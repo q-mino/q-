@@ -9,6 +9,7 @@
     "./seals": "./src/seals/index.ts",
     "./post": "./src/post/index.ts",
     "./mailbox": "./src/mailbox/index.ts",
+    "./mailbox-persona": "./src/mailbox-persona/index.ts",
     "./bonds": "./src/bonds/index.ts",
     "./conversations": "./src/conversations/index.ts",
     "./auth": "./src/auth/index.ts",
