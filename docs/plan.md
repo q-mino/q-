@@ -27,6 +27,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 - Rules: LIB-1..11, DOM-1, DOM-5..8, DOM-10..12, DOM-21, LIB-9, TST-1..3, TST-5, TST-7.
 - Checks: library test cases on the test domains; property tests (fast-check, hand-written arbitraries, TST-9) of the interpreter against scenarios; duplicate and different-fingerprint cases; a stability corpus for the fingerprint; JSON Schema snapshots in CI.
 - Watch: the library must not eat stage 1 (LIB-3). The smallest rule that closes each point.
+- Decisions with Alessandro, before code: the requirements, characteristics and approach of the library. His direction (6 Nov 2026): **convention over configuration, and a compilation of the domains**. Writing a domain, and defining its structure (use cases, ports, and so on), is only a folder structure, with conventions for folder names, module names and module exports, so that a compiler generates the representation of all domains and their components as paths, in one interface. The session starts from these questions, records the answers in `architecture.md` and re-plans steps 1 and 2 if the compiler changes their size.
 
 **2. Library nucleus II: use cases, streams, interface and persona** — `library` · J · 230k
 
