@@ -1,0 +1,19 @@
+{
+  "name": "@q-mino/domains",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    "./library": "./src/library/index.ts",
+    "./seals": "./src/seals/index.ts",
+    "./post": "./src/post/index.ts",
+    "./mailbox": "./src/mailbox/index.ts",
+    "./bonds": "./src/bonds/index.ts",
+    "./conversations": "./src/conversations/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./persona": "./src/persona/index.ts",
+    "./user": "./src/user/index.ts",
+    "./ui": "./src/ui/index.ts"
+  }
+}

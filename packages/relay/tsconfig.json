@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": ".tsbuild/src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../domains" },
+    { "path": "../adapters-common" },
+    { "path": "../adapters-node" }
+  ]
+}

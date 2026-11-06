@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "vite-plugin-pwa/solid"],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "rootDir": ".",
+    "outDir": "../.tsbuild/src"
+  },
+  "include": ["."],
+  "exclude": ["sw"],
+  "references": [{ "path": "../../domains" }, { "path": "../../adapters-web" }]
+}
