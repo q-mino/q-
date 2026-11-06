@@ -29,7 +29,7 @@ Q- (read _Cumino_) is a network of messages between real people, with no center.
 
 ## Working
 
-- One session per step of the development plan, on its own branch, through a pull request. Never push to `main`; Alessandro reviews and merges. Releases (tags `v*`) are his.
+- One session per step of the [development plan](docs/plan.md), on its own branch, through a pull request. Never push to `main`; Alessandro reviews and merges. Releases (tags `v*`) are his.
 - "Done" means `pnpm check` and `pnpm build` pass locally.
 - The software informs, it does not guarantee: when you add a guarantee, ask "can it be tampered with?"; if yes, it becomes a declared feature, not a defense.
 - Decisions and the session log live in Alessandro's notes, outside this repository: see `CLAUDE.local.md` if present.

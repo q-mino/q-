@@ -16,7 +16,7 @@ Status: skeleton. Nothing works yet.
 | `relay`           | Configurator: the relay server                                                         |
 | `memory`          | Configurator: phone and relay in one process, the oracle of the tests                  |
 
-Architecture: [`docs/architecture.md`](docs/architecture.md) (coming). Vocabulary: [`docs/glossary.md`](docs/glossary.md).
+Architecture: [`docs/architecture.md`](docs/architecture.md). Development plan: [`docs/plan.md`](docs/plan.md). Vocabulary: [`docs/glossary.md`](docs/glossary.md).
 
 ## Development
 
