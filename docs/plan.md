@@ -21,8 +21,17 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 ### (a) Pure domains
 
-**1. Library nucleus I: commands and facts** — `library` · J · 230k
+Step 1 was split in two on 6 Nov 2026, after the decisions on the library's approach (LIB-14..22): the compiler changed its size.
 
+**1a. Library conventions and the compiler** — `library`, `compiler` · J · 270k
+
+- Goal: the conventions of LIB-14..18 as pure functions of the library (kind from the module's suffix, matching by name, paths, compile errors, generated texts); the package `compiler` (Node: TypeScript compiler API, writing, `--watch`, `--check` in `pnpm check`); the generated indexes, tree and flat interfaces, per-node types from the schemas, per-domain reachable paths, and the arrows of the graph from the markers, replacing the hand-written ones. Kinds in this step: `schema`, `command`, `predicate`, `reads`; the reads vocabulary only as far as the test domains need it.
+- Rules: LIB-2, LIB-3, LIB-14..20, LIB-21 (the graph), LIB-22 (the shape of the path), DOM-21 (schemas matched by name), GR-1, GR-8, TST-7 (the generated files as snapshots).
+- Checks: compile errors tested on in-memory trees; test domains with a grouping and an arrow, written for the purpose with no word of Q-, compiled and type-checked; `--check` fails on a stale generated file; the graph rejects an import of another domain's internals and an import against the arrows.
+
+**1b. Library nucleus I: commands and facts** — `library` · J · 230k
+
+- Depends on: 1a. The command form, branches and conditions are written on the conventions of 1a: conditions name predicates by typed path (LIB-18), the engine resolves them from the root index and rejects a command of another domain (LIB-21).
 - Goal: the reference interpreter as a pure function; commands as data (branches, conditions, mutations); predicate declarations and the derived read set; facts with the event envelope; typed outcomes; the in-memory command port with the built-in duplicate branch and the fingerprint; strict zod schemas and their JSON Schema export; total order; the registry of interpreter rules. Driven by test domains written for the purpose, with no word of Q-.
 - Rules: LIB-1..11, DOM-1, DOM-5..8, DOM-10..12, DOM-21, LIB-9, TST-1..3, TST-5, TST-7.
 - Checks: library test cases on the test domains; property tests (fast-check, hand-written arbitraries, TST-9) of the interpreter against scenarios; duplicate and different-fingerprint cases; a stability corpus for the fingerprint; JSON Schema snapshots in CI.
@@ -34,7 +43,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 - Goal: use cases that open an event stream with a closed set of events; at most one command per use case; read port and stream read from an opaque position (base events, "position no longer available", inclusive resume); the interface component (contract version, then hat); the persona component (use-case tree, leaves only, entry checks in their fixed order, perimeter and limit constraints, explicit `Caller`); the trace of rejections.
 - Rules: DOM-2..4, DOM-17, DOM-18, PER-4..8, PER-13, PER-14, PER-17, PER-18, F6.
 - Checks: test cases for each entry check and its order; stream reads with injected redeliveries and resume (TST-4); perimeter hides from the caller, the trace keeps it.
-- Depends on: 1.
+- Depends on: 1b.
 
 **3. `mailbox` and `desk`** — J · 170k
 

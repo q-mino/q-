@@ -1,35 +1,22 @@
-// The architecture's arrows (see docs/architecture.md): who may import whom.
-// Arrows go from the consumer to the consumed. Anything not listed is forbidden.
-const arrows = {
-  library: [],
-  seals: ['library'],
-  post: ['library', 'seals'],
-  mailbox: ['library'],
-  desk: ['library', 'mailbox'],
-  bonds: ['library'],
-  conversations: ['library', 'bonds'],
-  auth: ['library'],
-  persona: ['library', 'auth', 'bonds', 'conversations'],
-  user: ['library', 'persona'],
-  ui: ['library', 'user'],
-}
-
-const domain = (name) => `^packages/domains/src/${name}/`
-
-const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
-  name: `arrows-of-${from}`,
-  comment: `${from} may import only: ${allowed.length > 0 ? allowed.join(', ') : 'nothing'}`,
-  severity: 'error',
-  from: { path: domain(from) },
-  to: {
-    path: '^packages/domains/src/[^/]+/',
-    pathNot: [domain(from), ...allowed.map(domain)],
-  },
-}))
+// The architecture's arrows (see docs/architecture.md § 2): who may import whom.
+// Each domain declares the domains it consumes in its marker, domain.ts (LIB-14); the library's
+// compiler turns the markers into these rules (LIB-19): it allows a domain the library, itself and
+// the surface of the domains it consumes (GR-1, LIB-21). Run `pnpm compile` after changing a marker.
+const arrowRules = [
+  ...require('./packages/domains/src/arrows.generated.cjs'),
+  ...require('./packages/domains/test/domains/arrows.generated.cjs'),
+]
 
 module.exports = {
   forbidden: [
     ...arrowRules,
+    {
+      name: 'library-imports-nothing',
+      comment: 'The library imports no domain (LIB-2).',
+      severity: 'error',
+      from: { path: '^packages/domains/src/library/' },
+      to: { path: '^packages/domains/src/', pathNot: '^packages/domains/src/library/' },
+    },
     {
       name: 'no-circular',
       severity: 'error',
@@ -40,7 +27,7 @@ module.exports = {
       name: 'only-through-index-inside',
       comment: 'A folder of a package is reachable from another folder only through its index.ts.',
       severity: 'error',
-      from: { path: '^(packages/[^/]+/src/[^/]+)/' },
+      from: { path: '^(packages/[^/]+/src/[^/]+)/', pathNot: '^packages/domains/src/' },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
         pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$'],

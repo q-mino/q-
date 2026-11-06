@@ -19,6 +19,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Compiled domains up to date (LIB-19)
+        run: pnpm compile:check
       - name: Type check (domains without DOM or Node)
         run: pnpm typecheck
       - name: Lint
