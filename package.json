@@ -8,13 +8,16 @@
     "node": ">=24"
   },
   "scripts": {
+    "compile": "node packages/compiler/src/main.ts packages/domains/src packages/domains/test/domains",
+    "compile:check": "node packages/compiler/src/main.ts packages/domains/src packages/domains/test/domains --check",
+    "compile:watch": "node packages/compiler/src/main.ts packages/domains/src packages/domains/test/domains --watch",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "graph": "depcruise packages --config .dependency-cruiser.cjs",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
+    "check": "pnpm compile:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
     "build": "pnpm --filter @q-mino/phone build"
   },
   "devDependencies": {

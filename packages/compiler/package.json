@@ -1,0 +1,15 @@
+{
+  "name": "@q-mino/compiler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@q-mino/domains": "workspace:*",
+    "prettier": "^3.9.10",
+    "typescript": "6.0.3"
+  }
+}

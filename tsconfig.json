@@ -1,19 +1,53 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/domains" },
-    { "path": "packages/domains/test" },
-    { "path": "packages/adapters-common" },
-    { "path": "packages/adapters-common/test" },
-    { "path": "packages/adapters-web" },
-    { "path": "packages/adapters-web/test" },
-    { "path": "packages/adapters-node" },
-    { "path": "packages/adapters-node/test" },
-    { "path": "packages/relay" },
-    { "path": "packages/relay/test" },
-    { "path": "packages/memory" },
-    { "path": "packages/memory/test" },
-    { "path": "packages/phone" },
-    { "path": "packages/phone/test" }
+    {
+      "path": "packages/domains"
+    },
+    {
+      "path": "packages/domains/test"
+    },
+    {
+      "path": "packages/compiler"
+    },
+    {
+      "path": "packages/compiler/test"
+    },
+    {
+      "path": "packages/adapters-common"
+    },
+    {
+      "path": "packages/adapters-common/test"
+    },
+    {
+      "path": "packages/adapters-web"
+    },
+    {
+      "path": "packages/adapters-web/test"
+    },
+    {
+      "path": "packages/adapters-node"
+    },
+    {
+      "path": "packages/adapters-node/test"
+    },
+    {
+      "path": "packages/relay"
+    },
+    {
+      "path": "packages/relay/test"
+    },
+    {
+      "path": "packages/memory"
+    },
+    {
+      "path": "packages/memory/test"
+    },
+    {
+      "path": "packages/phone"
+    },
+    {
+      "path": "packages/phone/test"
+    }
   ]
 }
