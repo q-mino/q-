@@ -1,0 +1,259 @@
+# Architecture
+
+The rules of this code, derived from the architecture paper _Architettura a domini_ (Alessandro Giansanti, in Italian, not public) and from the architecture decisions of Q-. Read this before writing code; read [`glossary.md`](glossary.md) for the words.
+
+## Version and how to read
+
+- **Paper version**: vault commit `a14d825` (2026-10-14), last decision **D114**. If the paper changes, this document is updated in a dedicated pass; until then this version holds.
+- **Q- decisions**: Alessandro's notes on the architecture (5–6 Nov 2026) and on the project setup (6 Nov 2026), in Italian.
+- **References**: `D<n>` is a numbered decision of the paper, `§<n>` a paragraph of its foundations; `[Q]` is a decision of Q-, `[Q, paper gap]` a Q- choice where the paper is silent. A rule with both applies the paper to Q-.
+- **Rule ids** (`F3`, `DOM-7`…) are stable: cite them in reviews and commits.
+- **When this document does not answer**, stop and ask. Never invent an architecture rule in the code. A gap of the paper is reported to the paper, not filled here.
+- **Levels** (D114): the paper fixes _semantics_ (what an author or a user can observe); the library fixes _interpreter rules_ (any rule would do, but only one), each with its test case; everything else (execution, internal shapes, technology) is _implementation freedom_ and is not written down.
+
+## 1. The frame: Q- inside the paper
+
+The paper assumes a trusted server. Q- has none; it recovers the server like this.
+
+- **F1** Every node is the server of itself. The phone runs the whole stack of the paper: UI → user → persona → business → state ports. No node trusts another. Wherever the paper says "trusted server side" (D99, D100), read "my node". [Q]
+- **F2** A remote peer is always a client. Everything inside a letter (persona and use case invoked, declared time, content) is a claim. What my node verifies or measures (signature, arrival mailbox, collect time) is trusted. D99 [Q]
+- **F3** The signature of the letter is the credential. `post` opens the envelope and verifies the signature; the inbound interface turns the verified signer into the `Caller`. D30 [Q]
+- **F4** A letter is a request, not a shared fact. The sender records its own fact ("I wrote M") with the effect "deliver M on bond L"; the receiver treats the letter as an invocation on its node and, if it accepts, records its own fact ("I received M from X"). No synchronous reply: a receipt is a new letter that invokes a use case on the sender's node. The outbound letter is an effect (D73, D108); the answer comes back in as an actor with its own identity (D91, D92). [Q]
+- **F5** Sending is an effect (DOM-13, DOM-14); collecting from a mailbox is a read on its stream from a position (DOM-17). D108, D64 [Q]
+- **F6** The software informs, it does not guarantee. Nothing happens in silence: annotations are part of the facts, dead letters are kept per effect, and both are shown to the local user. A rejection records no fact: a rejected letter goes to the persona's trace, which is eventual and without guarantees, and the UI shows it from there. Hiding (perimeter constraints, PER-14) applies to remote peers, never to the user of the node. D54, D106 [Q]
+
+## 2. Packages and the graph
+
+| package           | contains                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domains`         | the pure domains, one folder each: `library/`, `seals`, `post`, `mailbox`, `desk`, `bonds`, `conversations`, `auth`, `persona`, `user`, `ui` |
+| `adapters-common` | adapters that run in the browser and in Node                                                                                                 |
+| `adapters-web`    | browser adapters                                                                                                                             |
+| `adapters-node`   | Node adapters                                                                                                                                |
+| `phone`           | configurator: the PWA                                                                                                                        |
+| `relay`           | configurator: the relay server                                                                                                               |
+| `memory`          | configurator: phone and relay in one process, the oracle                                                                                     |
+
+Arrows between domains, from consumer to consumed (enforced by [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs)):
+
+| domain          | may import                                  |
+| --------------- | ------------------------------------------- |
+| `library`       | nothing                                     |
+| `seals`         | `library`                                   |
+| `post`          | `library`, `seals`                          |
+| `mailbox`       | `library`                                   |
+| `desk`          | `library`, `mailbox`                        |
+| `bonds`         | `library`                                   |
+| `conversations` | `library`, `bonds`                          |
+| `auth`          | `library`                                   |
+| `persona`       | `library`, `auth`, `bonds`, `conversations` |
+| `user`          | `library`, `persona`                        |
+| `ui`            | `library`, `user`                           |
+
+- **GR-1** The graph is acyclic. A consumer uses another domain's exported use cases and predicates, never its internals or its ports. D36, D43
+- **GR-2** Arrows are strict, not transitive: `user` does not import `bonds`, `ui` does not import `persona`. This is stricter than the paper and follows from it: the UI goes through the user domain (D76), an actor reaches the business only through its persona (D88, D24). [Q]
+- **GR-3** Business to business only to read: `conversations` uses the read use cases of `bonds` and its exported predicates inside its command conditions ("the bond exists", "is a member"); the read is atomic with the write, so the IndexedDB transaction of a `conversations` command covers the `bonds` stores it reads. A write in `conversations` after a fact of `bonds` is a reaction (DOM-16), never a direct call. D35, D68, D71, D88 [Q]
+- **GR-4** `auth` does not import `bonds`. Auth reads its data through its own outbound read ports, in its own language; the configurator implements them with an adapter over the read use cases of `bonds`. The logical edge `auth → bonds` remains (acyclic): the actor's data live in a business domain (V8). D29, D43, D41 (This corrects the arrow `auth → bonds` of the bootstrap.)
+- **GR-5** `post → seals` is a domain import: `post` speaks the protocol, `seals` the cryptography; the primitives are behind a port of `seals`. D36, D37, §2
+- **GR-6** `post` imports neither `mailbox` nor `persona`. The mailbox port of `post` is implemented by an HTTP adapter (to the relay) or by the imported `mailbox` domain (in memory). The inbound path (opened letter → interface → persona) and the effect executor (outbox → `post`) are wired by the configurator. D5, D30, D65, D108 [Q]
+- **GR-7** `ui → user` is an import: the UI drives the user domain. `user → persona` is an import of the persona's _contract_ surface; the _execution_ surface is wired by the configurator. `user` uses only the persona `self`, never the personas of remote peers. D76, D38, D40, D75
+- **GR-8** A domain is a folder of `domains` whose `index.ts` is its only exported surface. Domains compile without DOM and Node and import only `library`, other domains along the arrows, and `zod`. Identity, clock and randomness enter as parameters. D39, D20, D48 [Q]
+- **GR-9** Reactions live in a module above the domains, wired by the configurator; its place in the tree is decided when the first reaction is written. D88
+
+## 3. Library (`domains/src/library/`)
+
+The paper foresees one library that implements, once for every domain, what is the same everywhere. Q- is its pilot. [Q]
+
+- **LIB-1** The library contains: the reference interpreter; the interface component (contract version check, then hat check); the persona component (strict schema, fixed order of entry checks, fingerprint of the entry operation); the durable consumers (reactions, effect executor); the application of fact translations. A domain uses them and never rewrites them. D102
+- **LIB-2** No word of Q- in the library. It imports no domain. It ships its own test cases, run on test domains written for the purpose: it is conformant if it passes them. D102 [Q]
+- **LIB-3** It grows by need. First the nucleus (below); every other module at its trigger. The smallest rule that closes a point; no generalization or optimization without a case that asks for it. D82, D114 [Q]
+- **LIB-4** Every rule that fixes semantics comes with its test cases. Every interpreter rule goes into a registry with its constraint and its case. Test between the two: would the other choice change what an author or a user sees? If yes, it is semantics and belongs in the paper (until then, in this document). D102, D114
+- **LIB-5** The reference interpreter is a pure function: relevant state + command → fact or rejection. It is the semantics, the in-memory adapter and the oracle at once. Domain cores export commands and predicate declarations; they do not reimplement it. D50, D102
+- **LIB-6** A predicate declares: name, typed parameters, what it reads (an instance, or a set with one aggregation among exists, count, sum, min, max), its value as a pure function. The read set is derived from the declarations. D96
+- **LIB-7** The condition language is closed: AND, OR, NOT and a leaf. The third value ("cannot be evaluated") exists only in applicability results; selections are two-valued (D51). A new construct must be domain-independent, come with test scenarios and bump the library version. D49, D110
+- **LIB-8** Adapter capabilities form a closed catalogue of language forms, never domain predicates. The mandatory capabilities are never declared (AND/OR/NOT, instance predicates, the single-instance primitives, version, duplicate branch, total order, at-least-once fact delivery per resource); optional ones are declared per port. D110
+- **LIB-9** Every order is total: the core appends a tie-break on the domain id. Value order (interpreter rule, registry of the conformance note): text by Unicode code point (no collation), an absent value greater than any value (last ascending, first descending), false before true. Interpreter, adapters and UI must agree. D109
+- **LIB-10** The library owns the stable functions: the fingerprint and the delivery identity of a reaction (fact, reaction, part). A stability corpus is re-read at every release; an undeclared change is a fault. D100, D102
+- **LIB-11** The fingerprint covers only what the retrier keeps and resends: identity, node, input restricted to the declared fields, computed before the schema's defaults are applied. Not the contract version, nor values added later. D100
+- **LIB-12** The queue policy of the user domain (pending activities, retries) belongs to the library. D76
+- **LIB-13** License: the repository's (AGPL-3.0 with a commercial license); Apache-2.0 when it becomes a package of its own. [Q]
+
+**Stage 1** (nucleus, D82; triggers from the paper's cost note):
+
+1. Nucleus: fact with event envelope and operation id; default duplicate branch; stream contract of each use case; schemas, strict; entry checks in their fixed order; reference interpreter (three-valued conditions, primitives, total order); persona tree (shallow is fine); explicit `Caller`. The cost is lowered by implementation, never by removing pieces.
+2. Outbox, effect executor and dead letters, with the stream read beneath them (D65, D108): triggered by the first external effect, "deliver M on bond L".
+3. Client-generated ids (D62): triggered from the start, there is no server.
+4. Contract versions side by side (D75): when peers do not update together; version in the message and "version not supported" are nucleus.
+5. Reactions (D88, D89): with the first fact of one domain that causes a write in another.
+6. Processes and scheduling (D92, D93, D97): with the first real coordination or periodic job.
+7. Projections; fact translations (D101): with the first change of a fact schema.
+8. Optional adapter capabilities: when a domain's code requests them.
+
+## 4. Domains
+
+### Structure
+
+- **DOM-1** Every domain has the same four parts: language, use cases (its primary ports), a pure core (entities, invariants, command builders, predicates), secondary ports. The core does no I/O. D35, D20, D48
+- **DOM-2** Two kinds of use case, command and read, and two kinds of port on the state, command port and read port. No port to publish events: whoever wants facts reads the stream. D41, D55
+- **DOM-3** A use case receives one message and opens an event stream; it declares the closed set of events it can send and which ones end the stream. D55, D72
+- **DOM-4** A use case runs at most one command, in any domain; reads are free. Two commands mean a process. D58
+
+### Commands, facts, outcomes
+
+- **DOM-5** A command is data: an ordered list of branches. A branch has a fact name (a business phrase), a condition (vocabulary predicates with AND/OR/NOT), a mutation (create, modify, delete steps) and outbox follow-ups. At most one branch applies. The mutation may touch several instances, of the same domain only. D16, D47, D49, D94
+- **DOM-6** Every applied branch records a fact, even with an empty mutation: "nothing to do" is a branch, not a rejection. A rejection records nothing and names the failed predicates. D95, D54, D17
+- **DOM-7** The outcome is typed: the fact (branch, resolved values, outbox entries) or the rejection. The domain returns it raw; the persona projects it. A failure with no business meaning aborts the command and records nothing. D14, D17, D25
+- **DOM-8** A fact is written atomically with the state, in its own domain's store. One atomic write touches one domain, even when all domains share one IndexedDB database. D42, D59 [Q]
+- **DOM-9** The command port guarantees: same result as the reference interpreter, all or nothing, isolation that covers the ranges read. A serial writer (one command at a time, its reads inside its own sequence, one transaction per command) gets isolation and duplicates by construction; it still owes atomicity on failure and must never let a read see half a command. Two tabs of the PWA are two writers: either one writer per node or isolation from the adapter, chosen by the development plan. D21, D22, D96
+- **DOM-10** The event envelope carries: path, schema version, payload, outcome, event id, operation id and fingerprint, correlation, attribution, the frame stack (each frame with its own time), the resources of the fact; a composite fact carries name, version and resources per part. D56, D99, D100, D107
+
+### Duplicates and identities
+
+- **DOM-11** The duplicate branch is built into the command port and runs first: the same operation id in the same scope returns the recorded fact, at the same position; a different fingerprint is rejected with "identity already used". The scope is `Caller` + hat. A domain may replace this branch with its own. D79, D61, D100
+  - For a letter: operation id = the letter's identity; scope = the sender's `Caller` + persona; fingerprint over the invoked use case and the letter's declared fields as sent, without its schema version (LIB-11). Another peer cannot reuse an identity. For `anonymous` every letter is a new operation (PER-4). D91 [Q]
+  - How long identities are kept is a deployment choice, at least as long as the sender can retry; beyond it natural idempotency covers. Q- sets it in the development plan, against the relay's 7 days and time offline. D61, D66, D79
+- **DOM-12** A retry keeps the operation id, never rebuilds the command. The user domain creates the id before the first attempt. Resource ids are generated on the node and also serve as keys. D60, D73, D62
+
+### Effects and reactions
+
+- **DOM-13** An outbox entry declares: effect name, payload, entry id (also the event id and the key sent outside), optional delay, optional return use case whose input is the closed set of meaningful outcomes. D108, D12
+- **DOM-14** The effect executor is an internal entry, not a persona: a durable consumer that delivers at least once with the entry id as key. Position, order and dead letters are kept per effect; every rejection by the return use case goes to dead letter. D92, D108, D65
+  - "Deliver M on bond L" is executed by `post`, which deposits the envelope with the letter's identity as key; the receiver deduplicates (DOM-11). [Q]
+- **DOM-15** Effects fail in three ways: transient (retried), definitive with a meaning (back as a business fact through the return use case), exhausted (dead letter, never a business fact by itself). D67
+  - On a phone the operator is the user: dead letters are shown, and one must not silently freeze a whole conversation. [Q, F6]
+- **DOM-16** A reaction is "when fact E, command C": it reads only the fact, translates it purely, invokes at most one command per part of the fact, through a command use case. Its operation id is deterministic, from (event, reaction, part); a rejection goes to dead letter; each reaction is a delivery unit of its own. Its `Caller` is internal ("system · reaction R"), with no hat. D88, D89, D91, D113
+
+### Reads and streams
+
+- **DOM-17** A fact-stream read goes through the read port: a query and an opaque position; delivery at least once, deduplicated by event id, ordered per resource. Base events: entering and leaving the selection, caught up, "position no longer available" (re-read the state, then resume). Resume from a position is inclusive. D64, D72, D73
+  - Collecting from a mailbox is this read; positions are compared only by order. [Q]
+- **DOM-18** A query is data. A read sees a consistent snapshot, declares its freshness and may ask to be "at least up to P". Projections (audit, read models) are pure and record no facts. D41, D50, D53, D66
+
+### Processes
+
+- **DOM-19** Every command is a transition of a process; the simplest process is the life cycle of an entity. In one domain a step composes the target's transition and records one fact with one part per applied branch; across domains it invokes the transition through outbox and reaction. A failed step records a fact, not a rejection. D70, D68, D93, D111
+- **DOM-20** A bulk operation chosen by a condition is a process with a cursor, one instance per step. An operation on a list of named instances stays atomic, with one branch per instance. D97, D112, D113
+
+### Schemas and versions
+
+- **DOM-21** Every signature (use case, port, command, query, fact) has one declarative zod schema: type, validation, JSON Schema export. No parallel hand-written type or validator. An undeclared field never passes; the default is rejecting the request as "invalid request". D46, D75, D106
+- **DOM-22** A fact's name is its meaning and never changes; its version is its shape, in the envelope. The log is never rewritten. The producing domain translates old facts at read time, one version to the next; a translation is pure, adds nothing, touches only the payload and never changes once published. A reader that meets an unknown version stops and retries, never guesses. Stored state is migrated by an adapter only through such a translation; values the business must decide are commands with their facts. D101
+  - The export carries the state of every domain with its schema version; every release reads the letters and exports of the previous ones. [Q]
+
+### The domains of Q-
+
+| domain          | language and responsibility                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `seals`         | faces derived from seeds (flat index), seal for, open, sign, verify, group keys. Holds every secret; other domains hold opaque references and public keys. Primitives behind a port. |
+| `post`          | the protocol: envelope, letter, receipt, declaration, version. Opens envelopes and verifies signatures; the letter names the persona and use case invoked.                           |
+| `mailbox`       | the relay's domain: deposit, collect from a position, keep 7 days, no deletion on collect.                                                                                           |
+| `desk`          | the relay's personas: who deposits, who collects with R (PER-19).                                                                                                                    |
+| `bonds`         | upstream business: faces, contacts, handshakes and tickets, invitations, groups and memberships, separations.                                                                        |
+| `conversations` | downstream business, reads `bonds`: direct and group chats, messages, the news channel, receipts.                                                                                    |
+| `auth`          | data on the actor: which faces the local user has, which bond or group a remote face belongs to, which personas a caller may wear.                                                   |
+| `persona`       | the four personas and their use-case trees (section 5).                                                                                                                              |
+| `user`          | activities and user concepts: drafts, active face, "nothing happens in silence".                                                                                                     |
+| `ui`            | the language of the interface: screens, states, gestures (presentational state only).                                                                                                |
+
+Invariants of Q- that the domains keep [Q]: every bond and every membership belongs to exactly one of my faces; no domain deduces a face's position from its key or its key from its position; the derivation of a face is invisible from outside.
+
+## 5. Persona and auth
+
+### The four personas [Q, 6 Nov 2026]
+
+| persona     | who                                                | `Caller`                                                         | can do (prototype)                                                            |
+| ----------- | -------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `self`      | the user of this node, from the app                | the local user                                                   | everything its tree exposes; a node "as face X" binds the active face (PER-3) |
+| `known`     | valid signature, face known (bond, group, channel) | the sender's face key                                            | write in the chats of its bonds and groups, receipts                          |
+| `unknown`   | valid signature, face never seen                   | the sender's face key                                            | introduce itself with a ticket (PER-11)                                       |
+| `anonymous` | no signature, or a signature that does not verify  | an id per letter, not a stable identity (as the paper's visitor) | nothing yet: every letter is rejected and annotated                           |
+
+- **PER-1** Personas differ only when the trade differs; differences among wearers are values. Contact, member of group G, channel, the face of mine the bond belongs to and, later, permissions per known face are **values from auth**, not personas or trees. D33, D77 [Q]
+- **PER-2** A signature that does not verify gives `anonymous`, with the value "invalid signature, claimed face K" as an annotation; never a `Caller` with the claimed identity. Not a persona of its own: removing the signature is always possible, so it could not be given less than `anonymous`. D106 [Q]
+- **PER-3** My faces are not personas. Under `self`, a node "as face X" binds the face as the subject once per request; every constraint states whose value it reads. One face per request. D87 [Q]
+- **PER-4** The `Caller` is produced by the interface from verified credentials and passed explicitly to the persona: id mandatory, other fields only if verified; absence is a value, never `null`. `anonymous` has an id per letter: with no stable sender, every letter is a new operation (its derivation is set by the development plan). D30, D78, D91
+- **PER-5** Order of entry checks, fixed; the first that fails closes the request (D106):
+  1. transport (relay or local mailbox) and interface establish the `Caller` (`post` opens and verifies);
+  2. interface: contract version ("version not supported"), then hat ("hat not available");
+  3. persona: node exists and is a leaf, input in the schema ("invalid request");
+  4. persona: perimeter constraints on values and trusted-frame data only ("not found");
+  5. persona: limit constraints on values, input and trusted-frame data only (rejection with all reasons);
+  6. business, in the atomic operation: duplicate branch, then the composed condition.
+     A check may answer before a perimeter only with what the caller already knows.
+- **PER-6** A request lands on the root of the persona and invokes a leaf; internal nodes group and accumulate, invoking one is "invalid request". Every wearer gets the same structure. Constraints only accumulate going down. D77, D105
+- **PER-7** One hat per request. The hat is in the address of the use case — for a letter, the persona it invokes — and is a claim verified with auth, not a permission. D27, D78
+- **PER-8** Access values never come from the peer; an undeclared field never enters. D33, D75
+- **PER-9** Auth answers with data, never decisions. It may have commands; its read ports are implemented by adapters (in Q-, by the read use cases of `bonds`, GR-4). D29, D43, D98
+- **PER-10** The interface uses auth to verify the hat; the persona uses auth for its values; the business never knows auth. D43, D77
+- **PER-11** The introduction with a ticket is the paper's registration: a command of `unknown` that invokes the command of `bonds` creating the bond (in the paper, a command of auth: V8); its fact links the sender's key to the new bond. The sender is `known` from its next letter. D78, D98 [Q]
+- **PER-12** Internal entries (reactions, effect executor) are not personas and wear no hat. D88, D91
+- **PER-13** Request data lives in the frames of the envelope stack, written by each layer crossed; a datum is worth what its layer is worth. Only frames written by my node feed access constraints. The letter's declared time is a claim; the relay's arrival time is written by the relay and is annotated, not trusted; my node's collect time is trusted. D99 [Q]
+- **PER-14** Perimeter or limit, declared by the node. A perimeter that fails gives "not found" without a reason (and filters reads); a limit that fails gives an explicit reason. This hides from the peer; the local user is informed (F6). D44, D80
+- **PER-15** Capabilities on three levels, each restricting the previous: the persona's tree, the values from auth, the applicability on one resource. In the UI they are only UX. D25, D47, D77
+- **PER-16** An opaque value grants no permission; whoever reads it validates it again. D57 (exception: the collect secret, V5)
+- **PER-17** The contract version is the version of the persona's surface. A compatibility window is declared; an incompatible change is expand-contract inside the persona tree, readers first. This holds between peers released independently. D75, D101
+- **PER-18** Answers are built field by field; attribution, frame stack, fact schema versions and fact resources never leave the node. Correlation may travel, and is a claim when it comes in. D45, D56, D72, D101, D107
+- **PER-19** The relay has its own personas, by the trade of `mailbox`: whoever deposits on D (anyone), whoever collects with R. These are not the four personas of the phone, which hold only for `persona`: the relay has no bonds and no local user, and the envelope is sealed. They live in the domain `desk` (the counter of a post office, where one deposits and collects: the persona layer of `mailbox`; arrows: `library`, `mailbox`), which neither the phone nor other importers of the domains need. Its interface turns R into the `Caller` (id = D = hash(R)); its auth is trivial and gets a folder only when it has rules. The HTTP interface and the `memory` oracle both reach `mailbox` through them, never directly. D77, D88, D103, D75 [Q]
+- **PER-20** A future carrier (a nearby device passing an envelope) wears a persona of the local mailbox's tree; whether known carriers differ is decided then, as a value or a persona. The carrier travels as a frame of the letter it carries, independent of the letter's own persona. D77, D99 [Q, not in the prototype]
+
+## 6. Adapters
+
+- **ADP-1** Adapters are mechanical translators: no business rule, no `if` on the domain's meaning. The logic is in the domains. §4
+- **ADP-2** A technical event becomes a concept of the domain it enters. Technical outcomes map to user concepts: the meaning comes from the contract, the name from the user domain, the mapping is a pure function of the user core. D2, D14, D74
+- **ADP-3** A port speaks the consumer's language. "Port" alone means a secondary port; primary ports are use cases. D41, D86
+- **ADP-4** A transport adapter does not translate: it carries the message and the return stream, keeps order within a stream, signals abort; it may lose and duplicate. Reliability is end to end. D73
+  - The HTTP client of the relay is a transport for the mailbox port of `post`. [Q]
+- **ADP-5** Cache and retry are decorators of the same port, under its contract: a retry never repeats a domain outcome, and a decorator offers only what it preserves of the inner adapter. D2
+- **ADP-6** Storage is reached only through the ports; its shape is private to the adapter. D102
+- **ADP-7** The UI is an adapter of the user domain: it renders state, turns gestures into activities, listens to streams. Anything a product manager would name belongs to `user`. Activities are the use cases of `user`, at most one command each. D76, D58
+  - In Q- the screen model is the pure domain `ui`, and the Solid rendering is its adapter (V2). [Q]
+
+Adapters of Q- [Q]: the libsodium primitives of `seals` (same wasm in browser and Node); IndexedDB stores, `storage.persist()`; the HTTP client of the relay; the relay's HTTP interface and its storage on file or database; the Solid rendering. Their packages and order of writing are set by the development plan.
+
+## 7. Configurators
+
+- **CFG-1** A configurator is the composition root (the main): it picks the adapters and wires ports, the inbound interface to the persona, the effect executor to `post`, the reactions, the read port of auth to `bonds`. D88, D92, D104
+- **CFG-2** Before the first request it checks what each component requires against what is offered: requirements derived from the code, offers declared by the adapters and proven by the suite; also the `Caller` fields auth reads against those the interface fills, and the frames needed against those written. An unmet requirement is a composition fault: the node does not start. Static wiring is checked by TypeScript; adapters picked by configuration at startup. D104
+- **CFG-3** Three configurators [Q]: `phone` (the PWA), `relay` (`mailbox`, HTTP interface, storage port; no access logs, declared), `memory` (phone and relay in one process with `mailbox` imported instead of HTTP, still through the relay's personas (PER-19): the oracle, and the start of the nearby network of the native version).
+- **CFG-4** Adapters never import configurators; domains import no other package. [Q]
+
+## 8. Tests and conformance
+
+- **TST-1** Domain tests run on the in-memory implementation. Run again against each adapter they are its conformance tests: suites parametrized by an adapter factory. A domain writes no separate conformance tests. D102
+- **TST-2** Every port with more than one adapter has an in-memory reference implementation, the oracle; every other adapter is compared with it, never adapter with adapter. The `memory` configurator is the oracle stack. D103, D102, D38
+- **TST-3** Compare only what is observable: state through the read port, never storage contents; positions only by order ("at least up to X"). Clock and ids are injected. D102, D48, D57
+- **TST-4** Allowed deviations are injected, not hoped absent: loss, duplication and abort on transports (mandatory), resume and "position no longer available"; redeliveries on consumers. D103, D73, D69, D89
+- **TST-5** Every command adapter passes: scenarios, differential, concurrency (the result equals some serial order, ranges included); fact atomic with its mutation; a rejection leaves no fact; a duplicate returns the recorded fact at the same position, a different fingerprint is rejected; ids are never reassigned. The mid-write failure test is optional. D21, D79, D95, D96, D48
+- **TST-6** An adapter is tested exactly on the capabilities it declares. D110
+- **TST-7** Stability: the stable functions of the library are re-read against a corpus at every release; the JSON Schema export of every exported signature and fact is snapshotted and diffed in CI. D100, D101, D75
+- **TST-8** Business correctness (cores, branches, predicates) belongs to the domain tests; the suite checks only what is mechanical. D102
+- **TST-9** When the suite runs and how inputs are generated are left to Q-: on every pull request (`pnpm check`). Generating inputs from the zod schemas is open, for the development plan. D102, D104 [Q]
+
+Checks:
+
+| automatic                                                                                                    | review                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| dependency-cruiser: arrows, no cycles, only `index.ts`, no Node or other packages in domains, npm only `zod` | an adapter with an `if` on a business rule (ADP-1)                                                                              |
+| TypeScript: domains without DOM and Node                                                                     | a semantic rule without its test cases (LIB-4)                                                                                  |
+| JSON Schema snapshots of signatures and facts (TST-7)                                                        | a retry that mints a new operation id (DOM-12)                                                                                  |
+| transport and consumer suites contain the injected deviations (TST-4)                                        | a fact translation that reads state or clock, or invents a value (DOM-22)                                                       |
+| conformance tests import no storage API (TST-3)                                                              | a reaction that reads changing state or invokes more than one command (DOM-16); `user` using a persona other than `self` (GR-7) |
+
+## 9. Divergences of Q- from the paper
+
+- **V1** No trusted server: every node is the server of itself and the trusted level is my node (F1). The paper reasons on a trusted server side. [Q]
+- **V2** `ui` is a pure domain (the screen model) inside `domains`, and only its rendering is an adapter; in the paper the UI is the adapter of the user domain (D76). The paper's rule still holds: `ui` holds only presentational state.
+- **V3** `seals`, `post` and `mailbox` are technical domains with their own language and use cases, outside the paper's types (user, persona, auth, business). In the paper the interface speaks the protocol and is deliberately not a domain with rules (D5), and technical concerns become user concepts, not a service domain (D2); Q- gives the protocol and the cryptography a domain each. [Q]
+- **V4** "Every domain is a package" (D39) is read as a module unit: one package `domains`, a folder per domain, boundaries enforced by tools. [Q]
+- **V5** The collect secret R of a mailbox is a bearer credential: whoever holds it collects. It is not an opaque value (D57): it is a transport credential that yields the relay's `Caller`, never a permission carried around.
+- **V6** The paper's visitor has an anonymous session; `anonymous` has only an id per letter, and registration (D98) is done by `unknown`, whose key is verified but not known.
+- **V7** Q- is the pilot of the paper's library, which grows by Q-'s needs (section 3).
+- **V8** The actor's data (faces, bonds, memberships) live in the business domain `bonds`, not in auth: auth reads them through its ports (GR-4), and registration creates a bond, not a user (PER-11). In the paper auth's sources are external (token, database, identity provider, D43) and registration is a command of auth (D98).
+
+## 10. Gaps of the paper met by Q-
+
+Reported to the paper; until it answers, a point that depends on them is decided case by case and recorded in Q-'s decisions, not invented in the code.
+
+- **G1** Restoring an export on a new device: positions, operation ids, outbox entries not yet executed, duplicates still in the mailbox.
+
+Outside the paper, to be decided by Q- when it comes: the life cycle of keys (rotating or revoking a face, keeping faces unlinked in shared outputs), which is business or credentials (D98).
