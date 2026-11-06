@@ -5,7 +5,7 @@ const arrows = {
   seals: ['library'],
   post: ['library', 'seals'],
   mailbox: ['library'],
-  'mailbox-persona': ['library', 'mailbox'],
+  desk: ['library', 'mailbox'],
   bonds: ['library'],
   conversations: ['library', 'bonds'],
   auth: ['library'],

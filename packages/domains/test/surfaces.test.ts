@@ -3,7 +3,7 @@ import * as library from '../src/library/index.ts'
 import * as seals from '../src/seals/index.ts'
 import * as post from '../src/post/index.ts'
 import * as mailbox from '../src/mailbox/index.ts'
-import * as mailboxPersona from '../src/mailbox-persona/index.ts'
+import * as desk from '../src/desk/index.ts'
 import * as bonds from '../src/bonds/index.ts'
 import * as conversations from '../src/conversations/index.ts'
 import * as auth from '../src/auth/index.ts'
@@ -18,7 +18,7 @@ describe('domains', () => {
       seals,
       post,
       mailbox,
-      mailboxPersona,
+      desk,
       bonds,
       conversations,
       auth,

@@ -24,32 +24,31 @@ The paper assumes a trusted server. Q- has none; it recovers the server like thi
 
 ## 2. Packages and the graph
 
-| package           | contains                                                                                                                                                |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domains`         | the pure domains, one folder each: `library/`, `seals`, `post`, `mailbox`, `mailbox-persona`, `bonds`, `conversations`, `auth`, `persona`, `user`, `ui` |
-| `adapters-common` | adapters that run in the browser and in Node                                                                                                            |
-| `adapters-web`    | browser adapters                                                                                                                                        |
-| `adapters-node`   | Node adapters                                                                                                                                           |
-| `phone`           | configurator: the PWA                                                                                                                                   |
-| `relay`           | configurator: the relay server                                                                                                                          |
-| `memory`          | configurator: phone and relay in one process, the oracle                                                                                                |
+| package           | contains                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domains`         | the pure domains, one folder each: `library/`, `seals`, `post`, `mailbox`, `desk`, `bonds`, `conversations`, `auth`, `persona`, `user`, `ui` |
+| `adapters-common` | adapters that run in the browser and in Node                                                                                                 |
+| `adapters-web`    | browser adapters                                                                                                                             |
+| `adapters-node`   | Node adapters                                                                                                                                |
+| `phone`           | configurator: the PWA                                                                                                                        |
+| `relay`           | configurator: the relay server                                                                                                               |
+| `memory`          | configurator: phone and relay in one process, the oracle                                                                                     |
 
 Arrows between domains, from consumer to consumed (enforced by [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs)):
 
-| domain            | may import                                                        |
-| ----------------- | ----------------------------------------------------------------- |
-| `library`         | nothing                                                           |
-| `seals`           | `library`                                                         |
-| `post`            | `library`, `seals`                                                |
-| `mailbox`         | `library`                                                         |
-| `mailbox-persona` | `library`, `mailbox`                                              |
-| `mailbox-persona` | the relay's personas: who deposits, who collects with R (PER-19). |
-| `bonds`           | `library`                                                         |
-| `conversations`   | `library`, `bonds`                                                |
-| `auth`            | `library`                                                         |
-| `persona`         | `library`, `auth`, `bonds`, `conversations`                       |
-| `user`            | `library`, `persona`                                              |
-| `ui`              | `library`, `user`                                                 |
+| domain          | may import                                  |
+| --------------- | ------------------------------------------- |
+| `library`       | nothing                                     |
+| `seals`         | `library`                                   |
+| `post`          | `library`, `seals`                          |
+| `mailbox`       | `library`                                   |
+| `desk`          | `library`, `mailbox`                        |
+| `bonds`         | `library`                                   |
+| `conversations` | `library`, `bonds`                          |
+| `auth`          | `library`                                   |
+| `persona`       | `library`, `auth`, `bonds`, `conversations` |
+| `user`          | `library`, `persona`                        |
+| `ui`            | `library`, `user`                           |
 
 - **GR-1** The graph is acyclic. A consumer uses another domain's exported use cases and predicates, never its internals or its ports. D36, D43
 - **GR-2** Arrows are strict, not transitive: `user` does not import `bonds`, `ui` does not import `persona`. This is stricter than the paper and follows from it: the UI goes through the user domain (D76), an actor reaches the business only through its persona (D88, D24). [Q]
@@ -148,6 +147,7 @@ The paper foresees one library that implements, once for every domain, what is t
 | `seals`         | faces derived from seeds (flat index), seal for, open, sign, verify, group keys. Holds every secret; other domains hold opaque references and public keys. Primitives behind a port. |
 | `post`          | the protocol: envelope, letter, receipt, declaration, version. Opens envelopes and verifies signatures; the letter names the persona and use case invoked.                           |
 | `mailbox`       | the relay's domain: deposit, collect from a position, keep 7 days, no deletion on collect.                                                                                           |
+| `desk`          | the relay's personas: who deposits, who collects with R (PER-19).                                                                                                                    |
 | `bonds`         | upstream business: faces, contacts, handshakes and tickets, invitations, groups and memberships, separations.                                                                        |
 | `conversations` | downstream business, reads `bonds`: direct and group chats, messages, the news channel, receipts.                                                                                    |
 | `auth`          | data on the actor: which faces the local user has, which bond or group a remote face belongs to, which personas a caller may wear.                                                   |
@@ -193,7 +193,7 @@ Invariants of Q- that the domains keep [Q]: every bond and every membership belo
 - **PER-16** An opaque value grants no permission; whoever reads it validates it again. D57 (exception: the collect secret, V5)
 - **PER-17** The contract version is the version of the persona's surface. A compatibility window is declared; an incompatible change is expand-contract inside the persona tree, readers first. This holds between peers released independently. D75, D101
 - **PER-18** Answers are built field by field; attribution, frame stack, fact schema versions and fact resources never leave the node. Correlation may travel, and is a claim when it comes in. D45, D56, D72, D101, D107
-- **PER-19** The relay has its own personas, by the trade of `mailbox`: whoever deposits on D (anyone), whoever collects with R. The suffix `-persona` names the paper's layer (a persona domain in front of a business domain), not the four personas of the phone: those hold only for `persona` on the phone, since the relay has no bonds and no local user and the envelope is sealed. They live in the domain `mailbox-persona` (arrows: `library`, `mailbox`), which neither the phone nor other importers of the domains need. Its interface turns R into the `Caller` (id = D = hash(R)); its auth is trivial and gets a folder only when it has rules. The HTTP interface and the `memory` oracle both reach `mailbox` through them, never directly. D77, D88, D103, D75 [Q]
+- **PER-19** The relay has its own personas, by the trade of `mailbox`: whoever deposits on D (anyone), whoever collects with R. These are not the four personas of the phone, which hold only for `persona`: the relay has no bonds and no local user, and the envelope is sealed. They live in the domain `desk` (the counter of a post office, where one deposits and collects: the persona layer of `mailbox`; arrows: `library`, `mailbox`), which neither the phone nor other importers of the domains need. Its interface turns R into the `Caller` (id = D = hash(R)); its auth is trivial and gets a folder only when it has rules. The HTTP interface and the `memory` oracle both reach `mailbox` through them, never directly. D77, D88, D103, D75 [Q]
 - **PER-20** A future carrier (a nearby device passing an envelope) wears a persona of the local mailbox's tree; whether known carriers differ is decided then, as a value or a persona. The carrier travels as a frame of the letter it carries, independent of the letter's own persona. D77, D99 [Q, not in the prototype]
 
 ## 6. Adapters

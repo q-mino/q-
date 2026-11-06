@@ -11,7 +11,7 @@ The terms of the architecture paper, which is in Italian, are in [Architecture t
 | `domini`                                          | `domains`                                            |
 | `libreria/`                                       | `library/`                                           |
 | `sigilli` · `posta` · `casella`                   | `seals` · `post` · `mailbox`                         |
-| persone della casella                             | `mailbox-persona`                                    |
+| sportello                                         | `desk` (the persona layer of `mailbox`)              |
 | `legami` · `conversazioni`                        | `bonds` · `conversations`                            |
 | `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                   |
 | `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node` |
