@@ -1,0 +1,14 @@
+{
+  "name": "@q-mino/adapters-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@q-mino/domains": "workspace:*",
+    "@q-mino/adapters-common": "workspace:*"
+  }
+}

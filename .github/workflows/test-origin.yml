@@ -1,0 +1,39 @@
+# Every merge on main builds the PWA and publishes it on the test origin,
+# q-mino-prova.github.io/q-/ (branch gh-pages of q-mino-prova/q-).
+# The deploy key in TEST_ORIGIN_DEPLOY_KEY can write only to that repository.
+name: Test origin
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-test
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+        env:
+          Q_CHANNEL: test
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.TEST_ORIGIN_DEPLOY_KEY }}
+          external_repository: q-mino-prova/q-
+          publish_branch: gh-pages
+          publish_dir: packages/phone/dist
+          full_commit_message: 'Publish ${{ github.sha }} from q-mino/q-'

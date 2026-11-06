@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": ".tsbuild/config"
+  },
+  "include": ["vite.config.ts"],
+  "references": [{ "path": "./src" }, { "path": "./src/sw" }]
+}
