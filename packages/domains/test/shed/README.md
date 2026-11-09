@@ -22,3 +22,11 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
 8. Reactions: "tool retired → cancel reservations".
 9. Processes: the repair after a damaged return.
 10. (optional) Fact translation; bulk operation with a cursor.
+
+## Experiments
+
+Shed tries different approaches to the same question, one per domain, to compare them before one becomes a rule in [`architecture.md`](../../../../docs/architecture.md).
+
+| question            | `tools`                                                                                                                                                                                                     | `loans`  | `shed` |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| a value with states | by subtraction: a schema with every field of every state, each state `.extend`s it with its discriminant and marks the fields it lacks `absent` (`?: undefined`); a discriminated union of compatible types | (step 3) |        |

@@ -14,7 +14,7 @@ Status: skeleton. Nothing works yet.
 | `adapters-node`   | Node adapters: the relay's HTTP server and storage                                     |
 | `phone`           | Configurator: the PWA                                                                  |
 | `relay`           | Configurator: the relay server                                                         |
-| `memory`          | Configurator: phone and relay in one process, the oracle of the tests                  |
+| `memory`          | Configurator: phone and relay in one process, the stack of the oracles                 |
 
 Architecture: [`docs/architecture.md`](docs/architecture.md). Development plan: [`docs/plan.md`](docs/plan.md). Vocabulary: [`docs/glossary.md`](docs/glossary.md).
 

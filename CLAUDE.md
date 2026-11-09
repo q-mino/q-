@@ -19,6 +19,7 @@ Q- (read _Cumino_) is a network of messages between real people, with no center.
 - `domains` compiles without DOM and without Node: no `fetch`, `crypto`, `window`, `indexedDB`, `console`. Effects are declared as data and executed by adapters.
 - Imports follow the arrows in [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs). A folder is imported only through its `index.ts`. Changing an arrow is an architecture decision, not a fix.
 - `domains/src/library/` imports no domain and contains no word of Q-.
+- Functional style: pure functions and immutable data; algebraic data types (discriminated unions) wherever a value has cases, states or outcomes.
 
 ## Solid
 
