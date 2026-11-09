@@ -146,6 +146,9 @@ The paper foresees one library that implements, once for every domain, what is t
 - **DOM-21** Every signature (use case, port, command, query, fact) has one declarative zod schema: type, validation, JSON Schema export. No parallel hand-written type or validator. An undeclared field never passes; the default is rejecting the request as "invalid request". D46, D75, D106
 - **DOM-22** A fact's name is its meaning and never changes; its version is its shape, in the envelope. The log is never rewritten. The producing domain translates old facts at read time, one version to the next; a translation is pure, adds nothing, touches only the payload and never changes once published. A reader that meets an unknown version stops and retries, never guesses. Stored state is migrated by an adapter only through such a translation; values the business must decide are commands with their facts. D101
   - The export carries the state of every domain with its schema version; every release reads the letters and exports of the previous ones. [Q]
+- **DOM-24** Commands, facts, predicates and use cases are identified by their path: the domain, its folders, the conventional module and the member's name. The path names the schema when a message is serialized for an adapter, and is the path of the event envelope (DOM-10). A path is an identity: like a fact's name (DOM-22), it never changes once released. [Q]
+  - The domains' generator writes a path registry per domain, each path with its schema. It is compared in CI with the registry of `main`: a path that disappears, or whose schema changes without a new version, fails. A rename is an explicit decision (the old path kept, with a translation), never a side effect of a refactor. [Q]
+  - Every generated file (`$*`) is committed; CI regenerates them and fails on any difference. [Q]
 
 ### The domains of Q-
 
