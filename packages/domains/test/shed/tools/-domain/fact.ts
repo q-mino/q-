@@ -1,17 +1,10 @@
-import z from 'zod';
-import { tool_id, /* tool_name, category, notes, tool_status  */} from './value';
+import { z } from 'zod'
+import { tool } from './value.ts'
 
-
+/**
+ * Carries what the state needs (DOM-5, V9): the key, and every value the
+ * change of state reads. Its change is in dsl.ts.
+ */
 export const a_tool_has_been_added = z
-  .strictObject({
-    id: tool_id,
-    // credi che bisogna metterci tutto?
-    // avendo un log eventi linkati si puo' derivare il comando e quindi tutto il resto
-    // azzarderei anche di omettere anche il tool id !
-    //
-    // name: tool_name,
-    // category: category,
-    // notes: notes.optional(),
-    // status: tool_status,
-  })
-  .brand<'a_tool_has_been_added'>();
+  .strictObject({ added_tool: tool })
+  .brand<'a_tool_has_been_added'>()

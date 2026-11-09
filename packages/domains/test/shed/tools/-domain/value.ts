@@ -19,6 +19,5 @@ export const tool = z.strictObject({
   category: category,
   notes: notes.optional(),
   status: tool_status,
-  addDate: date_time_string
+  addDate: date_time_string,
 })
-
