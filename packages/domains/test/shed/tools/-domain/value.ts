@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { date_time_string } from '../../wlib'
 
-export const tool_id = z.string().min(1).brand(Symbol('tool id'))
+export const tool_id = z.string().min(1).brand<'tool_id'>()
 
 export const tool_name = z.string().min(1).max(80)
 

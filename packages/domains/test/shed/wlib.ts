@@ -4,7 +4,7 @@ export const date_time_string = z.string()
 .check(
   z.regex(/iso_date_regexp/)
 )
-.brand(Symbol('iso_date'))
+.brand<'date_time_string'>()
 export type date_time_string = z.output<typeof date_time_string>
 
 export interface CommandContext {
@@ -27,7 +27,9 @@ export type Command<
   outcomes extends Outcomes,
 > = CommandCreator<inputSchema, payloadSchema> & {
   [$Command]: {
-    outcomes:outcomes
+    input: inputSchema,
+    payload: payloadSchema,
+    outcomes: outcomes
   }
 }
 

@@ -103,7 +103,10 @@ The paper foresees one library that implements, once for every domain, what is t
 
 ### Commands, facts, outcomes
 
-- **DOM-5** A command is data: an ordered list of branches. A branch has a fact name (a business phrase), a condition (vocabulary predicates with AND/OR/NOT), a mutation (create, modify, delete steps) and outbox follow-ups. At most one branch applies. The mutation may touch several instances, of the same domain only. D16, D47, D49, D94
+- **DOM-5** A command is data: an ordered list of branches. A branch has a condition (vocabulary predicates with AND/OR/NOT), the fact it records (a business phrase) with its payload, and outbox follow-ups. At most one branch applies. D16, D47, D49, D94
+  - The fact describes what happened, and the change of state with it: each fact declares once the mutation it makes, which may touch several instances, of the same domain only. The command speaks only the business language: it names conditions and facts, never primitives or entities.
+  - The mutation is a pure function of the domain, in its own language: (instance before, fact) → instance after, `undefined` meaning absent. The interpreter derives the primitive of D94: absent → value creates, value → value modifies, value → absent deletes. The fact carries the key of each instance it touches; the resources of the envelope come from it (D107). The reference interpreter and every adapter call the same function, inside the atomic operation; none reimplements it (ADP-1).
+  - Interpretation functions (pure functions the library calls, never the business code) live apart from the business language, in the conventional module `dsl` of the domain (`dsl.ts` or `dsl/**`). The state stays primary and is written atomically with the fact (DOM-8, D69.2). Consequences: a payload carries at least what its mutation needs (D56: no thinner than that), and a change of what a fact does to the state is a new version of the fact (DOM-22). [Q] (V9)
 - **DOM-6** Every applied branch records a fact, even with an empty mutation: "nothing to do" is a branch, not a rejection. A rejection records nothing and names the failed predicates. D95, D54, D17
 - **DOM-7** The outcome is typed: the fact (branch, resolved values, outbox entries) or the rejection. The domain returns it raw; the persona projects it. A failure with no business meaning aborts the command and records nothing. D14, D17, D25
 - **DOM-8** A fact is written atomically with the state, in its own domain's store. One atomic write touches one domain, even when all domains share one IndexedDB database. D42, D59 [Q]
@@ -267,6 +270,8 @@ Checks:
 - **V6** The paper's visitor has an anonymous session; `anonymous` has only an id per letter, and registration (D98) is done by `unknown`, whose key is verified but not known.
 - **V7** Q- is the pilot of the paper's library, which grows by Q-'s needs (section 3).
 - **V8** The actor's data (faces, bonds, memberships) live in the business domain `bonds`, not in auth: auth reads them through its ports (GR-4), and registration creates a bond, not a user (PER-11). In the paper auth's sources are external (token, database, identity provider, D43) and registration is a command of auth (D98).
+
+- **V9** The mutation is declared by the fact, not by the branch of the command (DOM-5). In the paper a branch carries its own mutation (D16, D47) and the fact records it with the resolved values (D54). The semantics is unchanged (state primary, fact atomic with it); what moves is where an author writes the change: in the vocabulary of facts, so that the command uses only business words. Being a pure function rather than the closed language of D94, the mutation may compute from the instance before (D94.2 excludes arithmetic): observably the same inside an atomic operation, but an adapter cannot translate it into a native statement (such as SQL `UPDATE`); it reads the instance and writes the result.
 
 ## 10. Gaps of the paper met by Q-
 
