@@ -81,6 +81,7 @@ The paper foresees one library that implements, once for every domain, what is t
 - **LIB-12** The queue policy of the user domain (pending activities, retries) belongs to the library. D76
 - **LIB-13** License: the repository's (AGPL-3.0 with a commercial license); Apache-2.0 when it becomes a package of its own. [Q]
 - **LIB-14** Scope: the library is logic, never state. It routes; it gives the format of commands, branches, predicates and facts, and the operators of the conditions; it derives types; it interfaces the domains with interfaces and adapters, and helps implement the adapters. It does not define entities, keys, generic CRUD or mutation primitives (create, modify, delete), nor how a fact's values reach the state: that is the domain's adapters'. [Q] (V9)
+  - It guarantees the typing end to end, and gives typed tools to implement what surrounds a domain: command adapters (an adapter can return only a branch its command declares, with its typed fact, or the rejection with the failed predicates), reads (results typed by their schemas), reactions and every other consumer of facts, inside the domains too (querying an event, matching it against an imported schema through its `$path`, exhaustive matching over facts as over an ADT). [Q]
 
 **Stage 1** (nucleus, D82; triggers from the paper's cost note):
 
