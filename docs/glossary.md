@@ -49,7 +49,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | comando · ramo · condizione composta               | command · branch · composed condition               |                                      |
 | predicato · vocabolario                            | predicate · vocabulary                              | specification (DDD)                  |
 | query · selezione · campi · ordine                 | query · selection · fields · order                  |                                      |
-| predicato di selezione · candidato                 | selection predicate · candidate                     |                                      |
+| predicato di selezione · soggetto · candidato      | selection predicate · subject · candidate           |                                      |
 | lettura dichiarata · forma istanza · forma insieme | declared read · instance form · set form            |                                      |
 | percorso · modulo convenzionale · interpretazione  | path · conventional module · interpretation (`dsl`) |                                      |
 | busta (degli eventi)                               | event envelope                                      |                                      |
