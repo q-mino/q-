@@ -15,16 +15,21 @@ export const add_a_tool_input = z.strictObject({
   notes: notes.optional(),
 })
 
-export const add_a_tool = wlib.command(
-  add_a_tool_input,
-  (commandContext) => (input) => ({
+/** No tool of the catalogue has the requested id. */
+export const the_tool_is_new = wlib.not(a_tool_has_this_id)
+
+export const add_a_tool = wlib.command({
+  input: add_a_tool_input,
+  outcomes: {
+    the_tool_is_new_so_it_is_added: [the_tool_is_new, a_tool_has_been_added],
+  },
+  creator: (commandContext) => (input) => ({
     the_tool_is_new_so_it_is_added: [
       { tool_id: input.id },
       { added_tool: { ...input, status: 'inService', addDate: commandContext.now } },
     ],
   }),
-  { the_tool_is_new_so_it_is_added: [wlib.not(a_tool_has_this_id), a_tool_has_been_added] },
-)
+})
 
 export const retire_a_tool_input = z.strictObject({
   id: tool_id,
@@ -32,9 +37,28 @@ export const retire_a_tool_input = z.strictObject({
   notes: notes.optional(),
 })
 
-export const retire_a_tool = wlib.command(
-  retire_a_tool_input,
-  (commandContext) => (input) => ({
+/** The requested tool is in the catalogue and in service. */
+export const the_tool_can_be_retired = wlib.and({
+  a_tool_has_the_requested_id: a_tool_has_this_id,
+  the_requested_tool_is_in_service: the_tool_is_in_service,
+})
+
+/** The requested tool is in the catalogue and already retired. */
+export const the_tool_is_already_retired = wlib.and({
+  a_tool_has_the_requested_id: a_tool_has_this_id,
+  the_requested_tool_is_retired: the_tool_is_retired,
+})
+
+export const retire_a_tool = wlib.command({
+  input: retire_a_tool_input,
+  outcomes: {
+    the_tool_is_in_service_so_it_is_retired: [the_tool_can_be_retired, a_tool_has_been_retired],
+    the_tool_is_already_retired_so_nothing_changes: [
+      the_tool_is_already_retired,
+      the_tool_was_already_retired,
+    ],
+  },
+  creator: (commandContext) => (input) => ({
     the_tool_is_in_service_so_it_is_retired: [
       {
         a_tool_has_the_requested_id: { tool_id: input.id },
@@ -56,20 +80,4 @@ export const retire_a_tool = wlib.command(
       { tool_id: input.id },
     ],
   }),
-  {
-    the_tool_is_in_service_so_it_is_retired: [
-      wlib.and({
-        a_tool_has_the_requested_id: a_tool_has_this_id,
-        the_requested_tool_is_in_service: the_tool_is_in_service,
-      }),
-      a_tool_has_been_retired,
-    ],
-    the_tool_is_already_retired_so_nothing_changes: [
-      wlib.and({
-        a_tool_has_the_requested_id: a_tool_has_this_id,
-        the_requested_tool_is_retired: the_tool_is_retired,
-      }),
-      the_tool_was_already_retired,
-    ],
-  },
-)
+})

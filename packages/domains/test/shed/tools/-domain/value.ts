@@ -48,3 +48,11 @@ export const retired_tool = every_tool_field.extend({
 
 /** A tool of the catalogue: its states share every field, so any field reads without narrowing. */
 export const tool = z.discriminatedUnion('status', [tool_in_service, retired_tool])
+
+/** What a visitor sees of a tool in the catalogue. */
+export const catalogue_entry = tool_in_service.pick({
+  id: true,
+  name: true,
+  category: true,
+  notes: true,
+})

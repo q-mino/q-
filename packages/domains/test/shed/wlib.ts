@@ -38,6 +38,15 @@ export type Fact = z.ZodObject & { _zod: { output: { $path: Path<'fact'> } } }
 /** A predicate of the vocabulary: the schema of its parameters, with its `$path` as a fact (`$predicate.ts`). */
 export type Predicate = z.ZodObject & { _zod: { output: { $path: Path<'predicate'> } } }
 
+/**
+ * A selection predicate: a predicate over the candidate of a query, which it
+ * does not name; its parameters are the values of the filter (`$selection.ts`).
+ */
+export type SelectionPredicate = z.ZodObject & { _zod: { output: { $path: Path<'selection'> } } }
+
+/** A leaf of a condition: a predicate in a command, a selection predicate in a query. */
+export type Leaf = Predicate | SelectionPredicate
+
 /** What an author writes for a schema with a `$path`: everything else. */
 export type Unpathed<schema extends z.ZodType> = Omit<z.input<schema>, '$path'>
 
@@ -45,15 +54,28 @@ declare const $Composed: unique symbol
 /**
  * A condition composed with AND, OR, NOT (DOM-5). It is a zod schema: the
  * schema of its parameters, which the creator binds as an object of its type.
+ * It carries the type of its leaves, so that a command takes only predicates
+ * and a query only selection predicates.
  */
 export type Composed<
   parameters extends z.ZodObject = z.ZodObject,
   operands = unknown,
+  leaves extends Leaf = Leaf,
 > = parameters & {
-  [$Composed]: { operator: 'and' | 'or' | 'not'; operands: operands }
+  [$Composed]: { operator: 'and' | 'or' | 'not'; operands: operands; leaves: leaves }
 }
 
-export type Condition = Predicate | Composed
+/** A condition whose leaves are of a kind (every kind, by default). */
+export type Condition<leaves extends Leaf = Leaf> = leaves | Composed<z.ZodObject, unknown, leaves>
+
+/** The leaves of a condition, own and of other domains (GR-3). */
+export type Leaves<condition extends Condition> = condition extends {
+  [$Composed]: { leaves: infer leaves extends Leaf }
+}
+  ? leaves
+  : condition extends Leaf
+    ? condition
+    : never
 
 /**
  * The schema of a condition's parameters: a predicate's own fields (its
@@ -82,20 +104,20 @@ export type ComponentsParameters<components extends Components> = z.ZodObject<
  */
 export declare function and<const components extends Components>(
   components: components,
-): Composed<ComponentsParameters<components>, components>
+): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
 /** At least one component holds. */
 export declare function or<const components extends Components>(
   components: components,
-): Composed<ComponentsParameters<components>, components>
+): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
 /** The condition does not hold: its parameters are the condition's. */
 export declare function not<const condition extends Condition>(
   condition: condition,
-): Composed<Parameters<condition>, condition>
+): Composed<Parameters<condition>, condition, Leaves<condition>>
 
 /** A branch, declared: the condition and the fact it records. DOM-5 */
-export type Outcome = readonly [condition: Condition, fact: Fact]
+export type Outcome = readonly [condition: Condition<Predicate>, fact: Fact]
 /**
  * The closed set of a command's branches, each under a business name: at
  * most one applies, tried in the order they are written. DOM-5, DOM-3
@@ -137,28 +159,24 @@ export type Command<inputSchema extends z.ZodType, outcomes extends Outcomes> = 
 export type CommandInput<inputSchema extends z.ZodType> =
   inputSchema | ((commandContext: CommandContext) => inputSchema)
 
-export declare function command<inputSchema extends z.ZodType, const outcomes extends Outcomes>(
-  inputSchema: CommandInput<inputSchema>,
-  creator: CommandCreator<inputSchema, outcomes>,
-  outcomes: outcomes,
-): Command<inputSchema, outcomes>
+/**
+ * A command, declared in one argument whose parts have names: the input, the
+ * branches, and last the creator that binds them. DOM-25
+ */
+export declare function command<
+  inputSchema extends z.ZodType,
+  const outcomes extends Outcomes,
+>(command: {
+  readonly input: CommandInput<inputSchema>
+  readonly outcomes: outcomes
+  readonly creator: CommandCreator<inputSchema, outcomes>
+}): Command<inputSchema, outcomes>
 
 // ---------------------------------------------------------------------------
 // Adapters (LIB-14): typed tools to implement the command port. The library
 // derives what an adapter must cover and types the outcome. The algebra of
 // fragments below is one way, recommended (ADP-8), not required: the adapter
 // implements the port as it wants. No concept of state here.
-
-/** The predicates at the leaves of a condition, own and of other domains (GR-3). */
-export type Leaves<condition extends Condition> = condition extends {
-  [$Composed]: { operands: infer operands }
-}
-  ? operands extends Condition
-    ? Leaves<operands>
-    : operands extends Components
-      ? Leaves<operands[keyof operands]>
-      : never
-  : condition
 
 /** Every predicate a command's branches use. */
 export type PredicatesOf<outcomes extends Outcomes> = Leaves<outcomes[keyof outcomes][0]>
@@ -167,14 +185,14 @@ export type PredicatesOf<outcomes extends Outcomes> = Leaves<outcomes[keyof outc
 export type FactsOf<outcomes extends Outcomes> = outcomes[keyof outcomes][1]
 
 /** The `$path` of a predicate or of a fact. */
-export type PathOf<schema extends Predicate | Fact> = z.output<schema>['$path']
+export type PathOf<schema extends Leaf | Fact> = z.output<schema>['$path']
 
 /**
  * The adapter's fragment for each predicate, under its path, from its parsed
  * parameters: a SQL condition, a MongoDB filter, a function over a
  * transaction. Exhaustive: a forgotten predicate does not compile.
  */
-export type PredicateFragments<predicates extends Predicate, fragment> = {
+export type PredicateFragments<predicates extends Leaf, fragment> = {
   readonly [predicate in predicates as PathOf<predicate>]: (
     parameters: z.output<Parameters<predicate>>,
   ) => fragment
@@ -185,7 +203,7 @@ export type PredicateFragments<predicates extends Predicate, fragment> = {
  * operators. The same algebra serves commands and reads, so a predicate has
  * one translation in an adapter.
  */
-export interface Algebra<predicates extends Predicate, fragment> {
+export interface Algebra<predicates extends Leaf, fragment> {
   readonly predicate: PredicateFragments<predicates, fragment>
   readonly and: (components: readonly fragment[]) => fragment
   readonly or: (components: readonly fragment[]) => fragment
@@ -293,5 +311,160 @@ export declare function command_ports<const commands extends Commands>(
 /** The predicates declared in a generated module (`$predicate.ts`), for an adapter's fragments. */
 export type PredicatesIn<module> = Extract<module[keyof module], Predicate>
 
+/** The selection predicates declared in a generated module (`$selection.ts`), for an adapter's fragments. */
+export type SelectionsIn<module> = Extract<module[keyof module], SelectionPredicate>
+
 /** The facts declared in a generated module (`$fact.ts`), for an adapter's writes. */
 export type FactsIn<module> = Extract<module[keyof module], Fact>
+
+// ---------------------------------------------------------------------------
+// Queries (DOM-18): a query is data. Its selection is a condition in the
+// language of the commands (D47.1) over selection predicates: predicates over
+// the candidate, the entry the selection looks at, which they do not name;
+// their parameters are the values of the filter. Its fields are the schema of
+// an entry; its order, fields of the entry. Where the candidates are is the
+// adapter's (LIB-14): the library knows no entities.
+
+export type Direction = 'ascending' | 'descending'
+
+/**
+ * The order of the entries, by their fields, in the order they are written.
+ * Total (LIB-9): the business closes it with a field unique per entry, which
+ * its commands keep unique (`not(a_tool_has_this_id)`); the library cannot
+ * check it, the author declares it.
+ */
+export type Order<fields extends z.ZodObject> = {
+  readonly [field in keyof z.output<fields>]?: Direction
+}
+
+/** What a query declares besides its input and creator. */
+export interface QueryShape<
+  fields extends z.ZodObject,
+  selection extends Condition<SelectionPredicate>,
+> {
+  readonly fields: fields
+  readonly selection: selection
+  readonly order: Order<fields>
+}
+
+/** A query's input: a schema, or a function of the part of the context it needs. DOM-21 */
+export type QueryInput<inputSchema extends z.ZodType> =
+  inputSchema | ((context: Now) => inputSchema)
+
+/** From the context and the input, the parameters bound to the selection. */
+export type QueryCreator<
+  inputSchema extends z.ZodType,
+  selection extends Condition<SelectionPredicate>,
+> = (context: Now) => (input: z.output<inputSchema>) => ConditionInput<selection>
+
+export declare const $Query: unique symbol
+export type Query<
+  inputSchema extends z.ZodType,
+  fields extends z.ZodObject,
+  selection extends Condition<SelectionPredicate>,
+> = QueryCreator<inputSchema, selection> & {
+  [$Query]: { input: inputSchema } & QueryShape<fields, selection>
+}
+
+/**
+ * A query, declared in one argument whose parts have names: the input, the
+ * fields, the selection, the order, and last the creator that binds the
+ * selection. DOM-25
+ */
+export declare function query<
+  inputSchema extends z.ZodType,
+  fields extends z.ZodObject,
+  const selection extends Condition<SelectionPredicate>,
+>(
+  query: { readonly input: QueryInput<inputSchema> } & QueryShape<fields, selection> & {
+      readonly creator: QueryCreator<inputSchema, selection>
+    },
+): Query<inputSchema, fields, selection>
+
+// Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
+// per selection predicate, one source per query, one read. No concept of
+// state here.
+
+/** The queries of a domain, by name. */
+export type Queries = Readonly<
+  Record<
+    string,
+    {
+      readonly [$Query]: { input: z.ZodType } & QueryShape<
+        z.ZodObject,
+        Condition<SelectionPredicate>
+      >
+    }
+  >
+>
+
+type QueryParts<query> = query extends { [$Query]: infer parts } ? parts : never
+
+/** The schema of a query's entries. */
+export type FieldsOf<query> =
+  QueryParts<query> extends { fields: infer fields extends z.ZodObject } ? fields : never
+
+/** Every selection predicate the selections of a set of queries use. */
+export type PredicatesOfQueries<queries extends Queries> = Leaves<
+  QueryParts<queries[keyof queries]>['selection']
+>
+
+/**
+ * Where the adapter finds a query's candidates (a table, a store) and how it
+ * reads each field of an entry.
+ */
+export interface QuerySource<fields extends z.ZodObject, fragment> {
+  readonly from: fragment
+  readonly fields: { readonly [field in keyof z.output<fields>]-?: fragment }
+}
+
+/** A query ready to read: the selection composed, the fields and the order as fragments. */
+export interface PlannedQuery<fragment> {
+  readonly from: fragment
+  readonly fields: Readonly<Record<string, fragment>>
+  readonly selection: fragment
+  readonly order: readonly (readonly [fragment, Direction])[]
+}
+
+/** The position of a read: opaque, compared only by order (DOM-17). */
+export const position = z.string().min(1).brand<'position'>()
+export type position = z.output<typeof position>
+
+/**
+ * The adapter's read, in one consistent snapshot: the entries as stored (the
+ * library parses them with the query's fields) and the position read at (D66).
+ */
+export type Read<fragment> = (
+  plan: PlannedQuery<fragment>,
+) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
+
+/** What a read adapter gives for a set of queries, of one or more domains. */
+export interface ReadAdapter<queries extends Queries, fragment> {
+  readonly algebra: Algebra<PredicatesOfQueries<queries>, fragment>
+  readonly sources: {
+    readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, fragment>
+  }
+  readonly read: Read<fragment>
+}
+
+/** The outcome of a read: the entries, typed by the query's fields, and the position read at. */
+export interface Snapshot<entry> {
+  readonly entries: readonly entry[]
+  readonly position: position
+}
+
+/** A query port: the input in, the snapshot out. */
+export type QueryPort<query> =
+  QueryParts<query> extends {
+    input: infer input extends z.ZodType
+    fields: infer fields extends z.ZodObject
+  }
+    ? (context: Now, input: z.input<input>) => Promise<Snapshot<z.output<fields>>>
+    : never
+
+/** The query ports of a set of queries over a read adapter; curried as `command_ports`. */
+export declare function query_ports<const queries extends Queries>(
+  queries: queries,
+): <fragment>(adapter: ReadAdapter<queries, fragment>) => {
+  readonly [name in keyof queries]: QueryPort<queries[name]>
+}

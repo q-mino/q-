@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import {
+  catalogue_entry,
   category,
   notes,
   retire_reason,
@@ -33,3 +34,5 @@ export type $tool_in_service = z.output<typeof tool_in_service>
 export type $retired_tool = z.output<typeof retired_tool>
 
 export type $tool = z.output<typeof tool>
+
+export type $catalogue_entry = z.output<typeof catalogue_entry>

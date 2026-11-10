@@ -6,7 +6,9 @@
 import * as wlib from '../wlib.ts'
 import type * as tools_fact from '../tools/-domain/$fact.ts'
 import type * as tools_predicate from '../tools/-domain/$predicate.ts'
+import type * as tools_selection from '../tools/-domain/$selection.ts'
 import { add_a_tool, retire_a_tool } from '../tools/-domain/command.ts'
+import { the_catalogue } from '../tools/-domain/query.ts'
 import type * as loans_fact from '../loans/-domain/$fact.ts'
 import type * as loans_predicate from '../loans/-domain/$predicate.ts'
 import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/-domain/command.ts'
@@ -20,22 +22,36 @@ export interface sql {
 const is_sql = (value: unknown): value is sql =>
   typeof value === 'object' && value !== null && 'text' in value && 'values' in value
 
-/** A fragment from a template: a nested fragment is spliced, any other value is bound. */
-export const sql = (strings: TemplateStringsArray, ...values: readonly unknown[]): sql =>
-  values.reduce<sql>(
-    (fragment, value, i) => {
-      const next = strings[i + 1] ?? ''
-      return is_sql(value)
-        ? { text: fragment.text + value.text + next, values: [...fragment.values, ...value.values] }
-        : { text: fragment.text + '?' + next, values: [...fragment.values, value] }
-    },
-    { text: strings[0] ?? '', values: [] },
-  )
-
 const join = (fragments: readonly sql[], separator: string): sql => ({
   text: fragments.map((fragment) => fragment.text).join(separator),
   values: fragments.flatMap((fragment) => fragment.values),
 })
+
+const bind = (value: unknown): sql => ({ text: '?', values: [value] })
+
+/**
+ * A fragment from a template: a nested fragment is spliced, an array becomes
+ * a list of values, any other value is bound.
+ */
+export const sql = (strings: TemplateStringsArray, ...values: readonly unknown[]): sql =>
+  values.reduce<sql>(
+    (fragment, value, i) => {
+      const next = strings[i + 1] ?? ''
+      const inner = is_sql(value)
+        ? value
+        : Array.isArray(value)
+          ? join(value.map(bind), ', ')
+          : bind(value)
+      return {
+        text: fragment.text + inner.text + next,
+        values: [...fragment.values, ...inner.values],
+      }
+    },
+    { text: strings[0] ?? '', values: [] },
+  )
+
+/** A name the adapter writes itself, never a value. */
+const identifier = (name: string): sql => ({ text: `"${name}"`, values: [] })
 
 /** The database, a port. Its transactions are serializable. */
 export interface Database {
@@ -45,6 +61,9 @@ export interface Transaction {
   /** One statement, one boolean per column: `select c1, c2, …`. */
   readonly booleans: (columns: readonly sql[]) => Promise<readonly boolean[]>
   readonly run: (statement: sql) => Promise<void>
+  readonly rows: (statement: sql) => Promise<readonly unknown[]>
+  /** Where the state stands: the sequence of the last fact written. */
+  readonly position: () => Promise<wlib.position>
 }
 
 // The fragments of each domain's predicates: one translation, reused by every
@@ -76,6 +95,18 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
   'loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
+}
+
+// The fragments of each domain's selection predicates: a condition over the
+// candidate of a query, which every source of the adapter calls `candidate`.
+
+const tools_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof tools_selection>,
+  sql
+> = {
+  'tools/selection/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
+  'tools/selection/the_tool_is_in_one_of_these_categories': (p) =>
+    sql`candidate.category in (${p.categories})`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -147,12 +178,54 @@ const execute =
       }
     })
 
+/**
+ * One statement in one transaction, a snapshot: the fields of the candidates
+ * that the selection keeps, in the order, and the position it was read at.
+ */
+const read =
+  (database: Database): wlib.Read<sql> =>
+  (plan) =>
+    database.transaction(async (tx) => ({
+      entries: await tx.rows(
+        sql`select ${join(
+          Object.entries(plan.fields).map(([name, field]) => sql`${field} as ${identifier(name)}`),
+          ', ',
+        )} from ${plan.from} where ${plan.selection} order by ${join(
+          plan.order.map(
+            ([field, direction]) =>
+              sql`${field} ${direction === 'ascending' ? sql`asc` : sql`desc`}`,
+          ),
+          ', ',
+        )}`,
+      ),
+      position: await tx.position(),
+    }))
+
+// The sources of the queries: where the candidates are, how each field reads.
+
 export const sql_adapter = (database: Database) => ({
-  tools: wlib.command_ports({ add_a_tool, retire_a_tool })({
-    algebra: algebra(tools_fragments),
-    write: tools_writes,
-    execute: execute(database),
-  }),
+  tools: {
+    ...wlib.command_ports({ add_a_tool, retire_a_tool })({
+      algebra: algebra(tools_fragments),
+      write: tools_writes,
+      execute: execute(database),
+    }),
+    ...wlib.query_ports({ the_catalogue })({
+      algebra: algebra(tools_selection_fragments),
+      sources: {
+        the_catalogue: {
+          from: sql`tools as candidate`,
+          fields: {
+            id: sql`candidate.id`,
+            name: sql`candidate.name`,
+            category: sql`candidate.category`,
+            notes: sql`candidate.notes`,
+          },
+        },
+      },
+      read: read(database),
+    }),
+  },
   loans: wlib.command_ports({ borrow_a_tool, reserve_a_tool, return_a_tool })({
     algebra: algebra({ ...tools_fragments, ...loans_fragments }),
     write: loans_writes,

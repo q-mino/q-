@@ -36,9 +36,16 @@ export const the_tool_can_be_lent = wlib.and({
   the_requested_tool_is_not_on_loan: wlib.not(the_tool_is_on_loan),
 })
 
-export const borrow_a_tool = wlib.command(
-  borrow_a_tool_input,
-  (commandContext) => (input) => ({
+export const borrow_a_tool = wlib.command({
+  input: borrow_a_tool_input,
+  outcomes: {
+    the_tool_is_available_so_it_is_lent: [the_tool_can_be_lent, a_tool_has_been_lent],
+    the_member_already_has_the_tool_so_nothing_changes: [
+      the_tool_is_on_loan_to_this_member,
+      the_member_already_has_the_tool,
+    ],
+  },
+  creator: (commandContext) => (input) => ({
     the_tool_is_available_so_it_is_lent: [
       {
         a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
@@ -62,14 +69,7 @@ export const borrow_a_tool = wlib.command(
       { tool_id: input.tool_id, member_id: input.member_id },
     ],
   }),
-  {
-    the_tool_is_available_so_it_is_lent: [the_tool_can_be_lent, a_tool_has_been_lent],
-    the_member_already_has_the_tool_so_nothing_changes: [
-      the_tool_is_on_loan_to_this_member,
-      the_member_already_has_the_tool,
-    ],
-  },
-)
+})
 
 /** The day is validated against the clock: the schema needs `now`, nothing else. */
 export const reserve_a_tool_input = (context: wlib.Now) =>
@@ -92,9 +92,16 @@ export const the_tool_can_be_booked = wlib.and({
   the_requested_tool_is_not_booked_that_day: wlib.not(the_tool_is_booked_for_the_day),
 })
 
-export const reserve_a_tool = wlib.command(
-  reserve_a_tool_input,
-  (commandContext) => (input) => ({
+export const reserve_a_tool = wlib.command({
+  input: reserve_a_tool_input,
+  outcomes: {
+    the_tool_is_free_that_day_so_it_is_booked: [the_tool_can_be_booked, a_tool_has_been_booked],
+    the_member_already_booked_the_tool_so_nothing_changes: [
+      the_tool_is_booked_for_the_day_by_this_member,
+      the_member_already_booked_the_tool,
+    ],
+  },
+  creator: (commandContext) => (input) => ({
     the_tool_is_free_that_day_so_it_is_booked: [
       {
         a_reservation_has_not_the_requested_id: { reservation_id: input.reservation_id },
@@ -118,23 +125,35 @@ export const reserve_a_tool = wlib.command(
       { tool_id: input.tool_id, day: input.day, member_id: input.member_id },
     ],
   }),
-  {
-    the_tool_is_free_that_day_so_it_is_booked: [the_tool_can_be_booked, a_tool_has_been_booked],
-    the_member_already_booked_the_tool_so_nothing_changes: [
-      the_tool_is_booked_for_the_day_by_this_member,
-      the_member_already_booked_the_tool,
-    ],
-  },
-)
+})
 
 export const return_a_tool_input = z.strictObject({
   loan_id: loan_id,
   condition: return_condition,
 })
 
-export const return_a_tool = wlib.command(
-  return_a_tool_input,
-  (commandContext) => (input) => ({
+/** The requested loan exists and is ongoing. */
+export const the_loan_can_be_returned = wlib.and({
+  a_loan_has_the_requested_id: a_loan_has_this_id,
+  the_requested_loan_is_ongoing: the_loan_is_ongoing,
+})
+
+/** The requested loan exists and is already returned. */
+export const the_loan_is_already_returned = wlib.and({
+  a_loan_has_the_requested_id: a_loan_has_this_id,
+  the_requested_loan_is_returned: the_loan_is_returned,
+})
+
+export const return_a_tool = wlib.command({
+  input: return_a_tool_input,
+  outcomes: {
+    the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, a_tool_has_been_returned],
+    the_loan_was_already_returned_so_nothing_changes: [
+      the_loan_is_already_returned,
+      the_loan_was_already_returned,
+    ],
+  },
+  creator: (commandContext) => (input) => ({
     the_loan_is_ongoing_so_it_is_closed: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
@@ -159,20 +178,4 @@ export const return_a_tool = wlib.command(
       { loan_id: input.loan_id },
     ],
   }),
-  {
-    the_loan_is_ongoing_so_it_is_closed: [
-      wlib.and({
-        a_loan_has_the_requested_id: a_loan_has_this_id,
-        the_requested_loan_is_ongoing: the_loan_is_ongoing,
-      }),
-      a_tool_has_been_returned,
-    ],
-    the_loan_was_already_returned_so_nothing_changes: [
-      wlib.and({
-        a_loan_has_the_requested_id: a_loan_has_this_id,
-        the_requested_loan_is_returned: the_loan_is_returned,
-      }),
-      the_loan_was_already_returned,
-    ],
-  },
-)
+})

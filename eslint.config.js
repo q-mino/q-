@@ -35,5 +35,26 @@ export default defineConfig(
     files: ['packages/phone/src/**/*.tsx', 'packages/adapters-web/src/**/*.tsx'],
     ...solid,
   },
+  {
+    // DOM-25: a branch's condition and a query's selection are named, never composed inline.
+    files: ['packages/domains/src/**/-domain/**/*.ts', 'packages/domains/test/**/-domain/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.property.name='command'] > ObjectExpression > Property[key.name='outcomes'] > ObjectExpression > Property > ArrayExpression > CallExpression:first-child",
+          message:
+            "A branch's condition is a predicate or a named condition (DOM-25): name it in a constant.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name='query'] > ObjectExpression > Property[key.name='selection'] > CallExpression",
+          message:
+            "A query's selection is a selection predicate or a named condition (DOM-25): name it in a constant.",
+        },
+      ],
+    },
+  },
   prettier,
 )

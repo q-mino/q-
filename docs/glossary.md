@@ -48,6 +48,8 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | porta (di comando · di lettura)                    | port (command port · read port)                     | secondary port, repository (DDD)     |
 | comando · ramo · condizione composta               | command · branch · composed condition               |                                      |
 | predicato · vocabolario                            | predicate · vocabulary                              | specification (DDD)                  |
+| query · selezione · campi · ordine                 | query · selection · fields · order                  |                                      |
+| predicato di selezione · candidato                 | selection predicate · candidate                     |                                      |
 | lettura dichiarata · forma istanza · forma insieme | declared read · instance form · set form            |                                      |
 | percorso · modulo convenzionale · interpretazione  | path · conventional module · interpretation (`dsl`) |                                      |
 | busta (degli eventi)                               | event envelope                                      |                                      |
