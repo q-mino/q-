@@ -17,13 +17,13 @@ export const add_a_tool_input = z.strictObject({
 
 export const add_a_tool = wlib.command(
   add_a_tool_input,
-  (commandContext) => (input) => [
-    [
-      { id: input.id },
+  (commandContext) => (input) => ({
+    the_tool_is_new_so_it_is_added: [
+      { tool_id: input.id },
       { added_tool: { ...input, status: 'inService', addDate: commandContext.now } },
     ],
-  ],
-  [[wlib.not(a_tool_has_this_id), a_tool_has_been_added]],
+  }),
+  { the_tool_is_new_so_it_is_added: [wlib.not(a_tool_has_this_id), a_tool_has_been_added] },
 )
 
 export const retire_a_tool_input = z.strictObject({
@@ -34,9 +34,12 @@ export const retire_a_tool_input = z.strictObject({
 
 export const retire_a_tool = wlib.command(
   retire_a_tool_input,
-  (commandContext) => (input) => [
-    [
-      { id: input.id },
+  (commandContext) => (input) => ({
+    the_tool_is_in_service_so_it_is_retired: [
+      {
+        a_tool_has_the_requested_id: { tool_id: input.id },
+        the_requested_tool_is_in_service: { tool_id: input.id },
+      },
       {
         retired_tool: {
           id: input.id,
@@ -45,10 +48,28 @@ export const retire_a_tool = wlib.command(
         },
       },
     ],
-    [{ id: input.id }, { tool_id: input.id }],
-  ],
-  [
-    [wlib.and(a_tool_has_this_id, the_tool_is_in_service), a_tool_has_been_retired],
-    [wlib.and(a_tool_has_this_id, the_tool_is_retired), the_tool_was_already_retired],
-  ],
+    the_tool_is_already_retired_so_nothing_changes: [
+      {
+        a_tool_has_the_requested_id: { tool_id: input.id },
+        the_requested_tool_is_retired: { tool_id: input.id },
+      },
+      { tool_id: input.id },
+    ],
+  }),
+  {
+    the_tool_is_in_service_so_it_is_retired: [
+      wlib.and({
+        a_tool_has_the_requested_id: a_tool_has_this_id,
+        the_requested_tool_is_in_service: the_tool_is_in_service,
+      }),
+      a_tool_has_been_retired,
+    ],
+    the_tool_is_already_retired_so_nothing_changes: [
+      wlib.and({
+        a_tool_has_the_requested_id: a_tool_has_this_id,
+        the_requested_tool_is_retired: the_tool_is_retired,
+      }),
+      the_tool_was_already_retired,
+    ],
+  },
 )

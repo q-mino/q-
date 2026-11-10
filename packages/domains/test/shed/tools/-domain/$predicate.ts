@@ -3,6 +3,9 @@
 import { z } from 'zod'
 import * as predicate from './predicate.ts'
 
+/**
+ * @see {@link predicate.a_tool_has_this_id}
+ */
 export const a_tool_has_this_id = z.strictObject({
   $path: z.literal('tools/predicate/a_tool_has_this_id'),
   ...predicate.a_tool_has_this_id.shape,
@@ -13,6 +16,9 @@ export const $a_tool_has_this_id = (v: /*omit the $path!*/ Omit<$a_tool_has_this
 export const $$a_tool_has_this_id = (v: unknown) => a_tool_has_this_id.safeParse(v)
 export const $$$a_tool_has_this_id = (v: unknown) => a_tool_has_this_id.parse(v)
 
+/**
+ * @see {@link predicate.the_tool_is_in_service}
+ */
 export const the_tool_is_in_service = z.strictObject({
   $path: z.literal('tools/predicate/the_tool_is_in_service'),
   ...predicate.the_tool_is_in_service.shape,
@@ -24,6 +30,9 @@ export const $the_tool_is_in_service = (
 export const $$the_tool_is_in_service = (v: unknown) => the_tool_is_in_service.safeParse(v)
 export const $$$the_tool_is_in_service = (v: unknown) => the_tool_is_in_service.parse(v)
 
+/**
+ * @see {@link predicate.the_tool_is_retired}
+ */
 export const the_tool_is_retired = z.strictObject({
   $path: z.literal('tools/predicate/the_tool_is_retired'),
   ...predicate.the_tool_is_retired.shape,
