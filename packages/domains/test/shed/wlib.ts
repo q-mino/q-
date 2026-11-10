@@ -3,9 +3,17 @@ import * as z from 'zod'
 export const date_time_string = z.iso.datetime().brand<'date_time_string'>()
 export type date_time_string = z.output<typeof date_time_string>
 
-export interface CommandContext {
+/**
+ * The context the library gives, made of small interfaces: a function that
+ * needs part of it declares only that part (`Now`), so that it serves any
+ * context that has it (a command, the interface, the client).
+ */
+export interface Now {
+  readonly now: date_time_string
+}
+
+export interface CommandContext extends Now {
   uid: string
-  now: date_time_string
   /**
    * vari metadati necessari alla lib (ids,  keys, path, now, ... )
    * estendibile dall'applicazione
@@ -121,8 +129,16 @@ export type Command<inputSchema extends z.ZodType, outcomes extends Outcomes> = 
   }
 }
 
+/**
+ * A command's input: a schema, or a function of the part of the context its
+ * validation needs (a static rule over `now`). The library builds it before
+ * parsing. DOM-21
+ */
+export type CommandInput<inputSchema extends z.ZodType> =
+  inputSchema | ((commandContext: CommandContext) => inputSchema)
+
 export declare function command<inputSchema extends z.ZodType, const outcomes extends Outcomes>(
-  inputSchema: inputSchema,
+  inputSchema: CommandInput<inputSchema>,
   creator: CommandCreator<inputSchema, outcomes>,
   outcomes: outcomes,
 ): Command<inputSchema, outcomes>

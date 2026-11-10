@@ -35,3 +35,34 @@ export const loan = z.strictObject({
 export const ongoing_loan = loan.extend({
   progress: loan_ongoing,
 })
+
+export const reservation_id = z.string().min(1).brand<'reservation_id'>()
+
+/** A calendar day, `YYYY-MM-DD`. */
+export const day = z.iso.date().brand<'day'>()
+
+/** Grows with the steps: `cancelled` (step 8). */
+export const reservation_stage = z.enum(['booked'])
+
+/** The tool is held for the member on the day. */
+export const reservation_booked = z.strictObject({
+  stage: z.literal(reservation_stage.enum.booked),
+})
+
+/** Where a reservation is in its course. */
+export const reservation_progress = z.discriminatedUnion('stage', [reservation_booked])
+
+/** A reservation: a tool held for a member on a day. By nesting, as a loan. */
+export const reservation = z.strictObject({
+  id: reservation_id,
+  tool_id: tools.value.tool_id,
+  member_id: member_id,
+  day: day,
+  booking_date: date_time_string,
+  progress: reservation_progress,
+})
+
+/** A reservation in force. */
+export const booked_reservation = reservation.extend({
+  progress: reservation_booked,
+})

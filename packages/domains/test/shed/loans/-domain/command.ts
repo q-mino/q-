@@ -1,14 +1,22 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as tools from '../../tools/index.ts'
-import { a_tool_has_been_lent, the_member_already_has_the_tool } from './$fact.ts'
+import {
+  a_tool_has_been_booked,
+  a_tool_has_been_lent,
+  the_member_already_booked_the_tool,
+  the_member_already_has_the_tool,
+} from './$fact.ts'
 import {
   a_loan_has_this_id,
+  a_reservation_has_this_id,
+  the_tool_is_booked_for_the_day,
+  the_tool_is_booked_for_the_day_by_this_member,
   the_tool_is_on_loan,
   the_tool_is_on_loan_to_this_member,
 } from './$predicate.ts'
-import { the_due_date_of_a_loan_started_on } from './dsl.ts'
-import { loan_id, member_id } from './value.ts'
+import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on } from './dsl.ts'
+import { day, loan_id, member_id, reservation_id } from './value.ts'
 
 export const borrow_a_tool_input = z.strictObject({
   loan_id: loan_id,
@@ -55,6 +63,62 @@ export const borrow_a_tool = wlib.command(
     the_member_already_has_the_tool_so_nothing_changes: [
       the_tool_is_on_loan_to_this_member,
       the_member_already_has_the_tool,
+    ],
+  },
+)
+
+/** The day is validated against the clock: the schema needs `now`, nothing else. */
+export const reserve_a_tool_input = (context: wlib.Now) =>
+  z
+    .strictObject({
+      reservation_id: reservation_id,
+      tool_id: tools.value.tool_id,
+      member_id: member_id,
+      day: day,
+    })
+    .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
+      path: ['day'],
+    })
+
+/** The tool can be booked for the day. */
+export const the_tool_can_be_booked = wlib.and({
+  a_reservation_has_not_the_requested_id: wlib.not(a_reservation_has_this_id),
+  a_tool_has_the_requested_id: tools.predicate.a_tool_has_this_id,
+  the_requested_tool_is_in_service: tools.predicate.the_tool_is_in_service,
+  the_requested_tool_is_not_booked_that_day: wlib.not(the_tool_is_booked_for_the_day),
+})
+
+export const reserve_a_tool = wlib.command(
+  reserve_a_tool_input,
+  (commandContext) => (input) => ({
+    the_tool_is_free_that_day_so_it_is_booked: [
+      {
+        a_reservation_has_not_the_requested_id: { reservation_id: input.reservation_id },
+        a_tool_has_the_requested_id: { tool_id: input.tool_id },
+        the_requested_tool_is_in_service: { tool_id: input.tool_id },
+        the_requested_tool_is_not_booked_that_day: { tool_id: input.tool_id, day: input.day },
+      },
+      {
+        new_reservation: {
+          id: input.reservation_id,
+          tool_id: input.tool_id,
+          member_id: input.member_id,
+          day: input.day,
+          booking_date: commandContext.now,
+          progress: { stage: 'booked' },
+        },
+      },
+    ],
+    the_member_already_booked_the_tool_so_nothing_changes: [
+      { tool_id: input.tool_id, day: input.day, member_id: input.member_id },
+      { tool_id: input.tool_id, day: input.day, member_id: input.member_id },
+    ],
+  }),
+  {
+    the_tool_is_free_that_day_so_it_is_booked: [the_tool_can_be_booked, a_tool_has_been_booked],
+    the_member_already_booked_the_tool_so_nothing_changes: [
+      the_tool_is_booked_for_the_day_by_this_member,
+      the_member_already_booked_the_tool,
     ],
   },
 )

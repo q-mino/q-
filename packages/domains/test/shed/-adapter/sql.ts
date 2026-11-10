@@ -9,7 +9,7 @@ import type * as tools_predicate from '../tools/-domain/$predicate.ts'
 import { add_a_tool, retire_a_tool } from '../tools/-domain/command.ts'
 import type * as loans_fact from '../loans/-domain/$fact.ts'
 import type * as loans_predicate from '../loans/-domain/$predicate.ts'
-import { borrow_a_tool } from '../loans/-domain/command.ts'
+import { borrow_a_tool, reserve_a_tool } from '../loans/-domain/command.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {
@@ -66,6 +66,12 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and stage = 'ongoing')`,
   'loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and member_id = ${p.member_id} and stage = 'ongoing')`,
+  'loans/predicate/a_reservation_has_this_id': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id})`,
+  'loans/predicate/the_tool_is_booked_for_the_day': (p) =>
+    sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
+  'loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
+    sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -94,6 +100,10 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`insert into loans (id, tool_id, member_id, start_date, due_date, stage) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_date}, ${l.progress.stage})`,
   ],
   'loans/fact/the_member_already_has_the_tool': () => [],
+  'loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
+    sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
+  ],
+  'loans/fact/the_member_already_booked_the_tool': () => [],
 }
 
 /**
@@ -135,7 +145,7 @@ export const sql_adapter = (database: Database) => ({
     write: tools_writes,
     execute: execute(database),
   }),
-  loans: wlib.command_ports({ borrow_a_tool })({
+  loans: wlib.command_ports({ borrow_a_tool, reserve_a_tool })({
     algebra: algebra({ ...tools_fragments, ...loans_fragments }),
     write: loans_writes,
     execute: execute(database),
