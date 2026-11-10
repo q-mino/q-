@@ -2,11 +2,13 @@
 
 A neighbourhood tool shed, invented to drive the library with no word of Q- (LIB-2). Members borrow, reserve and return tools; a keeper manages the catalogue and the repairs; a visitor browses the catalogue.
 
-| domain  | language                                              | role                               |
-| ------- | ----------------------------------------------------- | ---------------------------------- |
-| `tools` | tool; added, retired, under repair                    | upstream business                  |
-| `loans` | loan, reservation, return (on time, late, damaged)    | downstream business, reads `tools` |
-| `shed`  | the personas `visitor`, `member`, `keeper`, with auth | persona                            |
+| domain  | language                                              | role                                                 |
+| ------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| `tools` | tool; added, retired, under repair                    | upstream business                                    |
+| `loans` | loan, reservation, return (on time, late, damaged)    | downstream business, its own view of the tools (V11) |
+| `shed`  | the personas `visitor`, `member`, `keeper`, with auth | persona                                              |
+
+No domain imports another (GR-3, V11): `loans` has its own view of the tools, and the adapters link it to `tools`. [`-adapter/sql.ts`](-adapter/sql.ts) is a sketch of a SQL state adapter; [`-adapter/memory/`](-adapter/memory/) a sketch of the in-memory oracle (TST-2), one module per domain, whose imports show who reads whom.
 
 [`wlib.ts`](wlib.ts) is the wished library: the types and signatures the domains want from the library, without bodies. The code typechecks; nothing here runs until the library exists. It becomes the requirement of the library steps of [the plan](../../../../docs/plan.md).
 

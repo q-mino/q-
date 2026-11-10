@@ -1,6 +1,14 @@
 import { z } from 'zod'
 import { date_time_string } from '../../wlib.ts'
-import * as tools from '../../tools/index.ts'
+
+/**
+ * A tool, as `loans` sees it: the shed's tool it lends. `loans` keeps its own
+ * view of the tools (GR-3, V11); the state adapter links it to `tools`.
+ */
+export const tool_id = z.string().min(1).brand<'tool_id'>()
+
+/** The name of a tool: in `loans` a value of its view, which the adapter reads from the catalogue. */
+export const tool_name = z.string().min(1)
 
 export const loan_id = z.string().min(1).brand<'loan_id'>()
 
@@ -33,7 +41,7 @@ export const loan_progress = z.discriminatedUnion('stage', [loan_ongoing, loan_r
  */
 export const loan = z.strictObject({
   id: loan_id,
-  tool_id: tools.value.tool_id,
+  tool_id: tool_id,
   member_id: member_id,
   start_date: date_time_string,
   due_date: date_time_string,
@@ -69,7 +77,7 @@ export const reservation_progress = z.discriminatedUnion('stage', [reservation_b
 /** A reservation: a tool held for a member on a day. By nesting, as a loan. */
 export const reservation = z.strictObject({
   id: reservation_id,
-  tool_id: tools.value.tool_id,
+  tool_id: tool_id,
   member_id: member_id,
   day: day,
   booking_date: date_time_string,
@@ -80,3 +88,13 @@ export const reservation = z.strictObject({
 export const booked_reservation = reservation.extend({
   progress: reservation_booked,
 })
+
+/** What a member sees of an ongoing loan: the tool, with its name, and the dates. */
+export const ongoing_loan_entry = ongoing_loan
+  .pick({ id: true, tool_id: true, start_date: true, due_date: true })
+  .extend({ tool_name: tool_name })
+
+/** What a member sees of a reservation: the tool, with its name, and the day. */
+export const reservation_entry = booked_reservation
+  .pick({ id: true, tool_id: true, day: true })
+  .extend({ tool_name: tool_name })

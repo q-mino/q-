@@ -3,6 +3,10 @@
 import { z } from 'zod'
 import {
   booked_reservation,
+  ongoing_loan_entry,
+  reservation_entry,
+  tool_id,
+  tool_name,
   day,
   loan,
   loan_id,
@@ -54,3 +58,11 @@ export type $reservation_progress = z.output<typeof reservation_progress>
 export type $reservation = z.output<typeof reservation>
 
 export type $booked_reservation = z.output<typeof booked_reservation>
+
+export type $tool_id = z.output<typeof tool_id>
+
+export type $tool_name = z.output<typeof tool_name>
+
+export type $ongoing_loan_entry = z.output<typeof ongoing_loan_entry>
+
+export type $reservation_entry = z.output<typeof reservation_entry>

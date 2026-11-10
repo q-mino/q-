@@ -141,3 +141,34 @@ export const $$the_tool_is_booked_for_the_day_by_this_member = (v: unknown) =>
   the_tool_is_booked_for_the_day_by_this_member.safeParse(v)
 export const $$$the_tool_is_booked_for_the_day_by_this_member = (v: unknown) =>
   the_tool_is_booked_for_the_day_by_this_member.parse(v)
+
+/**
+ * The shed has a tool with this id.
+ *
+ * @see {@link predicate.a_tool_has_this_id}
+ */
+export const a_tool_has_this_id = z.strictObject({
+  $path: z.literal('loans/predicate/a_tool_has_this_id'),
+  ...predicate.a_tool_has_this_id.shape,
+})
+export type $a_tool_has_this_id = z.output<typeof a_tool_has_this_id>
+export const $a_tool_has_this_id = (v: /*omit the $path!*/ Omit<$a_tool_has_this_id, '$path'>) =>
+  a_tool_has_this_id.parse({ ...v, $path: 'loans/predicate/a_tool_has_this_id' })
+export const $$a_tool_has_this_id = (v: unknown) => a_tool_has_this_id.safeParse(v)
+export const $$$a_tool_has_this_id = (v: unknown) => a_tool_has_this_id.parse(v)
+
+/**
+ * The tool can go out: it is in service in the shed.
+ *
+ * @see {@link predicate.the_tool_is_in_service}
+ */
+export const the_tool_is_in_service = z.strictObject({
+  $path: z.literal('loans/predicate/the_tool_is_in_service'),
+  ...predicate.the_tool_is_in_service.shape,
+})
+export type $the_tool_is_in_service = z.output<typeof the_tool_is_in_service>
+export const $the_tool_is_in_service = (
+  v: /*omit the $path!*/ Omit<$the_tool_is_in_service, '$path'>,
+) => the_tool_is_in_service.parse({ ...v, $path: 'loans/predicate/the_tool_is_in_service' })
+export const $$the_tool_is_in_service = (v: unknown) => the_tool_is_in_service.safeParse(v)
+export const $$$the_tool_is_in_service = (v: unknown) => the_tool_is_in_service.parse(v)

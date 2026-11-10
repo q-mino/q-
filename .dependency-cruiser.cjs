@@ -31,6 +31,16 @@ module.exports = {
   forbidden: [
     ...arrowRules,
     {
+      name: 'shed-domains-isolated',
+      comment: 'Shed: a test domain imports no other domain (GR-3, V11); the adapters link them.',
+      severity: 'error',
+      from: { path: '^packages/domains/test/shed/([^/-][^/]*)/' },
+      to: {
+        path: '^packages/domains/test/shed/[^/]+/',
+        pathNot: '^packages/domains/test/shed/$1/',
+      },
+    },
+    {
       name: 'no-circular',
       severity: 'error',
       from: {},

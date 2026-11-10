@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import * as tools from '../../tools/index.ts'
 import {
   booked_reservation,
   day,
@@ -7,6 +6,7 @@ import {
   member_id,
   ongoing_loan,
   returned_loan,
+  tool_id,
 } from './value.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
@@ -16,7 +16,7 @@ export const a_tool_has_been_lent = z.strictObject({
 
 /** Nothing to do (DOM-6): the member's ongoing loan of the tool stands. */
 export const the_member_already_has_the_tool = z.strictObject({
-  tool_id: tools.value.tool_id,
+  tool_id: tool_id,
   member_id: member_id,
 })
 
@@ -27,7 +27,7 @@ export const a_tool_has_been_booked = z.strictObject({
 
 /** Nothing to do (DOM-6): the member's reservation of the tool for the day stands. */
 export const the_member_already_booked_the_tool = z.strictObject({
-  tool_id: tools.value.tool_id,
+  tool_id: tool_id,
   day: day,
   member_id: member_id,
 })

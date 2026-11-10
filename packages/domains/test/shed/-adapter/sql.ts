@@ -11,7 +11,12 @@ import { add_a_tool, retire_a_tool } from '../tools/-domain/command.ts'
 import { the_catalogue } from '../tools/-domain/query.ts'
 import type * as loans_fact from '../loans/-domain/$fact.ts'
 import type * as loans_predicate from '../loans/-domain/$predicate.ts'
+import type * as loans_selection from '../loans/-domain/$selection.ts'
 import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/-domain/command.ts'
+import {
+  the_ongoing_loans_of_a_member,
+  the_reservations_of_a_member,
+} from '../loans/-domain/query.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {
@@ -79,6 +84,11 @@ const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_pr
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
+  // The view of `loans` over the tools of `tools` (GR-3, V11): the link.
+  'loans/predicate/a_tool_has_this_id': (p) =>
+    sql`exists (select 1 from tools where id = ${p.tool_id})`,
+  'loans/predicate/the_tool_is_in_service': (p) =>
+    sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'inService')`,
   'loans/predicate/a_loan_has_this_id': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id})`,
   'loans/predicate/the_loan_is_ongoing': (p) =>
@@ -107,6 +117,18 @@ const tools_selection_fragments: wlib.PredicateFragments<
   'tools/selection/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
   'tools/selection/the_tool_is_in_one_of_these_categories': (p) =>
     sql`candidate.category in (${p.categories})`,
+}
+
+const loans_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof loans_selection>,
+  sql
+> = {
+  'loans/selection/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
+  'loans/selection/the_loan_is_of_this_member': (p) => sql`candidate.member_id = ${p.member_id}`,
+  'loans/selection/the_reservation_is_booked': () => sql`candidate.stage = 'booked'`,
+  'loans/selection/the_reservation_is_of_this_member': (p) =>
+    sql`candidate.member_id = ${p.member_id}`,
+  'loans/selection/the_reservation_is_from_this_day_on': (p) => sql`candidate.day >= ${p.day}`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -226,9 +248,37 @@ export const sql_adapter = (database: Database) => ({
       read: read(database),
     }),
   },
-  loans: wlib.command_ports({ borrow_a_tool, reserve_a_tool, return_a_tool })({
-    algebra: algebra({ ...tools_fragments, ...loans_fragments }),
-    write: loans_writes,
-    execute: execute(database),
-  }),
+  loans: {
+    ...wlib.command_ports({ borrow_a_tool, reserve_a_tool, return_a_tool })({
+      algebra: algebra(loans_fragments),
+      write: loans_writes,
+      execute: execute(database),
+    }),
+    ...wlib.query_ports({ the_ongoing_loans_of_a_member, the_reservations_of_a_member })({
+      algebra: algebra(loans_selection_fragments),
+      sources: {
+        the_ongoing_loans_of_a_member: {
+          from: sql`loans as candidate`,
+          fields: {
+            id: sql`candidate.id`,
+            tool_id: sql`candidate.tool_id`,
+            // A value of the view of `loans`, read from `tools`: the link.
+            tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
+            start_date: sql`candidate.start_date`,
+            due_date: sql`candidate.due_date`,
+          },
+        },
+        the_reservations_of_a_member: {
+          from: sql`reservations as candidate`,
+          fields: {
+            id: sql`candidate.id`,
+            tool_id: sql`candidate.tool_id`,
+            tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
+            day: sql`candidate.day`,
+          },
+        },
+      },
+      read: read(database),
+    }),
+  },
 })

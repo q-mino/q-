@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import * as tools from '../../tools/index.ts'
 import {
   a_tool_has_been_booked,
   a_tool_has_been_returned,
@@ -11,6 +10,8 @@ import {
 } from './$fact.ts'
 import {
   a_loan_has_this_id,
+  a_tool_has_this_id,
+  the_tool_is_in_service,
   a_reservation_has_this_id,
   the_loan_is_ongoing,
   the_loan_is_returned,
@@ -20,19 +21,19 @@ import {
   the_tool_is_on_loan_to_this_member,
 } from './$predicate.ts'
 import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on } from './dsl.ts'
-import { day, loan_id, member_id, reservation_id, return_condition } from './value.ts'
+import { day, loan_id, member_id, reservation_id, return_condition, tool_id } from './value.ts'
 
 export const borrow_a_tool_input = z.strictObject({
   loan_id: loan_id,
-  tool_id: tools.value.tool_id,
+  tool_id: tool_id,
   member_id: member_id,
 })
 
 /** The tool can be lent: named components, bound one by one by the creator. */
 export const the_tool_can_be_lent = wlib.and({
   a_loan_has_not_the_requested_id: wlib.not(a_loan_has_this_id),
-  a_tool_has_the_requested_id: tools.predicate.a_tool_has_this_id,
-  the_requested_tool_is_in_service: tools.predicate.the_tool_is_in_service,
+  a_tool_has_the_requested_id: a_tool_has_this_id,
+  the_requested_tool_is_in_service: the_tool_is_in_service,
   the_requested_tool_is_not_on_loan: wlib.not(the_tool_is_on_loan),
 })
 
@@ -76,7 +77,7 @@ export const reserve_a_tool_input = (context: wlib.Now) =>
   z
     .strictObject({
       reservation_id: reservation_id,
-      tool_id: tools.value.tool_id,
+      tool_id: tool_id,
       member_id: member_id,
       day: day,
     })
@@ -87,8 +88,8 @@ export const reserve_a_tool_input = (context: wlib.Now) =>
 /** The tool can be booked for the day. */
 export const the_tool_can_be_booked = wlib.and({
   a_reservation_has_not_the_requested_id: wlib.not(a_reservation_has_this_id),
-  a_tool_has_the_requested_id: tools.predicate.a_tool_has_this_id,
-  the_requested_tool_is_in_service: tools.predicate.the_tool_is_in_service,
+  a_tool_has_the_requested_id: a_tool_has_this_id,
+  the_requested_tool_is_in_service: the_tool_is_in_service,
   the_requested_tool_is_not_booked_that_day: wlib.not(the_tool_is_booked_for_the_day),
 })
 
