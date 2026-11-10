@@ -80,3 +80,40 @@ export const $$the_member_already_booked_the_tool = (v: unknown) =>
   the_member_already_booked_the_tool.safeParse(v)
 export const $$$the_member_already_booked_the_tool = (v: unknown) =>
   the_member_already_booked_the_tool.parse(v)
+
+/**
+ * A partial value: the loan's id and its new stage, whole. Tool, member and
+ * dates stay as they were. Late or damaged are values of the return, not
+ * other facts, until the business language needs them apart.
+ *
+ * @see {@link fact.a_tool_has_been_returned}
+ */
+export const a_tool_has_been_returned = z.strictObject({
+  $path: z.literal('loans/fact/a_tool_has_been_returned'),
+  ...fact.a_tool_has_been_returned.shape,
+})
+export type $a_tool_has_been_returned = z.output<typeof a_tool_has_been_returned>
+export const $a_tool_has_been_returned = (
+  v: /*omit the $path!*/ Omit<$a_tool_has_been_returned, '$path'>,
+) => a_tool_has_been_returned.parse({ ...v, $path: 'loans/fact/a_tool_has_been_returned' })
+export const $$a_tool_has_been_returned = (v: unknown) => a_tool_has_been_returned.safeParse(v)
+export const $$$a_tool_has_been_returned = (v: unknown) => a_tool_has_been_returned.parse(v)
+
+/**
+ * Nothing to do (DOM-6): the first return stands.
+ *
+ * @see {@link fact.the_loan_was_already_returned}
+ */
+export const the_loan_was_already_returned = z.strictObject({
+  $path: z.literal('loans/fact/the_loan_was_already_returned'),
+  ...fact.the_loan_was_already_returned.shape,
+})
+export type $the_loan_was_already_returned = z.output<typeof the_loan_was_already_returned>
+export const $the_loan_was_already_returned = (
+  v: /*omit the $path!*/ Omit<$the_loan_was_already_returned, '$path'>,
+) =>
+  the_loan_was_already_returned.parse({ ...v, $path: 'loans/fact/the_loan_was_already_returned' })
+export const $$the_loan_was_already_returned = (v: unknown) =>
+  the_loan_was_already_returned.safeParse(v)
+export const $$$the_loan_was_already_returned = (v: unknown) =>
+  the_loan_was_already_returned.parse(v)

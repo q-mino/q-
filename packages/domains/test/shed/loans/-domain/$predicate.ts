@@ -17,6 +17,33 @@ export const $$a_loan_has_this_id = (v: unknown) => a_loan_has_this_id.safeParse
 export const $$$a_loan_has_this_id = (v: unknown) => a_loan_has_this_id.parse(v)
 
 /**
+ * @see {@link predicate.the_loan_is_ongoing}
+ */
+export const the_loan_is_ongoing = z.strictObject({
+  $path: z.literal('loans/predicate/the_loan_is_ongoing'),
+  ...predicate.the_loan_is_ongoing.shape,
+})
+export type $the_loan_is_ongoing = z.output<typeof the_loan_is_ongoing>
+export const $the_loan_is_ongoing = (v: /*omit the $path!*/ Omit<$the_loan_is_ongoing, '$path'>) =>
+  the_loan_is_ongoing.parse({ ...v, $path: 'loans/predicate/the_loan_is_ongoing' })
+export const $$the_loan_is_ongoing = (v: unknown) => the_loan_is_ongoing.safeParse(v)
+export const $$$the_loan_is_ongoing = (v: unknown) => the_loan_is_ongoing.parse(v)
+
+/**
+ * @see {@link predicate.the_loan_is_returned}
+ */
+export const the_loan_is_returned = z.strictObject({
+  $path: z.literal('loans/predicate/the_loan_is_returned'),
+  ...predicate.the_loan_is_returned.shape,
+})
+export type $the_loan_is_returned = z.output<typeof the_loan_is_returned>
+export const $the_loan_is_returned = (
+  v: /*omit the $path!*/ Omit<$the_loan_is_returned, '$path'>,
+) => the_loan_is_returned.parse({ ...v, $path: 'loans/predicate/the_loan_is_returned' })
+export const $$the_loan_is_returned = (v: unknown) => the_loan_is_returned.safeParse(v)
+export const $$$the_loan_is_returned = (v: unknown) => the_loan_is_returned.parse(v)
+
+/**
  * The tool is with a member, whoever it is.
  *
  * @see {@link predicate.the_tool_is_on_loan}

@@ -9,6 +9,14 @@ export const a_loan_has_this_id = z.strictObject({
   loan_id: loan_id,
 })
 
+export const the_loan_is_ongoing = z.strictObject({
+  loan_id: loan_id,
+})
+
+export const the_loan_is_returned = z.strictObject({
+  loan_id: loan_id,
+})
+
 /** The tool is with a member, whoever it is. */
 export const the_tool_is_on_loan = z.strictObject({
   tool_id: tools.value.tool_id,

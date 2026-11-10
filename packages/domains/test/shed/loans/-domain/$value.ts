@@ -8,6 +8,7 @@ import {
   loan_id,
   loan_ongoing,
   loan_progress,
+  loan_returned,
   loan_stage,
   member_id,
   ongoing_loan,
@@ -16,6 +17,8 @@ import {
   reservation_id,
   reservation_progress,
   reservation_stage,
+  return_condition,
+  returned_loan,
 } from './value'
 
 export type $loan_id = z.output<typeof loan_id>
@@ -24,13 +27,19 @@ export type $member_id = z.output<typeof member_id>
 
 export type $loan_stage = z.output<typeof loan_stage>
 
+export type $return_condition = z.output<typeof return_condition>
+
 export type $loan_ongoing = z.output<typeof loan_ongoing>
+
+export type $loan_returned = z.output<typeof loan_returned>
 
 export type $loan_progress = z.output<typeof loan_progress>
 
 export type $loan = z.output<typeof loan>
 
 export type $ongoing_loan = z.output<typeof ongoing_loan>
+
+export type $returned_loan = z.output<typeof returned_loan>
 
 export type $reservation_id = z.output<typeof reservation_id>
 

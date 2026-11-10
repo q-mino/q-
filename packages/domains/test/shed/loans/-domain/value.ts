@@ -7,16 +7,25 @@ export const loan_id = z.string().min(1).brand<'loan_id'>()
 /** A member of the shed. Who may act as one is the persona's (step 6), not this domain's. */
 export const member_id = z.string().min(1).brand<'member_id'>()
 
-/** Grows with the specifications: `returned` (specification 3). */
-export const loan_stage = z.enum(['ongoing'])
+export const loan_stage = z.enum(['ongoing', 'returned'])
+
+/** How the tool came back. */
+export const return_condition = z.enum(['good', 'damaged'])
 
 /** The tool is with the member. */
 export const loan_ongoing = z.strictObject({
   stage: z.literal(loan_stage.enum.ongoing),
 })
 
+/** The tool is back: when, and how. Late or on time is derived (dsl). */
+export const loan_returned = z.strictObject({
+  stage: z.literal(loan_stage.enum.returned),
+  return_date: date_time_string,
+  condition: return_condition,
+})
+
 /** Where a loan is in its course: each stage has only its own fields. */
-export const loan_progress = z.discriminatedUnion('stage', [loan_ongoing])
+export const loan_progress = z.discriminatedUnion('stage', [loan_ongoing, loan_returned])
 
 /**
  * A loan. The fields every stage shares stay flat; the stage is nested in
@@ -34,6 +43,11 @@ export const loan = z.strictObject({
 /** A loan in its course: the tool is with the member. */
 export const ongoing_loan = loan.extend({
   progress: loan_ongoing,
+})
+
+/** A closed loan: the tool is back. */
+export const returned_loan = loan.extend({
+  progress: loan_returned,
 })
 
 export const reservation_id = z.string().min(1).brand<'reservation_id'>()

@@ -2,6 +2,7 @@
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
 import { date_time_string } from '../../wlib.ts'
+import type { $returned_loan } from './$value.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30
@@ -23,3 +24,7 @@ export const the_day_is_within_the_booking_window = (day: string, now: date_time
         new Date(Date.parse(now) + booking_window_in_days * a_day_in_milliseconds).toISOString(),
       ),
     )
+
+/** A loan returned after its due date. */
+export const the_loan_was_returned_late = (the_loan: $returned_loan): boolean =>
+  the_loan.progress.return_date > the_loan.due_date
