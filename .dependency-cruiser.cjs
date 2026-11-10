@@ -7,7 +7,7 @@ const arrows = {
   mailbox: ['library'],
   desk: ['library', 'mailbox'],
   bonds: ['library'],
-  conversations: ['library', 'bonds'],
+  conversations: ['library'],
   auth: ['library'],
   persona: ['library', 'auth', 'bonds', 'conversations'],
   user: ['library', 'persona'],
