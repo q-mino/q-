@@ -104,16 +104,43 @@ export type ComponentsParameters<components extends Components> = z.ZodObject<
 >
 
 /**
+ * The kind of a leaf: a predicate, or a selection predicate of its subject
+ * (DOM-18); any other component is a kind of its own.
+ */
+type KindOf<leaves extends Component> = leaves extends unknown
+  ? PathOf<leaves> extends SelectionPath
+    ? SubjectOf<leaves>
+    : PathOf<leaves> extends Path<'predicate'>
+      ? 'predicate'
+      : PathOf<leaves>
+  : never
+
+/**
+ * Components whose leaves are of one kind are themselves; others ask for a
+ * field no condition has, whose name says why and whose type lists the kinds.
+ * A mixed condition is valid nowhere, so it fails where it is composed. DOM-5, DOM-18
+ */
+export type OneKind<components extends Components> =
+  IsUnion<KindOf<Leaves<components[keyof components]>>> extends true
+    ? {
+        readonly 'the leaves of a condition are all predicates, or all selection predicates of one subject (DOM-5, DOM-18)': KindOf<
+          Leaves<components[keyof components]>
+        >
+      }
+    : unknown
+
+/**
  * All the components hold. Every predicate gets a value, with no
- * short-circuit; a rejection names every failed component, once. D47.1, D49, D17
+ * short-circuit; a rejection names every failed component, once. Its leaves
+ * are of one kind (`OneKind`). D47.1, D49, D17
  */
 export declare function AND<const components extends Components>(
-  components: components,
+  components: components & OneKind<components>,
 ): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
-/** At least one component holds. */
+/** At least one component holds. Its leaves are of one kind (`OneKind`). */
 export declare function OR<const components extends Components>(
-  components: components,
+  components: components & OneKind<components>,
 ): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
 /** The condition does not hold: its parameters are the condition's. */
