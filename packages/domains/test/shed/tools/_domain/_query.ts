@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { the_tool_is_in_one_of_these_categories, the_tool_is_in_service } from './selection.ts'
+import * as selection from './selection/index.ts'
 import { catalogue_entry, category } from './value.ts'
 
 export const the_catalogue_input = z.strictObject({
@@ -12,8 +12,8 @@ export const the_catalogue_input = z.strictObject({
 
 /** The tool is in service and in a chosen category. */
 export const the_tool_is_shown_in_the_catalogue = wlib.AND({
-  the_tool_is_in_service: the_tool_is_in_service,
-  the_tool_is_in_a_chosen_category: the_tool_is_in_one_of_these_categories,
+  the_tool_is_in_service: selection.tool.the_tool_is_in_service,
+  the_tool_is_in_a_chosen_category: selection.tool.the_tool_is_in_one_of_these_categories,
 })
 
 /**

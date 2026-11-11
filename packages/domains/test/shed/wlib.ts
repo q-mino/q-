@@ -50,9 +50,15 @@ export type PathOf<schema> = schema extends { _zod: { output: { [z.core.$brand]:
   ? keyof brand & string
   : never
 
-/** The components of a union that are not of a conventional module: a fact where a predicate goes. */
-type Strays<components, module extends string> = components extends unknown
-  ? PathOf<components> extends Path<module>
+/**
+ * The path of a selection predicate (DOM-18): the module `selection` has one
+ * file per subject, so its subject's segment comes before its name.
+ */
+type SelectionPath = `${string}/selection/${string}/${string}`
+
+/** The components of a union whose path is not of a kind: a fact where a predicate goes. */
+type Strays<components, path extends string> = components extends unknown
+  ? PathOf<components> extends path
     ? never
     : components
   : never
@@ -164,12 +170,12 @@ export type CommandInput<inputSchema extends z.ZodType> =
  * and whose type lists the paths of the strays. DOM-24
  */
 export type PredicatesAndFacts<outcomes extends Outcomes> = [
-  Strays<PredicatesOf<outcomes>, 'predicate'> | Strays<FactsOf<outcomes>, 'fact'>,
+  Strays<PredicatesOf<outcomes>, Path<'predicate'>> | Strays<FactsOf<outcomes>, Path<'fact'>>,
 ] extends [never]
   ? unknown
   : {
       readonly 'a condition is made of predicates, a branch records a fact (DOM-24)': PathOf<
-        Strays<PredicatesOf<outcomes>, 'predicate'> | Strays<FactsOf<outcomes>, 'fact'>
+        Strays<PredicatesOf<outcomes>, Path<'predicate'>> | Strays<FactsOf<outcomes>, Path<'fact'>>
       >
     }
 
@@ -212,8 +218,9 @@ export type PredicateFragments<predicates extends Component, fragment> = {
 
 /**
  * How the adapter composes its fragments: one per predicate, and the boolean
- * operators. The same algebra serves commands and reads, so a predicate has
- * one translation in an adapter.
+ * operators. One algebra over the predicates serves every command, one over
+ * the selection predicates of a subject every query (V12): each has one
+ * translation in an adapter (ADP-8).
  */
 export interface Algebra<predicates extends Component, fragment> {
   readonly predicate: PredicateFragments<predicates, fragment>
@@ -353,7 +360,7 @@ type ComponentsIn<module, conventional extends string> = {
 /** The predicates declared in a generated module (`predicate.ts`), for an adapter's fragments. */
 export type PredicatesIn<module> = ComponentsIn<module, 'predicate'>
 
-/** The selection predicates declared in a generated module (`selection.ts`), for an adapter's fragments. */
+/** The selection predicates of a subject, from its generated module (`selection/loan.ts`), for an adapter's fragments. */
 export type SelectionsIn<module> = ComponentsIn<module, 'selection'>
 
 /** The facts declared in a generated module (`fact.ts`), for an adapter's writes. */
@@ -362,9 +369,10 @@ export type FactsIn<module> = ComponentsIn<module, 'fact'>
 // ---------------------------------------------------------------------------
 // Queries (DOM-18): a query is data. Its selection is a condition in the
 // language of the commands (D47.1) over selection predicates: predicates over
-// the candidate, the entry the selection looks at, which they do not name;
-// their parameters are the values of the filter. Its fields are the schema of
-// an entry; its order, fields of the entry. Where the candidates are is the
+// the candidate, an instance of the subject that the selection looks at, which
+// they do not name; their parameters are the values of the filter. Its fields
+// are the schema of an entry, what the query returns of a candidate it keeps;
+// its order, fields of the entry. Where the candidates are is the
 // adapter's (LIB-14): the library knows no entities.
 
 export type Direction = 'ascending' | 'descending'
@@ -379,21 +387,17 @@ export type Order<fields extends z.ZodObject> = {
   readonly [field in keyof z.output<fields>]?: Direction
 }
 
-/** A path without its last segment: the file or folder its member is declared in. */
-type Parent<path extends string> = path extends `${infer head}/${infer tail}`
-  ? tail extends `${string}/${string}`
-    ? `${head}/${Parent<tail>}`
-    : head
-  : never
-
 /**
- * The subject of a selection predicate (DOM-18): the file of the module
- * `selection` that declares it, its path without its name
- * (`loans/selection/loan`; `tools/selection` while the module is one file).
- * The library knows the subject only by this path: what it is and where its
- * candidates are is the adapter's (LIB-14).
+ * The subject of a selection predicate (DOM-18): its path up to the segment
+ * after the module `selection`, the subject's file (`loans/selection/loan`);
+ * a subject that grows into a folder keeps it. No folder is named `selection`
+ * before the module (DOM-24). The library knows the subject only by this
+ * path: what it is and where its candidates are is the adapter's (LIB-14).
  */
-export type SubjectOf<leaf extends Component> = Parent<PathOf<leaf>>
+export type SubjectOf<leaf extends Component> =
+  PathOf<leaf> extends `${infer head}/selection/${infer subject}/${string}`
+    ? `${head}/selection/${subject}`
+    : never
 
 type UnionToIntersection<union> = (
   union extends unknown ? (member: union) => void : never
@@ -409,7 +413,7 @@ type IsUnion<type> = [type] extends [UnionToIntersection<type>] ? false : true
  * the strays or the subjects. DOM-18
  */
 export type OneSubject<selection extends Condition> = [
-  Strays<Leaves<selection>, 'selection'>,
+  Strays<Leaves<selection>, SelectionPath>,
 ] extends [never]
   ? IsUnion<SubjectOf<Leaves<selection>>> extends true
     ? {
@@ -420,7 +424,7 @@ export type OneSubject<selection extends Condition> = [
     : unknown
   : {
       readonly 'a selection is made of selection predicates (DOM-18)': PathOf<
-        Strays<Leaves<selection>, 'selection'>
+        Strays<Leaves<selection>, SelectionPath>
       >
     }
 

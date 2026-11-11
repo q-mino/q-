@@ -9,7 +9,7 @@ import type * as wlib from '../../wlib.ts'
 import * as fact from './fact.ts'
 import * as id from './id.ts'
 import * as predicate from './predicate.ts'
-import * as selection from './selection.ts'
+import * as selection from './selection/index.ts'
 
 export const registry = {
   'tools/id/tool_id': id.tool_id,
@@ -19,7 +19,7 @@ export const registry = {
   'tools/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'tools/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'tools/predicate/the_tool_is_retired': predicate.the_tool_is_retired,
-  'tools/selection/the_tool_is_in_service': selection.the_tool_is_in_service,
-  'tools/selection/the_tool_is_in_one_of_these_categories':
-    selection.the_tool_is_in_one_of_these_categories,
+  'tools/selection/tool/the_tool_is_in_service': selection.tool.the_tool_is_in_service,
+  'tools/selection/tool/the_tool_is_in_one_of_these_categories':
+    selection.tool.the_tool_is_in_one_of_these_categories,
 } satisfies wlib.Registry

@@ -5,7 +5,7 @@
 import type * as wlib from '../../wlib.ts'
 import type * as tools_fact from '../../tools/_domain/fact.ts'
 import type * as tools_predicate from '../../tools/_domain/predicate.ts'
-import type * as tools_selection from '../../tools/_domain/selection.ts'
+import type * as tools_selection from '../../tools/_domain/selection/index.ts'
 import type { tool_id } from '../../tools/_domain/id.ts'
 import type { tool } from '../../tools/_domain/value.ts'
 import {
@@ -33,17 +33,17 @@ export const tools_fragments: wlib.PredicateFragments<
     the_tool_is_retired(state.tools.get(p.tool_id)),
 }
 
-// The reads of the subject of `tools/selection`: a tool of the catalogue.
+// The reads of the subject `tools/selection/tool`: a tool of the catalogue.
 
 export const tool_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof tools_selection>,
+  wlib.SelectionsIn<typeof tools_selection.tool>,
   Selection<ToolsState, tool>
 > = {
   ...selection_operators<ToolsState, tool>(),
   predicate: {
-    'tools/selection/the_tool_is_in_service': () => () => (the_tool) =>
+    'tools/selection/tool/the_tool_is_in_service': () => () => (the_tool) =>
       the_tool_is_in_service(the_tool),
-    'tools/selection/the_tool_is_in_one_of_these_categories': (p) => () => (the_tool) =>
+    'tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) => () => (the_tool) =>
       p.categories.includes(the_tool.category),
   },
 }

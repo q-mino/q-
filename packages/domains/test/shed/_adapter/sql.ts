@@ -8,7 +8,7 @@ import { registry as tools_registry } from '../tools/_domain/registry.ts'
 import { registry as loans_registry } from '../loans/_domain/registry.ts'
 import type * as tools_fact from '../tools/_domain/fact.ts'
 import type * as tools_predicate from '../tools/_domain/predicate.ts'
-import type * as tools_selection from '../tools/_domain/selection.ts'
+import type * as tools_selection from '../tools/_domain/selection/index.ts'
 import { add_a_tool, retire_a_tool } from '../tools/_domain/command.ts'
 import { the_catalogue } from '../tools/_domain/query.ts'
 import type * as loans_fact from '../loans/_domain/fact.ts'
@@ -74,7 +74,7 @@ export interface Transaction {
 }
 
 // The fragments of each domain's predicates: one translation, reused by every
-// command and every read.
+// command (ADP-8).
 
 const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_predicate>, sql> = {
   'tools/predicate/a_tool_has_this_id': (p) =>
@@ -113,12 +113,12 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
 // condition over the candidate of a query, which every source of the adapter
 // calls `candidate`. In SQL every group has the same fragment type.
 
-const tools_selection_fragments: wlib.PredicateFragments<
-  wlib.SelectionsIn<typeof tools_selection>,
+const tool_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof tools_selection.tool>,
   sql
 > = {
-  'tools/selection/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
-  'tools/selection/the_tool_is_in_one_of_these_categories': (p) =>
+  'tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
+  'tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) =>
     sql`candidate.category in (${p.categories})`,
 }
 
@@ -244,7 +244,7 @@ export const sql_adapter = (database: Database) => ({
       execute: execute(database),
     }),
     ...wlib.query_ports({ registry: tools_registry, queries: { the_catalogue } })({
-      algebra: algebra(tools_selection_fragments),
+      algebra: algebra(tool_selection_fragments),
       sources: {
         the_catalogue: {
           from: sql`tools as candidate`,

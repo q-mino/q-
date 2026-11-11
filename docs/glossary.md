@@ -49,7 +49,8 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | comando · ramo · condizione composta               | command · branch · composed condition               |                                      |
 | predicato · vocabolario                            | predicate · vocabulary                              | specification (DDD)                  |
 | query · selezione · campi · ordine                 | query · selection · fields · order                  |                                      |
-| predicato di selezione · soggetto · candidato      | selection predicate · subject · candidate           |                                      |
+| predicato di selezione · soggetto                  | selection predicate · subject                       |                                      |
+| candidato · voce (di Q-)                           | candidate · entry                                   |                                      |
 | lettura dichiarata · forma istanza · forma insieme | declared read · instance form · set form            |                                      |
 | percorso · modulo convenzionale · interpretazione  | path · conventional module · interpretation (`dsl`) |                                      |
 | identità · formato · brand                         | identity (module `id`) · format · brand             | branded (nominal) type               |
@@ -76,7 +77,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | interprete di riferimento                          | reference interpreter                               |                                      |
 | suite di conformità · oracolo                      | conformance suite · oracle                          | TCK · test oracle                    |
 | capacità (di un adapter) · capacità obbligatorie   | capability · mandatory capabilities                 |                                      |
-| attore · soggetto                                  | actor · subject (on behalf of)                      |                                      |
+| attore                                             | actor                                               |                                      |
 | traccia                                            | trace                                               |                                      |
 | dead-letter                                        | dead letter                                         |                                      |
 | evento di base · posizione                         | base event · position                               |                                      |
@@ -85,6 +86,8 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | guasto di composizione                             | composition fault                                   |                                      |
 
 Two names that collide in Italian: the paper's _busta_ is the **event envelope**; Q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.
+
+The paper's _soggetto_ has two senses: what a query speaks of (D50.1, D64.1), and on whose behalf one acts (D87.1). Q- keeps only the first: **subject** is always a query's, a view named by the business, where the paper's is an aggregate (V12). A **candidate** is an instance of the subject that a selection looks at; an **entry** is what the query returns of a candidate it keeps (its fields). Both are Q-'s words, not the paper's.
 
 ## Personas of Q-
 
