@@ -305,8 +305,9 @@ export interface Failure<outcomes extends Outcomes> {
 /**
  * A fact in its event envelope (DOM-10): its path apart from its payload, as
  * in the paper (D56, D101.2). Whoever consumes facts matches on the path,
- * exhaustively as on an ADT, and never reads the payload to know the fact
- * (D107). The other fields of the envelope come with their cases.
+ * exhaustively as on an ADT (a `switch` on `path` with a `never` check, or a
+ * record by path as `FactWrites`), and never reads the payload to know the
+ * fact (D107). The other fields of the envelope come with their cases.
  */
 export type Envelope<facts extends Component> = facts extends unknown
   ? {
