@@ -69,7 +69,7 @@ export interface Transaction {
   readonly booleans: (columns: readonly sql[]) => Promise<readonly boolean[]>
   readonly run: (statement: sql) => Promise<void>
   readonly rows: (statement: sql) => Promise<readonly unknown[]>
-  /** Where the state stands: the sequence of the last fact written. */
+  /** Where the state stands: the sequence of the last fact recorded. */
   readonly position: () => Promise<wlib.position>
 }
 
@@ -194,11 +194,12 @@ const execute =
       const applied = plan.findIndex((_, i) => values[i] === true)
       const branch = plan[applied]
       if (branch !== undefined) {
-        await branch.write.reduce(
-          (done, statement) => done.then(() => tx.run(statement)),
-          Promise.resolve(),
-        )
-        return { outcome: 'applied', branch: applied }
+        // The fact is recorded with its write, in the same transaction (DOM-8).
+        await [
+          ...branch.write,
+          sql`insert into facts (path, payload) values (${branch.fact.path}, ${JSON.stringify(branch.fact.payload)})`,
+        ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
+        return { outcome: 'applied', branch: applied, position: await tx.position() }
       }
       const starts = plan.map((_, i) =>
         plan.slice(0, i).reduce((start, previous) => start + previous.leaves.length, plan.length),

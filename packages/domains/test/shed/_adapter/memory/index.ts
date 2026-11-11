@@ -47,13 +47,19 @@ type Fragment = (state: State) => boolean
 /** A fact's write: the part of the state it changes. */
 type Write = (state: State) => Partial<State>
 
+/** A recorded fact with the state it left. */
+export interface Step {
+  readonly fact: wlib.StoredEnvelope
+  readonly state: State
+}
+
 /**
- * Where the oracle keeps the state: a port, so that a test can look at it.
- * Its position counts the states it was set to.
+ * Where the oracle keeps the state and its facts: a port, so that a test can
+ * look at it. Its position counts the facts recorded.
  */
 export interface Cell {
   readonly get: () => State
-  readonly set: (state: State) => void
+  readonly record: (step: Step) => void
   readonly position: () => wlib.position
 }
 
@@ -89,8 +95,12 @@ const execute =
         leaves: plan.map((planned) => planned.leaves.map((leaf) => leaf(state))),
       })
     }
-    cell.set({ ...state, ...branch.write(state) })
-    return Promise.resolve<wlib.Execution>({ outcome: 'applied', branch: applied })
+    cell.record({ fact: branch.fact, state: { ...state, ...branch.write(state) } })
+    return Promise.resolve<wlib.Execution>({
+      outcome: 'applied',
+      branch: applied,
+      position: cell.position(),
+    })
   }
 
 const code_points = (text: string): readonly number[] =>

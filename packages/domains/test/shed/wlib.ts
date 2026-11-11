@@ -266,21 +266,25 @@ export type FactWrites<facts extends Component, write> = {
 
 /**
  * A branch ready to execute, in the order of the branches: its condition
- * composed, each leaf apart (to name the failures), its write.
+ * composed, each leaf apart (to name the failures), its write, and its fact
+ * in its envelope, which the adapter records with the write, atomically
+ * (DOM-8), for the streams to read (DOM-17).
  */
 export interface PlannedBranch<fragment, write> {
   readonly condition: fragment
   readonly leaves: readonly fragment[]
   readonly write: write
+  readonly fact: StoredEnvelope
 }
 
 /**
  * What the adapter's execution tells the library: the index of the applied
- * branch; or, when none applies, the value of every leaf of every branch,
- * read in the same step or in a second one, as the technology allows.
+ * branch and the position of its fact; or, when none applies, the value of
+ * every leaf of every branch, read in the same step or in a second one, as
+ * the technology allows.
  */
 export type Execution =
-  | { readonly outcome: 'applied'; readonly branch: number }
+  | { readonly outcome: 'applied'; readonly branch: number; readonly position: position }
   | { readonly outcome: 'rejected'; readonly leaves: readonly (readonly boolean[])[] }
 
 /**
@@ -308,16 +312,23 @@ export type Envelope<facts extends Component> = facts extends unknown
   ? { readonly path: PathOf<facts>; readonly payload: z.output<facts> }
   : never
 
+/** A fact's envelope as an adapter stores it: the library parses the payload by the path. */
+export interface StoredEnvelope {
+  readonly path: string
+  readonly payload: unknown
+}
+
 /**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with
- * its typed fact in its envelope; or the rejection, naming every failed
- * predicate (DOM-6).
+ * its typed fact in its envelope and its position; or the rejection, naming
+ * every failed predicate (DOM-6).
  */
 export type CommandOutcome<outcomes extends Outcomes> =
   | {
       [branch in keyof outcomes & string]: {
         readonly outcome: 'applied'
         readonly branch: branch
+        readonly position: position
         readonly fact: Envelope<outcomes[branch][1]>
       }
     }[keyof outcomes & string]
@@ -596,3 +607,52 @@ export declare function query_ports<const queries extends Queries>(ports: {
 ) => {
   readonly [name in keyof queries]: QueryPort<queries[name]>
 }
+
+// ---------------------------------------------------------------------------
+// Streams (DOM-17): a query read as a stream of facts, from a position (D64.3).
+// No snapshot inside: a live view reads the query (its entries and position
+// P), then streams from P (D72). A stream ends when its consumer stops, or on
+// a terminal event.
+
+/**
+ * The events of a stream, a closed ADT (DOM-3). Every event but the terminal
+ * one carries the position of the fact that caused it; resume is inclusive,
+ * so a consumer deduplicates by position and identity (DOM-17).
+ * - `fact`: the fact touched a candidate that the selection keeps after it:
+ *   the fact in its envelope, the entry as it is after it (D72). A candidate
+ *   that comes in through a fact that touches it comes this way, not as
+ *   `entered`.
+ * - `entered`: a candidate the fact did not touch now satisfies the
+ *   selection, because a selection predicate reads another instance: its entry.
+ * - `left`: a candidate, touched or not, no longer satisfies the selection:
+ *   its identity only (D72.5).
+ * - `caught_up`: the end of the historical part, once (D72.5).
+ * - `position_unavailable`, terminal: the adapter no longer keeps the
+ *   position; read the query again, then stream from its position (D73.3).
+ */
+export type StreamEvent<envelope, entry, identity> =
+  | {
+      readonly event: 'fact'
+      readonly position: position
+      readonly identity: identity
+      readonly fact: envelope
+      readonly entry: entry
+    }
+  | {
+      readonly event: 'entered'
+      readonly position: position
+      readonly identity: identity
+      readonly entry: entry
+    }
+  | { readonly event: 'left'; readonly position: position; readonly identity: identity }
+  | { readonly event: 'caught_up'; readonly position: position }
+  | { readonly event: 'position_unavailable' }
+
+/**
+ * The adapter's stream of a planned query, from a position: the events with
+ * the entries and the facts as stored (the library parses them with the
+ * query's fields and, by path, the registry).
+ */
+export type Stream<selection, source, field> = (
+  plan: PlannedQuery<selection, source, field>,
+) => (from: position) => AsyncIterable<StreamEvent<StoredEnvelope, unknown, unknown>>
