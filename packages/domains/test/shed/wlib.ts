@@ -459,19 +459,19 @@ export type PredicatesOfQueries<queries extends Queries> = Leaves<
 
 /**
  * Where the adapter finds a query's candidates (a table, a store) and how it
- * reads each field of an entry.
+ * reads each field of an entry from a candidate.
  */
-export interface QuerySource<fields extends z.ZodObject, fragment> {
-  readonly from: fragment
-  readonly fields: { readonly [field in keyof z.output<fields>]-?: fragment }
+export interface QuerySource<fields extends z.ZodObject, source, field> {
+  readonly from: source
+  readonly fields: { readonly [name in keyof z.output<fields>]-?: field }
 }
 
 /** A query ready to read: the selection composed, the fields and the order as fragments. */
-export interface PlannedQuery<fragment> {
-  readonly from: fragment
-  readonly fields: Readonly<Record<string, fragment>>
-  readonly selection: fragment
-  readonly order: readonly (readonly [fragment, Direction])[]
+export interface PlannedQuery<selection, source, field> {
+  readonly from: source
+  readonly fields: Readonly<Record<string, field>>
+  readonly selection: selection
+  readonly order: readonly (readonly [field, Direction])[]
 }
 
 /** The position of a read: opaque, compared only by order (DOM-17). */
@@ -482,17 +482,25 @@ export type position = z.output<typeof position>
  * The adapter's read, in one consistent snapshot: the entries as stored (the
  * library parses them with the query's fields) and the position read at (D66).
  */
-export type Read<fragment> = (
-  plan: PlannedQuery<fragment>,
+export type Read<selection, source, field> = (
+  plan: PlannedQuery<selection, source, field>,
 ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
 
-/** What a read adapter gives for a set of queries, of one or more domains. */
-export interface ReadAdapter<queries extends Queries, fragment> {
-  readonly algebra: Algebra<PredicatesOfQueries<queries>, fragment>
+/**
+ * What a read adapter gives for a set of queries, of one or more domains. Its
+ * fragments are of three types: a condition over a candidate (`selection`),
+ * where the candidates are (`source`), how a field reads from a candidate
+ * (`field`). In SQL the three are one type, and one adapter serves the
+ * queries of every subject; an adapter whose fragments are typed by the
+ * candidate (the in-memory oracle) serves the queries of one subject at a
+ * time (DOM-18).
+ */
+export interface ReadAdapter<queries extends Queries, selection, source, field> {
+  readonly algebra: Algebra<PredicatesOfQueries<queries>, selection>
   readonly sources: {
-    readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, fragment>
+    readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, source, field>
   }
-  readonly read: Read<fragment>
+  readonly read: Read<selection, source, field>
 }
 
 /** The outcome of a read: the entries, typed by the query's fields, and the position read at. */
@@ -513,6 +521,8 @@ export type QueryPort<query> =
 /** The query ports of a set of queries over a read adapter; curried as `command_ports`. */
 export declare function query_ports<const queries extends Queries>(
   queries: queries,
-): <fragment>(adapter: ReadAdapter<queries, fragment>) => {
+): <selection, source, field>(
+  adapter: ReadAdapter<queries, selection, source, field>,
+) => {
   readonly [name in keyof queries]: QueryPort<queries[name]>
 }

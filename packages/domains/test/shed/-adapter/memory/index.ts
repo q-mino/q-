@@ -4,16 +4,36 @@
 // imports `tools.ts`), and their imports are the graph of who reads whom.
 // Nothing runs: the library is wished.
 //
-// Commands only. The reads wait for a finding: `QuerySource` gives one
-// fragment type to the source, the fields and the selection, which fits SQL
-// (everything is `sql`) but not a typed in-memory read, where each query has a
-// candidate of its own type (a tool, a loan).
+// Reads are typed by subject (DOM-18): each domain module gives, for each
+// subject, its selection fragments over a typed candidate and the sources of
+// its queries; the query ports are built one subject at a time, so that each
+// has its own candidate type.
 
 import * as wlib from '../../wlib.ts'
 import { add_a_tool, retire_a_tool } from '../../tools/-domain/command.ts'
+import { the_catalogue } from '../../tools/-domain/query.ts'
 import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../../loans/-domain/command.ts'
-import { loans_fragments, loans_writes, type LoansState } from './loans.ts'
-import { tools_fragments, tools_writes, type ToolsState } from './tools.ts'
+import {
+  the_ongoing_loans_of_a_member,
+  the_reservations_of_a_member,
+} from '../../loans/-domain/query.ts'
+import type { Field, Selection, Source } from './fragments.ts'
+import {
+  loan_selection,
+  loan_sources,
+  loans_fragments,
+  loans_writes,
+  reservation_selection,
+  reservation_sources,
+  type LoansState,
+} from './loans.ts'
+import {
+  tool_selection,
+  tool_sources,
+  tools_fragments,
+  tools_writes,
+  type ToolsState,
+} from './tools.ts'
 
 /** The state of every domain. */
 export interface State extends ToolsState, LoansState {}
@@ -24,10 +44,14 @@ type Fragment = (state: State) => boolean
 /** A fact's write: the part of the state it changes. */
 type Write = (state: State) => Partial<State>
 
-/** Where the oracle keeps the state: a port, so that a test can look at it. */
+/**
+ * Where the oracle keeps the state: a port, so that a test can look at it.
+ * Its position counts the states it was set to.
+ */
 export interface Cell {
   readonly get: () => State
   readonly set: (state: State) => void
+  readonly position: () => wlib.position
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -66,15 +90,99 @@ const execute =
     return Promise.resolve<wlib.Execution>({ outcome: 'applied', branch: applied })
   }
 
+const code_points = (text: string): readonly number[] =>
+  Array.from(text, (character) => character.codePointAt(0) ?? 0)
+
+/** Text by Unicode code point, no collation (LIB-9). */
+const compare_texts = (a: string, b: string): number => {
+  const x = code_points(a)
+  const y = code_points(b)
+  const first_difference = x.findIndex((point, i) => point !== y[i])
+  return first_difference === -1
+    ? x.length - y.length
+    : (x[first_difference] ?? 0) - (y[first_difference] ?? Number.NEGATIVE_INFINITY)
+}
+
+/**
+ * The value order of LIB-9: an absent value after any value, false before
+ * true, numbers by value, text by code point.
+ */
+const compare_values = (a: unknown, b: unknown): number =>
+  a === undefined || a === null
+    ? b === undefined || b === null
+      ? 0
+      : 1
+    : b === undefined || b === null
+      ? -1
+      : typeof a === 'string' && typeof b === 'string'
+        ? compare_texts(a, b)
+        : typeof a === 'number' && typeof b === 'number'
+          ? a - b
+          : typeof a === 'boolean' && typeof b === 'boolean'
+            ? Number(a) - Number(b)
+            : 0
+
+/**
+ * A read on one state: the candidates of the source that the selection keeps,
+ * in the order (a descending field reverses the value order), each as the
+ * entry of its fields.
+ */
+const read =
+  (cell: Cell) =>
+  <candidate>(
+    plan: wlib.PlannedQuery<
+      Selection<State, candidate>,
+      Source<State, candidate>,
+      Field<State, candidate>
+    >,
+  ) => {
+    const state = cell.get()
+    const keeps = plan.selection(state)
+    const order = plan.order.map(([field, direction]) => {
+      const value = field(state)
+      const sign = direction === 'ascending' ? 1 : -1
+      return (a: candidate, b: candidate): number => sign * compare_values(value(a), value(b))
+    })
+    const entries = plan
+      .from(state)
+      .filter(keeps)
+      .toSorted((a, b) => order.reduce((result, by) => (result !== 0 ? result : by(a, b)), 0))
+      .map((candidate) =>
+        Object.fromEntries(
+          Object.entries(plan.fields).map(([name, field]) => [name, field(state)(candidate)]),
+        ),
+      )
+    return Promise.resolve({ entries, position: cell.position() })
+  }
+
 export const memory_adapter = (cell: Cell) => ({
-  tools: wlib.command_ports({ add_a_tool, retire_a_tool })({
-    algebra: algebra(tools_fragments),
-    write: tools_writes,
-    execute: execute(cell),
-  }),
-  loans: wlib.command_ports({ borrow_a_tool, reserve_a_tool, return_a_tool })({
-    algebra: algebra(loans_fragments),
-    write: loans_writes,
-    execute: execute(cell),
-  }),
+  tools: {
+    ...wlib.command_ports({ add_a_tool, retire_a_tool })({
+      algebra: algebra(tools_fragments),
+      write: tools_writes,
+      execute: execute(cell),
+    }),
+    ...wlib.query_ports({ the_catalogue })({
+      algebra: tool_selection,
+      sources: tool_sources,
+      read: read(cell),
+    }),
+  },
+  loans: {
+    ...wlib.command_ports({ borrow_a_tool, reserve_a_tool, return_a_tool })({
+      algebra: algebra(loans_fragments),
+      write: loans_writes,
+      execute: execute(cell),
+    }),
+    ...wlib.query_ports({ the_ongoing_loans_of_a_member })({
+      algebra: loan_selection,
+      sources: loan_sources,
+      read: read(cell),
+    }),
+    ...wlib.query_ports({ the_reservations_of_a_member })({
+      algebra: reservation_selection,
+      sources: reservation_sources,
+      read: read(cell),
+    }),
+  },
 })

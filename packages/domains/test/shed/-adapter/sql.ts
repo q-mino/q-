@@ -214,7 +214,7 @@ const execute =
  * that the selection keeps, in the order, and the position it was read at.
  */
 const read =
-  (database: Database): wlib.Read<sql> =>
+  (database: Database): wlib.Read<sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => ({
       entries: await tx.rows(

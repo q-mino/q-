@@ -8,7 +8,7 @@ A neighbourhood tool shed, invented to drive the library with no word of Q- (LIB
 | `loans` | loan, reservation, return (on time, late, damaged)    | downstream business, its own view of the tools (V11) |
 | `shed`  | the personas `visitor`, `member`, `keeper`, with auth | persona                                              |
 
-No domain imports another, except its identities, the generated `$id.ts` (GR-3, V11, DOM-24): `loans` has its own view of the tools, keyed by the `tool_id` of `tools`, and the adapters link it to `tools`. Brands carry the value's path (`tools/value/tool_id`); formats (`date_time_string`, `day`) are the library's. [`-adapter/sql.ts`](-adapter/sql.ts) is a sketch of a SQL state adapter; [`-adapter/memory/`](-adapter/memory/) a sketch of the in-memory oracle (TST-2), one module per domain, whose imports show who reads whom.
+No domain imports another, except its identities, the generated `$id.ts` (GR-3, V11, DOM-24): `loans` has its own view of the tools, keyed by the `tool_id` of `tools`, and the adapters link it to `tools`. Brands carry the value's path (`tools/value/tool_id`); formats (`date_time_string`, `day`) are the library's. [`-adapter/sql.ts`](-adapter/sql.ts) is a sketch of a SQL state adapter; [`-adapter/memory/`](-adapter/memory/) a sketch of the in-memory oracle (TST-2), one module per domain, whose imports show who reads whom, with its reads typed by subject (DOM-18).
 
 [`wlib.ts`](wlib.ts) is the wished library: the types and signatures the domains want from the library, without bodies. The code typechecks; nothing here runs until the library exists. It becomes the requirement of the library steps of [the plan](../../../../docs/plan.md).
 
