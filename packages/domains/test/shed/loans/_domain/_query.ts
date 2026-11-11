@@ -19,8 +19,9 @@ export const the_loan_is_ongoing_for_the_member = wlib.AND({
 export const the_ongoing_loans_of_a_member = wlib.query({
   input: the_ongoing_loans_of_a_member_input,
   fields: ongoing_loan_entry,
+  identity: 'id',
   selection: the_loan_is_ongoing_for_the_member,
-  order: { due_date: 'ascending', id: 'ascending' },
+  order: { due_date: 'ascending' },
   creator: () => (input) => ({
     the_loan_is_ongoing: {},
     the_loan_is_of_the_member: { member_id: input.member_id },
@@ -42,8 +43,9 @@ export const the_reservation_is_ahead_for_the_member = wlib.AND({
 export const the_reservations_of_a_member = wlib.query({
   input: the_reservations_of_a_member_input,
   fields: reservation_entry,
+  identity: 'id',
   selection: the_reservation_is_ahead_for_the_member,
-  order: { day: 'ascending', id: 'ascending' },
+  order: { day: 'ascending' },
   creator: (context) => (input) => ({
     the_reservation_is_booked: {},
     the_reservation_is_of_the_member: { member_id: input.member_id },

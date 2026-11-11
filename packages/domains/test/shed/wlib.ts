@@ -309,13 +309,30 @@ export interface Failure<outcomes extends Outcomes> {
  * (D107). The other fields of the envelope come with their cases.
  */
 export type Envelope<facts extends Component> = facts extends unknown
-  ? { readonly path: PathOf<facts>; readonly payload: z.output<facts> }
+  ? {
+      readonly path: PathOf<facts>
+      readonly payload: z.output<facts>
+      readonly resources: readonly Resource[]
+    }
   : never
+
+/**
+ * A resource of a fact (DOM-10): an identity in its payload, by its path and
+ * value (`loans/id/loan_id`, `L7`). The library derives a fact's resources
+ * from its schema, finding the identities in the registry; nobody writes
+ * them. In the paper they come from the mutation primitives (D107); in q-
+ * the fact carries the change (V9), so they come from the fact.
+ */
+export interface Resource {
+  readonly path: string
+  readonly value: unknown
+}
 
 /** A fact's envelope as an adapter stores it: the library parses the payload by the path. */
 export interface StoredEnvelope {
   readonly path: string
   readonly payload: unknown
+  readonly resources: readonly Resource[]
 }
 
 /**
@@ -417,13 +434,29 @@ export type Direction = 'ascending' | 'descending'
 
 /**
  * The order of the entries, by their fields, in the order they are written.
- * Total (LIB-9): the business closes it with a field unique per entry, which
- * its commands keep unique (`not(a_tool_has_this_id)`); the library cannot
- * check it, the author declares it.
+ * The library closes it with the entry's identity, ascending, so that it is
+ * total (LIB-9, D109).
  */
 export type Order<fields extends z.ZodObject> = {
   readonly [field in keyof z.output<fields>]?: Direction
 }
+
+type BrandOf<value> = value extends { readonly [z.core.$brand]: infer brand }
+  ? keyof brand & string
+  : never
+
+/**
+ * The fields of an entry whose value is an identity (DOM-24): branded with a
+ * path of a module `id`. One of them is the entry's identity.
+ */
+export type IdentityFields<fields extends z.ZodObject> = {
+  [name in keyof z.output<fields>]-?: [BrandOf<z.output<fields>[name]>] extends [never]
+    ? never
+    : BrandOf<z.output<fields>[name]> extends Path<'id'>
+      ? name
+      : never
+}[keyof z.output<fields>] &
+  string
 
 /**
  * The subject of a selection predicate (DOM-18): its path up to the segment
@@ -466,9 +499,20 @@ export type OneSubject<selection extends Condition> = [
       >
     }
 
-/** What a query declares besides its input and creator. */
-export interface QueryShape<fields extends z.ZodObject, selection extends Condition> {
+/**
+ * What a query declares besides its input and creator. Its `identity` is the
+ * field that names an entry: an identity, unique per entry, which the
+ * business's commands keep unique (`NOT(a_loan_has_this_id)`); the library
+ * cannot check the uniqueness, the author declares it. It closes the order
+ * (LIB-9) and names the entry in a stream (DOM-17).
+ */
+export interface QueryShape<
+  fields extends z.ZodObject,
+  identity extends string,
+  selection extends Condition,
+> {
   readonly fields: fields
+  readonly identity: identity
   readonly selection: selection
   readonly order: Order<fields>
 }
@@ -486,27 +530,30 @@ export declare const $Query: unique symbol
 export type Query<
   inputSchema extends z.ZodType,
   fields extends z.ZodObject,
+  identity extends string,
   selection extends Condition,
 > = QueryCreator<inputSchema, selection> & {
-  [$Query]: { input: inputSchema } & QueryShape<fields, selection>
+  [$Query]: { input: inputSchema } & QueryShape<fields, identity, selection>
 }
 
 /**
  * A query, declared in one argument whose parts have names: the input, the
- * fields, the selection, the order, and last the creator that binds the
- * selection. DOM-25. The leaves of its selection come from one subject,
- * checked by type (DOM-18).
+ * fields, the identity, the selection, the order, and last the creator that
+ * binds the selection. DOM-25. Its identity is a field whose value is an
+ * identity, and the leaves of its selection come from one subject, checked
+ * by type (DOM-18).
  */
 export declare function query<
   inputSchema extends z.ZodType,
   fields extends z.ZodObject,
+  const identity extends IdentityFields<fields>,
   const selection extends Condition,
 >(
-  query: { readonly input: QueryInput<inputSchema> } & QueryShape<fields, selection> & {
+  query: { readonly input: QueryInput<inputSchema> } & QueryShape<fields, identity, selection> & {
       readonly selection: OneSubject<selection>
       readonly creator: QueryCreator<inputSchema, selection>
     },
-): Query<inputSchema, fields, selection>
+): Query<inputSchema, fields, identity, selection>
 
 // Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
 // per selection predicate, one source per query, one read. No concept of
@@ -517,7 +564,7 @@ export type Queries = Readonly<
   Record<
     string,
     {
-      readonly [$Query]: { input: z.ZodType } & QueryShape<z.ZodObject, Condition>
+      readonly [$Query]: { input: z.ZodType } & QueryShape<z.ZodObject, string, Condition>
     }
   >
 >
@@ -542,10 +589,15 @@ export interface QuerySource<fields extends z.ZodObject, source, field> {
   readonly fields: { readonly [name in keyof z.output<fields>]-?: field }
 }
 
-/** A query ready to read: the selection composed, the fields and the order as fragments. */
+/**
+ * A query ready to read: the selection composed, the fields and the order as
+ * fragments, the order closed by the identity; the identity by its field's
+ * name and its path, for a stream to know which entries a fact touches.
+ */
 export interface PlannedQuery<selection, source, field> {
   readonly from: source
   readonly fields: Readonly<Record<string, field>>
+  readonly identity: { readonly field: string; readonly path: string }
   readonly selection: selection
   readonly order: readonly (readonly [field, Direction])[]
 }
@@ -656,3 +708,54 @@ export type StreamEvent<envelope, entry, identity> =
 export type Stream<selection, source, field> = (
   plan: PlannedQuery<selection, source, field>,
 ) => (from: position) => AsyncIterable<StreamEvent<StoredEnvelope, unknown, unknown>>
+
+/** What an adapter gives to stream a set of queries: their reads, and the stream. */
+export interface StreamAdapter<
+  queries extends Queries,
+  selection,
+  source,
+  field,
+> extends ReadAdapter<queries, selection, source, field> {
+  readonly stream: Stream<selection, source, field>
+}
+
+/**
+ * A stream port: the input in, from a position; the events out, the facts
+ * typed by the registry's, the entries by the query's fields, the identity by
+ * its field.
+ */
+export type StreamPort<query, facts extends Component> =
+  QueryParts<query> extends {
+    input: infer input extends z.ZodType
+    fields: infer fields extends z.ZodObject
+    identity: infer identity extends string
+  }
+    ? (
+        context: Now,
+        input: z.input<input>,
+        from: position,
+      ) => AsyncIterable<
+        StreamEvent<
+          Envelope<facts>,
+          z.output<fields>,
+          z.output<fields>[identity & keyof z.output<fields>]
+        >
+      >
+    : never
+
+/**
+ * The stream ports of a set of queries over a stream adapter: the facts a
+ * stream can carry are the registry's (a stream reads the facts of a domain,
+ * D64.1). Curried as `query_ports`.
+ */
+export declare function stream_ports<
+  const registry extends Registry,
+  const queries extends Queries,
+>(ports: {
+  readonly registry: registry
+  readonly queries: queries
+}): <selection, source, field>(
+  adapter: StreamAdapter<queries, selection, source, field>,
+) => {
+  readonly [name in keyof queries]: StreamPort<queries[name], FactsIn<registry>>
+}

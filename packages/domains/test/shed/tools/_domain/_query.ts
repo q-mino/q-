@@ -18,14 +18,15 @@ export const the_tool_is_shown_in_the_catalogue = wlib.AND({
 
 /**
  * The tools a visitor can see: in service, in the chosen categories (every
- * category, if none is chosen), by category and name; the id, unique,
- * closes the order.
+ * category, if none is chosen), by category and name; the id, the entry's
+ * identity, closes the order.
  */
 export const the_catalogue = wlib.query({
   input: the_catalogue_input,
   fields: catalogue_entry,
+  identity: 'id',
   selection: the_tool_is_shown_in_the_catalogue,
-  order: { category: 'ascending', name: 'ascending', id: 'ascending' },
+  order: { category: 'ascending', name: 'ascending' },
   creator: () => (input) => ({
     the_tool_is_in_service: {},
     the_tool_is_in_a_chosen_category: { categories: input.categories },

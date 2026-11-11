@@ -90,6 +90,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | traccia                                            | trace                                               |                                      |
 | dead-letter                                        | dead letter                                         |                                      |
 | evento di base · posizione                         | base event · position                               |                                      |
+| risorsa (di un fatto) · identità della voce        | resource · identity of an entry (a query's, LIB-9)  |                                      |
 | registro (delle regole dell'interprete)            | registry                                            |                                      |
 | registro dei percorsi (di q-)                      | path registry (`registry.ts`)                       |                                      |
 | guasto di composizione                             | composition fault                                   |                                      |

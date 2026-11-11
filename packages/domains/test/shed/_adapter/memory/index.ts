@@ -9,6 +9,9 @@
 // subject, its selection fragments over a typed candidate and the sources of
 // its queries; the query ports are built one subject at a time, so that each
 // has its own candidate type.
+//
+// Streams (DOM-17): the oracle keeps every fact with the state before and
+// after it, and its stream defines what the events of a fact are.
 
 import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../tools/_domain/registry.ts'
@@ -61,7 +64,32 @@ export interface Cell {
   readonly get: () => State
   readonly record: (step: Step) => void
   readonly position: () => wlib.position
+  /** The facts recorded from a position on, inclusive (DOM-17). */
+  readonly history: (from: wlib.position) => History
+  /** The facts recorded after a position, as soon as there is one. */
+  readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
 }
+
+/** A recorded fact, at its position, with the state before and after it. */
+export interface Recorded {
+  readonly position: wlib.position
+  readonly fact: wlib.StoredEnvelope
+  readonly before: State
+  readonly after: State
+}
+
+/**
+ * What the cell keeps from a position on: the facts recorded, and its
+ * position when asked; or nothing, when it keeps that position no longer (a
+ * test injects it, TST-4).
+ */
+export type History =
+  | {
+      readonly history: 'kept'
+      readonly recorded: readonly Recorded[]
+      readonly position: wlib.position
+    }
+  | { readonly history: 'forgotten' }
 
 const algebra = <fragments>(predicate: fragments) => ({
   predicate,
@@ -136,37 +164,116 @@ const compare_values = (a: unknown, b: unknown): number =>
             ? Number(a) - Number(b)
             : 0
 
+/** A planned query over the candidates of one subject. */
+type Plan<candidate> = wlib.PlannedQuery<
+  Selection<State, candidate>,
+  Source<State, candidate>,
+  Field<State, candidate>
+>
+
+/** An entry with its identity, read from its identity field. */
+interface Identified {
+  readonly identity: unknown
+  readonly entry: Readonly<Record<string, unknown>>
+}
+
 /**
- * A read on one state: the candidates of the source that the selection keeps,
- * in the order (a descending field reverses the value order), each as the
- * entry of its fields.
+ * The entries of a query on a state: the candidates of the source that the
+ * selection keeps, in the order (a descending field reverses the value
+ * order; the identity closes it), each as the entry of its fields.
  */
-const read =
-  (cell: Cell) =>
-  <candidate>(
-    plan: wlib.PlannedQuery<
-      Selection<State, candidate>,
-      Source<State, candidate>,
-      Field<State, candidate>
-    >,
-  ) => {
-    const state = cell.get()
+const entries_on =
+  <candidate>(plan: Plan<candidate>) =>
+  (state: State): readonly Identified[] => {
     const keeps = plan.selection(state)
     const order = plan.order.map(([field, direction]) => {
       const value = field(state)
       const sign = direction === 'ascending' ? 1 : -1
       return (a: candidate, b: candidate): number => sign * compare_values(value(a), value(b))
     })
-    const entries = plan
+    return plan
       .from(state)
       .filter(keeps)
       .toSorted((a, b) => order.reduce((result, by) => (result !== 0 ? result : by(a, b)), 0))
-      .map((candidate) =>
-        Object.fromEntries(
+      .map((candidate) => {
+        const entry = Object.fromEntries(
           Object.entries(plan.fields).map(([name, field]) => [name, field(state)(candidate)]),
-        ),
+        )
+        return { identity: entry[plan.identity.field], entry }
+      })
+  }
+
+/** A read on one state: its entries and its position. */
+const read =
+  (cell: Cell) =>
+  <candidate>(plan: Plan<candidate>) =>
+    Promise.resolve({
+      entries: entries_on(plan)(cell.get()).map((identified) => identified.entry),
+      position: cell.position(),
+    })
+
+type Event = wlib.StreamEvent<wlib.StoredEnvelope, unknown, unknown>
+
+/**
+ * The events of a fact for a query, the semantics of a stream (DOM-17, V10):
+ * the entries before and after the fact, compared by identity. An entry kept
+ * after it that the fact touches (its identity among the fact's resources) is
+ * the fact; one that appears untouched entered; one that disappears left,
+ * touched or not; an untouched entry that stays gives nothing, even if a
+ * field changed. Interpreter rule: the events of one fact come in the order
+ * of the entries after it, then those that left, in their order before it.
+ */
+const events_of =
+  <candidate>(plan: Plan<candidate>) =>
+  (recorded: Recorded): readonly Event[] => {
+    const before = entries_on(plan)(recorded.before)
+    const after = entries_on(plan)(recorded.after)
+    const among = (entries: readonly Identified[]) => (identity: unknown) =>
+      entries.some((identified) => identified.identity === identity)
+    const touched = (identity: unknown): boolean =>
+      recorded.fact.resources.some(
+        (resource) => resource.path === plan.identity.path && resource.value === identity,
       )
-    return Promise.resolve({ entries, position: cell.position() })
+    return [
+      ...after.flatMap(({ identity, entry }): readonly Event[] =>
+        touched(identity)
+          ? [{ event: 'fact', position: recorded.position, identity, fact: recorded.fact, entry }]
+          : among(before)(identity)
+            ? []
+            : [{ event: 'entered', position: recorded.position, identity, entry }],
+      ),
+      ...before
+        .filter(({ identity }) => !among(after)(identity))
+        .map(({ identity }): Event => ({ event: 'left', position: recorded.position, identity })),
+    ]
+  }
+
+/**
+ * A stream from a position: the events of the facts kept from there, then
+ * "caught up", then the events of each new fact; or "position no longer
+ * available", when the cell keeps that position no longer.
+ */
+const stream =
+  (cell: Cell) =>
+  <candidate>(plan: Plan<candidate>) =>
+  (from: wlib.position): AsyncIterable<Event> => {
+    const events = events_of(plan)
+    async function* live(position: wlib.position): AsyncGenerator<Event> {
+      const recorded = await cell.after(position)
+      yield* recorded.flatMap(events)
+      yield* live(recorded.at(-1)?.position ?? position)
+    }
+    async function* from_history(): AsyncGenerator<Event> {
+      const history = cell.history(from)
+      if (history.history === 'forgotten') {
+        yield { event: 'position_unavailable' }
+        return
+      }
+      yield* history.recorded.flatMap(events)
+      yield { event: 'caught_up', position: history.position }
+      yield* live(history.position)
+    }
+    return from_history()
   }
 
 export const memory_adapter = (cell: Cell) => ({
@@ -206,6 +313,18 @@ export const memory_adapter = (cell: Cell) => ({
       algebra: reservation_selection,
       sources: reservation_sources,
       read: read(cell),
+    }),
+  },
+  /** The stream ports, apart: a stream has the name of its query. */
+  streams: {
+    loans: wlib.stream_ports({
+      registry: loans_registry,
+      queries: { the_ongoing_loans_of_a_member },
+    })({
+      algebra: loan_selection,
+      sources: loan_sources,
+      read: read(cell),
+      stream: stream(cell),
     }),
   },
 })
