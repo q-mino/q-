@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { tool_id } from '../../tools/-domain/$id.ts'
 import * as wlib from '../../wlib.ts'
 import {
   a_tool_has_been_booked,
@@ -21,7 +22,7 @@ import {
   the_tool_is_on_loan_to_this_member,
 } from './$predicate.ts'
 import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on } from './dsl.ts'
-import { day, loan_id, member_id, reservation_id, return_condition, tool_id } from './value.ts'
+import { loan_id, member_id, reservation_id, return_condition } from './value.ts'
 
 export const borrow_a_tool_input = z.strictObject({
   loan_id: loan_id,
@@ -79,7 +80,7 @@ export const reserve_a_tool_input = (context: wlib.Now) =>
       reservation_id: reservation_id,
       tool_id: tool_id,
       member_id: member_id,
-      day: day,
+      day: wlib.day,
     })
     .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
       path: ['day'],

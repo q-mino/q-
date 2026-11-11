@@ -5,9 +5,7 @@ import {
   booked_reservation,
   ongoing_loan_entry,
   reservation_entry,
-  tool_id,
   tool_name,
-  day,
   loan,
   loan_id,
   loan_ongoing,
@@ -47,8 +45,6 @@ export type $returned_loan = z.output<typeof returned_loan>
 
 export type $reservation_id = z.output<typeof reservation_id>
 
-export type $day = z.output<typeof day>
-
 export type $reservation_stage = z.output<typeof reservation_stage>
 
 export type $reservation_booked = z.output<typeof reservation_booked>
@@ -58,8 +54,6 @@ export type $reservation_progress = z.output<typeof reservation_progress>
 export type $reservation = z.output<typeof reservation>
 
 export type $booked_reservation = z.output<typeof booked_reservation>
-
-export type $tool_id = z.output<typeof tool_id>
 
 export type $tool_name = z.output<typeof tool_name>
 

@@ -1,9 +1,8 @@
 // The domain's pure functions over its values, added at need: usable by the
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
-import { date_time_string } from '../../wlib.ts'
-import type { $day, $returned_loan } from './$value.ts'
-import { day } from './value.ts'
+import { date_time_string, day } from '../../wlib.ts'
+import type { $returned_loan } from './$value.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30
@@ -17,7 +16,7 @@ export const the_due_date_of_a_loan_started_on = (start_date: date_time_string):
 const the_day_of = (date: date_time_string): string => date.slice(0, 10)
 
 /** The calendar day of an instant. */
-export const today = (now: date_time_string): $day => day.parse(the_day_of(now))
+export const today = (now: date_time_string): day => day.parse(the_day_of(now))
 
 /** A day can be booked after today and within the booking window. A static rule: validation. */
 export const the_day_is_within_the_booking_window = (day: string, now: date_time_string): boolean =>

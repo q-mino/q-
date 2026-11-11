@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { day, member_id } from './value.ts'
+import { day } from '../../wlib.ts'
+import { member_id } from './value.ts'
 
 // The vocabulary of the selections of `loans`: predicates over the loan or the
 // reservation a query looks at, which they do not name; their parameters are

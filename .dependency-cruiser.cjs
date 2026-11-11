@@ -32,12 +32,16 @@ module.exports = {
     ...arrowRules,
     {
       name: 'shed-domains-isolated',
-      comment: 'Shed: a test domain imports no other domain (GR-3, V11); the adapters link them.',
+      comment:
+        'Shed: a test domain imports of another only its identities, $id.ts (GR-3, V11); the adapters link them.',
       severity: 'error',
       from: { path: '^packages/domains/test/shed/([^/-][^/]*)/' },
       to: {
         path: '^packages/domains/test/shed/[^/]+/',
-        pathNot: '^packages/domains/test/shed/$1/',
+        pathNot: [
+          '^packages/domains/test/shed/$1/',
+          '^packages/domains/test/shed/[^/-][^/]*/-domain/\\$id\\.ts$',
+        ],
       },
     },
     {

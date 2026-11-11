@@ -1,7 +1,15 @@
 import * as z from 'zod'
 
+// Formats (DOM-24): branded values with no word of a domain. A format's brand
+// is its name: no domain path is a bare name, so it meets no domain's brand.
+
+/** An instant, ISO 8601 with the time zone. */
 export const date_time_string = z.iso.datetime().brand<'date_time_string'>()
 export type date_time_string = z.output<typeof date_time_string>
+
+/** A calendar day, `YYYY-MM-DD`. */
+export const day = z.iso.date().brand<'day'>()
+export type day = z.output<typeof day>
 
 /**
  * The context the library gives, made of small interfaces: a function that

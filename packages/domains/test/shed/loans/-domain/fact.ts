@@ -1,13 +1,7 @@
 import { z } from 'zod'
-import {
-  booked_reservation,
-  day,
-  loan_id,
-  member_id,
-  ongoing_loan,
-  returned_loan,
-  tool_id,
-} from './value.ts'
+import { tool_id } from '../../tools/-domain/$id.ts'
+import { day } from '../../wlib.ts'
+import { booked_reservation, loan_id, member_id, ongoing_loan, returned_loan } from './value.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
 export const a_tool_has_been_lent = z.strictObject({

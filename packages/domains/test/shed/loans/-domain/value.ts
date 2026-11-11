@@ -1,19 +1,21 @@
 import { z } from 'zod'
-import { date_time_string } from '../../wlib.ts'
+import { tool_id } from '../../tools/-domain/$id.ts'
+import { date_time_string, day } from '../../wlib.ts'
 
-/**
- * A tool, as `loans` sees it: the shed's tool it lends. `loans` keeps its own
- * view of the tools (GR-3, V11); the state adapter links it to `tools`.
- */
-export const tool_id = z.string().min(1).brand<'tool_id'>()
+// The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
+// own view of the tools (GR-3, V11), and imports of `tools` only its
+// identities, the key of the link; the state adapter links the rest.
 
 /** The name of a tool: in `loans` a value of its view, which the adapter reads from the catalogue. */
 export const tool_name = z.string().min(1)
 
-export const loan_id = z.string().min(1).brand<'loan_id'>()
+// A brand's literal is the value's path (DOM-24), the generator's: written by
+// hand until the generator exists.
+
+export const loan_id = z.string().min(1).brand<'loans/value/loan_id'>()
 
 /** A member of the shed. Who may act as one is the persona's (step 6), not this domain's. */
-export const member_id = z.string().min(1).brand<'member_id'>()
+export const member_id = z.string().min(1).brand<'loans/value/member_id'>()
 
 export const loan_stage = z.enum(['ongoing', 'returned'])
 
@@ -58,10 +60,7 @@ export const returned_loan = loan.extend({
   progress: loan_returned,
 })
 
-export const reservation_id = z.string().min(1).brand<'reservation_id'>()
-
-/** A calendar day, `YYYY-MM-DD`. */
-export const day = z.iso.date().brand<'day'>()
+export const reservation_id = z.string().min(1).brand<'loans/value/reservation_id'>()
 
 /** Grows with the steps: `cancelled` (step 8). */
 export const reservation_stage = z.enum(['booked'])
