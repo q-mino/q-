@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { member_id } from '../value.ts'
+import { member_id } from '../$id.ts'
 
 // The selections over a loan, the subject of this file (DOM-18): predicates
 // over the loan a query looks at, which they do not name; their parameters are

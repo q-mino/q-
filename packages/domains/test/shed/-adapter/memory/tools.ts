@@ -6,7 +6,8 @@ import type * as wlib from '../../wlib.ts'
 import type * as tools_fact from '../../tools/-domain/$fact.ts'
 import type * as tools_predicate from '../../tools/-domain/$predicate.ts'
 import type * as tools_selection from '../../tools/-domain/$selection.ts'
-import type { $tool, $tool_id } from '../../tools/-domain/$value.ts'
+import type { $tool_id } from '../../tools/-domain/$id.ts'
+import type { $tool } from '../../tools/-domain/$value.ts'
 import {
   the_tool_is_in_service,
   the_tool_is_in_the_catalogue,

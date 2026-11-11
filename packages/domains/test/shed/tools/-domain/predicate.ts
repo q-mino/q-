@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from './value.ts'
+import { tool_id } from './$id.ts'
 
 // The vocabulary of the conditions. A predicate declares its parameters;
 // its value is in dsl.ts. Composed (wlib.and, wlib.or) under business names,

@@ -9,13 +9,10 @@ import {
   retired_tool,
   retirement,
   tool,
-  tool_id,
   tool_in_service,
   tool_name,
   tool_status,
 } from './value'
-
-export type $tool_id = z.output<typeof tool_id>
 
 export type $tool_name = z.output<typeof tool_name>
 

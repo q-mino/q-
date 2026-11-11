@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { day } from '../../../wlib.ts'
-import { member_id } from '../value.ts'
+import { member_id } from '../$id.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).
 

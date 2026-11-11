@@ -22,7 +22,8 @@ import {
   the_tool_is_on_loan_to_this_member,
 } from './$predicate.ts'
 import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on } from './dsl.ts'
-import { loan_id, member_id, reservation_id, return_condition } from './value.ts'
+import { loan_id, member_id, reservation_id } from './$id.ts'
+import { return_condition } from './value.ts'
 
 export const borrow_a_tool_input = z.strictObject({
   loan_id: loan_id,

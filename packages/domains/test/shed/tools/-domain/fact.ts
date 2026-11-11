@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { retired_tool, tool, tool_id } from './value.ts'
+import { tool_id } from './$id.ts'
+import { retired_tool, tool } from './value.ts'
 
 /**
  * Carries the change of state (DOM-5, V9): every value it writes. The

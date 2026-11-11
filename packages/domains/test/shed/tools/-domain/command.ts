@@ -6,7 +6,8 @@ import {
   the_tool_was_already_retired,
 } from './$fact.ts'
 import { a_tool_has_this_id, the_tool_is_in_service, the_tool_is_retired } from './$predicate.ts'
-import { category, notes, retire_reason, tool_id, tool_name } from './value.ts'
+import { tool_id } from './$id.ts'
+import { category, notes, retire_reason, tool_name } from './value.ts'
 
 export const add_a_tool_input = z.strictObject({
   id: tool_id,

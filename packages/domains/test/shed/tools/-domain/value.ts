@@ -1,10 +1,6 @@
 import { z } from 'zod'
 import { date_time_string } from '../../wlib.ts'
-
-// A brand's literal is the value's path (DOM-24), the generator's: written by
-// hand until the generator exists.
-
-export const tool_id = z.string().min(1).brand<'tools/value/tool_id'>()
+import { tool_id } from './$id.ts'
 
 export const tool_name = z.string().min(1).max(80)
 

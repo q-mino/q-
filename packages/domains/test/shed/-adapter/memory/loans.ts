@@ -8,7 +8,8 @@
 import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../loans/-domain/$fact.ts'
 import type * as loans_predicate from '../../loans/-domain/$predicate.ts'
-import type { $loan, $loan_id, $reservation, $reservation_id } from '../../loans/-domain/$value.ts'
+import type { $loan_id, $reservation_id } from '../../loans/-domain/$id.ts'
+import type { $loan, $reservation } from '../../loans/-domain/$value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,

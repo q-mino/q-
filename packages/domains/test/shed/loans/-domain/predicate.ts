@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { tool_id } from '../../tools/-domain/$id.ts'
 import { day } from '../../wlib.ts'
-import { loan_id, member_id, reservation_id } from './value.ts'
+import { loan_id, member_id, reservation_id } from './$id.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the
 // tools too (GR-3, V11): the state adapter reads them from `tools`.

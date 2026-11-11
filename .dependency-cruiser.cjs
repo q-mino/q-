@@ -45,6 +45,14 @@ module.exports = {
       },
     },
     {
+      name: 'identities-only-branded',
+      comment:
+        "A domain's identities are taken branded from $id.ts: only $id.ts imports the authored id.ts (DOM-24).",
+      severity: 'error',
+      from: { pathNot: '/-domain/\\$id\\.ts$' },
+      to: { path: '/-domain/id\\.ts$' },
+    },
+    {
       name: 'module-folder-only-through-$index-inside',
       comment:
         "A domain's module folder (DOM-25) is reachable from another folder only through its generated $index.ts.",

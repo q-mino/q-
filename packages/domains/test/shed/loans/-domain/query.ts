@@ -2,7 +2,8 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import { today } from './dsl.ts'
 import * as selection from './selection/$index.ts'
-import { member_id, ongoing_loan_entry, reservation_entry } from './value.ts'
+import { member_id } from './$id.ts'
+import { ongoing_loan_entry, reservation_entry } from './value.ts'
 
 export const the_ongoing_loans_of_a_member_input = z.strictObject({
   member_id: member_id,

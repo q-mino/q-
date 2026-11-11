@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { tool_id } from '../../tools/-domain/$id.ts'
 import { date_time_string, day } from '../../wlib.ts'
+import { loan_id, member_id, reservation_id } from './$id.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
 // own view of the tools (GR-3, V11), and imports of `tools` only its
@@ -8,14 +9,6 @@ import { date_time_string, day } from '../../wlib.ts'
 
 /** The name of a tool: in `loans` a value of its view, which the adapter reads from the catalogue. */
 export const tool_name = z.string().min(1)
-
-// A brand's literal is the value's path (DOM-24), the generator's: written by
-// hand until the generator exists.
-
-export const loan_id = z.string().min(1).brand<'loans/value/loan_id'>()
-
-/** A member of the shed. Who may act as one is the persona's (step 6), not this domain's. */
-export const member_id = z.string().min(1).brand<'loans/value/member_id'>()
 
 export const loan_stage = z.enum(['ongoing', 'returned'])
 
@@ -59,8 +52,6 @@ export const ongoing_loan = loan.extend({
 export const returned_loan = loan.extend({
   progress: loan_returned,
 })
-
-export const reservation_id = z.string().min(1).brand<'loans/value/reservation_id'>()
 
 /** Grows with the steps: `cancelled` (step 8). */
 export const reservation_stage = z.enum(['booked'])
