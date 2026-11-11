@@ -345,6 +345,44 @@ export type Order<fields extends z.ZodObject> = {
   readonly [field in keyof z.output<fields>]?: Direction
 }
 
+/** A path without its last segment: the file or folder its member is declared in. */
+type Parent<path extends string> = path extends `${infer head}/${infer tail}`
+  ? tail extends `${string}/${string}`
+    ? `${head}/${Parent<tail>}`
+    : head
+  : never
+
+/**
+ * The subject of a selection predicate (DOM-18): the file of the module
+ * `selection` that declares it, its path without its name
+ * (`loans/selection/loan`; `tools/selection` while the module is one file).
+ * The library knows the subject only by this path: what it is and where its
+ * candidates are is the adapter's (LIB-14).
+ */
+export type SubjectOf<leaf extends SelectionPredicate> = Parent<PathOf<leaf>>
+
+type UnionToIntersection<union> = (
+  union extends unknown ? (member: union) => void : never
+) extends (member: infer intersection) => void
+  ? intersection
+  : never
+
+type IsUnion<type> = [type] extends [UnionToIntersection<type>] ? false : true
+
+/**
+ * A selection whose leaves come from one subject is itself; one whose leaves
+ * come from more subjects asks for a field no selection has, whose name says
+ * why and whose type lists the subjects. DOM-18
+ */
+export type OneSubject<selection extends Condition<SelectionPredicate>> =
+  IsUnion<SubjectOf<Leaves<selection>>> extends true
+    ? {
+        readonly 'the leaves of a selection come from one subject (DOM-18)': SubjectOf<
+          Leaves<selection>
+        >
+      }
+    : unknown
+
 /** What a query declares besides its input and creator. */
 export interface QueryShape<
   fields extends z.ZodObject,
@@ -377,7 +415,8 @@ export type Query<
 /**
  * A query, declared in one argument whose parts have names: the input, the
  * fields, the selection, the order, and last the creator that binds the
- * selection. DOM-25
+ * selection. DOM-25. The leaves of its selection come from one subject,
+ * checked by type (DOM-18).
  */
 export declare function query<
   inputSchema extends z.ZodType,
@@ -385,6 +424,7 @@ export declare function query<
   const selection extends Condition<SelectionPredicate>,
 >(
   query: { readonly input: QueryInput<inputSchema> } & QueryShape<fields, selection> & {
+      readonly selection: OneSubject<selection>
       readonly creator: QueryCreator<inputSchema, selection>
     },
 ): Query<inputSchema, fields, selection>

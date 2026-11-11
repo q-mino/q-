@@ -45,6 +45,28 @@ module.exports = {
       },
     },
     {
+      name: 'module-folder-only-through-$index-inside',
+      comment:
+        "A domain's module folder (DOM-25) is reachable from another folder only through its generated $index.ts.",
+      severity: 'error',
+      from: { path: '^(packages/domains/.+/-domain/[^/]+)/' },
+      to: {
+        path: '^packages/domains/.+/-domain/[^/]+/',
+        pathNot: ['^$1/', '^packages/domains/.+/-domain/[^/]+/\\$index\\.ts$'],
+      },
+    },
+    {
+      name: 'module-folder-only-through-$index-outside',
+      comment:
+        "From outside any module folder, a domain's module folder (DOM-25) is reachable only through its generated $index.ts.",
+      severity: 'error',
+      from: { pathNot: '^packages/domains/.+/-domain/[^/]+/' },
+      to: {
+        path: '^packages/domains/.+/-domain/[^/]+/',
+        pathNot: '^packages/domains/.+/-domain/[^/]+/\\$index\\.ts$',
+      },
+    },
+    {
       name: 'no-circular',
       severity: 'error',
       from: {},

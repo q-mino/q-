@@ -11,7 +11,7 @@ import { add_a_tool, retire_a_tool } from '../tools/-domain/command.ts'
 import { the_catalogue } from '../tools/-domain/query.ts'
 import type * as loans_fact from '../loans/-domain/$fact.ts'
 import type * as loans_predicate from '../loans/-domain/$predicate.ts'
-import type * as loans_selection from '../loans/-domain/$selection.ts'
+import type * as loans_selection from '../loans/-domain/selection/$index.ts'
 import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/-domain/command.ts'
 import {
   the_ongoing_loans_of_a_member,
@@ -107,8 +107,9 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
 }
 
-// The fragments of each domain's selection predicates: a condition over the
-// candidate of a query, which every source of the adapter calls `candidate`.
+// The fragments of the selection predicates, grouped by subject (DOM-18): a
+// condition over the candidate of a query, which every source of the adapter
+// calls `candidate`. In SQL every group has the same fragment type.
 
 const tools_selection_fragments: wlib.PredicateFragments<
   wlib.SelectionsIn<typeof tools_selection>,
@@ -119,16 +120,24 @@ const tools_selection_fragments: wlib.PredicateFragments<
     sql`candidate.category in (${p.categories})`,
 }
 
-const loans_selection_fragments: wlib.PredicateFragments<
-  wlib.SelectionsIn<typeof loans_selection>,
+const loan_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof loans_selection.loan>,
   sql
 > = {
-  'loans/selection/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
-  'loans/selection/the_loan_is_of_this_member': (p) => sql`candidate.member_id = ${p.member_id}`,
-  'loans/selection/the_reservation_is_booked': () => sql`candidate.stage = 'booked'`,
-  'loans/selection/the_reservation_is_of_this_member': (p) =>
+  'loans/selection/loan/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
+  'loans/selection/loan/the_loan_is_of_this_member': (p) =>
     sql`candidate.member_id = ${p.member_id}`,
-  'loans/selection/the_reservation_is_from_this_day_on': (p) => sql`candidate.day >= ${p.day}`,
+}
+
+const reservation_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof loans_selection.reservation>,
+  sql
+> = {
+  'loans/selection/reservation/the_reservation_is_booked': () => sql`candidate.stage = 'booked'`,
+  'loans/selection/reservation/the_reservation_is_of_this_member': (p) =>
+    sql`candidate.member_id = ${p.member_id}`,
+  'loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
+    sql`candidate.day >= ${p.day}`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -255,7 +264,7 @@ export const sql_adapter = (database: Database) => ({
       execute: execute(database),
     }),
     ...wlib.query_ports({ the_ongoing_loans_of_a_member, the_reservations_of_a_member })({
-      algebra: algebra(loans_selection_fragments),
+      algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),
       sources: {
         the_ongoing_loans_of_a_member: {
           from: sql`loans as candidate`,
