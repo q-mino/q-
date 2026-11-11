@@ -23,7 +23,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 **1. Library nucleus I: commands and facts** — `library` · J · 230k
 
-- Goal: the routing of commands (LIB-14, V10); commands as data (branches, conditions; the fact carries the change of state, V9); predicates declared by their parameters; facts with the event envelope; typed outcomes; the in-memory command port with the built-in duplicate branch and the fingerprint; strict zod schemas and their JSON Schema export; total order; the registry of library rules. Driven by test domains written for the purpose, with no word of Q-.
+- Goal: the routing of commands (LIB-14, V10); commands as data (branches, conditions; the fact carries the change of state, V9); predicates declared by their parameters; facts with the event envelope; typed outcomes; the in-memory command port with the built-in duplicate branch and the fingerprint; strict zod schemas and their JSON Schema export; total order; the registry of library rules. Driven by test domains written for the purpose, with no word of q-.
 - Rules: LIB-1..11, DOM-1, DOM-5..8, DOM-10..12, DOM-21, LIB-9, TST-1..3, TST-5, TST-7.
 - Checks: library test cases on the test domains; property tests (fast-check, hand-written arbitraries, TST-9) of the routing against scenarios; duplicate and different-fingerprint cases; a stability corpus for the fingerprint; JSON Schema snapshots in CI.
 - Watch: the library must not eat stage 1 (LIB-3). The smallest rule that closes each point.
@@ -46,7 +46,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 **4. `seals`** — J · 200k
 
 - Goal: the secrets and their state: seeds (32 random bytes, declared scheme `slip10-flat`), faces `m/i'` (SLIP-0010 over the HMAC-SHA512 of the primitives port), seal for / open / sign / verify, group keys, R and D of a mailbox. Opaque references outward; indices of a seed never reused.
-- Rules: GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of § 4 (Domains of Q-).
+- Rules: GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of § 4 (Domains of q-).
 - Checks: core tests with a fake primitives port; derivation invisible from outside (only public keys and references leave). The SLIP-0010 vectors run in step 15, with the real HMAC.
 - Depends on: 2.
 
@@ -171,7 +171,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 **23. Export and import** — J · 220k
 
 - Goal: the export of every domain's state with its schema version, encrypted with a phrase (Argon2id); the import on a new device.
-- Decisions with Alessandro: gap G1 (positions, operation ids, pending outbox entries, duplicates still in the mailbox), recorded as a Q- decision and reported to the paper.
+- Decisions with Alessandro: gap G1 (positions, operation ids, pending outbox entries, duplicates still in the mailbox), recorded as a q- decision and reported to the paper.
 - Rules: DOM-22, G1.
 
 **24. Full-stack trial and release** — L · 160k

@@ -1,12 +1,12 @@
 # Trademark policy
 
-The code of Q- is free software under the AGPL-3.0. The names are not: **"Q-"**, **"Cumino"** and the Q- logo are trademarks of Alessandro Giansanti. A registration will follow when the name is final.
+The code of q- is free software under the AGPL-3.0. The names are not: **"q-"**, **"Cumino"** and the q- logo are trademarks of Alessandro Giansanti. A registration will follow when the name is final.
 
-The reason is the project's own principle: the software does not guarantee, it informs. A user must always know which copy of Q- they are running and who serves it.
+The reason is the project's own principle: the software does not guarantee, it informs. A user must always know which copy of q- they are running and who serves it.
 
 ## You may, without asking
 
-- Use the names to refer to the project, for example "compatible with Q-" or "based on Q-".
+- Use the names to refer to the project, for example "compatible with q-" or "based on q-".
 - Redistribute **unmodified** copies of an official release under its name.
 - Use the names in articles, talks and teaching material about the project.
 

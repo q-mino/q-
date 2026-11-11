@@ -4,6 +4,15 @@ The code is in English; the app speaks Italian to its users (`packages/phone/src
 
 The terms of the architecture paper, which is in Italian, are in [Architecture terms](#architecture-terms); [`architecture.md`](architecture.md) uses them.
 
+## Names
+
+Lowercase, as written; read with a capital.
+
+| written | read    | what                                                         |
+| ------- | ------- | ------------------------------------------------------------ |
+| `q-`    | Cumino  | the network, and this app                                    |
+| `zen0`  | Zenzero | its library (`domains/src/library/`), the paper's _libreria_ |
+
 ## Packages and folders
 
 | Italian                                           | English                                              |
@@ -50,7 +59,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | predicato · vocabolario                            | predicate · vocabulary                              | specification (DDD)                  |
 | query · selezione · campi · ordine                 | query · selection · fields · order                  |                                      |
 | predicato di selezione · soggetto                  | selection predicate · subject                       |                                      |
-| candidato · voce (di Q-)                           | candidate · entry                                   |                                      |
+| candidato · voce (di q-)                           | candidate · entry                                   |                                      |
 | lettura dichiarata · forma istanza · forma insieme | declared read · instance form · set form            |                                      |
 | percorso · modulo convenzionale · interpretazione  | path · conventional module · interpretation (`dsl`) |                                      |
 | identità · formato · brand                         | identity (module `id`) · format · brand             | branded (nominal) type               |
@@ -74,7 +83,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | adapter di trasporto                               | transport adapter                                   |                                      |
 | configuratore · verifica di composizione           | configurator · composition check                    | composition root                     |
 | libreria · nucleo · innesco                        | library · nucleus · trigger                         |                                      |
-| interprete di riferimento                          | reference interpreter (in Q-, the oracle: V10)      |                                      |
+| interprete di riferimento                          | reference interpreter (in q-, the oracle: V10)      |                                      |
 | suite di conformità · oracolo                      | conformance suite · oracle                          | TCK · test oracle                    |
 | capacità (di un adapter) · capacità obbligatorie   | capability · mandatory capabilities                 |                                      |
 | attore                                             | actor                                               |                                      |
@@ -82,14 +91,14 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | dead-letter                                        | dead letter                                         |                                      |
 | evento di base · posizione                         | base event · position                               |                                      |
 | registro (delle regole dell'interprete)            | registry                                            |                                      |
-| registro dei percorsi (di Q-)                      | path registry (`registry.ts`)                       |                                      |
+| registro dei percorsi (di q-)                      | path registry (`registry.ts`)                       |                                      |
 | guasto di composizione                             | composition fault                                   |                                      |
 
-Two names that collide in Italian: the paper's _busta_ is the **event envelope**; Q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.
+Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.
 
-The paper's _soggetto_ has two senses: what a query speaks of (D50.1, D64.1), and on whose behalf one acts (D87.1). Q- keeps only the first: **subject** is always a query's, a view named by the business, where the paper's is an aggregate (V12). A **candidate** is an instance of the subject that a selection looks at; an **entry** is what the query returns of a candidate it keeps (its fields). Both are Q-'s words, not the paper's.
+The paper's _soggetto_ has two senses: what a query speaks of (D50.1, D64.1), and on whose behalf one acts (D87.1). q- keeps only the first: **subject** is always a query's, a view named by the business, where the paper's is an aggregate (V12). A **candidate** is an instance of the subject that a selection looks at; an **entry** is what the query returns of a candidate it keeps (its fields). Both are q-'s words, not the paper's.
 
-## Personas of Q-
+## Personas of q-
 
 | Italian                                             | English                                    |
 | --------------------------------------------------- | ------------------------------------------ |

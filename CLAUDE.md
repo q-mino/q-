@@ -1,6 +1,6 @@
-# Q- — rules for Claude
+# q- — rules for Claude
 
-Q- (read _Cumino_) is a network of messages between real people, with no center. This repository is its first prototype: a PWA for a test community of eight adults, plus a relay. See [README.md](README.md).
+q- (read _Cumino_) is a network of messages between real people, with no center. This repository is its first prototype: a PWA for a test community of eight adults, plus a relay. See [README.md](README.md).
 
 ## Before writing code
 
@@ -18,7 +18,7 @@ Q- (read _Cumino_) is a network of messages between real people, with no center.
 - Strict everywhere. Never loosen a `tsconfig`, never use `any`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable` or a cast to silence an error: fix the type.
 - `domains` compiles without DOM and without Node: no `fetch`, `crypto`, `window`, `indexedDB`, `console`. Effects are declared as data and executed by adapters.
 - Imports follow the arrows in [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs). A folder is imported only through its `index.ts`; a domain's module folder too, through its generated `index.ts`; an authored file `_x.ts` only through its generated twin `x.ts` (DOM-25). Changing an arrow is an architecture decision, not a fix.
-- `domains/src/library/` imports no domain and contains no word of Q-.
+- `domains/src/library/` imports no domain and contains no word of q-.
 - Functional style: pure functions and immutable data; algebraic data types (discriminated unions) wherever a value has cases, states or outcomes.
 
 ## Solid

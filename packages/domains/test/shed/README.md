@@ -1,6 +1,6 @@
 # Shed: the test domains
 
-A neighbourhood tool shed, invented to drive the library with no word of Q- (LIB-2). Members borrow, reserve and return tools; a keeper manages the catalogue and the repairs; a visitor browses the catalogue.
+A neighbourhood tool shed, invented to drive the library with no word of q- (LIB-2). Members borrow, reserve and return tools; a keeper manages the catalogue and the repairs; a visitor browses the catalogue.
 
 | domain  | language                                              | role                                                 |
 | ------- | ----------------------------------------------------- | ---------------------------------------------------- |
