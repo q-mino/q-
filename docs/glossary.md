@@ -52,6 +52,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | predicato di selezione · soggetto · candidato      | selection predicate · subject · candidate           |                                      |
 | lettura dichiarata · forma istanza · forma insieme | declared read · instance form · set form            |                                      |
 | percorso · modulo convenzionale · interpretazione  | path · conventional module · interpretation (`dsl`) |                                      |
+| identità · formato · brand                         | identity (module `id`) · format · brand             | branded (nominal) type               |
 | busta (degli eventi)                               | event envelope                                      |                                      |
 | identità dell'operazione · impronta                | operation id · fingerprint                          | idempotency key                      |
 | ramo del duplicato                                 | duplicate branch                                    |                                      |
