@@ -1,4 +1,5 @@
-// A sketch of the in-memory state adapter, the oracle of the shed (TST-2):
+// A sketch of the in-memory state adapter, the oracle of the shed and its
+// reference interpreter (TST-2, V10):
 // one module per domain, the state of every domain in one value, one command
 // at a time. The links between domains are typed in the modules (`loans.ts`
 // imports `tools.ts`), and their imports are the graph of who reads whom.
@@ -106,7 +107,8 @@ const compare_texts = (a: string, b: string): number => {
 }
 
 /**
- * The value order of LIB-9: an absent value after any value, false before
+ * The value order of LIB-9, an interpreter rule that the other adapters and
+ * the UI follow: an absent value after any value, false before
  * true, numbers by value, text by code point.
  */
 const compare_values = (a: unknown, b: unknown): number =>

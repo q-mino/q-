@@ -74,7 +74,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | adapter di trasporto                               | transport adapter                                   |                                      |
 | configuratore · verifica di composizione           | configurator · composition check                    | composition root                     |
 | libreria · nucleo · innesco                        | library · nucleus · trigger                         |                                      |
-| interprete di riferimento                          | reference interpreter                               |                                      |
+| interprete di riferimento                          | reference interpreter (in Q-, the oracle: V10)      |                                      |
 | suite di conformità · oracolo                      | conformance suite · oracle                          | TCK · test oracle                    |
 | capacità (di un adapter) · capacità obbligatorie   | capability · mandatory capabilities                 |                                      |
 | attore                                             | actor                                               |                                      |
