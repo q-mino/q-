@@ -81,6 +81,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | dead-letter                                        | dead letter                                         |                                      |
 | evento di base · posizione                         | base event · position                               |                                      |
 | registro (delle regole dell'interprete)            | registry                                            |                                      |
+| registro dei percorsi (di Q-)                      | path registry (`registry.ts`)                       |                                      |
 | guasto di composizione                             | composition fault                                   |                                      |
 
 Two names that collide in Italian: the paper's _busta_ is the **event envelope**; Q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.

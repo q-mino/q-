@@ -33,45 +33,48 @@ module.exports = {
     {
       name: 'shed-domains-isolated',
       comment:
-        'Shed: a test domain imports of another only its identities, $id.ts (GR-3, V11); the adapters link them.',
+        'Shed: a test domain imports of another only its identities, id.ts (GR-3, V11); the adapters link them.',
       severity: 'error',
-      from: { path: '^packages/domains/test/shed/([^/-][^/]*)/' },
+      from: { path: '^packages/domains/test/shed/([^/_][^/]*)/' },
       to: {
         path: '^packages/domains/test/shed/[^/]+/',
         pathNot: [
           '^packages/domains/test/shed/$1/',
-          '^packages/domains/test/shed/[^/-][^/]*/-domain/\\$id\\.ts$',
+          '^packages/domains/test/shed/[^/_][^/]*/_domain/id\\.ts$',
         ],
       },
     },
     {
-      name: 'identities-only-branded',
+      name: 'authored-only-through-generated',
       comment:
-        "A domain's identities are taken branded from $id.ts: only $id.ts imports the authored id.ts (DOM-24).",
+        'An authored module of a domain (_fact.ts) is imported only by its generated twin (fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
       severity: 'error',
-      from: { pathNot: '/-domain/\\$id\\.ts$' },
-      to: { path: '/-domain/id\\.ts$' },
-    },
-    {
-      name: 'module-folder-only-through-$index-inside',
-      comment:
-        "A domain's module folder (DOM-25) is reachable from another folder only through its generated $index.ts.",
-      severity: 'error',
-      from: { path: '^(packages/domains/.+/-domain/[^/]+)/' },
+      from: { path: '^(.+/)([^/_][^/]*)\\.ts$' },
       to: {
-        path: '^packages/domains/.+/-domain/[^/]+/',
-        pathNot: ['^$1/', '^packages/domains/.+/-domain/[^/]+/\\$index\\.ts$'],
+        path: ['/_domain/_[^/]+\\.ts$', '/_domain/[^/]+/_[^/]+\\.ts$'],
+        pathNot: '^$1_$2\\.ts$',
       },
     },
     {
-      name: 'module-folder-only-through-$index-outside',
+      name: 'module-folder-only-through-index-inside',
       comment:
-        "From outside any module folder, a domain's module folder (DOM-25) is reachable only through its generated $index.ts.",
+        "A domain's module folder (DOM-25) is reachable from another folder only through its generated index.ts.",
       severity: 'error',
-      from: { pathNot: '^packages/domains/.+/-domain/[^/]+/' },
+      from: { path: '^(packages/domains/.+/_domain/[^/]+)/' },
       to: {
-        path: '^packages/domains/.+/-domain/[^/]+/',
-        pathNot: '^packages/domains/.+/-domain/[^/]+/\\$index\\.ts$',
+        path: '^packages/domains/.+/_domain/[^/]+/',
+        pathNot: ['^$1/', '^packages/domains/.+/_domain/[^/]+/index\\.ts$'],
+      },
+    },
+    {
+      name: 'module-folder-only-through-index-outside',
+      comment:
+        "From outside any module folder, a domain's module folder (DOM-25) is reachable only through its generated index.ts.",
+      severity: 'error',
+      from: { pathNot: '^packages/domains/.+/_domain/[^/]+/' },
+      to: {
+        path: '^packages/domains/.+/_domain/[^/]+/',
+        pathNot: '^packages/domains/.+/_domain/[^/]+/index\\.ts$',
       },
     },
     {
