@@ -1,4 +1,9 @@
 {
   "js/ts.tsdk.path": "node_modules/typescript/lib",
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/_domain/**/_*.ts"]
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/_domain/**/_*.ts"],
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "_*.ts": "${capture}.ts"
+  }
 }
