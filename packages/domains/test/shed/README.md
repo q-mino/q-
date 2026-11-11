@@ -20,7 +20,7 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
 4. Reads and streams.
 5. Use cases.
 6. Persona, auth, interface.
-7. Effects and outbox: the due-date reminder.
+7. Effects and outbox: the due-date reminder; the deadline as a fact, so that an overdue loan can enter a stream (no fact makes a loan overdue before then: time is not a fact, D68.3, D92.4).
 8. Reactions: "tool retired → cancel reservations".
 9. Processes: the repair after a damaged return.
 10. (optional) Fact translation; bulk operation with a cursor.
