@@ -9,12 +9,12 @@ import { registry as loans_registry } from '../loans/_domain/registry.ts'
 import type * as tools_fact from '../tools/_domain/fact.ts'
 import type * as tools_predicate from '../tools/_domain/predicate.ts'
 import type * as tools_selection from '../tools/_domain/selection/index.ts'
-import { add_a_tool, retire_a_tool } from '../tools/_domain/command.ts'
+import { add_a_tool, retire_a_tool } from '../tools/_domain/usecase.ts'
 import { the_catalogue } from '../tools/_domain/query.ts'
 import type * as loans_fact from '../loans/_domain/fact.ts'
 import type * as loans_predicate from '../loans/_domain/predicate.ts'
 import type * as loans_selection from '../loans/_domain/selection/index.ts'
-import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/_domain/command.ts'
+import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/_domain/usecase.ts'
 import {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
@@ -239,7 +239,10 @@ const read =
 
 export const sql_adapter = (database: Database) => ({
   tools: {
-    ...wlib.command_ports({ registry: tools_registry, commands: { add_a_tool, retire_a_tool } })({
+    ...wlib.use_case_ports({
+      registry: tools_registry,
+      use_cases: { add_a_tool, retire_a_tool },
+    })({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(database),
@@ -261,9 +264,9 @@ export const sql_adapter = (database: Database) => ({
     }),
   },
   loans: {
-    ...wlib.command_ports({
+    ...wlib.use_case_ports({
       registry: loans_registry,
-      commands: { borrow_a_tool, reserve_a_tool, return_a_tool },
+      use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
     })({
       algebra: algebra(loans_fragments),
       write: loans_writes,

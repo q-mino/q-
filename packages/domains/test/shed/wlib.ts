@@ -382,25 +382,25 @@ export type OutcomesOf<command> = command extends { [$Command]: { outcomes: infe
     : never
   : never
 
-type AllOutcomes<commands extends Commands> = OutcomesOf<commands[keyof commands]>
+/**
+ * Every predicate of a set of commands, command by command: the outcomes of
+ * two commands are two records, whose common keys would be none.
+ */
+type AllPredicates<commands extends Commands> = {
+  [name in keyof commands]: PredicatesOf<OutcomesOf<commands[name]>>
+}[keyof commands]
+
+/** Every fact of a set of commands, command by command. */
+type AllFacts<commands extends Commands> = {
+  [name in keyof commands]: FactsOf<OutcomesOf<commands[name]>>
+}[keyof commands]
 
 /** What a state adapter gives for a set of commands, of one or more domains. */
 export interface StateAdapter<commands extends Commands, fragment, write> {
-  readonly algebra: Algebra<PredicatesOf<AllOutcomes<commands>>, fragment>
-  readonly write: FactWrites<FactsOf<AllOutcomes<commands>>, write>
+  readonly algebra: Algebra<AllPredicates<commands>, fragment>
+  readonly write: FactWrites<AllFacts<commands>, write>
   readonly execute: Execute<fragment, write>
 }
-
-/** A command port: the input in, the typed outcome out. */
-export type CommandPort<command> = command extends {
-  [$Command]: { input: infer input; outcomes: infer outcomes }
-}
-  ? input extends z.ZodType
-    ? outcomes extends Outcomes
-      ? (context: CommandContext, input: z.input<input>) => Promise<CommandOutcome<outcomes>>
-      : never
-    : never
-  : never
 
 /**
  * A domain's path registry (DOM-24), generated in `registry.ts`: each path
@@ -409,18 +409,6 @@ export type CommandPort<command> = command extends {
  * component to its path, by object identity. One object, one path.
  */
 export type Registry = Readonly<Record<string, z.ZodType>>
-
-/**
- * The command ports of a set of commands over a state adapter, with the
- * registry where the library finds the paths of their predicates and facts.
- * Curried, so that the commands fix the types before the adapter is written.
- */
-export declare function command_ports<const commands extends Commands>(ports: {
-  readonly registry: Registry
-  readonly commands: commands
-}): <fragment, write>(
-  adapter: StateAdapter<commands, fragment, write>,
-) => { readonly [name in keyof commands]: CommandPort<commands[name]> }
 
 /** The components of a generated module that belong to a conventional module. */
 type ComponentsIn<module, conventional extends string> = {
@@ -673,7 +661,7 @@ export type QueryPort<query> =
 /**
  * The query ports of a set of queries over a read adapter, with the registry
  * where the library finds the paths of their selection predicates; curried as
- * `command_ports`.
+ * `use_case_ports`.
  */
 export declare function query_ports<const queries extends Queries>(ports: {
   readonly registry: Registry
@@ -783,3 +771,66 @@ export declare function stream_ports<
 ) => {
   readonly [name in keyof queries]: StreamPort<queries[name], FactsIn<registry>>
 }
+
+// ---------------------------------------------------------------------------
+// Use cases (DOM-2, DOM-3, DOM-4): a domain's only entry. Personas, reactions
+// and the effect executor reach a business domain through its use cases,
+// never through its ports: its command is sent only by the domain, in its own
+// store (DOM-8). A business use case does not know who asks (D85); what
+// depends on the caller is the persona's.
+
+export declare const $UseCase: unique symbol
+
+/**
+ * A command use case: the primary port of one command (DOM-4). In the
+ * trivial case it declares only its command, so that it is a declared
+ * boundary, not boilerplate: its input is the command's; its events are the
+ * command's outcome, the first event and a terminal one (D72.3). Parts of its
+ * own (an input and a creator, events after the outcome, their terminals)
+ * come with the case that composes something.
+ */
+export interface CommandUseCase<command extends Commands[string]> {
+  readonly [$UseCase]: { readonly command: command }
+}
+
+/** A command use case, declared in one argument whose parts have names (DOM-25). */
+export declare function command_use_case<const command extends Commands[string]>(use_case: {
+  readonly command: command
+}): CommandUseCase<command>
+
+/** The use cases of a domain, by name. */
+export type UseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>
+
+/** The commands the use cases run, under the use cases' names. */
+type CommandsOf<use_cases extends UseCases> = {
+  readonly [name in keyof use_cases]: use_cases[name][typeof $UseCase]['command']
+}
+
+/**
+ * A use case port: one message in, the stream of its events out (DOM-3). The
+ * stream ends after a terminal event; a consumer that stops listening does
+ * not cancel the command (D72.2).
+ */
+export type UseCasePort<use_case> = use_case extends {
+  [$UseCase]: { command: infer command }
+}
+  ? command extends { [$Command]: { input: infer input extends z.ZodType } }
+    ? (
+        context: CommandContext,
+        input: z.input<input>,
+      ) => AsyncIterable<CommandOutcome<OutcomesOf<command>>>
+    : never
+  : never
+
+/**
+ * The ports of a set of use cases over a state adapter for their commands,
+ * with the registry where the library finds the paths of their predicates and
+ * facts. Curried, so that the use cases fix the types before the adapter is
+ * written. The command ports stay inside the library.
+ */
+export declare function use_case_ports<const use_cases extends UseCases>(ports: {
+  readonly registry: Registry
+  readonly use_cases: use_cases
+}): <fragment, write>(
+  adapter: StateAdapter<CommandsOf<use_cases>, fragment, write>,
+) => { readonly [name in keyof use_cases]: UseCasePort<use_cases[name]> }

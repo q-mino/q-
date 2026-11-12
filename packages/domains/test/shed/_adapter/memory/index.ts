@@ -16,9 +16,9 @@
 import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../tools/_domain/registry.ts'
 import { registry as loans_registry } from '../../loans/_domain/registry.ts'
-import { add_a_tool, retire_a_tool } from '../../tools/_domain/command.ts'
+import { add_a_tool, retire_a_tool } from '../../tools/_domain/usecase.ts'
 import { the_catalogue } from '../../tools/_domain/query.ts'
-import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../../loans/_domain/command.ts'
+import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../../loans/_domain/usecase.ts'
 import {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
@@ -278,7 +278,10 @@ const stream =
 
 export const memory_adapter = (cell: Cell) => ({
   tools: {
-    ...wlib.command_ports({ registry: tools_registry, commands: { add_a_tool, retire_a_tool } })({
+    ...wlib.use_case_ports({
+      registry: tools_registry,
+      use_cases: { add_a_tool, retire_a_tool },
+    })({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(cell),
@@ -290,9 +293,9 @@ export const memory_adapter = (cell: Cell) => ({
     }),
   },
   loans: {
-    ...wlib.command_ports({
+    ...wlib.use_case_ports({
       registry: loans_registry,
-      commands: { borrow_a_tool, reserve_a_tool, return_a_tool },
+      use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
     })({
       algebra: algebra(loans_fragments),
       write: loans_writes,
