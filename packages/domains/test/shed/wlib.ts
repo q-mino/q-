@@ -649,34 +649,11 @@ export interface Snapshot<entry> {
   readonly position: position
 }
 
-/** A query port: the input in, the snapshot out. */
-export type QueryPort<query> =
-  QueryParts<query> extends {
-    input: infer input extends z.ZodType
-    fields: infer fields extends z.ZodObject
-  }
-    ? (context: Now, input: z.input<input>) => Promise<Snapshot<z.output<fields>>>
-    : never
-
-/**
- * The query ports of a set of queries over a read adapter, with the registry
- * where the library finds the paths of their selection predicates; curried as
- * `use_case_ports`.
- */
-export declare function query_ports<const queries extends Queries>(ports: {
-  readonly registry: Registry
-  readonly queries: queries
-}): <selection, source, field>(
-  adapter: ReadAdapter<queries, selection, source, field>,
-) => {
-  readonly [name in keyof queries]: QueryPort<queries[name]>
-}
-
 // ---------------------------------------------------------------------------
 // Streams (DOM-17): a query read as a stream of facts, from a position (D64.3).
-// No snapshot inside: a live view reads the query (its entries and position
-// P), then streams from P (D72). A stream ends when its consumer stops, or on
-// a terminal event.
+// An adapter's stream has no snapshot inside; the read use case composes the
+// read at P and the stream from P (D72). A stream ends when its consumer
+// stops, or on a terminal event.
 
 /**
  * The events of a stream, a closed ADT (DOM-3). Every event but the terminal
@@ -721,55 +698,44 @@ export type Stream<selection, source, field> = (
   plan: PlannedQuery<selection, source, field>,
 ) => (from: position) => AsyncIterable<StreamEvent<StoredEnvelope, unknown, unknown>>
 
-/** What an adapter gives to stream a set of queries: their reads, and the stream. */
-export interface StreamAdapter<
-  queries extends Queries,
-  selection,
-  source,
-  field,
-> extends ReadAdapter<queries, selection, source, field> {
-  readonly stream: Stream<selection, source, field>
-}
+/**
+ * An event of the fact log, an ADT: a fact recorded at its position; the end
+ * of what was recorded when the log was opened, once; or, terminal, a
+ * position the adapter keeps no longer (D73.3).
+ */
+export type LogEvent =
+  | { readonly event: 'fact'; readonly position: position; readonly fact: StoredEnvelope }
+  | { readonly event: 'caught_up'; readonly position: position }
+  | { readonly event: 'position_unavailable' }
 
 /**
- * A stream port: the input in, from a position; the events out, the facts
- * typed by the registry's, the entries by the query's fields, the identity by
- * its field.
+ * The adapter's fact log (DOM-17): the facts it records with their writes
+ * (DOM-8), from a position on, inclusive, then each new one as it is
+ * recorded. The library reads it to compose streams, and later to deliver
+ * facts to reactions (step 8).
  */
-export type StreamPort<query, facts extends Component> =
-  QueryParts<query> extends {
-    input: infer input extends z.ZodType
-    fields: infer fields extends z.ZodObject
-    identity: infer identity extends string
-  }
-    ? (
-        context: Now,
-        input: z.input<input>,
-        from: position,
-      ) => AsyncIterable<
-        StreamEvent<
-          Envelope<facts>,
-          z.output<fields>,
-          z.output<fields>[identity & keyof z.output<fields>]
-        >
-      >
-    : never
+export type FactLog = (from: position) => AsyncIterable<LogEvent>
 
 /**
- * The stream ports of a set of queries over a stream adapter: the facts a
- * stream can carry are the registry's (a stream reads the facts of a domain,
- * D64.1). Curried as `query_ports`.
+ * How an adapter streams a query (LIB-8), declared query by query, since
+ * whether a stream scales depends on the technology and the data, not on the
+ * business:
+ * - `native`: the adapter's own stream (the oracle, a replication);
+ * - `composed`: the library composes it from the adapter's read and fact
+ *   log. For each fact after P it reads the query again and compares the
+ *   entries with the previous ones by identity, as the oracle does (DOM-17):
+ *   an entry the fact touches and that stays is the fact, a new untouched one
+ *   entered, a missing one left. A whole read per fact of the domain: the
+ *   adapter's author chooses it for the queries where that is cheap.
+ * A query with no strategy is only read.
  */
-export declare function stream_ports<
-  const registry extends Registry,
-  const queries extends Queries,
->(ports: {
-  readonly registry: registry
-  readonly queries: queries
-}): <selection, source, field>(
-  adapter: StreamAdapter<queries, selection, source, field>,
-) => {
-  readonly [name in keyof queries]: StreamPort<queries[name], FactsIn<registry>>
+export type StreamStrategy<selection, source, field> =
+  | { readonly strategy: 'native'; readonly stream: Stream<selection, source, field> }
+  | { readonly strategy: 'composed'; readonly log: FactLog }
+
+/** The stream strategies of a set of queries, by name: a query may have none. */
+export type Streams<queries extends Queries, selection, source, field> = {
+  readonly [name in keyof queries]?: StreamStrategy<selection, source, field>
 }
 
 // ---------------------------------------------------------------------------
@@ -798,20 +764,20 @@ export declare function command_use_case<const command extends Commands[string]>
   readonly command: command
 }): CommandUseCase<command>
 
-/** The use cases of a domain, by name. */
-export type UseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>
+/** The command use cases of a domain, by name. */
+export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>
 
 /** The commands the use cases run, under the use cases' names. */
-type CommandsOf<use_cases extends UseCases> = {
+type CommandsOf<use_cases extends CommandUseCases> = {
   readonly [name in keyof use_cases]: use_cases[name][typeof $UseCase]['command']
 }
 
 /**
- * A use case port: one message in, the stream of its events out (DOM-3). The
- * stream ends after a terminal event; a consumer that stops listening does
- * not cancel the command (D72.2).
+ * A command use case port: one message in, the stream of its events out
+ * (DOM-3). The stream ends after a terminal event; a consumer that stops
+ * listening does not cancel the command (D72.2).
  */
-export type UseCasePort<use_case> = use_case extends {
+export type CommandUseCasePort<use_case> = use_case extends {
   [$UseCase]: { command: infer command }
 }
   ? command extends { [$Command]: { input: infer input extends z.ZodType } }
@@ -823,14 +789,119 @@ export type UseCasePort<use_case> = use_case extends {
   : never
 
 /**
- * The ports of a set of use cases over a state adapter for their commands,
- * with the registry where the library finds the paths of their predicates and
- * facts. Curried, so that the use cases fix the types before the adapter is
- * written. The command ports stay inside the library.
+ * The ports of a set of command use cases over a state adapter for their
+ * commands, with the registry where the library finds the paths of their
+ * predicates and facts. Curried, so that the use cases fix the types before
+ * the adapter is written. The command ports stay inside the library.
  */
-export declare function use_case_ports<const use_cases extends UseCases>(ports: {
+export declare function command_use_case_ports<const use_cases extends CommandUseCases>(ports: {
   readonly registry: Registry
   readonly use_cases: use_cases
 }): <fragment, write>(
   adapter: StateAdapter<CommandsOf<use_cases>, fragment, write>,
-) => { readonly [name in keyof use_cases]: UseCasePort<use_cases[name]> }
+) => { readonly [name in keyof use_cases]: CommandUseCasePort<use_cases[name]> }
+
+/**
+ * A read use case: the primary port of one query (DOM-2). One use case per
+ * query, always a stream: with no position, its first event is the snapshot
+ * (the entries and the position P they were read at, D66), then the events
+ * of the stream from P (DOM-17); from a position, the stream alone (a resume).
+ * The consumer takes what it needs and stops: the snapshot alone is a read,
+ * up to `caught_up` a review, on and on a live view (D72, D72.2). The library
+ * composes the read and the stream, so that a live view has no gap and no
+ * double. A query the adapter does not stream gives the snapshot alone.
+ */
+export interface ReadUseCase<query extends Queries[string]> {
+  readonly [$UseCase]: { readonly query: query }
+}
+
+/** A read use case, declared in one argument whose parts have names (DOM-25). */
+export declare function read_use_case<const query extends Queries[string]>(use_case: {
+  readonly query: query
+}): ReadUseCase<query>
+
+/** The read use cases of a domain, by name. */
+export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>>
+
+/** The queries the use cases read, under the use cases' names. */
+type QueriesOf<use_cases extends ReadUseCases> = {
+  readonly [name in keyof use_cases]: use_cases[name][typeof $UseCase]['query']
+}
+
+/** The first event of a read: the entries and the position read at. */
+export interface SnapshotEvent<entry> extends Snapshot<entry> {
+  readonly event: 'snapshot'
+}
+
+/** The events of a read use case that streams: the snapshot, then the stream's (DOM-17). */
+export type ReadEvent<envelope, entry, identity> =
+  SnapshotEvent<entry> | StreamEvent<envelope, entry, identity>
+
+/**
+ * A read use case port, typed by what its adapter gives: with a stream, the
+ * input and an optional position in, the snapshot and the stream out, the
+ * facts typed by the registry's, the entries by the query's fields, the
+ * identity by its field; with none, the input in, the snapshot alone out.
+ * `streamed` says which, at runtime and in the type: by subtyping a port that
+ * gives the snapshot alone would serve a consumer of every event, so a
+ * consumer that needs a live view asks for `streamed: true` (`Streamed`).
+ */
+export type ReadUseCasePort<query, facts extends Component, streamed extends boolean> =
+  QueryParts<query> extends {
+    input: infer input extends z.ZodType
+    fields: infer fields extends z.ZodObject
+    identity: infer identity extends string
+  }
+    ? streamed extends true
+      ? ((
+          context: Now,
+          input: z.input<input>,
+          from?: position,
+        ) => AsyncIterable<
+          ReadEvent<
+            Envelope<facts>,
+            z.output<fields>,
+            z.output<fields>[identity & keyof z.output<fields>]
+          >
+        >) &
+          Streamed
+      : ((
+          context: Now,
+          input: z.input<input>,
+        ) => AsyncIterable<SnapshotEvent<z.output<fields>>>) & { readonly streamed: false }
+    : never
+
+/** What a consumer of a live view asks of a read use case port. */
+export interface Streamed {
+  readonly streamed: true
+}
+
+/**
+ * The ports of a set of read use cases over a read adapter and the stream
+ * strategies it declares, with the registry where the library finds the
+ * paths of their selection predicates and of the facts a stream carries (a
+ * stream reads the facts of a domain, D64.1). Curried as
+ * `command_use_case_ports`.
+ */
+export declare function read_use_case_ports<
+  const registry extends Registry,
+  const use_cases extends ReadUseCases,
+>(ports: {
+  readonly registry: registry
+  readonly use_cases: use_cases
+}): <
+  selection,
+  source,
+  field,
+  const streams extends Streams<QueriesOf<use_cases>, selection, source, field>,
+>(
+  adapter: ReadAdapter<QueriesOf<use_cases>, selection, source, field> & {
+    readonly streams: streams
+  },
+) => {
+  readonly [name in keyof use_cases]: ReadUseCasePort<
+    QueriesOf<use_cases>[name],
+    FactsIn<registry>,
+    name extends keyof streams ? true : false
+  >
+}

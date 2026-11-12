@@ -3,22 +3,24 @@
 // predicates of `tools` that `loans` uses are fragments of the same adapter
 // (D71). Nothing runs: the database is a port, the library is wished.
 
+import { z } from 'zod'
 import * as wlib from '../wlib.ts'
 import { registry as tools_registry } from '../tools/_domain/registry.ts'
 import { registry as loans_registry } from '../loans/_domain/registry.ts'
 import type * as tools_fact from '../tools/_domain/fact.ts'
 import type * as tools_predicate from '../tools/_domain/predicate.ts'
 import type * as tools_selection from '../tools/_domain/selection/index.ts'
-import { add_a_tool, retire_a_tool } from '../tools/_domain/usecase.ts'
-import { the_catalogue } from '../tools/_domain/query.ts'
+import { add_a_tool, retire_a_tool, the_catalogue } from '../tools/_domain/usecase.ts'
 import type * as loans_fact from '../loans/_domain/fact.ts'
 import type * as loans_predicate from '../loans/_domain/predicate.ts'
 import type * as loans_selection from '../loans/_domain/selection/index.ts'
-import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../loans/_domain/usecase.ts'
 import {
+  borrow_a_tool,
+  reserve_a_tool,
+  return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../loans/_domain/query.ts'
+} from '../loans/_domain/usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {
@@ -63,6 +65,8 @@ const identifier = (name: string): sql => ({ text: `"${name}"`, values: [] })
 /** The database, a port. Its transactions are serializable. */
 export interface Database {
   readonly transaction: <result>(work: (tx: Transaction) => Promise<result>) => Promise<result>
+  /** Resolves when a fact after the position is recorded (`listen`/`notify`). */
+  readonly recorded: (after: wlib.position) => Promise<void>
 }
 export interface Transaction {
   /** One statement, one boolean per column: `select c1, c2, …`. */
@@ -197,7 +201,7 @@ const execute =
         // The fact is recorded with its write, in the same transaction (DOM-8).
         await [
           ...branch.write,
-          sql`insert into facts (path, payload) values (${branch.fact.path}, ${JSON.stringify(branch.fact.payload)})`,
+          sql`insert into facts (path, payload, resources) values (${branch.fact.path}, ${JSON.stringify(branch.fact.payload)}, ${JSON.stringify(branch.fact.resources)})`,
         ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
         return { outcome: 'applied', branch: applied, position: await tx.position() }
       }
@@ -235,11 +239,74 @@ const read =
       position: await tx.position(),
     }))
 
+/** A row of the facts table, its sequence the position (DOM-17). */
+const fact_row = z.strictObject({
+  sequence: wlib.position,
+  path: z.string(),
+  payload: z.string(),
+  resources: z.string(),
+})
+
+const resources = z.array(z.strictObject({ path: z.string(), value: z.unknown() }))
+
+const as_fact = (row: unknown): wlib.LogEvent => {
+  const fact = fact_row.parse(row)
+  const payload: unknown = JSON.parse(fact.payload)
+  const named: unknown = JSON.parse(fact.resources)
+  return {
+    event: 'fact',
+    position: fact.sequence,
+    fact: { path: fact.path, payload, resources: resources.parse(named) },
+  }
+}
+
+const facts_from = (database: Database) => (where: sql) =>
+  database.transaction((tx) =>
+    tx.rows(
+      sql`select sequence, path, payload, resources from facts where ${where} order by sequence`,
+    ),
+  )
+
+/**
+ * The fact log (DOM-17) over the facts table, which every command writes in
+ * its transaction: the facts from a position, inclusive, then each new one as
+ * `recorded` signals it. A position no longer in the table is unavailable
+ * (the table's retention is the adapter's).
+ */
+const log =
+  (database: Database): wlib.FactLog =>
+  (from) => {
+    const rows = facts_from(database)
+    async function* live(position: wlib.position): AsyncGenerator<wlib.LogEvent> {
+      await database.recorded(position)
+      const facts = (await rows(sql`sequence > ${position}`)).map(as_fact)
+      yield* facts
+      const last = facts.at(-1)
+      yield* live(last?.event === 'fact' ? last.position : position)
+    }
+    async function* from_position(): AsyncGenerator<wlib.LogEvent> {
+      const [kept] = await database.transaction((tx) =>
+        tx.booleans([sql`exists (select 1 from facts where sequence = ${from})`]),
+      )
+      if (kept !== true) {
+        yield { event: 'position_unavailable' }
+        return
+      }
+      const facts = (await rows(sql`sequence >= ${from}`)).map(as_fact)
+      yield* facts
+      const last = facts.at(-1)
+      const position = last?.event === 'fact' ? last.position : from
+      yield { event: 'caught_up', position }
+      yield* live(position)
+    }
+    return from_position()
+  }
+
 // The sources of the queries: where the candidates are, how each field reads.
 
 export const sql_adapter = (database: Database) => ({
   tools: {
-    ...wlib.use_case_ports({
+    ...wlib.command_use_case_ports({
       registry: tools_registry,
       use_cases: { add_a_tool, retire_a_tool },
     })({
@@ -247,7 +314,8 @@ export const sql_adapter = (database: Database) => ({
       write: tools_writes,
       execute: execute(database),
     }),
-    ...wlib.query_ports({ registry: tools_registry, queries: { the_catalogue } })({
+    // The catalogue is only read: a visitor reads it once, no case streams it.
+    ...wlib.read_use_case_ports({ registry: tools_registry, use_cases: { the_catalogue } })({
       algebra: algebra(tool_selection_fragments),
       sources: {
         the_catalogue: {
@@ -261,10 +329,11 @@ export const sql_adapter = (database: Database) => ({
         },
       },
       read: read(database),
+      streams: {},
     }),
   },
   loans: {
-    ...wlib.use_case_ports({
+    ...wlib.command_use_case_ports({
       registry: loans_registry,
       use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
     })({
@@ -272,9 +341,9 @@ export const sql_adapter = (database: Database) => ({
       write: loans_writes,
       execute: execute(database),
     }),
-    ...wlib.query_ports({
+    ...wlib.read_use_case_ports({
       registry: loans_registry,
-      queries: { the_ongoing_loans_of_a_member, the_reservations_of_a_member },
+      use_cases: { the_ongoing_loans_of_a_member, the_reservations_of_a_member },
     })({
       algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),
       sources: {
@@ -300,6 +369,11 @@ export const sql_adapter = (database: Database) => ({
         },
       },
       read: read(database),
+      // A member's loans and reservations are few: a whole read per fact is cheap.
+      streams: {
+        the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
+        the_reservations_of_a_member: { strategy: 'composed', log: log(database) },
+      },
     }),
   },
 })

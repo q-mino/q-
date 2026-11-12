@@ -17,3 +17,10 @@ export const add_a_tool = usecase.add_a_tool
  * @see {@link usecase.retire_a_tool}
  */
 export const retire_a_tool = usecase.retire_a_tool
+
+/**
+ * A visitor browses the catalogue: the garden tools, say, read once.
+ *
+ * @see {@link usecase.the_catalogue}
+ */
+export const the_catalogue = usecase.the_catalogue

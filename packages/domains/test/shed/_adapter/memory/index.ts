@@ -16,13 +16,14 @@
 import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../tools/_domain/registry.ts'
 import { registry as loans_registry } from '../../loans/_domain/registry.ts'
-import { add_a_tool, retire_a_tool } from '../../tools/_domain/usecase.ts'
-import { the_catalogue } from '../../tools/_domain/query.ts'
-import { borrow_a_tool, reserve_a_tool, return_a_tool } from '../../loans/_domain/usecase.ts'
+import { add_a_tool, retire_a_tool, the_catalogue } from '../../tools/_domain/usecase.ts'
 import {
+  borrow_a_tool,
+  reserve_a_tool,
+  return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../../loans/_domain/query.ts'
+} from '../../loans/_domain/usecase.ts'
 import type { Field, Selection, Source } from './fragments.ts'
 import {
   loan_selection,
@@ -276,9 +277,12 @@ const stream =
     return from_history()
   }
 
+/** The oracle streams every query natively: its stream is exact, state before and after each fact. */
+const native = (cell: Cell) => ({ strategy: 'native', stream: stream(cell) }) as const
+
 export const memory_adapter = (cell: Cell) => ({
   tools: {
-    ...wlib.use_case_ports({
+    ...wlib.command_use_case_ports({
       registry: tools_registry,
       use_cases: { add_a_tool, retire_a_tool },
     })({
@@ -286,14 +290,15 @@ export const memory_adapter = (cell: Cell) => ({
       write: tools_writes,
       execute: execute(cell),
     }),
-    ...wlib.query_ports({ registry: tools_registry, queries: { the_catalogue } })({
+    ...wlib.read_use_case_ports({ registry: tools_registry, use_cases: { the_catalogue } })({
       algebra: tool_selection,
       sources: tool_sources,
       read: read(cell),
+      streams: { the_catalogue: native(cell) },
     }),
   },
   loans: {
-    ...wlib.use_case_ports({
+    ...wlib.command_use_case_ports({
       registry: loans_registry,
       use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
     })({
@@ -301,33 +306,23 @@ export const memory_adapter = (cell: Cell) => ({
       write: loans_writes,
       execute: execute(cell),
     }),
-    ...wlib.query_ports({
+    ...wlib.read_use_case_ports({
       registry: loans_registry,
-      queries: { the_ongoing_loans_of_a_member },
+      use_cases: { the_ongoing_loans_of_a_member },
     })({
       algebra: loan_selection,
       sources: loan_sources,
       read: read(cell),
+      streams: { the_ongoing_loans_of_a_member: native(cell) },
     }),
-    ...wlib.query_ports({
+    ...wlib.read_use_case_ports({
       registry: loans_registry,
-      queries: { the_reservations_of_a_member },
+      use_cases: { the_reservations_of_a_member },
     })({
       algebra: reservation_selection,
       sources: reservation_sources,
       read: read(cell),
-    }),
-  },
-  /** The stream ports, apart: a stream has the name of its query. */
-  streams: {
-    loans: wlib.stream_ports({
-      registry: loans_registry,
-      queries: { the_ongoing_loans_of_a_member },
-    })({
-      algebra: loan_selection,
-      sources: loan_sources,
-      read: read(cell),
-      stream: stream(cell),
+      streams: { the_reservations_of_a_member: native(cell) },
     }),
   },
 })

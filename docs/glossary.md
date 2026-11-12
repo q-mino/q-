@@ -71,6 +71,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | reazione                                           | reaction                                            | policy (Event Storming)              |
 | processo                                           | process                                             | process manager, saga                |
 | lettura sul flusso · allineato                     | stream read · caught up                             | catch-up subscription                |
+| registro dei fatti · stream nativo · composto      | fact log · native · composed stream                 | event log, change data capture       |
 | traduzione (di un fatto)                           | translation                                         | upcasting                            |
 | proiezione                                         | projection                                          | read model                           |
 | persona · cappello                                 | persona · hat (the persona worn)                    |                                      |
