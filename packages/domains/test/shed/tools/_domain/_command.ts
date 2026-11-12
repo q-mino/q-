@@ -9,18 +9,16 @@ import { a_tool_has_this_id, the_tool_is_in_service, the_tool_is_retired } from 
 import { tool_id } from './id.ts'
 import { category, notes, retire_reason, tool_name } from './value.ts'
 
-export const add_a_tool_input = z.strictObject({
-  id: tool_id,
-  name: tool_name,
-  category: category,
-  notes: notes.optional(),
-})
-
 /** No tool of the catalogue has the requested id. */
 export const the_tool_is_new = wlib.NOT(a_tool_has_this_id)
 
 export const add_a_tool = wlib.command({
-  input: add_a_tool_input,
+  input: z.strictObject({
+    id: tool_id,
+    name: tool_name,
+    category: category,
+    notes: notes.optional(),
+  }),
   outcomes: {
     the_tool_is_new_so_it_is_added: [the_tool_is_new, a_tool_has_been_added],
   },
@@ -30,12 +28,6 @@ export const add_a_tool = wlib.command({
       { added_tool: { ...input, status: 'inService', addDate: commandContext.now } },
     ],
   }),
-})
-
-export const retire_a_tool_input = z.strictObject({
-  id: tool_id,
-  reason: retire_reason,
-  notes: notes.optional(),
 })
 
 /** The requested tool is in the catalogue and in service. */
@@ -51,7 +43,11 @@ export const the_tool_is_already_retired = wlib.AND({
 })
 
 export const retire_a_tool = wlib.command({
-  input: retire_a_tool_input,
+  input: z.strictObject({
+    id: tool_id,
+    reason: retire_reason,
+    notes: notes.optional(),
+  }),
   outcomes: {
     the_tool_is_in_service_so_it_is_retired: [the_tool_can_be_retired, a_tool_has_been_retired],
     the_tool_is_already_retired_so_nothing_changes: [

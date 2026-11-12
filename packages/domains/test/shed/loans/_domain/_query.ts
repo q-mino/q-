@@ -5,10 +5,6 @@ import * as selection from './selection/index.ts'
 import { member_id } from './id.ts'
 import { ongoing_loan_entry, reservation_entry } from './value.ts'
 
-export const the_ongoing_loans_of_a_member_input = z.strictObject({
-  member_id: member_id,
-})
-
 /** The loan is ongoing and the member has the tool. */
 export const the_loan_is_ongoing_for_the_member = wlib.AND({
   the_loan_is_ongoing: selection.loan.the_loan_is_ongoing,
@@ -17,7 +13,9 @@ export const the_loan_is_ongoing_for_the_member = wlib.AND({
 
 /** The tools a member has: the ongoing loans, the closest due date first. */
 export const the_ongoing_loans_of_a_member = wlib.query({
-  input: the_ongoing_loans_of_a_member_input,
+  input: z.strictObject({
+    member_id: member_id,
+  }),
   fields: ongoing_loan_entry,
   identity: 'id',
   selection: the_loan_is_ongoing_for_the_member,
@@ -26,10 +24,6 @@ export const the_ongoing_loans_of_a_member = wlib.query({
     the_loan_is_ongoing: {},
     the_loan_is_of_the_member: { member_id: input.member_id },
   }),
-})
-
-export const the_reservations_of_a_member_input = z.strictObject({
-  member_id: member_id,
 })
 
 /** The reservation is in force, the member's, for today or a later day. */
@@ -41,7 +35,9 @@ export const the_reservation_is_ahead_for_the_member = wlib.AND({
 
 /** The member's reservations from today on, the closest day first. */
 export const the_reservations_of_a_member = wlib.query({
-  input: the_reservations_of_a_member_input,
+  input: z.strictObject({
+    member_id: member_id,
+  }),
   fields: reservation_entry,
   identity: 'id',
   selection: the_reservation_is_ahead_for_the_member,

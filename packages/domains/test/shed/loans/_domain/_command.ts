@@ -25,12 +25,6 @@ import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on
 import { loan_id, member_id, reservation_id } from './id.ts'
 import { return_condition } from './value.ts'
 
-export const borrow_a_tool_input = z.strictObject({
-  loan_id: loan_id,
-  tool_id: tool_id,
-  member_id: member_id,
-})
-
 /** The tool can be lent: named components, bound one by one by the creator. */
 export const the_tool_can_be_lent = wlib.AND({
   a_loan_has_not_the_requested_id: wlib.NOT(a_loan_has_this_id),
@@ -40,7 +34,11 @@ export const the_tool_can_be_lent = wlib.AND({
 })
 
 export const borrow_a_tool = wlib.command({
-  input: borrow_a_tool_input,
+  input: z.strictObject({
+    loan_id: loan_id,
+    tool_id: tool_id,
+    member_id: member_id,
+  }),
   outcomes: {
     the_tool_is_available_so_it_is_lent: [the_tool_can_be_lent, a_tool_has_been_lent],
     the_member_already_has_the_tool_so_nothing_changes: [
@@ -74,19 +72,6 @@ export const borrow_a_tool = wlib.command({
   }),
 })
 
-/** The day is validated against the clock: the schema needs `now`, nothing else. */
-export const reserve_a_tool_input = (context: wlib.Now) =>
-  z
-    .strictObject({
-      reservation_id: reservation_id,
-      tool_id: tool_id,
-      member_id: member_id,
-      day: wlib.day,
-    })
-    .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
-      path: ['day'],
-    })
-
 /** The tool can be booked for the day. */
 export const the_tool_can_be_booked = wlib.AND({
   a_reservation_has_not_the_requested_id: wlib.NOT(a_reservation_has_this_id),
@@ -96,7 +81,18 @@ export const the_tool_can_be_booked = wlib.AND({
 })
 
 export const reserve_a_tool = wlib.command({
-  input: reserve_a_tool_input,
+  /** The day is validated against the clock: the schema needs `now`, nothing else. */
+  input: (context: wlib.Now) =>
+    z
+      .strictObject({
+        reservation_id: reservation_id,
+        tool_id: tool_id,
+        member_id: member_id,
+        day: wlib.day,
+      })
+      .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
+        path: ['day'],
+      }),
   outcomes: {
     the_tool_is_free_that_day_so_it_is_booked: [the_tool_can_be_booked, a_tool_has_been_booked],
     the_member_already_booked_the_tool_so_nothing_changes: [
@@ -130,11 +126,6 @@ export const reserve_a_tool = wlib.command({
   }),
 })
 
-export const return_a_tool_input = z.strictObject({
-  loan_id: loan_id,
-  condition: return_condition,
-})
-
 /** The requested loan exists and is ongoing. */
 export const the_loan_can_be_returned = wlib.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
@@ -148,7 +139,10 @@ export const the_loan_is_already_returned = wlib.AND({
 })
 
 export const return_a_tool = wlib.command({
-  input: return_a_tool_input,
+  input: z.strictObject({
+    loan_id: loan_id,
+    condition: return_condition,
+  }),
   outcomes: {
     the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, a_tool_has_been_returned],
     the_loan_was_already_returned_so_nothing_changes: [

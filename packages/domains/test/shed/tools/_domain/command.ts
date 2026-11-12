@@ -7,12 +7,6 @@ import { z } from 'zod'
 import * as command from './_command.ts'
 
 /**
- * @see {@link command.add_a_tool_input}
- */
-export const add_a_tool_input = command.add_a_tool_input
-export type add_a_tool_input = z.output<typeof add_a_tool_input>
-
-/**
  * No tool of the catalogue has the requested id.
  *
  * @see {@link command.the_tool_is_new}
@@ -26,10 +20,12 @@ export type the_tool_is_new = z.output<typeof the_tool_is_new>
 export const add_a_tool = command.add_a_tool
 
 /**
- * @see {@link command.retire_a_tool_input}
+ * The input of `add_a_tool`, declared inline.
+ *
+ * @see {@link command.add_a_tool}
  */
-export const retire_a_tool_input = command.retire_a_tool_input
-export type retire_a_tool_input = z.output<typeof retire_a_tool_input>
+export const add_a_tool_input = command.add_a_tool.input
+export type add_a_tool_input = z.output<typeof add_a_tool_input>
 
 /**
  * The requested tool is in the catalogue and in service.
@@ -51,3 +47,11 @@ export type the_tool_is_already_retired = z.output<typeof the_tool_is_already_re
  * @see {@link command.retire_a_tool}
  */
 export const retire_a_tool = command.retire_a_tool
+
+/**
+ * The input of `retire_a_tool`, declared inline.
+ *
+ * @see {@link command.retire_a_tool}
+ */
+export const retire_a_tool_input = command.retire_a_tool.input
+export type retire_a_tool_input = z.output<typeof retire_a_tool_input>

@@ -172,17 +172,6 @@ export type CommandCreator<inputSchema extends z.ZodType, outcomes extends Outco
   commandContext: CommandContext,
 ) => (input: z.output<inputSchema>) => ResolvedOutcomes<outcomes>
 
-export declare const $Command: unique symbol
-export type Command<inputSchema extends z.ZodType, outcomes extends Outcomes> = CommandCreator<
-  inputSchema,
-  outcomes
-> & {
-  [$Command]: {
-    input: inputSchema
-    outcomes: outcomes
-  }
-}
-
 /**
  * A command's input: a schema, or a function of the part of the context its
  * validation needs (a static rule over `now`). The library builds it before
@@ -190,6 +179,34 @@ export type Command<inputSchema extends z.ZodType, outcomes extends Outcomes> = 
  */
 export type CommandInput<inputSchema extends z.ZodType> =
   inputSchema | ((commandContext: CommandContext) => inputSchema)
+
+/**
+ * The schema of an input declared as a schema or as a function of a context
+ * (DOM-21): the schema, or what the function returns.
+ */
+export type SchemaOf<input> = input extends z.ZodType
+  ? input
+  : input extends (context: never) => infer schema
+    ? schema extends z.ZodType
+      ? schema
+      : never
+    : never
+
+export declare const $Command: unique symbol
+/**
+ * A command: its creator, its input as declared (`input`), from which the
+ * generator writes `<command>_input` (DOM-25), and its parts for the library.
+ */
+export type Command<
+  input extends CommandInput<z.ZodType>,
+  outcomes extends Outcomes,
+> = CommandCreator<SchemaOf<input>, outcomes> & {
+  readonly input: input
+  [$Command]: {
+    input: SchemaOf<input>
+    outcomes: outcomes
+  }
+}
 
 /**
  * Branches whose conditions are made of predicates and whose facts are facts
@@ -207,18 +224,19 @@ export type PredicatesAndFacts<outcomes extends Outcomes> = [
     }
 
 /**
- * A command, declared in one argument whose parts have names: the input, the
- * branches, and last the creator that binds them. DOM-25. Its conditions are
- * made of predicates and its facts are facts, checked by type.
+ * A command, declared in one argument whose parts have names: the input,
+ * declared inline, the branches, and last the creator that binds them. DOM-25.
+ * Its conditions are made of predicates and its facts are facts, checked by
+ * type.
  */
 export declare function command<
-  inputSchema extends z.ZodType,
+  const input extends CommandInput<z.ZodType>,
   const outcomes extends Outcomes,
 >(command: {
-  readonly input: CommandInput<inputSchema>
+  readonly input: input
   readonly outcomes: outcomes & PredicatesAndFacts<outcomes>
-  readonly creator: CommandCreator<inputSchema, outcomes>
-}): Command<inputSchema, outcomes>
+  readonly creator: CommandCreator<SchemaOf<input>, outcomes>
+}): Command<input, outcomes>
 
 // ---------------------------------------------------------------------------
 // Adapters (LIB-14): typed tools to implement the command port. The library
@@ -528,33 +546,38 @@ export type QueryCreator<inputSchema extends z.ZodType, selection extends Condit
 ) => (input: z.output<inputSchema>) => ConditionInput<selection>
 
 export declare const $Query: unique symbol
+/**
+ * A query: its creator, its input as declared (`input`), from which the
+ * generator writes `<query>_input` (DOM-25), and its parts for the library.
+ */
 export type Query<
-  inputSchema extends z.ZodType,
+  input extends QueryInput<z.ZodType>,
   fields extends z.ZodObject,
   identity extends string,
   selection extends Condition,
-> = QueryCreator<inputSchema, selection> & {
-  [$Query]: { input: inputSchema } & QueryShape<fields, identity, selection>
+> = QueryCreator<SchemaOf<input>, selection> & {
+  readonly input: input
+  [$Query]: { input: SchemaOf<input> } & QueryShape<fields, identity, selection>
 }
 
 /**
- * A query, declared in one argument whose parts have names: the input, the
- * fields, the identity, the selection, the order, and last the creator that
- * binds the selection. DOM-25. Its identity is a field whose value is an
- * identity, and the leaves of its selection come from one subject, checked
- * by type (DOM-18).
+ * A query, declared in one argument whose parts have names: the input,
+ * declared inline, the fields, the identity, the selection, the order, and
+ * last the creator that binds the selection. DOM-25. Its identity is a field
+ * whose value is an identity, and the leaves of its selection come from one
+ * subject, checked by type (DOM-18).
  */
 export declare function query<
-  inputSchema extends z.ZodType,
+  const input extends QueryInput<z.ZodType>,
   fields extends z.ZodObject,
   const identity extends IdentityFields<fields>,
   const selection extends Condition,
 >(
-  query: { readonly input: QueryInput<inputSchema> } & QueryShape<fields, identity, selection> & {
+  query: { readonly input: input } & QueryShape<fields, identity, selection> & {
       readonly selection: OneSubject<selection>
-      readonly creator: QueryCreator<inputSchema, selection>
+      readonly creator: QueryCreator<SchemaOf<input>, selection>
     },
-): Query<inputSchema, fields, identity, selection>
+): Query<input, fields, identity, selection>
 
 // Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
 // per selection predicate, one source per query, one read. No concept of

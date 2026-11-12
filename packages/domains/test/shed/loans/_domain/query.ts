@@ -7,14 +7,6 @@ import { z } from 'zod'
 import * as query from './_query.ts'
 
 /**
- * @see {@link query.the_ongoing_loans_of_a_member_input}
- */
-export const the_ongoing_loans_of_a_member_input = query.the_ongoing_loans_of_a_member_input
-export type the_ongoing_loans_of_a_member_input = z.output<
-  typeof the_ongoing_loans_of_a_member_input
->
-
-/**
  * The loan is ongoing and the member has the tool.
  *
  * @see {@link query.the_loan_is_ongoing_for_the_member}
@@ -30,10 +22,14 @@ export type the_loan_is_ongoing_for_the_member = z.output<typeof the_loan_is_ong
 export const the_ongoing_loans_of_a_member = query.the_ongoing_loans_of_a_member
 
 /**
- * @see {@link query.the_reservations_of_a_member_input}
+ * The input of `the_ongoing_loans_of_a_member`, declared inline.
+ *
+ * @see {@link query.the_ongoing_loans_of_a_member}
  */
-export const the_reservations_of_a_member_input = query.the_reservations_of_a_member_input
-export type the_reservations_of_a_member_input = z.output<typeof the_reservations_of_a_member_input>
+export const the_ongoing_loans_of_a_member_input = query.the_ongoing_loans_of_a_member.input
+export type the_ongoing_loans_of_a_member_input = z.output<
+  typeof the_ongoing_loans_of_a_member_input
+>
 
 /**
  * The reservation is in force, the member's, for today or a later day.
@@ -51,3 +47,11 @@ export type the_reservation_is_ahead_for_the_member = z.output<
  * @see {@link query.the_reservations_of_a_member}
  */
 export const the_reservations_of_a_member = query.the_reservations_of_a_member
+
+/**
+ * The input of `the_reservations_of_a_member`, declared inline.
+ *
+ * @see {@link query.the_reservations_of_a_member}
+ */
+export const the_reservations_of_a_member_input = query.the_reservations_of_a_member.input
+export type the_reservations_of_a_member_input = z.output<typeof the_reservations_of_a_member_input>

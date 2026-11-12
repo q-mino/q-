@@ -3,13 +3,6 @@ import * as wlib from '../../wlib.ts'
 import * as selection from './selection/index.ts'
 import { catalogue_entry, category } from './value.ts'
 
-export const the_catalogue_input = z.strictObject({
-  categories: z
-    .array(category)
-    .min(1)
-    .default([...category.options]),
-})
-
 /** The tool is in service and in a chosen category. */
 export const the_tool_is_shown_in_the_catalogue = wlib.AND({
   the_tool_is_in_service: selection.tool.the_tool_is_in_service,
@@ -22,7 +15,12 @@ export const the_tool_is_shown_in_the_catalogue = wlib.AND({
  * identity, closes the order.
  */
 export const the_catalogue = wlib.query({
-  input: the_catalogue_input,
+  input: z.strictObject({
+    categories: z
+      .array(category)
+      .min(1)
+      .default([...category.options]),
+  }),
   fields: catalogue_entry,
   identity: 'id',
   selection: the_tool_is_shown_in_the_catalogue,

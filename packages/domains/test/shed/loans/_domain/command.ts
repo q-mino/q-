@@ -7,12 +7,6 @@ import { z } from 'zod'
 import * as command from './_command.ts'
 
 /**
- * @see {@link command.borrow_a_tool_input}
- */
-export const borrow_a_tool_input = command.borrow_a_tool_input
-export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
-
-/**
  * The tool can be lent: named components, bound one by one by the creator.
  *
  * @see {@link command.the_tool_can_be_lent}
@@ -26,12 +20,12 @@ export type the_tool_can_be_lent = z.output<typeof the_tool_can_be_lent>
 export const borrow_a_tool = command.borrow_a_tool
 
 /**
- * The day is validated against the clock: the schema needs `now`, nothing else.
+ * The input of `borrow_a_tool`, declared inline.
  *
- * @see {@link command.reserve_a_tool_input}
+ * @see {@link command.borrow_a_tool}
  */
-export const reserve_a_tool_input = command.reserve_a_tool_input
-export type reserve_a_tool_input = z.output<ReturnType<typeof reserve_a_tool_input>>
+export const borrow_a_tool_input = command.borrow_a_tool.input
+export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
 
 /**
  * The tool can be booked for the day.
@@ -47,10 +41,13 @@ export type the_tool_can_be_booked = z.output<typeof the_tool_can_be_booked>
 export const reserve_a_tool = command.reserve_a_tool
 
 /**
- * @see {@link command.return_a_tool_input}
+ * The input of `reserve_a_tool`, declared inline. The day is validated
+ * against the clock: the schema needs `now`, nothing else.
+ *
+ * @see {@link command.reserve_a_tool}
  */
-export const return_a_tool_input = command.return_a_tool_input
-export type return_a_tool_input = z.output<typeof return_a_tool_input>
+export const reserve_a_tool_input = command.reserve_a_tool.input
+export type reserve_a_tool_input = z.output<ReturnType<typeof reserve_a_tool_input>>
 
 /**
  * The requested loan exists and is ongoing.
@@ -72,3 +69,11 @@ export type the_loan_is_already_returned = z.output<typeof the_loan_is_already_r
  * @see {@link command.return_a_tool}
  */
 export const return_a_tool = command.return_a_tool
+
+/**
+ * The input of `return_a_tool`, declared inline.
+ *
+ * @see {@link command.return_a_tool}
+ */
+export const return_a_tool_input = command.return_a_tool.input
+export type return_a_tool_input = z.output<typeof return_a_tool_input>
