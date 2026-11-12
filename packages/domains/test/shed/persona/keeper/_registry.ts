@@ -1,7 +1,8 @@
 // generated
 
 // The path registry of `keeper` (DOM-24): every path with its component, in
-// the order of the modules. The hat is the first segment (PER-7).
+// the order of the files. The hat is the persona's segment, after its kind's
+// folder (PER-7, DOM-25).
 
 import type * as wlib from '../../wlib.ts'
 import * as usecase from './_usecase.ts'

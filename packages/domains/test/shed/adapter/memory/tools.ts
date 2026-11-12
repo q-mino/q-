@@ -5,7 +5,7 @@
 import type * as wlib from '../../wlib.ts'
 import type * as tools_fact from '../../business/tools/_fact.ts'
 import type * as tools_predicate from '../../business/tools/_predicate.ts'
-import type * as tools_selection from '../../business/tools/@selection/_index.ts'
+import type * as tool_selections from '../../business/tools/_tool_selection.ts'
 import type { tool_id } from '../../business/tools/_id.ts'
 import type { tool } from '../../business/tools/_value.ts'
 import {
@@ -36,7 +36,7 @@ export const tools_fragments: wlib.PredicateFragments<
 // The reads of the subject `business/tools/selection/tool`: a tool of the catalogue.
 
 export const tool_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof tools_selection.tool>,
+  wlib.SelectionsIn<typeof tool_selections>,
   Selection<ToolsState, tool>
 > = {
   ...selection_operators<ToolsState, tool>(),

@@ -48,14 +48,14 @@ module.exports = {
       },
     },
     {
-      name: 'shed-persona-through-use-cases',
+      name: 'shed-persona-through-doors',
       comment:
-        'Shed: a persona imports of a business domain only its use cases and identities, _usecase.ts and _id.ts, never its commands or queries (DOM-2, GR-1), and nothing of another persona.',
+        'Shed: a persona imports of a business domain only its door, _index.ts, which exposes its use cases and identities and nothing else (DOM-2, DOM-25, GR-1), and nothing of another persona.',
       severity: 'error',
       from: { path: `${shed}persona/([^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/_(?:usecase|id)\\.ts$`],
+        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/_index\\.ts$`],
       },
     },
     {
@@ -73,28 +73,6 @@ module.exports = {
       severity: 'error',
       from: { pathNot: '/_[^/]+\\.ts$' },
       to: { path: '/@[^/]+\\.ts$' },
-    },
-    {
-      name: 'module-folder-only-through-index-inside',
-      comment:
-        "A domain's module folder (@selection/, DOM-25) is reachable from another folder only through its generated _index.ts.",
-      severity: 'error',
-      from: { path: '^(packages/domains/.+/@[^/]+)/' },
-      to: {
-        path: '^packages/domains/.+/@[^/]+/',
-        pathNot: ['^$1/', '^packages/domains/.+/@[^/]+/_index\\.ts$'],
-      },
-    },
-    {
-      name: 'module-folder-only-through-index-outside',
-      comment:
-        "From outside any module folder, a domain's module folder (@selection/, DOM-25) is reachable only through its generated _index.ts.",
-      severity: 'error',
-      from: { pathNot: '^packages/domains/.+/@[^/]+/' },
-      to: {
-        path: '^packages/domains/.+/@[^/]+/',
-        pathNot: '^packages/domains/.+/@[^/]+/_index\\.ts$',
-      },
     },
     {
       name: 'no-circular',

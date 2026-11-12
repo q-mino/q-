@@ -10,7 +10,8 @@ import * as fact from './_fact.ts'
 import * as id from './_id.ts'
 import * as predicate from './_predicate.ts'
 import * as query from './_query.ts'
-import * as selection from './@selection/_index.ts'
+import * as loan_selection from './_loan_selection.ts'
+import * as reservation_selection from './_reservation_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
 
@@ -63,15 +64,15 @@ export const registry = {
   'business/loans/command/the_loan_is_already_returned': command.the_loan_is_already_returned,
   'business/loans/command/return_a_tool': command.return_a_tool,
   'business/loans/command/return_a_tool_input': command.return_a_tool_input,
-  'business/loans/selection/loan/the_loan_is_ongoing': selection.loan.the_loan_is_ongoing,
+  'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
-    selection.loan.the_loan_is_of_this_member,
+    loan_selection.the_loan_is_of_this_member,
   'business/loans/selection/reservation/the_reservation_is_booked':
-    selection.reservation.the_reservation_is_booked,
+    reservation_selection.the_reservation_is_booked,
   'business/loans/selection/reservation/the_reservation_is_of_this_member':
-    selection.reservation.the_reservation_is_of_this_member,
+    reservation_selection.the_reservation_is_of_this_member,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
-    selection.reservation.the_reservation_is_from_this_day_on,
+    reservation_selection.the_reservation_is_from_this_day_on,
   'business/loans/query/the_loan_is_ongoing_for_the_member':
     query.the_loan_is_ongoing_for_the_member,
   'business/loans/query/the_ongoing_loans_of_a_member': query.the_ongoing_loans_of_a_member,

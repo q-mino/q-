@@ -14,7 +14,8 @@ import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
 } from '../../business/loans/_query.ts'
-import type * as loans_selection from '../../business/loans/@selection/_index.ts'
+import type * as loan_selections from '../../business/loans/_loan_selection.ts'
+import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
 import type { tool_id } from '../../business/tools/_id.ts'
 import * as tools_dsl from '../../business/tools/_dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
@@ -80,7 +81,7 @@ const the_name_of_the_tool =
 // The reads of the subject `business/loans/selection/loan`: a loan.
 
 export const loan_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof loans_selection.loan>,
+  wlib.SelectionsIn<typeof loan_selections>,
   Selection<Reads, loan>
 > = {
   ...selection_operators<Reads, loan>(),
@@ -116,7 +117,7 @@ export const loan_sources: {
 // The reads of the subject `business/loans/selection/reservation`: a reservation.
 
 export const reservation_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof loans_selection.reservation>,
+  wlib.SelectionsIn<typeof reservation_selections>,
   Selection<Reads, reservation>
 > = {
   ...selection_operators<Reads, reservation>(),

@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { tool_id } from '../../business/tools/_id.ts'
-import * as tools from '../../business/tools/_usecase.ts'
+import * as tools from '../../business/tools/_index.ts'
 import { notes, retirement_reason } from './_value.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
@@ -13,14 +12,14 @@ import { notes, retirement_reason } from './_value.ts'
 export const retire_a_tool = wlib.command_use_case_over({
   use_case: tools.retire_a_tool,
   input: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.tool_id,
     reason: retirement_reason,
     notes: notes.optional(),
   }),
   creator: () => (input) => ({ id: input.tool_id, reason: input.reason, notes: input.notes }),
   events: {
-    the_tool_is_retired: z.strictObject({ tool_id: tool_id, date: wlib.date_time_string }),
-    the_tool_was_already_retired: z.strictObject({ tool_id: tool_id }),
+    the_tool_is_retired: z.strictObject({ tool_id: tools.tool_id, date: wlib.date_time_string }),
+    the_tool_was_already_retired: z.strictObject({ tool_id: tools.tool_id }),
     /** The keeper knows which tool they asked for: no need to say it back. */
     there_is_no_such_tool: z.strictObject({}),
   },

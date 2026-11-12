@@ -10,7 +10,7 @@ import * as fact from './_fact.ts'
 import * as id from './_id.ts'
 import * as predicate from './_predicate.ts'
 import * as query from './_query.ts'
-import * as selection from './@selection/_index.ts'
+import * as tool_selection from './_tool_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
 
@@ -39,9 +39,9 @@ export const registry = {
   'business/tools/command/the_tool_is_already_retired': command.the_tool_is_already_retired,
   'business/tools/command/retire_a_tool': command.retire_a_tool,
   'business/tools/command/retire_a_tool_input': command.retire_a_tool_input,
-  'business/tools/selection/tool/the_tool_is_in_service': selection.tool.the_tool_is_in_service,
+  'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
-    selection.tool.the_tool_is_in_one_of_these_categories,
+    tool_selection.the_tool_is_in_one_of_these_categories,
   'business/tools/query/the_tool_is_shown_in_the_catalogue':
     query.the_tool_is_shown_in_the_catalogue,
   'business/tools/query/the_catalogue': query.the_catalogue,

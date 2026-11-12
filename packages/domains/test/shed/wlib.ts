@@ -29,11 +29,45 @@ export interface CommandContext extends Now {
 }
 
 /**
- * The path of a component (DOM-24): its domain, folders, conventional module
- * and name, as in `business/tools/fact/a_tool_has_been_added`. A folder is never named
- * as a conventional module.
+ * The path of a component (DOM-24, DOM-25): its folders from the root, the
+ * kind of its construct, which its builder gives, and its export's name, as
+ * in `business/tools/fact/a_tool_has_been_added`; the file it sits in is not
+ * in it. No folder is named as a kind.
  */
-export type Path<module extends string> = `${string}/${module}/${string}`
+export type Path<kind extends string> = `${string}/${kind}/${string}`
+
+// ---------------------------------------------------------------------------
+// The builders of the components (DOM-25): an export built by a builder of the
+// library is a component, and its builder gives the kind of its construct,
+// the segment of its path after its folders; an exported zod schema is a value
+// (DOM-21); the rest (the functions of `dsl`, helpers) the library ignores. The
+// generator imports the authored files, which are pure, and finds the
+// components by their builder: the files are named and grouped as the author
+// likes. Each returns what it is given, for the generator to brand.
+
+/** An identity (DOM-24): the format of the values that name an instance. */
+export declare function id<const format extends z.ZodType>(id: { readonly format: format }): format
+
+/** A fact (DOM-5): its payload, at least every value its change writes. */
+export declare function fact<const payload extends z.ZodObject>(fact: {
+  readonly payload: payload
+}): payload
+
+/** A predicate, a word of the conditions (DOM-5): the schema of its parameters. */
+export declare function predicate<const parameters extends z.ZodObject>(predicate: {
+  readonly parameters: parameters
+}): parameters
+
+/**
+ * A selection predicate (DOM-18): a predicate over the candidate of a query,
+ * which it does not name, and of its subject, a view named by the business,
+ * which the generator writes after the kind
+ * (`business/loans/selection/loan/the_loan_is_ongoing`).
+ */
+export declare function selection<const parameters extends z.ZodObject>(selection: {
+  readonly subject: string
+  readonly parameters: parameters
+}): parameters
 
 /**
  * A component of a domain that the library meets: a fact, a predicate, a
@@ -51,8 +85,8 @@ export type PathOf<schema> = schema extends { _zod: { output: { [z.core.$brand]:
   : never
 
 /**
- * The path of a selection predicate (DOM-18): the module `selection` has one
- * file per subject, so its subject's segment comes before its name.
+ * The path of a selection predicate (DOM-18): its builder declares its
+ * subject, which the generator writes after the kind, before its name.
  */
 type SelectionPath = `${string}/selection/${string}/${string}`
 
@@ -426,10 +460,10 @@ export type RegistryEntry =
   | ReadUseCase<Queries[string]>
   | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
 
-/** The components of a generated module that belong to a conventional module. */
-type ComponentsIn<module, conventional extends string> = {
+/** The components of a generated module of one kind. */
+type ComponentsIn<module, kind extends string> = {
   [name in keyof module]: module[name] extends Component
-    ? PathOf<module[name]> extends Path<conventional>
+    ? PathOf<module[name]> extends Path<kind>
       ? module[name]
       : never
     : never
@@ -438,7 +472,7 @@ type ComponentsIn<module, conventional extends string> = {
 /** The predicates declared in a generated module (`_predicate.ts`), for an adapter's fragments. */
 export type PredicatesIn<module> = ComponentsIn<module, 'predicate'>
 
-/** The selection predicates of a subject, from its generated module (`@selection/_loan.ts`), for an adapter's fragments. */
+/** The selection predicates of a generated module (`_loan_selection.ts`, one subject in Shed), for an adapter's fragments. */
 export type SelectionsIn<module> = ComponentsIn<module, 'selection'>
 
 /** The facts declared in a generated module (`_fact.ts`), for an adapter's writes. */
@@ -483,9 +517,9 @@ export type IdentityFields<fields extends z.ZodObject> = {
 
 /**
  * The subject of a selection predicate (DOM-18): its path up to the segment
- * after the module `selection`, the subject's file (`business/loans/selection/loan`);
- * a subject that grows into a folder keeps it. No folder is named `selection`
- * before the module (DOM-24). The library knows the subject only by this
+ * after the kind `selection`, the subject its builder declares
+ * (`business/loans/selection/loan`). No folder is named `selection`, as no
+ * folder is named as a kind (DOM-24). The library knows the subject only by this
  * path: what it is and where its candidates are is the adapter's (LIB-14).
  */
 export type SubjectOf<leaf extends Component> =

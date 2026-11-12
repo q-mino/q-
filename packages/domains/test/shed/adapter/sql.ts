@@ -9,11 +9,12 @@ import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'
 import type * as tools_predicate from '../business/tools/_predicate.ts'
-import type * as tools_selection from '../business/tools/@selection/_index.ts'
+import type * as tool_selections from '../business/tools/_tool_selection.ts'
 import { add_a_tool, retire_a_tool, the_catalogue } from '../business/tools/_usecase.ts'
 import type * as loans_fact from '../business/loans/_fact.ts'
 import type * as loans_predicate from '../business/loans/_predicate.ts'
-import type * as loans_selection from '../business/loans/@selection/_index.ts'
+import type * as loan_selections from '../business/loans/_loan_selection.ts'
+import type * as reservation_selections from '../business/loans/_reservation_selection.ts'
 import {
   borrow_a_tool,
   reserve_a_tool,
@@ -118,7 +119,7 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
 // calls `candidate`. In SQL every group has the same fragment type.
 
 const tool_selection_fragments: wlib.PredicateFragments<
-  wlib.SelectionsIn<typeof tools_selection.tool>,
+  wlib.SelectionsIn<typeof tool_selections>,
   sql
 > = {
   'business/tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
@@ -127,7 +128,7 @@ const tool_selection_fragments: wlib.PredicateFragments<
 }
 
 const loan_selection_fragments: wlib.PredicateFragments<
-  wlib.SelectionsIn<typeof loans_selection.loan>,
+  wlib.SelectionsIn<typeof loan_selections>,
   sql
 > = {
   'business/loans/selection/loan/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
@@ -136,7 +137,7 @@ const loan_selection_fragments: wlib.PredicateFragments<
 }
 
 const reservation_selection_fragments: wlib.PredicateFragments<
-  wlib.SelectionsIn<typeof loans_selection.reservation>,
+  wlib.SelectionsIn<typeof reservation_selections>,
   sql
 > = {
   'business/loans/selection/reservation/the_reservation_is_booked': () =>
