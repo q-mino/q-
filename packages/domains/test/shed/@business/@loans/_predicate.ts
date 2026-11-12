@@ -5,7 +5,7 @@
 // `predicate.ts`.
 
 import { z } from 'zod'
-import * as predicate from './@predicate.ts'
+import * as predicate from './predicate.ts'
 
 /**
  * The shed has a tool with this id.

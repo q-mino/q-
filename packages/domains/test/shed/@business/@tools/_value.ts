@@ -4,7 +4,7 @@
 // the same names: one import gives both.
 
 import { z } from 'zod'
-import * as value from './@value.ts'
+import * as value from './value.ts'
 
 /**
  * @see {@link value.tool_name}

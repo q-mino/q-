@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from '../tools/_id.ts'
+import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
 import {
   a_tool_has_been_booked,

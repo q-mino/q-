@@ -4,7 +4,7 @@
 // under the same name: one import gives both.
 
 import { z } from 'zod'
-import * as command from './@command.ts'
+import * as command from './command.ts'
 
 /**
  * No tool of the catalogue has the requested id.

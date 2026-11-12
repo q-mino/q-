@@ -1,10 +1,10 @@
 // generated
 
 // The facts of `tools`, branded with their path (DOM-24): the same objects as
-// in `@fact.ts`, nominal in the types. Only this module imports `@fact.ts`.
+// in `fact.ts`, nominal in the types. Only this module imports `fact.ts`.
 
 import { z } from 'zod'
-import * as fact from './@fact.ts'
+import * as fact from './fact.ts'
 
 /**
  * Carries the change of state (DOM-5, V9): every value it writes. The

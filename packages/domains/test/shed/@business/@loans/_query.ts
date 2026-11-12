@@ -4,7 +4,7 @@
 // under the same name: one import gives both.
 
 import { z } from 'zod'
-import * as query from './@query.ts'
+import * as query from './query.ts'
 
 /**
  * The loan is ongoing and the member has the tool.

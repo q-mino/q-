@@ -2,10 +2,10 @@
 
 // The selection predicates of the subject `business/loans/selection/reservation`,
 // branded with their path (DOM-24): the same objects as in
-// `@reservation_selection.ts`, nominal in the types. Only this module imports it.
+// `reservation_selection.ts`, nominal in the types. Only this module imports it.
 
 import { z } from 'zod'
-import * as selection from './@reservation_selection.ts'
+import * as selection from './reservation_selection.ts'
 
 /**
  * @see {@link selection.the_reservation_is_booked}

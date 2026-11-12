@@ -6,18 +6,18 @@
 // (DOM-18): a loan, a reservation.
 
 import type * as wlib from '../../wlib.ts'
-import type * as loans_fact from '../../business/loans/_fact.ts'
-import type * as loans_predicate from '../../business/loans/_predicate.ts'
-import type { loan_id, reservation_id } from '../../business/loans/_id.ts'
-import type { loan, reservation } from '../../business/loans/_value.ts'
+import type * as loans_fact from '../../@business/@loans/_fact.ts'
+import type * as loans_predicate from '../../@business/@loans/_predicate.ts'
+import type { loan_id, reservation_id } from '../../@business/@loans/_id.ts'
+import type { loan, reservation } from '../../@business/@loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../../business/loans/_query.ts'
-import type * as loan_selections from '../../business/loans/_loan_selection.ts'
-import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
-import type { tool_id } from '../../business/tools/_id.ts'
-import * as tools_dsl from '../../business/tools/_dsl.ts'
+} from '../../@business/@loans/_query.ts'
+import type * as loan_selections from '../../@business/@loans/_loan_selection.ts'
+import type * as reservation_selections from '../../@business/@loans/_reservation_selection.ts'
+import type { tool_id } from '../../@business/@tools/_id.ts'
+import * as tools_dsl from '../../@business/@tools/_dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 

@@ -17,9 +17,12 @@ const arrows = {
 const domain = (name) => `^packages/domains/src/${name}/`
 
 // Shed's layout (its architecture, not the library's): a domain's folder sits in
-// the folder of its kind. The library knows only the prefixes: `@x` is the
-// author's, `_x` the generator's (DOM-25).
-const kinds = '(?:business|persona)'
+// the folder of its kind. The library knows only the prefixes: the tree is made
+// of the `@` folders, and in them `_x.ts` is the generator's, any other `.ts`
+// the author's (DOM-25).
+const authored = '^packages/.+/@[^/]+/[^_/][^/]*\\.ts$'
+const tests = '\\.test\\.ts$'
+const kinds = '@(?:business|persona)'
 const shed = '^packages/domains/test/shed/'
 
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
@@ -41,10 +44,10 @@ module.exports = {
       comment:
         'Shed: a business domain imports of another only its identities, _id.ts (GR-3, V11), and nothing of a persona; the adapters link them.',
       severity: 'error',
-      from: { path: `${shed}business/([^/]+)/` },
+      from: { path: `${shed}@business/(@[^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}business/$1/`, `${shed}business/[^/]+/_id\\.ts$`],
+        pathNot: [`${shed}@business/$1/`, `${shed}@business/[^/]+/_id\\.ts$`],
       },
     },
     {
@@ -52,27 +55,27 @@ module.exports = {
       comment:
         'Shed: a persona imports of a business domain only its door, _index.ts, which exposes its use cases and identities and nothing else (DOM-2, DOM-25, GR-1), and nothing of another persona.',
       severity: 'error',
-      from: { path: `${shed}persona/([^/]+)/` },
+      from: { path: `${shed}@persona/(@[^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/_index\\.ts$`],
+        pathNot: [`${shed}@persona/$1/`, `${shed}@business/[^/]+/_index\\.ts$`],
       },
     },
     {
       name: 'authored-only-through-generated',
       comment:
-        'An authored module (@fact.ts) is imported only by its generated twin (_fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
+        'An authored file of the tree (fact.ts in an @ folder) is imported only by its generated twin (_fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
       severity: 'error',
       from: { path: '^(.+/)_([^/]+)\\.ts$' },
-      to: { path: '/@[^/]+\\.ts$', pathNot: '^$1@$2\\.ts$' },
+      to: { path: authored, pathNot: ['^$1$2\\.ts$', tests] },
     },
     {
       name: 'authored-only-through-generated-others',
       comment:
-        'A file that is not generated never imports an authored module (@fact.ts): it imports its generated twin (_fact.ts) (DOM-25).',
+        'A file that is not generated never imports an authored file of the tree (fact.ts in an @ folder): it imports its generated twin (_fact.ts) (DOM-25).',
       severity: 'error',
       from: { pathNot: '/_[^/]+\\.ts$' },
-      to: { path: '/@[^/]+\\.ts$' },
+      to: { path: authored, pathNot: tests },
     },
     {
       name: 'no-circular',

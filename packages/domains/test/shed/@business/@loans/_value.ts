@@ -4,7 +4,7 @@
 // the same names: one import gives both.
 
 import { z } from 'zod'
-import * as value from './@value.ts'
+import * as value from './value.ts'
 
 /**
  * The name of a tool: in `loans` a value of its view, which the adapter reads from the catalogue.

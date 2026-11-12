@@ -4,7 +4,7 @@
 // module another domain may import (GR-3).
 
 import { z } from 'zod'
-import * as id from './@id.ts'
+import * as id from './id.ts'
 
 /**
  * @see {@link id.loan_id}

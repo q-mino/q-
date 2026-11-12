@@ -1,11 +1,11 @@
 // generated
 
 // The selection predicates of the subject `business/loans/selection/loan`, branded with
-// their path (DOM-24): the same objects as in `@loan_selection.ts`, nominal in
+// their path (DOM-24): the same objects as in `loan_selection.ts`, nominal in
 // the types. Only this module imports it.
 
 import { z } from 'zod'
-import * as selection from './@loan_selection.ts'
+import * as selection from './loan_selection.ts'
 
 /**
  * @see {@link selection.the_loan_is_ongoing}

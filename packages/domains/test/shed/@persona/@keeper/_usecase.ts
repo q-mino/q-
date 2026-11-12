@@ -3,7 +3,7 @@
 // The use cases of `keeper` under their names (DOM-2), the leaves of its tree.
 
 import { z } from 'zod'
-import * as usecase from './@usecase.ts'
+import * as usecase from './usecase.ts'
 
 /**
  * The keeper retires a tool: the ladder is broken.

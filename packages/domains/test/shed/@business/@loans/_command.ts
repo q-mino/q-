@@ -4,7 +4,7 @@
 // under the same name: one import gives both.
 
 import { z } from 'zod'
-import * as command from './@command.ts'
+import * as command from './command.ts'
 
 /**
  * The tool can be lent: named components, bound one by one by the creator.

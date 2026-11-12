@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from '../tools/_id.ts'
+import { tool_id } from '../@tools/_id.ts'
 import { loan_id, member_id } from './_id.ts'
 import { booked_reservation, ongoing_loan, returned_loan } from './_value.ts'
 import * as wlib from '../../wlib.ts'

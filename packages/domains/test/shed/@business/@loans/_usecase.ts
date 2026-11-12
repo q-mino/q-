@@ -2,7 +2,7 @@
 
 // The use cases of `loans` under their names (DOM-2).
 
-import * as usecase from './@usecase.ts'
+import * as usecase from './usecase.ts'
 
 /**
  * A member borrows a tool: Marta takes the drill home.

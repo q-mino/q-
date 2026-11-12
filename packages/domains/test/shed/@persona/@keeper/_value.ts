@@ -4,7 +4,7 @@
 // under the same names: one import gives both.
 
 import { z } from 'zod'
-import * as value from './@value.ts'
+import * as value from './value.ts'
 
 /**
  * Why the keeper takes a tool off the shelf.

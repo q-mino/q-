@@ -2,7 +2,7 @@
 
 // The use cases of `tools` under their names (DOM-2).
 
-import * as usecase from './@usecase.ts'
+import * as usecase from './usecase.ts'
 
 /**
  * The keeper adds a tool to the catalogue: a new drill on the shelf.

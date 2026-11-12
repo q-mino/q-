@@ -3,17 +3,17 @@
 // domain's `dsl`.
 
 import type * as wlib from '../../wlib.ts'
-import type * as tools_fact from '../../business/tools/_fact.ts'
-import type * as tools_predicate from '../../business/tools/_predicate.ts'
-import type * as tool_selections from '../../business/tools/_tool_selection.ts'
-import type { tool_id } from '../../business/tools/_id.ts'
-import type { tool } from '../../business/tools/_value.ts'
+import type * as tools_fact from '../../@business/@tools/_fact.ts'
+import type * as tools_predicate from '../../@business/@tools/_predicate.ts'
+import type * as tool_selections from '../../@business/@tools/_tool_selection.ts'
+import type { tool_id } from '../../@business/@tools/_id.ts'
+import type { tool } from '../../@business/@tools/_value.ts'
 import {
   the_tool_is_in_service,
   the_tool_is_in_the_catalogue,
   the_tool_is_retired,
-} from '../../business/tools/_dsl.ts'
-import type { the_catalogue } from '../../business/tools/_query.ts'
+} from '../../@business/@tools/_dsl.ts'
+import type { the_catalogue } from '../../@business/@tools/_query.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 
 /** The catalogue, by id. */
