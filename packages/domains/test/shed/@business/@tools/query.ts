@@ -2,6 +2,7 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as tool_selection from './_tool_selection.ts'
 import { catalogue_entry, category } from './_value.ts'
+import { here } from './_here.ts'
 
 /** The tool is in service and in a chosen category. */
 export const the_tool_is_shown_in_the_catalogue = wlib.AND({
@@ -14,7 +15,7 @@ export const the_tool_is_shown_in_the_catalogue = wlib.AND({
  * category, if none is chosen), by category and name; the id, the entry's
  * identity, closes the order.
  */
-export const the_catalogue = wlib.query({
+export const the_catalogue = here.query({
   input: z.strictObject({
     categories: z
       .array(category)

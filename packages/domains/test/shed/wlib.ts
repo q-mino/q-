@@ -53,7 +53,7 @@ export interface OperationContext {
   readonly operation: Operation
 }
 
-/** The context of a command at the root of its tree, the default of a command's creator. */
+/** The context of a command at the root of its tree: what its port takes. */
 export type CommandRootContext = RootContext & OperationContext
 
 /**
@@ -297,17 +297,17 @@ export type PredicatesAndFacts<outcomes extends Outcomes> = [
  * A command, declared in one argument whose parts have names: the input,
  * declared inline, the branches, and last the creator that binds them. DOM-25.
  * Its conditions are made of predicates and its facts are facts, checked by
- * type.
+ * type. Its creator and its input read the context of its point of the tree
+ * with its operation (`here.command`, `Builders`).
  */
-export declare function command<
-  const input extends CommandInput<z.ZodType, context>,
+export type CommandBuilder<context> = <
+  const input extends CommandInput<z.ZodType, context & OperationContext>,
   const outcomes extends Outcomes,
-  context = CommandRootContext,
 >(command: {
   readonly input: input
   readonly outcomes: outcomes & PredicatesAndFacts<outcomes>
-  readonly creator: CommandCreator<SchemaOf<input>, outcomes, context>
-}): Command<input, outcomes, context>
+  readonly creator: CommandCreator<SchemaOf<input>, outcomes, context & OperationContext>
+}) => Command<input, outcomes, context & OperationContext>
 
 // ---------------------------------------------------------------------------
 // Adapters (LIB-14): typed tools to implement the command port. The library
@@ -649,18 +649,17 @@ export type Query<
  * whose value is an identity, and the leaves of its selection come from one
  * subject, checked by type (DOM-18).
  */
-export declare function query<
+export type QueryBuilder<context> = <
   const input extends QueryInput<z.ZodType, context>,
   fields extends z.ZodObject,
   const identity extends IdentityFields<fields>,
   const selection extends Condition,
-  context = RootContext,
 >(
   query: { readonly input: input } & QueryShape<fields, identity, selection> & {
       readonly selection: OneSubject<selection>
       readonly creator: QueryCreator<SchemaOf<input>, selection, context>
     },
-): Query<input, fields, identity, selection, context>
+) => Query<input, fields, identity, selection, context>
 
 // Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
 // per selection predicate, one source per query, one read. No concept of
@@ -930,22 +929,44 @@ export interface CommandUseCaseOver<
  * creator that turns it into the invoked one's input, its events, the
  * projection that turns the invoked one's outcome into them. The projected
  * outcome is the first event and a terminal one (D72.3). Apart from
- * `command_use_case`, since its parts are others.
+ * `command_use_case`, since its parts are others. Its creator reads the
+ * context of its point of the tree with its operation.
  */
-export declare function command_use_case_over<
+export type CommandUseCaseOverBuilder<context> = <
   const use_case extends CommandUseCase<Commands[string]>,
-  const input extends CommandInput<z.ZodType, context>,
+  const input extends CommandInput<z.ZodType, context & OperationContext>,
   const events extends Events,
-  context = CommandRootContext,
 >(use_case: {
   readonly use_case: use_case
   readonly input: input
   readonly creator: (
-    context: context,
+    context: context & OperationContext,
   ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
   readonly events: events
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
-}): CommandUseCaseOver<use_case, input, events>
+}) => CommandUseCaseOver<use_case, input, events>
+
+// ---------------------------------------------------------------------------
+// Builders at a point of the tree (PER-6, DOM-25): the context of a creator
+// comes from where it sits, not from its annotation.
+
+/**
+ * The builders whose creators read the context, bound to the context of a
+ * point of the tree. The generator writes in each folder of the tree
+ * `_here.ts`, with the context the nodes above give there (`RootContext`
+ * with none), and the authored files of the folder build with it
+ * (`here.command`). A creator gets the context with no annotation; one that
+ * asks for more than the point gives does not compile. A command, and a use
+ * case over one, add their operation (`OperationContext`).
+ */
+export interface Builders<context extends RootContext> {
+  readonly command: CommandBuilder<context>
+  readonly query: QueryBuilder<context>
+  readonly command_use_case_over: CommandUseCaseOverBuilder<context>
+}
+
+/** The builders bound to the context of a point of the tree, for its `_here.ts`. */
+export declare function builders_at<context extends RootContext>(): Builders<context>
 
 /** The command use cases of a domain, by name. */
 export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>

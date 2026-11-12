@@ -24,6 +24,7 @@ import {
 import { the_day_is_within_the_booking_window, the_due_date_of_a_loan_started_on } from './_dsl.ts'
 import { loan_id, member_id, reservation_id } from './_id.ts'
 import { return_condition } from './_value.ts'
+import { here } from './_here.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
 export const the_tool_can_be_lent = wlib.AND({
@@ -33,7 +34,7 @@ export const the_tool_can_be_lent = wlib.AND({
   the_requested_tool_is_not_on_loan: wlib.NOT(the_tool_is_on_loan),
 })
 
-export const borrow_a_tool = wlib.command({
+export const borrow_a_tool = here.command({
   input: z.strictObject({
     loan_id: loan_id,
     tool_id: tool_id,
@@ -46,7 +47,7 @@ export const borrow_a_tool = wlib.command({
       the_member_already_has_the_tool,
     ],
   },
-  creator: (context: wlib.Now) => (input) => ({
+  creator: (context) => (input) => ({
     the_tool_is_available_so_it_is_lent: [
       {
         a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
@@ -80,9 +81,9 @@ export const the_tool_can_be_booked = wlib.AND({
   the_requested_tool_is_not_booked_that_day: wlib.NOT(the_tool_is_booked_for_the_day),
 })
 
-export const reserve_a_tool = wlib.command({
+export const reserve_a_tool = here.command({
   /** The day is validated against the clock: the schema needs `now`, nothing else. */
-  input: (context: wlib.Now) =>
+  input: (context) =>
     z
       .strictObject({
         reservation_id: reservation_id,
@@ -100,7 +101,7 @@ export const reserve_a_tool = wlib.command({
       the_member_already_booked_the_tool,
     ],
   },
-  creator: (context: wlib.Now) => (input) => ({
+  creator: (context) => (input) => ({
     the_tool_is_free_that_day_so_it_is_booked: [
       {
         a_reservation_has_not_the_requested_id: { reservation_id: input.reservation_id },
@@ -138,7 +139,7 @@ export const the_loan_is_already_returned = wlib.AND({
   the_requested_loan_is_returned: the_loan_is_returned,
 })
 
-export const return_a_tool = wlib.command({
+export const return_a_tool = here.command({
   input: z.strictObject({
     loan_id: loan_id,
     condition: return_condition,
@@ -150,7 +151,7 @@ export const return_a_tool = wlib.command({
       the_loan_was_already_returned,
     ],
   },
-  creator: (context: wlib.Now) => (input) => ({
+  creator: (context) => (input) => ({
     the_loan_is_ongoing_so_it_is_closed: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
