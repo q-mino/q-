@@ -46,7 +46,7 @@ export const borrow_a_tool = wlib.command({
       the_member_already_has_the_tool,
     ],
   },
-  creator: (commandContext) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_tool_is_available_so_it_is_lent: [
       {
         a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
@@ -59,8 +59,8 @@ export const borrow_a_tool = wlib.command({
           id: input.loan_id,
           tool_id: input.tool_id,
           member_id: input.member_id,
-          start_date: commandContext.now,
-          due_date: the_due_date_of_a_loan_started_on(commandContext.now),
+          start_date: context.now,
+          due_date: the_due_date_of_a_loan_started_on(context.now),
           progress: { stage: 'ongoing' },
         },
       },
@@ -100,7 +100,7 @@ export const reserve_a_tool = wlib.command({
       the_member_already_booked_the_tool,
     ],
   },
-  creator: (commandContext) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_tool_is_free_that_day_so_it_is_booked: [
       {
         a_reservation_has_not_the_requested_id: { reservation_id: input.reservation_id },
@@ -114,7 +114,7 @@ export const reserve_a_tool = wlib.command({
           tool_id: input.tool_id,
           member_id: input.member_id,
           day: input.day,
-          booking_date: commandContext.now,
+          booking_date: context.now,
           progress: { stage: 'booked' },
         },
       },
@@ -150,7 +150,7 @@ export const return_a_tool = wlib.command({
       the_loan_was_already_returned,
     ],
   },
-  creator: (commandContext) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_loan_is_ongoing_so_it_is_closed: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
@@ -161,7 +161,7 @@ export const return_a_tool = wlib.command({
           id: input.loan_id,
           progress: {
             stage: 'returned',
-            return_date: commandContext.now,
+            return_date: context.now,
             condition: input.condition,
           },
         },

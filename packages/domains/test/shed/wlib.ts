@@ -12,21 +12,49 @@ export const day = z.iso.date().brand<'day'>()
 export type day = z.output<typeof day>
 
 /**
- * The context the library gives, made of small interfaces: a function that
- * needs part of it declares only that part (`Now`), so that it serves any
- * context that has it (a command, the interface, the client).
+ * The context every root of a tree takes, given by the entry (PER-6): the
+ * instant of the request, from a trusted frame (D99.4), one for the request,
+ * so that the library's mechanisms and the domain's creators read the same.
+ * The application extends it (declaration merging) with what every root has
+ * and every invocation carries over; what only one tree's entry gives goes in
+ * the context its root node takes. A node extends the context of its point,
+ * never rewrites it, and one context serves everything below it (commands,
+ * queries, use cases); a construct declares only the part it reads (`Now`),
+ * so that it serves any context that has it. When a leaf invokes another
+ * tree, the library gives its root this context, copied, and nothing else
+ * (D105.1).
  */
-export interface Now {
+export interface RootContext {
   readonly now: date_time_string
 }
 
-export interface CommandContext extends Now {
-  uid: string
-  /**
-   * vari metadati necessari alla lib (ids,  keys, path, now, ... )
-   * estendibile dall'applicazione
-   */
+/** The part of the context a construct that reads only the time declares. */
+export type Now = Pick<RootContext, 'now'>
+
+/** An operation's identity (DOM-11, DOM-12): created before the first attempt, kept on a retry. */
+export const operation_id = z.string().min(1).brand<'operation_id'>()
+export type operation_id = z.output<typeof operation_id>
+
+/**
+ * The operation of a command (DOM-11): its identity and the scope it is
+ * unique in, which the entry composes (in the paper, `Caller` + hat) and the
+ * library does not read. The duplicate branch is keyed on both.
+ */
+export interface Operation {
+  readonly id: operation_id
+  readonly scope: string
 }
+
+/**
+ * What the library adds to the context of a command, at its point of the
+ * tree, for its own mechanisms: its operation. A read has none.
+ */
+export interface OperationContext {
+  readonly operation: Operation
+}
+
+/** The context of a command at the root of its tree, the default of a command's creator. */
+export type CommandRootContext = RootContext & OperationContext
 
 /**
  * The path of a component (DOM-24, DOM-25): its folders from the root, the
@@ -202,17 +230,24 @@ export type ResolvedOutcomes<outcomes extends Outcomes> = {
   ]
 }
 
-export type CommandCreator<inputSchema extends z.ZodType, outcomes extends Outcomes> = (
-  commandContext: CommandContext,
-) => (input: z.output<inputSchema>) => ResolvedOutcomes<outcomes>
+/**
+ * A command's creator: from the part of the context it declares, which the
+ * tree must give at the command's point (the generator checks it), and the
+ * input, the resolved branches.
+ */
+export type CommandCreator<
+  inputSchema extends z.ZodType,
+  outcomes extends Outcomes,
+  context = never,
+> = (context: context) => (input: z.output<inputSchema>) => ResolvedOutcomes<outcomes>
 
 /**
  * A command's input: a schema, or a function of the part of the context its
  * validation needs (a static rule over `now`). The library builds it before
  * parsing. DOM-21
  */
-export type CommandInput<inputSchema extends z.ZodType> =
-  inputSchema | ((commandContext: CommandContext) => inputSchema)
+export type CommandInput<inputSchema extends z.ZodType, context = never> =
+  inputSchema | ((context: context) => inputSchema)
 
 /**
  * The schema of an input declared as a schema or as a function of a context
@@ -234,7 +269,8 @@ export declare const $Command: unique symbol
 export type Command<
   input extends CommandInput<z.ZodType>,
   outcomes extends Outcomes,
-> = CommandCreator<SchemaOf<input>, outcomes> & {
+  context,
+> = CommandCreator<SchemaOf<input>, outcomes, context> & {
   readonly input: input
   [$Command]: {
     input: SchemaOf<input>
@@ -264,13 +300,14 @@ export type PredicatesAndFacts<outcomes extends Outcomes> = [
  * type.
  */
 export declare function command<
-  const input extends CommandInput<z.ZodType>,
+  const input extends CommandInput<z.ZodType, context>,
   const outcomes extends Outcomes,
+  context = CommandRootContext,
 >(command: {
   readonly input: input
   readonly outcomes: outcomes & PredicatesAndFacts<outcomes>
-  readonly creator: CommandCreator<SchemaOf<input>, outcomes>
-}): Command<input, outcomes>
+  readonly creator: CommandCreator<SchemaOf<input>, outcomes, context>
+}): Command<input, outcomes, context>
 
 // ---------------------------------------------------------------------------
 // Adapters (LIB-14): typed tools to implement the command port. The library
@@ -576,13 +613,18 @@ export interface QueryShape<
 }
 
 /** A query's input: a schema, or a function of the part of the context it needs. DOM-21 */
-export type QueryInput<inputSchema extends z.ZodType> =
-  inputSchema | ((context: Now) => inputSchema)
+export type QueryInput<inputSchema extends z.ZodType, context = never> =
+  inputSchema | ((context: context) => inputSchema)
 
-/** From the context and the input, the parameters bound to the selection. */
-export type QueryCreator<inputSchema extends z.ZodType, selection extends Condition> = (
-  context: Now,
-) => (input: z.output<inputSchema>) => ConditionInput<selection>
+/**
+ * From the part of the context it declares, which the tree must give at the
+ * query's point, and the input, the parameters bound to the selection.
+ */
+export type QueryCreator<
+  inputSchema extends z.ZodType,
+  selection extends Condition,
+  context = never,
+> = (context: context) => (input: z.output<inputSchema>) => ConditionInput<selection>
 
 export declare const $Query: unique symbol
 /**
@@ -594,7 +636,8 @@ export type Query<
   fields extends z.ZodObject,
   identity extends string,
   selection extends Condition,
-> = QueryCreator<SchemaOf<input>, selection> & {
+  context,
+> = QueryCreator<SchemaOf<input>, selection, context> & {
   readonly input: input
   [$Query]: { input: SchemaOf<input> } & QueryShape<fields, identity, selection>
 }
@@ -607,16 +650,17 @@ export type Query<
  * subject, checked by type (DOM-18).
  */
 export declare function query<
-  const input extends QueryInput<z.ZodType>,
+  const input extends QueryInput<z.ZodType, context>,
   fields extends z.ZodObject,
   const identity extends IdentityFields<fields>,
   const selection extends Condition,
+  context = RootContext,
 >(
   query: { readonly input: input } & QueryShape<fields, identity, selection> & {
       readonly selection: OneSubject<selection>
-      readonly creator: QueryCreator<SchemaOf<input>, selection>
+      readonly creator: QueryCreator<SchemaOf<input>, selection, context>
     },
-): Query<input, fields, identity, selection>
+): Query<input, fields, identity, selection, context>
 
 // Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
 // per selection predicate, one source per query, one read. No concept of
@@ -890,13 +934,14 @@ export interface CommandUseCaseOver<
  */
 export declare function command_use_case_over<
   const use_case extends CommandUseCase<Commands[string]>,
-  const input extends CommandInput<z.ZodType>,
+  const input extends CommandInput<z.ZodType, context>,
   const events extends Events,
+  context = CommandRootContext,
 >(use_case: {
   readonly use_case: use_case
   readonly input: input
   readonly creator: (
-    context: Now,
+    context: context,
   ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
   readonly events: events
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
@@ -920,7 +965,7 @@ export type CommandUseCasePort<use_case> = use_case extends {
 }
   ? command extends { [$Command]: { input: infer input extends z.ZodType } }
     ? (
-        context: CommandContext,
+        context: CommandRootContext,
         input: z.input<input>,
       ) => AsyncIterable<CommandOutcome<OutcomesOf<command>>>
     : never
@@ -992,7 +1037,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
   }
     ? streamed extends true
       ? ((
-          context: Now,
+          context: RootContext,
           input: z.input<input>,
           from?: position,
         ) => AsyncIterable<
@@ -1004,7 +1049,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
         >) &
           Streamed
       : ((
-          context: Now,
+          context: RootContext,
           input: z.input<input>,
         ) => AsyncIterable<SnapshotEvent<z.output<fields>>>) & { readonly streamed: false }
     : never

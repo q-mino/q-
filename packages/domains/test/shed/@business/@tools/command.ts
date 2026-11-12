@@ -22,10 +22,10 @@ export const add_a_tool = wlib.command({
   outcomes: {
     the_tool_is_new_so_it_is_added: [the_tool_is_new, a_tool_has_been_added],
   },
-  creator: (commandContext) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_tool_is_new_so_it_is_added: [
       { tool_id: input.id },
-      { added_tool: { ...input, status: 'inService', addDate: commandContext.now } },
+      { added_tool: { ...input, status: 'inService', addDate: context.now } },
     ],
   }),
 })
@@ -55,7 +55,7 @@ export const retire_a_tool = wlib.command({
       the_tool_was_already_retired,
     ],
   },
-  creator: (commandContext) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_tool_is_in_service_so_it_is_retired: [
       {
         a_tool_has_the_requested_id: { tool_id: input.id },
@@ -65,7 +65,7 @@ export const retire_a_tool = wlib.command({
         retired_tool: {
           id: input.id,
           status: 'retired',
-          retirement: { date: commandContext.now, reason: input.reason, notes: input.notes },
+          retirement: { date: context.now, reason: input.reason, notes: input.notes },
         },
       },
     ],

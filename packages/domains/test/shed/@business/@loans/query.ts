@@ -43,7 +43,7 @@ export const the_reservations_of_a_member = wlib.query({
   identity: 'id',
   selection: the_reservation_is_ahead_for_the_member,
   order: { day: 'ascending' },
-  creator: (context) => (input) => ({
+  creator: (context: wlib.Now) => (input) => ({
     the_reservation_is_booked: {},
     the_reservation_is_of_the_member: { member_id: input.member_id },
     the_day_has_not_passed: { day: today(context.now) },
