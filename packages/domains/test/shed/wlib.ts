@@ -497,6 +497,7 @@ export type RegistryEntry =
   | ReadUseCase<Queries[string]>
   | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
   | Lookup<z.ZodType, z.ZodType>
+  | Node<RootContext>
 
 /** The components of a generated module of one kind. */
 type ComponentsIn<module, kind extends string> = {
@@ -963,10 +964,95 @@ export interface Builders<context extends RootContext> {
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
   readonly command_use_case_over: CommandUseCaseOverBuilder<context>
+  readonly node: NodeBuilder<context>
 }
 
-/** The builders bound to the context of a point of the tree, for its `_here.ts`. */
+/**
+ * The builders bound to the context of a point of the tree, for its
+ * `_here.ts`. A folder with a node has two points: the point above, whose
+ * builders the generator writes in `_above.ts` and which builds the node,
+ * and the context the node gives, in `_here.ts`, which builds the rest of
+ * the folder; two files, so that no import goes round.
+ */
 export declare function builders_at<context extends RootContext>(): Builders<context>
+
+// ---------------------------------------------------------------------------
+// Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
+// walks a path down, whatever the tree. A node is a function of the context,
+// not of the request: it sees no input, since it sits above every leaf of
+// its folder. It runs its lookups, its only I/O, then its limits and its
+// bindings, pure, in the order of PER-5 (perimeter, then limit); it extends
+// the context, never rewrites it (D105.2); once per request, for everything
+// below it.
+
+export declare const $Node: unique symbol
+
+/** A node: the context it gives. */
+export interface Node<context extends RootContext> {
+  readonly [$Node]: { readonly gives: context }
+}
+
+/** The context a node gives, for the `_here.ts` of its folder. */
+export type ContextOf<node> = node extends { [$Node]: { gives: infer context extends RootContext } }
+  ? context
+  : never
+
+/**
+ * A lookup a node runs: the lookup, its key from the context the node takes,
+ * and what "not known" does. `not_found` closes the request as a perimeter
+ * (PER-14, D87.5), so that the value goes on known; "not known" as a value
+ * (D30) comes with its case.
+ */
+export interface NodeLookup<context, key extends z.ZodType, value extends z.ZodType> {
+  readonly lookup: Lookup<key, value>
+  readonly key: (context: context) => z.input<key>
+  readonly when_not_known: 'not_found'
+}
+
+/** The lookups of a node, by name. */
+export type NodeLookups<context> = Readonly<
+  Record<string, NodeLookup<context, z.ZodType, z.ZodType>>
+>
+
+/** The values the lookups of a node found, by name, known. */
+export type Found<lookups> = {
+  readonly [name in keyof lookups]: z.output<
+    LookupParts<lookups[name] extends { lookup: infer lookup } ? lookup : never>['value']
+  >
+}
+
+/** The context a node takes: the point's, and at the top of a tree what its entry gives (`takes`). */
+type Taken<context, takes> = takes extends z.ZodObject ? context & z.output<takes> : context
+
+/**
+ * A node, declared in one argument whose parts have names, in the order of
+ * its run: what the entry gives at the top of a tree (`takes`, only there),
+ * its lookups, its limits, its bindings (`gives`), last. A limit is named by
+ * what must hold, and its name is the reason the caller reads when it fails
+ * (PER-14); every limit is evaluated, every failure named.
+ */
+export type NodeBuilder<context> = <
+  const lookups extends NodeLookups<Taken<context, takes>>,
+  const gives extends Readonly<Record<string, unknown>>,
+  const takes extends z.ZodObject | undefined = undefined,
+>(node: {
+  readonly takes?: takes
+  readonly lookups: lookups
+  readonly limits: Readonly<
+    Record<string, (context: Taken<context, takes>) => (found: Found<lookups>) => boolean>
+  >
+  readonly gives: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
+}) => Node<Taken<context, takes> & gives & RootContext>
+
+/**
+ * The base events of a node that closes a request (PER-14, D80), in the
+ * union of every leaf below it; no leaf declares them, and they are
+ * terminal: a lookup that finds nothing, a perimeter, gives `not_found`,
+ * with no reason; failed limits give `refused`, with the name of each.
+ */
+export type NodeEvent<reason extends string> =
+  | { readonly event: 'not_found' }
+  | { readonly event: 'refused'; readonly reasons: readonly reason[] }
 
 /** The command use cases of a domain, by name. */
 export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>
