@@ -1,7 +1,13 @@
+// generated
+
+// The identities of `tools`, branded with their path (DOM-24): the only
+// module another domain may import (GR-3).
+
 import { z } from 'zod'
+import * as id from './@id.ts'
 
-// The identities of `tools`: the values that name an instance (DOM-24). Their
-// shape only: the generator brands them with their path in `id.ts`, where
-// every module, and every other domain, takes them from.
-
-export const tool_id = z.string().min(1)
+/**
+ * @see {@link id.tool_id}
+ */
+export const tool_id = id.tool_id.brand<'business/tools/id/tool_id'>()
+export type tool_id = z.output<typeof tool_id>

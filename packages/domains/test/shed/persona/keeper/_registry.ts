@@ -1,0 +1,15 @@
+// generated
+
+// The path registry of `keeper` (DOM-24): every path with its component, in
+// the order of the modules. The hat is the first segment (PER-7).
+
+import type * as wlib from '../../wlib.ts'
+import * as usecase from './_usecase.ts'
+import * as value from './_value.ts'
+
+export const registry = {
+  'persona/keeper/value/retirement_reason': value.retirement_reason,
+  'persona/keeper/value/notes': value.notes,
+  'persona/keeper/usecase/retire_a_tool': usecase.retire_a_tool,
+  'persona/keeper/usecase/retire_a_tool_input': usecase.retire_a_tool_input,
+} satisfies wlib.Registry

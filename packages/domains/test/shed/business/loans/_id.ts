@@ -1,12 +1,27 @@
+// generated
+
+// The identities of `loans`, branded with their path (DOM-24): the only
+// module another domain may import (GR-3).
+
 import { z } from 'zod'
+import * as id from './@id.ts'
 
-// The identities of `loans`: the values that name an instance (DOM-24). Their
-// shape only: the generator brands them with their path in `id.ts`, where
-// every module, and every other domain, takes them from.
+/**
+ * @see {@link id.loan_id}
+ */
+export const loan_id = id.loan_id.brand<'business/loans/id/loan_id'>()
+export type loan_id = z.output<typeof loan_id>
 
-export const loan_id = z.string().min(1)
+/**
+ * A member of the shed. Who may act as one is the persona's (step 6), not this domain's.
+ *
+ * @see {@link id.member_id}
+ */
+export const member_id = id.member_id.brand<'business/loans/id/member_id'>()
+export type member_id = z.output<typeof member_id>
 
-/** A member of the shed. Who may act as one is the persona's (step 6), not this domain's. */
-export const member_id = z.string().min(1)
-
-export const reservation_id = z.string().min(1)
+/**
+ * @see {@link id.reservation_id}
+ */
+export const reservation_id = id.reservation_id.brand<'business/loans/id/reservation_id'>()
+export type reservation_id = z.output<typeof reservation_id>

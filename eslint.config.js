@@ -37,7 +37,7 @@ export default defineConfig(
   },
   {
     // DOM-25: a branch's condition and a query's selection are named, never composed inline.
-    files: ['packages/domains/src/**/_domain/**/*.ts', 'packages/domains/test/**/_domain/**/*.ts'],
+    files: ['packages/domains/**/@*.ts', 'packages/domains/**/@*/**/*.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',

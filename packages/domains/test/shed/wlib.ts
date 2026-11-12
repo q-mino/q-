@@ -30,7 +30,7 @@ export interface CommandContext extends Now {
 
 /**
  * The path of a component (DOM-24): its domain, folders, conventional module
- * and name, as in `tools/fact/a_tool_has_been_added`. A folder is never named
+ * and name, as in `business/tools/fact/a_tool_has_been_added`. A folder is never named
  * as a conventional module.
  */
 export type Path<module extends string> = `${string}/${module}/${string}`
@@ -38,7 +38,7 @@ export type Path<module extends string> = `${string}/${module}/${string}`
 /**
  * A component of a domain that the library meets: a fact, a predicate, a
  * selection predicate. An object schema that the generator brands with its
- * path in its generated module, as an identity (`fact.ts`): the same object as the
+ * path in its generated module, as an identity (`_fact.ts`): the same object as the
  * author's, nominal in the types. Its path is not in its data: at runtime the
  * library finds it in the registry, and a fact carries it in its envelope.
  * DOM-24
@@ -337,7 +337,7 @@ export type Envelope<facts extends Component> = facts extends unknown
 
 /**
  * A resource of a fact (DOM-10): an identity in its payload, by its path and
- * value (`loans/id/loan_id`, `L7`). The library derives a fact's resources
+ * value (`business/loans/id/loan_id`, `L7`). The library derives a fact's resources
  * from its schema, finding the identities in the registry; nobody writes
  * them. In the paper they come from the mutation primitives (D107); in q-
  * the fact carries the change (V9), so they come from the fact.
@@ -403,7 +403,7 @@ export interface StateAdapter<commands extends Commands, fragment, write> {
 }
 
 /**
- * A domain's path registry (DOM-24), generated in `registry.ts`: every path
+ * A domain's path registry (DOM-24), generated in `_registry.ts`: every path
  * with its component, the map of the domain: identities, values, facts,
  * predicates, named conditions, commands and their inputs, selection
  * predicates, queries and their inputs, use cases. The configurator gives
@@ -435,13 +435,13 @@ type ComponentsIn<module, conventional extends string> = {
     : never
 }[keyof module]
 
-/** The predicates declared in a generated module (`predicate.ts`), for an adapter's fragments. */
+/** The predicates declared in a generated module (`_predicate.ts`), for an adapter's fragments. */
 export type PredicatesIn<module> = ComponentsIn<module, 'predicate'>
 
-/** The selection predicates of a subject, from its generated module (`selection/loan.ts`), for an adapter's fragments. */
+/** The selection predicates of a subject, from its generated module (`@selection/_loan.ts`), for an adapter's fragments. */
 export type SelectionsIn<module> = ComponentsIn<module, 'selection'>
 
-/** The facts declared in a generated module (`fact.ts`), for an adapter's writes. */
+/** The facts declared in a generated module (`_fact.ts`), for an adapter's writes. */
 export type FactsIn<module> = ComponentsIn<module, 'fact'>
 
 // ---------------------------------------------------------------------------
@@ -483,7 +483,7 @@ export type IdentityFields<fields extends z.ZodObject> = {
 
 /**
  * The subject of a selection predicate (DOM-18): its path up to the segment
- * after the module `selection`, the subject's file (`loans/selection/loan`);
+ * after the module `selection`, the subject's file (`business/loans/selection/loan`);
  * a subject that grows into a folder keeps it. No folder is named `selection`
  * before the module (DOM-24). The library knows the subject only by this
  * path: what it is and where its candidates are is the adapter's (LIB-14).

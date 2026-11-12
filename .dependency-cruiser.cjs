@@ -16,8 +16,9 @@ const arrows = {
 
 const domain = (name) => `^packages/domains/src/${name}/`
 
-// The kinds of domain (DOM-25): a domain's folder sits in the folder of its kind,
-// and holds only its conventional modules.
+// Shed's layout (its architecture, not the library's): a domain's folder sits in
+// the folder of its kind. The library knows only the prefixes: `@x` is the
+// author's, `_x` the generator's (DOM-25).
 const kinds = '(?:business|persona)'
 const shed = '^packages/domains/test/shed/'
 
@@ -38,56 +39,61 @@ module.exports = {
     {
       name: 'shed-business-isolated',
       comment:
-        'Shed: a business domain imports of another only its identities, id.ts (GR-3, V11), and nothing of a persona; the adapters link them.',
+        'Shed: a business domain imports of another only its identities, _id.ts (GR-3, V11), and nothing of a persona; the adapters link them.',
       severity: 'error',
       from: { path: `${shed}business/([^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}business/$1/`, `${shed}business/[^/]+/id\\.ts$`],
+        pathNot: [`${shed}business/$1/`, `${shed}business/[^/]+/_id\\.ts$`],
       },
     },
     {
       name: 'shed-persona-through-use-cases',
       comment:
-        'Shed: a persona imports of a business domain only its use cases and identities, usecase.ts and id.ts, never its commands or queries (DOM-2, GR-3), and nothing of another persona.',
+        'Shed: a persona imports of a business domain only its use cases and identities, _usecase.ts and _id.ts, never its commands or queries (DOM-2, GR-1), and nothing of another persona.',
       severity: 'error',
       from: { path: `${shed}persona/([^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/(?:usecase|id)\\.ts$`],
+        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/_(?:usecase|id)\\.ts$`],
       },
     },
     {
       name: 'authored-only-through-generated',
       comment:
-        'An authored module of a domain (_fact.ts) is imported only by its generated twin (fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
+        'An authored module (@fact.ts) is imported only by its generated twin (_fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
       severity: 'error',
-      from: { path: '^(.+/)([^/_][^/]*)\\.ts$' },
-      to: {
-        path: [`/${kinds}/[^/]+/_[^/]+\\.ts$`, `/${kinds}/[^/]+/[^/]+/_[^/]+\\.ts$`],
-        pathNot: '^$1_$2\\.ts$',
-      },
+      from: { path: '^(.+/)_([^/]+)\\.ts$' },
+      to: { path: '/@[^/]+\\.ts$', pathNot: '^$1@$2\\.ts$' },
+    },
+    {
+      name: 'authored-only-through-generated-others',
+      comment:
+        'A file that is not generated never imports an authored module (@fact.ts): it imports its generated twin (_fact.ts) (DOM-25).',
+      severity: 'error',
+      from: { pathNot: '/_[^/]+\\.ts$' },
+      to: { path: '/@[^/]+\\.ts$' },
     },
     {
       name: 'module-folder-only-through-index-inside',
       comment:
-        "A domain's module folder (DOM-25) is reachable from another folder only through its generated index.ts.",
+        "A domain's module folder (@selection/, DOM-25) is reachable from another folder only through its generated _index.ts.",
       severity: 'error',
-      from: { path: `^(packages/domains/.+/${kinds}/[^/]+/[^/]+)/` },
+      from: { path: '^(packages/domains/.+/@[^/]+)/' },
       to: {
-        path: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/`,
-        pathNot: ['^$1/', `^packages/domains/.+/${kinds}/[^/]+/[^/]+/index\\.ts$`],
+        path: '^packages/domains/.+/@[^/]+/',
+        pathNot: ['^$1/', '^packages/domains/.+/@[^/]+/_index\\.ts$'],
       },
     },
     {
       name: 'module-folder-only-through-index-outside',
       comment:
-        "From outside any module folder, a domain's module folder (DOM-25) is reachable only through its generated index.ts.",
+        "From outside any module folder, a domain's module folder (@selection/, DOM-25) is reachable only through its generated _index.ts.",
       severity: 'error',
-      from: { pathNot: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/` },
+      from: { pathNot: '^packages/domains/.+/@[^/]+/' },
       to: {
-        path: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/`,
-        pathNot: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/index\\.ts$`,
+        path: '^packages/domains/.+/@[^/]+/',
+        pathNot: '^packages/domains/.+/@[^/]+/_index\\.ts$',
       },
     },
     {

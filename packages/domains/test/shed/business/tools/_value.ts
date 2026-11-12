@@ -1,57 +1,79 @@
+// generated
+
+// The value schemas of `tools` under their names, with their output types under
+// the same names: one import gives both.
+
 import { z } from 'zod'
-import { date_time_string } from '../../wlib.ts'
-import { tool_id } from './id.ts'
+import * as value from './@value.ts'
 
-export const tool_name = z.string().min(1).max(80)
+/**
+ * @see {@link value.tool_name}
+ */
+export const tool_name = value.tool_name
+export type tool_name = z.output<typeof tool_name>
 
-export const category = z.enum(['garden', 'power', 'hand', 'ladder'])
+/**
+ * @see {@link value.category}
+ */
+export const category = value.category
+export type category = z.output<typeof category>
 
-export const notes = z.string().max(500)
+/**
+ * @see {@link value.notes}
+ */
+export const notes = value.notes
+export type notes = z.output<typeof notes>
 
-/** Grows with the steps: `underRepair` (step 9). */
-export const tool_status = z.enum(['inService', 'retired'])
+/**
+ * Grows with the steps: `underRepair` (step 9).
+ *
+ * @see {@link value.tool_status}
+ */
+export const tool_status = value.tool_status
+export type tool_status = z.output<typeof tool_status>
 
-export const retire_reason = z.enum(['broken', 'lost', 'worn_out', 'given_away'])
+/**
+ * @see {@link value.retire_reason}
+ */
+export const retire_reason = value.retire_reason
+export type retire_reason = z.output<typeof retire_reason>
 
-/** Why and when a tool left service. */
-export const retirement = z.strictObject({
-  date: date_time_string,
-  reason: retire_reason,
-  notes: notes.optional(),
-})
+/**
+ * Why and when a tool left service.
+ *
+ * @see {@link value.retirement}
+ */
+export const retirement = value.retirement
+export type retirement = z.output<typeof retirement>
 
-/** A field a state does not have: in the type, `?: undefined`; in the data, absent. */
-const absent = z.undefined().optional()
+/**
+ * A tool that can be lent.
+ *
+ * @see {@link value.tool_in_service}
+ */
+export const tool_in_service = value.tool_in_service
+export type tool_in_service = z.output<typeof tool_in_service>
 
-/** Every field of every state of a tool. Not a state: each state subtracts from it. */
-const every_tool_field = z.strictObject({
-  id: tool_id,
-  name: tool_name,
-  category: category,
-  notes: notes.optional(),
-  addDate: date_time_string,
-  status: tool_status,
-  retirement: retirement,
-})
+/**
+ * A tool out of service; it stays in the catalogue, for the history of the loans.
+ *
+ * @see {@link value.retired_tool}
+ */
+export const retired_tool = value.retired_tool
+export type retired_tool = z.output<typeof retired_tool>
 
-/** A tool that can be lent. */
-export const tool_in_service = every_tool_field.extend({
-  status: z.literal(tool_status.enum.inService),
-  retirement: absent,
-})
+/**
+ * A tool of the catalogue: its states share every field, so any field reads without narrowing.
+ *
+ * @see {@link value.tool}
+ */
+export const tool = value.tool
+export type tool = z.output<typeof tool>
 
-/** A tool out of service; it stays in the catalogue, for the history of the loans. */
-export const retired_tool = every_tool_field.extend({
-  status: z.literal(tool_status.enum.retired),
-})
-
-/** A tool of the catalogue: its states share every field, so any field reads without narrowing. */
-export const tool = z.discriminatedUnion('status', [tool_in_service, retired_tool])
-
-/** What a visitor sees of a tool in the catalogue. */
-export const catalogue_entry = tool_in_service.pick({
-  id: true,
-  name: true,
-  category: true,
-  notes: true,
-})
+/**
+ * What a visitor sees of a tool in the catalogue.
+ *
+ * @see {@link value.catalogue_entry}
+ */
+export const catalogue_entry = value.catalogue_entry
+export type catalogue_entry = z.output<typeof catalogue_entry>

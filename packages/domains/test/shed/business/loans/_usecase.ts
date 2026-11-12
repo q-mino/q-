@@ -1,31 +1,41 @@
-import * as wlib from '../../wlib.ts'
-import * as command from './command.ts'
-import * as query from './query.ts'
+// generated
 
-// The use cases of `loans`, its only entry (DOM-2): every persona, reaction
-// and effect executor reaches the loans and the reservations through them.
-// A command use case runs one command (DOM-4), a read use case reads one
-// query; in the trivial case each declares only its command or its query.
-// Who the member is comes from the persona (step 6), not from here.
+// The use cases of `loans` under their names (DOM-2).
 
-/** A member borrows a tool: Marta takes the drill home. */
-export const borrow_a_tool = wlib.command_use_case({ command: command.borrow_a_tool })
+import * as usecase from './@usecase.ts'
 
-/** A member books a tool for a day ahead: the ladder for Saturday. */
-export const reserve_a_tool = wlib.command_use_case({ command: command.reserve_a_tool })
+/**
+ * A member borrows a tool: Marta takes the drill home.
+ *
+ * @see {@link usecase.borrow_a_tool}
+ */
+export const borrow_a_tool = usecase.borrow_a_tool
 
-/** A member brings a tool back, in good condition or damaged. */
-export const return_a_tool = wlib.command_use_case({ command: command.return_a_tool })
+/**
+ * A member books a tool for a day ahead: the ladder for Saturday.
+ *
+ * @see {@link usecase.reserve_a_tool}
+ */
+export const reserve_a_tool = usecase.reserve_a_tool
+
+/**
+ * A member brings a tool back, in good condition or damaged.
+ *
+ * @see {@link usecase.return_a_tool}
+ */
+export const return_a_tool = usecase.return_a_tool
 
 /**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, a return takes it away.
+ *
+ * @see {@link usecase.the_ongoing_loans_of_a_member}
  */
-export const the_ongoing_loans_of_a_member = wlib.read_use_case({
-  query: query.the_ongoing_loans_of_a_member,
-})
+export const the_ongoing_loans_of_a_member = usecase.the_ongoing_loans_of_a_member
 
-/** A member sees their reservations from today on. */
-export const the_reservations_of_a_member = wlib.read_use_case({
-  query: query.the_reservations_of_a_member,
-})
+/**
+ * A member sees their reservations from today on.
+ *
+ * @see {@link usecase.the_reservations_of_a_member}
+ */
+export const the_reservations_of_a_member = usecase.the_reservations_of_a_member

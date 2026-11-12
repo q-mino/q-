@@ -1,32 +1,32 @@
-import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
-import * as selection from './selection/index.ts'
-import { catalogue_entry, category } from './value.ts'
+// generated
 
-/** The tool is in service and in a chosen category. */
-export const the_tool_is_shown_in_the_catalogue = wlib.AND({
-  the_tool_is_in_service: selection.tool.the_tool_is_in_service,
-  the_tool_is_in_a_chosen_category: selection.tool.the_tool_is_in_one_of_these_categories,
-})
+// The queries of `tools` under their names, each schema with its output type
+// under the same name: one import gives both.
+
+import { z } from 'zod'
+import * as query from './@query.ts'
+
+/**
+ * The tool is in service and in a chosen category.
+ *
+ * @see {@link query.the_tool_is_shown_in_the_catalogue}
+ */
+export const the_tool_is_shown_in_the_catalogue = query.the_tool_is_shown_in_the_catalogue
+export type the_tool_is_shown_in_the_catalogue = z.output<typeof the_tool_is_shown_in_the_catalogue>
 
 /**
  * The tools a visitor can see: in service, in the chosen categories (every
  * category, if none is chosen), by category and name; the id, the entry's
  * identity, closes the order.
+ *
+ * @see {@link query.the_catalogue}
  */
-export const the_catalogue = wlib.query({
-  input: z.strictObject({
-    categories: z
-      .array(category)
-      .min(1)
-      .default([...category.options]),
-  }),
-  fields: catalogue_entry,
-  identity: 'id',
-  selection: the_tool_is_shown_in_the_catalogue,
-  order: { category: 'ascending', name: 'ascending' },
-  creator: () => (input) => ({
-    the_tool_is_in_service: {},
-    the_tool_is_in_a_chosen_category: { categories: input.categories },
-  }),
-})
+export const the_catalogue = query.the_catalogue
+
+/**
+ * The input of `the_catalogue`, declared inline.
+ *
+ * @see {@link query.the_catalogue}
+ */
+export const the_catalogue_input = query.the_catalogue.input
+export type the_catalogue_input = z.output<typeof the_catalogue_input>

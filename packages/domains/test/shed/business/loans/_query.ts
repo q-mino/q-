@@ -1,50 +1,57 @@
+// generated
+
+// The queries of `loans` under their names, each schema with its output type
+// under the same name: one import gives both.
+
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
-import { today } from './dsl.ts'
-import * as selection from './selection/index.ts'
-import { member_id } from './id.ts'
-import { ongoing_loan_entry, reservation_entry } from './value.ts'
+import * as query from './@query.ts'
 
-/** The loan is ongoing and the member has the tool. */
-export const the_loan_is_ongoing_for_the_member = wlib.AND({
-  the_loan_is_ongoing: selection.loan.the_loan_is_ongoing,
-  the_loan_is_of_the_member: selection.loan.the_loan_is_of_this_member,
-})
+/**
+ * The loan is ongoing and the member has the tool.
+ *
+ * @see {@link query.the_loan_is_ongoing_for_the_member}
+ */
+export const the_loan_is_ongoing_for_the_member = query.the_loan_is_ongoing_for_the_member
+export type the_loan_is_ongoing_for_the_member = z.output<typeof the_loan_is_ongoing_for_the_member>
 
-/** The tools a member has: the ongoing loans, the closest due date first. */
-export const the_ongoing_loans_of_a_member = wlib.query({
-  input: z.strictObject({
-    member_id: member_id,
-  }),
-  fields: ongoing_loan_entry,
-  identity: 'id',
-  selection: the_loan_is_ongoing_for_the_member,
-  order: { due_date: 'ascending' },
-  creator: () => (input) => ({
-    the_loan_is_ongoing: {},
-    the_loan_is_of_the_member: { member_id: input.member_id },
-  }),
-})
+/**
+ * The tools a member has: the ongoing loans, the closest due date first.
+ *
+ * @see {@link query.the_ongoing_loans_of_a_member}
+ */
+export const the_ongoing_loans_of_a_member = query.the_ongoing_loans_of_a_member
 
-/** The reservation is in force, the member's, for today or a later day. */
-export const the_reservation_is_ahead_for_the_member = wlib.AND({
-  the_reservation_is_booked: selection.reservation.the_reservation_is_booked,
-  the_reservation_is_of_the_member: selection.reservation.the_reservation_is_of_this_member,
-  the_day_has_not_passed: selection.reservation.the_reservation_is_from_this_day_on,
-})
+/**
+ * The input of `the_ongoing_loans_of_a_member`, declared inline.
+ *
+ * @see {@link query.the_ongoing_loans_of_a_member}
+ */
+export const the_ongoing_loans_of_a_member_input = query.the_ongoing_loans_of_a_member.input
+export type the_ongoing_loans_of_a_member_input = z.output<
+  typeof the_ongoing_loans_of_a_member_input
+>
 
-/** The member's reservations from today on, the closest day first. */
-export const the_reservations_of_a_member = wlib.query({
-  input: z.strictObject({
-    member_id: member_id,
-  }),
-  fields: reservation_entry,
-  identity: 'id',
-  selection: the_reservation_is_ahead_for_the_member,
-  order: { day: 'ascending' },
-  creator: (context) => (input) => ({
-    the_reservation_is_booked: {},
-    the_reservation_is_of_the_member: { member_id: input.member_id },
-    the_day_has_not_passed: { day: today(context.now) },
-  }),
-})
+/**
+ * The reservation is in force, the member's, for today or a later day.
+ *
+ * @see {@link query.the_reservation_is_ahead_for_the_member}
+ */
+export const the_reservation_is_ahead_for_the_member = query.the_reservation_is_ahead_for_the_member
+export type the_reservation_is_ahead_for_the_member = z.output<
+  typeof the_reservation_is_ahead_for_the_member
+>
+
+/**
+ * The member's reservations from today on, the closest day first.
+ *
+ * @see {@link query.the_reservations_of_a_member}
+ */
+export const the_reservations_of_a_member = query.the_reservations_of_a_member
+
+/**
+ * The input of `the_reservations_of_a_member`, declared inline.
+ *
+ * @see {@link query.the_reservations_of_a_member}
+ */
+export const the_reservations_of_a_member_input = query.the_reservations_of_a_member.input
+export type the_reservations_of_a_member_input = z.output<typeof the_reservations_of_a_member_input>

@@ -1,42 +1,63 @@
+// generated
+
+// The facts of `loans`, branded with their path (DOM-24): the same objects as
+// in `@fact.ts`, nominal in the types. Only this module imports `@fact.ts`.
+
 import { z } from 'zod'
-import { tool_id } from '../tools/id.ts'
-import { day } from '../../wlib.ts'
-import { loan_id, member_id } from './id.ts'
-import { booked_reservation, ongoing_loan, returned_loan } from './value.ts'
+import * as fact from './@fact.ts'
 
-/** Carries the change of state (DOM-5, V9): the whole new loan. */
-export const a_tool_has_been_lent = z.strictObject({
-  new_loan: ongoing_loan,
-})
+/**
+ * Carries the change of state (DOM-5, V9): the whole new loan.
+ *
+ * @see {@link fact.a_tool_has_been_lent}
+ */
+export const a_tool_has_been_lent =
+  fact.a_tool_has_been_lent.brand<'business/loans/fact/a_tool_has_been_lent'>()
+export type a_tool_has_been_lent = z.output<typeof a_tool_has_been_lent>
 
-/** Nothing to do (DOM-6): the member's ongoing loan of the tool stands. */
-export const the_member_already_has_the_tool = z.strictObject({
-  tool_id: tool_id,
-  member_id: member_id,
-})
+/**
+ * Nothing to do (DOM-6): the member's ongoing loan of the tool stands.
+ *
+ * @see {@link fact.the_member_already_has_the_tool}
+ */
+export const the_member_already_has_the_tool =
+  fact.the_member_already_has_the_tool.brand<'business/loans/fact/the_member_already_has_the_tool'>()
+export type the_member_already_has_the_tool = z.output<typeof the_member_already_has_the_tool>
 
-/** Carries the change of state (DOM-5, V9): the whole new reservation. */
-export const a_tool_has_been_booked = z.strictObject({
-  new_reservation: booked_reservation,
-})
+/**
+ * Carries the change of state (DOM-5, V9): the whole new reservation.
+ *
+ * @see {@link fact.a_tool_has_been_booked}
+ */
+export const a_tool_has_been_booked =
+  fact.a_tool_has_been_booked.brand<'business/loans/fact/a_tool_has_been_booked'>()
+export type a_tool_has_been_booked = z.output<typeof a_tool_has_been_booked>
 
-/** Nothing to do (DOM-6): the member's reservation of the tool for the day stands. */
-export const the_member_already_booked_the_tool = z.strictObject({
-  tool_id: tool_id,
-  day: day,
-  member_id: member_id,
-})
+/**
+ * Nothing to do (DOM-6): the member's reservation of the tool for the day stands.
+ *
+ * @see {@link fact.the_member_already_booked_the_tool}
+ */
+export const the_member_already_booked_the_tool =
+  fact.the_member_already_booked_the_tool.brand<'business/loans/fact/the_member_already_booked_the_tool'>()
+export type the_member_already_booked_the_tool = z.output<typeof the_member_already_booked_the_tool>
 
 /**
  * A partial value: the loan's id and its new stage, whole. Tool, member and
  * dates stay as they were. Late or damaged are values of the return, not
  * other facts, until the business language needs them apart.
+ *
+ * @see {@link fact.a_tool_has_been_returned}
  */
-export const a_tool_has_been_returned = z.strictObject({
-  returned_loan: returned_loan.pick({ id: true, progress: true }),
-})
+export const a_tool_has_been_returned =
+  fact.a_tool_has_been_returned.brand<'business/loans/fact/a_tool_has_been_returned'>()
+export type a_tool_has_been_returned = z.output<typeof a_tool_has_been_returned>
 
-/** Nothing to do (DOM-6): the first return stands. */
-export const the_loan_was_already_returned = z.strictObject({
-  loan_id: loan_id,
-})
+/**
+ * Nothing to do (DOM-6): the first return stands.
+ *
+ * @see {@link fact.the_loan_was_already_returned}
+ */
+export const the_loan_was_already_returned =
+  fact.the_loan_was_already_returned.brand<'business/loans/fact/the_loan_was_already_returned'>()
+export type the_loan_was_already_returned = z.output<typeof the_loan_was_already_returned>

@@ -5,22 +5,22 @@
 
 import { z } from 'zod'
 import * as wlib from '../wlib.ts'
-import { registry as tools_registry } from '../business/tools/registry.ts'
-import { registry as loans_registry } from '../business/loans/registry.ts'
-import type * as tools_fact from '../business/tools/fact.ts'
-import type * as tools_predicate from '../business/tools/predicate.ts'
-import type * as tools_selection from '../business/tools/selection/index.ts'
-import { add_a_tool, retire_a_tool, the_catalogue } from '../business/tools/usecase.ts'
-import type * as loans_fact from '../business/loans/fact.ts'
-import type * as loans_predicate from '../business/loans/predicate.ts'
-import type * as loans_selection from '../business/loans/selection/index.ts'
+import { registry as tools_registry } from '../business/tools/_registry.ts'
+import { registry as loans_registry } from '../business/loans/_registry.ts'
+import type * as tools_fact from '../business/tools/_fact.ts'
+import type * as tools_predicate from '../business/tools/_predicate.ts'
+import type * as tools_selection from '../business/tools/@selection/_index.ts'
+import { add_a_tool, retire_a_tool, the_catalogue } from '../business/tools/_usecase.ts'
+import type * as loans_fact from '../business/loans/_fact.ts'
+import type * as loans_predicate from '../business/loans/_predicate.ts'
+import type * as loans_selection from '../business/loans/@selection/_index.ts'
 import {
   borrow_a_tool,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../business/loans/usecase.ts'
+} from '../business/loans/_usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {
@@ -81,35 +81,35 @@ export interface Transaction {
 // command (ADP-8).
 
 const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_predicate>, sql> = {
-  'tools/predicate/a_tool_has_this_id': (p) =>
+  'business/tools/predicate/a_tool_has_this_id': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id})`,
-  'tools/predicate/the_tool_is_in_service': (p) =>
+  'business/tools/predicate/the_tool_is_in_service': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'inService')`,
-  'tools/predicate/the_tool_is_retired': (p) =>
+  'business/tools/predicate/the_tool_is_retired': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'retired')`,
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
   // The view of `loans` over the tools of `tools` (GR-3, V11): the link.
-  'loans/predicate/a_tool_has_this_id': (p) =>
+  'business/loans/predicate/a_tool_has_this_id': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id})`,
-  'loans/predicate/the_tool_is_in_service': (p) =>
+  'business/loans/predicate/the_tool_is_in_service': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'inService')`,
-  'loans/predicate/a_loan_has_this_id': (p) =>
+  'business/loans/predicate/a_loan_has_this_id': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id})`,
-  'loans/predicate/the_loan_is_ongoing': (p) =>
+  'business/loans/predicate/the_loan_is_ongoing': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'ongoing')`,
-  'loans/predicate/the_loan_is_returned': (p) =>
+  'business/loans/predicate/the_loan_is_returned': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'returned')`,
-  'loans/predicate/the_tool_is_on_loan': (p) =>
+  'business/loans/predicate/the_tool_is_on_loan': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and stage = 'ongoing')`,
-  'loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
+  'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and member_id = ${p.member_id} and stage = 'ongoing')`,
-  'loans/predicate/a_reservation_has_this_id': (p) =>
+  'business/loans/predicate/a_reservation_has_this_id': (p) =>
     sql`exists (select 1 from reservations where id = ${p.reservation_id})`,
-  'loans/predicate/the_tool_is_booked_for_the_day': (p) =>
+  'business/loans/predicate/the_tool_is_booked_for_the_day': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
-  'loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
+  'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
 }
 
@@ -121,8 +121,8 @@ const tool_selection_fragments: wlib.PredicateFragments<
   wlib.SelectionsIn<typeof tools_selection.tool>,
   sql
 > = {
-  'tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
-  'tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) =>
+  'business/tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
+  'business/tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) =>
     sql`candidate.category in (${p.categories})`,
 }
 
@@ -130,8 +130,8 @@ const loan_selection_fragments: wlib.PredicateFragments<
   wlib.SelectionsIn<typeof loans_selection.loan>,
   sql
 > = {
-  'loans/selection/loan/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
-  'loans/selection/loan/the_loan_is_of_this_member': (p) =>
+  'business/loans/selection/loan/the_loan_is_ongoing': () => sql`candidate.stage = 'ongoing'`,
+  'business/loans/selection/loan/the_loan_is_of_this_member': (p) =>
     sql`candidate.member_id = ${p.member_id}`,
 }
 
@@ -139,10 +139,11 @@ const reservation_selection_fragments: wlib.PredicateFragments<
   wlib.SelectionsIn<typeof loans_selection.reservation>,
   sql
 > = {
-  'loans/selection/reservation/the_reservation_is_booked': () => sql`candidate.stage = 'booked'`,
-  'loans/selection/reservation/the_reservation_is_of_this_member': (p) =>
+  'business/loans/selection/reservation/the_reservation_is_booked': () =>
+    sql`candidate.stage = 'booked'`,
+  'business/loans/selection/reservation/the_reservation_is_of_this_member': (p) =>
     sql`candidate.member_id = ${p.member_id}`,
-  'loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
+  'business/loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
     sql`candidate.day >= ${p.day}`,
 }
 
@@ -158,28 +159,28 @@ const algebra = <fragments>(predicate: fragments) => ({
 // The writes of each domain's facts: how their values reach the state (DOM-5).
 
 const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sql[]> = {
-  'tools/fact/a_tool_has_been_added': ({ added_tool: t }) => [
+  'business/tools/fact/a_tool_has_been_added': ({ added_tool: t }) => [
     sql`insert into tools (id, name, category, notes, add_date, status) values (${t.id}, ${t.name}, ${t.category}, ${t.notes ?? null}, ${t.addDate}, ${t.status})`,
   ],
-  'tools/fact/a_tool_has_been_retired': ({ retired_tool: t }) => [
+  'business/tools/fact/a_tool_has_been_retired': ({ retired_tool: t }) => [
     sql`update tools set status = ${t.status}, retirement_date = ${t.retirement.date}, retirement_reason = ${t.retirement.reason}, retirement_notes = ${t.retirement.notes ?? null} where id = ${t.id}`,
   ],
-  'tools/fact/the_tool_was_already_retired': () => [],
+  'business/tools/fact/the_tool_was_already_retired': () => [],
 }
 
 const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sql[]> = {
-  'loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
+  'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
     sql`insert into loans (id, tool_id, member_id, start_date, due_date, stage) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_date}, ${l.progress.stage})`,
   ],
-  'loans/fact/the_member_already_has_the_tool': () => [],
-  'loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
+  'business/loans/fact/the_member_already_has_the_tool': () => [],
+  'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
     sql`update loans set stage = ${l.progress.stage}, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
   ],
-  'loans/fact/the_loan_was_already_returned': () => [],
-  'loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
+  'business/loans/fact/the_loan_was_already_returned': () => [],
+  'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
-  'loans/fact/the_member_already_booked_the_tool': () => [],
+  'business/loans/fact/the_member_already_booked_the_tool': () => [],
 }
 
 /**

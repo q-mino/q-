@@ -6,17 +6,17 @@
 // (DOM-18): a loan, a reservation.
 
 import type * as wlib from '../../wlib.ts'
-import type * as loans_fact from '../../business/loans/fact.ts'
-import type * as loans_predicate from '../../business/loans/predicate.ts'
-import type { loan_id, reservation_id } from '../../business/loans/id.ts'
-import type { loan, reservation } from '../../business/loans/value.ts'
+import type * as loans_fact from '../../business/loans/_fact.ts'
+import type * as loans_predicate from '../../business/loans/_predicate.ts'
+import type { loan_id, reservation_id } from '../../business/loans/_id.ts'
+import type { loan, reservation } from '../../business/loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../../business/loans/query.ts'
-import type * as loans_selection from '../../business/loans/selection/index.ts'
-import type { tool_id } from '../../business/tools/id.ts'
-import * as tools_dsl from '../../business/tools/dsl.ts'
+} from '../../business/loans/_query.ts'
+import type * as loans_selection from '../../business/loans/@selection/_index.ts'
+import type { tool_id } from '../../business/tools/_id.ts'
+import * as tools_dsl from '../../business/tools/_dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
@@ -40,29 +40,29 @@ export const loans_fragments: wlib.PredicateFragments<
   (state: Reads) => boolean
 > = {
   // The link: the view of `loans` over the tools, read from `tools`.
-  'loans/predicate/a_tool_has_this_id': (p) => (state) =>
+  'business/loans/predicate/a_tool_has_this_id': (p) => (state) =>
     tools_dsl.the_tool_is_in_the_catalogue(state.tools.get(p.tool_id)),
-  'loans/predicate/the_tool_is_in_service': (p) => (state) =>
+  'business/loans/predicate/the_tool_is_in_service': (p) => (state) =>
     tools_dsl.the_tool_is_in_service(state.tools.get(p.tool_id)),
 
-  'loans/predicate/a_loan_has_this_id': (p) => (state) => state.loans.has(p.loan_id),
-  'loans/predicate/the_loan_is_ongoing': (p) => (state) =>
+  'business/loans/predicate/a_loan_has_this_id': (p) => (state) => state.loans.has(p.loan_id),
+  'business/loans/predicate/the_loan_is_ongoing': (p) => (state) =>
     state.loans.get(p.loan_id)?.progress.stage === 'ongoing',
-  'loans/predicate/the_loan_is_returned': (p) => (state) =>
+  'business/loans/predicate/the_loan_is_returned': (p) => (state) =>
     state.loans.get(p.loan_id)?.progress.stage === 'returned',
-  'loans/predicate/the_tool_is_on_loan': (p) => (state) =>
+  'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
     ongoing(state).some((the_loan) => the_loan.tool_id === p.tool_id),
-  'loans/predicate/the_tool_is_on_loan_to_this_member': (p) => (state) =>
+  'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) => (state) =>
     ongoing(state).some(
       (the_loan) => the_loan.tool_id === p.tool_id && the_loan.member_id === p.member_id,
     ),
-  'loans/predicate/a_reservation_has_this_id': (p) => (state) =>
+  'business/loans/predicate/a_reservation_has_this_id': (p) => (state) =>
     state.reservations.has(p.reservation_id),
-  'loans/predicate/the_tool_is_booked_for_the_day': (p) => (state) =>
+  'business/loans/predicate/the_tool_is_booked_for_the_day': (p) => (state) =>
     booked(state).some(
       (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day === p.day,
     ),
-  'loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) => (state) =>
+  'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) => (state) =>
     booked(state).some(
       (the_reservation) =>
         the_reservation.tool_id === p.tool_id &&
@@ -77,7 +77,7 @@ const the_name_of_the_tool =
   (the_thing: { readonly tool_id: tool_id }): string | undefined =>
     state.tools.get(the_thing.tool_id)?.name
 
-// The reads of the subject `loans/selection/loan`: a loan.
+// The reads of the subject `business/loans/selection/loan`: a loan.
 
 export const loan_selection: wlib.Algebra<
   wlib.SelectionsIn<typeof loans_selection.loan>,
@@ -85,9 +85,9 @@ export const loan_selection: wlib.Algebra<
 > = {
   ...selection_operators<Reads, loan>(),
   predicate: {
-    'loans/selection/loan/the_loan_is_ongoing': () => () => (the_loan) =>
+    'business/loans/selection/loan/the_loan_is_ongoing': () => () => (the_loan) =>
       the_loan.progress.stage === 'ongoing',
-    'loans/selection/loan/the_loan_is_of_this_member': (p) => () => (the_loan) =>
+    'business/loans/selection/loan/the_loan_is_of_this_member': (p) => () => (the_loan) =>
       the_loan.member_id === p.member_id,
   },
 }
@@ -113,7 +113,7 @@ export const loan_sources: {
   },
 }
 
-// The reads of the subject `loans/selection/reservation`: a reservation.
+// The reads of the subject `business/loans/selection/reservation`: a reservation.
 
 export const reservation_selection: wlib.Algebra<
   wlib.SelectionsIn<typeof loans_selection.reservation>,
@@ -122,11 +122,11 @@ export const reservation_selection: wlib.Algebra<
   ...selection_operators<Reads, reservation>(),
   predicate: {
     // Every reservation is booked until one can be cancelled (step 8): then a test of the stage.
-    'loans/selection/reservation/the_reservation_is_booked': () => () => () => true,
-    'loans/selection/reservation/the_reservation_is_of_this_member':
+    'business/loans/selection/reservation/the_reservation_is_booked': () => () => () => true,
+    'business/loans/selection/reservation/the_reservation_is_of_this_member':
       (p) => () => (the_reservation) =>
         the_reservation.member_id === p.member_id,
-    'loans/selection/reservation/the_reservation_is_from_this_day_on':
+    'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
       (p) => () => (the_reservation) =>
         the_reservation.day >= p.day,
   },
@@ -156,11 +156,11 @@ export const loans_writes: wlib.FactWrites<
   wlib.FactsIn<typeof loans_fact>,
   (state: LoansState) => LoansState
 > = {
-  'loans/fact/a_tool_has_been_lent':
+  'business/loans/fact/a_tool_has_been_lent':
     ({ new_loan }) =>
     (state) => ({ ...state, loans: new Map(state.loans).set(new_loan.id, new_loan) }),
-  'loans/fact/the_member_already_has_the_tool': () => (state) => state,
-  'loans/fact/a_tool_has_been_returned':
+  'business/loans/fact/the_member_already_has_the_tool': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_returned':
     ({ returned_loan }) =>
     (state) => {
       const the_loan = state.loans.get(returned_loan.id)
@@ -174,12 +174,12 @@ export const loans_writes: wlib.FactWrites<
             }),
           }
     },
-  'loans/fact/the_loan_was_already_returned': () => (state) => state,
-  'loans/fact/a_tool_has_been_booked':
+  'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({
       ...state,
       reservations: new Map(state.reservations).set(new_reservation.id, new_reservation),
     }),
-  'loans/fact/the_member_already_booked_the_tool': () => (state) => state,
+  'business/loans/fact/the_member_already_booked_the_tool': () => (state) => state,
 }

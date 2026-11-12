@@ -1,57 +1,92 @@
+// generated
+
+// The predicates of `loans`, branded with their path (DOM-24): the same
+// objects as in `predicate.ts`, nominal in the types. Only this module imports
+// `predicate.ts`.
+
 import { z } from 'zod'
-import { tool_id } from '../tools/id.ts'
-import { day } from '../../wlib.ts'
-import { loan_id, member_id, reservation_id } from './id.ts'
+import * as predicate from './@predicate.ts'
 
-// The vocabulary of the conditions of `loans`, over its own view of the
-// tools too (GR-3, V11): the state adapter reads them from `tools`.
+/**
+ * The shed has a tool with this id.
+ *
+ * @see {@link predicate.a_tool_has_this_id}
+ */
+export const a_tool_has_this_id =
+  predicate.a_tool_has_this_id.brand<'business/loans/predicate/a_tool_has_this_id'>()
+export type a_tool_has_this_id = z.output<typeof a_tool_has_this_id>
 
-/** The shed has a tool with this id. */
-export const a_tool_has_this_id = z.strictObject({
-  tool_id: tool_id,
-})
+/**
+ * The tool can go out: it is in service in the shed.
+ *
+ * @see {@link predicate.the_tool_is_in_service}
+ */
+export const the_tool_is_in_service =
+  predicate.the_tool_is_in_service.brand<'business/loans/predicate/the_tool_is_in_service'>()
+export type the_tool_is_in_service = z.output<typeof the_tool_is_in_service>
 
-/** The tool can go out: it is in service in the shed. */
-export const the_tool_is_in_service = z.strictObject({
-  tool_id: tool_id,
-})
+/**
+ * @see {@link predicate.a_loan_has_this_id}
+ */
+export const a_loan_has_this_id =
+  predicate.a_loan_has_this_id.brand<'business/loans/predicate/a_loan_has_this_id'>()
+export type a_loan_has_this_id = z.output<typeof a_loan_has_this_id>
 
-export const a_loan_has_this_id = z.strictObject({
-  loan_id: loan_id,
-})
+/**
+ * @see {@link predicate.the_loan_is_ongoing}
+ */
+export const the_loan_is_ongoing =
+  predicate.the_loan_is_ongoing.brand<'business/loans/predicate/the_loan_is_ongoing'>()
+export type the_loan_is_ongoing = z.output<typeof the_loan_is_ongoing>
 
-export const the_loan_is_ongoing = z.strictObject({
-  loan_id: loan_id,
-})
+/**
+ * @see {@link predicate.the_loan_is_returned}
+ */
+export const the_loan_is_returned =
+  predicate.the_loan_is_returned.brand<'business/loans/predicate/the_loan_is_returned'>()
+export type the_loan_is_returned = z.output<typeof the_loan_is_returned>
 
-export const the_loan_is_returned = z.strictObject({
-  loan_id: loan_id,
-})
+/**
+ * The tool is with a member, whoever it is.
+ *
+ * @see {@link predicate.the_tool_is_on_loan}
+ */
+export const the_tool_is_on_loan =
+  predicate.the_tool_is_on_loan.brand<'business/loans/predicate/the_tool_is_on_loan'>()
+export type the_tool_is_on_loan = z.output<typeof the_tool_is_on_loan>
 
-/** The tool is with a member, whoever it is. */
-export const the_tool_is_on_loan = z.strictObject({
-  tool_id: tool_id,
-})
+/**
+ * The tool is with this member.
+ *
+ * @see {@link predicate.the_tool_is_on_loan_to_this_member}
+ */
+export const the_tool_is_on_loan_to_this_member =
+  predicate.the_tool_is_on_loan_to_this_member.brand<'business/loans/predicate/the_tool_is_on_loan_to_this_member'>()
+export type the_tool_is_on_loan_to_this_member = z.output<typeof the_tool_is_on_loan_to_this_member>
 
-/** The tool is with this member. */
-export const the_tool_is_on_loan_to_this_member = z.strictObject({
-  tool_id: tool_id,
-  member_id: member_id,
-})
+/**
+ * @see {@link predicate.a_reservation_has_this_id}
+ */
+export const a_reservation_has_this_id =
+  predicate.a_reservation_has_this_id.brand<'business/loans/predicate/a_reservation_has_this_id'>()
+export type a_reservation_has_this_id = z.output<typeof a_reservation_has_this_id>
 
-export const a_reservation_has_this_id = z.strictObject({
-  reservation_id: reservation_id,
-})
+/**
+ * The tool is booked for the day, by whoever.
+ *
+ * @see {@link predicate.the_tool_is_booked_for_the_day}
+ */
+export const the_tool_is_booked_for_the_day =
+  predicate.the_tool_is_booked_for_the_day.brand<'business/loans/predicate/the_tool_is_booked_for_the_day'>()
+export type the_tool_is_booked_for_the_day = z.output<typeof the_tool_is_booked_for_the_day>
 
-/** The tool is booked for the day, by whoever. */
-export const the_tool_is_booked_for_the_day = z.strictObject({
-  tool_id: tool_id,
-  day: day,
-})
-
-/** The tool is booked for the day by this member. */
-export const the_tool_is_booked_for_the_day_by_this_member = z.strictObject({
-  tool_id: tool_id,
-  day: day,
-  member_id: member_id,
-})
+/**
+ * The tool is booked for the day by this member.
+ *
+ * @see {@link predicate.the_tool_is_booked_for_the_day_by_this_member}
+ */
+export const the_tool_is_booked_for_the_day_by_this_member =
+  predicate.the_tool_is_booked_for_the_day_by_this_member.brand<'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member'>()
+export type the_tool_is_booked_for_the_day_by_this_member = z.output<
+  typeof the_tool_is_booked_for_the_day_by_this_member
+>
