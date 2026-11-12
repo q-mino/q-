@@ -16,6 +16,12 @@
 import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../@business/@tools/_registry.ts'
 import { registry as loans_registry } from '../../@business/@loans/_registry.ts'
+import { registry as accounts_registry } from '../../@auth/@accounts/_registry.ts'
+import {
+  the_hats_of_an_account,
+  the_member_card_of_an_account,
+} from '../../@auth/@accounts/_lookup.ts'
+import { accounts_lookups, type AccountsState } from './accounts.ts'
 import { add_a_tool, retire_a_tool, the_catalogue } from '../../@business/@tools/_usecase.ts'
 import {
   borrow_a_tool,
@@ -43,7 +49,7 @@ import {
 } from './tools.ts'
 
 /** The state of every domain. */
-export interface State extends ToolsState, LoansState {}
+export interface State extends ToolsState, LoansState, AccountsState {}
 
 /** A condition, read on the state. */
 type Fragment = (state: State) => boolean
@@ -325,4 +331,8 @@ export const memory_adapter = (cell: Cell) => ({
       streams: { the_reservations_of_a_member: native(cell) },
     }),
   },
+  accounts: wlib.lookup_ports({
+    registry: accounts_registry,
+    lookups: { the_hats_of_an_account, the_member_card_of_an_account },
+  })(accounts_lookups(cell.get)),
 })

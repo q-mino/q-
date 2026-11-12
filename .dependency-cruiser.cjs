@@ -22,7 +22,7 @@ const domain = (name) => `^packages/domains/src/${name}/`
 // the author's (DOM-25).
 const authored = '^packages/.+/@[^/]+/[^_/][^/]*\\.ts$'
 const tests = '\\.test\\.ts$'
-const kinds = '@(?:business|persona)'
+const kinds = '@(?:business|persona|auth)'
 const shed = '^packages/domains/test/shed/'
 
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
@@ -42,7 +42,7 @@ module.exports = {
     {
       name: 'shed-business-isolated',
       comment:
-        'Shed: a business domain imports of another only its identities, _id.ts (GR-3, V11), and nothing of a persona; the adapters link them.',
+        'Shed: a business domain imports of another only its identities, _id.ts (GR-3, V11), and nothing of a persona or of auth (PER-10); the adapters link them.',
       severity: 'error',
       from: { path: `${shed}@business/(@[^/]+)/` },
       to: {
@@ -53,13 +53,21 @@ module.exports = {
     {
       name: 'shed-persona-through-doors',
       comment:
-        'Shed: a persona imports of a business domain only its door, _index.ts, which exposes its use cases and identities and nothing else (DOM-2, DOM-25, GR-1), and nothing of another persona.',
+        'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups) and identities and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona.',
       severity: 'error',
       from: { path: `${shed}@persona/(@[^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}@persona/$1/`, `${shed}@business/[^/]+/_index\\.ts$`],
+        pathNot: [`${shed}@persona/$1/`, `${shed}@(?:business|auth)/[^/]+/_index\\.ts$`],
       },
+    },
+    {
+      name: 'shed-auth-isolated',
+      comment:
+        "Shed: an auth domain imports no other domain: its data is its adapters' (D43), the business never knows it (PER-10), a persona reads it through its door.",
+      severity: 'error',
+      from: { path: `${shed}@auth/(@[^/]+)/` },
+      to: { path: `${shed}${kinds}/`, pathNot: [`${shed}@auth/$1/`] },
     },
     {
       name: 'authored-only-through-generated',
