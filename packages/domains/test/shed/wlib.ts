@@ -424,7 +424,7 @@ export type RegistryEntry =
   | Queries[string]
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
-  | PersonaCommandUseCase<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
+  | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
 
 /** The components of a generated module that belong to a conventional module. */
 type ComponentsIn<module, conventional extends string> = {
@@ -781,16 +781,17 @@ export declare function command_use_case<const command extends Commands[string]>
 }): CommandUseCase<command>
 
 // ---------------------------------------------------------------------------
-// The persona's use cases (PER-6, D77): the leaves of its tree. A persona is
-// a domain of its own (DOM-25), with its own language: a leaf invokes a
-// business use case, conformist (D36), but its surface is the persona's,
-// input and events, so that the persona can keep its contract when the
-// business changes (PER-17, D75.6, GR-3). Always the full form: nothing
-// derived from the business.
+// A use case over another (DOM-2, D105): it runs no command of its own, it
+// invokes another domain's command use case, with parts of its own: its
+// input, its events, the creator and the projection that translate them. The
+// library knows no kind of domain (LIB-1, DOM-25): who uses it, and with
+// which rules, is the architecture's. In Shed a persona's leaves are always
+// in this form (PER-6), so that the persona keeps its contract when the
+// business changes (PER-17, D75.6, GR-3).
 
 /**
- * The events of a persona's use case, by name: each a phrase of the
- * persona's language, its payload a schema (D72.1). A closed set (DOM-3).
+ * The events of a use case with parts of its own, by name: each a phrase of
+ * its domain's language, its payload a schema (D72.1). A closed set (DOM-3).
  */
 export type Events = Readonly<Record<string, z.ZodType>>
 
@@ -805,24 +806,24 @@ export type EventOf<events extends Events> = {
   }
 }[keyof events & string]
 
-/** The command a business command use case runs. */
+/** The command a command use case runs. */
 type CommandOfUseCase<use_case> = use_case extends { [$UseCase]: { command: infer command } }
   ? command
   : never
 
-/** The input schema of the command a business command use case runs. */
+/** The input schema of the command a command use case runs. */
 type InputOfUseCase<use_case> =
   CommandOfUseCase<use_case> extends { [$Command]: { input: infer input extends z.ZodType } }
     ? input
     : never
 
 /**
- * The persona's projection of a business command's outcome (D45): one
- * function per branch, from its fact's payload, and one for the rejection,
- * from its failures, each to one of the persona's events. Exhaustive, as a
- * match over an ADT: a new branch in the business does not compile in the
- * persona. What never leaves the node (the fact's resources, attribution,
- * versions, PER-18) is never given to it.
+ * The projection of the invoked use case's outcome into the events of the
+ * use case over it (D45): one function per branch, from its fact's payload,
+ * and one for the rejection, from its failures. Exhaustive, as a match over
+ * an ADT: a new branch below does not compile above. What never leaves the
+ * node (the fact's resources, attribution, versions, PER-18) is never given
+ * to it.
  */
 export type Projection<outcomes extends Outcomes, events extends Events> = {
   readonly [branch in keyof outcomes]: (fact: z.output<outcomes[branch][1]>) => EventOf<events>
@@ -831,11 +832,11 @@ export type Projection<outcomes extends Outcomes, events extends Events> = {
 }
 
 /**
- * A persona's command use case, a leaf of its tree: the business use case it
- * invokes, its own input as declared (`input`, from which the generator
- * writes `<use case>_input`, DOM-25) and its events.
+ * A command use case over another: the use case it invokes, its own input
+ * as declared (`input`, from which the generator writes `<use case>_input`,
+ * DOM-25) and its events.
  */
-export interface PersonaCommandUseCase<
+export interface CommandUseCaseOver<
   use_case extends CommandUseCase<Commands[string]>,
   input extends CommandInput<z.ZodType>,
   events extends Events,
@@ -845,14 +846,14 @@ export interface PersonaCommandUseCase<
 }
 
 /**
- * A persona's command use case, a leaf (`command_leaf`): apart from the
- * business's builder, since its parts are others. Declared in one argument whose parts have
- * names, in the order of the flow: the business use case, the persona's
- * input, the creator that turns it into the business's input, the persona's
- * events, the projection that turns the business's outcome into them. The
- * projected outcome is the first event and a terminal one (D72.3).
+ * A command use case over another, declared in one argument whose parts have
+ * names, in the order of the flow: the use case it invokes, its input, the
+ * creator that turns it into the invoked one's input, its events, the
+ * projection that turns the invoked one's outcome into them. The projected
+ * outcome is the first event and a terminal one (D72.3). Apart from
+ * `command_use_case`, since its parts are others.
  */
-export declare function command_leaf<
+export declare function command_use_case_over<
   const use_case extends CommandUseCase<Commands[string]>,
   const input extends CommandInput<z.ZodType>,
   const events extends Events,
@@ -864,7 +865,7 @@ export declare function command_leaf<
   ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
   readonly events: events
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
-}): PersonaCommandUseCase<use_case, input, events>
+}): CommandUseCaseOver<use_case, input, events>
 
 /** The command use cases of a domain, by name. */
 export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>

@@ -10,7 +10,7 @@ import { notes, retirement_reason } from './_value.ts'
 // projected (D45).
 
 /** The keeper retires a tool: the ladder is broken. */
-export const retire_a_tool = wlib.command_leaf({
+export const retire_a_tool = wlib.command_use_case_over({
   use_case: tools.retire_a_tool,
   input: z.strictObject({
     tool_id: tool_id,
