@@ -403,12 +403,27 @@ export interface StateAdapter<commands extends Commands, fragment, write> {
 }
 
 /**
- * A domain's path registry (DOM-24), generated in `registry.ts`: each path
- * with its component. The configurator gives the library the registries of
- * the domains it composes; the library reads them in reverse, from a
- * component to its path, by object identity. One object, one path.
+ * A domain's path registry (DOM-24), generated in `registry.ts`: every path
+ * with its component, the map of the domain: identities, values, facts,
+ * predicates, named conditions, commands and their inputs, selection
+ * predicates, queries and their inputs, use cases. The configurator gives
+ * the library the registries of the domains it composes; the library reads
+ * them in reverse, from a component to its path, by object identity. One
+ * object, one path.
  */
-export type Registry = Readonly<Record<string, z.ZodType>>
+export type Registry = Readonly<Record<string, RegistryEntry>>
+
+/**
+ * What a registry maps a path to: a schema, an input that is a function of
+ * the context (DOM-21), a command, a query, a use case.
+ */
+export type RegistryEntry =
+  | z.ZodType
+  | CommandInput<z.ZodType>
+  | Commands[string]
+  | Queries[string]
+  | CommandUseCase<Commands[string]>
+  | ReadUseCase<Queries[string]>
 
 /** The components of a generated module that belong to a conventional module. */
 type ComponentsIn<module, conventional extends string> = {
