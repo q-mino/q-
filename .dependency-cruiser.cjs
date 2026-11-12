@@ -16,6 +16,11 @@ const arrows = {
 
 const domain = (name) => `^packages/domains/src/${name}/`
 
+// The kinds of domain (DOM-25): a domain's folder sits in the folder of its kind,
+// and holds only its conventional modules.
+const kinds = '(?:business|persona)'
+const shed = '^packages/domains/test/shed/'
+
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   name: `arrows-of-${from}`,
   comment: `${from} may import only: ${allowed.length > 0 ? allowed.join(', ') : 'nothing'}`,
@@ -31,17 +36,25 @@ module.exports = {
   forbidden: [
     ...arrowRules,
     {
-      name: 'shed-domains-isolated',
+      name: 'shed-business-isolated',
       comment:
-        'Shed: a test domain imports of another only its identities, id.ts (GR-3, V11); the adapters link them.',
+        'Shed: a business domain imports of another only its identities, id.ts (GR-3, V11), and nothing of a persona; the adapters link them.',
       severity: 'error',
-      from: { path: '^packages/domains/test/shed/([^/_][^/]*)/' },
+      from: { path: `${shed}business/([^/]+)/` },
       to: {
-        path: '^packages/domains/test/shed/[^/]+/',
-        pathNot: [
-          '^packages/domains/test/shed/$1/',
-          '^packages/domains/test/shed/[^/_][^/]*/_domain/id\\.ts$',
-        ],
+        path: `${shed}${kinds}/`,
+        pathNot: [`${shed}business/$1/`, `${shed}business/[^/]+/id\\.ts$`],
+      },
+    },
+    {
+      name: 'shed-persona-through-use-cases',
+      comment:
+        'Shed: a persona imports of a business domain only its use cases and identities, usecase.ts and id.ts, never its commands or queries (DOM-2, GR-3), and nothing of another persona.',
+      severity: 'error',
+      from: { path: `${shed}persona/([^/]+)/` },
+      to: {
+        path: `${shed}${kinds}/`,
+        pathNot: [`${shed}persona/$1/`, `${shed}business/[^/]+/(?:usecase|id)\\.ts$`],
       },
     },
     {
@@ -51,7 +64,7 @@ module.exports = {
       severity: 'error',
       from: { path: '^(.+/)([^/_][^/]*)\\.ts$' },
       to: {
-        path: ['/_domain/_[^/]+\\.ts$', '/_domain/[^/]+/_[^/]+\\.ts$'],
+        path: [`/${kinds}/[^/]+/_[^/]+\\.ts$`, `/${kinds}/[^/]+/[^/]+/_[^/]+\\.ts$`],
         pathNot: '^$1_$2\\.ts$',
       },
     },
@@ -60,10 +73,10 @@ module.exports = {
       comment:
         "A domain's module folder (DOM-25) is reachable from another folder only through its generated index.ts.",
       severity: 'error',
-      from: { path: '^(packages/domains/.+/_domain/[^/]+)/' },
+      from: { path: `^(packages/domains/.+/${kinds}/[^/]+/[^/]+)/` },
       to: {
-        path: '^packages/domains/.+/_domain/[^/]+/',
-        pathNot: ['^$1/', '^packages/domains/.+/_domain/[^/]+/index\\.ts$'],
+        path: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/`,
+        pathNot: ['^$1/', `^packages/domains/.+/${kinds}/[^/]+/[^/]+/index\\.ts$`],
       },
     },
     {
@@ -71,10 +84,10 @@ module.exports = {
       comment:
         "From outside any module folder, a domain's module folder (DOM-25) is reachable only through its generated index.ts.",
       severity: 'error',
-      from: { pathNot: '^packages/domains/.+/_domain/[^/]+/' },
+      from: { pathNot: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/` },
       to: {
-        path: '^packages/domains/.+/_domain/[^/]+/',
-        pathNot: '^packages/domains/.+/_domain/[^/]+/index\\.ts$',
+        path: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/`,
+        pathNot: `^packages/domains/.+/${kinds}/[^/]+/[^/]+/index\\.ts$`,
       },
     },
     {

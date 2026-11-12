@@ -14,16 +14,16 @@
 // after it, and its stream defines what the events of a fact are.
 
 import * as wlib from '../../wlib.ts'
-import { registry as tools_registry } from '../../tools/_domain/registry.ts'
-import { registry as loans_registry } from '../../loans/_domain/registry.ts'
-import { add_a_tool, retire_a_tool, the_catalogue } from '../../tools/_domain/usecase.ts'
+import { registry as tools_registry } from '../../business/tools/registry.ts'
+import { registry as loans_registry } from '../../business/loans/registry.ts'
+import { add_a_tool, retire_a_tool, the_catalogue } from '../../business/tools/usecase.ts'
 import {
   borrow_a_tool,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../../loans/_domain/usecase.ts'
+} from '../../business/loans/usecase.ts'
 import type { Field, Selection, Source } from './fragments.ts'
 import {
   loan_selection,

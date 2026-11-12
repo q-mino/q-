@@ -5,22 +5,22 @@
 
 import { z } from 'zod'
 import * as wlib from '../wlib.ts'
-import { registry as tools_registry } from '../tools/_domain/registry.ts'
-import { registry as loans_registry } from '../loans/_domain/registry.ts'
-import type * as tools_fact from '../tools/_domain/fact.ts'
-import type * as tools_predicate from '../tools/_domain/predicate.ts'
-import type * as tools_selection from '../tools/_domain/selection/index.ts'
-import { add_a_tool, retire_a_tool, the_catalogue } from '../tools/_domain/usecase.ts'
-import type * as loans_fact from '../loans/_domain/fact.ts'
-import type * as loans_predicate from '../loans/_domain/predicate.ts'
-import type * as loans_selection from '../loans/_domain/selection/index.ts'
+import { registry as tools_registry } from '../business/tools/registry.ts'
+import { registry as loans_registry } from '../business/loans/registry.ts'
+import type * as tools_fact from '../business/tools/fact.ts'
+import type * as tools_predicate from '../business/tools/predicate.ts'
+import type * as tools_selection from '../business/tools/selection/index.ts'
+import { add_a_tool, retire_a_tool, the_catalogue } from '../business/tools/usecase.ts'
+import type * as loans_fact from '../business/loans/fact.ts'
+import type * as loans_predicate from '../business/loans/predicate.ts'
+import type * as loans_selection from '../business/loans/selection/index.ts'
 import {
   borrow_a_tool,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../loans/_domain/usecase.ts'
+} from '../business/loans/usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {

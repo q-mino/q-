@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from '../../tools/_domain/id.ts'
+import { tool_id } from '../tools/id.ts'
 import { day } from '../../wlib.ts'
 import { loan_id, member_id, reservation_id } from './id.ts'
 

@@ -6,17 +6,17 @@
 // (DOM-18): a loan, a reservation.
 
 import type * as wlib from '../../wlib.ts'
-import type * as loans_fact from '../../loans/_domain/fact.ts'
-import type * as loans_predicate from '../../loans/_domain/predicate.ts'
-import type { loan_id, reservation_id } from '../../loans/_domain/id.ts'
-import type { loan, reservation } from '../../loans/_domain/value.ts'
+import type * as loans_fact from '../../business/loans/fact.ts'
+import type * as loans_predicate from '../../business/loans/predicate.ts'
+import type { loan_id, reservation_id } from '../../business/loans/id.ts'
+import type { loan, reservation } from '../../business/loans/value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
-} from '../../loans/_domain/query.ts'
-import type * as loans_selection from '../../loans/_domain/selection/index.ts'
-import type { tool_id } from '../../tools/_domain/id.ts'
-import * as tools_dsl from '../../tools/_domain/dsl.ts'
+} from '../../business/loans/query.ts'
+import type * as loans_selection from '../../business/loans/selection/index.ts'
+import type { tool_id } from '../../business/tools/id.ts'
+import * as tools_dsl from '../../business/tools/dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
