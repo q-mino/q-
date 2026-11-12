@@ -20,7 +20,8 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
 4. Reads and streams.
 5. Use cases.
 6. Persona, auth, interface. Left from step 5:
-   - the personas `visitor`, `member`, `keeper`, a domain each (DOM-25), and their trees (PER-6): leaves that invoke the use cases of `tools` and `loans`, a persona use case with an input of its own, a creator that injects the values of the caller (`member_id` from the `Caller`, D33) and its events projected for the actor (D45), the first case of a use case's own parts (DOM-2);
+   - done: `keeper`, a domain of kind persona, and its leaf `retire_a_tool` in the full form (PER-6: own input and events, creator, projection; `wlib.command_leaf`).
+   - the personas `visitor`, `member`, a domain each (DOM-25), and their trees (PER-6): leaves that invoke the use cases of `tools` and `loans`, a persona use case with an input of its own, a creator that injects the values of the caller (`member_id` from the `Caller`, D33) and its events projected for the actor (D45), the first case of a use case's own parts (DOM-2);
    - the `Caller` (PER-4), which replaces the placeholder `CommandContext.uid`; the hat (PER-7); the interface: contract version, then hat (PER-5);
    - the base events no use case declares: hat not available, version not supported, invalid request, identity already used (DOM-11);
    - done: the kind of a domain declared by its folder (`business/`, `persona/`), and the persona importing a business domain's `usecase` and `id` only, never `command` or `query` (`.dependency-cruiser.cjs`);

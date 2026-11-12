@@ -424,6 +424,7 @@ export type RegistryEntry =
   | Queries[string]
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
+  | PersonaCommandUseCase<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
 
 /** The components of a generated module that belong to a conventional module. */
 type ComponentsIn<module, conventional extends string> = {
@@ -778,6 +779,92 @@ export interface CommandUseCase<command extends Commands[string]> {
 export declare function command_use_case<const command extends Commands[string]>(use_case: {
   readonly command: command
 }): CommandUseCase<command>
+
+// ---------------------------------------------------------------------------
+// The persona's use cases (PER-6, D77): the leaves of its tree. A persona is
+// a domain of its own (DOM-25), with its own language: a leaf invokes a
+// business use case, conformist (D36), but its surface is the persona's,
+// input and events, so that the persona can keep its contract when the
+// business changes (PER-17, D75.6, GR-3). Always the full form: nothing
+// derived from the business.
+
+/**
+ * The events of a persona's use case, by name: each a phrase of the
+ * persona's language, its payload a schema (D72.1). A closed set (DOM-3).
+ */
+export type Events = Readonly<Record<string, z.ZodType>>
+
+/**
+ * One of the events of a use case, as a projection writes it: its name and
+ * its payload, an input that the library parses with the event's schema.
+ */
+export type EventOf<events extends Events> = {
+  [name in keyof events & string]: {
+    readonly event: name
+    readonly payload: z.input<events[name]>
+  }
+}[keyof events & string]
+
+/** The command a business command use case runs. */
+type CommandOfUseCase<use_case> = use_case extends { [$UseCase]: { command: infer command } }
+  ? command
+  : never
+
+/** The input schema of the command a business command use case runs. */
+type InputOfUseCase<use_case> =
+  CommandOfUseCase<use_case> extends { [$Command]: { input: infer input extends z.ZodType } }
+    ? input
+    : never
+
+/**
+ * The persona's projection of a business command's outcome (D45): one
+ * function per branch, from its fact's payload, and one for the rejection,
+ * from its failures, each to one of the persona's events. Exhaustive, as a
+ * match over an ADT: a new branch in the business does not compile in the
+ * persona. What never leaves the node (the fact's resources, attribution,
+ * versions, PER-18) is never given to it.
+ */
+export type Projection<outcomes extends Outcomes, events extends Events> = {
+  readonly [branch in keyof outcomes]: (fact: z.output<outcomes[branch][1]>) => EventOf<events>
+} & {
+  readonly rejected: (failures: readonly Failure<outcomes>[]) => EventOf<events>
+}
+
+/**
+ * A persona's command use case, a leaf of its tree: the business use case it
+ * invokes, its own input as declared (`input`, from which the generator
+ * writes `<use case>_input`, DOM-25) and its events.
+ */
+export interface PersonaCommandUseCase<
+  use_case extends CommandUseCase<Commands[string]>,
+  input extends CommandInput<z.ZodType>,
+  events extends Events,
+> {
+  readonly input: input
+  readonly [$UseCase]: { readonly use_case: use_case; readonly events: events }
+}
+
+/**
+ * A persona's command use case, a leaf (`command_leaf`): apart from the
+ * business's builder, since its parts are others. Declared in one argument whose parts have
+ * names, in the order of the flow: the business use case, the persona's
+ * input, the creator that turns it into the business's input, the persona's
+ * events, the projection that turns the business's outcome into them. The
+ * projected outcome is the first event and a terminal one (D72.3).
+ */
+export declare function command_leaf<
+  const use_case extends CommandUseCase<Commands[string]>,
+  const input extends CommandInput<z.ZodType>,
+  const events extends Events,
+>(use_case: {
+  readonly use_case: use_case
+  readonly input: input
+  readonly creator: (
+    context: Now,
+  ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
+  readonly events: events
+  readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
+}): PersonaCommandUseCase<use_case, input, events>
 
 /** The command use cases of a domain, by name. */
 export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>
