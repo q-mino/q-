@@ -25,9 +25,10 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
    - the base events no use case declares: hat not available, version not supported, invalid request, identity already used (DOM-11);
    - the kind of a domain declared explicitly (persona or business), and the persona importing a business domain's `usecase` and `id` only, never `command` or `query` (`.dependency-cruiser.cjs`);
    - the consumers: a live view takes a read use case port that streams (`wlib.Streamed`); a persona's limit on reads (a visitor keeps no stream open), if a case asks.
+   - a business domain's own tree (D105): a business use case under a node ("a pending order") that adds the node's conditions to its command, a possible first business use case written by hand, beside the persona's.
 7. Effects and outbox: the due-date reminder; the deadline as a fact, so that an overdue loan can enter a stream (no fact makes a loan overdue before then: time is not a fact, D68.3, D92.4).
 8. Reactions: "tool retired → cancel reservations". The fact log of the adapters (DOM-2, DOM-17) is what they read. A scenario to weigh (A, 12 Nov 2026): a command, then the facts that cascade from it, followed by correlation (DOM-10): Marta returns a tool damaged, her screen follows the repair it opens. In the paper a use case may stay open after the outcome until the final event it expects (D58.2), with the events it declares; listening beyond what a persona exposes is excluded (pub/sub discarded, D64).
-9. Processes: the repair after a damaged return.
+9. Processes: the repair after a damaged return. A transition composed into another's (D111, DOM-19): a command with no use case of its own, and a fact in parts.
 10. (optional) Fact translation; bulk operation with a cursor.
 
 ## Experiments
