@@ -19,7 +19,12 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
 3. A second domain that reads the first: `loans`.
 4. Reads and streams.
 5. Use cases.
-6. Persona, auth, interface.
+6. Persona, auth, interface. Left from step 5:
+   - the persona `shed` and its tree (PER-6): leaves that invoke the use cases of `tools` and `loans`, a persona use case with an input of its own, a creator that injects the values of the caller (`member_id` from the `Caller`, D33) and its events projected for the actor (D45), the first case of a use case's own parts (DOM-2);
+   - the `Caller` (PER-4), which replaces the placeholder `CommandContext.uid`; the hat (PER-7); the interface: contract version, then hat (PER-5);
+   - the base events no use case declares: hat not available, version not supported, invalid request, identity already used (DOM-11);
+   - the kind of a domain declared explicitly (persona or business), and the persona importing a business domain's `usecase` and `id` only, never `command` or `query` (`.dependency-cruiser.cjs`);
+   - the consumers: a live view takes a read use case port that streams (`wlib.Streamed`); a persona's limit on reads (a visitor keeps no stream open), if a case asks.
 7. Effects and outbox: the due-date reminder; the deadline as a fact, so that an overdue loan can enter a stream (no fact makes a loan overdue before then: time is not a fact, D68.3, D92.4).
 8. Reactions: "tool retired → cancel reservations". The fact log of the adapters (DOM-2, DOM-17) is what they read. A scenario to weigh (A, 12 Nov 2026): a command, then the facts that cascade from it, followed by correlation (DOM-10): Marta returns a tool damaged, her screen follows the repair it opens. In the paper a use case may stay open after the outcome until the final event it expects (D58.2), with the events it declares; listening beyond what a persona exposes is excluded (pub/sub discarded, D64).
 9. Processes: the repair after a damaged return.
