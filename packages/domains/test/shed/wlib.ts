@@ -903,10 +903,14 @@ type InputOfUseCase<use_case> =
  * and one for the rejection, from its failures. Exhaustive, as a match over
  * an ADT: a new branch below does not compile above. What never leaves the
  * node (the fact's resources, attribution, versions, PER-18) is never given
- * to it.
+ * to it. The branches exclude `rejected` from their keys: while the
+ * outcomes are still generic, a mapped type may hold any key, and `rejected`
+ * would get two signatures and lose its parameter's type (A, 13 Nov 2026).
  */
 export type Projection<outcomes extends Outcomes, events extends Events> = {
-  readonly [branch in keyof outcomes]: (fact: z.output<outcomes[branch][1]>) => EventOf<events>
+  readonly [branch in Exclude<keyof outcomes, 'rejected'>]: (
+    fact: z.output<outcomes[branch][1]>,
+  ) => EventOf<events>
 } & {
   readonly rejected: (failures: readonly Failure<outcomes>[]) => EventOf<events>
 }
