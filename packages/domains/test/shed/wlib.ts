@@ -496,6 +496,7 @@ export type RegistryEntry =
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
   | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
+  | ReadUseCaseOver<ReadUseCase<Queries[string]>, QueryInput<z.ZodType>, z.ZodObject>
   | Lookup<z.ZodType, z.ZodType>
   | Node<RootContext>
 
@@ -947,6 +948,54 @@ export type CommandUseCaseOverBuilder<context> = <
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
 }) => CommandUseCaseOver<use_case, input, events>
 
+/** The query a read use case reads. */
+type QueryOfUseCase<use_case> = use_case extends { [$UseCase]: { query: infer query } }
+  ? query
+  : never
+
+/**
+ * A read use case over another (DOM-2, D45): the read use case it invokes,
+ * its own input as declared (`input`, from which the generator writes
+ * `<use case>_input`, DOM-25) and the schema of its own entries.
+ */
+export interface ReadUseCaseOver<
+  use_case extends ReadUseCase<Queries[string]>,
+  input extends QueryInput<z.ZodType>,
+  entry extends z.ZodObject,
+> {
+  readonly input: input
+  readonly [$UseCase]: { readonly use_case: use_case; readonly entry: entry }
+}
+
+/**
+ * A read use case over another, declared in one argument whose parts have
+ * names, in the order of the flow: the read use case it invokes, its input,
+ * the creator that turns it into the invoked one's input, its entry, the
+ * projection that builds an entry of its own from one of the invoked one,
+ * field by field (D45): a field it does not write never leaves (PER-18). It
+ * gives the snapshot alone: with no projection of the events of the stream,
+ * its port is not `Streamed`, so that no live view can take it (D24, D77);
+ * the projection of the stream comes with its case. Its creator reads the
+ * context of its point of the tree.
+ */
+export type ReadUseCaseOverBuilder<context> = <
+  const use_case extends ReadUseCase<Queries[string]>,
+  const input extends QueryInput<z.ZodType, context>,
+  const entry extends z.ZodObject,
+>(use_case: {
+  readonly use_case: use_case
+  readonly input: input
+  readonly creator: (
+    context: context,
+  ) => (
+    input: z.output<SchemaOf<input>>,
+  ) => z.input<
+    QueryParts<QueryOfUseCase<use_case>> extends { input: infer i extends z.ZodType } ? i : never
+  >
+  readonly entry: entry
+  readonly projection: (entry: z.output<FieldsOf<QueryOfUseCase<use_case>>>) => z.input<entry>
+}) => ReadUseCaseOver<use_case, input, entry>
+
 // ---------------------------------------------------------------------------
 // Builders at a point of the tree (PER-6, DOM-25): the context of a creator
 // comes from where it sits, not from its annotation.
@@ -964,6 +1013,7 @@ export interface Builders<context extends RootContext> {
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
   readonly command_use_case_over: CommandUseCaseOverBuilder<context>
+  readonly read_use_case_over: ReadUseCaseOverBuilder<context>
   readonly node: NodeBuilder<context>
 }
 
