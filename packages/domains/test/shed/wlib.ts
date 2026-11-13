@@ -499,7 +499,13 @@ export type RegistryEntry =
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
   | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
-  | ReadUseCaseOver<ReadUseCase<Queries[string]>, QueryInput<z.ZodType>, z.ZodObject, unknown>
+  | ReadUseCaseOver<
+      ReadUseCase<Queries[string]>,
+      QueryInput<z.ZodType>,
+      z.ZodObject,
+      unknown,
+      LeafStream | undefined
+    >
   | Lookup<z.ZodType, z.ZodType>
   | Node<unknown, RootContext, unknown>
 
@@ -984,39 +990,78 @@ type QueryOfUseCase<use_case> = use_case extends { [$UseCase]: { query: infer qu
   : never
 
 /**
+ * How a read use case over another streams (`stream`): the field of its own
+ * entry that names it (`identity`), which holds the identity of the query's
+ * entry, as it is. Grows with its cases: the facts by name (step 7), an
+ * identity of its own, translated from the query's (A, 13 Nov 2026 (2)).
+ */
+export interface LeafStream {
+  readonly identity: string
+}
+
+/**
  * A read use case over another (DOM-2, D45): the read use case it invokes,
  * its own input as declared (`input`, from which the generator writes
- * `<use case>_input`, DOM-25) and the schema of its own entries.
+ * `<use case>_input`, DOM-25), the schema of its own entries, and how it
+ * streams, if it does (`stream`).
  */
 export interface ReadUseCaseOver<
   use_case extends ReadUseCase<Queries[string]>,
   input extends QueryInput<z.ZodType>,
   entry extends z.ZodObject,
   closes,
+  stream extends LeafStream | undefined = undefined,
 > {
   readonly input: input
   readonly [$UseCase]: {
     readonly use_case: use_case
     readonly entry: entry
     readonly closes: closes
+    readonly stream: stream
   }
 }
+
+/** The identity of a query's entry, as parsed: the value of its `identity` field. */
+type IdentityOfQuery<query> =
+  QueryParts<query> extends {
+    fields: infer fields extends z.ZodObject
+    identity: infer identity extends string
+  }
+    ? z.output<fields>[identity & keyof z.output<fields>]
+    : never
+
+/** The fields of an entry whose value is exactly a given identity. */
+type FieldsHolding<entry extends z.ZodObject, identity> = {
+  [field in keyof z.output<entry> & string]: [z.output<entry>[field]] extends [identity]
+    ? [identity] extends [z.output<entry>[field]]
+      ? field
+      : never
+    : never
+}[keyof z.output<entry> & string]
 
 /**
  * A read use case over another, declared in one argument whose parts have
  * names, in the order of the flow: the read use case it invokes, its input,
  * the creator that turns it into the invoked one's input, its entry, the
  * projection that builds an entry of its own from one of the invoked one,
- * field by field (D45): a field it does not write never leaves (PER-18). It
- * gives the snapshot alone: with no projection of the events of the stream,
- * its port is not `Streamed`, so that no live view can take it (D24, D77);
- * the projection of the stream comes with its case. Its creator reads the
- * context of its point of the tree.
+ * field by field (D45): a field it does not write never leaves (PER-18); and
+ * last, if it streams, how (`stream`). Its creator reads the context of its
+ * point of the tree.
+ *
+ * With no `stream` it gives the snapshot alone, and its port is not
+ * `Streamed`, so that no live view can take it (D24, D77). With `stream`, its
+ * port is `Streamed`: every entry of the stream (`fact`, `entered`) is
+ * projected as in the snapshot, and `left` names the entry by the field of its
+ * own entry that `stream.identity` declares, which must hold the identity of
+ * the query's entry, as it is (A, 13 Nov 2026 (2)).
  */
 export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
   const input extends QueryInput<z.ZodType, context>,
   const entry extends z.ZodObject,
+  const stream extends
+    | { readonly identity: FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> }
+    | undefined = undefined,
 >(use_case: {
   readonly use_case: use_case
   readonly input: input
@@ -1029,7 +1074,8 @@ export type ReadUseCaseOverBuilder<context, closes> = <
   >
   readonly entry: entry
   readonly projection: (entry: z.output<FieldsOf<QueryOfUseCase<use_case>>>) => z.input<entry>
-}) => ReadUseCaseOver<use_case, input, entry, closes>
+  readonly stream?: stream
+}) => ReadUseCaseOver<use_case, input, entry, closes, stream>
 
 // ---------------------------------------------------------------------------
 // Builders at a point of the tree (PER-6, DOM-25): the context of a creator
@@ -1259,13 +1305,91 @@ export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer 
     ) => AsyncIterable<CommandLeafEvent<leaf>>
   : never
 
-/** The command leaves of a tree, by name. */
-export type CommandLeaves = Readonly<
+/**
+ * The events of the stream of a read leaf, as its port gives them (D72.5, A,
+ * 13 Nov 2026 (2)): those of `StreamEvent`, every entry projected as in the
+ * snapshot, its identity the field of the leaf's own entry that names it
+ * (`stream.identity`), typed as that field so that an identity of its own
+ * can come without changing the port. `fact` carries the entry the fact
+ * leaves, not the fact: the facts by name come with their case (step 7). The
+ * position goes out as it is, opaque (D72.6); the envelope and its resources
+ * never (PER-18, D107.4).
+ */
+export type LeafStreamEvent<entry, identity> =
+  | {
+      readonly event: 'fact'
+      readonly position: position
+      readonly identity: identity
+      readonly entry: entry
+    }
+  | {
+      readonly event: 'entered'
+      readonly position: position
+      readonly identity: identity
+      readonly entry: entry
+    }
+  | { readonly event: 'left'; readonly position: position; readonly identity: identity }
+  | { readonly event: 'caught_up'; readonly position: position }
+  | { readonly event: 'position_unavailable' }
+
+/**
+ * The events of a read leaf: the snapshot of its own entries, then, if it
+ * streams, the events of its stream; how its path may close it; the base
+ * event of a request (no operation, so no `identity_already_used`).
+ */
+export type ReadLeafEvent<leaf> = leaf extends {
+  [$UseCase]: { entry: infer entry extends z.ZodObject; closes: infer closes; stream: infer stream }
+}
+  ? | SnapshotEvent<z.output<entry>>
+    | (stream extends { identity: infer identity extends keyof z.output<entry> }
+        ? LeafStreamEvent<z.output<entry>, z.output<entry>[identity]>
+        : never)
+    | closes
+    | InvalidRequest
+  : never
+
+/**
+ * The port of a read leaf: what the entry gives the top of its tree, with no
+ * operation (a read has none), the leaf's input, and, if it streams, a
+ * position to resume from, as the stream gave it; its events out. With
+ * `stream` it is `Streamed`; a stream over a port of the invoked tree that
+ * does not stream is a composition fault, stopped at wiring (CFG-2).
+ */
+export type ReadLeafPort<entry, leaf> = leaf extends {
+  readonly input: infer input
+  readonly [$UseCase]: { stream: infer stream }
+}
+  ? stream extends LeafStream
+    ? ((
+        context: entry,
+        input: z.input<SchemaOf<input>>,
+        from?: position,
+      ) => AsyncIterable<ReadLeafEvent<leaf>>) &
+        Streamed
+    : ((context: entry, input: z.input<SchemaOf<input>>) => AsyncIterable<ReadLeafEvent<leaf>>) & {
+        readonly streamed: false
+      }
+  : never
+
+/** The leaves of a tree, by name: command and read use cases over another. */
+export type TreeLeaves = Readonly<
   Record<
     string,
-    CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+    | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+    | ReadUseCaseOver<
+        ReadUseCase<Queries[string]>,
+        QueryInput<z.ZodType>,
+        z.ZodObject,
+        unknown,
+        LeafStream | undefined
+      >
   >
 >
+
+/** The port of a leaf, by its kind: a read leaf declares its entry, a command leaf its events. */
+export type LeafPort<entry, leaf> = leaf extends { [$UseCase]: { entry: z.ZodObject } }
+  ? ReadLeafPort<entry, leaf>
+  : CommandLeafPort<entry, leaf>
 
 /**
  * The ports that a tree invokes, by the path of their folder
@@ -1278,15 +1402,15 @@ export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>
 /**
  * The ports of the leaves of a tree (PER-6): the registry where the library
  * finds the nodes and the leaves by path, the node at the top, which takes
- * what the entry gives, and the leaves. Curried as `command_use_case_ports`:
- * then the ports the tree invokes.
+ * what the entry gives, and the leaves, command and read. Curried as
+ * `command_use_case_ports`: then the ports the tree invokes.
  */
-export declare function tree_ports<const top, const use_cases extends CommandLeaves>(ports: {
+export declare function tree_ports<const top, const use_cases extends TreeLeaves>(ports: {
   readonly registry: Registry
   readonly top: top
   readonly use_cases: use_cases
 }): (invoked: Invoked) => {
-  readonly [name in keyof use_cases]: CommandLeafPort<EntryOf<top>, use_cases[name]>
+  readonly [name in keyof use_cases]: LeafPort<EntryOf<top>, use_cases[name]>
 }
 
 /** The command use cases of a domain, by name. */

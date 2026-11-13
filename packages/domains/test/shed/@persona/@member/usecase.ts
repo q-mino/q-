@@ -4,13 +4,15 @@ import * as loans from '../../@business/@loans/_index.ts'
 import * as tools from '../../@business/@tools/_index.ts'
 import { the_card_is_valid_on } from './_dsl.ts'
 import { here } from './_here.ts'
+import { tool_name } from './_value.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found
-// (`context.card`), given to the business as its input (D33); the outcome is
-// projected in the member's words (D45). A node that closes the request
-// answers for them (`not_found`), with no event of theirs; a leaf's own limit
-// closes it with `refused`.
+// (`context.card`), given to the business as its input (D33), never from the
+// client (PER-8); the outcome and the entries are projected in the member's
+// words (D45). A node that closes the request answers for them
+// (`not_found`), with no event of theirs; a leaf's own limit closes it with
+// `refused`.
 
 /** Marta takes the drill home, while her card is valid. */
 export const borrow_a_tool = here.command_use_case_over({
@@ -54,4 +56,30 @@ export const borrow_a_tool = here.command_use_case_over({
     }),
     rejected: () => ({ event: 'the_tool_is_not_available', payload: {} }),
   },
+})
+
+/**
+ * Marta opens "my loans": the tools she has at home and when each is due,
+ * then follows them live; a loan appears, a return takes it away. Her card
+ * may have expired: she still sees what she must bring back.
+ */
+export const my_loans = here.read_use_case_over({
+  use_case: loans.the_ongoing_loans_of_a_member,
+  input: z.strictObject({}),
+  creator: (context) => () => ({ member_id: context.card.id }),
+  entry: z.strictObject({
+    loan_id: loans.loan_id,
+    tool_id: tools.tool_id,
+    tool_name: tool_name,
+    start_date: wlib.date_time_string,
+    due_date: wlib.date_time_string,
+  }),
+  projection: (entry) => ({
+    loan_id: entry.id,
+    tool_id: entry.tool_id,
+    tool_name: entry.tool_name,
+    start_date: entry.start_date,
+    due_date: entry.due_date,
+  }),
+  stream: { identity: 'loan_id' },
 })

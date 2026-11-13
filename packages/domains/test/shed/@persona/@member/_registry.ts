@@ -7,9 +7,13 @@
 import type * as wlib from '../../wlib.ts'
 import * as node from './_node.ts'
 import * as usecase from './_usecase.ts'
+import * as value from './_value.ts'
 
 export const registry = {
   'persona/member/node/member': node.member,
   'persona/member/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'persona/member/usecase/borrow_a_tool_input': usecase.borrow_a_tool_input,
+  'persona/member/usecase/my_loans': usecase.my_loans,
+  'persona/member/usecase/my_loans_input': usecase.my_loans_input,
+  'persona/member/value/tool_name': value.tool_name,
 } satisfies wlib.Registry
