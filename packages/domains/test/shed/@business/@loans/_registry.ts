@@ -6,6 +6,7 @@
 
 import type * as wlib from '../../wlib.ts'
 import * as command from './_command.ts'
+import * as effect from './_effect.ts'
 import * as fact from './_fact.ts'
 import * as id from './_id.ts'
 import * as predicate from './_predicate.ts'
@@ -41,6 +42,13 @@ export const registry = {
   'business/loans/fact/the_member_already_booked_the_tool': fact.the_member_already_booked_the_tool,
   'business/loans/fact/a_tool_has_been_returned': fact.a_tool_has_been_returned,
   'business/loans/fact/the_loan_was_already_returned': fact.the_loan_was_already_returned,
+  'business/loans/fact/the_member_has_been_reminded_of_the_due_date':
+    fact.the_member_has_been_reminded_of_the_due_date,
+  'business/loans/fact/the_loan_was_returned_before_the_reminder':
+    fact.the_loan_was_returned_before_the_reminder,
+  'business/loans/effect/wait_until_the_eve_of_the_due_date':
+    effect.wait_until_the_eve_of_the_due_date,
+  'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
   'business/loans/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/loans/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
@@ -64,6 +72,11 @@ export const registry = {
   'business/loans/command/the_loan_is_already_returned': command.the_loan_is_already_returned,
   'business/loans/command/return_a_tool': command.return_a_tool,
   'business/loans/command/return_a_tool_input': command.return_a_tool_input,
+  'business/loans/command/the_member_still_has_the_tool': command.the_member_still_has_the_tool,
+  'business/loans/command/remind_the_member_of_the_due_date':
+    command.remind_the_member_of_the_due_date,
+  'business/loans/command/remind_the_member_of_the_due_date_input':
+    command.remind_the_member_of_the_due_date_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -86,6 +99,8 @@ export const registry = {
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'business/loans/usecase/reserve_a_tool': usecase.reserve_a_tool,
   'business/loans/usecase/return_a_tool': usecase.return_a_tool,
+  'business/loans/usecase/remind_the_member_of_the_due_date':
+    usecase.remind_the_member_of_the_due_date,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
 } satisfies wlib.Registry

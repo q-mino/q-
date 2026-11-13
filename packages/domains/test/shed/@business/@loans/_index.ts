@@ -4,7 +4,10 @@
 // outside it, flat, under the components' names. A business domain's door
 // exposes its use cases and its identities only, by the architecture's rule
 // (DOM-2, GR-1): from outside, its commands and queries cannot even be named.
-// Inside the folder the files import the twins, never the door.
+// A return use case is not in it: its entry is the effect executor (D92.1),
+// which reaches it from the configurator, so that no persona can send a
+// reminder with a payload of its choice. Inside the folder the files import
+// the twins, never the door.
 
 export {
   borrow_a_tool,

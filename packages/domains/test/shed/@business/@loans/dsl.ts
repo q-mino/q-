@@ -13,6 +13,10 @@ export const the_due_date_of_a_loan_started_on = (start_date: date_time_string):
     new Date(Date.parse(start_date) + loan_period_in_days * a_day_in_milliseconds).toISOString(),
   )
 
+/** A day before an instant: the eve of a due date, when the member is reminded. */
+export const the_eve_of = (date: date_time_string): date_time_string =>
+  date_time_string.parse(new Date(Date.parse(date) - a_day_in_milliseconds).toISOString())
+
 const the_day_of = (date: date_time_string): string => date.slice(0, 10)
 
 /** The calendar day of an instant. */

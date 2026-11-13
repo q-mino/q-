@@ -25,6 +25,7 @@ import { accounts_lookups, type AccountsState } from './accounts.ts'
 import { add_a_tool, retire_a_tool, the_catalogue } from '../../@business/@tools/_usecase.ts'
 import {
   borrow_a_tool,
+  remind_the_member_of_the_due_date,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
@@ -57,9 +58,10 @@ type Fragment = (state: State) => boolean
 /** A fact's write: the part of the state it changes. */
 type Write = (state: State) => Partial<State>
 
-/** A recorded fact with the state it left. */
+/** A recorded fact with its outbox entries and the state it left. */
 export interface Step {
   readonly fact: wlib.StoredEnvelope
+  readonly entries: readonly wlib.StoredEntry[]
   readonly state: State
 }
 
@@ -75,6 +77,10 @@ export interface Cell {
   readonly history: (from: wlib.position) => History
   /** The facts recorded after a position, as soon as there is one. */
   readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
+  /** The entries recorded with the facts, effect by effect (DOM-14). */
+  readonly outbox: wlib.Outbox
+  /** The state of the effect executors: positions per effect, dead letters, shown to a test. */
+  readonly executor: wlib.ExecutorState
 }
 
 /** A recorded fact, at its position, with the state before and after it. */
@@ -130,7 +136,11 @@ const execute =
         leaves: plan.map((planned) => planned.leaves.map((leaf) => leaf(state))),
       })
     }
-    cell.record({ fact: branch.fact, state: { ...state, ...branch.write(state) } })
+    cell.record({
+      fact: branch.fact,
+      entries: branch.entries,
+      state: { ...state, ...branch.write(state) },
+    })
     return Promise.resolve<wlib.Execution>({
       outcome: 'applied',
       branch: applied,
@@ -306,7 +316,12 @@ export const memory_adapter = (cell: Cell) => ({
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
-      use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
+      use_cases: {
+        borrow_a_tool,
+        reserve_a_tool,
+        return_a_tool,
+        remind_the_member_of_the_due_date,
+      },
     })({
       algebra: algebra(loans_fragments),
       write: loans_writes,

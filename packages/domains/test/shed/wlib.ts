@@ -98,8 +98,17 @@ export declare function selection<const parameters extends z.ZodObject>(selectio
 }): parameters
 
 /**
+ * An effect (DOM-13, D108.1): what the domain asks of the world, named by a
+ * business phrase, and its payload, what the delivery needs. A branch queues
+ * it with its fact; the domain never runs it (D12).
+ */
+export declare function effect<const payload extends z.ZodObject>(effect: {
+  readonly payload: payload
+}): payload
+
+/**
  * A component of a domain that the library meets: a fact, a predicate, a
- * selection predicate. An object schema that the generator brands with its
+ * selection predicate, an effect. An object schema that the generator brands with its
  * path in its generated module, as an identity (`_fact.ts`): the same object as the
  * author's, nominal in the types. Its path is not in its data: at runtime the
  * library finds it in the registry, and a fact carries it in its envelope.
@@ -210,8 +219,19 @@ export declare function NOT<const condition extends Condition>(
   condition: condition,
 ): Composed<condition, condition, Leaves<condition>>
 
-/** A branch, declared: the condition and the fact it records. DOM-5 */
-export type Outcome = readonly [condition: Condition, fact: Component]
+/**
+ * The outbox entries of a branch, by name (DOM-5, DOM-13): each an effect,
+ * queued with the branch's fact, in the same atomic step (D12).
+ */
+export type Entries = Readonly<Record<string, Component>>
+
+/**
+ * A branch, declared: the condition, the fact it records and, if it asks
+ * the world for something, its outbox entries. DOM-5
+ */
+export type Outcome =
+  | readonly [condition: Condition, fact: Component]
+  | readonly [condition: Condition, fact: Component, entries: Entries]
 /**
  * The closed set of a command's branches, each under a business name: at
  * most one applies, tried in the order they are written. DOM-5, DOM-3
@@ -224,10 +244,38 @@ export type Outcomes = Readonly<Record<string, Outcome>>
  * Inputs, not outputs: the library parses them and puts the brands on.
  */
 export type ResolvedOutcomes<outcomes extends Outcomes> = {
-  readonly [k in keyof outcomes]: readonly [
-    condition: ConditionInput<outcomes[k][0]>,
-    fact: z.input<outcomes[k][1]>,
+  readonly [k in keyof outcomes]: outcomes[k] extends readonly [
+    Condition,
+    Component,
+    infer entries extends Entries,
   ]
+    ? readonly [
+        condition: ConditionInput<outcomes[k][0]>,
+        fact: z.input<outcomes[k][1]>,
+        entries: ResolvedEntries<entries>,
+      ]
+    : readonly [condition: ConditionInput<outcomes[k][0]>, fact: z.input<outcomes[k][1]>]
+}
+
+/** The identity of an outbox entry (DOM-13, D48): written by the domain, the key sent outside with its effect. */
+export const entry_id = z.string().min(1).brand<'entry_id'>()
+export type entry_id = z.output<typeof entry_id>
+
+/**
+ * A branch's outbox entries as the creator resolves them, under the same
+ * names (DOM-13, D108.1): the entry's id, from the domain's values, so that
+ * the pair (effect, id) is the key sent outside and the identity of the
+ * return's operation (DOM-14); its payload; and, if it waits, the instant it
+ * may go at the earliest, `not_before`, which the creator computes with the
+ * clock as a parameter (D48): after a downtime the entry goes late, never
+ * skipped. The paper leaves the form of the delay open (A, 13 Nov 2026 (3)).
+ */
+export type ResolvedEntries<entries extends Entries> = {
+  readonly [name in keyof entries]: {
+    readonly id: z.input<typeof entry_id>
+    readonly payload: z.input<entries[name]>
+    readonly not_before?: z.input<typeof date_time_string>
+  }
 }
 
 /**
@@ -279,17 +327,22 @@ export type Command<
 }
 
 /**
- * Branches whose conditions are made of predicates and whose facts are facts
- * are themselves; others ask for a field no command has, whose name says why
- * and whose type lists the paths of the strays. DOM-24
+ * Branches whose conditions are made of predicates, whose facts are facts
+ * and whose entries are effects are themselves; others ask for a field no
+ * command has, whose name says why and whose type lists the paths of the
+ * strays. DOM-24
  */
 export type PredicatesAndFacts<outcomes extends Outcomes> = [
-  Strays<PredicatesOf<outcomes>, Path<'predicate'>> | Strays<FactsOf<outcomes>, Path<'fact'>>,
+  | Strays<PredicatesOf<outcomes>, Path<'predicate'>>
+  | Strays<FactsOf<outcomes>, Path<'fact'>>
+  | Strays<EffectsOf<outcomes>, Path<'effect'>>,
 ] extends [never]
   ? unknown
   : {
-      readonly 'a condition is made of predicates, a branch records a fact (DOM-24)': PathOf<
-        Strays<PredicatesOf<outcomes>, Path<'predicate'>> | Strays<FactsOf<outcomes>, Path<'fact'>>
+      readonly 'a condition is made of predicates, a branch records a fact and queues effects (DOM-24)': PathOf<
+        | Strays<PredicatesOf<outcomes>, Path<'predicate'>>
+        | Strays<FactsOf<outcomes>, Path<'fact'>>
+        | Strays<EffectsOf<outcomes>, Path<'effect'>>
       >
     }
 
@@ -320,6 +373,18 @@ export type PredicatesOf<outcomes extends Outcomes> = Leaves<outcomes[keyof outc
 
 /** Every fact a command can record. */
 export type FactsOf<outcomes extends Outcomes> = outcomes[keyof outcomes][1]
+
+/** The effects of a branch's entries, none if it has no entries. */
+type EffectsOfOutcome<outcome> = outcome extends readonly [
+  Condition,
+  Component,
+  infer entries extends Entries,
+]
+  ? entries[keyof entries]
+  : never
+
+/** Every effect a command can queue. */
+export type EffectsOf<outcomes extends Outcomes> = EffectsOfOutcome<outcomes[keyof outcomes]>
 
 /**
  * The adapter's fragment for each predicate, under its path, from its parsed
@@ -355,15 +420,29 @@ export type FactWrites<facts extends Component, write> = {
 
 /**
  * A branch ready to execute, in the order of the branches: its condition
- * composed, each leaf apart (to name the failures), its write, and its fact
- * in its envelope, which the adapter records with the write, atomically
- * (DOM-8), for the streams to read (DOM-17).
+ * composed, each leaf apart (to name the failures), its write, its fact in
+ * its envelope and its outbox entries, which the adapter records with the
+ * write, atomically (DOM-8, D12), for the streams (DOM-17) and the effect
+ * executor (DOM-14) to read.
  */
 export interface PlannedBranch<fragment, write> {
   readonly condition: fragment
   readonly leaves: readonly fragment[]
   readonly write: write
   readonly fact: StoredEnvelope
+  readonly entries: readonly StoredEntry[]
+}
+
+/**
+ * An outbox entry as an adapter stores it (DOM-13): the path of its effect,
+ * its id, its payload (the library parses it by the path) and the instant it
+ * may go at the earliest.
+ */
+export interface StoredEntry {
+  readonly effect: string
+  readonly id: entry_id
+  readonly payload: unknown
+  readonly not_before?: date_time_string
 }
 
 /**
@@ -860,14 +939,27 @@ export declare const $UseCase: unique symbol
  * own (an input and a creator, events after the outcome, their terminals)
  * come with the case that composes something.
  */
-export interface CommandUseCase<command extends Commands[string]> {
-  readonly [$UseCase]: { readonly command: command }
+export interface CommandUseCase<command extends Commands[string], returns_from = unknown> {
+  readonly [$UseCase]: { readonly command: command; readonly returns_from: returns_from }
 }
 
-/** A command use case, declared in one argument whose parts have names (DOM-25). */
-export declare function command_use_case<const command extends Commands[string]>(use_case: {
+/**
+ * A command use case, declared in one argument whose parts have names
+ * (DOM-25). A return use case (DOM-13, D108.1) names the effect it comes
+ * back from (`returns_from`): the effect executor invokes it with what the
+ * world said, which the effect's delivery maps onto its input. The paper
+ * puts the return in the entry; here the use case names the effect, since a
+ * command that queues an effect and a use case over a command would import
+ * each other (A, 13 Nov 2026 (3)). An effect has one return at most, which
+ * the generator checks.
+ */
+export declare function command_use_case<
+  const command extends Commands[string],
+  const returns_from extends Component | undefined = undefined,
+>(use_case: {
   readonly command: command
-}): CommandUseCase<command>
+  readonly returns_from?: returns_from
+}): CommandUseCase<command, returns_from>
 
 // ---------------------------------------------------------------------------
 // A use case over another (DOM-2, D105): it runs no command of its own, it
@@ -1554,6 +1646,151 @@ export declare function read_use_case_ports<
     name extends keyof streams ? true : false
   >
 }
+
+// ---------------------------------------------------------------------------
+// Effects (DOM-13, DOM-14, DOM-15): a branch queues outbox entries with its
+// fact; the effect executor, an internal entry and not a persona (PER-12),
+// delivers them through an adapter per effect and brings what the world said
+// back through the effect's return use case, if it has one.
+
+/** The effects of a generated module (`_effect.ts`) or of a registry, for the deliveries. */
+export type EffectsIn<module> = ComponentsIn<module, 'effect'>
+
+/**
+ * What a delivery tells the executor (DOM-15, D108.2), an ADT:
+ * - `delivered`: the world answered; with a return use case, what it said,
+ *   as the return's input (a definitive outcome with a meaning is one of
+ *   them, D67.2); with none, nothing;
+ * - `transient`: retried later; the domain never sees it;
+ * - `exhausted`: to the dead letter, with its reason; never a business fact.
+ */
+export type Delivered<returned> =
+  | ([returned] extends [never]
+      ? { readonly outcome: 'delivered' }
+      : { readonly outcome: 'delivered'; readonly returns: returned })
+  | { readonly outcome: 'transient' }
+  | { readonly outcome: 'exhausted'; readonly reason: string }
+
+/**
+ * The delivery of one effect, an adapter (DOM-14): from an entry, its id
+ * (the key sent outside, with the effect) and its payload, what the world
+ * said, typed by the input of the effect's return, if any.
+ */
+export type Delivery<effect extends Component, returned> = (entry: {
+  readonly id: entry_id
+  readonly payload: z.output<effect>
+}) => Promise<Delivered<returned>>
+
+/**
+ * The library's delivery of an effect with no world (a wait: the eve of a
+ * due date): the payload back, as the return's input. The executor waits
+ * for `not_before` for every effect, so this one only answers: never
+ * transient nor exhausted. It fits an effect whose payload is its return's
+ * input. A timer is not a construct (A, 13 Nov 2026 (3)).
+ */
+export declare const returns_the_payload: <payload>(entry: {
+  readonly id: entry_id
+  readonly payload: payload
+}) => Promise<{ readonly outcome: 'delivered'; readonly returns: payload }>
+
+/** The input of the return of an effect among a domain's return use cases; `never` if it has none. */
+type ReturnOf<returns, effect> = {
+  [name in keyof returns]: returns[name] extends {
+    [$UseCase]: { returns_from: infer from; command: infer command }
+  }
+    ? [from] extends [effect]
+      ? command extends { [$Command]: { input: infer input extends z.ZodType } }
+        ? z.input<input>
+        : never
+      : never
+    : never
+}[keyof returns]
+
+/**
+ * The deliveries of a domain's effects, by path: exhaustive, so that an
+ * effect with no delivery does not compile, each typed by its return.
+ */
+export type Deliveries<registry, returns> = {
+  readonly [effect in EffectsIn<registry> as PathOf<effect>]: Delivery<
+    effect,
+    ReturnOf<returns, effect>
+  >
+}
+
+/**
+ * The outbox of a store, effect by effect (DOM-14): the entries of one
+ * effect from a position on, inclusive (from the first with none), in the
+ * order they were recorded, then each new one as it is recorded.
+ */
+export type Outbox = (
+  effect: string,
+) => (
+  from: position | undefined,
+) => AsyncIterable<{ readonly position: position; readonly entry: StoredEntry }>
+
+/**
+ * A dead letter of the effect executor (DOM-15, D67.3): operational,
+ * outside the domains, shown, never a business fact; redelivered after a
+ * fix with the same identity, or discarded by an operator, with a trace.
+ * Its cause, an ADT:
+ * - `exhausted`: the delivery gave up; redelivered, the effect runs again;
+ * - `rejected`: the return rejected what the world said, kept with its
+ *   failures; redelivered, the return runs again with it, never the effect
+ *   (D108.4);
+ * - `identity_already_used`: the entry came back with another outcome; the
+ *   first stands (D108.4).
+ */
+export interface DeadLetter {
+  readonly entry: StoredEntry
+  readonly cause:
+    | { readonly cause: 'exhausted'; readonly reason: string }
+    | {
+        readonly cause: 'rejected'
+        readonly returns: unknown
+        readonly failures: readonly Failure<Outcomes>[]
+      }
+    | { readonly cause: 'identity_already_used'; readonly returns: unknown }
+}
+
+/** Where an executor keeps its own state, durable (DOM-14): its position per effect, its dead letters. */
+export interface ExecutorState {
+  readonly position: (effect: string) => Promise<position | undefined>
+  readonly advance: (effect: string) => (to: position) => Promise<void>
+  readonly dead_letter: (letter: DeadLetter) => Promise<void>
+}
+
+/** A running executor: it stops when asked, after the entry it is delivering. */
+export interface EffectExecutor {
+  readonly stop: () => Promise<void>
+}
+
+/**
+ * The effect executor of a domain (DOM-14, PER-12): an internal entry, a
+ * durable consumer of its outbox, one delivery unit per effect, with its own
+ * position, order and dead letters. For each entry it waits for
+ * `not_before` by its clock, delivers it at least once, and, if the world
+ * answered and the effect has a return, invokes the return's port as
+ * "system · executor of effect E" (D91.3): the scope is the effect's path,
+ * the operation's id the entry's, so that a double report is the duplicate
+ * branch (DOM-11) and the fingerprint covers the entry and what the world
+ * said (D108.3); the context's `now` is the clock's. Curried as
+ * `command_use_case_ports`: the registry and the domain's return use cases,
+ * where it finds each effect's return; then the deliveries; then its ports.
+ */
+export declare function effect_executor<
+  const registry extends Registry,
+  const returns extends CommandUseCases,
+>(executor: {
+  readonly registry: registry
+  readonly returns: returns
+}): (
+  deliveries: Deliveries<registry, returns>,
+) => (ports: {
+  readonly outbox: Outbox
+  readonly returns: { readonly [name in keyof returns]: CommandUseCasePort<returns[name]> }
+  readonly state: ExecutorState
+  readonly clock: () => date_time_string
+}) => EffectExecutor
 
 // ---------------------------------------------------------------------------
 // Lookups (PER-9): a read of one key, which gives its value or "not known",

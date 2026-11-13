@@ -61,3 +61,25 @@ export type a_tool_has_been_returned = z.output<typeof a_tool_has_been_returned>
 export const the_loan_was_already_returned =
   fact.the_loan_was_already_returned.brand<'business/loans/fact/the_loan_was_already_returned'>()
 export type the_loan_was_already_returned = z.output<typeof the_loan_was_already_returned>
+
+/**
+ * The eve of the due date came while the member had the tool: the reminder is on its way. Nothing changes in the state (D95).
+ *
+ * @see {@link fact.the_member_has_been_reminded_of_the_due_date}
+ */
+export const the_member_has_been_reminded_of_the_due_date =
+  fact.the_member_has_been_reminded_of_the_due_date.brand<'business/loans/fact/the_member_has_been_reminded_of_the_due_date'>()
+export type the_member_has_been_reminded_of_the_due_date = z.output<
+  typeof the_member_has_been_reminded_of_the_due_date
+>
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came after the return, and no reminder goes.
+ *
+ * @see {@link fact.the_loan_was_returned_before_the_reminder}
+ */
+export const the_loan_was_returned_before_the_reminder =
+  fact.the_loan_was_returned_before_the_reminder.brand<'business/loans/fact/the_loan_was_returned_before_the_reminder'>()
+export type the_loan_was_returned_before_the_reminder = z.output<
+  typeof the_loan_was_returned_before_the_reminder
+>

@@ -178,6 +178,8 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`update loans set stage = ${l.progress.stage}, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
   ],
   'business/loans/fact/the_loan_was_already_returned': () => [],
+  'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => [],
+  'business/loans/fact/the_loan_was_returned_before_the_reminder': () => [],
   'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
@@ -200,10 +202,15 @@ const execute =
       const applied = plan.findIndex((_, i) => values[i] === true)
       const branch = plan[applied]
       if (branch !== undefined) {
-        // The fact is recorded with its write, in the same transaction (DOM-8).
+        // The fact and its outbox entries are recorded with its write, in the
+        // same transaction (DOM-8, D12).
         await [
           ...branch.write,
           sql`insert into facts (path, payload, resources) values (${branch.fact.path}, ${JSON.stringify(branch.fact.payload)}, ${JSON.stringify(branch.fact.resources)})`,
+          ...branch.entries.map(
+            (entry) =>
+              sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
+          ),
         ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
         return { outcome: 'applied', branch: applied, position: await tx.position() }
       }

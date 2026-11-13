@@ -1,6 +1,7 @@
 import * as wlib from '../../wlib.ts'
 import * as command from './_command.ts'
 import * as query from './_query.ts'
+import * as effect from './_effect.ts'
 
 // The use cases of `loans`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the loans and the reservations through them.
@@ -16,6 +17,16 @@ export const reserve_a_tool = wlib.command_use_case({ command: command.reserve_a
 
 /** A member brings a tool back, in good condition or damaged. */
 export const return_a_tool = wlib.command_use_case({ command: command.return_a_tool })
+
+/**
+ * On the eve of the due date the effect executor comes back (DOM-13): Marta
+ * is reminded if she still has the drill. The return of the wait queued by
+ * a loan.
+ */
+export const remind_the_member_of_the_due_date = wlib.command_use_case({
+  command: command.remind_the_member_of_the_due_date,
+  returns_from: effect.wait_until_the_eve_of_the_due_date,
+})
 
 /**
  * A member sees the tools they have: Marta opens "my loans", reads the list,

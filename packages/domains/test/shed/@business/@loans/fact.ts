@@ -52,3 +52,17 @@ export const the_loan_was_already_returned = wlib.fact({
     loan_id: loan_id,
   }),
 })
+
+/** The eve of the due date came while the member had the tool: the reminder is on its way. Nothing changes in the state (D95). */
+export const the_member_has_been_reminded_of_the_due_date = wlib.fact({
+  payload: z.strictObject({
+    loan_id: loan_id,
+  }),
+})
+
+/** Nothing to do (DOM-6, D95): the eve came after the return, and no reminder goes. */
+export const the_loan_was_returned_before_the_reminder = wlib.fact({
+  payload: z.strictObject({
+    loan_id: loan_id,
+  }),
+})

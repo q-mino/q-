@@ -176,6 +176,8 @@ export const loans_writes: wlib.FactWrites<
           }
     },
   'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
+  'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => (state) => state,
+  'business/loans/fact/the_loan_was_returned_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({
