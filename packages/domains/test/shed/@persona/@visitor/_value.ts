@@ -15,6 +15,14 @@ export const category = value.category
 export type category = z.output<typeof category>
 
 /**
+ * The shelves a visitor browses: at least one.
+ *
+ * @see {@link value.categories}
+ */
+export const categories = value.categories
+export type categories = z.output<typeof categories>
+
+/**
  * The name of a tool, as the visitor reads it.
  *
  * @see {@link value.tool_name}

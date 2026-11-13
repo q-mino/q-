@@ -9,6 +9,12 @@ import * as wlib from '../../wlib.ts'
 export const account_id = wlib.id({ format: z.string().min(1) })
 
 /**
+ * An anonymous session: the id of the `Caller` who has not signed in (D78.7,
+ * PER-4). Who wears `visitor` with it is a visitor, and nothing more.
+ */
+export const session_id = wlib.id({ format: z.string().min(1) })
+
+/**
  * A member card of the shed, a value of the hat `member` (PER-1). The persona
  * gives its number to `loans`, as the member of a loan (D33).
  */

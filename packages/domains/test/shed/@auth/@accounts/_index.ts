@@ -7,4 +7,4 @@
 // folder the files import the twins, never the door.
 
 export { the_hats_of_an_account, the_member_card_of_an_account } from './_lookup.ts'
-export { account_id, card_id } from './_id.ts'
+export { account_id, session_id, card_id } from './_id.ts'

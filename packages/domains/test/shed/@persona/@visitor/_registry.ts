@@ -10,6 +10,7 @@ import * as value from './_value.ts'
 
 export const registry = {
   'persona/visitor/value/category': value.category,
+  'persona/visitor/value/categories': value.categories,
   'persona/visitor/value/tool_name': value.tool_name,
   'persona/visitor/usecase/the_catalogue': usecase.the_catalogue,
   'persona/visitor/usecase/the_catalogue_input': usecase.the_catalogue_input,

@@ -7,7 +7,7 @@ import { z } from 'zod'
 import * as value from './value.ts'
 
 /**
- * The hats an account may wear. Who may wear `visitor` is the interface's (step 6).
+ * The hats an account may wear. Anyone wears `visitor`, which has no node to verify it (PER-7).
  *
  * @see {@link value.hat}
  */

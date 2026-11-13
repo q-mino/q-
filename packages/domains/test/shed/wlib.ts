@@ -1034,10 +1034,12 @@ export declare function builders_at<context extends RootContext>(): Builders<con
 // Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
 // walks a path down, whatever the tree. A node is a function of the context,
 // not of the request: it sees no input, since it sits above every leaf of
-// its folder. It runs its lookups, its only I/O, then its limits and its
-// bindings, pure, in the order of PER-5 (perimeter, then limit); it extends
-// the context, never rewrites it (D105.2); once per request, for everything
-// below it.
+// its folder. It runs its lookups, its only I/O, then its perimeters, its
+// limits and its bindings, pure, in the order of PER-5 (perimeter, then
+// limit); it extends the context, never rewrites it (D105.2); once per
+// request, for everything below it. It reads as sentences, its name the
+// subject: `member` looks up …, is found only if …, is refused unless …,
+// gives … (A, 13 Nov 2026).
 
 export declare const $Node: unique symbol
 
@@ -1052,21 +1054,31 @@ export type ContextOf<node> = node extends { [$Node]: { gives: infer context ext
   : never
 
 /**
- * A lookup a node runs: the lookup, its key from the context the node takes,
- * and what "not known" does. `not_found` closes the request as a perimeter
- * (PER-14, D87.5), so that the value goes on known; "not known" as a value
- * (D30) comes with its case.
+ * A lookup a node runs: the lookup, the key it runs `of`, from the context
+ * the node takes, and what "not known" does. The key is an answer (D30): a
+ * key not known (a caller with no account) runs no lookup, and the value is
+ * not known. The key is typed as parsed, branded, so that another identity
+ * (a session for an account) does not compile. `not_found` closes the
+ * request as a perimeter (PER-14, D87.5), so that the value goes on known;
+ * "not known" as a value comes with its case.
  */
 export interface NodeLookup<context, key extends z.ZodType, value extends z.ZodType> {
   readonly lookup: Lookup<key, value>
-  readonly key: (context: context) => z.input<key>
+  readonly of: (context: context) => Answer<z.output<key>>
   readonly when_not_known: 'not_found'
 }
 
-/** The lookups of a node, by name. */
-export type NodeLookups<context> = Readonly<
-  Record<string, NodeLookup<context, z.ZodType, z.ZodType>>
+/** The lookups of a node, by name: each a phrase, the value it looks up. */
+export type NodeLookups = Readonly<
+  Record<string, { readonly lookup: Lookup<z.ZodType, z.ZodType> }>
 >
+
+/** The lookups of a node, each checked against the lookup it runs: its key, its value. */
+type NodeLookupsOf<context, lookups> = {
+  readonly [name in keyof lookups]: lookups[name] extends { readonly lookup: infer lookup }
+    ? NodeLookup<context, LookupParts<lookup>['key'], LookupParts<lookup>['value']>
+    : never
+}
 
 /** The values the lookups of a node found, by name, known. */
 export type Found<lookups> = {
@@ -1078,31 +1090,46 @@ export type Found<lookups> = {
 /** The context a node takes: the point's, and at the top of a tree what its entry gives (`takes`). */
 type Taken<context, takes> = takes extends z.ZodObject ? context & z.output<takes> : context
 
+/** The conditions of a node, by name: each pure, over the context and what its lookups found. */
+type NodeConditions<context, lookups> = Readonly<
+  Record<string, (context: context) => (found: Found<lookups>) => boolean>
+>
+
 /**
  * A node, declared in one argument whose parts have names, in the order of
- * its run: what the entry gives at the top of a tree (`takes`, only there),
- * its lookups, its limits, its bindings (`gives`), last. A limit is named by
- * what must hold, and its name is the reason the caller reads when it fails
- * (PER-14); every limit is evaluated, every failure named.
+ * its run, so that it reads as sentences with its name as the subject (A,
+ * 13 Nov 2026): what the entry gives at the top of a tree (`takes`, only
+ * there); what it `looks_up`; the perimeters, as what it `is_found_only_if`;
+ * the limits, as what it `is_refused_unless`; what it `gives`, last. Every
+ * part may be left out. A condition is named by what must hold: a perimeter
+ * that fails closes with `not_found`, with no reason; a limit that fails
+ * with `refused`, its name the reason the caller reads (PER-14); every limit
+ * is evaluated, every failure named.
  */
 export type NodeBuilder<context> = <
-  const lookups extends NodeLookups<Taken<context, takes>>,
-  const gives extends Readonly<Record<string, unknown>>,
   const takes extends z.ZodObject | undefined = undefined,
+  const lookups extends NodeLookups = NoLookups,
+  const gives extends Readonly<Record<string, unknown>> | undefined = undefined,
 >(node: {
   readonly takes?: takes
-  readonly lookups: lookups
-  readonly limits: Readonly<
-    Record<string, (context: Taken<context, takes>) => (found: Found<lookups>) => boolean>
-  >
-  readonly gives: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
-}) => Node<Taken<context, takes> & gives & RootContext>
+  readonly looks_up?: lookups & NodeLookupsOf<Taken<context, takes>, lookups>
+  readonly is_found_only_if?: NodeConditions<Taken<context, takes>, lookups>
+  readonly is_refused_unless?: NodeConditions<Taken<context, takes>, lookups>
+  readonly gives?: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
+}) => Node<Taken<context, takes> & Given<gives> & RootContext>
+
+/** The lookups of a node that runs none: nothing is found, and no name reads. */
+type NoLookups = Readonly<Record<string, never>>
+
+/** What a node gives: its bindings, or nothing more when it has none. */
+type Given<gives> = gives extends undefined ? unknown : gives
 
 /**
  * The base events of a node that closes a request (PER-14, D80), in the
  * union of every leaf below it; no leaf declares them, and they are
- * terminal: a lookup that finds nothing, a perimeter, gives `not_found`,
- * with no reason; failed limits give `refused`, with the name of each.
+ * terminal: a lookup that finds nothing, or a perimeter that fails, gives
+ * `not_found`, with no reason; failed limits give `refused`, with the name of
+ * each.
  */
 export type NodeEvent<reason extends string> =
   | { readonly event: 'not_found' }

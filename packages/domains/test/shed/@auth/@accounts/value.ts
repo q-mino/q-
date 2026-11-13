@@ -5,7 +5,7 @@ import { card_id } from './_id.ts'
 // The values of `accounts`: the hats an account may wear and the values of
 // the hats that have some (PER-1, PER-7). Data, never decisions (PER-9).
 
-/** The hats an account may wear. Who may wear `visitor` is the interface's (step 6). */
+/** The hats an account may wear. Anyone wears `visitor`, which has no node to verify it (PER-7). */
 export const hat = z.enum(['member', 'keeper'])
 
 /** The hats of one account: Giorgio keeps the shed and borrows from it. */

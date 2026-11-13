@@ -53,12 +53,16 @@ module.exports = {
     {
       name: 'shed-persona-through-doors',
       comment:
-        'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups) and identities and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona.',
+        'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups) and identities and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona; above it, the twins of the persona base (@persona/_x.ts, D78.7), as a file sees its ancestors (DOM-25).',
       severity: 'error',
       from: { path: `${shed}@persona/(@[^/]+)/` },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}@persona/$1/`, `${shed}@(?:business|auth)/[^/]+/_index\\.ts$`],
+        pathNot: [
+          `${shed}@persona/$1/`,
+          `${shed}@persona/_[^/]+\\.ts$`,
+          `${shed}@(?:business|auth)/[^/]+/_index\\.ts$`,
+        ],
       },
     },
     {
