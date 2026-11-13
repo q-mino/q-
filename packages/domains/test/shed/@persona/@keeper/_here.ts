@@ -4,6 +4,6 @@
 // (PER-6), which build the rest of the folder.
 
 import * as wlib from '../../wlib.ts'
-import type { keeper_context } from './_node.ts'
+import type { keeper_closes, keeper_context } from './_node.ts'
 
-export const here = wlib.builders_at<keeper_context>()
+export const here = wlib.builders_at<keeper_context, keeper_closes>()

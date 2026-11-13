@@ -14,3 +14,6 @@ export const member = node.member
 
 /** The context the node `member` gives to everything below it. */
 export type member_context = wlib.ContextOf<typeof member>
+
+/** How the node `member` and the nodes above it may close a request (PER-14), for the leaves below it. */
+export type member_closes = wlib.ClosesOf<typeof member>

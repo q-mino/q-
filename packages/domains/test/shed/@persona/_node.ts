@@ -14,3 +14,6 @@ export const persona = node.persona
 
 /** The context the node `persona` gives to every persona below it. */
 export type persona_context = wlib.ContextOf<typeof persona>
+
+/** How the node `persona` and the nodes above it may close a request (PER-14), for the leaves below it. */
+export type persona_closes = wlib.ClosesOf<typeof persona>

@@ -427,8 +427,10 @@ export interface StoredEnvelope {
 
 /**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with
- * its typed fact in its envelope and its position; or the rejection, naming
- * every failed predicate (DOM-6).
+ * its typed fact in its envelope and its position; the rejection, naming
+ * every failed predicate (DOM-6); or, from the duplicate branch, the identity
+ * of the operation already used with another fingerprint (DOM-11, D79.4),
+ * which no projection sees: it crosses a use case over another as it is.
  */
 export type CommandOutcome<outcomes extends Outcomes> =
   | {
@@ -440,6 +442,7 @@ export type CommandOutcome<outcomes extends Outcomes> =
       }
     }[keyof outcomes & string]
   | { readonly outcome: 'rejected'; readonly failures: readonly Failure<outcomes>[] }
+  | { readonly outcome: 'identity_already_used' }
 
 /** The commands of a domain, by name. */
 export type Commands = Readonly<
@@ -495,10 +498,10 @@ export type RegistryEntry =
   | Queries[string]
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
-  | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events>
-  | ReadUseCaseOver<ReadUseCase<Queries[string]>, QueryInput<z.ZodType>, z.ZodObject>
+  | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+  | ReadUseCaseOver<ReadUseCase<Queries[string]>, QueryInput<z.ZodType>, z.ZodObject, unknown>
   | Lookup<z.ZodType, z.ZodType>
-  | Node<RootContext>
+  | Node<unknown, RootContext, unknown>
 
 /** The components of a generated module of one kind. */
 type ComponentsIn<module, kind extends string> = {
@@ -918,15 +921,21 @@ export type Projection<outcomes extends Outcomes, events extends Events> = {
 /**
  * A command use case over another: the use case it invokes, its own input
  * as declared (`input`, from which the generator writes `<use case>_input`,
- * DOM-25) and its events.
+ * DOM-25), its events, and how the nodes above it may close a request
+ * (`closes`), which its port adds to its events.
  */
 export interface CommandUseCaseOver<
   use_case extends CommandUseCase<Commands[string]>,
   input extends CommandInput<z.ZodType>,
   events extends Events,
+  closes,
 > {
   readonly input: input
-  readonly [$UseCase]: { readonly use_case: use_case; readonly events: events }
+  readonly [$UseCase]: {
+    readonly use_case: use_case
+    readonly events: events
+    readonly closes: closes
+  }
 }
 
 /**
@@ -938,7 +947,7 @@ export interface CommandUseCaseOver<
  * `command_use_case`, since its parts are others. Its creator reads the
  * context of its point of the tree with its operation.
  */
-export type CommandUseCaseOverBuilder<context> = <
+export type CommandUseCaseOverBuilder<context, closes> = <
   const use_case extends CommandUseCase<Commands[string]>,
   const input extends CommandInput<z.ZodType, context & OperationContext>,
   const events extends Events,
@@ -950,7 +959,7 @@ export type CommandUseCaseOverBuilder<context> = <
   ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
   readonly events: events
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
-}) => CommandUseCaseOver<use_case, input, events>
+}) => CommandUseCaseOver<use_case, input, events, closes>
 
 /** The query a read use case reads. */
 type QueryOfUseCase<use_case> = use_case extends { [$UseCase]: { query: infer query } }
@@ -966,9 +975,14 @@ export interface ReadUseCaseOver<
   use_case extends ReadUseCase<Queries[string]>,
   input extends QueryInput<z.ZodType>,
   entry extends z.ZodObject,
+  closes,
 > {
   readonly input: input
-  readonly [$UseCase]: { readonly use_case: use_case; readonly entry: entry }
+  readonly [$UseCase]: {
+    readonly use_case: use_case
+    readonly entry: entry
+    readonly closes: closes
+  }
 }
 
 /**
@@ -982,7 +996,7 @@ export interface ReadUseCaseOver<
  * the projection of the stream comes with its case. Its creator reads the
  * context of its point of the tree.
  */
-export type ReadUseCaseOverBuilder<context> = <
+export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
   const input extends QueryInput<z.ZodType, context>,
   const entry extends z.ZodObject,
@@ -998,7 +1012,7 @@ export type ReadUseCaseOverBuilder<context> = <
   >
   readonly entry: entry
   readonly projection: (entry: z.output<FieldsOf<QueryOfUseCase<use_case>>>) => z.input<entry>
-}) => ReadUseCaseOver<use_case, input, entry>
+}) => ReadUseCaseOver<use_case, input, entry, closes>
 
 // ---------------------------------------------------------------------------
 // Builders at a point of the tree (PER-6, DOM-25): the context of a creator
@@ -1006,19 +1020,21 @@ export type ReadUseCaseOverBuilder<context> = <
 
 /**
  * The builders whose creators read the context, bound to the context of a
- * point of the tree. The generator writes in each folder of the tree
- * `_here.ts`, with the context the nodes above give there (`RootContext`
- * with none), and the authored files of the folder build with it
+ * point of the tree and to how the nodes above it may close a request
+ * (`closes`), which the leaves built there carry. The generator writes in
+ * each folder of the tree `_here.ts`, with the context the nodes above give
+ * there (`RootContext` with none) and their `closes` (`never` with none),
+ * and the authored files of the folder build with it
  * (`here.command`). A creator gets the context with no annotation; one that
  * asks for more than the point gives does not compile. A command, and a use
  * case over one, add their operation (`OperationContext`).
  */
-export interface Builders<context extends RootContext> {
+export interface Builders<context extends RootContext, closes> {
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
-  readonly command_use_case_over: CommandUseCaseOverBuilder<context>
-  readonly read_use_case_over: ReadUseCaseOverBuilder<context>
-  readonly node: NodeBuilder<context>
+  readonly command_use_case_over: CommandUseCaseOverBuilder<context, closes>
+  readonly read_use_case_over: ReadUseCaseOverBuilder<context, closes>
+  readonly node: NodeBuilder<context, closes>
 }
 
 /**
@@ -1028,7 +1044,10 @@ export interface Builders<context extends RootContext> {
  * and the context the node gives, in `_here.ts`, which builds the rest of
  * the folder; two files, so that no import goes round.
  */
-export declare function builders_at<context extends RootContext>(): Builders<context>
+export declare function builders_at<context extends RootContext, closes = never>(): Builders<
+  context,
+  closes
+>
 
 // ---------------------------------------------------------------------------
 // Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
@@ -1043,15 +1062,25 @@ export declare function builders_at<context extends RootContext>(): Builders<con
 
 export declare const $Node: unique symbol
 
-/** A node: the context it gives. */
-export interface Node<context extends RootContext> {
-  readonly [$Node]: { readonly gives: context }
+/**
+ * A node: the context it takes, the context it gives, and how it and the
+ * nodes above it may close a request (`closes`, a union of `NodeEvent`s), for
+ * the leaves below it to carry.
+ */
+export interface Node<taken, gives extends RootContext, closes> {
+  readonly [$Node]: { readonly takes: taken; readonly gives: gives; readonly closes: closes }
 }
 
 /** The context a node gives, for the `_here.ts` of its folder. */
 export type ContextOf<node> = node extends { [$Node]: { gives: infer context extends RootContext } }
   ? context
   : never
+
+/** How a node and the nodes above it may close a request, for the `_here.ts` of its folder. */
+export type ClosesOf<node> = node extends { [$Node]: { closes: infer closes } } ? closes : never
+
+/** What the entry gives the node at the top of a tree: the root's context and what the node takes. */
+export type EntryOf<node> = node extends { [$Node]: { takes: infer taken } } ? taken : never
 
 /**
  * A lookup a node runs: the lookup, the key it runs `of`, from the context
@@ -1091,8 +1120,8 @@ export type Found<lookups> = {
 type Taken<context, takes> = takes extends z.ZodObject ? context & z.output<takes> : context
 
 /** The conditions of a node, by name: each pure, over the context and what its lookups found. */
-type NodeConditions<context, lookups> = Readonly<
-  Record<string, (context: context) => (found: Found<lookups>) => boolean>
+type NodeConditions<name extends string, context, lookups> = Readonly<
+  Record<name, (context: context) => (found: Found<lookups>) => boolean>
 >
 
 /**
@@ -1104,19 +1133,27 @@ type NodeConditions<context, lookups> = Readonly<
  * part may be left out. A condition is named by what must hold: a perimeter
  * that fails closes with `not_found`, with no reason; a limit that fails
  * with `refused`, its name the reason the caller reads (PER-14); every limit
- * is evaluated, every failure named.
+ * is evaluated, every failure named. The node adds to how the nodes above
+ * close (`closes`) what it may close with: `not_found` if it looks up or
+ * holds perimeters, `refused` with the names of its limits if it has some.
  */
-export type NodeBuilder<context> = <
+export type NodeBuilder<context, closes> = <
   const takes extends z.ZodObject | undefined = undefined,
   const lookups extends NodeLookups = NoLookups,
+  const perimeters extends string = never,
+  const limits extends string = never,
   const gives extends Readonly<Record<string, unknown>> | undefined = undefined,
 >(node: {
   readonly takes?: takes
   readonly looks_up?: lookups & NodeLookupsOf<Taken<context, takes>, lookups>
-  readonly is_found_only_if?: NodeConditions<Taken<context, takes>, lookups>
-  readonly is_refused_unless?: NodeConditions<Taken<context, takes>, lookups>
+  readonly is_found_only_if?: NodeConditions<perimeters, Taken<context, takes>, lookups>
+  readonly is_refused_unless?: NodeConditions<limits, Taken<context, takes>, lookups>
   readonly gives?: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
-}) => Node<Taken<context, takes> & Given<gives> & RootContext>
+}) => Node<
+  Taken<context, takes>,
+  Taken<context, takes> & Given<gives> & RootContext,
+  closes | ClosesBy<lookups, perimeters, limits>
+>
 
 /** The lookups of a node that runs none: nothing is found, and no name reads. */
 type NoLookups = Readonly<Record<string, never>>
@@ -1124,16 +1161,116 @@ type NoLookups = Readonly<Record<string, never>>
 /** What a node gives: its bindings, or nothing more when it has none. */
 type Given<gives> = gives extends undefined ? unknown : gives
 
+/** How one node may close a request, by the names of what it declares. */
+type ClosesBy<lookups, perimeters extends string, limits extends string> =
+  | ([lookups] extends [NoLookups] ? ([perimeters] extends [never] ? never : NotFound) : NotFound)
+  | ([limits] extends [never] ? never : Refused<limits>)
+
+/** A lookup that finds nothing, or a perimeter that fails: no reason (PER-14, D87.5). */
+export interface NotFound {
+  readonly event: 'not_found'
+}
+
+/** Failed limits: the name of each, the reasons the caller reads (PER-14, D80). */
+export interface Refused<reason extends string> {
+  readonly event: 'refused'
+  readonly reasons: readonly reason[]
+}
+
 /**
- * The base events of a node that closes a request (PER-14, D80), in the
- * union of every leaf below it; no leaf declares them, and they are
- * terminal: a lookup that finds nothing, or a perimeter that fails, gives
- * `not_found`, with no reason; failed limits give `refused`, with the name of
- * each.
+ * The events of a node that closes a request (PER-14, D80), in the union of
+ * every leaf below it, which no leaf declares; terminal. In the paper they
+ * are of the node's declared union, not base events (D72).
  */
-export type NodeEvent<reason extends string> =
-  | { readonly event: 'not_found' }
-  | { readonly event: 'refused'; readonly reasons: readonly reason[] }
+export type NodeEvent<reason extends string> = NotFound | Refused<reason>
+
+// ---------------------------------------------------------------------------
+// The ports of a tree (PER-6, DOM-11, D106): a request enters a tree from a
+// leaf. The library walks its path down from the node at the top, which takes
+// what the entry gives, runs the nodes it meets, then the leaf, which invokes
+// another tree's use case. Its events are the leaf's own, how the nodes of
+// its path may close it, and the base events, which no leaf declares.
+
+/**
+ * A base event (D106.3), in the union of every leaf: at the entry of the
+ * tree, the path is not a leaf (an inner node, none at that version), or the
+ * input is not in its schema. A formal reason: the contract is public, so it
+ * tells nothing more. Terminal.
+ */
+export interface InvalidRequest {
+  readonly event: 'invalid_request'
+  readonly reason: 'not_a_leaf' | 'input_not_in_schema'
+}
+
+/**
+ * A base event (DOM-11, D79.4), in the union of every command leaf: the
+ * operation's identity, in its scope, was used with another fingerprint. It
+ * comes from the duplicate branch of the command port and crosses the leaf
+ * unprojected. Terminal.
+ */
+export interface IdentityAlreadyUsed {
+  readonly event: 'identity_already_used'
+}
+
+/** One of the events of a use case, as its port gives it: its name and its payload, parsed. */
+export type EventOutOf<events extends Events> = {
+  [name in keyof events & string]: {
+    readonly event: name
+    readonly payload: z.output<events[name]>
+  }
+}[keyof events & string]
+
+/** The events of a command leaf: its own, how its path may close it, the base events. */
+export type CommandLeafEvent<leaf> = leaf extends {
+  [$UseCase]: { events: infer events extends Events; closes: infer closes }
+}
+  ? EventOutOf<events> | closes | InvalidRequest | IdentityAlreadyUsed
+  : never
+
+/**
+ * The port of a command leaf: what the entry gives the top of its tree, with
+ * the operation (its id and its scope, which the entry composes, DOM-11), and
+ * the leaf's input in; its events out. The library computes the operation's
+ * fingerprint at the leaf, over its path and its input as sent, after the
+ * schema (D100), and gives it with the operation to the command port, which
+ * compares it (D79.5).
+ */
+export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer input }
+  ? (
+      context: entry & OperationContext,
+      input: z.input<SchemaOf<input>>,
+    ) => AsyncIterable<CommandLeafEvent<leaf>>
+  : never
+
+/** The command leaves of a tree, by name. */
+export type CommandLeaves = Readonly<
+  Record<
+    string,
+    CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+  >
+>
+
+/**
+ * The ports that a tree invokes, by the path of their folder
+ * (`business/loans`, `auth/accounts`), as their adapters give them: the
+ * library finds a use case's or a lookup's port by its path, in the
+ * registries, and stops at wiring if one is missing.
+ */
+export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>>
+
+/**
+ * The ports of the leaves of a tree (PER-6): the registry where the library
+ * finds the nodes and the leaves by path, the node at the top, which takes
+ * what the entry gives, and the leaves. Curried as `command_use_case_ports`:
+ * then the ports the tree invokes.
+ */
+export declare function tree_ports<const top, const use_cases extends CommandLeaves>(ports: {
+  readonly registry: Registry
+  readonly top: top
+  readonly use_cases: use_cases
+}): (invoked: Invoked) => {
+  readonly [name in keyof use_cases]: CommandLeafPort<EntryOf<top>, use_cases[name]>
+}
 
 /** The command use cases of a domain, by name. */
 export type CommandUseCases = Readonly<Record<string, CommandUseCase<Commands[string]>>>

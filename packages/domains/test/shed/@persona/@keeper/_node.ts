@@ -14,3 +14,6 @@ export const keeper = node.keeper
 
 /** The context the node `keeper` gives to everything below it. */
 export type keeper_context = wlib.ContextOf<typeof keeper>
+
+/** How the node `keeper` and the nodes above it may close a request (PER-14), for the leaves below it. */
+export type keeper_closes = wlib.ClosesOf<typeof keeper>
