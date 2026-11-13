@@ -6,7 +6,7 @@ import type * as wlib from '../../wlib.ts'
 import * as node from './node.ts'
 
 /**
- * Marta, card M-12, valid until 31 March 2027: she may borrow today.
+ * Marta, card M-12, valid until 31 March 2027.
  *
  * @see {@link node.member}
  */

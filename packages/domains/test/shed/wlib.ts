@@ -941,25 +941,42 @@ export interface CommandUseCaseOver<
 /**
  * A command use case over another, declared in one argument whose parts have
  * names, in the order of the flow: the use case it invokes, its input, the
- * creator that turns it into the invoked one's input, its events, the
- * projection that turns the invoked one's outcome into them. The projected
- * outcome is the first event and a terminal one (D72.3). Apart from
- * `command_use_case`, since its parts are others. Its creator reads the
- * context of its point of the tree with its operation.
+ * limits it `is_refused_unless`, the creator that turns the input into the
+ * invoked one's, its events, the projection that turns the invoked one's
+ * outcome into them. The projected outcome is the first event and a terminal
+ * one (D72.3). Apart from `command_use_case`, since its parts are others. Its
+ * creator reads the context of its point of the tree with its operation.
+ *
+ * A limit of the leaf is one that holds for it and not for every leaf of its
+ * folder (a card expired blocks borrowing, not reading nor returning: A,
+ * 13 Nov 2026 (2)): pure, over the context of its point and the input,
+ * named by what must hold, run after the nodes of its path and before the
+ * creator (PER-5.5); every limit is evaluated, and the failed ones close the
+ * request with `refused`, their names the reasons, which the leaf adds to how
+ * the nodes above close (`closes`).
  */
 export type CommandUseCaseOverBuilder<context, closes> = <
   const use_case extends CommandUseCase<Commands[string]>,
   const input extends CommandInput<z.ZodType, context & OperationContext>,
   const events extends Events,
+  const limits extends string = never,
 >(use_case: {
   readonly use_case: use_case
   readonly input: input
+  readonly is_refused_unless?: Readonly<
+    Record<limits, (context: context) => (input: z.output<SchemaOf<input>>) => boolean>
+  >
   readonly creator: (
     context: context & OperationContext,
   ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
   readonly events: events
   readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
-}) => CommandUseCaseOver<use_case, input, events, closes>
+}) => CommandUseCaseOver<
+  use_case,
+  input,
+  events,
+  closes | ([limits] extends [never] ? never : Refused<limits>)
+>
 
 /** The query a read use case reads. */
 type QueryOfUseCase<use_case> = use_case extends { [$UseCase]: { query: infer query } }

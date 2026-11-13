@@ -6,7 +6,7 @@ import { z } from 'zod'
 import * as usecase from './usecase.ts'
 
 /**
- * Marta takes the drill home.
+ * Marta takes the drill home, while her card is valid.
  *
  * @see {@link usecase.borrow_a_tool}
  */

@@ -1,14 +1,15 @@
 import * as accounts from '../../@auth/@accounts/_index.ts'
 import { the_account_of_the_caller } from '../_dsl.ts'
-import { the_card_is_valid_on } from './_dsl.ts'
 import { above } from './_above.ts'
 
 // The node of `member` (PER-6): who wears the hat has an account with the hat
-// `member` and a member card, valid today, and its number goes down the tree,
-// for the leaves to give the business as the member (D33). Its only I/O is
-// the lookups of auth; then all is pure.
+// `member` and a member card, and the card goes down the tree whole, for the
+// leaves to give its number to the business as the member (D33) and to read
+// its last day. An expired card blocks borrowing, not reading one's loans nor
+// returning a tool (A, 13 Nov 2026 (2)): its limit is the leaf's. Its only
+// I/O is the lookups of auth; then all is pure.
 
-/** Marta, card M-12, valid until 31 March 2027: she may borrow today. */
+/** Marta, card M-12, valid until 31 March 2027. */
 export const member = above.node({
   looks_up: {
     the_hats_of_the_caller: {
@@ -28,9 +29,5 @@ export const member = above.node({
     the_caller_wears_the_hat_of_member: () => (found) =>
       found.the_hats_of_the_caller.includes('member'),
   },
-  is_refused_unless: {
-    the_member_card_is_valid_today: (context) => (found) =>
-      the_card_is_valid_on(context.now)(found.the_member_card_of_the_caller),
-  },
-  gives: () => (found) => ({ card: found.the_member_card_of_the_caller.id }),
+  gives: () => (found) => ({ card: found.the_member_card_of_the_caller }),
 })
