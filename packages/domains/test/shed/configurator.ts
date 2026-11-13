@@ -4,14 +4,17 @@
 // `Caller` (PER-4, PER-6); its leaves, command and read, invoke the use cases
 // of `tools` and `loans`, its nodes the lookups of `accounts`, found by path
 // (`Invoked`). The effect executor of `loans` (DOM-14) delivers its effects
-// to the world the oracle fakes, and brings the eve of a due date back to
-// its return. Nothing runs: the library is wished.
+// to the world the oracle fakes, and brings the eve of a due date, and the
+// due date, back to their returns. Nothing runs: the library is wished.
 
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
 import { send_the_due_date_reminder, type Phones } from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './@business/@loans/_registry.ts'
-import { remind_the_member_of_the_due_date } from './@business/@loans/_usecase.ts'
+import {
+  declare_the_loan_overdue,
+  remind_the_member_of_the_due_date,
+} from './@business/@loans/_usecase.ts'
 import { persona } from './@persona/_node.ts'
 import { registry as persona_registry } from './@persona/_registry.ts'
 import { registry as member_registry } from './@persona/@member/_registry.ts'
@@ -52,9 +55,10 @@ export const shed = (cell: Cell) => (world: World) => {
     })(invoked),
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
-      returns: { remind_the_member_of_the_due_date },
+      returns: { remind_the_member_of_the_due_date, declare_the_loan_overdue },
     })({
       'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
+      'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
       'business/loans/effect/send_the_due_date_reminder': send_the_due_date_reminder(cell.get)(
         world.phones,
       ),

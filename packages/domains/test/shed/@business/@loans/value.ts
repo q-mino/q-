@@ -15,9 +15,18 @@ export const loan_stage = z.enum(['ongoing', 'returned'])
 /** How the tool came back. */
 export const return_condition = z.enum(['good', 'damaged'])
 
-/** The tool is with the member. */
+/**
+ * Whether the due date has passed on a loan the member still has: a stamp
+ * on the loan's card, not a stage. The tool is with the member either way,
+ * and every desk of the office handles the loan alike; only the stamp
+ * changes, by a fact (time is not a fact, D68.3).
+ */
+export const loan_term = z.enum(['running', 'overdue'])
+
+/** The tool is with the member, its term running or overdue. */
 export const loan_ongoing = z.strictObject({
   stage: z.literal(loan_stage.enum.ongoing),
+  term: loan_term,
 })
 
 /** The tool is back: when, and how. Late or on time is derived (dsl). */
@@ -46,6 +55,13 @@ export const loan = z.strictObject({
 /** A loan in its course: the tool is with the member. */
 export const ongoing_loan = loan.extend({
   progress: loan_ongoing,
+})
+
+/** A loan whose due date has passed while the member still has the tool. */
+export const overdue_loan = loan.extend({
+  progress: loan_ongoing.extend({
+    term: z.literal(loan_term.enum.overdue),
+  }),
 })
 
 /** A closed loan: the tool is back. */
@@ -79,10 +95,10 @@ export const booked_reservation = reservation.extend({
   progress: reservation_booked,
 })
 
-/** What a member sees of an ongoing loan: the tool, with its name, and the dates. */
+/** What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed. */
 export const ongoing_loan_entry = ongoing_loan
   .pick({ id: true, tool_id: true, start_date: true, due_date: true })
-  .extend({ tool_name: tool_name })
+  .extend({ tool_name: tool_name, term: loan_term })
 
 /** What a member sees of a reservation: the tool, with its name, and the day. */
 export const reservation_entry = booked_reservation

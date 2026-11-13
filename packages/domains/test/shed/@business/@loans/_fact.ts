@@ -83,3 +83,26 @@ export const the_loan_was_returned_before_the_reminder =
 export type the_loan_was_returned_before_the_reminder = z.output<
   typeof the_loan_was_returned_before_the_reminder
 >
+
+/**
+ * The due date came while the member had the tool: the loan's card is
+ * stamped overdue. A partial value, as a return: the loan's id and its new
+ * progress, whole; the loan stays ongoing, in "my loans".
+ *
+ * @see {@link fact.a_loan_has_become_overdue}
+ */
+export const a_loan_has_become_overdue =
+  fact.a_loan_has_become_overdue.brand<'business/loans/fact/a_loan_has_become_overdue'>()
+export type a_loan_has_become_overdue = z.output<typeof a_loan_has_become_overdue>
+
+/**
+ * Nothing to do (DOM-6, D95): the tool was back when the due date was
+ * checked. Late or on time is the return's, derived from its date (dsl).
+ *
+ * @see {@link fact.the_loan_was_returned_before_it_became_overdue}
+ */
+export const the_loan_was_returned_before_it_became_overdue =
+  fact.the_loan_was_returned_before_it_became_overdue.brand<'business/loans/fact/the_loan_was_returned_before_it_became_overdue'>()
+export type the_loan_was_returned_before_it_became_overdue = z.output<
+  typeof the_loan_was_returned_before_it_became_overdue
+>

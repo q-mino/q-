@@ -21,9 +21,10 @@ export const borrow_a_tool_input = usecase.borrow_a_tool.input
 export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
 
 /**
- * Marta opens "my loans": the tools she has at home and when each is due,
- * then follows them live; a loan appears, a return takes it away. Her card
- * may have expired: she still sees what she must bring back.
+ * Marta opens "my loans": the tools she has at home, when each is due and
+ * whether it is overdue, then follows them live; a loan appears, the due
+ * date passes on one, a return takes it away. Her card may have expired: she
+ * still sees what she must bring back.
  *
  * @see {@link usecase.my_loans}
  */

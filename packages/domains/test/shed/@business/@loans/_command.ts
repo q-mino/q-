@@ -15,9 +15,12 @@ export const the_tool_can_be_lent = command.the_tool_can_be_lent
 export type the_tool_can_be_lent = z.output<typeof the_tool_can_be_lent>
 
 /**
- * The tool is lent, and the eve of its due date is awaited (DOM-13): on the
- * eve, `remind_the_member_of_the_due_date` reminds the member if they still
- * have the tool. One loan, one eve: the loan's id is the entry's.
+ * The tool is lent, its term running, and two dates are awaited (DOM-13):
+ * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
+ * member, on the due date `declare_the_loan_overdue` stamps the loan
+ * overdue, each only if the member still has the tool. Both queued here, not
+ * one by the other's return: neither decides the other. One loan, one wait of
+ * each: the loan's id is each entry's.
  *
  * @see {@link command.borrow_a_tool}
  */
@@ -111,3 +114,22 @@ export const remind_the_member_of_the_due_date_input =
 export type remind_the_member_of_the_due_date_input = z.output<
   typeof remind_the_member_of_the_due_date_input
 >
+
+/**
+ * The return of the due date (D68.3), guarded as the reminder: if the member
+ * still has the tool, the loan is stamped overdue and stays ongoing; if the
+ * tool is back, nothing changes (D95). Its input is the payload of the wait;
+ * its operation is the entry's (DOM-14), so a second delivery of the wait is
+ * a duplicate, not a second stamp.
+ *
+ * @see {@link command.declare_the_loan_overdue}
+ */
+export const declare_the_loan_overdue = command.declare_the_loan_overdue
+
+/**
+ * The input of `declare_the_loan_overdue`, declared inline.
+ *
+ * @see {@link command.declare_the_loan_overdue}
+ */
+export const declare_the_loan_overdue_input = command.declare_the_loan_overdue.input
+export type declare_the_loan_overdue_input = z.output<typeof declare_the_loan_overdue_input>

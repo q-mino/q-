@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import { loan_id, member_id } from './_id.ts'
-import { booked_reservation, ongoing_loan, returned_loan } from './_value.ts'
+import { booked_reservation, ongoing_loan, overdue_loan, returned_loan } from './_value.ts'
 import * as wlib from '../../wlib.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
@@ -62,6 +62,27 @@ export const the_member_has_been_reminded_of_the_due_date = wlib.fact({
 
 /** Nothing to do (DOM-6, D95): the eve came after the return, and no reminder goes. */
 export const the_loan_was_returned_before_the_reminder = wlib.fact({
+  payload: z.strictObject({
+    loan_id: loan_id,
+  }),
+})
+
+/**
+ * The due date came while the member had the tool: the loan's card is
+ * stamped overdue. A partial value, as a return: the loan's id and its new
+ * progress, whole; the loan stays ongoing, in "my loans".
+ */
+export const a_loan_has_become_overdue = wlib.fact({
+  payload: z.strictObject({
+    overdue_loan: overdue_loan.pick({ id: true, progress: true }),
+  }),
+})
+
+/**
+ * Nothing to do (DOM-6, D95): the tool was back when the due date was
+ * checked. Late or on time is the return's, derived from its date (dsl).
+ */
+export const the_loan_was_returned_before_it_became_overdue = wlib.fact({
   payload: z.strictObject({
     loan_id: loan_id,
   }),

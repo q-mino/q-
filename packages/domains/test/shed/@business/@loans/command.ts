@@ -10,8 +10,14 @@ import {
   the_member_already_has_the_tool,
   the_member_has_been_reminded_of_the_due_date,
   the_loan_was_returned_before_the_reminder,
+  a_loan_has_become_overdue,
+  the_loan_was_returned_before_it_became_overdue,
 } from './_fact.ts'
-import { send_the_due_date_reminder, wait_until_the_eve_of_the_due_date } from './_effect.ts'
+import {
+  send_the_due_date_reminder,
+  wait_until_the_due_date,
+  wait_until_the_eve_of_the_due_date,
+} from './_effect.ts'
 import {
   a_loan_has_this_id,
   a_tool_has_this_id,
@@ -42,9 +48,12 @@ export const the_tool_can_be_lent = wlib.AND({
 })
 
 /**
- * The tool is lent, and the eve of its due date is awaited (DOM-13): on the
- * eve, `remind_the_member_of_the_due_date` reminds the member if they still
- * have the tool. One loan, one eve: the loan's id is the entry's.
+ * The tool is lent, its term running, and two dates are awaited (DOM-13):
+ * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
+ * member, on the due date `declare_the_loan_overdue` stamps the loan
+ * overdue, each only if the member still has the tool. Both queued here, not
+ * one by the other's return: neither decides the other. One loan, one wait of
+ * each: the loan's id is each entry's.
  */
 export const borrow_a_tool = here.command({
   input: z.strictObject({
@@ -56,7 +65,7 @@ export const borrow_a_tool = here.command({
     the_tool_is_available_so_it_is_lent: [
       the_tool_can_be_lent,
       a_tool_has_been_lent,
-      { wait_until_the_eve_of_the_due_date },
+      { wait_until_the_eve_of_the_due_date, wait_until_the_due_date },
     ],
     the_member_already_has_the_tool_so_nothing_changes: [
       the_tool_is_on_loan_to_this_member,
@@ -80,7 +89,7 @@ export const borrow_a_tool = here.command({
             member_id: input.member_id,
             start_date: context.now,
             due_date: due_date,
-            progress: { stage: 'ongoing' },
+            progress: { stage: 'ongoing', term: 'running' },
           },
         },
         {
@@ -93,6 +102,11 @@ export const borrow_a_tool = here.command({
               due_date: due_date,
             },
             not_before: the_eve_of(due_date),
+          },
+          wait_until_the_due_date: {
+            id: input.loan_id,
+            payload: { loan_id: input.loan_id },
+            not_before: due_date,
           },
         },
       ],
@@ -256,6 +270,50 @@ export const remind_the_member_of_the_due_date = here.command({
             member_id: input.member_id,
             due_date: input.due_date,
           },
+        },
+      },
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_returned: { loan_id: input.loan_id },
+      },
+      { loan_id: input.loan_id },
+    ],
+  }),
+})
+
+/**
+ * The return of the due date (D68.3), guarded as the reminder: if the member
+ * still has the tool, the loan is stamped overdue and stays ongoing; if the
+ * tool is back, nothing changes (D95). Its input is the payload of the wait;
+ * its operation is the entry's (DOM-14), so a second delivery of the wait is
+ * a duplicate, not a second stamp.
+ */
+export const declare_the_loan_overdue = here.command({
+  input: z.strictObject({
+    loan_id: loan_id,
+  }),
+  outcomes: {
+    the_member_still_has_the_tool_so_the_loan_is_overdue: [
+      the_member_still_has_the_tool,
+      a_loan_has_become_overdue,
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      the_loan_is_already_returned,
+      the_loan_was_returned_before_it_became_overdue,
+    ],
+  },
+  creator: () => (input) => ({
+    the_member_still_has_the_tool_so_the_loan_is_overdue: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+      },
+      {
+        overdue_loan: {
+          id: input.loan_id,
+          progress: { stage: 'ongoing', term: 'overdue' },
         },
       },
     ],

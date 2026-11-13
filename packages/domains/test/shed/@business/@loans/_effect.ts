@@ -26,3 +26,15 @@ export type wait_until_the_eve_of_the_due_date = z.output<typeof wait_until_the_
 export const send_the_due_date_reminder =
   effect.send_the_due_date_reminder.brand<'business/loans/effect/send_the_due_date_reminder'>()
 export type send_the_due_date_reminder = z.output<typeof send_the_due_date_reminder>
+
+/**
+ * Wait until the due date. No world: the executor gives the payload back to
+ * its return, `declare_the_loan_overdue`, which stamps the loan overdue only
+ * if the member still has the tool (D68.3): time is not a fact, so a loan
+ * becomes overdue only through a command and its fact (D92.4).
+ *
+ * @see {@link effect.wait_until_the_due_date}
+ */
+export const wait_until_the_due_date =
+  effect.wait_until_the_due_date.brand<'business/loans/effect/wait_until_the_due_date'>()
+export type wait_until_the_due_date = z.output<typeof wait_until_the_due_date>

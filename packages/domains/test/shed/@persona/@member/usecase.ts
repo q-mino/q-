@@ -4,7 +4,7 @@ import * as loans from '../../@business/@loans/_index.ts'
 import * as tools from '../../@business/@tools/_index.ts'
 import { the_card_is_valid_on } from './_dsl.ts'
 import { here } from './_here.ts'
-import { tool_name } from './_value.ts'
+import { loan_term, tool_name } from './_value.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found
@@ -59,9 +59,10 @@ export const borrow_a_tool = here.command_use_case_over({
 })
 
 /**
- * Marta opens "my loans": the tools she has at home and when each is due,
- * then follows them live; a loan appears, a return takes it away. Her card
- * may have expired: she still sees what she must bring back.
+ * Marta opens "my loans": the tools she has at home, when each is due and
+ * whether it is overdue, then follows them live; a loan appears, the due
+ * date passes on one, a return takes it away. Her card may have expired: she
+ * still sees what she must bring back.
  */
 export const my_loans = here.read_use_case_over({
   use_case: loans.the_ongoing_loans_of_a_member,
@@ -73,6 +74,7 @@ export const my_loans = here.read_use_case_over({
     tool_name: tool_name,
     start_date: wlib.date_time_string,
     due_date: wlib.date_time_string,
+    term: loan_term,
   }),
   projection: (entry) => ({
     loan_id: entry.id,
@@ -80,6 +82,7 @@ export const my_loans = here.read_use_case_over({
     tool_name: entry.tool_name,
     start_date: entry.start_date,
     due_date: entry.due_date,
+    term: entry.term,
   }),
   stream: { identity: 'loan_id' },
 })

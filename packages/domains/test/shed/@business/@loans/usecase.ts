@@ -29,6 +29,16 @@ export const remind_the_member_of_the_due_date = wlib.command_use_case({
 })
 
 /**
+ * On the due date the effect executor comes back (DOM-13): Marta's loan of
+ * the drill is stamped overdue if she still has it. The return of the wait
+ * queued by a loan.
+ */
+export const declare_the_loan_overdue = wlib.command_use_case({
+  command: command.declare_the_loan_overdue,
+  returns_from: effect.wait_until_the_due_date,
+})
+
+/**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, a return takes it away.
  */

@@ -29,7 +29,18 @@ export const return_condition = value.return_condition
 export type return_condition = z.output<typeof return_condition>
 
 /**
- * The tool is with the member.
+ * Whether the due date has passed on a loan the member still has: a stamp
+ * on the loan's card, not a stage. The tool is with the member either way,
+ * and every desk of the office handles the loan alike; only the stamp
+ * changes, by a fact (time is not a fact, D68.3).
+ *
+ * @see {@link value.loan_term}
+ */
+export const loan_term = value.loan_term
+export type loan_term = z.output<typeof loan_term>
+
+/**
+ * The tool is with the member, its term running or overdue.
  *
  * @see {@link value.loan_ongoing}
  */
@@ -68,6 +79,14 @@ export type loan = z.output<typeof loan>
  */
 export const ongoing_loan = value.ongoing_loan
 export type ongoing_loan = z.output<typeof ongoing_loan>
+
+/**
+ * A loan whose due date has passed while the member still has the tool.
+ *
+ * @see {@link value.overdue_loan}
+ */
+export const overdue_loan = value.overdue_loan
+export type overdue_loan = z.output<typeof overdue_loan>
 
 /**
  * A closed loan: the tool is back.
@@ -118,7 +137,7 @@ export const booked_reservation = value.booked_reservation
 export type booked_reservation = z.output<typeof booked_reservation>
 
 /**
- * What a member sees of an ongoing loan: the tool, with its name, and the dates.
+ * What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed.
  *
  * @see {@link value.ongoing_loan_entry}
  */

@@ -23,11 +23,13 @@ export const registry = {
   'business/loans/value/tool_name': value.tool_name,
   'business/loans/value/loan_stage': value.loan_stage,
   'business/loans/value/return_condition': value.return_condition,
+  'business/loans/value/loan_term': value.loan_term,
   'business/loans/value/loan_ongoing': value.loan_ongoing,
   'business/loans/value/loan_returned': value.loan_returned,
   'business/loans/value/loan_progress': value.loan_progress,
   'business/loans/value/loan': value.loan,
   'business/loans/value/ongoing_loan': value.ongoing_loan,
+  'business/loans/value/overdue_loan': value.overdue_loan,
   'business/loans/value/returned_loan': value.returned_loan,
   'business/loans/value/reservation_stage': value.reservation_stage,
   'business/loans/value/reservation_booked': value.reservation_booked,
@@ -46,9 +48,13 @@ export const registry = {
     fact.the_member_has_been_reminded_of_the_due_date,
   'business/loans/fact/the_loan_was_returned_before_the_reminder':
     fact.the_loan_was_returned_before_the_reminder,
+  'business/loans/fact/a_loan_has_become_overdue': fact.a_loan_has_become_overdue,
+  'business/loans/fact/the_loan_was_returned_before_it_became_overdue':
+    fact.the_loan_was_returned_before_it_became_overdue,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
+  'business/loans/effect/wait_until_the_due_date': effect.wait_until_the_due_date,
   'business/loans/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/loans/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
@@ -77,6 +83,8 @@ export const registry = {
     command.remind_the_member_of_the_due_date,
   'business/loans/command/remind_the_member_of_the_due_date_input':
     command.remind_the_member_of_the_due_date_input,
+  'business/loans/command/declare_the_loan_overdue': command.declare_the_loan_overdue,
+  'business/loans/command/declare_the_loan_overdue_input': command.declare_the_loan_overdue_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -101,6 +109,7 @@ export const registry = {
   'business/loans/usecase/return_a_tool': usecase.return_a_tool,
   'business/loans/usecase/remind_the_member_of_the_due_date':
     usecase.remind_the_member_of_the_due_date,
+  'business/loans/usecase/declare_the_loan_overdue': usecase.declare_the_loan_overdue,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
 } satisfies wlib.Registry

@@ -9,7 +9,7 @@ import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../@business/@loans/_fact.ts'
 import type * as loans_predicate from '../../@business/@loans/_predicate.ts'
 import type { loan_id, reservation_id } from '../../@business/@loans/_id.ts'
-import type { loan, reservation } from '../../@business/@loans/_value.ts'
+import type { loan, loan_progress, reservation } from '../../@business/@loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
@@ -18,6 +18,7 @@ import type * as loan_selections from '../../@business/@loans/_loan_selection.ts
 import type * as reservation_selections from '../../@business/@loans/_reservation_selection.ts'
 import type { tool_id } from '../../@business/@tools/_id.ts'
 import * as tools_dsl from '../../@business/@tools/_dsl.ts'
+import * as loans_dsl from '../../@business/@loans/_dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
@@ -31,7 +32,7 @@ export interface LoansState {
 type Reads = LoansState & ToolsState
 
 const ongoing = (state: Reads): readonly loan[] =>
-  [...state.loans.values()].filter((the_loan) => the_loan.progress.stage === 'ongoing')
+  [...state.loans.values()].filter(loans_dsl.the_loan_is_ongoing)
 
 /** Every reservation is booked until a reservation can be cancelled (step 8): then a filter on the stage. */
 const booked = (state: Reads): readonly reservation[] => [...state.reservations.values()]
@@ -48,9 +49,9 @@ export const loans_fragments: wlib.PredicateFragments<
 
   'business/loans/predicate/a_loan_has_this_id': (p) => (state) => state.loans.has(p.loan_id),
   'business/loans/predicate/the_loan_is_ongoing': (p) => (state) =>
-    state.loans.get(p.loan_id)?.progress.stage === 'ongoing',
+    loans_dsl.the_loan_is_ongoing(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_loan_is_returned': (p) => (state) =>
-    state.loans.get(p.loan_id)?.progress.stage === 'returned',
+    loans_dsl.the_loan_is_returned(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
     ongoing(state).some((the_loan) => the_loan.tool_id === p.tool_id),
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) => (state) =>
@@ -86,8 +87,7 @@ export const loan_selection: wlib.Algebra<
 > = {
   ...selection_operators<Reads, loan>(),
   predicate: {
-    'business/loans/selection/loan/the_loan_is_ongoing': () => () => (the_loan) =>
-      the_loan.progress.stage === 'ongoing',
+    'business/loans/selection/loan/the_loan_is_ongoing': () => () => loans_dsl.the_loan_is_ongoing,
     'business/loans/selection/loan/the_loan_is_of_this_member': (p) => () => (the_loan) =>
       the_loan.member_id === p.member_id,
   },
@@ -110,6 +110,7 @@ export const loan_sources: {
       tool_name: the_name_of_the_tool,
       start_date: () => (the_loan) => the_loan.start_date,
       due_date: () => (the_loan) => the_loan.due_date,
+      term: () => loans_dsl.the_term_of_the_loan,
     },
   },
 }
@@ -153,6 +154,22 @@ export const reservation_sources: {
   },
 }
 
+/**
+ * The one rule of a change of stage, by nesting: the new progress replaces
+ * the old, whole; tool, member and dates stay as they were.
+ */
+const with_the_progress =
+  (changed: { readonly id: loan_id; readonly progress: loan_progress }) =>
+  (state: LoansState): LoansState => {
+    const the_loan = state.loans.get(changed.id)
+    return the_loan === undefined
+      ? state
+      : {
+          ...state,
+          loans: new Map(state.loans).set(changed.id, { ...the_loan, progress: changed.progress }),
+        }
+  }
+
 export const loans_writes: wlib.FactWrites<
   wlib.FactsIn<typeof loans_fact>,
   (state: LoansState) => LoansState
@@ -161,23 +178,14 @@ export const loans_writes: wlib.FactWrites<
     ({ new_loan }) =>
     (state) => ({ ...state, loans: new Map(state.loans).set(new_loan.id, new_loan) }),
   'business/loans/fact/the_member_already_has_the_tool': () => (state) => state,
-  'business/loans/fact/a_tool_has_been_returned':
-    ({ returned_loan }) =>
-    (state) => {
-      const the_loan = state.loans.get(returned_loan.id)
-      return the_loan === undefined
-        ? state
-        : {
-            ...state,
-            loans: new Map(state.loans).set(returned_loan.id, {
-              ...the_loan,
-              progress: returned_loan.progress,
-            }),
-          }
-    },
+  'business/loans/fact/a_tool_has_been_returned': ({ returned_loan }) =>
+    with_the_progress(returned_loan),
   'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => (state) => state,
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => (state) => state,
+  'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan }) =>
+    with_the_progress(overdue_loan),
+  'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({

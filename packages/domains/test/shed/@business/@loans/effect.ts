@@ -33,3 +33,15 @@ export const send_the_due_date_reminder = wlib.effect({
     due_date: wlib.date_time_string,
   }),
 })
+
+/**
+ * Wait until the due date. No world: the executor gives the payload back to
+ * its return, `declare_the_loan_overdue`, which stamps the loan overdue only
+ * if the member still has the tool (D68.3): time is not a fact, so a loan
+ * becomes overdue only through a command and its fact (D92.4).
+ */
+export const wait_until_the_due_date = wlib.effect({
+  payload: z.strictObject({
+    loan_id: loan_id,
+  }),
+})

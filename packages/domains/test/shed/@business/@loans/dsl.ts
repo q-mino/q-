@@ -2,7 +2,7 @@
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
 import { date_time_string, day } from '../../wlib.ts'
-import type { returned_loan } from './_value.ts'
+import type { loan, loan_term, returned_loan } from './_value.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30
@@ -35,3 +35,15 @@ export const the_day_is_within_the_booking_window = (day: string, now: date_time
 /** A loan returned after its due date. */
 export const the_loan_was_returned_late = (the_loan: returned_loan): boolean =>
   the_loan.progress.return_date > the_loan.due_date
+
+/** The member has the tool: the loan is ongoing, its term running or overdue. */
+export const the_loan_is_ongoing = (the_loan: loan | undefined): boolean =>
+  the_loan?.progress.stage === 'ongoing'
+
+/** The tool is back. */
+export const the_loan_is_returned = (the_loan: loan | undefined): boolean =>
+  the_loan?.progress.stage === 'returned'
+
+/** Whether the due date of an ongoing loan has passed; a returned loan has no term. */
+export const the_term_of_the_loan = (the_loan: loan): loan_term | undefined =>
+  the_loan.progress.stage === 'ongoing' ? the_loan.progress.term : undefined

@@ -6,7 +6,7 @@
 // (DOM-2, GR-1): from outside, its commands and queries cannot even be named.
 // A return use case is not in it: its entry is the effect executor (D92.1),
 // which reaches it from the configurator, so that no persona can send a
-// reminder with a payload of its choice. Inside the folder the files import
+// reminder, or stamp a loan overdue, with a payload of its choice. Inside the folder the files import
 // the twins, never the door.
 
 export {

@@ -171,15 +171,19 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
 
 const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sql[]> = {
   'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
-    sql`insert into loans (id, tool_id, member_id, start_date, due_date, stage) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_date}, ${l.progress.stage})`,
+    sql`insert into loans (id, tool_id, member_id, start_date, due_date, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_date}, ${l.progress.stage}, ${l.progress.term})`,
   ],
   'business/loans/fact/the_member_already_has_the_tool': () => [],
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
-    sql`update loans set stage = ${l.progress.stage}, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
+    sql`update loans set stage = ${l.progress.stage}, term = null, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
   ],
   'business/loans/fact/the_loan_was_already_returned': () => [],
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => [],
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => [],
+  'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan: l }) => [
+    sql`update loans set term = ${l.progress.term} where id = ${l.id}`,
+  ],
+  'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => [],
   'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
@@ -365,6 +369,7 @@ export const sql_adapter = (database: Database) => ({
             tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
             start_date: sql`candidate.start_date`,
             due_date: sql`candidate.due_date`,
+            term: sql`candidate.term`,
           },
         },
         the_reservations_of_a_member: {

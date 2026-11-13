@@ -16,4 +16,5 @@ export const registry = {
   'persona/member/usecase/my_loans': usecase.my_loans,
   'persona/member/usecase/my_loans_input': usecase.my_loans_input,
   'persona/member/value/tool_name': value.tool_name,
+  'persona/member/value/loan_term': value.loan_term,
 } satisfies wlib.Registry
