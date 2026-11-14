@@ -61,7 +61,8 @@ export const borrow_a_tool = here.command_use_case_over({
 /**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
- * date passes on one, a return takes it away. Her card may have expired: she
+ * date passes on one, a return takes it away. When the due date passes she
+ * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
  */
 export const my_loans = here.read_use_case_over({
@@ -84,5 +85,14 @@ export const my_loans = here.read_use_case_over({
     due_date: entry.due_date,
     term: entry.term,
   }),
-  stream: { identity: 'loan_id' },
+  stream: {
+    identity: 'loan_id',
+    events: {
+      /** The drill was due yesterday and Marta still has it: the row says when, and which. */
+      your_loan_is_overdue: z.strictObject({}),
+    },
+    facts: {
+      a_loan_has_become_overdue: () => ({ event: 'your_loan_is_overdue', payload: {} }),
+    },
+  },
 })

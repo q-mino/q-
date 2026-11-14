@@ -23,7 +23,8 @@ export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
 /**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
- * date passes on one, a return takes it away. Her card may have expired: she
+ * date passes on one, a return takes it away. When the due date passes she
+ * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
  *
  * @see {@link usecase.my_loans}

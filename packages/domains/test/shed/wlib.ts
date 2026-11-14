@@ -1084,18 +1084,64 @@ type QueryOfUseCase<use_case> = use_case extends { [$UseCase]: { query: infer qu
 /**
  * How a read use case over another streams (`stream`): the field of its own
  * entry that names it (`identity`), which holds the identity of the query's
- * entry, as it is. Grows with its cases: the facts by name (step 7), an
- * identity of its own, translated from the query's (A, 13 Nov 2026 (2)).
+ * entry, as it is; the events of its own that the facts it names become
+ * (`events`, none with none). Grows with its cases: an identity of its own,
+ * translated from the query's (A, 13 Nov 2026 (2)).
  */
 export interface LeafStream {
   readonly identity: string
+  readonly events: Events
 }
+
+/** The facts a read use case names, by name. */
+type FactsOfUseCase<use_case> = use_case extends {
+  [$UseCase]: { facts: infer facts extends Readonly<Record<string, Component>> }
+}
+  ? facts
+  : never
+
+/**
+ * The projection of the facts that a read use case names into the events of
+ * the stream of a use case over it (D45, D72.6): one function for each fact
+ * it chooses among them, from the fact's payload. Partial: a fact it does
+ * not choose, or that the read use case does not name, goes out as `fact`,
+ * the entry it leaves, so that a new fact of the business adds no event to
+ * the surface (PER-17, D75.6).
+ */
+export type FactProjection<
+  facts extends Readonly<Record<string, Component>>,
+  events extends Events,
+> = {
+  readonly [name in keyof facts]?: (fact: z.output<facts[name]>) => EventOf<events>
+}
+
+/** The names of the events a set of events holds. */
+type EventNames<events> = events extends { readonly event: infer name extends string }
+  ? name
+  : never
+
+/**
+ * The events of its own a read leaf's stream may declare: none named as an
+ * event of the stream, of the snapshot, of a node that closes the request,
+ * or as a base event, which the port gives beside them.
+ */
+type StreamEvents<closes> = Events &
+  Partial<
+    Readonly<
+      Record<
+        | EventNames<LeafStreamEvent<unknown, unknown> | SnapshotEvent<unknown> | InvalidRequest>
+        | EventNames<closes>,
+        never
+      >
+    >
+  >
 
 /**
  * A read use case over another (DOM-2, D45): the read use case it invokes,
  * its own input as declared (`input`, from which the generator writes
  * `<use case>_input`, DOM-25), the schema of its own entries, and how it
- * streams, if it does (`stream`).
+ * streams, if it does (`stream`: the field that names an entry and the
+ * events of its own).
  */
 export interface ReadUseCaseOver<
   use_case extends ReadUseCase<Queries[string]>,
@@ -1145,15 +1191,18 @@ type FieldsHolding<entry extends z.ZodObject, identity> = {
  * port is `Streamed`: every entry of the stream (`fact`, `entered`) is
  * projected as in the snapshot, and `left` names the entry by the field of its
  * own entry that `stream.identity` declares, which must hold the identity of
- * the query's entry, as it is (A, 13 Nov 2026 (2)).
+ * the query's entry, as it is (A, 13 Nov 2026 (2)). Among the facts the read
+ * use case names, it chooses those its clients read by a name of its own
+ * (`stream.events`, `stream.facts`, D72.6): the fact goes out as its event,
+ * with the entry it leaves and the payload projected from the fact; every
+ * other fact as `fact`, the entry alone (A, 14 Nov 2026).
  */
 export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
   const input extends QueryInput<z.ZodType, context>,
   const entry extends z.ZodObject,
-  const stream extends
-    | { readonly identity: FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> }
-    | undefined = undefined,
+  const identity extends FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> = never,
+  const events extends StreamEvents<closes> = never,
 >(use_case: {
   readonly use_case: use_case
   readonly input: input
@@ -1166,8 +1215,23 @@ export type ReadUseCaseOverBuilder<context, closes> = <
   >
   readonly entry: entry
   readonly projection: (entry: z.output<FieldsOf<QueryOfUseCase<use_case>>>) => z.input<entry>
-  readonly stream?: stream
-}) => ReadUseCaseOver<use_case, input, entry, closes, stream>
+  readonly stream?: {
+    readonly identity: identity
+    readonly events?: events
+    readonly facts?: FactProjection<FactsOfUseCase<use_case>, events>
+  }
+}) => ReadUseCaseOver<
+  use_case,
+  input,
+  entry,
+  closes,
+  [identity] extends [never]
+    ? undefined
+    : {
+        readonly identity: identity
+        readonly events: events
+      }
+>
 
 // ---------------------------------------------------------------------------
 // Builders at a point of the tree (PER-6, DOM-25): the context of a creator
@@ -1183,10 +1247,19 @@ export type ReadUseCaseOverBuilder<context, closes> = <
  * (`here.command`). A creator gets the context with no annotation; one that
  * asks for more than the point gives does not compile. A command, and a use
  * case over one, add their operation (`OperationContext`).
+ *
+ * The builders are bound to the facts of the folder too (`facts`, the
+ * generated `_fact.ts`, none with none), so that a read use case names the
+ * facts it lets a reader name by their names (A, 14 Nov 2026).
  */
-export interface Builders<context extends RootContext, closes> {
+export interface Builders<
+  context extends RootContext,
+  closes,
+  facts extends Readonly<Record<string, Component>> = never,
+> {
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
+  readonly read_use_case: ReadUseCaseBuilder<facts>
   readonly command_use_case_over: CommandUseCaseOverBuilder<context, closes>
   readonly read_use_case_over: ReadUseCaseOverBuilder<context, closes>
   readonly node: NodeBuilder<context, closes>
@@ -1199,10 +1272,11 @@ export interface Builders<context extends RootContext, closes> {
  * and the context the node gives, in `_here.ts`, which builds the rest of
  * the folder; two files, so that no import goes round.
  */
-export declare function builders_at<context extends RootContext, closes = never>(): Builders<
-  context,
-  closes
->
+export declare function builders_at<
+  context extends RootContext,
+  closes = never,
+  facts extends Readonly<Record<string, Component>> = never,
+>(): Builders<context, closes, facts>
 
 // ---------------------------------------------------------------------------
 // Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
@@ -1402,12 +1476,14 @@ export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer 
  * 13 Nov 2026 (2)): those of `StreamEvent`, every entry projected as in the
  * snapshot, its identity the field of the leaf's own entry that names it
  * (`stream.identity`), typed as that field so that an identity of its own
- * can come without changing the port. `fact` carries the entry the fact
- * leaves, not the fact: the facts by name come with their case (step 7). The
- * position goes out as it is, opaque (D72.6); the envelope and its resources
- * never (PER-18, D107.4).
+ * can come without changing the port. A fact the leaf names goes out as its
+ * own event (`events`), with the entry it leaves and its payload, projected
+ * from the fact (D72.6, A, 14 Nov 2026); any other, as `fact`, with the
+ * entry and not the fact. The position goes out as it is, opaque (D72.6);
+ * the envelope and its resources never (PER-18, D107.4).
  */
-export type LeafStreamEvent<entry, identity> =
+export type LeafStreamEvent<entry, identity, events extends Events = never> =
+  | NamedFactEvent<entry, identity, events>
   | {
       readonly event: 'fact'
       readonly position: position
@@ -1424,6 +1500,19 @@ export type LeafStreamEvent<entry, identity> =
   | { readonly event: 'caught_up'; readonly position: position }
   | { readonly event: 'position_unavailable' }
 
+/** A fact the leaf names, as its port gives it: its own event, with the entry and the payload; none with no events. */
+type NamedFactEvent<entry, identity, events extends Events> = [events] extends [never]
+  ? never
+  : {
+      [name in keyof events & string]: {
+        readonly event: name
+        readonly position: position
+        readonly identity: identity
+        readonly entry: entry
+        readonly payload: z.output<events[name]>
+      }
+    }[keyof events & string]
+
 /**
  * The events of a read leaf: the snapshot of its own entries, then, if it
  * streams, the events of its stream; how its path may close it; the base
@@ -1433,8 +1522,11 @@ export type ReadLeafEvent<leaf> = leaf extends {
   [$UseCase]: { entry: infer entry extends z.ZodObject; closes: infer closes; stream: infer stream }
 }
   ? | SnapshotEvent<z.output<entry>>
-    | (stream extends { identity: infer identity extends keyof z.output<entry> }
-        ? LeafStreamEvent<z.output<entry>, z.output<entry>[identity]>
+    | (stream extends {
+        identity: infer identity extends keyof z.output<entry>
+        events: infer events extends Events
+      }
+        ? LeafStreamEvent<z.output<entry>, z.output<entry>[identity], events>
         : never)
     | closes
     | InvalidRequest
@@ -1551,15 +1643,35 @@ export declare function command_use_case_ports<const use_cases extends CommandUs
  * up to `caught_up` a review, on and on a live view (D72, D72.2). The library
  * composes the read and the stream, so that a live view has no gap and no
  * double. A query the adapter does not stream gives the snapshot alone.
+ *
+ * It names the facts that a use case over it may name in its stream
+ * (`facts`, by name: D64.2, D101.4): the notices the domain sends with its
+ * register, its choice (A, 14 Nov 2026). A fact is named when it touches an
+ * entry and leaves it in the selection (one that takes it out comes as
+ * `left`, its identity only), tells a reader something the entry does not,
+ * an occurrence rather than a state ("has just fallen overdue", not "is
+ * overdue"), and a reader uses it (LIB-3). A fact it does not name reaches
+ * the use cases over it as the entry it leaves.
  */
-export interface ReadUseCase<query extends Queries[string]> {
-  readonly [$UseCase]: { readonly query: query }
+export interface ReadUseCase<
+  query extends Queries[string],
+  facts extends Readonly<Record<string, Component>> = Readonly<Record<string, Component>>,
+> {
+  readonly [$UseCase]: { readonly query: query; readonly facts: facts }
 }
 
-/** A read use case, declared in one argument whose parts have names (DOM-25). */
-export declare function read_use_case<const query extends Queries[string]>(use_case: {
+/**
+ * A read use case, declared in one argument whose parts have names (DOM-25):
+ * its query and the facts it names, by their names among the facts of its
+ * folder, to which the builders of the point are bound (`builders_at`).
+ */
+export type ReadUseCaseBuilder<facts extends Readonly<Record<string, Component>>> = <
+  const query extends Queries[string],
+  const named extends ([facts] extends [never] ? never : keyof facts & string) = never,
+>(use_case: {
   readonly query: query
-}): ReadUseCase<query>
+  readonly facts?: readonly named[]
+}) => ReadUseCase<query, Pick<facts, named>>
 
 /** The read use cases of a domain, by name. */
 export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>>

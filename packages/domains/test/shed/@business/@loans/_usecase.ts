@@ -45,7 +45,9 @@ export const declare_the_loan_overdue = usecase.declare_the_loan_overdue
 
 /**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
- * then follows it live; a loan appears, a return takes it away.
+ * then follows it live; a loan appears, falls overdue, a return takes it
+ * away. With the register goes one notice by name: a loan has fallen overdue
+ * (D64.2, D101.4).
  *
  * @see {@link usecase.the_ongoing_loans_of_a_member}
  */

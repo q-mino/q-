@@ -2,6 +2,7 @@ import * as wlib from '../../wlib.ts'
 import * as command from './_command.ts'
 import * as query from './_query.ts'
 import * as effect from './_effect.ts'
+import { here } from './_here.ts'
 
 // The use cases of `loans`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the loans and the reservations through them.
@@ -40,13 +41,16 @@ export const declare_the_loan_overdue = wlib.command_use_case({
 
 /**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
- * then follows it live; a loan appears, a return takes it away.
+ * then follows it live; a loan appears, falls overdue, a return takes it
+ * away. With the register goes one notice by name: a loan has fallen overdue
+ * (D64.2, D101.4).
  */
-export const the_ongoing_loans_of_a_member = wlib.read_use_case({
+export const the_ongoing_loans_of_a_member = here.read_use_case({
   query: query.the_ongoing_loans_of_a_member,
+  facts: ['a_loan_has_become_overdue'],
 })
 
 /** A member sees their reservations from today on. */
-export const the_reservations_of_a_member = wlib.read_use_case({
+export const the_reservations_of_a_member = here.read_use_case({
   query: query.the_reservations_of_a_member,
 })
