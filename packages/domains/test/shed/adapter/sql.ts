@@ -102,6 +102,8 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'ongoing')`,
   'business/loans/predicate/the_loan_is_returned': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'returned')`,
+  'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) =>
+    sql`exists (select 1 from loans where id = ${p.loan_id} and due_date > ${p.now})`,
   'business/loans/predicate/the_tool_is_on_loan': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and stage = 'ongoing')`,
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
@@ -180,6 +182,7 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/the_loan_was_already_returned': () => [],
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => [],
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => [],
+  'business/loans/fact/the_due_date_came_before_the_reminder': () => [],
   'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan: l }) => [
     sql`update loans set term = ${l.progress.term} where id = ${l.id}`,
   ],

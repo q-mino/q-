@@ -94,11 +94,33 @@ export const the_member_still_has_the_tool = command.the_member_still_has_the_to
 export type the_member_still_has_the_tool = z.output<typeof the_member_still_has_the_tool>
 
 /**
+ * The member still has the tool and its due date is still ahead: the eve is not late.
+ *
+ * @see {@link command.the_member_can_still_be_reminded}
+ */
+export const the_member_can_still_be_reminded = command.the_member_can_still_be_reminded
+export type the_member_can_still_be_reminded = z.output<typeof the_member_can_still_be_reminded>
+
+/**
+ * The member still has the tool, but its due date has passed: the eve came late.
+ *
+ * @see {@link command.the_due_date_of_the_ongoing_loan_has_passed}
+ */
+export const the_due_date_of_the_ongoing_loan_has_passed =
+  command.the_due_date_of_the_ongoing_loan_has_passed
+export type the_due_date_of_the_ongoing_loan_has_passed = z.output<
+  typeof the_due_date_of_the_ongoing_loan_has_passed
+>
+
+/**
  * The return of the eve of the due date (D68.3): the guard is the command's,
  * not the infrastructure's, so a return before the eve meets a branch that
- * records a fact and changes nothing (D95), never a rejection. Its input is
- * the payload of the wait, given back by the executor; its operation is the
- * entry's (DOM-14).
+ * records a fact and changes nothing (D95), never a rejection. The eve may
+ * come late (the executor was down): no order holds between two effects
+ * (D108), so the due date may even have stamped the loan first; the guard
+ * reads the due date at the executor's `now`, and a late eve reminds no one
+ * (A, 15 Nov 2026). Its input is the payload of the wait, given back by the
+ * executor; its operation is the entry's (DOM-14).
  *
  * @see {@link command.remind_the_member_of_the_due_date}
  */

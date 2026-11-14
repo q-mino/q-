@@ -10,6 +10,7 @@ import {
   the_member_already_has_the_tool,
   the_member_has_been_reminded_of_the_due_date,
   the_loan_was_returned_before_the_reminder,
+  the_due_date_came_before_the_reminder,
   a_loan_has_become_overdue,
   the_loan_was_returned_before_it_became_overdue,
 } from './_fact.ts'
@@ -23,6 +24,7 @@ import {
   a_tool_has_this_id,
   the_tool_is_in_service,
   a_reservation_has_this_id,
+  the_due_date_of_the_loan_is_still_ahead,
   the_loan_is_ongoing,
   the_loan_is_returned,
   the_tool_is_booked_for_the_day,
@@ -229,12 +231,29 @@ export const the_member_still_has_the_tool = wlib.AND({
   the_requested_loan_is_ongoing: the_loan_is_ongoing,
 })
 
+/** The member still has the tool and its due date is still ahead: the eve is not late. */
+export const the_member_can_still_be_reminded = wlib.AND({
+  a_loan_has_the_requested_id: a_loan_has_this_id,
+  the_requested_loan_is_ongoing: the_loan_is_ongoing,
+  its_due_date_is_still_ahead: the_due_date_of_the_loan_is_still_ahead,
+})
+
+/** The member still has the tool, but its due date has passed: the eve came late. */
+export const the_due_date_of_the_ongoing_loan_has_passed = wlib.AND({
+  a_loan_has_the_requested_id: a_loan_has_this_id,
+  the_requested_loan_is_ongoing: the_loan_is_ongoing,
+  its_due_date_has_passed: wlib.NOT(the_due_date_of_the_loan_is_still_ahead),
+})
+
 /**
  * The return of the eve of the due date (D68.3): the guard is the command's,
  * not the infrastructure's, so a return before the eve meets a branch that
- * records a fact and changes nothing (D95), never a rejection. Its input is
- * the payload of the wait, given back by the executor; its operation is the
- * entry's (DOM-14).
+ * records a fact and changes nothing (D95), never a rejection. The eve may
+ * come late (the executor was down): no order holds between two effects
+ * (D108), so the due date may even have stamped the loan first; the guard
+ * reads the due date at the executor's `now`, and a late eve reminds no one
+ * (A, 15 Nov 2026). Its input is the payload of the wait, given back by the
+ * executor; its operation is the entry's (DOM-14).
  */
 export const remind_the_member_of_the_due_date = here.command({
   input: z.strictObject({
@@ -244,8 +263,8 @@ export const remind_the_member_of_the_due_date = here.command({
     due_date: wlib.date_time_string,
   }),
   outcomes: {
-    the_member_still_has_the_tool_so_they_are_reminded: [
-      the_member_still_has_the_tool,
+    the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
+      the_member_can_still_be_reminded,
       the_member_has_been_reminded_of_the_due_date,
       { send_the_due_date_reminder },
     ],
@@ -253,12 +272,17 @@ export const remind_the_member_of_the_due_date = here.command({
       the_loan_is_already_returned,
       the_loan_was_returned_before_the_reminder,
     ],
+    the_due_date_has_passed_so_nothing_changes: [
+      the_due_date_of_the_ongoing_loan_has_passed,
+      the_due_date_came_before_the_reminder,
+    ],
   },
-  creator: () => (input) => ({
-    the_member_still_has_the_tool_so_they_are_reminded: [
+  creator: (context) => (input) => ({
+    the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
       },
       { loan_id: input.loan_id },
       {
@@ -277,6 +301,14 @@ export const remind_the_member_of_the_due_date = here.command({
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_returned: { loan_id: input.loan_id },
+      },
+      { loan_id: input.loan_id },
+    ],
+    the_due_date_has_passed_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
       },
       { loan_id: input.loan_id },
     ],

@@ -38,6 +38,18 @@ export const the_loan_is_returned = wlib.predicate({
   }),
 })
 
+/**
+ * The due date on the loan's card is still ahead at an instant: "bring it
+ * back tomorrow" is still true. The instant is a parameter, the clock of
+ * whoever asks (GR-8): time is not a fact (D92.4), the due date is.
+ */
+export const the_due_date_of_the_loan_is_still_ahead = wlib.predicate({
+  parameters: z.strictObject({
+    loan_id: loan_id,
+    now: wlib.date_time_string,
+  }),
+})
+
 /** The tool is with a member, whoever it is. */
 export const the_tool_is_on_loan = wlib.predicate({
   parameters: z.strictObject({

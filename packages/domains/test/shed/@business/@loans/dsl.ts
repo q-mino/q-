@@ -44,6 +44,12 @@ export const the_loan_is_ongoing = (the_loan: loan | undefined): boolean =>
 export const the_loan_is_returned = (the_loan: loan | undefined): boolean =>
   the_loan?.progress.stage === 'returned'
 
+/** The due date on the loan's card is still ahead at an instant; a loan that does not exist has none. */
+export const the_due_date_of_the_loan_is_still_ahead =
+  (the_loan: loan | undefined) =>
+  (now: date_time_string): boolean =>
+    the_loan !== undefined && now < the_loan.due_date
+
 /** Whether the due date of an ongoing loan has passed; a returned loan has no term. */
 export const the_term_of_the_loan = (the_loan: loan): loan_term | undefined =>
   the_loan.progress.stage === 'ongoing' ? the_loan.progress.term : undefined

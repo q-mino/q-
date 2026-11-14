@@ -48,6 +48,8 @@ export const registry = {
     fact.the_member_has_been_reminded_of_the_due_date,
   'business/loans/fact/the_loan_was_returned_before_the_reminder':
     fact.the_loan_was_returned_before_the_reminder,
+  'business/loans/fact/the_due_date_came_before_the_reminder':
+    fact.the_due_date_came_before_the_reminder,
   'business/loans/fact/a_loan_has_become_overdue': fact.a_loan_has_become_overdue,
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue':
     fact.the_loan_was_returned_before_it_became_overdue,
@@ -60,6 +62,8 @@ export const registry = {
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
   'business/loans/predicate/the_loan_is_ongoing': predicate.the_loan_is_ongoing,
   'business/loans/predicate/the_loan_is_returned': predicate.the_loan_is_returned,
+  'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead':
+    predicate.the_due_date_of_the_loan_is_still_ahead,
   'business/loans/predicate/the_tool_is_on_loan': predicate.the_tool_is_on_loan,
   'business/loans/predicate/the_tool_is_on_loan_to_this_member':
     predicate.the_tool_is_on_loan_to_this_member,
@@ -79,6 +83,10 @@ export const registry = {
   'business/loans/command/return_a_tool': command.return_a_tool,
   'business/loans/command/return_a_tool_input': command.return_a_tool_input,
   'business/loans/command/the_member_still_has_the_tool': command.the_member_still_has_the_tool,
+  'business/loans/command/the_member_can_still_be_reminded':
+    command.the_member_can_still_be_reminded,
+  'business/loans/command/the_due_date_of_the_ongoing_loan_has_passed':
+    command.the_due_date_of_the_ongoing_loan_has_passed,
   'business/loans/command/remind_the_member_of_the_due_date':
     command.remind_the_member_of_the_due_date,
   'business/loans/command/remind_the_member_of_the_due_date_input':

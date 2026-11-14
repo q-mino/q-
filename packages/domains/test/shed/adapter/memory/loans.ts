@@ -52,6 +52,8 @@ export const loans_fragments: wlib.PredicateFragments<
     loans_dsl.the_loan_is_ongoing(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_loan_is_returned': (p) => (state) =>
     loans_dsl.the_loan_is_returned(state.loans.get(p.loan_id)),
+  'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) => (state) =>
+    loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.now),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
     ongoing(state).some((the_loan) => the_loan.tool_id === p.tool_id),
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) => (state) =>
@@ -183,6 +185,7 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => (state) => state,
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => (state) => state,
+  'business/loans/fact/the_due_date_came_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan }) =>
     with_the_progress(overdue_loan),
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,

@@ -47,6 +47,19 @@ export const the_loan_is_returned =
 export type the_loan_is_returned = z.output<typeof the_loan_is_returned>
 
 /**
+ * The due date on the loan's card is still ahead at an instant: "bring it
+ * back tomorrow" is still true. The instant is a parameter, the clock of
+ * whoever asks (GR-8): time is not a fact (D92.4), the due date is.
+ *
+ * @see {@link predicate.the_due_date_of_the_loan_is_still_ahead}
+ */
+export const the_due_date_of_the_loan_is_still_ahead =
+  predicate.the_due_date_of_the_loan_is_still_ahead.brand<'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead'>()
+export type the_due_date_of_the_loan_is_still_ahead = z.output<
+  typeof the_due_date_of_the_loan_is_still_ahead
+>
+
+/**
  * The tool is with a member, whoever it is.
  *
  * @see {@link predicate.the_tool_is_on_loan}

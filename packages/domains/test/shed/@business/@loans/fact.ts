@@ -68,6 +68,17 @@ export const the_loan_was_returned_before_the_reminder = wlib.fact({
 })
 
 /**
+ * Nothing to do (DOM-6, D95): the eve was delivered after the due date (the
+ * executor was down, or behind), and "bring it back tomorrow" would be
+ * false. No reminder goes; the overdue stamp is the due date's to give.
+ */
+export const the_due_date_came_before_the_reminder = wlib.fact({
+  payload: z.strictObject({
+    loan_id: loan_id,
+  }),
+})
+
+/**
  * The due date came while the member had the tool: the loan's card is
  * stamped overdue. A partial value, as a return: the loan's id and its new
  * progress, whole; the loan stays ongoing, in "my loans".
