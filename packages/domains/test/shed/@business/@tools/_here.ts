@@ -1,10 +1,8 @@
 // generated
 
 // The builders of `tools` bound to the context of this point of the tree
-// (PER-6): no node above, the root's; and to the facts of the folder, which
-// a read use case names by their names.
+// (PER-6): no node above, the root's.
 
 import * as wlib from '../../wlib.ts'
-import type * as fact from './_fact.ts'
 
-export const here = wlib.builders_at<wlib.RootContext, never, typeof fact>()
+export const here = wlib.builders_at<wlib.RootContext>()

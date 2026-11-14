@@ -1247,19 +1247,10 @@ export type ReadUseCaseOverBuilder<context, closes> = <
  * (`here.command`). A creator gets the context with no annotation; one that
  * asks for more than the point gives does not compile. A command, and a use
  * case over one, add their operation (`OperationContext`).
- *
- * The builders are bound to the facts of the folder too (`facts`, the
- * generated `_fact.ts`, none with none), so that a read use case names the
- * facts it lets a reader name by their names (A, 14 Nov 2026).
  */
-export interface Builders<
-  context extends RootContext,
-  closes,
-  facts extends Readonly<Record<string, Component>> = never,
-> {
+export interface Builders<context extends RootContext, closes> {
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
-  readonly read_use_case: ReadUseCaseBuilder<facts>
   readonly command_use_case_over: CommandUseCaseOverBuilder<context, closes>
   readonly read_use_case_over: ReadUseCaseOverBuilder<context, closes>
   readonly node: NodeBuilder<context, closes>
@@ -1272,11 +1263,10 @@ export interface Builders<
  * and the context the node gives, in `_here.ts`, which builds the rest of
  * the folder; two files, so that no import goes round.
  */
-export declare function builders_at<
-  context extends RootContext,
-  closes = never,
-  facts extends Readonly<Record<string, Component>> = never,
->(): Builders<context, closes, facts>
+export declare function builders_at<context extends RootContext, closes = never>(): Builders<
+  context,
+  closes
+>
 
 // ---------------------------------------------------------------------------
 // Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
@@ -1645,13 +1635,14 @@ export declare function command_use_case_ports<const use_cases extends CommandUs
  * double. A query the adapter does not stream gives the snapshot alone.
  *
  * It names the facts that a use case over it may name in its stream
- * (`facts`, by name: D64.2, D101.4): the notices the domain sends with its
- * register, its choice (A, 14 Nov 2026). A fact is named when it touches an
- * entry and leaves it in the selection (one that takes it out comes as
- * `left`, its identity only), tells a reader something the entry does not,
- * an occurrence rather than a state ("has just fallen overdue", not "is
- * overdue"), and a reader uses it (LIB-3). A fact it does not name reaches
- * the use cases over it as the entry it leaves.
+ * (`facts`, the facts themselves, as a command names its own: D64.2,
+ * D101.4): the notices the domain sends with its register, its choice (A,
+ * 14 Nov 2026). A fact is named when it touches an entry and leaves it in
+ * the selection (one that takes it out comes as `left`, its identity only),
+ * tells a reader something the entry does not, an occurrence rather than a
+ * state ("has just fallen overdue", not "is overdue"), and a reader uses it
+ * (LIB-3). A fact it does not name reaches the use cases over it as the
+ * entry it leaves. A use case over it names a fact by the name in its path.
  */
 export interface ReadUseCase<
   query extends Queries[string],
@@ -1660,18 +1651,29 @@ export interface ReadUseCase<
   readonly [$UseCase]: { readonly query: query; readonly facts: facts }
 }
 
+/** The name of a fact, the last part of its path. */
+type FactName<path> = path extends `${string}/fact/${infer name}` ? name : never
+
+/** Facts by the name in their path. */
+type FactsByName<facts extends Component> = {
+  readonly [fact in facts as FactName<PathOf<fact>>]: fact
+}
+
 /**
  * A read use case, declared in one argument whose parts have names (DOM-25):
- * its query and the facts it names, by their names among the facts of its
- * folder, to which the builders of the point are bound (`builders_at`).
+ * its query and the facts it names, which must be facts.
  */
-export type ReadUseCaseBuilder<facts extends Readonly<Record<string, Component>>> = <
+export declare function read_use_case<
   const query extends Queries[string],
-  const named extends ([facts] extends [never] ? never : keyof facts & string) = never,
->(use_case: {
-  readonly query: query
-  readonly facts?: readonly named[]
-}) => ReadUseCase<query, Pick<facts, named>>
+  const facts extends Component = never,
+>(
+  use_case: {
+    readonly query: query
+    readonly facts?: readonly facts[]
+  } & ([Strays<facts, Path<'fact'>>] extends [never]
+    ? unknown
+    : { readonly 'a read use case names facts (DOM-17)': PathOf<Strays<facts, Path<'fact'>>> }),
+): ReadUseCase<query, FactsByName<facts>>
 
 /** The read use cases of a domain, by name. */
 export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>>
