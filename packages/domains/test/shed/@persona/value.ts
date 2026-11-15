@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as accounts from '../@auth/@accounts/_index.ts'
+import { accounts } from './_here_value.ts'
 
 // The values of the persona base (D78.7, DOM-25): above every hat, what every
 // persona takes from the entry.
@@ -11,6 +11,6 @@ import * as accounts from '../@auth/@accounts/_index.ts'
  * opaque, never which of the two it is (PER-1, D78).
  */
 export const caller = z.discriminatedUnion('identified_by', [
-  z.strictObject({ identified_by: z.literal('account'), id: accounts.account_id }),
-  z.strictObject({ identified_by: z.literal('session'), id: accounts.session_id }),
+  z.strictObject({ identified_by: z.literal('account'), id: accounts.id.account_id }),
+  z.strictObject({ identified_by: z.literal('session'), id: accounts.id.session_id }),
 ])

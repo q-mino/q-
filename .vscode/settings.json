@@ -5,6 +5,6 @@
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
     "*.ts": "_${capture}.ts",
-    "_here.ts": "_here_*.ts"
+    "_here.ts": "_here_*.ts, _door_*.ts"
   }
 }

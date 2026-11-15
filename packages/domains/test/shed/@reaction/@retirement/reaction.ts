@@ -1,6 +1,4 @@
-import * as tools from '../../@business/@tools/_index.ts'
-import * as loans from '../../@business/@loans/_index.ts'
-import { reaction } from './_here_reaction.ts'
+import { reaction, tools, loans } from './_here_reaction.ts'
 
 // The procedure of a tool's retirement: what the offices of the shed do when
 // the catalogue retires a tool (GR-9, DOM-16). A standing order speaks the
@@ -13,7 +11,7 @@ import { reaction } from './_here_reaction.ts'
  * `loans` (D97, D112).
  */
 export const the_reservations_of_the_tool_are_cancelled = reaction({
-  when: tools.a_tool_has_been_retired,
-  invokes: loans.cancel_the_reservations_of_a_tool,
+  when: tools.fact.a_tool_has_been_retired,
+  invokes: loans.usecase.cancel_the_reservations_of_a_tool,
   translation: (fact) => ({ tool_id: fact.retired_tool.id }),
 })

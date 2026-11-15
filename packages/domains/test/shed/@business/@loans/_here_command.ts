@@ -4,7 +4,6 @@
 // of the composition of its conditions, pick to name some of a namespace; the
 // components below. The folders it sees (`sight.ts`): `tools` (id).
 
-import * as tools_id from '../@tools/_id.ts'
 export { command, AND, OR, NOT } from './_here.ts'
 export { pick } from '../../wlib.ts'
 export * as id from './_id.ts'
@@ -15,5 +14,4 @@ export * as predicate from './_predicate.ts'
 export * as effect from './_effect.ts'
 export * as loan_selection from './_loan_selection.ts'
 export * as reservation_selection from './_reservation_selection.ts'
-
-export const tools = { id: tools_id }
+export * as tools from '../@tools/_door_business.ts'

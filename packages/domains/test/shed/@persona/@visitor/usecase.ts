@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import * as tools from '../../@business/@tools/_index.ts'
-import { read_use_case_over, value } from './_here_usecase.ts'
+import { read_use_case_over, value, tools } from './_here_usecase.ts'
 
 // The use cases of `visitor`, the leaves of its tree (PER-6): who browses the
 // shed. Its entries are its own, projected field by field (D45): what it does
@@ -9,11 +8,11 @@ import { read_use_case_over, value } from './_here_usecase.ts'
 
 /** Luca browses the shed: the tools he could borrow, by shelf, without the keeper's notes. */
 export const the_catalogue = read_use_case_over({
-  use_case: tools.the_catalogue,
+  use_case: tools.usecase.the_catalogue,
   input: z.strictObject({ categories: value.categories.optional() }),
   creator: () => (input) => ({ categories: input.categories }),
   entry: z.strictObject({
-    tool_id: tools.tool_id,
+    tool_id: tools.id.tool_id,
     name: value.tool_name,
     category: value.category,
   }),
