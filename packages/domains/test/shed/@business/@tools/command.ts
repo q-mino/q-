@@ -1,10 +1,10 @@
 import { z } from 'zod'
-import here, { fact, id, predicate, value } from './_here_command.ts'
+import { command, AND, NOT, fact, id, predicate, value } from './_here_command.ts'
 
 /** No tool of the catalogue has the requested id. */
-export const the_tool_is_new = here.NOT(predicate.a_tool_has_this_id)
+export const the_tool_is_new = NOT(predicate.a_tool_has_this_id)
 
-export const add_a_tool = here.command({
+export const add_a_tool = command({
   input: z.strictObject({
     id: id.tool_id,
     name: value.tool_name,
@@ -23,18 +23,18 @@ export const add_a_tool = here.command({
 })
 
 /** The requested tool is in the catalogue and in service. */
-export const the_tool_can_be_retired = here.AND({
+export const the_tool_can_be_retired = AND({
   a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
   the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
 })
 
 /** The requested tool is in the catalogue and already retired. */
-export const the_tool_is_already_retired = here.AND({
+export const the_tool_is_already_retired = AND({
   a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
   the_requested_tool_is_retired: predicate.the_tool_is_retired,
 })
 
-export const retire_a_tool = here.command({
+export const retire_a_tool = command({
   input: z.strictObject({
     id: id.tool_id,
     reason: value.retire_reason,

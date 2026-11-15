@@ -1,4 +1,4 @@
-import here, { command, effect, fact, query } from './_here_usecase.ts'
+import { command_use_case, read_use_case, command, effect, fact, query } from './_here_usecase.ts'
 
 // The use cases of `loans`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the loans and the reservations through them.
@@ -7,20 +7,20 @@ import here, { command, effect, fact, query } from './_here_usecase.ts'
 // Who the member is comes from the persona (step 6), not from here.
 
 /** A member borrows a tool: Marta takes the drill home. */
-export const borrow_a_tool = here.command_use_case({ command: command.borrow_a_tool })
+export const borrow_a_tool = command_use_case({ command: command.borrow_a_tool })
 
 /** A member books a tool for a day ahead: the ladder for Saturday. */
-export const reserve_a_tool = here.command_use_case({ command: command.reserve_a_tool })
+export const reserve_a_tool = command_use_case({ command: command.reserve_a_tool })
 
 /** A member brings a tool back, in good condition or damaged. */
-export const return_a_tool = here.command_use_case({ command: command.return_a_tool })
+export const return_a_tool = command_use_case({ command: command.return_a_tool })
 
 /**
  * On the eve of the due date the effect executor comes back (DOM-13): Marta
  * is reminded if she still has the drill. The return of the wait queued by
  * a loan.
  */
-export const remind_the_member_of_the_due_date = here.command_use_case({
+export const remind_the_member_of_the_due_date = command_use_case({
   command: command.remind_the_member_of_the_due_date,
   returns_from: effect.wait_until_the_eve_of_the_due_date,
 })
@@ -30,7 +30,7 @@ export const remind_the_member_of_the_due_date = here.command_use_case({
  * the drill is stamped overdue if she still has it. The return of the wait
  * queued by a loan.
  */
-export const declare_the_loan_overdue = here.command_use_case({
+export const declare_the_loan_overdue = command_use_case({
   command: command.declare_the_loan_overdue,
   returns_from: effect.wait_until_the_due_date,
 })
@@ -40,7 +40,7 @@ export const declare_the_loan_overdue = here.command_use_case({
  * longer be lent: the ladder is retired, and Marta's Saturday and Gianni's
  * Sunday go. Invoked by a reaction to the retirement (DOM-16).
  */
-export const cancel_the_reservations_of_a_tool = here.command_use_case({
+export const cancel_the_reservations_of_a_tool = command_use_case({
   command: command.cancel_the_reservations_of_a_tool,
 })
 
@@ -50,12 +50,12 @@ export const cancel_the_reservations_of_a_tool = here.command_use_case({
  * away. With the register goes one notice by name: a loan has fallen overdue
  * (D64.2, D101.4).
  */
-export const the_ongoing_loans_of_a_member = here.read_use_case({
+export const the_ongoing_loans_of_a_member = read_use_case({
   query: query.the_ongoing_loans_of_a_member,
   facts: [fact.a_loan_has_become_overdue],
 })
 
 /** A member sees their reservations from today on. */
-export const the_reservations_of_a_member = here.read_use_case({
+export const the_reservations_of_a_member = read_use_case({
   query: query.the_reservations_of_a_member,
 })

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as loans from '../../@business/@loans/_index.ts'
 import * as tools from '../../@business/@tools/_index.ts'
-import here, { dsl, value } from './_here_usecase.ts'
+import { command_use_case_over, read_use_case_over, dsl, value } from './_here_usecase.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found
@@ -13,7 +13,7 @@ import here, { dsl, value } from './_here_usecase.ts'
 // `refused`.
 
 /** Marta takes the drill home, while her card is valid. */
-export const borrow_a_tool = here.command_use_case_over({
+export const borrow_a_tool = command_use_case_over({
   use_case: loans.borrow_a_tool,
   input: z.strictObject({ loan_id: loans.loan_id, tool_id: tools.tool_id }),
   is_refused_unless: {
@@ -63,7 +63,7 @@ export const borrow_a_tool = here.command_use_case_over({
  * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
  */
-export const my_loans = here.read_use_case_over({
+export const my_loans = read_use_case_over({
   use_case: loans.the_ongoing_loans_of_a_member,
   input: z.strictObject({}),
   creator: (context) => () => ({ member_id: context.card.id }),

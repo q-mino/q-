@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import here, { tool_selection, value } from './_here_query.ts'
+import { query, AND, tool_selection, value } from './_here_query.ts'
 
 /** The tool is in service and in a chosen category. */
-export const the_tool_is_shown_in_the_catalogue = here.AND({
+export const the_tool_is_shown_in_the_catalogue = AND({
   the_tool_is_in_service: tool_selection.the_tool_is_in_service,
   the_tool_is_in_a_chosen_category: tool_selection.the_tool_is_in_one_of_these_categories,
 })
@@ -12,7 +12,7 @@ export const the_tool_is_shown_in_the_catalogue = here.AND({
  * category, if none is chosen), by category and name; the id, the entry's
  * identity, closes the order.
  */
-export const the_catalogue = here.query({
+export const the_catalogue = query({
   input: z.strictObject({
     categories: z
       .array(value.category)

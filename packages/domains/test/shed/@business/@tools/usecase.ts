@@ -1,4 +1,4 @@
-import here, { command, query } from './_here_usecase.ts'
+import { command_use_case, read_use_case, command, query } from './_here_usecase.ts'
 
 // The use cases of `tools`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the catalogue through them. A command use case
@@ -6,10 +6,10 @@ import here, { command, query } from './_here_usecase.ts'
 // case each declares only its command or its query.
 
 /** The keeper adds a tool to the catalogue: a new drill on the shelf. */
-export const add_a_tool = here.command_use_case({ command: command.add_a_tool })
+export const add_a_tool = command_use_case({ command: command.add_a_tool })
 
 /** The keeper retires a tool: broken, lost, worn out or given away. */
-export const retire_a_tool = here.command_use_case({ command: command.retire_a_tool })
+export const retire_a_tool = command_use_case({ command: command.retire_a_tool })
 
 /** A visitor browses the catalogue: the garden tools, say, read once. */
-export const the_catalogue = here.read_use_case({ query: query.the_catalogue })
+export const the_catalogue = read_use_case({ query: query.the_catalogue })

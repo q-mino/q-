@@ -43,13 +43,13 @@ export default defineConfig(
         'error',
         {
           selector:
-            "CallExpression[callee.property.name='command'] > ObjectExpression > Property[key.name='outcomes'] > ObjectExpression > Property > ArrayExpression > CallExpression:first-child",
+            "CallExpression[callee.name='command'] > ObjectExpression > Property[key.name='outcomes'] > ObjectExpression > Property > ArrayExpression > CallExpression:first-child",
           message:
             "A branch's condition is a predicate or a named condition (DOM-25): name it in a constant.",
         },
         {
           selector:
-            "CallExpression[callee.property.name='query'] > ObjectExpression > Property[key.name='selection'] > CallExpression",
+            "CallExpression[callee.name='query'] > ObjectExpression > Property[key.name='selection'] > CallExpression",
           message:
             "A query's selection is a selection predicate or a named condition (DOM-25): name it in a constant.",
         },

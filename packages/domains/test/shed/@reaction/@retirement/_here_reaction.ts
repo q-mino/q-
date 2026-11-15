@@ -4,10 +4,4 @@
 // reaction; nothing below in its folder, it takes the facts and use cases from
 // the doors.
 
-import point from './_here.ts'
-
-const { reaction } = point
-
-const here = { reaction }
-
-export default here
+export { reaction } from './_here.ts'

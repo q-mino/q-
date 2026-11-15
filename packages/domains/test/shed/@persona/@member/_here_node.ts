@@ -9,8 +9,4 @@ import type { persona_context } from '../_node.ts'
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'
 
-const { node } = wlib.builders_at<persona_context>()
-
-const here = { node }
-
-export default here
+export const { node } = wlib.builders_at<persona_context>()

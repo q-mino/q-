@@ -7,6 +7,22 @@
 import * as wlib from '../../wlib.ts'
 import type { keeper_closes, keeper_context } from './_node.ts'
 
-const here = wlib.builders_at<keeper_context, keeper_closes>()
-
-export default here
+export const {
+  id,
+  fact,
+  predicate,
+  selection,
+  effect,
+  AND,
+  OR,
+  NOT,
+  command,
+  query,
+  command_use_case,
+  read_use_case,
+  command_use_case_over,
+  read_use_case_over,
+  lookup,
+  reaction,
+  node,
+} = wlib.builders_at<keeper_context, keeper_closes>()

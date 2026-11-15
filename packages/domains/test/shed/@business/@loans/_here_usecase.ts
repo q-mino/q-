@@ -3,7 +3,7 @@
 // The here of the use cases of `loans` (DOM-25): the builders of a use case;
 // the components below.
 
-import point from './_here.ts'
+export { command_use_case, read_use_case } from './_here.ts'
 export * as id from './_id.ts'
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'
@@ -14,9 +14,3 @@ export * as loan_selection from './_loan_selection.ts'
 export * as reservation_selection from './_reservation_selection.ts'
 export * as command from './_command.ts'
 export * as query from './_query.ts'
-
-const { command_use_case, read_use_case } = point
-
-const here = { command_use_case, read_use_case }
-
-export default here

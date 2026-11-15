@@ -1,14 +1,25 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
-import here, { dsl, effect, fact, id, predicate, value } from './_here_command.ts'
+import {
+  AND,
+  NOT,
+  command,
+  pick,
+  predicate,
+  dsl,
+  effect,
+  fact,
+  id,
+  value,
+} from './_here_command.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
-export const the_tool_can_be_lent = here.AND({
-  a_loan_has_not_the_requested_id: here.NOT(predicate.a_loan_has_this_id),
+export const the_tool_can_be_lent = AND({
+  a_loan_has_not_the_requested_id: NOT(predicate.a_loan_has_this_id),
   a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
   the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
-  the_requested_tool_is_not_on_loan: here.NOT(predicate.the_tool_is_on_loan),
+  the_requested_tool_is_not_on_loan: NOT(predicate.the_tool_is_on_loan),
 })
 
 /**
@@ -19,7 +30,7 @@ export const the_tool_can_be_lent = here.AND({
  * one by the other's return: neither decides the other. One loan, one wait of
  * each: the loan's id is each entry's.
  */
-export const borrow_a_tool = here.command({
+export const borrow_a_tool = command({
   input: z.strictObject({
     loan_id: id.loan_id,
     tool_id: tool_id,
@@ -29,10 +40,7 @@ export const borrow_a_tool = here.command({
     the_tool_is_available_so_it_is_lent: [
       the_tool_can_be_lent,
       fact.a_tool_has_been_lent,
-      {
-        wait_until_the_eve_of_the_due_date: effect.wait_until_the_eve_of_the_due_date,
-        wait_until_the_due_date: effect.wait_until_the_due_date,
-      },
+      pick(effect, 'wait_until_the_eve_of_the_due_date', 'wait_until_the_due_date'),
     ],
     the_member_already_has_the_tool_so_nothing_changes: [
       predicate.the_tool_is_on_loan_to_this_member,
@@ -86,14 +94,14 @@ export const borrow_a_tool = here.command({
 })
 
 /** The tool can be booked for the day. */
-export const the_tool_can_be_booked = here.AND({
-  a_reservation_has_not_the_requested_id: here.NOT(predicate.a_reservation_has_this_id),
+export const the_tool_can_be_booked = AND({
+  a_reservation_has_not_the_requested_id: NOT(predicate.a_reservation_has_this_id),
   a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
   the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
-  the_requested_tool_is_not_booked_that_day: here.NOT(predicate.the_tool_is_booked_for_the_day),
+  the_requested_tool_is_not_booked_that_day: NOT(predicate.the_tool_is_booked_for_the_day),
 })
 
-export const reserve_a_tool = here.command({
+export const reserve_a_tool = command({
   /** The day is validated against the clock: the schema needs `now`, nothing else. */
   input: (context) =>
     z
@@ -143,18 +151,18 @@ export const reserve_a_tool = here.command({
 })
 
 /** The requested loan exists and is ongoing. */
-export const the_loan_can_be_returned = here.AND({
+export const the_loan_can_be_returned = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
 })
 
 /** The requested loan exists and is already returned. */
-export const the_loan_is_already_returned = here.AND({
+export const the_loan_is_already_returned = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_returned: predicate.the_loan_is_returned,
 })
 
-export const return_a_tool = here.command({
+export const return_a_tool = command({
   input: z.strictObject({
     loan_id: id.loan_id,
     condition: value.return_condition,
@@ -194,23 +202,23 @@ export const return_a_tool = here.command({
 })
 
 /** The requested loan exists and the member still has the tool. */
-export const the_member_still_has_the_tool = here.AND({
+export const the_member_still_has_the_tool = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
 })
 
 /** The member still has the tool and its due date is still ahead: the eve is not late. */
-export const the_member_can_still_be_reminded = here.AND({
+export const the_member_can_still_be_reminded = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
   its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
 })
 
 /** The member still has the tool, but its due date has passed: the eve came late. */
-export const the_due_date_of_the_ongoing_loan_has_passed = here.AND({
+export const the_due_date_of_the_ongoing_loan_has_passed = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
-  its_due_date_has_passed: here.NOT(predicate.the_due_date_of_the_loan_is_still_ahead),
+  its_due_date_has_passed: NOT(predicate.the_due_date_of_the_loan_is_still_ahead),
 })
 
 /**
@@ -223,7 +231,7 @@ export const the_due_date_of_the_ongoing_loan_has_passed = here.AND({
  * (A, 15 Nov 2026). Its input is the payload of the wait, given back by the
  * executor; its operation is the entry's (DOM-14).
  */
-export const remind_the_member_of_the_due_date = here.command({
+export const remind_the_member_of_the_due_date = command({
   input: z.strictObject({
     loan_id: id.loan_id,
     tool_id: tool_id,
@@ -234,7 +242,7 @@ export const remind_the_member_of_the_due_date = here.command({
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
       the_member_can_still_be_reminded,
       fact.the_member_has_been_reminded_of_the_due_date,
-      { send_the_due_date_reminder: effect.send_the_due_date_reminder },
+      pick(effect, 'send_the_due_date_reminder'),
     ],
     the_loan_was_returned_so_nothing_changes: [
       the_loan_is_already_returned,
@@ -290,7 +298,7 @@ export const remind_the_member_of_the_due_date = here.command({
  * its operation is the entry's (DOM-14), so a second delivery of the wait is
  * a duplicate, not a second stamp.
  */
-export const declare_the_loan_overdue = here.command({
+export const declare_the_loan_overdue = command({
   input: z.strictObject({
     loan_id: id.loan_id,
   }),
@@ -328,7 +336,7 @@ export const declare_the_loan_overdue = here.command({
 })
 
 /** The desk has not yet begun cancelling the reservations of the tool. */
-export const no_cancellation_of_the_reservations_of_the_tool_has_begun = here.NOT(
+export const no_cancellation_of_the_reservations_of_the_tool_has_begun = NOT(
   predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
 )
 
@@ -341,7 +349,7 @@ export const no_cancellation_of_the_reservations_of_the_tool_has_begun = here.NO
  * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
  * a rejection, which a reaction sends to its dead letter, in sight.
  */
-export const cancel_the_reservations_of_a_tool = here.command({
+export const cancel_the_reservations_of_a_tool = command({
   input: z.strictObject({
     tool_id: tool_id,
   }),

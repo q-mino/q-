@@ -7,8 +7,4 @@ import * as wlib from '../wlib.ts'
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'
 
-const { node } = wlib.builders_at<wlib.RootContext>()
-
-const here = { node }
-
-export default here
+export const { node } = wlib.builders_at<wlib.RootContext>()

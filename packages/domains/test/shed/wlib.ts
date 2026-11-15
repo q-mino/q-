@@ -73,7 +73,7 @@ export type Path<kind extends string> = `${string}/${kind}/${string}`
 // components by their builder: the files are named and grouped as the author
 // likes. Each returns what it is given, for the generator to brand. None is
 // exported: the authored files reach them through `Builders`, from the here
-// of their kind (`_here_fact.ts`, `here.fact`).
+// of their kind (`_here_fact.ts`, `fact`).
 
 /** An identity (DOM-24): the format of the values that name an instance. */
 export type IdBuilder = <const format extends z.ZodType>(id: { readonly format: format }) => format
@@ -228,6 +228,18 @@ export type NotBuilder = <const condition extends Condition>(
 export type Entries = Readonly<Record<string, Component>>
 
 /**
+ * Some members of a namespace, under their own names: the outbox entries of a
+ * branch are its effects by name, `pick(effect, 'wait_until_the_due_date')`
+ * for `{ wait_until_the_due_date: effect.wait_until_the_due_date }`. A name
+ * the namespace does not export does not compile. Not a builder: it builds no
+ * component, it names some.
+ */
+export declare function pick<
+  const namespace extends object,
+  const names extends readonly (keyof namespace & string)[],
+>(namespace: namespace, ...names: names): { readonly [name in names[number]]: namespace[name] }
+
+/**
  * A branch, declared: the condition, the fact it records and, if it asks
  * the world for something, its outbox entries. DOM-5
  */
@@ -353,7 +365,7 @@ export type PredicatesAndFacts<outcomes extends Outcomes> = [
  * declared inline, the branches, and last the creator that binds them. DOM-25.
  * Its conditions are made of predicates and its facts are facts, checked by
  * type. Its creator and its input read the context of its point of the tree
- * with its operation (`here.command`, `Builders`).
+ * with its operation (`command`, `Builders`).
  */
 export type CommandBuilder<context> = <
   const input extends CommandInput<z.ZodType, context & OperationContext>,
@@ -1246,10 +1258,10 @@ export type ReadUseCaseOverBuilder<context, closes> = <
  * in each folder of the tree `_here.ts`, the point, whose default export is
  * these builders, with the context the nodes above give there (`RootContext`
  * with none) and their `closes` (`never` with none); and beside it one here
- * per kind (`_here_command.ts`), whose default export is the builders of its
- * kind, taken from the point, and whose namespaces are the components of the
- * folder in the layers below the kind. An authored file imports one here, the
- * one of the kind it builds (`here.command`, `fact.a_tool_has_been_retired`).
+ * per kind (`_here_command.ts`), which exports by name the builders of its
+ * kind, taken from the point, and as namespaces the components of the folder
+ * in the layers below the kind. An authored file imports one here, the one of
+ * the kind it builds (`command`, `fact.a_tool_has_been_retired`).
  * The point is the one door to the builders, the place where a builder could
  * be added.
  *
