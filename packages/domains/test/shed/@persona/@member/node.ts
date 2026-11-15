@@ -1,6 +1,6 @@
 import * as accounts from '../../@auth/@accounts/_index.ts'
 import { the_account_of_the_caller } from '../_dsl.ts'
-import above from './_above.ts'
+import here from './_here_node.ts'
 
 // The node of `member` (PER-6): who wears the hat has an account with the hat
 // `member` and a member card, and the card goes down the tree whole, for the
@@ -10,7 +10,7 @@ import above from './_above.ts'
 // I/O is the lookups of auth; then all is pure.
 
 /** Marta, card M-12, valid until 31 March 2027. */
-export const member = above.node({
+export const member = here.node({
   looks_up: {
     the_hats_of_the_caller: {
       lookup: accounts.the_hats_of_an_account,

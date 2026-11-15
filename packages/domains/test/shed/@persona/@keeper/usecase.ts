@@ -1,8 +1,7 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as tools from '../../@business/@tools/_index.ts'
-import { notes, retirement_reason } from './_value.ts'
-import here from './_here.ts'
+import here, { value } from './_here_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
 // shed. Each invokes a use case of a business domain and speaks to the keeper
@@ -14,8 +13,8 @@ export const retire_a_tool = here.command_use_case_over({
   use_case: tools.retire_a_tool,
   input: z.strictObject({
     tool_id: tools.tool_id,
-    reason: retirement_reason,
-    notes: notes.optional(),
+    reason: value.retirement_reason,
+    notes: value.notes.optional(),
   }),
   creator: () => (input) => ({ id: input.tool_id, reason: input.reason, notes: input.notes }),
   events: {

@@ -2,9 +2,7 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as loans from '../../@business/@loans/_index.ts'
 import * as tools from '../../@business/@tools/_index.ts'
-import { the_card_is_valid_on } from './_dsl.ts'
-import here from './_here.ts'
-import { loan_term, tool_name } from './_value.ts'
+import here, { dsl, value } from './_here_usecase.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found
@@ -21,7 +19,7 @@ export const borrow_a_tool = here.command_use_case_over({
   is_refused_unless: {
     /** Card M-12 is valid until 31 March 2027: on 1 April Marta borrows no more. */
     the_member_card_is_valid_today: (context) => () =>
-      the_card_is_valid_on(context.now)(context.card),
+      dsl.the_card_is_valid_on(context.now)(context.card),
   },
   creator: (context) => (input) => ({
     loan_id: input.loan_id,
@@ -72,10 +70,10 @@ export const my_loans = here.read_use_case_over({
   entry: z.strictObject({
     loan_id: loans.loan_id,
     tool_id: tools.tool_id,
-    tool_name: tool_name,
+    tool_name: value.tool_name,
     start_date: wlib.date_time_string,
     due_date: wlib.date_time_string,
-    term: loan_term,
+    term: value.loan_term,
   }),
   projection: (entry) => ({
     loan_id: entry.id,
