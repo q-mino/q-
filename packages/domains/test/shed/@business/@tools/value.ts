@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { date_time_string } from '../../wlib.ts'
-import { tool_id } from './_id.ts'
+import { id } from './_here_value.ts'
 
 export const tool_name = z.string().min(1).max(80)
 
@@ -25,7 +25,7 @@ const absent = z.undefined().optional()
 
 /** Every field of every state of a tool. Not a state: each state subtracts from it. */
 const every_tool_field = z.strictObject({
-  id: tool_id,
+  id: id.tool_id,
   name: tool_name,
   category: category,
   notes: notes.optional(),

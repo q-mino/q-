@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from './_id.ts'
-import here from './_here.ts'
+import here, { id } from './_here_predicate.ts'
 
 // The vocabulary of the conditions. A predicate declares its parameters;
 // its value is in dsl.ts. Composed (here.AND, here.OR) under business names,
@@ -8,18 +7,18 @@ import here from './_here.ts'
 
 export const a_tool_has_this_id = here.predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: id.tool_id,
   }),
 })
 
 export const the_tool_is_in_service = here.predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: id.tool_id,
   }),
 })
 
 export const the_tool_is_retired = here.predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: id.tool_id,
   }),
 })

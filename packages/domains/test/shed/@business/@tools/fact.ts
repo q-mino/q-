@@ -1,7 +1,5 @@
 import { z } from 'zod'
-import { tool_id } from './_id.ts'
-import { retired_tool, tool } from './_value.ts'
-import here from './_here.ts'
+import here, { id, value } from './_here_fact.ts'
 
 /**
  * Carries the change of state (DOM-5, V9): every value it writes. The
@@ -9,7 +7,7 @@ import here from './_here.ts'
  */
 export const a_tool_has_been_added = here.fact({
   payload: z.strictObject({
-    added_tool: tool,
+    added_tool: value.tool,
   }),
 })
 
@@ -19,13 +17,13 @@ export const a_tool_has_been_added = here.fact({
  */
 export const a_tool_has_been_retired = here.fact({
   payload: z.strictObject({
-    retired_tool: retired_tool.pick({ id: true, status: true, retirement: true }),
+    retired_tool: value.retired_tool.pick({ id: true, status: true, retirement: true }),
   }),
 })
 
 /** Nothing to do (DOM-6): the first retirement stands, the state does not change. */
 export const the_tool_was_already_retired = here.fact({
   payload: z.strictObject({
-    tool_id: tool_id,
+    tool_id: id.tool_id,
   }),
 })

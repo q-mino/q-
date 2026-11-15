@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { category } from './_value.ts'
-import here from './_here.ts'
+import here, { value } from './_here_selection.ts'
 
 // The selections over a tool of the catalogue, the subject of this file
 // (DOM-18): predicates over the tool a query looks at, which they do not name;
@@ -15,6 +14,6 @@ export const the_tool_is_in_service = here.selection({
 export const the_tool_is_in_one_of_these_categories = here.selection({
   subject: 'tool',
   parameters: z.strictObject({
-    categories: z.array(category).min(1),
+    categories: z.array(value.category).min(1),
   }),
 })

@@ -4,6 +4,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
-    "*.ts": "_${capture}.ts"
+    "*.ts": "_${capture}.ts",
+    "_here.ts": "_here_*.ts"
   }
 }

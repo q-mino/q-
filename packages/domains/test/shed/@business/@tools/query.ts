@@ -1,7 +1,5 @@
 import { z } from 'zod'
-import * as tool_selection from './_tool_selection.ts'
-import { catalogue_entry, category } from './_value.ts'
-import here from './_here.ts'
+import here, { tool_selection, value } from './_here_query.ts'
 
 /** The tool is in service and in a chosen category. */
 export const the_tool_is_shown_in_the_catalogue = here.AND({
@@ -17,11 +15,11 @@ export const the_tool_is_shown_in_the_catalogue = here.AND({
 export const the_catalogue = here.query({
   input: z.strictObject({
     categories: z
-      .array(category)
+      .array(value.category)
       .min(1)
-      .default([...category.options]),
+      .default([...value.category.options]),
   }),
-  fields: catalogue_entry,
+  fields: value.catalogue_entry,
   identity: 'id',
   selection: the_tool_is_shown_in_the_catalogue,
   order: { category: 'ascending', name: 'ascending' },

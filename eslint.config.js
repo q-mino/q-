@@ -53,6 +53,12 @@ export default defineConfig(
           message:
             "A query's selection is a selection predicate or a named condition (DOM-25): name it in a constant.",
         },
+        {
+          selector:
+            'ImportDeclaration[source.value=/_here(_[a-z]+)?\\.ts$/] ~ ImportDeclaration[source.value=/_here(_[a-z]+)?\\.ts$/]',
+          message:
+            'A file imports one here, the one of its layer (DOM-25): it gives the builders of the layer and the components below it.',
+        },
       ],
     },
   },
