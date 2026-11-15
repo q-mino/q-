@@ -2,15 +2,15 @@ import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
 import {
+  command,
   AND,
   NOT,
-  command,
   pick,
-  predicate,
   dsl,
   effect,
   fact,
   id,
+  predicate,
   value,
 } from './_here_command.ts'
 
