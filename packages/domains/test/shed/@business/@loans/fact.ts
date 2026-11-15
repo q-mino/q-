@@ -1,20 +1,12 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
-import { loan_id, member_id } from './_id.ts'
-import {
-  booked_reservation,
-  cancellation_under_way,
-  ongoing_loan,
-  overdue_loan,
-  returned_loan,
-} from './_value.ts'
 import * as wlib from '../../wlib.ts'
-import here from './_here.ts'
+import here, { id, value } from './_here_fact.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
 export const a_tool_has_been_lent = here.fact({
   payload: z.strictObject({
-    new_loan: ongoing_loan,
+    new_loan: value.ongoing_loan,
   }),
 })
 
@@ -22,14 +14,14 @@ export const a_tool_has_been_lent = here.fact({
 export const the_member_already_has_the_tool = here.fact({
   payload: z.strictObject({
     tool_id: tool_id,
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })
 
 /** Carries the change of state (DOM-5, V9): the whole new reservation. */
 export const a_tool_has_been_booked = here.fact({
   payload: z.strictObject({
-    new_reservation: booked_reservation,
+    new_reservation: value.booked_reservation,
   }),
 })
 
@@ -38,7 +30,7 @@ export const the_member_already_booked_the_tool = here.fact({
   payload: z.strictObject({
     tool_id: tool_id,
     day: wlib.day,
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })
 
@@ -49,28 +41,28 @@ export const the_member_already_booked_the_tool = here.fact({
  */
 export const a_tool_has_been_returned = here.fact({
   payload: z.strictObject({
-    returned_loan: returned_loan.pick({ id: true, progress: true }),
+    returned_loan: value.returned_loan.pick({ id: true, progress: true }),
   }),
 })
 
 /** Nothing to do (DOM-6): the first return stands. */
 export const the_loan_was_already_returned = here.fact({
   payload: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
 /** The eve of the due date came while the member had the tool: the reminder is on its way. Nothing changes in the state (D95). */
 export const the_member_has_been_reminded_of_the_due_date = here.fact({
   payload: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
 /** Nothing to do (DOM-6, D95): the eve came after the return, and no reminder goes. */
 export const the_loan_was_returned_before_the_reminder = here.fact({
   payload: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
@@ -81,7 +73,7 @@ export const the_loan_was_returned_before_the_reminder = here.fact({
  */
 export const the_due_date_came_before_the_reminder = here.fact({
   payload: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
@@ -92,7 +84,7 @@ export const the_due_date_came_before_the_reminder = here.fact({
  */
 export const a_loan_has_become_overdue = here.fact({
   payload: z.strictObject({
-    overdue_loan: overdue_loan.pick({ id: true, progress: true }),
+    overdue_loan: value.overdue_loan.pick({ id: true, progress: true }),
   }),
 })
 
@@ -102,7 +94,7 @@ export const a_loan_has_become_overdue = here.fact({
  */
 export const the_loan_was_returned_before_it_became_overdue = here.fact({
   payload: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
@@ -113,6 +105,6 @@ export const the_loan_was_returned_before_it_became_overdue = here.fact({
  */
 export const the_cancellation_of_the_reservations_of_a_tool_has_begun = here.fact({
   payload: z.strictObject({
-    new_cancellation: cancellation_under_way,
+    new_cancellation: value.cancellation_under_way,
   }),
 })

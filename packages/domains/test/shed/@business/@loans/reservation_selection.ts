@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { member_id } from './_id.ts'
 import * as wlib from '../../wlib.ts'
-import here from './_here.ts'
+import here, { id } from './_here_selection.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).
 
@@ -13,7 +12,7 @@ export const the_reservation_is_booked = here.selection({
 export const the_reservation_is_of_this_member = here.selection({
   subject: 'reservation',
   parameters: z.strictObject({
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })
 

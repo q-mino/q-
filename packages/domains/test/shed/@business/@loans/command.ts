@@ -1,54 +1,14 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
-import {
-  a_tool_has_been_booked,
-  a_tool_has_been_returned,
-  the_loan_was_already_returned,
-  a_tool_has_been_lent,
-  the_member_already_booked_the_tool,
-  the_member_already_has_the_tool,
-  the_member_has_been_reminded_of_the_due_date,
-  the_loan_was_returned_before_the_reminder,
-  the_due_date_came_before_the_reminder,
-  a_loan_has_become_overdue,
-  the_loan_was_returned_before_it_became_overdue,
-  the_cancellation_of_the_reservations_of_a_tool_has_begun,
-} from './_fact.ts'
-import {
-  send_the_due_date_reminder,
-  wait_until_the_due_date,
-  wait_until_the_eve_of_the_due_date,
-} from './_effect.ts'
-import {
-  a_loan_has_this_id,
-  a_tool_has_this_id,
-  the_tool_is_in_service,
-  a_cancellation_of_the_reservations_of_the_tool_has_begun,
-  a_reservation_has_this_id,
-  the_due_date_of_the_loan_is_still_ahead,
-  the_loan_is_ongoing,
-  the_loan_is_returned,
-  the_tool_is_booked_for_the_day,
-  the_tool_is_booked_for_the_day_by_this_member,
-  the_tool_is_on_loan,
-  the_tool_is_on_loan_to_this_member,
-} from './_predicate.ts'
-import {
-  the_day_is_within_the_booking_window,
-  the_due_date_of_a_loan_started_on,
-  the_eve_of,
-} from './_dsl.ts'
-import { loan_id, member_id, reservation_id } from './_id.ts'
-import { return_condition } from './_value.ts'
-import here from './_here.ts'
+import here, { dsl, effect, fact, id, predicate, value } from './_here_command.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
 export const the_tool_can_be_lent = here.AND({
-  a_loan_has_not_the_requested_id: here.NOT(a_loan_has_this_id),
-  a_tool_has_the_requested_id: a_tool_has_this_id,
-  the_requested_tool_is_in_service: the_tool_is_in_service,
-  the_requested_tool_is_not_on_loan: here.NOT(the_tool_is_on_loan),
+  a_loan_has_not_the_requested_id: here.NOT(predicate.a_loan_has_this_id),
+  a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
+  the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
+  the_requested_tool_is_not_on_loan: here.NOT(predicate.the_tool_is_on_loan),
 })
 
 /**
@@ -61,23 +21,26 @@ export const the_tool_can_be_lent = here.AND({
  */
 export const borrow_a_tool = here.command({
   input: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
     tool_id: tool_id,
-    member_id: member_id,
+    member_id: id.member_id,
   }),
   outcomes: {
     the_tool_is_available_so_it_is_lent: [
       the_tool_can_be_lent,
-      a_tool_has_been_lent,
-      { wait_until_the_eve_of_the_due_date, wait_until_the_due_date },
+      fact.a_tool_has_been_lent,
+      {
+        wait_until_the_eve_of_the_due_date: effect.wait_until_the_eve_of_the_due_date,
+        wait_until_the_due_date: effect.wait_until_the_due_date,
+      },
     ],
     the_member_already_has_the_tool_so_nothing_changes: [
-      the_tool_is_on_loan_to_this_member,
-      the_member_already_has_the_tool,
+      predicate.the_tool_is_on_loan_to_this_member,
+      fact.the_member_already_has_the_tool,
     ],
   },
   creator: (context) => (input) => {
-    const due_date = the_due_date_of_a_loan_started_on(context.now)
+    const due_date = dsl.the_due_date_of_a_loan_started_on(context.now)
     return {
       the_tool_is_available_so_it_is_lent: [
         {
@@ -105,7 +68,7 @@ export const borrow_a_tool = here.command({
               member_id: input.member_id,
               due_date: due_date,
             },
-            not_before: the_eve_of(due_date),
+            not_before: dsl.the_eve_of(due_date),
           },
           wait_until_the_due_date: {
             id: input.loan_id,
@@ -124,10 +87,10 @@ export const borrow_a_tool = here.command({
 
 /** The tool can be booked for the day. */
 export const the_tool_can_be_booked = here.AND({
-  a_reservation_has_not_the_requested_id: here.NOT(a_reservation_has_this_id),
-  a_tool_has_the_requested_id: a_tool_has_this_id,
-  the_requested_tool_is_in_service: the_tool_is_in_service,
-  the_requested_tool_is_not_booked_that_day: here.NOT(the_tool_is_booked_for_the_day),
+  a_reservation_has_not_the_requested_id: here.NOT(predicate.a_reservation_has_this_id),
+  a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
+  the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
+  the_requested_tool_is_not_booked_that_day: here.NOT(predicate.the_tool_is_booked_for_the_day),
 })
 
 export const reserve_a_tool = here.command({
@@ -135,19 +98,22 @@ export const reserve_a_tool = here.command({
   input: (context) =>
     z
       .strictObject({
-        reservation_id: reservation_id,
+        reservation_id: id.reservation_id,
         tool_id: tool_id,
-        member_id: member_id,
+        member_id: id.member_id,
         day: wlib.day,
       })
-      .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
+      .refine((input) => dsl.the_day_is_within_the_booking_window(input.day, context.now), {
         path: ['day'],
       }),
   outcomes: {
-    the_tool_is_free_that_day_so_it_is_booked: [the_tool_can_be_booked, a_tool_has_been_booked],
+    the_tool_is_free_that_day_so_it_is_booked: [
+      the_tool_can_be_booked,
+      fact.a_tool_has_been_booked,
+    ],
     the_member_already_booked_the_tool_so_nothing_changes: [
-      the_tool_is_booked_for_the_day_by_this_member,
-      the_member_already_booked_the_tool,
+      predicate.the_tool_is_booked_for_the_day_by_this_member,
+      fact.the_member_already_booked_the_tool,
     ],
   },
   creator: (context) => (input) => ({
@@ -178,26 +144,26 @@ export const reserve_a_tool = here.command({
 
 /** The requested loan exists and is ongoing. */
 export const the_loan_can_be_returned = here.AND({
-  a_loan_has_the_requested_id: a_loan_has_this_id,
-  the_requested_loan_is_ongoing: the_loan_is_ongoing,
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
 })
 
 /** The requested loan exists and is already returned. */
 export const the_loan_is_already_returned = here.AND({
-  a_loan_has_the_requested_id: a_loan_has_this_id,
-  the_requested_loan_is_returned: the_loan_is_returned,
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_returned: predicate.the_loan_is_returned,
 })
 
 export const return_a_tool = here.command({
   input: z.strictObject({
-    loan_id: loan_id,
-    condition: return_condition,
+    loan_id: id.loan_id,
+    condition: value.return_condition,
   }),
   outcomes: {
-    the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, a_tool_has_been_returned],
+    the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, fact.a_tool_has_been_returned],
     the_loan_was_already_returned_so_nothing_changes: [
       the_loan_is_already_returned,
-      the_loan_was_already_returned,
+      fact.the_loan_was_already_returned,
     ],
   },
   creator: (context) => (input) => ({
@@ -229,22 +195,22 @@ export const return_a_tool = here.command({
 
 /** The requested loan exists and the member still has the tool. */
 export const the_member_still_has_the_tool = here.AND({
-  a_loan_has_the_requested_id: a_loan_has_this_id,
-  the_requested_loan_is_ongoing: the_loan_is_ongoing,
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
 })
 
 /** The member still has the tool and its due date is still ahead: the eve is not late. */
 export const the_member_can_still_be_reminded = here.AND({
-  a_loan_has_the_requested_id: a_loan_has_this_id,
-  the_requested_loan_is_ongoing: the_loan_is_ongoing,
-  its_due_date_is_still_ahead: the_due_date_of_the_loan_is_still_ahead,
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
 })
 
 /** The member still has the tool, but its due date has passed: the eve came late. */
 export const the_due_date_of_the_ongoing_loan_has_passed = here.AND({
-  a_loan_has_the_requested_id: a_loan_has_this_id,
-  the_requested_loan_is_ongoing: the_loan_is_ongoing,
-  its_due_date_has_passed: here.NOT(the_due_date_of_the_loan_is_still_ahead),
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_has_passed: here.NOT(predicate.the_due_date_of_the_loan_is_still_ahead),
 })
 
 /**
@@ -259,24 +225,24 @@ export const the_due_date_of_the_ongoing_loan_has_passed = here.AND({
  */
 export const remind_the_member_of_the_due_date = here.command({
   input: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
     tool_id: tool_id,
-    member_id: member_id,
+    member_id: id.member_id,
     due_date: wlib.date_time_string,
   }),
   outcomes: {
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
       the_member_can_still_be_reminded,
-      the_member_has_been_reminded_of_the_due_date,
-      { send_the_due_date_reminder },
+      fact.the_member_has_been_reminded_of_the_due_date,
+      { send_the_due_date_reminder: effect.send_the_due_date_reminder },
     ],
     the_loan_was_returned_so_nothing_changes: [
       the_loan_is_already_returned,
-      the_loan_was_returned_before_the_reminder,
+      fact.the_loan_was_returned_before_the_reminder,
     ],
     the_due_date_has_passed_so_nothing_changes: [
       the_due_date_of_the_ongoing_loan_has_passed,
-      the_due_date_came_before_the_reminder,
+      fact.the_due_date_came_before_the_reminder,
     ],
   },
   creator: (context) => (input) => ({
@@ -326,16 +292,16 @@ export const remind_the_member_of_the_due_date = here.command({
  */
 export const declare_the_loan_overdue = here.command({
   input: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
   outcomes: {
     the_member_still_has_the_tool_so_the_loan_is_overdue: [
       the_member_still_has_the_tool,
-      a_loan_has_become_overdue,
+      fact.a_loan_has_become_overdue,
     ],
     the_loan_was_returned_so_nothing_changes: [
       the_loan_is_already_returned,
-      the_loan_was_returned_before_it_became_overdue,
+      fact.the_loan_was_returned_before_it_became_overdue,
     ],
   },
   creator: () => (input) => ({
@@ -363,7 +329,7 @@ export const declare_the_loan_overdue = here.command({
 
 /** The desk has not yet begun cancelling the reservations of the tool. */
 export const no_cancellation_of_the_reservations_of_the_tool_has_begun = here.NOT(
-  a_cancellation_of_the_reservations_of_the_tool_has_begun,
+  predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
 )
 
 /**
@@ -382,7 +348,7 @@ export const cancel_the_reservations_of_a_tool = here.command({
   outcomes: {
     no_cancellation_has_begun_so_one_begins: [
       no_cancellation_of_the_reservations_of_the_tool_has_begun,
-      the_cancellation_of_the_reservations_of_a_tool_has_begun,
+      fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
     ],
   },
   creator: (context) => (input) => ({

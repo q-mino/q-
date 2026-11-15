@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { member_id } from './_id.ts'
-import here from './_here.ts'
+import here, { id } from './_here_selection.ts'
 
 // The selections over a loan, the subject of this file (DOM-18): predicates
 // over the loan a query looks at, which they do not name; their parameters are
@@ -15,6 +14,6 @@ export const the_loan_is_ongoing = here.selection({
 export const the_loan_is_of_this_member = here.selection({
   subject: 'loan',
   parameters: z.strictObject({
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })

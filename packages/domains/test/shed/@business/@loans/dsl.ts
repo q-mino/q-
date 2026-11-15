@@ -2,7 +2,7 @@
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
 import { date_time_string, day } from '../../wlib.ts'
-import type { loan, loan_term, returned_loan } from './_value.ts'
+import { value } from './_here_dsl.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30
@@ -33,23 +33,23 @@ export const the_day_is_within_the_booking_window = (day: string, now: date_time
     )
 
 /** A loan returned after its due date. */
-export const the_loan_was_returned_late = (the_loan: returned_loan): boolean =>
+export const the_loan_was_returned_late = (the_loan: value.returned_loan): boolean =>
   the_loan.progress.return_date > the_loan.due_date
 
 /** The member has the tool: the loan is ongoing, its term running or overdue. */
-export const the_loan_is_ongoing = (the_loan: loan | undefined): boolean =>
+export const the_loan_is_ongoing = (the_loan: value.loan | undefined): boolean =>
   the_loan?.progress.stage === 'ongoing'
 
 /** The tool is back. */
-export const the_loan_is_returned = (the_loan: loan | undefined): boolean =>
+export const the_loan_is_returned = (the_loan: value.loan | undefined): boolean =>
   the_loan?.progress.stage === 'returned'
 
 /** The due date on the loan's card is still ahead at an instant; a loan that does not exist has none. */
 export const the_due_date_of_the_loan_is_still_ahead =
-  (the_loan: loan | undefined) =>
+  (the_loan: value.loan | undefined) =>
   (now: date_time_string): boolean =>
     the_loan !== undefined && now < the_loan.due_date
 
 /** Whether the due date of an ongoing loan has passed; a returned loan has no term. */
-export const the_term_of_the_loan = (the_loan: loan): loan_term | undefined =>
+export const the_term_of_the_loan = (the_loan: value.loan): value.loan_term | undefined =>
   the_loan.progress.stage === 'ongoing' ? the_loan.progress.term : undefined

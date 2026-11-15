@@ -1,8 +1,4 @@
-import * as command from './_command.ts'
-import * as query from './_query.ts'
-import * as effect from './_effect.ts'
-import * as fact from './_fact.ts'
-import here from './_here.ts'
+import here, { command, effect, fact, query } from './_here_usecase.ts'
 
 // The use cases of `loans`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the loans and the reservations through them.

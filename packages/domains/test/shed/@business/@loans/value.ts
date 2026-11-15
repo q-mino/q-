@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import { date_time_string, day } from '../../wlib.ts'
-import { loan_id, member_id, reservation_id } from './_id.ts'
+import { id } from './_here_value.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
 // own view of the tools (GR-3, V11), and imports of `tools` only its
@@ -44,9 +44,9 @@ export const loan_progress = z.discriminatedUnion('stage', [loan_ongoing, loan_r
  * `progress`, a discriminated union of stages with only their own fields.
  */
 export const loan = z.strictObject({
-  id: loan_id,
+  id: id.loan_id,
   tool_id: tool_id,
-  member_id: member_id,
+  member_id: id.member_id,
   start_date: date_time_string,
   due_date: date_time_string,
   progress: loan_progress,
@@ -82,9 +82,9 @@ export const reservation_progress = z.discriminatedUnion('stage', [reservation_b
 
 /** A reservation: a tool held for a member on a day. By nesting, as a loan. */
 export const reservation = z.strictObject({
-  id: reservation_id,
+  id: id.reservation_id,
   tool_id: tool_id,
-  member_id: member_id,
+  member_id: id.member_id,
   day: day,
   booking_date: date_time_string,
   progress: reservation_progress,

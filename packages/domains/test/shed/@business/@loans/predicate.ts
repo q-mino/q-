@@ -1,8 +1,7 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
-import { loan_id, member_id, reservation_id } from './_id.ts'
 import * as wlib from '../../wlib.ts'
-import here from './_here.ts'
+import here, { id } from './_here_predicate.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the
 // tools too (GR-3, V11): the state adapter reads them from `tools`.
@@ -23,19 +22,19 @@ export const the_tool_is_in_service = here.predicate({
 
 export const a_loan_has_this_id = here.predicate({
   parameters: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
 export const the_loan_is_ongoing = here.predicate({
   parameters: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
 export const the_loan_is_returned = here.predicate({
   parameters: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
   }),
 })
 
@@ -46,7 +45,7 @@ export const the_loan_is_returned = here.predicate({
  */
 export const the_due_date_of_the_loan_is_still_ahead = here.predicate({
   parameters: z.strictObject({
-    loan_id: loan_id,
+    loan_id: id.loan_id,
     now: wlib.date_time_string,
   }),
 })
@@ -62,13 +61,13 @@ export const the_tool_is_on_loan = here.predicate({
 export const the_tool_is_on_loan_to_this_member = here.predicate({
   parameters: z.strictObject({
     tool_id: tool_id,
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })
 
 export const a_reservation_has_this_id = here.predicate({
   parameters: z.strictObject({
-    reservation_id: reservation_id,
+    reservation_id: id.reservation_id,
   }),
 })
 
@@ -85,7 +84,7 @@ export const the_tool_is_booked_for_the_day_by_this_member = here.predicate({
   parameters: z.strictObject({
     tool_id: tool_id,
     day: wlib.day,
-    member_id: member_id,
+    member_id: id.member_id,
   }),
 })
 
