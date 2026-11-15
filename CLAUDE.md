@@ -17,7 +17,7 @@ q- (read _Cumino_) is a network of messages between real people, with no center.
 
 - Strict everywhere. Never loosen a `tsconfig`, never use `any`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable` or a cast to silence an error: fix the type.
 - `domains` compiles without DOM and without Node: no `fetch`, `crypto`, `window`, `indexedDB`, `console`. Effects are declared as data and executed by adapters.
-- Imports follow the arrows in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs). A folder is imported only through its `index.ts`; a domain's module folder (`@selection/`) through its generated `_index.ts`; an authored file `@x.ts` only through its generated twin `_x.ts` (DOM-25). Changing an arrow is an architecture decision, not a fix.
+- Imports follow the arrows in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs). A folder is imported only through its `index.ts`. In the tree of the domains (`@` folders) an authored file imports only the generated here of its kind (`_here_command.ts`): the builders, its folder's components and the doors of the folders it sees, by the map (`sight.ts`) (DOM-25). Changing an arrow is an architecture decision, not a fix.
 - `domains/src/library/` imports no domain and contains no word of q-.
 - Functional style: pure functions and immutable data; algebraic data types (discriminated unions) wherever a value has cases, states or outcomes.
 
