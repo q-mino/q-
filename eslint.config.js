@@ -40,6 +40,7 @@ export default defineConfig(
     // DOM-25: a branch's condition and a query's selection are named, never composed inline;
     // a file imports one here. The tree: the folders Shed's map names (sight.ts).
     files: Object.keys(sight).map((top) => `packages/domains/test/shed/${top}/**/*.ts`),
+    ignores: ['packages/domains/test/shed/**/@*/**'],
     rules: {
       'no-restricted-syntax': [
         'error',

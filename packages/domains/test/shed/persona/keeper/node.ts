@@ -1,4 +1,4 @@
-import { node, accounts, persona } from './_here_node.ts'
+import { node, accounts, _persona } from './_here_node.ts'
 
 // The node of `keeper` (PER-6): who wears the hat has an account with the hat
 // `keeper` (PER-7). It gives nothing more: the keeper's leaves read no value
@@ -9,7 +9,7 @@ export const keeper = node({
   looks_up: {
     the_hats_of_the_caller: {
       lookup: accounts.lookup.the_hats_of_an_account,
-      of: persona.dsl.the_account_of_the_caller,
+      of: _persona.dsl.the_account_of_the_caller,
       /** No account, or none known: "not found", no reason (D87.5, PER-14). */
       when_not_known: 'not_found',
     },
