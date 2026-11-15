@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
 import {
   a_tool_has_been_added,
   a_tool_has_been_retired,
@@ -8,10 +7,10 @@ import {
 import { a_tool_has_this_id, the_tool_is_in_service, the_tool_is_retired } from './_predicate.ts'
 import { tool_id } from './_id.ts'
 import { category, notes, retire_reason, tool_name } from './_value.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 
 /** No tool of the catalogue has the requested id. */
-export const the_tool_is_new = wlib.NOT(a_tool_has_this_id)
+export const the_tool_is_new = here.NOT(a_tool_has_this_id)
 
 export const add_a_tool = here.command({
   input: z.strictObject({
@@ -32,13 +31,13 @@ export const add_a_tool = here.command({
 })
 
 /** The requested tool is in the catalogue and in service. */
-export const the_tool_can_be_retired = wlib.AND({
+export const the_tool_can_be_retired = here.AND({
   a_tool_has_the_requested_id: a_tool_has_this_id,
   the_requested_tool_is_in_service: the_tool_is_in_service,
 })
 
 /** The requested tool is in the catalogue and already retired. */
-export const the_tool_is_already_retired = wlib.AND({
+export const the_tool_is_already_retired = here.AND({
   a_tool_has_the_requested_id: a_tool_has_this_id,
   the_requested_tool_is_retired: the_tool_is_retired,
 })

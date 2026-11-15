@@ -1,11 +1,10 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
 import * as tool_selection from './_tool_selection.ts'
 import { catalogue_entry, category } from './_value.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 
 /** The tool is in service and in a chosen category. */
-export const the_tool_is_shown_in_the_catalogue = wlib.AND({
+export const the_tool_is_shown_in_the_catalogue = here.AND({
   the_tool_is_in_service: tool_selection.the_tool_is_in_service,
   the_tool_is_in_a_chosen_category: tool_selection.the_tool_is_in_one_of_these_categories,
 })

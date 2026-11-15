@@ -1,14 +1,13 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
 import { today } from './_dsl.ts'
 import * as loan_selection from './_loan_selection.ts'
 import * as reservation_selection from './_reservation_selection.ts'
 import { member_id } from './_id.ts'
 import { ongoing_loan_entry, reservation_entry } from './_value.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 
 /** The loan is ongoing and the member has the tool. */
-export const the_loan_is_ongoing_for_the_member = wlib.AND({
+export const the_loan_is_ongoing_for_the_member = here.AND({
   the_loan_is_ongoing: loan_selection.the_loan_is_ongoing,
   the_loan_is_of_the_member: loan_selection.the_loan_is_of_this_member,
 })
@@ -29,7 +28,7 @@ export const the_ongoing_loans_of_a_member = here.query({
 })
 
 /** The reservation is in force, the member's, for today or a later day. */
-export const the_reservation_is_ahead_for_the_member = wlib.AND({
+export const the_reservation_is_ahead_for_the_member = here.AND({
   the_reservation_is_booked: reservation_selection.the_reservation_is_booked,
   the_reservation_is_of_the_member: reservation_selection.the_reservation_is_of_this_member,
   the_day_has_not_passed: reservation_selection.the_reservation_is_from_this_day_on,

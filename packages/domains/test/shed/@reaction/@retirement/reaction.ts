@@ -1,6 +1,6 @@
 import * as tools from '../../@business/@tools/_index.ts'
 import * as loans from '../../@business/@loans/_index.ts'
-import * as wlib from '../../wlib.ts'
+import here from './_here.ts'
 
 // The procedure of a tool's retirement: what the offices of the shed do when
 // the catalogue retires a tool (GR-9, DOM-16). A standing order speaks the
@@ -12,7 +12,7 @@ import * as wlib from '../../wlib.ts'
  * Gianni's Sunday are cancelled, one by one, by the work sheet it opens in
  * `loans` (D97, D112).
  */
-export const the_reservations_of_the_tool_are_cancelled = wlib.reaction({
+export const the_reservations_of_the_tool_are_cancelled = here.reaction({
   when: tools.a_tool_has_been_retired,
   invokes: loans.cancel_the_reservations_of_a_tool,
   translation: (fact) => ({ tool_id: fact.retired_tool.id }),

@@ -3,7 +3,7 @@ import * as wlib from '../../wlib.ts'
 import * as loans from '../../@business/@loans/_index.ts'
 import * as tools from '../../@business/@tools/_index.ts'
 import { the_card_is_valid_on } from './_dsl.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 import { loan_term, tool_name } from './_value.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from

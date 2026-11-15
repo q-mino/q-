@@ -5,4 +5,6 @@
 
 import * as wlib from '../../wlib.ts'
 
-export const here = wlib.builders_at<wlib.RootContext>()
+const here = wlib.builders_at<wlib.RootContext>()
+
+export default here

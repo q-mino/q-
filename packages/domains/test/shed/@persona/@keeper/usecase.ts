@@ -2,7 +2,7 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import * as tools from '../../@business/@tools/_index.ts'
 import { notes, retirement_reason } from './_value.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
 // shed. Each invokes a use case of a business domain and speaks to the keeper

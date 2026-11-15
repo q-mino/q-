@@ -5,4 +5,6 @@
 
 import * as wlib from '../wlib.ts'
 
-export const above = wlib.builders_at<wlib.RootContext>()
+const above = wlib.builders_at<wlib.RootContext>()
+
+export default above

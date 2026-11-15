@@ -41,14 +41,14 @@ import {
 } from './_dsl.ts'
 import { loan_id, member_id, reservation_id } from './_id.ts'
 import { return_condition } from './_value.ts'
-import { here } from './_here.ts'
+import here from './_here.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
-export const the_tool_can_be_lent = wlib.AND({
-  a_loan_has_not_the_requested_id: wlib.NOT(a_loan_has_this_id),
+export const the_tool_can_be_lent = here.AND({
+  a_loan_has_not_the_requested_id: here.NOT(a_loan_has_this_id),
   a_tool_has_the_requested_id: a_tool_has_this_id,
   the_requested_tool_is_in_service: the_tool_is_in_service,
-  the_requested_tool_is_not_on_loan: wlib.NOT(the_tool_is_on_loan),
+  the_requested_tool_is_not_on_loan: here.NOT(the_tool_is_on_loan),
 })
 
 /**
@@ -123,11 +123,11 @@ export const borrow_a_tool = here.command({
 })
 
 /** The tool can be booked for the day. */
-export const the_tool_can_be_booked = wlib.AND({
-  a_reservation_has_not_the_requested_id: wlib.NOT(a_reservation_has_this_id),
+export const the_tool_can_be_booked = here.AND({
+  a_reservation_has_not_the_requested_id: here.NOT(a_reservation_has_this_id),
   a_tool_has_the_requested_id: a_tool_has_this_id,
   the_requested_tool_is_in_service: the_tool_is_in_service,
-  the_requested_tool_is_not_booked_that_day: wlib.NOT(the_tool_is_booked_for_the_day),
+  the_requested_tool_is_not_booked_that_day: here.NOT(the_tool_is_booked_for_the_day),
 })
 
 export const reserve_a_tool = here.command({
@@ -177,13 +177,13 @@ export const reserve_a_tool = here.command({
 })
 
 /** The requested loan exists and is ongoing. */
-export const the_loan_can_be_returned = wlib.AND({
+export const the_loan_can_be_returned = here.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
   the_requested_loan_is_ongoing: the_loan_is_ongoing,
 })
 
 /** The requested loan exists and is already returned. */
-export const the_loan_is_already_returned = wlib.AND({
+export const the_loan_is_already_returned = here.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
   the_requested_loan_is_returned: the_loan_is_returned,
 })
@@ -228,23 +228,23 @@ export const return_a_tool = here.command({
 })
 
 /** The requested loan exists and the member still has the tool. */
-export const the_member_still_has_the_tool = wlib.AND({
+export const the_member_still_has_the_tool = here.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
   the_requested_loan_is_ongoing: the_loan_is_ongoing,
 })
 
 /** The member still has the tool and its due date is still ahead: the eve is not late. */
-export const the_member_can_still_be_reminded = wlib.AND({
+export const the_member_can_still_be_reminded = here.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
   the_requested_loan_is_ongoing: the_loan_is_ongoing,
   its_due_date_is_still_ahead: the_due_date_of_the_loan_is_still_ahead,
 })
 
 /** The member still has the tool, but its due date has passed: the eve came late. */
-export const the_due_date_of_the_ongoing_loan_has_passed = wlib.AND({
+export const the_due_date_of_the_ongoing_loan_has_passed = here.AND({
   a_loan_has_the_requested_id: a_loan_has_this_id,
   the_requested_loan_is_ongoing: the_loan_is_ongoing,
-  its_due_date_has_passed: wlib.NOT(the_due_date_of_the_loan_is_still_ahead),
+  its_due_date_has_passed: here.NOT(the_due_date_of_the_loan_is_still_ahead),
 })
 
 /**
@@ -362,7 +362,7 @@ export const declare_the_loan_overdue = here.command({
 })
 
 /** The desk has not yet begun cancelling the reservations of the tool. */
-export const no_cancellation_of_the_reservations_of_the_tool_has_begun = wlib.NOT(
+export const no_cancellation_of_the_reservations_of_the_tool_has_begun = here.NOT(
   a_cancellation_of_the_reservations_of_the_tool_has_begun,
 )
 

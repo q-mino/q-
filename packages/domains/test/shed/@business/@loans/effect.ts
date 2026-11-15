@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import { loan_id, member_id } from './_id.ts'
 import * as wlib from '../../wlib.ts'
+import here from './_here.ts'
 
 // The effects of `loans` (DOM-13): what it asks of the world, queued by a
 // branch with its fact, never run by the domain (D12). A creator does not
@@ -15,7 +16,7 @@ import * as wlib from '../../wlib.ts'
  * reminds the member only if they still have the tool (D68.3): Marta brought
  * the drill back early, and no reminder reaches her.
  */
-export const wait_until_the_eve_of_the_due_date = wlib.effect({
+export const wait_until_the_eve_of_the_due_date = here.effect({
   payload: z.strictObject({
     loan_id: loan_id,
     tool_id: tool_id,
@@ -25,7 +26,7 @@ export const wait_until_the_eve_of_the_due_date = wlib.effect({
 })
 
 /** Marta reads on her phone "bring the drill back tomorrow". No return: nothing comes back to `loans`. */
-export const send_the_due_date_reminder = wlib.effect({
+export const send_the_due_date_reminder = here.effect({
   payload: z.strictObject({
     loan_id: loan_id,
     tool_id: tool_id,
@@ -40,7 +41,7 @@ export const send_the_due_date_reminder = wlib.effect({
  * if the member still has the tool (D68.3): time is not a fact, so a loan
  * becomes overdue only through a command and its fact (D92.4).
  */
-export const wait_until_the_due_date = wlib.effect({
+export const wait_until_the_due_date = here.effect({
   payload: z.strictObject({
     loan_id: loan_id,
   }),

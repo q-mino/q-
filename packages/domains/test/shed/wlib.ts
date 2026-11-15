@@ -71,20 +71,22 @@ export type Path<kind extends string> = `${string}/${kind}/${string}`
 // (DOM-21); the rest (the functions of `dsl`, helpers) the library ignores. The
 // generator imports the authored files, which are pure, and finds the
 // components by their builder: the files are named and grouped as the author
-// likes. Each returns what it is given, for the generator to brand.
+// likes. Each returns what it is given, for the generator to brand. None is
+// exported: the authored files reach them through `Builders`, the default
+// export of the `_here.ts` of their folder (`here.fact`).
 
 /** An identity (DOM-24): the format of the values that name an instance. */
-export declare function id<const format extends z.ZodType>(id: { readonly format: format }): format
+export type IdBuilder = <const format extends z.ZodType>(id: { readonly format: format }) => format
 
 /** A fact (DOM-5): its payload, at least every value its change writes. */
-export declare function fact<const payload extends z.ZodObject>(fact: {
+export type FactBuilder = <const payload extends z.ZodObject>(fact: {
   readonly payload: payload
-}): payload
+}) => payload
 
 /** A predicate, a word of the conditions (DOM-5): the schema of its parameters. */
-export declare function predicate<const parameters extends z.ZodObject>(predicate: {
+export type PredicateBuilder = <const parameters extends z.ZodObject>(predicate: {
   readonly parameters: parameters
-}): parameters
+}) => parameters
 
 /**
  * A selection predicate (DOM-18): a predicate over the candidate of a query,
@@ -92,19 +94,19 @@ export declare function predicate<const parameters extends z.ZodObject>(predicat
  * which the generator writes after the kind
  * (`business/loans/selection/loan/the_loan_is_ongoing`).
  */
-export declare function selection<const parameters extends z.ZodObject>(selection: {
+export type SelectionBuilder = <const parameters extends z.ZodObject>(selection: {
   readonly subject: string
   readonly parameters: parameters
-}): parameters
+}) => parameters
 
 /**
  * An effect (DOM-13, D108.1): what the domain asks of the world, named by a
  * business phrase, and its payload, what the delivery needs. A branch queues
  * it with its fact; the domain never runs it (D12).
  */
-export declare function effect<const payload extends z.ZodObject>(effect: {
+export type EffectBuilder = <const payload extends z.ZodObject>(effect: {
   readonly payload: payload
-}): payload
+}) => payload
 
 /**
  * A component of a domain that the library meets: a fact, a predicate, a
@@ -205,19 +207,19 @@ export type OneKind<components extends Components> =
  * short-circuit; a rejection names every failed component, once. Its leaves
  * are of one kind (`OneKind`). D47.1, D49, D17
  */
-export declare function AND<const components extends Components>(
+export type AndBuilder = <const components extends Components>(
   components: components & OneKind<components>,
-): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
+) => Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
 /** At least one component holds. Its leaves are of one kind (`OneKind`). */
-export declare function OR<const components extends Components>(
+export type OrBuilder = <const components extends Components>(
   components: components & OneKind<components>,
-): Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
+) => Composed<ComponentsParameters<components>, components, Leaves<components[keyof components]>>
 
 /** The condition does not hold: its parameters are the condition's. */
-export declare function NOT<const condition extends Condition>(
+export type NotBuilder = <const condition extends Condition>(
   condition: condition,
-): Composed<condition, condition, Leaves<condition>>
+) => Composed<condition, condition, Leaves<condition>>
 
 /**
  * The outbox entries of a branch, by name (DOM-5, DOM-13): each an effect,
@@ -954,13 +956,13 @@ export interface CommandUseCase<command extends Commands[string], returns_from =
  * each other (A, 13 Nov 2026 (3)). An effect has one return at most, which
  * the generator checks.
  */
-export declare function command_use_case<
+export type CommandUseCaseBuilder = <
   const command extends Commands[string],
   const returns_from extends Component | undefined = undefined,
 >(use_case: {
   readonly command: command
   readonly returns_from?: returns_from
-}): CommandUseCase<command, returns_from>
+}) => CommandUseCase<command, returns_from>
 
 // ---------------------------------------------------------------------------
 // A use case over another (DOM-2, D105): it runs no command of its own, it
@@ -1239,21 +1241,39 @@ export type ReadUseCaseOverBuilder<context, closes> = <
 // comes from where it sits, not from its annotation.
 
 /**
- * The builders whose creators read the context, bound to the context of a
- * point of the tree and to how the nodes above it may close a request
- * (`closes`), which the leaves built there carry. The generator writes in
- * each folder of the tree `_here.ts`, with the context the nodes above give
- * there (`RootContext` with none) and their `closes` (`never` with none),
- * and the authored files of the folder build with it
- * (`here.command`). A creator gets the context with no annotation; one that
- * asks for more than the point gives does not compile. A command, and a use
- * case over one, add their operation (`OperationContext`).
+ * Every builder of the components, at a point of the tree: the authored files
+ * build only with them, never with the library directly. The generator writes
+ * in each folder of the tree `_here.ts`, whose default export is these
+ * builders, with the context the nodes above give there (`RootContext` with
+ * none) and their `closes` (`never` with none), and the authored files of the
+ * folder build with it (`here.command`, `here.fact`, `here.AND`). One
+ * object for every construct, so that the point of the tree is the one door
+ * to the builders, the place where a builder could be added.
+ *
+ * Those whose creators read the context are bound to the context of the point
+ * and to how the nodes above it may close a request (`closes`), which the
+ * leaves built there carry: a creator gets the context with no annotation;
+ * one that asks for more than the point gives does not compile. A command,
+ * and a use case over one, add their operation (`OperationContext`). The
+ * others are the same at every point.
  */
 export interface Builders<context extends RootContext, closes> {
+  readonly id: IdBuilder
+  readonly fact: FactBuilder
+  readonly predicate: PredicateBuilder
+  readonly selection: SelectionBuilder
+  readonly effect: EffectBuilder
+  readonly AND: AndBuilder
+  readonly OR: OrBuilder
+  readonly NOT: NotBuilder
   readonly command: CommandBuilder<context>
   readonly query: QueryBuilder<context>
+  readonly command_use_case: CommandUseCaseBuilder
+  readonly read_use_case: ReadUseCaseBuilder
   readonly command_use_case_over: CommandUseCaseOverBuilder<context, closes>
   readonly read_use_case_over: ReadUseCaseOverBuilder<context, closes>
+  readonly lookup: LookupBuilder
+  readonly reaction: ReactionBuilder
   readonly node: NodeBuilder<context, closes>
 }
 
@@ -1664,7 +1684,7 @@ type FactsByName<facts extends Component> = {
  * A read use case, declared in one argument whose parts have names (DOM-25):
  * its query and the facts it names, which must be facts.
  */
-export declare function read_use_case<
+export type ReadUseCaseBuilder = <
   const query extends Queries[string],
   const facts extends Component = never,
 >(
@@ -1674,7 +1694,7 @@ export declare function read_use_case<
   } & ([Strays<facts, Path<'fact'>>] extends [never]
     ? unknown
     : { readonly 'a read use case names facts (DOM-17)': PathOf<Strays<facts, Path<'fact'>>> }),
-): ReadUseCase<query, FactsByName<facts>>
+) => ReadUseCase<query, FactsByName<facts>>
 
 /** The read use cases of a domain, by name. */
 export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>>
@@ -1939,7 +1959,7 @@ export interface Reaction<
  * executor. A translation that gives nothing (D88.2), and the parts of a
  * composite fact (D113.3), come with their cases.
  */
-export declare function reaction<
+export type ReactionBuilder = <
   const fact extends Component,
   const use_case extends CommandUseCase<Commands[string]>,
 >(
@@ -1950,7 +1970,7 @@ export declare function reaction<
   } & ([Strays<fact, Path<'fact'>>] extends [never]
     ? unknown
     : { readonly 'a reaction reacts to a fact (DOM-16)': PathOf<Strays<fact, Path<'fact'>>> }),
-): Reaction<fact, use_case>
+) => Reaction<fact, use_case>
 
 // ---------------------------------------------------------------------------
 // Lookups (PER-9): a read of one key, which gives its value or "not known",
@@ -1967,10 +1987,10 @@ export interface Lookup<key extends z.ZodType, value extends z.ZodType> {
 }
 
 /** A lookup, declared in one argument whose parts have names (DOM-25). */
-export declare function lookup<const key extends z.ZodType, const value extends z.ZodType>(lookup: {
+export type LookupBuilder = <const key extends z.ZodType, const value extends z.ZodType>(lookup: {
   readonly key: key
   readonly value: value
-}): Lookup<key, value>
+}) => Lookup<key, value>
 
 /** The answer of a lookup: its value, or "not known"; absence is a value, never `null` (D30). */
 export type Answer<value> =

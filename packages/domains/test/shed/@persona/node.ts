@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { caller } from './_value.ts'
-import { above } from './_above.ts'
+import above from './_above.ts'
 
 // The node of the persona base (PER-6, D78.7), at the top of the tree of every
 // persona: it takes what the entry gives, the `Caller`, the same whatever the

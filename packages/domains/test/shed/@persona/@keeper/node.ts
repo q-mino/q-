@@ -1,6 +1,6 @@
 import * as accounts from '../../@auth/@accounts/_index.ts'
 import { the_account_of_the_caller } from '../_dsl.ts'
-import { above } from './_above.ts'
+import above from './_above.ts'
 
 // The node of `keeper` (PER-6): who wears the hat has an account with the hat
 // `keeper` (PER-7). It gives nothing more: the keeper's leaves read no value

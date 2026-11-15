@@ -6,4 +6,6 @@
 import * as wlib from '../../wlib.ts'
 import type { keeper_closes, keeper_context } from './_node.ts'
 
-export const here = wlib.builders_at<keeper_context, keeper_closes>()
+const here = wlib.builders_at<keeper_context, keeper_closes>()
+
+export default here

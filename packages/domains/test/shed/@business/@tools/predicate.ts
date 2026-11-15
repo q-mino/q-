@@ -1,24 +1,24 @@
 import { z } from 'zod'
 import { tool_id } from './_id.ts'
-import * as wlib from '../../wlib.ts'
+import here from './_here.ts'
 
 // The vocabulary of the conditions. A predicate declares its parameters;
-// its value is in dsl.ts. Composed (wlib.AND, wlib.OR) under business names,
+// its value is in dsl.ts. Composed (here.AND, here.OR) under business names,
 // each component bound by the creator.
 
-export const a_tool_has_this_id = wlib.predicate({
+export const a_tool_has_this_id = here.predicate({
   parameters: z.strictObject({
     tool_id: tool_id,
   }),
 })
 
-export const the_tool_is_in_service = wlib.predicate({
+export const the_tool_is_in_service = here.predicate({
   parameters: z.strictObject({
     tool_id: tool_id,
   }),
 })
 
-export const the_tool_is_retired = wlib.predicate({
+export const the_tool_is_retired = here.predicate({
   parameters: z.strictObject({
     tool_id: tool_id,
   }),

@@ -8,4 +8,6 @@
 import * as wlib from '../../wlib.ts'
 import type { persona_context } from '../_node.ts'
 
-export const here = wlib.builders_at<persona_context>()
+const here = wlib.builders_at<persona_context>()
+
+export default here
