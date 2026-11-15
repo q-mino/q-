@@ -80,7 +80,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | albero di casi d'uso                                | use-case tree                                                                               |                                      |
 | nodo · contesto (di un nodo)                        | node · context                                                                              |                                      |
 | domanda (di auth, di q-)                            | lookup                                                                                      | key-value lookup                     |
-| porta (di una cartella, per un pubblico, di q-)     | door (`_door_persona.ts`)                                                                   |                                      |
+| porta (di una cartella, per un pubblico, di q-)     | door (`_door_persona.ts`; to the folders below, `_door_below.ts`)                           |                                      |
 | qui · punto (di una cartella, di q-)                | here (`_here_command.ts`, one per kind of construct) · point (`_here.ts`)                   |                                      |
 | mappa della vista (di q-)                           | sight (`sight.ts`, `wlib.Sight`): what a folder sees of the others                          |                                      |
 | vincolo di perimetro · vincolo di limite            | perimeter constraint · limit constraint                                                     | 404 instead of 403 · 403 with reason |

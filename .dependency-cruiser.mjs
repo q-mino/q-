@@ -64,12 +64,12 @@ export default {
     {
       name: 'shed-authored-through-its-here',
       comment:
-        "Shed: an authored file of the tree reaches another folder only through its here, which carries the doors sight.ts opens to it (DOM-25, LIB-1); directly, of the tree, only its ancestors' twins, as a file sees its ancestors (D78.7).",
+        "Shed: an authored file of the tree imports of the tree only its here, which carries its folder's components, the doors of its ancestors to the folders below (_door_below.ts) and the doors sight.ts opens to it (DOM-25, LIB-1).",
       severity: 'error',
       from: { path: `${shed}(@[^/]+)/(@[^/]+/|)[^_/][^/]*\\.ts$`, pathNot: tests },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: [`${shed}$1/$2_here_[a-z]+\\.ts$`, `${shed}$1/_[^/]+\\.ts$`],
+        pathNot: `${shed}$1/$2_here_[a-z]+\\.ts$`,
       },
     },
     {
