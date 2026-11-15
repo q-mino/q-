@@ -72,8 +72,8 @@ export type Path<kind extends string> = `${string}/${kind}/${string}`
 // generator imports the authored files, which are pure, and finds the
 // components by their builder: the files are named and grouped as the author
 // likes. Each returns what it is given, for the generator to brand. None is
-// exported: the authored files reach them through `Builders`, the default
-// export of the `_here.ts` of their folder (`here.fact`).
+// exported: the authored files reach them through `Builders`, from the here
+// of their kind (`_here_fact.ts`, `here.fact`).
 
 /** An identity (DOM-24): the format of the values that name an instance. */
 export type IdBuilder = <const format extends z.ZodType>(id: { readonly format: format }) => format
@@ -1243,12 +1243,15 @@ export type ReadUseCaseOverBuilder<context, closes> = <
 /**
  * Every builder of the components, at a point of the tree: the authored files
  * build only with them, never with the library directly. The generator writes
- * in each folder of the tree `_here.ts`, whose default export is these
- * builders, with the context the nodes above give there (`RootContext` with
- * none) and their `closes` (`never` with none), and the authored files of the
- * folder build with it (`here.command`, `here.fact`, `here.AND`). One
- * object for every construct, so that the point of the tree is the one door
- * to the builders, the place where a builder could be added.
+ * in each folder of the tree `_here.ts`, the point, whose default export is
+ * these builders, with the context the nodes above give there (`RootContext`
+ * with none) and their `closes` (`never` with none); and beside it one here
+ * per kind (`_here_command.ts`), whose default export is the builders of its
+ * kind, taken from the point, and whose namespaces are the components of the
+ * folder in the layers below the kind. An authored file imports one here, the
+ * one of the kind it builds (`here.command`, `fact.a_tool_has_been_retired`).
+ * The point is the one door to the builders, the place where a builder could
+ * be added.
  *
  * Those whose creators read the context are bound to the context of the point
  * and to how the nodes above it may close a request (`closes`), which the
@@ -1280,9 +1283,9 @@ export interface Builders<context extends RootContext, closes> {
 /**
  * The builders bound to the context of a point of the tree, for its
  * `_here.ts`. A folder with a node has two points: the point above, whose
- * builders the generator writes in `_above.ts` and which builds the node,
- * and the context the node gives, in `_here.ts`, which builds the rest of
- * the folder; two files, so that no import goes round.
+ * builder of the node the generator writes in `_here_node.ts`, and the
+ * context the node gives, in `_here.ts`, from which the here of the leaves
+ * takes its builders (`_here_usecase.ts`); so that no import goes round.
  */
 export declare function builders_at<context extends RootContext, closes = never>(): Builders<
   context,

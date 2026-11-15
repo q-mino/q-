@@ -103,13 +103,10 @@ module.exports = {
     {
       name: 'authored-only-through-here',
       comment:
-        'An authored file takes the components of its own folder from the here of its kind (_here_command.ts), never from their twins (DOM-25). Probe: `tools` only, until the layers reach every folder.',
+        'An authored file of the tree takes the components of its own folder from the here of its kind (_here_command.ts), never from their twins nor from the point (_here.ts) (DOM-25).',
       severity: 'error',
-      from: { path: `${shed}@business/@tools/[^_/][^/]*\\.ts$` },
-      to: {
-        path: `${shed}@business/@tools/_[^/]+\\.ts$`,
-        pathNot: `${shed}@business/@tools/_here_[a-z]+\\.ts$`,
-      },
+      from: { path: '^(.+/@[^/]+/)[^_/][^/]*\\.ts$', pathNot: tests },
+      to: { path: '^$1_[^/]+\\.ts$', pathNot: '^$1_here_[a-z]+\\.ts$' },
     },
     {
       name: 'no-circular',
