@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { id } from './_here_value.ts'
+import { id } from './_scope_value.ts'
 
 // The values of `accounts`: the hats an account may wear and the values of
 // the hats that have some (PER-1, PER-7). Data, never decisions (PER-9).

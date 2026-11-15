@@ -12,7 +12,7 @@ import {
   predicate,
   value,
   tools,
-} from './_here_command.ts'
+} from './_scope_command.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
 export const the_tool_can_be_lent = AND({

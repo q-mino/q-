@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { predicate, id, tools } from './_here_predicate.ts'
+import { predicate, id, tools } from './_scope_predicate.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the
 // tools too (GR-3, V11): the state adapter reads them from `tools`.

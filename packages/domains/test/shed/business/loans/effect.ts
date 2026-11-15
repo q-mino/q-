@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { effect, id, tools } from './_here_effect.ts'
+import { effect, id, tools } from './_scope_effect.ts'
 
 // The effects of `loans` (DOM-13): what it asks of the world, queued by a
 // branch with its fact, never run by the domain (D12). A creator does not

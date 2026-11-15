@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { query, AND, tool_selection, value } from './_here_query.ts'
+import { query, AND, tool_selection, value } from './_scope_query.ts'
 
 /** The tool is in service and in a chosen category. */
 export const the_tool_is_shown_in_the_catalogue = AND({

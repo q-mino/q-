@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { command, AND, NOT, fact, id, predicate, value } from './_here_command.ts'
+import { command, AND, NOT, fact, id, predicate, value } from './_scope_command.ts'
 
 /** No tool of the catalogue has the requested id. */
 export const the_tool_is_new = NOT(predicate.a_tool_has_this_id)

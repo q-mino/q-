@@ -1,4 +1,4 @@
-import { node, accounts, _persona } from './_here_node.ts'
+import { node, accounts, _persona } from './_scope_node.ts'
 
 // The node of `keeper` (PER-6): who wears the hat has an account with the hat
 // `keeper` (PER-7). It gives nothing more: the keeper's leaves read no value

@@ -2,7 +2,7 @@ import type * as wlib from './wlib.ts'
 
 // What each folder of Shed's tree sees of the others (LIB-1, DOM-25): the
 // architecture's rules, as data for the generator, which writes into the
-// heres of a folder the folders it sees, with those kinds only. What is not
+// scopes of a folder the folders it sees, with those kinds only. What is not
 // listed is not seen. A folder sees its ancestors by the tree's rule, not by
 // this map. Its keys are the top of the tree (DOM-25): a folder they do not
 // name (`adapter/`) is outside it, as a folder prefixed with `@` inside it

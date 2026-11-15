@@ -1,4 +1,4 @@
-import { command_use_case, read_use_case, command, effect, fact, query } from './_here_usecase.ts'
+import { command_use_case, read_use_case, command, effect, fact, query } from './_scope_usecase.ts'
 
 // The use cases of `loans`, its only entry (DOM-2): every persona, reaction
 // and effect executor reaches the loans and the reservations through them.

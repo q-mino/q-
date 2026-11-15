@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { selection, value } from './_here_selection.ts'
+import { selection, value } from './_scope_selection.ts'
 
 // The selections over a tool of the catalogue, the subject of this file
 // (DOM-18): predicates over the tool a query looks at, which they do not name;

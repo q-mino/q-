@@ -1,4 +1,4 @@
-import { lookup, id, value } from './_here_lookup.ts'
+import { lookup, id, value } from './_scope_lookup.ts'
 
 // The lookups of `accounts` (PER-9, D43): one key, one value or "not known".
 // The node of a persona reads the hats to verify its own (PER-7) and the

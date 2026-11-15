@@ -1,5 +1,13 @@
 import { z } from 'zod'
-import { query, AND, dsl, id, loan_selection, reservation_selection, value } from './_here_query.ts'
+import {
+  query,
+  AND,
+  dsl,
+  id,
+  loan_selection,
+  reservation_selection,
+  value,
+} from './_scope_query.ts'
 
 /** The loan is ongoing and the member has the tool. */
 export const the_loan_is_ongoing_for_the_member = AND({

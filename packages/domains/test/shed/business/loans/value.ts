@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { date_time_string, day } from '../../wlib.ts'
-import { id, tools } from './_here_value.ts'
+import { id, tools } from './_scope_value.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
 // own view of the tools (GR-3, V11), and imports of `tools` only its

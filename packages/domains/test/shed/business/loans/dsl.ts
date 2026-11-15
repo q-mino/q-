@@ -2,7 +2,7 @@
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
 import { date_time_string, day } from '../../wlib.ts'
-import { value } from './_here_dsl.ts'
+import { value } from './_scope_dsl.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { id } from './_here_id.ts'
+import { id } from './_scope_id.ts'
 
 // The identities of `accounts`, auth's (D35, D43): who signs in, and the
 // member cards. No business domain knows them (PER-10): a persona reads them

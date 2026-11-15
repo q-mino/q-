@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { command_use_case_over, value, tools } from './_here_usecase.ts'
+import { command_use_case_over, value, tools } from './_scope_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
 // shed. Each invokes a use case of a business domain and speaks to the keeper

@@ -1,7 +1,7 @@
 // The domain's pure functions over its values, added at need: usable by the
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
-import type { value } from './_here_dsl.ts'
+import type { value } from './_scope_dsl.ts'
 
 export const the_tool_is_in_the_catalogue = (
   the_tool: value.tool | undefined,

@@ -72,8 +72,8 @@ export type Path<kind extends string> = `${string}/${kind}/${string}`
 // generator imports the authored files, which are pure, and finds the
 // components by their builder: the files are named and grouped as the author
 // likes. Each returns what it is given, for the generator to brand. None is
-// exported: the authored files reach them through `Builders`, from the here
-// of their kind (`_here_fact.ts`, `fact`).
+// exported: the authored files reach them through `Builders`, from the scope
+// of their kind (`_scope_fact.ts`, `fact`).
 
 /** An identity (DOM-24): the format of the values that name an instance. */
 export type IdBuilder = <const format extends z.ZodType>(id: { readonly format: format }) => format
@@ -1255,15 +1255,16 @@ export type ReadUseCaseOverBuilder<context, closes> = <
 /**
  * Every builder of the components, at a point of the tree: the authored files
  * build only with them, never with the library directly. The generator writes
- * in each folder of the tree `_here.ts`, the point, whose default export is
- * these builders, with the context the nodes above give there (`RootContext`
- * with none) and their `closes` (`never` with none); and beside it one here
- * per kind (`_here_command.ts`), which exports by name the builders of its
- * kind, taken from the point, and as namespaces the components of the folder
- * in the layers below the kind. An authored file imports one here, the one of
- * the kind it builds (`command`, `fact.a_tool_has_been_retired`).
- * The point is the one door to the builders, the place where a builder could
- * be added.
+ * in each folder of the tree `_scope.ts`, the scope of the folder, which
+ * exports by name these builders, with the context the nodes above give at its
+ * point (`RootContext` with none) and their `closes` (`never` with none); and
+ * beside it one scope per kind (`_scope_command.ts`), which exports by name
+ * the builders of its kind, taken from the folder's, and as namespaces the
+ * components of the folder in the layers below the kind, its ancestors and
+ * the doors the map opens to it. An authored file imports one scope, the one
+ * of the kind it builds (`command`, `fact.a_tool_has_been_retired`). The
+ * folder's scope is the one door to the builders, the place where a builder
+ * could be added.
  *
  * Those whose creators read the context are bound to the context of the point
  * and to how the nodes above it may close a request (`closes`), which the
@@ -1313,7 +1314,7 @@ export type ConstructKind =
  * of each folder under another (`business: { business: ['id'] }`). The
  * architecture's rule, given to the generator as data: the library knows
  * folders and kinds of construct, never kinds of domain. The generator writes
- * into the heres of a folder every folder it sees, under its name, with those
+ * into the scopes of a folder every folder it sees, under its name, with those
  * namespaces only (`tools.id.tool_id`); what is not listed is not seen, and
  * does not compile.
  */
@@ -1321,10 +1322,10 @@ export type Sight = Readonly<Record<string, Readonly<Record<string, readonly Con
 
 /**
  * The builders bound to the context of a point of the tree, for its
- * `_here.ts`. A folder with a node has two points: the point above, whose
- * builder of the node the generator writes in `_here_node.ts`, and the
- * context the node gives, in `_here.ts`, from which the here of the leaves
- * takes its builders (`_here_usecase.ts`); so that no import goes round.
+ * `_scope.ts`. A folder with a node has two points: the point above, whose
+ * builder of the node the generator writes in `_scope_node.ts`, and the
+ * context the node gives, in `_scope.ts`, from which the scope of the leaves
+ * takes its builders (`_scope_usecase.ts`); so that no import goes round.
  */
 export declare function builders_at<context extends RootContext, closes = never>(): Builders<
   context,
@@ -1353,12 +1354,12 @@ export interface Node<taken, gives extends RootContext, closes> {
   readonly [$Node]: { readonly takes: taken; readonly gives: gives; readonly closes: closes }
 }
 
-/** The context a node gives, for the `_here.ts` of its folder. */
+/** The context a node gives, for the `_scope.ts` of its folder. */
 export type ContextOf<node> = node extends { [$Node]: { gives: infer context extends RootContext } }
   ? context
   : never
 
-/** How a node and the nodes above it may close a request, for the `_here.ts` of its folder. */
+/** How a node and the nodes above it may close a request, for the `_scope.ts` of its folder. */
 export type ClosesOf<node> = node extends { [$Node]: { closes: infer closes } } ? closes : never
 
 /** What the entry gives the node at the top of a tree: the root's context and what the node takes. */

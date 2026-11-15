@@ -1,4 +1,4 @@
-import { node, accounts, _persona } from './_here_node.ts'
+import { node, accounts, _persona } from './_scope_node.ts'
 
 // The node of `member` (PER-6): who wears the hat has an account with the hat
 // `member` and a member card, and the card goes down the tree whole, for the

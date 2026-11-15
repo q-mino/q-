@@ -1,4 +1,4 @@
-import { reaction, tools, loans } from './_here_reaction.ts'
+import { reaction, tools, loans } from './_scope_reaction.ts'
 
 // The procedure of a tool's retirement: what the offices of the shed do when
 // the catalogue retires a tool (GR-9, DOM-16). A standing order speaks the

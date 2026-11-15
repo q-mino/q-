@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { date_time_string } from '../../wlib.ts'
-import { id } from './_here_value.ts'
+import { id } from './_scope_value.ts'
 
 export const tool_name = z.string().min(1).max(80)
 

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { fact, id, value } from './_here_fact.ts'
+import { fact, id, value } from './_scope_fact.ts'
 
 /**
  * Carries the change of state (DOM-5, V9): every value it writes. The

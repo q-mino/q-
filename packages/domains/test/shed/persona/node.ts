@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { node, value } from './_here_node.ts'
+import { node, value } from './_scope_node.ts'
 
 // The node of the persona base (PER-6, D78.7), at the top of the tree of every
 // persona: it takes what the entry gives, the `Caller`, the same whatever the

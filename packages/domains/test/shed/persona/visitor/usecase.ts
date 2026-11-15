@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { read_use_case_over, value, tools } from './_here_usecase.ts'
+import { read_use_case_over, value, tools } from './_scope_usecase.ts'
 
 // The use cases of `visitor`, the leaves of its tree (PER-6): who browses the
 // shed. Its entries are its own, projected field by field (D45): what it does

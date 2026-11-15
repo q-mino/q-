@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { fact, id, value, tools } from './_here_fact.ts'
+import { fact, id, value, tools } from './_scope_fact.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
 export const a_tool_has_been_lent = fact({

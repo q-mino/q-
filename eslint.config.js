@@ -38,7 +38,7 @@ export default defineConfig(
   },
   {
     // DOM-25: a branch's condition and a query's selection are named, never composed inline;
-    // a file imports one here. The tree: the folders Shed's map names (sight.ts).
+    // a file imports one scope. The tree: the folders Shed's map names (sight.ts).
     files: Object.keys(sight).map((top) => `packages/domains/test/shed/${top}/**/*.ts`),
     ignores: ['packages/domains/test/shed/**/@*/**'],
     rules: {
@@ -58,9 +58,9 @@ export default defineConfig(
         },
         {
           selector:
-            'ImportDeclaration[source.value=/_here(_[a-z]+)?\\.ts$/] ~ ImportDeclaration[source.value=/_here(_[a-z]+)?\\.ts$/]',
+            'ImportDeclaration[source.value=/_scope(_[a-z]+)?\\.ts$/] ~ ImportDeclaration[source.value=/_scope(_[a-z]+)?\\.ts$/]',
           message:
-            'A file imports one here, the one of its kind (DOM-25): it gives the builders of the kind and what lies below it.',
+            'A file imports one scope, the one of its kind (DOM-25): it gives the builders of the kind and what it sees.',
         },
       ],
     },

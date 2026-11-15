@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { selection, id } from './_here_selection.ts'
+import { selection, id } from './_scope_selection.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).
 

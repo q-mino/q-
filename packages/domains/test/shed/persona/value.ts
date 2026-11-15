@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { accounts } from './_here_value.ts'
+import { accounts } from './_scope_value.ts'
 
 // The values of the persona base (D78.7, DOM-25): above every hat, what every
 // persona takes from the entry.

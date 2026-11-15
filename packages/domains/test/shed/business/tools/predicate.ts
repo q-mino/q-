@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { predicate, id } from './_here_predicate.ts'
+import { predicate, id } from './_scope_predicate.ts'
 
 // The vocabulary of the conditions. A predicate declares its parameters;
 // its value is in dsl.ts. Composed (AND, OR) under business names,

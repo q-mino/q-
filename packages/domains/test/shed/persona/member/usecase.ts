@@ -7,7 +7,7 @@ import {
   value,
   tools,
   loans,
-} from './_here_usecase.ts'
+} from './_scope_usecase.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found

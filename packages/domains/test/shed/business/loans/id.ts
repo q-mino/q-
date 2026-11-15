@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { id } from './_here_id.ts'
+import { id } from './_scope_id.ts'
 
 // The identities of `loans`: the values that name an instance (DOM-24). Their
 // shape only: the generator brands them with their path in `_id.ts`, where
