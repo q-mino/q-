@@ -18,30 +18,27 @@ const arrows = {
 
 const domain = (name) => `^packages/domains/src/${name}/`
 
-// Shed's layout (its architecture, not the library's): a domain's folder sits in
-// the folder of its kind. The library knows only the prefixes: the tree is made
-// of the `@` folders, and in them `_x.ts` is the generator's, any other `.ts`
-// the author's (DOM-25).
-const authored = '^packages/.+/@[^/]+/[^_/][^/]*\\.ts$'
-const tests = '\\.test\\.ts$'
+// Shed's tree (DOM-25): the folders its map names (sight.ts: what each folder
+// sees of the others, LIB-1), and everything below them; in them `_x.ts` is the
+// generator's, any other `.ts` the author's. The map is one source, read here
+// as by the generator, which writes it into the doors and the heres. A domain's
+// folder sits in the folder of its kind: Shed's layout, not the library's.
 const shed = '^packages/domains/test/shed/'
-
-// What each folder of Shed's tree sees of the others (LIB-1, DOM-25): one
-// source, read here as by the generator, which writes it into the heres.
-const kinds = `@(?:${Object.keys(sight)
-  .map((kind) => kind.slice(1))
-  .join('|')})`
+const kinds = `(?:${Object.keys(sight).join('|')})`
+const tree = `${shed}${kinds}/(?:[^/]+/|)`
+const authored = `${tree}[^_/][^/]*\\.ts$`
+const tests = '\\.test\\.ts$'
 const sightRules = Object.entries(sight).map(([from, seen]) => ({
-  name: `shed-sight-of-${from.slice(1)}`,
-  comment: `Shed: the heres of a folder under ${from} take of another folder only the door sight.ts opens to ${from} (_door_${from.slice(1)}.ts), besides their own folder's twins and their ancestors' (LIB-1, DOM-25).`,
+  name: `shed-sight-of-${from}`,
+  comment: `Shed: the heres of a folder under ${from} take of another folder only the door sight.ts opens to ${from} (_door_${from}.ts), besides their own folder's twins and their ancestors' (LIB-1, DOM-25).`,
   severity: 'error',
-  from: { path: `${shed}${from}/(@[^/]+/|)_here_[a-z]+\\.ts$` },
+  from: { path: `${shed}${from}/([^/]+/|)_here_[a-z]+\\.ts$` },
   to: {
     path: `${shed}${kinds}/`,
     pathNot: [
       `${shed}${from}/$1_[^/]+\\.ts$`,
       `${shed}${from}/_[^/]+\\.ts$`,
-      ...Object.keys(seen).map((folder) => `${shed}${folder}/[^/]+/_door_${from.slice(1)}\\.ts$`),
+      ...Object.keys(seen).map((folder) => `${shed}${folder}/[^/]+/_door_${from}\\.ts$`),
     ],
   },
 }))
@@ -66,7 +63,7 @@ export default {
       comment:
         "Shed: an authored file of the tree imports of the tree only its here, which carries its folder's components, the doors of its ancestors to the folders below (_door_below.ts) and the doors sight.ts opens to it (DOM-25, LIB-1).",
       severity: 'error',
-      from: { path: `${shed}(@[^/]+)/(@[^/]+/|)[^_/][^/]*\\.ts$`, pathNot: tests },
+      from: { path: `${shed}(${kinds})/([^/]+/|)[^_/][^/]*\\.ts$`, pathNot: tests },
       to: {
         path: `${shed}${kinds}/`,
         pathNot: `${shed}$1/$2_here_[a-z]+\\.ts$`,
@@ -75,7 +72,7 @@ export default {
     {
       name: 'authored-only-through-generated',
       comment:
-        'An authored file of the tree (fact.ts in an @ folder) is imported only by its generated twin (_fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
+        'An authored file of the tree (fact.ts) is imported only by its generated twin (_fact.ts), which brands its components with their path and gives every schema its type (DOM-24, DOM-25).',
       severity: 'error',
       from: { path: '^(.+/)_([^/]+)\\.ts$' },
       to: { path: authored, pathNot: ['^$1$2\\.ts$', tests] },
@@ -83,7 +80,7 @@ export default {
     {
       name: 'authored-only-through-generated-others',
       comment:
-        'A file that is not generated never imports an authored file of the tree (fact.ts in an @ folder): it imports its generated twin (_fact.ts) (DOM-25).',
+        'A file that is not generated never imports an authored file of the tree (fact.ts): it imports its generated twin (_fact.ts) (DOM-25).',
       severity: 'error',
       from: { pathNot: '/_[^/]+\\.ts$' },
       to: { path: authored, pathNot: tests },
@@ -93,7 +90,7 @@ export default {
       comment:
         'An authored file of the tree takes the components of its own folder from the here of its kind (_here_command.ts), never from their twins nor from the point (_here.ts) (DOM-25).',
       severity: 'error',
-      from: { path: '^(.+/@[^/]+/)[^_/][^/]*\\.ts$', pathNot: tests },
+      from: { path: `^(${tree.slice(1)})[^_/][^/]*\\.ts$`, pathNot: tests },
       to: { path: '^$1_[^/]+\\.ts$', pathNot: '^$1_here_[a-z]+\\.ts$' },
     },
     {

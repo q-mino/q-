@@ -3,9 +3,9 @@
 // table, an identity provider; here two maps that a test fills.
 
 import type * as wlib from '../../wlib.ts'
-import type * as accounts_lookup from '../../@auth/@accounts/_lookup.ts'
-import type { account_id } from '../../@auth/@accounts/_id.ts'
-import type { hats, member_card } from '../../@auth/@accounts/_value.ts'
+import type * as accounts_lookup from '../../auth/accounts/_lookup.ts'
+import type { account_id } from '../../auth/accounts/_id.ts'
+import type { hats, member_card } from '../../auth/accounts/_value.ts'
 
 /** The hats and the member cards, by account: an account with no card has none. */
 export interface AccountsState {

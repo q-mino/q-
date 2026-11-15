@@ -8,8 +8,8 @@
 // has not.
 
 import type * as wlib from '../../wlib.ts'
-import type * as loans_effect from '../../@business/@loans/_effect.ts'
-import type { member_id } from '../../@business/@loans/_id.ts'
+import type * as loans_effect from '../../business/loans/_effect.ts'
+import type { member_id } from '../../business/loans/_id.ts'
 import type { ToolsState } from './tools.ts'
 
 /** A reminder as a phone receives it, with the key the network deduplicates on: effect and entry. */

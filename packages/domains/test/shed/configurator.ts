@@ -10,19 +10,19 @@
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
 import { send_the_due_date_reminder, type Phones } from './adapter/memory/reminders.ts'
-import { registry as loans_registry } from './@business/@loans/_registry.ts'
+import { registry as loans_registry } from './business/loans/_registry.ts'
 import {
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
-} from './@business/@loans/_usecase.ts'
-import { persona } from './@persona/_node.ts'
-import { registry as persona_registry } from './@persona/_registry.ts'
-import { registry as member_registry } from './@persona/@member/_registry.ts'
-import { borrow_a_tool, my_loans } from './@persona/@member/_usecase.ts'
-import { registry as keeper_registry } from './@persona/@keeper/_registry.ts'
-import { retire_a_tool } from './@persona/@keeper/_usecase.ts'
-import { registry as visitor_registry } from './@persona/@visitor/_registry.ts'
-import { the_catalogue } from './@persona/@visitor/_usecase.ts'
+} from './business/loans/_usecase.ts'
+import { persona } from './persona/_node.ts'
+import { registry as persona_registry } from './persona/_registry.ts'
+import { registry as member_registry } from './persona/member/_registry.ts'
+import { borrow_a_tool, my_loans } from './persona/member/_usecase.ts'
+import { registry as keeper_registry } from './persona/keeper/_registry.ts'
+import { retire_a_tool } from './persona/keeper/_usecase.ts'
+import { registry as visitor_registry } from './persona/visitor/_registry.ts'
+import { the_catalogue } from './persona/visitor/_usecase.ts'
 
 /** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
 export interface World {

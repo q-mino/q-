@@ -1309,8 +1309,8 @@ export type ConstructKind =
 
 /**
  * What a folder of the tree sees of the others (LIB-1, DOM-25): for the
- * folders under a first segment (`@business`), the kinds of construct they see
- * of each folder under another (`@business: { '@business': ['id'] }`). The
+ * folders under a first segment (`business`), the kinds of construct they see
+ * of each folder under another (`business: { business: ['id'] }`). The
  * architecture's rule, given to the generator as data: the library knows
  * folders and kinds of construct, never kinds of domain. The generator writes
  * into the heres of a folder every folder it sees, under its name, with those
@@ -1974,8 +1974,8 @@ export declare function effect_executor<
 // between two offices. Its module sits above the domains, which never import
 // it (GR-9, D88.6): it speaks the language of the fact it reads and of the
 // use case it invokes, and the configurator wires it. In Shed the folders
-// under `@reaction/` are procedures, the business occurrences that move more
-// than one office (`@retirement/`), the author's choice (A, 15 Nov 2026).
+// under `reaction/` are procedures, the business occurrences that move more
+// than one office (`retirement/`), the author's choice (A, 15 Nov 2026).
 
 export declare const $Reaction: unique symbol
 

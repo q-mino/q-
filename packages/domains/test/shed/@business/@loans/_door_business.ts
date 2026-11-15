@@ -1,7 +1,0 @@
-// generated
-
-// The door of `business/loans` for the folders under `@business` (DOM-25): what
-// `sight.ts` lets them see of it, id, each a namespace. Nothing else of the
-// folder can be named from there.
-
-export * as id from './_id.ts'
