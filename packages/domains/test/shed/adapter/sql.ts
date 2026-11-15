@@ -114,6 +114,8 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
+  'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun': (p) =>
+    sql`exists (select 1 from cancellations where tool_id = ${p.tool_id})`,
 }
 
 // The fragments of the selection predicates, grouped by subject (DOM-18): a
@@ -191,6 +193,11 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
   'business/loans/fact/the_member_already_booked_the_tool': () => [],
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun': ({
+    new_cancellation: c,
+  }) => [
+    sql`insert into cancellations (tool_id, start_date, stage) values (${c.tool_id}, ${c.start_date}, ${c.progress.stage})`,
+  ],
 }
 
 /**

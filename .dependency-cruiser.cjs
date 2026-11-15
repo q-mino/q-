@@ -22,7 +22,7 @@ const domain = (name) => `^packages/domains/src/${name}/`
 // the author's (DOM-25).
 const authored = '^packages/.+/@[^/]+/[^_/][^/]*\\.ts$'
 const tests = '\\.test\\.ts$'
-const kinds = '@(?:business|persona|auth)'
+const kinds = '@(?:business|persona|auth|reaction)'
 const shed = '^packages/domains/test/shed/'
 
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
@@ -53,7 +53,7 @@ module.exports = {
     {
       name: 'shed-persona-through-doors',
       comment:
-        'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups) and identities and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona; above it, the twins of the persona base (@persona/_x.ts, D78.7), as a file sees its ancestors (DOM-25).',
+        'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups), identities and facts and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona; above it, the twins of the persona base (@persona/_x.ts, D78.7), as a file sees its ancestors (DOM-25).',
       severity: 'error',
       from: { path: `${shed}@persona/(@[^/]+)/` },
       to: {
@@ -63,6 +63,17 @@ module.exports = {
           `${shed}@persona/_[^/]+\\.ts$`,
           `${shed}@(?:business|auth)/[^/]+/_index\\.ts$`,
         ],
+      },
+    },
+    {
+      name: 'shed-reactions-through-doors',
+      comment:
+        "Shed: a reaction sits above the domains (GR-9, D88.6): it imports of a business domain only its door, _index.ts, which exposes the facts it reacts to and the use cases it invokes, and nothing of a persona, of auth or of another procedure; no domain imports it, by the other kinds' rules.",
+      severity: 'error',
+      from: { path: `${shed}@reaction/(@[^/]+)/` },
+      to: {
+        path: `${shed}${kinds}/`,
+        pathNot: [`${shed}@reaction/$1/`, `${shed}@business/[^/]+/_index\\.ts$`],
       },
     },
     {

@@ -87,3 +87,10 @@ export const the_tool_is_booked_for_the_day_by_this_member = wlib.predicate({
     member_id: member_id,
   }),
 })
+
+/** The desk has begun cancelling the reservations of the tool. */
+export const a_cancellation_of_the_reservations_of_the_tool_has_begun = wlib.predicate({
+  parameters: z.strictObject({
+    tool_id: tool_id,
+  }),
+})

@@ -1,7 +1,13 @@
 import { z } from 'zod'
 import { tool_id } from '../@tools/_id.ts'
 import { loan_id, member_id } from './_id.ts'
-import { booked_reservation, ongoing_loan, overdue_loan, returned_loan } from './_value.ts'
+import {
+  booked_reservation,
+  cancellation_under_way,
+  ongoing_loan,
+  overdue_loan,
+  returned_loan,
+} from './_value.ts'
 import * as wlib from '../../wlib.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
@@ -96,5 +102,16 @@ export const a_loan_has_become_overdue = wlib.fact({
 export const the_loan_was_returned_before_it_became_overdue = wlib.fact({
   payload: z.strictObject({
     loan_id: loan_id,
+  }),
+})
+
+/**
+ * The desk has opened its work sheet for the tool's reservations (D97,
+ * D112): the whole new cancellation. Its steps, one reservation each, come
+ * with part 2 of step 8.
+ */
+export const the_cancellation_of_the_reservations_of_a_tool_has_begun = wlib.fact({
+  payload: z.strictObject({
+    new_cancellation: cancellation_under_way,
   }),
 })

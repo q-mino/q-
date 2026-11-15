@@ -104,3 +104,31 @@ export const ongoing_loan_entry = ongoing_loan
 export const reservation_entry = booked_reservation
   .pick({ id: true, tool_id: true, day: true })
   .extend({ tool_name: tool_name })
+
+/** Grows with part 2 of step 8: the cursor, and `complete`. */
+export const cancellation_stage = z.enum(['cancelling'])
+
+/** The desk goes through the tool's reservations, one at a time. */
+export const cancellation_cancelling = z.strictObject({
+  stage: z.literal(cancellation_stage.enum.cancelling),
+})
+
+/** Where the cancellation of a tool's reservations is in its course. */
+export const cancellation_progress = z.discriminatedUnion('stage', [cancellation_cancelling])
+
+/**
+ * The desk's work sheet: the reservations of a tool, cancelled one at a
+ * time, a process with a cursor (DOM-20, DOM-23, D97, D112), whose state is
+ * its own aggregate in `loans`. One per tool: a tool is retired once, for
+ * good. By nesting, as a loan.
+ */
+export const cancellation_of_reservations = z.strictObject({
+  tool_id: tool_id,
+  start_date: date_time_string,
+  progress: cancellation_progress,
+})
+
+/** A cancellation under way. */
+export const cancellation_under_way = cancellation_of_reservations.extend({
+  progress: cancellation_cancelling,
+})

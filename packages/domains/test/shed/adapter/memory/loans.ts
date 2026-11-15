@@ -9,7 +9,12 @@ import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../@business/@loans/_fact.ts'
 import type * as loans_predicate from '../../@business/@loans/_predicate.ts'
 import type { loan_id, reservation_id } from '../../@business/@loans/_id.ts'
-import type { loan, loan_progress, reservation } from '../../@business/@loans/_value.ts'
+import type {
+  cancellation_of_reservations,
+  loan,
+  loan_progress,
+  reservation,
+} from '../../@business/@loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
@@ -22,10 +27,11 @@ import * as loans_dsl from '../../@business/@loans/_dsl.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
-/** The loans and the reservations, by id. */
+/** The loans and the reservations, by id; the desk's work sheets, by tool. */
 export interface LoansState {
   readonly loans: ReadonlyMap<loan_id, loan>
   readonly reservations: ReadonlyMap<reservation_id, reservation>
+  readonly cancellations: ReadonlyMap<tool_id, cancellation_of_reservations>
 }
 
 /** What the predicates of `loans` read: its state, and the state of `tools` for its view of the tools. */
@@ -73,6 +79,9 @@ export const loans_fragments: wlib.PredicateFragments<
         the_reservation.day === p.day &&
         the_reservation.member_id === p.member_id,
     ),
+  'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
+    (p) => (state) =>
+      state.cancellations.has(p.tool_id),
 }
 
 /** The name of a tool, read from the catalogue of `tools`: the link of the view of `loans`. */
@@ -196,4 +205,10 @@ export const loans_writes: wlib.FactWrites<
       reservations: new Map(state.reservations).set(new_reservation.id, new_reservation),
     }),
   'business/loans/fact/the_member_already_booked_the_tool': () => (state) => state,
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
+    ({ new_cancellation }) =>
+    (state) => ({
+      ...state,
+      cancellations: new Map(state.cancellations).set(new_cancellation.tool_id, new_cancellation),
+    }),
 }

@@ -155,3 +155,38 @@ export const declare_the_loan_overdue = command.declare_the_loan_overdue
  */
 export const declare_the_loan_overdue_input = command.declare_the_loan_overdue.input
 export type declare_the_loan_overdue_input = z.output<typeof declare_the_loan_overdue_input>
+
+/**
+ * The desk has not yet begun cancelling the reservations of the tool.
+ *
+ * @see {@link command.no_cancellation_of_the_reservations_of_the_tool_has_begun}
+ */
+export const no_cancellation_of_the_reservations_of_the_tool_has_begun =
+  command.no_cancellation_of_the_reservations_of_the_tool_has_begun
+export type no_cancellation_of_the_reservations_of_the_tool_has_begun = z.output<
+  typeof no_cancellation_of_the_reservations_of_the_tool_has_begun
+>
+
+/**
+ * The desk opens its work sheet for the reservations of a tool that can no
+ * longer be lent: Luca retired the ladder, and a reaction brings the news
+ * (DOM-16). A set chosen by a condition is never changed by one fact: the
+ * sheet is a process with a cursor, one reservation a step (DOM-20, D97,
+ * D112, D113.4), its steps in part 2 of step 8. A second sheet for one tool
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, which a reaction sends to its dead letter, in sight.
+ *
+ * @see {@link command.cancel_the_reservations_of_a_tool}
+ */
+export const cancel_the_reservations_of_a_tool = command.cancel_the_reservations_of_a_tool
+
+/**
+ * The input of `cancel_the_reservations_of_a_tool`, declared inline.
+ *
+ * @see {@link command.cancel_the_reservations_of_a_tool}
+ */
+export const cancel_the_reservations_of_a_tool_input =
+  command.cancel_the_reservations_of_a_tool.input
+export type cancel_the_reservations_of_a_tool_input = z.output<
+  typeof cancel_the_reservations_of_a_tool_input
+>

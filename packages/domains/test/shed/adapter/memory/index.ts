@@ -25,6 +25,7 @@ import { accounts_lookups, type AccountsState } from './accounts.ts'
 import { add_a_tool, retire_a_tool, the_catalogue } from '../../@business/@tools/_usecase.ts'
 import {
   borrow_a_tool,
+  cancel_the_reservations_of_a_tool,
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
   reserve_a_tool,
@@ -323,6 +324,7 @@ export const memory_adapter = (cell: Cell) => ({
         return_a_tool,
         remind_the_member_of_the_due_date,
         declare_the_loan_overdue,
+        cancel_the_reservations_of_a_tool,
       },
     })({
       algebra: algebra(loans_fragments),

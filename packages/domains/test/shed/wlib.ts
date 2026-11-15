@@ -559,7 +559,7 @@ export interface StateAdapter<commands extends Commands, fragment, write> {
  * A domain's path registry (DOM-24), generated in `_registry.ts`: every path
  * with its component, the map of the domain: identities, values, facts,
  * predicates, named conditions, commands and their inputs, selection
- * predicates, queries and their inputs, use cases, lookups. The configurator gives
+ * predicates, queries and their inputs, use cases, lookups, reactions. The configurator gives
  * the library the registries of the domains it composes; the library reads
  * them in reverse, from a component to its path, by object identity. One
  * object, one path.
@@ -587,6 +587,7 @@ export type RegistryEntry =
     >
   | Lookup<z.ZodType, z.ZodType>
   | Node<unknown, RootContext, unknown>
+  | Reaction<Component, CommandUseCase<Commands[string]>>
 
 /** The components of a generated module of one kind. */
 type ComponentsIn<module, kind extends string> = {
@@ -1905,6 +1906,51 @@ export declare function effect_executor<
   readonly state: ExecutorState
   readonly clock: () => date_time_string
 }) => EffectExecutor
+
+// ---------------------------------------------------------------------------
+// Reactions (DOM-16, PER-12): "when fact E, command C", a standing order
+// between two offices. Its module sits above the domains, which never import
+// it (GR-9, D88.6): it speaks the language of the fact it reads and of the
+// use case it invokes, and the configurator wires it. In Shed the folders
+// under `@reaction/` are procedures, the business occurrences that move more
+// than one office (`@retirement/`), the author's choice (A, 15 Nov 2026).
+
+export declare const $Reaction: unique symbol
+
+/**
+ * A reaction: the fact it reacts to and the command use case it invokes.
+ * Its path is its identity, stable across releases (D89.5): the scope of its
+ * operations ("system · reaction R", D91.3) and its delivery unit, with its
+ * own position, order and dead letters (D89.6).
+ */
+export interface Reaction<
+  fact extends Component,
+  use_case extends CommandUseCase<Commands[string]>,
+> {
+  readonly [$Reaction]: { readonly when: fact; readonly invokes: use_case }
+}
+
+/**
+ * A reaction, declared in one argument whose parts have names: the fact it
+ * reacts to (`when`), the command use case it invokes (`invokes`), through a
+ * domain's door, and the pure translation from the fact's payload to the
+ * invoked one's input (`translation`, D89.3). It reads no state and has no
+ * context: the command's `now` is the clock of the entry, as for the effect
+ * executor. A translation that gives nothing (D88.2), and the parts of a
+ * composite fact (D113.3), come with their cases.
+ */
+export declare function reaction<
+  const fact extends Component,
+  const use_case extends CommandUseCase<Commands[string]>,
+>(
+  reaction: {
+    readonly when: fact
+    readonly invokes: use_case
+    readonly translation: (fact: z.output<fact>) => z.input<InputOfUseCase<use_case>>
+  } & ([Strays<fact, Path<'fact'>>] extends [never]
+    ? unknown
+    : { readonly 'a reaction reacts to a fact (DOM-16)': PathOf<Strays<fact, Path<'fact'>>> }),
+): Reaction<fact, use_case>
 
 // ---------------------------------------------------------------------------
 // Lookups (PER-9): a read of one key, which gives its value or "not known",

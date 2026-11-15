@@ -44,6 +44,15 @@ export const remind_the_member_of_the_due_date = usecase.remind_the_member_of_th
 export const declare_the_loan_overdue = usecase.declare_the_loan_overdue
 
 /**
+ * The reservations desk cancels the reservations of a tool that can no
+ * longer be lent: the ladder is retired, and Marta's Saturday and Gianni's
+ * Sunday go. Invoked by a reaction to the retirement (DOM-16).
+ *
+ * @see {@link usecase.cancel_the_reservations_of_a_tool}
+ */
+export const cancel_the_reservations_of_a_tool = usecase.cancel_the_reservations_of_a_tool
+
+/**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, falls overdue, a return takes it
  * away. With the register goes one notice by name: a loan has fallen overdue

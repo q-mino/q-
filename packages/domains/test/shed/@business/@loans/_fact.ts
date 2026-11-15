@@ -119,3 +119,16 @@ export const the_loan_was_returned_before_it_became_overdue =
 export type the_loan_was_returned_before_it_became_overdue = z.output<
   typeof the_loan_was_returned_before_it_became_overdue
 >
+
+/**
+ * The desk has opened its work sheet for the tool's reservations (D97,
+ * D112): the whole new cancellation. Its steps, one reservation each, come
+ * with part 2 of step 8.
+ *
+ * @see {@link fact.the_cancellation_of_the_reservations_of_a_tool_has_begun}
+ */
+export const the_cancellation_of_the_reservations_of_a_tool_has_begun =
+  fact.the_cancellation_of_the_reservations_of_a_tool_has_begun.brand<'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun'>()
+export type the_cancellation_of_the_reservations_of_a_tool_has_begun = z.output<
+  typeof the_cancellation_of_the_reservations_of_a_tool_has_begun
+>

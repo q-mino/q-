@@ -40,6 +40,15 @@ export const declare_the_loan_overdue = wlib.command_use_case({
 })
 
 /**
+ * The reservations desk cancels the reservations of a tool that can no
+ * longer be lent: the ladder is retired, and Marta's Saturday and Gianni's
+ * Sunday go. Invoked by a reaction to the retirement (DOM-16).
+ */
+export const cancel_the_reservations_of_a_tool = wlib.command_use_case({
+  command: command.cancel_the_reservations_of_a_tool,
+})
+
+/**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, falls overdue, a return takes it
  * away. With the register goes one notice by name: a loan has fallen overdue

@@ -103,3 +103,14 @@ export const the_tool_is_booked_for_the_day_by_this_member =
 export type the_tool_is_booked_for_the_day_by_this_member = z.output<
   typeof the_tool_is_booked_for_the_day_by_this_member
 >
+
+/**
+ * The desk has begun cancelling the reservations of the tool.
+ *
+ * @see {@link predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun}
+ */
+export const a_cancellation_of_the_reservations_of_the_tool_has_begun =
+  predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun.brand<'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun'>()
+export type a_cancellation_of_the_reservations_of_the_tool_has_begun = z.output<
+  typeof a_cancellation_of_the_reservations_of_the_tool_has_begun
+>

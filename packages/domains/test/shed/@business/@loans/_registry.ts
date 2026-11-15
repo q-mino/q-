@@ -38,6 +38,11 @@ export const registry = {
   'business/loans/value/booked_reservation': value.booked_reservation,
   'business/loans/value/ongoing_loan_entry': value.ongoing_loan_entry,
   'business/loans/value/reservation_entry': value.reservation_entry,
+  'business/loans/value/cancellation_stage': value.cancellation_stage,
+  'business/loans/value/cancellation_cancelling': value.cancellation_cancelling,
+  'business/loans/value/cancellation_progress': value.cancellation_progress,
+  'business/loans/value/cancellation_of_reservations': value.cancellation_of_reservations,
+  'business/loans/value/cancellation_under_way': value.cancellation_under_way,
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
   'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
@@ -53,6 +58,8 @@ export const registry = {
   'business/loans/fact/a_loan_has_become_overdue': fact.a_loan_has_become_overdue,
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue':
     fact.the_loan_was_returned_before_it_became_overdue,
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
+    fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
@@ -72,6 +79,8 @@ export const registry = {
     predicate.the_tool_is_booked_for_the_day,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member':
     predicate.the_tool_is_booked_for_the_day_by_this_member,
+  'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
+    predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
   'business/loans/command/the_tool_can_be_lent': command.the_tool_can_be_lent,
   'business/loans/command/borrow_a_tool': command.borrow_a_tool,
   'business/loans/command/borrow_a_tool_input': command.borrow_a_tool_input,
@@ -93,6 +102,12 @@ export const registry = {
     command.remind_the_member_of_the_due_date_input,
   'business/loans/command/declare_the_loan_overdue': command.declare_the_loan_overdue,
   'business/loans/command/declare_the_loan_overdue_input': command.declare_the_loan_overdue_input,
+  'business/loans/command/no_cancellation_of_the_reservations_of_the_tool_has_begun':
+    command.no_cancellation_of_the_reservations_of_the_tool_has_begun,
+  'business/loans/command/cancel_the_reservations_of_a_tool':
+    command.cancel_the_reservations_of_a_tool,
+  'business/loans/command/cancel_the_reservations_of_a_tool_input':
+    command.cancel_the_reservations_of_a_tool_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -118,6 +133,8 @@ export const registry = {
   'business/loans/usecase/remind_the_member_of_the_due_date':
     usecase.remind_the_member_of_the_due_date,
   'business/loans/usecase/declare_the_loan_overdue': usecase.declare_the_loan_overdue,
+  'business/loans/usecase/cancel_the_reservations_of_a_tool':
+    usecase.cancel_the_reservations_of_a_tool,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
 } satisfies wlib.Registry

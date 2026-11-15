@@ -151,3 +151,46 @@ export type ongoing_loan_entry = z.output<typeof ongoing_loan_entry>
  */
 export const reservation_entry = value.reservation_entry
 export type reservation_entry = z.output<typeof reservation_entry>
+
+/**
+ * Grows with part 2 of step 8: the cursor, and `complete`.
+ *
+ * @see {@link value.cancellation_stage}
+ */
+export const cancellation_stage = value.cancellation_stage
+export type cancellation_stage = z.output<typeof cancellation_stage>
+
+/**
+ * The desk goes through the tool's reservations, one at a time.
+ *
+ * @see {@link value.cancellation_cancelling}
+ */
+export const cancellation_cancelling = value.cancellation_cancelling
+export type cancellation_cancelling = z.output<typeof cancellation_cancelling>
+
+/**
+ * Where the cancellation of a tool's reservations is in its course.
+ *
+ * @see {@link value.cancellation_progress}
+ */
+export const cancellation_progress = value.cancellation_progress
+export type cancellation_progress = z.output<typeof cancellation_progress>
+
+/**
+ * The desk's work sheet: the reservations of a tool, cancelled one at a
+ * time, a process with a cursor (DOM-20, DOM-23, D97, D112), whose state is
+ * its own aggregate in `loans`. One per tool: a tool is retired once, for
+ * good. By nesting, as a loan.
+ *
+ * @see {@link value.cancellation_of_reservations}
+ */
+export const cancellation_of_reservations = value.cancellation_of_reservations
+export type cancellation_of_reservations = z.output<typeof cancellation_of_reservations>
+
+/**
+ * A cancellation under way.
+ *
+ * @see {@link value.cancellation_under_way}
+ */
+export const cancellation_under_way = value.cancellation_under_way
+export type cancellation_under_way = z.output<typeof cancellation_under_way>

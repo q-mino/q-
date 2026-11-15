@@ -13,6 +13,7 @@ import {
   the_due_date_came_before_the_reminder,
   a_loan_has_become_overdue,
   the_loan_was_returned_before_it_became_overdue,
+  the_cancellation_of_the_reservations_of_a_tool_has_begun,
 } from './_fact.ts'
 import {
   send_the_due_date_reminder,
@@ -23,6 +24,7 @@ import {
   a_loan_has_this_id,
   a_tool_has_this_id,
   the_tool_is_in_service,
+  a_cancellation_of_the_reservations_of_the_tool_has_begun,
   a_reservation_has_this_id,
   the_due_date_of_the_loan_is_still_ahead,
   the_loan_is_ongoing,
@@ -355,6 +357,44 @@ export const declare_the_loan_overdue = here.command({
         the_requested_loan_is_returned: { loan_id: input.loan_id },
       },
       { loan_id: input.loan_id },
+    ],
+  }),
+})
+
+/** The desk has not yet begun cancelling the reservations of the tool. */
+export const no_cancellation_of_the_reservations_of_the_tool_has_begun = wlib.NOT(
+  a_cancellation_of_the_reservations_of_the_tool_has_begun,
+)
+
+/**
+ * The desk opens its work sheet for the reservations of a tool that can no
+ * longer be lent: Luca retired the ladder, and a reaction brings the news
+ * (DOM-16). A set chosen by a condition is never changed by one fact: the
+ * sheet is a process with a cursor, one reservation a step (DOM-20, D97,
+ * D112, D113.4), its steps in part 2 of step 8. A second sheet for one tool
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, which a reaction sends to its dead letter, in sight.
+ */
+export const cancel_the_reservations_of_a_tool = here.command({
+  input: z.strictObject({
+    tool_id: tool_id,
+  }),
+  outcomes: {
+    no_cancellation_has_begun_so_one_begins: [
+      no_cancellation_of_the_reservations_of_the_tool_has_begun,
+      the_cancellation_of_the_reservations_of_a_tool_has_begun,
+    ],
+  },
+  creator: (context) => (input) => ({
+    no_cancellation_has_begun_so_one_begins: [
+      { tool_id: input.tool_id },
+      {
+        new_cancellation: {
+          tool_id: input.tool_id,
+          start_date: context.now,
+          progress: { stage: 'cancelling' },
+        },
+      },
     ],
   }),
 })
