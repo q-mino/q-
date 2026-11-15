@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
 import {
   command,
@@ -12,6 +11,7 @@ import {
   id,
   predicate,
   value,
+  tools,
 } from './_here_command.ts'
 
 /** The tool can be lent: named components, bound one by one by the creator. */
@@ -33,7 +33,7 @@ export const the_tool_can_be_lent = AND({
 export const borrow_a_tool = command({
   input: z.strictObject({
     loan_id: id.loan_id,
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
   }),
   outcomes: {
@@ -107,7 +107,7 @@ export const reserve_a_tool = command({
     z
       .strictObject({
         reservation_id: id.reservation_id,
-        tool_id: tool_id,
+        tool_id: tools.id.tool_id,
         member_id: id.member_id,
         day: wlib.day,
       })
@@ -234,7 +234,7 @@ export const the_due_date_of_the_ongoing_loan_has_passed = AND({
 export const remind_the_member_of_the_due_date = command({
   input: z.strictObject({
     loan_id: id.loan_id,
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
     due_date: wlib.date_time_string,
   }),
@@ -351,7 +351,7 @@ export const no_cancellation_of_the_reservations_of_the_tool_has_begun = NOT(
  */
 export const cancel_the_reservations_of_a_tool = command({
   input: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
   }),
   outcomes: {
     no_cancellation_has_begun_so_one_begins: [

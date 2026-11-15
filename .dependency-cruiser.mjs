@@ -1,3 +1,5 @@
+import { sight } from './packages/domains/test/shed/sight.ts'
+
 // The architecture's arrows (see docs/architecture.md): who may import whom.
 // Arrows go from the consumer to the consumed. Anything not listed is forbidden.
 const arrows = {
@@ -22,8 +24,31 @@ const domain = (name) => `^packages/domains/src/${name}/`
 // the author's (DOM-25).
 const authored = '^packages/.+/@[^/]+/[^_/][^/]*\\.ts$'
 const tests = '\\.test\\.ts$'
-const kinds = '@(?:business|persona|auth|reaction)'
 const shed = '^packages/domains/test/shed/'
+
+// What each folder of Shed's tree sees of the others (LIB-1, DOM-25): one
+// source, read here as by the generator, which writes it into the heres.
+const kinds = `@(?:${Object.keys(sight)
+  .map((kind) => kind.slice(1))
+  .join('|')})`
+const here = '/_here_[a-z]+\\.ts$'
+
+const sightRules = Object.entries(sight).map(([from, seen]) => ({
+  name: `shed-sight-of-${from.slice(1)}`,
+  comment: `Shed: the heres of a folder under ${from} take of the other domains only what sight.ts lets it see (LIB-1, DOM-25), and their ancestors' twins.`,
+  severity: 'error',
+  from: { path: `${shed}${from}/(@[^/]+)${here}` },
+  to: {
+    path: `${shed}${kinds}/`,
+    pathNot: [
+      `${shed}${from}/$1/`,
+      `${shed}${from}/_[^/]+\\.ts$`,
+      ...Object.entries(seen).map(
+        ([folder, constructs]) => `${shed}${folder}/[^/]+/_(?:${constructs.join('|')})\\.ts$`,
+      ),
+    ],
+  },
+}))
 
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   name: `arrows-of-${from}`,
@@ -36,15 +61,16 @@ const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   },
 }))
 
-module.exports = {
+export default {
   forbidden: [
     ...arrowRules,
+    ...sightRules,
     {
       name: 'shed-business-isolated',
       comment:
         'Shed: a business domain imports of another only its identities, _id.ts (GR-3, V11), and nothing of a persona or of auth (PER-10); the adapters link them.',
       severity: 'error',
-      from: { path: `${shed}@business/(@[^/]+)/` },
+      from: { path: `${shed}@business/(@[^/]+)/`, pathNot: here },
       to: {
         path: `${shed}${kinds}/`,
         pathNot: [`${shed}@business/$1/`, `${shed}@business/[^/]+/_id\\.ts$`],
@@ -55,7 +81,7 @@ module.exports = {
       comment:
         'Shed: a persona imports of a business or auth domain only its door, _index.ts, which exposes its use cases (an auth domain its lookups), identities and facts and nothing else (DOM-2, DOM-25, GR-1, PER-9), and nothing of another persona; above it, the twins of the persona base (@persona/_x.ts, D78.7), as a file sees its ancestors (DOM-25).',
       severity: 'error',
-      from: { path: `${shed}@persona/(@[^/]+)/` },
+      from: { path: `${shed}@persona/(@[^/]+)/`, pathNot: here },
       to: {
         path: `${shed}${kinds}/`,
         pathNot: [
@@ -70,7 +96,7 @@ module.exports = {
       comment:
         "Shed: a reaction sits above the domains (GR-9, D88.6): it imports of a business domain only its door, _index.ts, which exposes the facts it reacts to and the use cases it invokes, and nothing of a persona, of auth or of another procedure; no domain imports it, by the other kinds' rules.",
       severity: 'error',
-      from: { path: `${shed}@reaction/(@[^/]+)/` },
+      from: { path: `${shed}@reaction/(@[^/]+)/`, pathNot: here },
       to: {
         path: `${shed}${kinds}/`,
         pathNot: [`${shed}@reaction/$1/`, `${shed}@business/[^/]+/_index\\.ts$`],
@@ -81,7 +107,7 @@ module.exports = {
       comment:
         "Shed: an auth domain imports no other domain: its data is its adapters' (D43), the business never knows it (PER-10), a persona reads it through its door.",
       severity: 'error',
-      from: { path: `${shed}@auth/(@[^/]+)/` },
+      from: { path: `${shed}@auth/(@[^/]+)/`, pathNot: here },
       to: { path: `${shed}${kinds}/`, pathNot: [`${shed}@auth/$1/`] },
     },
     {

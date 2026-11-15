@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
-import { effect, id } from './_here_effect.ts'
+import { effect, id, tools } from './_here_effect.ts'
 
 // The effects of `loans` (DOM-13): what it asks of the world, queued by a
 // branch with its fact, never run by the domain (D12). A creator does not
@@ -18,7 +17,7 @@ import { effect, id } from './_here_effect.ts'
 export const wait_until_the_eve_of_the_due_date = effect({
   payload: z.strictObject({
     loan_id: id.loan_id,
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
     due_date: wlib.date_time_string,
   }),
@@ -28,7 +27,7 @@ export const wait_until_the_eve_of_the_due_date = effect({
 export const send_the_due_date_reminder = effect({
   payload: z.strictObject({
     loan_id: id.loan_id,
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
     due_date: wlib.date_time_string,
   }),

@@ -1,8 +1,13 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import * as loans from '../../@business/@loans/_index.ts'
-import * as tools from '../../@business/@tools/_index.ts'
-import { command_use_case_over, read_use_case_over, dsl, value } from './_here_usecase.ts'
+import {
+  command_use_case_over,
+  read_use_case_over,
+  dsl,
+  value,
+  tools,
+  loans,
+} from './_here_usecase.ts'
 
 // The use cases of `member`, the leaves of its tree (PER-6): who borrows from
 // the shed. The member is the number of the card the node found
@@ -14,8 +19,8 @@ import { command_use_case_over, read_use_case_over, dsl, value } from './_here_u
 
 /** Marta takes the drill home, while her card is valid. */
 export const borrow_a_tool = command_use_case_over({
-  use_case: loans.borrow_a_tool,
-  input: z.strictObject({ loan_id: loans.loan_id, tool_id: tools.tool_id }),
+  use_case: loans.usecase.borrow_a_tool,
+  input: z.strictObject({ loan_id: loans.id.loan_id, tool_id: tools.id.tool_id }),
   is_refused_unless: {
     /** Card M-12 is valid until 31 March 2027: on 1 April Marta borrows no more. */
     the_member_card_is_valid_today: (context) => () =>
@@ -28,11 +33,11 @@ export const borrow_a_tool = command_use_case_over({
   }),
   events: {
     you_have_the_tool: z.strictObject({
-      loan_id: loans.loan_id,
-      tool_id: tools.tool_id,
+      loan_id: loans.id.loan_id,
+      tool_id: tools.id.tool_id,
       due_date: wlib.date_time_string,
     }),
-    you_already_have_the_tool: z.strictObject({ tool_id: tools.tool_id }),
+    you_already_have_the_tool: z.strictObject({ tool_id: tools.id.tool_id }),
     /**
      * Not in the shed, retired, or lent to someone else: the member need not
      * know which, and knows which tool they asked for.
@@ -64,12 +69,12 @@ export const borrow_a_tool = command_use_case_over({
  * still sees what she must bring back.
  */
 export const my_loans = read_use_case_over({
-  use_case: loans.the_ongoing_loans_of_a_member,
+  use_case: loans.usecase.the_ongoing_loans_of_a_member,
   input: z.strictObject({}),
   creator: (context) => () => ({ member_id: context.card.id }),
   entry: z.strictObject({
-    loan_id: loans.loan_id,
-    tool_id: tools.tool_id,
+    loan_id: loans.id.loan_id,
+    tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
     start_date: wlib.date_time_string,
     due_date: wlib.date_time_string,

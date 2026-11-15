@@ -1292,6 +1292,33 @@ export interface Builders<context extends RootContext, closes> {
   readonly node: NodeBuilder<context, closes>
 }
 
+/** The kinds of construct, the segment of a path after its folders (DOM-24, DOM-25). */
+export type ConstructKind =
+  | 'id'
+  | 'value'
+  | 'fact'
+  | 'predicate'
+  | 'selection'
+  | 'effect'
+  | 'command'
+  | 'query'
+  | 'usecase'
+  | 'lookup'
+  | 'node'
+  | 'reaction'
+
+/**
+ * What a folder of the tree sees of the others (LIB-1, DOM-25): for the
+ * folders under a first segment (`@business`), the kinds of construct they see
+ * of each folder under another (`@business: { '@business': ['id'] }`). The
+ * architecture's rule, given to the generator as data: the library knows
+ * folders and kinds of construct, never kinds of domain. The generator writes
+ * into the heres of a folder every folder it sees, under its name, with those
+ * namespaces only (`tools.id.tool_id`); what is not listed is not seen, and
+ * does not compile.
+ */
+export type Sight = Readonly<Record<string, Readonly<Record<string, readonly ConstructKind[]>>>>
+
 /**
  * The builders bound to the context of a point of the tree, for its
  * `_here.ts`. A folder with a node has two points: the point above, whose

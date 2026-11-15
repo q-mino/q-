@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
-import { fact, id, value } from './_here_fact.ts'
+import { fact, id, value, tools } from './_here_fact.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
 export const a_tool_has_been_lent = fact({
@@ -13,7 +12,7 @@ export const a_tool_has_been_lent = fact({
 /** Nothing to do (DOM-6): the member's ongoing loan of the tool stands. */
 export const the_member_already_has_the_tool = fact({
   payload: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
   }),
 })
@@ -28,7 +27,7 @@ export const a_tool_has_been_booked = fact({
 /** Nothing to do (DOM-6): the member's reservation of the tool for the day stands. */
 export const the_member_already_booked_the_tool = fact({
   payload: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     day: wlib.day,
     member_id: id.member_id,
   }),

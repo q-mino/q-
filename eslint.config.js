@@ -13,14 +13,14 @@ export default defineConfig(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.js', '*.cjs', '*.ts'],
+          allowDefaultProject: ['*.js', '*.cjs', '*.mjs', '*.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
     },
   },
   {
-    files: ['**/*.js', '**/*.cjs'],
+    files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
   },
   {

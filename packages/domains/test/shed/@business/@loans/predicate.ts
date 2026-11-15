@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { tool_id } from '../@tools/_id.ts'
 import * as wlib from '../../wlib.ts'
-import { predicate, id } from './_here_predicate.ts'
+import { predicate, id, tools } from './_here_predicate.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the
 // tools too (GR-3, V11): the state adapter reads them from `tools`.
@@ -9,14 +8,14 @@ import { predicate, id } from './_here_predicate.ts'
 /** The shed has a tool with this id. */
 export const a_tool_has_this_id = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
   }),
 })
 
 /** The tool can go out: it is in service in the shed. */
 export const the_tool_is_in_service = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
   }),
 })
 
@@ -53,14 +52,14 @@ export const the_due_date_of_the_loan_is_still_ahead = predicate({
 /** The tool is with a member, whoever it is. */
 export const the_tool_is_on_loan = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
   }),
 })
 
 /** The tool is with this member. */
 export const the_tool_is_on_loan_to_this_member = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     member_id: id.member_id,
   }),
 })
@@ -74,7 +73,7 @@ export const a_reservation_has_this_id = predicate({
 /** The tool is booked for the day, by whoever. */
 export const the_tool_is_booked_for_the_day = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     day: wlib.day,
   }),
 })
@@ -82,7 +81,7 @@ export const the_tool_is_booked_for_the_day = predicate({
 /** The tool is booked for the day by this member. */
 export const the_tool_is_booked_for_the_day_by_this_member = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
     day: wlib.day,
     member_id: id.member_id,
   }),
@@ -91,6 +90,6 @@ export const the_tool_is_booked_for_the_day_by_this_member = predicate({
 /** The desk has begun cancelling the reservations of the tool. */
 export const a_cancellation_of_the_reservations_of_the_tool_has_begun = predicate({
   parameters: z.strictObject({
-    tool_id: tool_id,
+    tool_id: tools.id.tool_id,
   }),
 })
