@@ -257,7 +257,7 @@ const record =
   (written: wlib.PlannedWrite<readonly sql[]>): Promise<void> =>
     [
       ...written.writes.flat(),
-      sql`insert into facts (parts, operation_scope, operation_id) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id})`,
+      sql`insert into facts (parts, operation_scope, operation_id, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
           sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
@@ -383,6 +383,7 @@ const fact_row = z.strictObject({
   parts: z.string(),
   operation_scope: z.string(),
   operation_id: wlib.operation_id,
+  correlation: wlib.correlation,
 })
 
 const parts = z.array(
@@ -402,6 +403,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
     fact: {
       parts: parts.parse(stored),
       operation: { scope: fact.operation_scope, id: fact.operation_id },
+      correlation: fact.correlation,
     },
   }
 }
@@ -409,7 +411,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
 const facts_from = (database: Database) => (where: sql) =>
   database.transaction((tx) =>
     tx.rows(
-      sql`select sequence, parts, operation_scope, operation_id from facts where ${where} order by sequence`,
+      sql`select sequence, parts, operation_scope, operation_id, correlation from facts where ${where} order by sequence`,
     ),
   )
 
@@ -451,7 +453,7 @@ const log =
         async (tx) =>
           [
             await tx.rows(
-              sql`select sequence, parts, operation_scope, operation_id from facts order by sequence`,
+              sql`select sequence, parts, operation_scope, operation_id, correlation from facts order by sequence`,
             ),
             await tx.position(),
           ] as const,

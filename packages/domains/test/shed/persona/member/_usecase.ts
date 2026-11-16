@@ -38,3 +38,23 @@ export const my_loans = usecase.my_loans
  */
 export const my_loans_input = usecase.my_loans.input
 export type my_loans_input = z.output<typeof my_loans_input>
+
+/**
+ * Marta brings the drill back, and her screen follows what her return sets
+ * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
+ * open until the workshop takes the drill in, a fact of `tools` that a
+ * standing order records with the correlation of her return, or until its
+ * wait is over. The workshop's own end (the drill back in service on
+ * Friday) is not her flow.
+ *
+ * @see {@link usecase.return_a_tool}
+ */
+export const return_a_tool = usecase.return_a_tool
+
+/**
+ * The input of `return_a_tool`, declared inline.
+ *
+ * @see {@link usecase.return_a_tool}
+ */
+export const return_a_tool_input = usecase.return_a_tool.input
+export type return_a_tool_input = z.output<typeof return_a_tool_input>

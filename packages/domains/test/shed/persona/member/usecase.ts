@@ -62,6 +62,81 @@ export const borrow_a_tool = command_use_case_over({
 })
 
 /**
+ * Marta brings the drill back, and her screen follows what her return sets
+ * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
+ * open until the workshop takes the drill in, a fact of `tools` that a
+ * standing order records with the correlation of her return, or until its
+ * wait is over. The workshop's own end (the drill back in service on
+ * Friday) is not her flow.
+ */
+export const return_a_tool = command_use_case_over({
+  use_case: loans.usecase.return_a_tool,
+  input: z.strictObject({
+    loan_id: loans.id.loan_id,
+    tool_id: tools.id.tool_id,
+    condition: z.enum(['good', 'damaged']),
+  }),
+  creator: () => (input) => ({
+    loan_id: input.loan_id,
+    tool_id: input.tool_id,
+    condition: input.condition,
+  }),
+  events: {
+    you_returned_the_tool: z.strictObject({ tool_id: tools.id.tool_id }),
+    you_returned_the_tool_damaged: z.strictObject({ tool_id: tools.id.tool_id }),
+    you_had_already_returned_it: z.strictObject({ loan_id: loans.id.loan_id }),
+    /** No such loan, or not of this tool: the member knows which they meant. */
+    the_return_is_not_possible: z.strictObject({}),
+    the_tool_is_in_the_workshop: z.strictObject({ tool_id: tools.id.tool_id }),
+    the_tool_was_already_in_the_workshop: z.strictObject({ tool_id: tools.id.tool_id }),
+    the_tool_had_been_retired: z.strictObject({ tool_id: tools.id.tool_id }),
+  },
+  ends: [
+    'you_returned_the_tool',
+    'you_had_already_returned_it',
+    'the_return_is_not_possible',
+    'the_tool_is_in_the_workshop',
+    'the_tool_was_already_in_the_workshop',
+    'the_tool_had_been_retired',
+  ],
+  projection: {
+    the_loan_is_ongoing_so_it_is_closed: (fact) =>
+      dsl.the_tool_came_back_damaged(fact)
+        ? {
+            event: 'you_returned_the_tool_damaged',
+            payload: { tool_id: fact.returned_loan.tool_id },
+          }
+        : { event: 'you_returned_the_tool', payload: { tool_id: fact.returned_loan.tool_id } },
+    the_loan_was_already_returned_so_nothing_changes: (fact) => ({
+      event: 'you_had_already_returned_it',
+      payload: { loan_id: fact.loan_id },
+    }),
+    rejected: () => ({ event: 'the_return_is_not_possible', payload: {} }),
+  },
+  follows: {
+    facts: [
+      tools.fact.a_tool_has_been_sent_to_repair,
+      tools.fact.the_tool_was_already_under_repair,
+      tools.fact.the_tool_was_retired_before_the_repair,
+    ],
+    projection: {
+      a_tool_has_been_sent_to_repair: (fact) => ({
+        event: 'the_tool_is_in_the_workshop',
+        payload: { tool_id: fact.tool_under_repair.id },
+      }),
+      the_tool_was_already_under_repair: (fact) => ({
+        event: 'the_tool_was_already_in_the_workshop',
+        payload: { tool_id: fact.tool_id },
+      }),
+      the_tool_was_retired_before_the_repair: (fact) => ({
+        event: 'the_tool_had_been_retired',
+        payload: { tool_id: fact.tool_id },
+      }),
+    },
+    at_most: 60_000,
+  },
+})
+/**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
  * date passes on one, a return takes it away. When the due date passes she

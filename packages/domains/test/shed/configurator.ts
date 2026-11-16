@@ -26,7 +26,7 @@ import {
 import { persona } from './persona/_node.ts'
 import { registry as persona_registry } from './persona/_registry.ts'
 import { registry as member_registry } from './persona/member/_registry.ts'
-import { borrow_a_tool, my_loans } from './persona/member/_usecase.ts'
+import { borrow_a_tool, my_loans, return_a_tool } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import {
   put_a_repaired_tool_back_in_service,
@@ -56,18 +56,18 @@ export const shed = (cell: Cell) => (world: World) => {
     member: wlib.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       top: persona,
-      use_cases: { borrow_a_tool, my_loans },
-    })(invoked),
+      use_cases: { borrow_a_tool, return_a_tool, my_loans },
+    })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       top: persona,
       use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
-    })(invoked),
+    })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
       top: persona,
       use_cases: { the_catalogue },
-    })(invoked),
+    })({ invoked, log: adapter.log }),
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
       returns: { remind_the_member_of_the_due_date, declare_the_loan_overdue },

@@ -53,8 +53,29 @@ export interface OperationContext {
   readonly operation: Operation
 }
 
+/**
+ * The correlation of a chain of facts born of one intention (DOM-10, D56, §
+ * "La busta e la pila"): created at the origin, by the client if it gives
+ * one (D72.7), else by the entry; neither a secret nor a permission. Every
+ * fact, outbox entry and event derived from a fact keeps it: a reaction
+ * invokes with the correlation of the fact it reacts to, the executor
+ * returns with the entry's, which is the fact's that queued it. Not part of
+ * the operation's identity (DOM-11): a retry keeps both. A, 16 Nov 2026 (5)
+ */
+export const correlation = z.string().min(1).brand<'correlation'>()
+export type correlation = z.output<typeof correlation>
+
+/**
+ * What the library adds to the context of a command's port, beside its
+ * operation: its correlation, which it writes into the envelope. A creator
+ * never sees it: no business decides on it.
+ */
+export interface CorrelationContext {
+  readonly correlation: correlation
+}
+
 /** The context of a command at the root of its tree: what its port takes. */
-export type CommandRootContext = RootContext & OperationContext
+export type CommandRootContext = RootContext & OperationContext & CorrelationContext
 
 /**
  * The path of a component (DOM-24, DOM-25): its folders from the root, the
@@ -793,12 +814,15 @@ export type Part<facts extends Component> = facts extends unknown
  * recorded the fact is its identity: one operation in its scope records one
  * fact (DOM-11), and it travels with the fact through any adapter, where a
  * position may be renumbered; a reaction derives its own operation from it
- * and the part (LIB-10, A, 16 Nov 2026). The other fields of the envelope
- * come with their cases.
+ * and the part (LIB-10, A, 16 Nov 2026). Its correlation is the chain's
+ * (`correlation`), kept by every fact derived from it, so that Marta's
+ * return follows the repair it opens (A, 16 Nov 2026 (5)). The other fields
+ * of the envelope come with their cases.
  */
 export interface Envelope<parts extends readonly StoredPart[]> {
   readonly parts: parts
   readonly operation: Operation
+  readonly correlation: correlation
 }
 
 /**
@@ -1034,7 +1058,13 @@ export type RegistryEntry =
   | Queries[string]
   | CommandUseCase<Commands[string]>
   | ReadUseCase<Queries[string]>
-  | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+  | CommandUseCaseOver<
+      CommandUseCase<Commands[string]>,
+      CommandInput<z.ZodType>,
+      Events,
+      unknown,
+      unknown
+    >
   | ReadUseCaseOver<
       ReadUseCase<Queries[string]>,
       QueryInput<z.ZodType>,
@@ -1498,14 +1528,63 @@ export interface CommandUseCaseOver<
   input extends CommandInput<z.ZodType>,
   events extends Events,
   closes,
+  waits = never,
 > {
   readonly input: input
   readonly [$UseCase]: {
     readonly use_case: use_case
     readonly events: events
     readonly closes: closes
+    readonly waits: waits
   }
 }
+
+/**
+ * The base event of a leaf that follows (D58.2, § "Il caso d'uso resta
+ * attivo"): its wait is over, at the position of its outcome's fact, from
+ * which a client may follow again by correlation (D72.8). It closes the
+ * flow, not the operation nor the process, records nothing, and is no
+ * outcome: no business result may be read in it.
+ */
+export interface WaitIsOver {
+  readonly event: 'the_wait_is_over'
+  readonly position: position
+}
+
+/**
+ * What a command leaf follows after an outcome that does not end its flow
+ * (D58.2, A, 16 Nov 2026 (5)): the facts it waits for (`facts`), of any
+ * domain its folder sees, those of the chain of its outcome, with its
+ * correlation, from the position of its outcome's fact on (D72.8); their
+ * projection into its events, by the name in their path, exhaustive; how
+ * long it waits at most (`at_most`, in milliseconds), after which
+ * `the_wait_is_over`. Marta returns the drill damaged; her screen stays
+ * open until `tools` takes it into the workshop.
+ */
+export interface Follows<events extends Events, followed extends Component> {
+  readonly facts: readonly followed[]
+  readonly projection: {
+    readonly [name in keyof FactsByName<followed>]: (
+      fact: z.output<FactsByName<followed>[name]>,
+    ) => EventOf<events>
+  }
+  readonly at_most: number
+}
+
+/**
+ * The flow of a command leaf (DOM-3, D72.1): with no `ends` and no
+ * `follows`, every event ends it, the outcome's projection is the last;
+ * else it declares which of its events end it (`ends`), and an event of its
+ * outcome among the others keeps it open, on what it `follows`. Declared
+ * with the events, not by each projection, so that the closed set and its
+ * terminals read without running.
+ */
+export type LeafFlow<events extends Events, followed extends Component> =
+  | { readonly ends?: never; readonly follows?: never }
+  | {
+      readonly ends: readonly (keyof events & string)[]
+      readonly follows: Follows<events, followed>
+    }
 
 /**
  * A command use case over another, declared in one argument whose parts have
@@ -1529,22 +1608,26 @@ export type CommandUseCaseOverBuilder<context, closes> = <
   const input extends CommandInput<z.ZodType, context & OperationContext>,
   const events extends Events,
   const limits extends string = never,
->(use_case: {
-  readonly use_case: use_case
-  readonly input: input
-  readonly is_refused_unless?: Readonly<
-    Record<limits, (context: context) => (input: z.output<SchemaOf<input>>) => boolean>
-  >
-  readonly creator: (
-    context: context & OperationContext,
-  ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
-  readonly events: events
-  readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
-}) => CommandUseCaseOver<
+  const followed extends Component = never,
+>(
+  use_case: {
+    readonly use_case: use_case
+    readonly input: input
+    readonly is_refused_unless?: Readonly<
+      Record<limits, (context: context) => (input: z.output<SchemaOf<input>>) => boolean>
+    >
+    readonly creator: (
+      context: context & OperationContext,
+    ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
+    readonly events: events
+    readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
+  } & LeafFlow<events, followed>,
+) => CommandUseCaseOver<
   use_case,
   input,
   events,
-  closes | ([limits] extends [never] ? never : Refused<limits>)
+  closes | ([limits] extends [never] ? never : Refused<limits>),
+  [followed] extends [never] ? never : WaitIsOver
 >
 
 /** The query a read use case reads. */
@@ -1962,9 +2045,9 @@ export type EventOutOf<events extends Events> = {
 
 /** The events of a command leaf: its own, how its path may close it, the base events. */
 export type CommandLeafEvent<leaf> = leaf extends {
-  [$UseCase]: { events: infer events extends Events; closes: infer closes }
+  [$UseCase]: { events: infer events extends Events; closes: infer closes; waits: infer waits }
 }
-  ? EventOutOf<events> | closes | InvalidRequest | IdentityAlreadyUsed
+  ? EventOutOf<events> | closes | waits | InvalidRequest | IdentityAlreadyUsed
   : never
 
 /**
@@ -1973,11 +2056,12 @@ export type CommandLeafEvent<leaf> = leaf extends {
  * the leaf's input in; its events out. The library computes the operation's
  * fingerprint at the leaf, over its path and its input as sent, after the
  * schema (D100), and gives it with the operation to the command port, which
- * compares it (D79.5).
+ * compares it (D79.5). The entry gives the correlation too, the client's or
+ * a new one (D72.7), which the leaf follows, if it follows (`Follows`).
  */
 export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer input }
   ? (
-      context: entry & OperationContext,
+      context: entry & OperationContext & CorrelationContext,
       input: z.input<SchemaOf<input>>,
     ) => AsyncIterable<CommandLeafEvent<leaf>>
   : never
@@ -2070,7 +2154,13 @@ export type ReadLeafPort<entry, leaf> = leaf extends {
 export type TreeLeaves = Readonly<
   Record<
     string,
-    | CommandUseCaseOver<CommandUseCase<Commands[string]>, CommandInput<z.ZodType>, Events, unknown>
+    | CommandUseCaseOver<
+        CommandUseCase<Commands[string]>,
+        CommandInput<z.ZodType>,
+        Events,
+        unknown,
+        unknown
+      >
     | ReadUseCaseOver<
         ReadUseCase<Queries[string]>,
         QueryInput<z.ZodType>,
@@ -2098,13 +2188,14 @@ export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>
  * The ports of the leaves of a tree (PER-6): the registry where the library
  * finds the nodes and the leaves by path, the node at the top, which takes
  * what the entry gives, and the leaves, command and read. Curried as
- * `command_use_case_ports`: then the ports the tree invokes.
+ * `command_use_case_ports`: then the ports the tree invokes, and the fact
+ * log a leaf that follows reads, by correlation (`Follows`).
  */
 export declare function tree_ports<const top, const use_cases extends TreeLeaves>(ports: {
   readonly registry: Registry
   readonly top: top
   readonly use_cases: use_cases
-}): (invoked: Invoked) => {
+}): (wired: { readonly invoked: Invoked; readonly log: FactLog }) => {
   readonly [name in keyof use_cases]: LeafPort<EntryOf<top>, use_cases[name]>
 }
 
