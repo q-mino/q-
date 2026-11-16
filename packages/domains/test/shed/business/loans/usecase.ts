@@ -65,9 +65,16 @@ export const the_ongoing_loans_of_a_member = read_use_case({
   facts: [fact.a_loan_has_become_overdue],
 })
 
-/** A member sees their reservations from today on. */
+/**
+ * A member sees their reservations from today on: Gianni opens "my
+ * reservations", reads the list, then follows it live; a booking appears, a
+ * cancellation takes one away. With the register goes one notice by name:
+ * the desk has notified the member that the tool they booked is in repair, a
+ * part of a step of its round (D111, A, 16 Nov 2026 (6)).
+ */
 export const the_reservations_of_a_member = read_use_case({
   query: query.the_reservations_of_a_member,
+  facts: [fact.a_member_has_been_notified_of_the_repair],
 })
 
 /**

@@ -74,7 +74,11 @@ export const continue_the_cancellation_of_reservations =
 export const the_ongoing_loans_of_a_member = usecase.the_ongoing_loans_of_a_member
 
 /**
- * A member sees their reservations from today on.
+ * A member sees their reservations from today on: Gianni opens "my
+ * reservations", reads the list, then follows it live; a booking appears, a
+ * cancellation takes one away. With the register goes one notice by name:
+ * the desk has notified the member that the tool they booked is in repair, a
+ * part of a step of its round (D111, A, 16 Nov 2026 (6)).
  *
  * @see {@link usecase.the_reservations_of_a_member}
  */

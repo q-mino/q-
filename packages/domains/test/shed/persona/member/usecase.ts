@@ -174,3 +174,42 @@ export const my_loans = read_use_case_over({
     },
   },
 })
+
+/**
+ * Gianni opens "my reservations": the tools he booked, from today on, the
+ * closest day first, then follows them live; a booking appears, a
+ * cancellation takes one away. When a tool he booked goes to the workshop
+ * he reads "the tool you booked is in repair", with the row: the notice the
+ * desk recorded for his reservation, a part of a step of its round, which
+ * the stream projects as the part that touches the row (A, 16 Nov 2026 (6)).
+ */
+export const my_reservations = read_use_case_over({
+  use_case: loans.usecase.the_reservations_of_a_member,
+  input: z.strictObject({}),
+  creator: (context) => () => ({ member_id: context.card.id }),
+  entry: z.strictObject({
+    reservation_id: loans.id.reservation_id,
+    tool_id: tools.id.tool_id,
+    tool_name: value.tool_name,
+    day: wlib.day,
+  }),
+  projection: (entry) => ({
+    reservation_id: entry.id,
+    tool_id: entry.tool_id,
+    tool_name: entry.tool_name,
+    day: entry.day,
+  }),
+  stream: {
+    identity: 'reservation_id',
+    events: {
+      /** The drill Gianni booked for Thursday went to the workshop on Tuesday: the row says which, and when. */
+      the_tool_you_booked_is_in_repair: z.strictObject({}),
+    },
+    facts: {
+      a_member_has_been_notified_of_the_repair: () => ({
+        event: 'the_tool_you_booked_is_in_repair',
+        payload: {},
+      }),
+    },
+  },
+})

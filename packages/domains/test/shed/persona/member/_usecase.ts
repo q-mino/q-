@@ -40,6 +40,26 @@ export const my_loans_input = usecase.my_loans.input
 export type my_loans_input = z.output<typeof my_loans_input>
 
 /**
+ * Gianni opens "my reservations": the tools he booked, from today on, the
+ * closest day first, then follows them live; a booking appears, a
+ * cancellation takes one away. When a tool he booked goes to the workshop
+ * he reads "the tool you booked is in repair", with the row: the notice the
+ * desk recorded for his reservation, a part of a step of its round, which
+ * the stream projects as the part that touches the row (A, 16 Nov 2026 (6)).
+ *
+ * @see {@link usecase.my_reservations}
+ */
+export const my_reservations = usecase.my_reservations
+
+/**
+ * The input of `my_reservations`, declared inline.
+ *
+ * @see {@link usecase.my_reservations}
+ */
+export const my_reservations_input = usecase.my_reservations.input
+export type my_reservations_input = z.output<typeof my_reservations_input>
+
+/**
  * Marta brings the drill back, and her screen follows what her return sets
  * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
  * open until the workshop takes the drill in, a fact of `tools` that a

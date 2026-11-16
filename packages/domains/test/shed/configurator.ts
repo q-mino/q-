@@ -26,7 +26,12 @@ import {
 import { persona } from './persona/_node.ts'
 import { registry as persona_registry } from './persona/_registry.ts'
 import { registry as member_registry } from './persona/member/_registry.ts'
-import { borrow_a_tool, my_loans, return_a_tool } from './persona/member/_usecase.ts'
+import {
+  borrow_a_tool,
+  my_loans,
+  my_reservations,
+  return_a_tool,
+} from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import {
   put_a_repaired_tool_back_in_service,
@@ -56,7 +61,7 @@ export const shed = (cell: Cell) => (world: World) => {
     member: wlib.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       top: persona,
-      use_cases: { borrow_a_tool, return_a_tool, my_loans },
+      use_cases: { borrow_a_tool, return_a_tool, my_loans, my_reservations },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },

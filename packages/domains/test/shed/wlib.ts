@@ -1412,7 +1412,12 @@ export type FactLog = (from: position | undefined) => AsyncIterable<LogEvent>
  *   an entry the fact touches and that stays is the fact, a new untouched one
  *   entered, a missing one left. A whole read per fact of the domain: the
  *   adapter's author chooses it for the queries where that is cheap.
- * A query with no strategy is only read.
+ * A query with no strategy is only read. Either way a query's stream sees
+ * only the facts of its domain, as if each had a log of its own (DOM-8,
+ * D64.3): the native stream by the adapter, the composed one by the library,
+ * which skips a fact whose paths are not in the domain's registry, so that a
+ * fact of `loans` holding the drill's id touches no entry of `tools`'
+ * catalogue (A, 16 Nov 2026 (6)).
  */
 export type StreamStrategy<selection, source, field> =
   | { readonly strategy: 'native'; readonly stream: Stream<selection, source, field> }
@@ -1660,7 +1665,13 @@ type FactsOfUseCase<use_case> = use_case extends {
  * it chooses among them, from the fact's payload. Partial: a fact it does
  * not choose, or that the read use case does not name, goes out as `fact`,
  * the entry it leaves, so that a new fact of the business adds no event to
- * the surface (PER-17, D75.6).
+ * the surface (PER-17, D75.6). A named fact may be a part of a fact (D111):
+ * the library projects the part it names among those that touch the entry
+ * (DOM-17: the entry's identity among the part's resources), which it finds
+ * from the envelope and the query's identity, so that the stream's event
+ * stays as the adapter gives it; the step's part of the round of notices
+ * does not touch Gianni's R8, the notice does (A, 16 Nov 2026 (6)). Two
+ * named parts touching one entry come with their case.
  */
 export type FactProjection<
   facts extends Readonly<Record<string, Component>>,
@@ -2073,8 +2084,9 @@ export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer 
  * (`stream.identity`), typed as that field so that an identity of its own
  * can come without changing the port. A fact the leaf names goes out as its
  * own event (`events`), with the entry it leaves and its payload, projected
- * from the fact (D72.6, A, 14 Nov 2026); any other, as `fact`, with the
- * entry and not the fact. The position goes out as it is, opaque (D72.6);
+ * from the fact (D72.6, A, 14 Nov 2026), or from its part that touches the
+ * entry (A, 16 Nov 2026 (6)); any other, as `fact`, with the entry and not
+ * the fact. The position goes out as it is, opaque (D72.6);
  * the envelope and its resources never (PER-18, D107.4).
  */
 export type LeafStreamEvent<entry, identity, events extends Events = never> =

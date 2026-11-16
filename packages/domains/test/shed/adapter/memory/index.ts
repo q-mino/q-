@@ -357,15 +357,29 @@ const events_of =
   }
 
 /**
+ * Whether a fact is of the domain whose registry is given: a fact is of one
+ * domain (DOM-8), so any of its parts tells.
+ */
+const is_of_the_domain =
+  (registry: wlib.Registry) =>
+  (recorded: Recorded): boolean =>
+    recorded.fact.parts.some((part) => part.path in registry)
+
+/**
  * A stream from a position: the events of the facts kept from there, then
  * "caught up", then the events of each new fact; or "position no longer
- * available", when the cell keeps that position no longer.
+ * available", when the cell keeps that position no longer. Only the facts of
+ * the query's domain, as if it had a log of its own (DOM-8, D64.3): the
+ * cell keeps every domain's, and a fact of `loans` holding the drill's id
+ * would otherwise touch the drill in `tools`' catalogue (A, 16 Nov 2026 (6)).
  */
 const stream =
   (cell: Cell) =>
+  (registry: wlib.Registry) =>
   <candidate>(plan: Plan<candidate>) =>
   (from: wlib.position): AsyncIterable<Event> => {
-    const events = events_of(plan)
+    const events = (recorded: Recorded): readonly Event[] =>
+      is_of_the_domain(registry)(recorded) ? events_of(plan)(recorded) : []
     async function* live(position: wlib.position): AsyncGenerator<Event> {
       const recorded = await cell.after(position)
       yield* recorded.flatMap(events)
@@ -418,8 +432,12 @@ const log =
     return from_history()
   }
 
-/** The oracle streams every query natively: its stream is exact, state before and after each fact. */
-const native = (cell: Cell) => ({ strategy: 'native', stream: stream(cell) }) as const
+/**
+ * The oracle streams every query natively: its stream is exact, state before
+ * and after each fact, over the facts of the query's domain.
+ */
+const native = (cell: Cell) => (registry: wlib.Registry) =>
+  ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
 export const memory_adapter = (cell: Cell) => ({
   log: log(cell),
@@ -441,7 +459,7 @@ export const memory_adapter = (cell: Cell) => ({
       algebra: tool_selection,
       sources: tool_sources,
       read: read(cell),
-      streams: { the_catalogue: native(cell) },
+      streams: { the_catalogue: native(cell)(tools_registry) },
     }),
   },
   loans: {
@@ -475,7 +493,7 @@ export const memory_adapter = (cell: Cell) => ({
       algebra: loan_selection,
       sources: loan_sources,
       read: read(cell),
-      streams: { the_ongoing_loans_of_a_member: native(cell) },
+      streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
@@ -484,7 +502,7 @@ export const memory_adapter = (cell: Cell) => ({
       algebra: reservation_selection,
       sources: reservation_sources,
       read: read(cell),
-      streams: { the_reservations_of_a_member: native(cell) },
+      streams: { the_reservations_of_a_member: native(cell)(loans_registry) },
     }),
   },
   accounts: wlib.lookup_ports({
