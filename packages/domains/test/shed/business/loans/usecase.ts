@@ -45,6 +45,15 @@ export const cancel_the_reservations_of_a_tool = command_use_case({
 })
 
 /**
+ * The desk goes one reservation further on its work sheet, or closes it: a
+ * step of the cancellation of a tool's reservations (DOM-20). Invoked by the
+ * desk's own standing order, after each step.
+ */
+export const continue_the_cancellation_of_reservations = command_use_case({
+  command: command.continue_the_cancellation_of_reservations,
+})
+
+/**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, falls overdue, a return takes it
  * away. With the register goes one notice by name: a loan has fallen overdue

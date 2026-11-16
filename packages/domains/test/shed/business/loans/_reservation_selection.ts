@@ -22,6 +22,13 @@ export const the_reservation_is_of_this_member =
 export type the_reservation_is_of_this_member = z.output<typeof the_reservation_is_of_this_member>
 
 /**
+ * @see {@link selection.the_reservation_is_of_this_tool}
+ */
+export const the_reservation_is_of_this_tool =
+  selection.the_reservation_is_of_this_tool.brand<'business/loans/selection/reservation/the_reservation_is_of_this_tool'>()
+export type the_reservation_is_of_this_tool = z.output<typeof the_reservation_is_of_this_tool>
+
+/**
  * The reserved day is this day or a later one.
  *
  * @see {@link selection.the_reservation_is_from_this_day_on}

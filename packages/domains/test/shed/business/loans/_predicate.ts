@@ -85,6 +85,15 @@ export const a_reservation_has_this_id =
 export type a_reservation_has_this_id = z.output<typeof a_reservation_has_this_id>
 
 /**
+ * The reservation holds the tool for its day: it can still be cancelled.
+ *
+ * @see {@link predicate.the_reservation_is_booked}
+ */
+export const the_reservation_is_booked =
+  predicate.the_reservation_is_booked.brand<'business/loans/predicate/the_reservation_is_booked'>()
+export type the_reservation_is_booked = z.output<typeof the_reservation_is_booked>
+
+/**
  * The tool is booked for the day, by whoever.
  *
  * @see {@link predicate.the_tool_is_booked_for_the_day}

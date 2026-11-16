@@ -113,6 +113,15 @@ export const reservation_booked = value.reservation_booked
 export type reservation_booked = z.output<typeof reservation_booked>
 
 /**
+ * The tool is no longer held: the desk cancelled the reservation, when. Why
+ * (the tool retired) is the work sheet's, not the reservation's.
+ *
+ * @see {@link value.reservation_cancelled}
+ */
+export const reservation_cancelled = value.reservation_cancelled
+export type reservation_cancelled = z.output<typeof reservation_cancelled>
+
+/**
  * Where a reservation is in its course.
  *
  * @see {@link value.reservation_progress}
@@ -135,6 +144,14 @@ export type reservation = z.output<typeof reservation>
  */
 export const booked_reservation = value.booked_reservation
 export type booked_reservation = z.output<typeof booked_reservation>
+
+/**
+ * A reservation the desk cancelled.
+ *
+ * @see {@link value.cancelled_reservation}
+ */
+export const cancelled_reservation = value.cancelled_reservation
+export type cancelled_reservation = z.output<typeof cancelled_reservation>
 
 /**
  * What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed.

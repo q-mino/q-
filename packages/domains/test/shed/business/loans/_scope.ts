@@ -17,6 +17,7 @@ export const {
   OR,
   NOT,
   command,
+  cursor_step,
   query,
   command_use_case,
   read_use_case,

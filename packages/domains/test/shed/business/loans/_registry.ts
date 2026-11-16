@@ -33,16 +33,20 @@ export const registry = {
   'business/loans/value/returned_loan': value.returned_loan,
   'business/loans/value/reservation_stage': value.reservation_stage,
   'business/loans/value/reservation_booked': value.reservation_booked,
+  'business/loans/value/reservation_cancelled': value.reservation_cancelled,
   'business/loans/value/reservation_progress': value.reservation_progress,
   'business/loans/value/reservation': value.reservation,
   'business/loans/value/booked_reservation': value.booked_reservation,
+  'business/loans/value/cancelled_reservation': value.cancelled_reservation,
   'business/loans/value/ongoing_loan_entry': value.ongoing_loan_entry,
   'business/loans/value/reservation_entry': value.reservation_entry,
   'business/loans/value/cancellation_stage': value.cancellation_stage,
   'business/loans/value/cancellation_cancelling': value.cancellation_cancelling,
+  'business/loans/value/cancellation_complete': value.cancellation_complete,
   'business/loans/value/cancellation_progress': value.cancellation_progress,
   'business/loans/value/cancellation_of_reservations': value.cancellation_of_reservations,
   'business/loans/value/cancellation_under_way': value.cancellation_under_way,
+  'business/loans/value/completed_cancellation': value.completed_cancellation,
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
   'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
@@ -60,6 +64,10 @@ export const registry = {
     fact.the_loan_was_returned_before_it_became_overdue,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
+  'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
+  'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete':
+    fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
@@ -75,6 +83,7 @@ export const registry = {
   'business/loans/predicate/the_tool_is_on_loan_to_this_member':
     predicate.the_tool_is_on_loan_to_this_member,
   'business/loans/predicate/a_reservation_has_this_id': predicate.a_reservation_has_this_id,
+  'business/loans/predicate/the_reservation_is_booked': predicate.the_reservation_is_booked,
   'business/loans/predicate/the_tool_is_booked_for_the_day':
     predicate.the_tool_is_booked_for_the_day,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member':
@@ -108,6 +117,14 @@ export const registry = {
     command.cancel_the_reservations_of_a_tool,
   'business/loans/command/cancel_the_reservations_of_a_tool_input':
     command.cancel_the_reservations_of_a_tool_input,
+  'business/loans/command/cancel_a_reservation': command.cancel_a_reservation,
+  'business/loans/command/cancel_a_reservation_input': command.cancel_a_reservation_input,
+  'business/loans/command/the_reservation_is_still_ahead_for_the_tool':
+    command.the_reservation_is_still_ahead_for_the_tool,
+  'business/loans/command/continue_the_cancellation_of_reservations':
+    command.continue_the_cancellation_of_reservations,
+  'business/loans/command/continue_the_cancellation_of_reservations_input':
+    command.continue_the_cancellation_of_reservations_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -115,6 +132,8 @@ export const registry = {
     reservation_selection.the_reservation_is_booked,
   'business/loans/selection/reservation/the_reservation_is_of_this_member':
     reservation_selection.the_reservation_is_of_this_member,
+  'business/loans/selection/reservation/the_reservation_is_of_this_tool':
+    reservation_selection.the_reservation_is_of_this_tool,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
     reservation_selection.the_reservation_is_from_this_day_on,
   'business/loans/query/the_loan_is_ongoing_for_the_member':
@@ -135,6 +154,8 @@ export const registry = {
   'business/loans/usecase/declare_the_loan_overdue': usecase.declare_the_loan_overdue,
   'business/loans/usecase/cancel_the_reservations_of_a_tool':
     usecase.cancel_the_reservations_of_a_tool,
+  'business/loans/usecase/continue_the_cancellation_of_reservations':
+    usecase.continue_the_cancellation_of_reservations,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
 } satisfies wlib.Registry

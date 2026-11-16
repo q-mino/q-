@@ -53,3 +53,8 @@ export const the_due_date_of_the_loan_is_still_ahead =
 /** Whether the due date of an ongoing loan has passed; a returned loan has no term. */
 export const the_term_of_the_loan = (the_loan: value.loan): value.loan_term | undefined =>
   the_loan.progress.stage === 'ongoing' ? the_loan.progress.term : undefined
+
+/** The reservation holds the tool for its day; one that does not exist holds nothing. */
+export const the_reservation_is_booked = (
+  the_reservation: value.reservation | undefined,
+): boolean => the_reservation?.progress.stage === 'booked'

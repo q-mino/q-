@@ -11,9 +11,11 @@ import type * as loans_predicate from '../../business/loans/_predicate.ts'
 import type { loan_id, reservation_id } from '../../business/loans/_id.ts'
 import type {
   cancellation_of_reservations,
+  cancellation_progress,
   loan,
   loan_progress,
   reservation,
+  reservation_progress,
 } from '../../business/loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
@@ -40,8 +42,9 @@ type Reads = LoansState & ToolsState
 const ongoing = (state: Reads): readonly loan[] =>
   [...state.loans.values()].filter(loans_dsl.the_loan_is_ongoing)
 
-/** Every reservation is booked until a reservation can be cancelled (step 8): then a filter on the stage. */
-const booked = (state: Reads): readonly reservation[] => [...state.reservations.values()]
+/** The reservations that hold their tool for their day. */
+const booked = (state: Reads): readonly reservation[] =>
+  [...state.reservations.values()].filter(loans_dsl.the_reservation_is_booked)
 
 export const loans_fragments: wlib.PredicateFragments<
   wlib.PredicatesIn<typeof loans_predicate>,
@@ -68,6 +71,8 @@ export const loans_fragments: wlib.PredicateFragments<
     ),
   'business/loans/predicate/a_reservation_has_this_id': (p) => (state) =>
     state.reservations.has(p.reservation_id),
+  'business/loans/predicate/the_reservation_is_booked': (p) => (state) =>
+    loans_dsl.the_reservation_is_booked(state.reservations.get(p.reservation_id)),
   'business/loans/predicate/the_tool_is_booked_for_the_day': (p) => (state) =>
     booked(state).some(
       (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day === p.day,
@@ -134,11 +139,14 @@ export const reservation_selection: wlib.Algebra<
 > = {
   ...selection_operators<Reads, reservation>(),
   predicate: {
-    // Every reservation is booked until one can be cancelled (step 8): then a test of the stage.
-    'business/loans/selection/reservation/the_reservation_is_booked': () => () => () => true,
+    'business/loans/selection/reservation/the_reservation_is_booked': () => () =>
+      loans_dsl.the_reservation_is_booked,
     'business/loans/selection/reservation/the_reservation_is_of_this_member':
       (p) => () => (the_reservation) =>
         the_reservation.member_id === p.member_id,
+    'business/loans/selection/reservation/the_reservation_is_of_this_tool':
+      (p) => () => (the_reservation) =>
+        the_reservation.tool_id === p.tool_id,
     'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
       (p) => () => (the_reservation) =>
         the_reservation.day >= p.day,
@@ -181,6 +189,38 @@ const with_the_progress =
         }
   }
 
+/** A reservation's change of stage, by nesting, as a loan's. */
+const with_the_reservation_progress =
+  (changed: { readonly id: reservation_id; readonly progress: reservation_progress }) =>
+  (state: LoansState): LoansState => {
+    const the_reservation = state.reservations.get(changed.id)
+    return the_reservation === undefined
+      ? state
+      : {
+          ...state,
+          reservations: new Map(state.reservations).set(changed.id, {
+            ...the_reservation,
+            progress: changed.progress,
+          }),
+        }
+  }
+
+/** A work sheet's change of stage, by nesting: the tool and the start date stay. */
+const with_the_sheet_progress =
+  (changed: { readonly tool_id: tool_id; readonly progress: cancellation_progress }) =>
+  (state: LoansState): LoansState => {
+    const the_sheet = state.cancellations.get(changed.tool_id)
+    return the_sheet === undefined
+      ? state
+      : {
+          ...state,
+          cancellations: new Map(state.cancellations).set(changed.tool_id, {
+            ...the_sheet,
+            progress: changed.progress,
+          }),
+        }
+  }
+
 export const loans_writes: wlib.FactWrites<
   wlib.FactsIn<typeof loans_fact>,
   (state: LoansState) => LoansState
@@ -211,4 +251,13 @@ export const loans_writes: wlib.FactWrites<
       ...state,
       cancellations: new Map(state.cancellations).set(new_cancellation.tool_id, new_cancellation),
     }),
+  'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation }) =>
+    with_the_reservation_progress(cancelled_reservation),
+  'business/loans/fact/the_cancellation_has_advanced':
+    ({ tool_id, cursor }) =>
+    (state) =>
+      with_the_sheet_progress({ tool_id, progress: { stage: 'cancelling', cursor } })(state),
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+    completed_cancellation,
+  }) => with_the_sheet_progress(completed_cancellation),
 }

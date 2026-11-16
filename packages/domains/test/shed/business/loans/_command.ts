@@ -172,7 +172,7 @@ export type no_cancellation_of_the_reservations_of_the_tool_has_begun = z.output
  * longer be lent: Luca retired the ladder, and a reaction brings the news
  * (DOM-16). A set chosen by a condition is never changed by one fact: the
  * sheet is a process with a cursor, one reservation a step (DOM-20, D97,
- * D112, D113.4), its steps in part 2 of step 8. A second sheet for one tool
+ * D112, D113.4): `continue_the_cancellation_of_reservations`. A second sheet for one tool
  * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
  * a rejection, which a reaction sends to its dead letter, in sight.
  *
@@ -189,4 +189,58 @@ export const cancel_the_reservations_of_a_tool_input =
   command.cancel_the_reservations_of_a_tool.input
 export type cancel_the_reservations_of_a_tool_input = z.output<
   typeof cancel_the_reservations_of_a_tool_input
+>
+
+/**
+ * The desk cancels a reservation that still holds the tool. A transition of
+ * the reservation's life cycle (DOM-19) with no use case of its own: no one
+ * cancels a reservation by itself yet; the work sheet composes it into its
+ * step (D111).
+ *
+ * @see {@link command.cancel_a_reservation}
+ */
+export const cancel_a_reservation = command.cancel_a_reservation
+
+/**
+ * The input of `cancel_a_reservation`, declared inline.
+ *
+ * @see {@link command.cancel_a_reservation}
+ */
+export const cancel_a_reservation_input = command.cancel_a_reservation.input
+export type cancel_a_reservation_input = z.output<typeof cancel_a_reservation_input>
+
+/**
+ * The reservations the work sheet goes through: booked, of the tool, from the day on.
+ *
+ * @see {@link command.the_reservation_is_still_ahead_for_the_tool}
+ */
+export const the_reservation_is_still_ahead_for_the_tool =
+  command.the_reservation_is_still_ahead_for_the_tool
+export type the_reservation_is_still_ahead_for_the_tool = z.output<
+  typeof the_reservation_is_still_ahead_for_the_tool
+>
+
+/**
+ * The desk takes the next reservation on its work sheet and cancels it, or,
+ * none left, closes the sheet (DOM-20, D112.2): the ladder is retired, the
+ * first step cancels Marta's Saturday, the second Gianni's Sunday, the third
+ * closes. The reservations still ahead from the day the sheet was opened,
+ * the closest day first, then by id (D109); the cursor the library keeps on
+ * the sheet marks where the desk stands, so that a step delivered again is
+ * the same step (DOM-11), and one reservation is cancelled once.
+ *
+ * @see {@link command.continue_the_cancellation_of_reservations}
+ */
+export const continue_the_cancellation_of_reservations =
+  command.continue_the_cancellation_of_reservations
+
+/**
+ * The input of `continue_the_cancellation_of_reservations`, declared inline.
+ *
+ * @see {@link command.continue_the_cancellation_of_reservations}
+ */
+export const continue_the_cancellation_of_reservations_input =
+  command.continue_the_cancellation_of_reservations.input
+export type continue_the_cancellation_of_reservations_input = z.output<
+  typeof continue_the_cancellation_of_reservations_input
 >

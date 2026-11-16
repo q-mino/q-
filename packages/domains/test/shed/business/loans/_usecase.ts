@@ -53,6 +53,16 @@ export const declare_the_loan_overdue = usecase.declare_the_loan_overdue
 export const cancel_the_reservations_of_a_tool = usecase.cancel_the_reservations_of_a_tool
 
 /**
+ * The desk goes one reservation further on its work sheet, or closes it: a
+ * step of the cancellation of a tool's reservations (DOM-20). Invoked by the
+ * desk's own standing order, after each step.
+ *
+ * @see {@link usecase.continue_the_cancellation_of_reservations}
+ */
+export const continue_the_cancellation_of_reservations =
+  usecase.continue_the_cancellation_of_reservations
+
+/**
  * A member sees the tools they have: Marta opens "my loans", reads the list,
  * then follows it live; a loan appears, falls overdue, a return takes it
  * away. With the register goes one notice by name: a loan has fallen overdue

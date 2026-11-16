@@ -2,6 +2,7 @@ import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
 import {
   command,
+  cursor_step,
   AND,
   NOT,
   pick,
@@ -10,6 +11,7 @@ import {
   fact,
   id,
   predicate,
+  reservation_selection,
   value,
   tools,
 } from './_scope_command.ts'
@@ -345,7 +347,7 @@ export const no_cancellation_of_the_reservations_of_the_tool_has_begun = NOT(
  * longer be lent: Luca retired the ladder, and a reaction brings the news
  * (DOM-16). A set chosen by a condition is never changed by one fact: the
  * sheet is a process with a cursor, one reservation a step (DOM-20, D97,
- * D112, D113.4), its steps in part 2 of step 8. A second sheet for one tool
+ * D112, D113.4): `continue_the_cancellation_of_reservations`. A second sheet for one tool
  * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
  * a rejection, which a reaction sends to its dead letter, in sight.
  */
@@ -370,5 +372,81 @@ export const cancel_the_reservations_of_a_tool = command({
         },
       },
     ],
+  }),
+})
+
+/**
+ * The desk cancels a reservation that still holds the tool. A transition of
+ * the reservation's life cycle (DOM-19) with no use case of its own: no one
+ * cancels a reservation by itself yet; the work sheet composes it into its
+ * step (D111).
+ */
+export const cancel_a_reservation = command({
+  input: z.strictObject({
+    reservation_id: id.reservation_id,
+  }),
+  outcomes: {
+    the_reservation_is_booked_so_it_is_cancelled: [
+      predicate.the_reservation_is_booked,
+      fact.a_reservation_has_been_cancelled,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_reservation_is_booked_so_it_is_cancelled: [
+      { reservation_id: input.reservation_id },
+      {
+        cancelled_reservation: {
+          id: input.reservation_id,
+          progress: { stage: 'cancelled', cancellation_date: context.now },
+        },
+      },
+    ],
+  }),
+})
+
+/** The reservations the work sheet goes through: booked, of the tool, from the day on. */
+export const the_reservation_is_still_ahead_for_the_tool = AND({
+  the_reservation_is_booked: reservation_selection.the_reservation_is_booked,
+  the_reservation_is_of_the_tool: reservation_selection.the_reservation_is_of_this_tool,
+  the_day_has_not_passed: reservation_selection.the_reservation_is_from_this_day_on,
+})
+
+/**
+ * The desk takes the next reservation on its work sheet and cancels it, or,
+ * none left, closes the sheet (DOM-20, D112.2): the ladder is retired, the
+ * first step cancels Marta's Saturday, the second Gianni's Sunday, the third
+ * closes. The reservations still ahead from the day the sheet was opened,
+ * the closest day first, then by id (D109); the cursor the library keeps on
+ * the sheet marks where the desk stands, so that a step delivered again is
+ * the same step (DOM-11), and one reservation is cancelled once.
+ */
+export const continue_the_cancellation_of_reservations = cursor_step({
+  input: z.strictObject({
+    tool_id: tools.id.tool_id,
+  }),
+  reads: value.cancellation_under_way,
+  fields: value.booked_reservation,
+  identity: 'id',
+  selection: the_reservation_is_still_ahead_for_the_tool,
+  order: { day: 'ascending' },
+  composes: cancel_a_reservation,
+  outcomes: {
+    advances: fact.the_cancellation_has_advanced,
+    completes: fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+  },
+  creator: (context) => () => (sheet) => ({
+    selection: {
+      the_reservation_is_booked: {},
+      the_reservation_is_of_the_tool: { tool_id: sheet.tool_id },
+      the_day_has_not_passed: { day: dsl.today(sheet.start_date) },
+    },
+    composes: (reservation) => ({ reservation_id: reservation.id }),
+    advances: { tool_id: sheet.tool_id },
+    completes: {
+      completed_cancellation: {
+        tool_id: sheet.tool_id,
+        progress: { stage: 'complete', end_date: context.now },
+      },
+    },
   }),
 })

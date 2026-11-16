@@ -70,6 +70,13 @@ export const a_reservation_has_this_id = predicate({
   }),
 })
 
+/** The reservation holds the tool for its day: it can still be cancelled. */
+export const the_reservation_is_booked = predicate({
+  parameters: z.strictObject({
+    reservation_id: id.reservation_id,
+  }),
+})
+
 /** The tool is booked for the day, by whoever. */
 export const the_tool_is_booked_for_the_day = predicate({
   parameters: z.strictObject({

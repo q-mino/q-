@@ -68,16 +68,27 @@ export const returned_loan = loan.extend({
   progress: loan_returned,
 })
 
-/** Grows with the steps: `cancelled` (step 8). */
-export const reservation_stage = z.enum(['booked'])
+export const reservation_stage = z.enum(['booked', 'cancelled'])
 
 /** The tool is held for the member on the day. */
 export const reservation_booked = z.strictObject({
   stage: z.literal(reservation_stage.enum.booked),
 })
 
+/**
+ * The tool is no longer held: the desk cancelled the reservation, when. Why
+ * (the tool retired) is the work sheet's, not the reservation's.
+ */
+export const reservation_cancelled = z.strictObject({
+  stage: z.literal(reservation_stage.enum.cancelled),
+  cancellation_date: date_time_string,
+})
+
 /** Where a reservation is in its course. */
-export const reservation_progress = z.discriminatedUnion('stage', [reservation_booked])
+export const reservation_progress = z.discriminatedUnion('stage', [
+  reservation_booked,
+  reservation_cancelled,
+])
 
 /** A reservation: a tool held for a member on a day. By nesting, as a loan. */
 export const reservation = z.strictObject({
@@ -92,6 +103,11 @@ export const reservation = z.strictObject({
 /** A reservation in force. */
 export const booked_reservation = reservation.extend({
   progress: reservation_booked,
+})
+
+/** A reservation the desk cancelled. */
+export const cancelled_reservation = reservation.extend({
+  progress: reservation_cancelled,
 })
 
 /** What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed. */

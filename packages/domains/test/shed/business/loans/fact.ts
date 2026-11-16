@@ -99,11 +99,42 @@ export const the_loan_was_returned_before_it_became_overdue = fact({
 
 /**
  * The desk has opened its work sheet for the tool's reservations (D97,
- * D112): the whole new cancellation. Its steps, one reservation each, come
- * with part 2 of step 8.
+ * D112): the whole new cancellation. Its steps cancel one reservation each.
  */
 export const the_cancellation_of_the_reservations_of_a_tool_has_begun = fact({
   payload: z.strictObject({
     new_cancellation: value.cancellation_under_way,
+  }),
+})
+
+/**
+ * The desk cancelled a reservation: a partial value, as a return, the
+ * reservation's id and its new progress, whole. Recorded as a part of a step
+ * of the work sheet (D111), not alone: no one cancels a reservation by
+ * itself yet.
+ */
+export const a_reservation_has_been_cancelled = fact({
+  payload: z.strictObject({
+    cancelled_reservation: value.cancelled_reservation.pick({ id: true, progress: true }),
+  }),
+})
+
+/**
+ * The desk went one reservation further on the work sheet of the tool: the
+ * step's part (D111, D112.2), beside the cancellation it applied. A partial
+ * value: the sheet stays under way, its cursor at the reservation handled,
+ * written by the library (DOM-20).
+ */
+export const the_cancellation_has_advanced = fact({
+  payload: z.strictObject({
+    tool_id: tools.id.tool_id,
+    cursor: wlib.cursor,
+  }),
+})
+
+/** No reservation of the tool is left ahead: the desk closes its work sheet (D112.2). */
+export const the_cancellation_of_the_reservations_of_a_tool_is_complete = fact({
+  payload: z.strictObject({
+    completed_cancellation: value.completed_cancellation.pick({ tool_id: true, progress: true }),
   }),
 })

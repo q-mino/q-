@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { selection, id } from './_scope_selection.ts'
+import { selection, id, tools } from './_scope_selection.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).
 
@@ -13,6 +13,13 @@ export const the_reservation_is_of_this_member = selection({
   subject: 'reservation',
   parameters: z.strictObject({
     member_id: id.member_id,
+  }),
+})
+
+export const the_reservation_is_of_this_tool = selection({
+  subject: 'reservation',
+  parameters: z.strictObject({
+    tool_id: tools.id.tool_id,
   }),
 })
 

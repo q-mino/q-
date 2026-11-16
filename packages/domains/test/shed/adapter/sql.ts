@@ -110,6 +110,8 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and member_id = ${p.member_id} and stage = 'ongoing')`,
   'business/loans/predicate/a_reservation_has_this_id': (p) =>
     sql`exists (select 1 from reservations where id = ${p.reservation_id})`,
+  'business/loans/predicate/the_reservation_is_booked': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
@@ -148,6 +150,8 @@ const reservation_selection_fragments: wlib.PredicateFragments<
     sql`candidate.stage = 'booked'`,
   'business/loans/selection/reservation/the_reservation_is_of_this_member': (p) =>
     sql`candidate.member_id = ${p.member_id}`,
+  'business/loans/selection/reservation/the_reservation_is_of_this_tool': (p) =>
+    sql`candidate.tool_id = ${p.tool_id}`,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
     sql`candidate.day >= ${p.day}`,
 }
@@ -197,6 +201,17 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     new_cancellation: c,
   }) => [
     sql`insert into cancellations (tool_id, start_date, stage) values (${c.tool_id}, ${c.start_date}, ${c.progress.stage})`,
+  ],
+  'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation: r }) => [
+    sql`update reservations set stage = ${r.progress.stage}, cancellation_date = ${r.progress.cancellation_date} where id = ${r.id}`,
+  ],
+  'business/loans/fact/the_cancellation_has_advanced': (c) => [
+    sql`update cancellations set cursor = ${c.cursor} where tool_id = ${c.tool_id}`,
+  ],
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+    completed_cancellation: c,
+  }) => [
+    sql`update cancellations set stage = ${c.progress.stage}, cursor = null, end_date = ${c.progress.end_date} where tool_id = ${c.tool_id}`,
   ],
 }
 
