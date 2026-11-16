@@ -5,7 +5,9 @@
 // of `tools` and `loans`, its nodes the lookups of `accounts`, found by path
 // (`Invoked`). The effect executor of `loans` (DOM-14) delivers its effects
 // to the world the oracle fakes, and brings the eve of a due date, and the
-// due date, back to their returns. Nothing runs: the library is wished.
+// due date, back to their returns. The consumers of the reactions (DOM-16)
+// read the fact log of the cell and invoke the use cases of the offices they
+// move. Nothing runs: the library is wished.
 
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
@@ -23,6 +25,7 @@ import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import { retire_a_tool } from './persona/keeper/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
+import { registry as retirement_registry } from './reaction/retirement/_registry.ts'
 
 /** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
 export interface World {
@@ -66,6 +69,15 @@ export const shed = (cell: Cell) => (world: World) => {
       outbox: cell.outbox,
       returns: adapter.loans,
       state: cell.executor,
+      clock: world.clock,
+    }),
+    retirement: wlib.reaction_consumers({ registry: retirement_registry })({
+      'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled': {
+        log: adapter.log,
+        invokes: adapter.loans.cancel_the_reservations_of_a_tool,
+      },
+    })({
+      state: cell.reactions,
       clock: world.clock,
     }),
   }

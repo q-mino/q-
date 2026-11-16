@@ -75,14 +75,16 @@ export interface Cell {
   readonly get: () => State
   readonly record: (step: Step) => void
   readonly position: () => wlib.position
-  /** The facts recorded from a position on, inclusive (DOM-17). */
-  readonly history: (from: wlib.position) => History
+  /** The facts recorded from a position on, inclusive (DOM-17); from the first, with none. */
+  readonly history: (from: wlib.position | undefined) => History
   /** The facts recorded after a position, as soon as there is one. */
   readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
   /** The entries recorded with the facts, effect by effect (DOM-14). */
   readonly outbox: wlib.Outbox
   /** The state of the effect executors: positions per effect, dead letters, shown to a test. */
   readonly executor: wlib.ExecutorState
+  /** The state of the consumers of the reactions: positions per reaction, dead letters, shown to a test. */
+  readonly reactions: wlib.ReactionState
 }
 
 /** A recorded fact, at its position, with the state before and after it. */
@@ -295,10 +297,45 @@ const stream =
     return from_history()
   }
 
+/**
+ * The fact log of the cell (DOM-17): every fact of every domain, since the
+ * oracle keeps them in one value; a consumer skips the paths it does not
+ * read. The facts kept from a position, then "caught up", then each new one.
+ */
+const log =
+  (cell: Cell): wlib.FactLog =>
+  (from) => {
+    async function* live(position: wlib.position): AsyncGenerator<wlib.LogEvent> {
+      const recorded = await cell.after(position)
+      yield* recorded.map((fact): wlib.LogEvent => ({
+        event: 'fact',
+        position: fact.position,
+        fact: fact.fact,
+      }))
+      yield* live(recorded.at(-1)?.position ?? position)
+    }
+    async function* from_history(): AsyncGenerator<wlib.LogEvent> {
+      const history = cell.history(from)
+      if (history.history === 'forgotten') {
+        yield { event: 'position_unavailable' }
+        return
+      }
+      yield* history.recorded.map((fact): wlib.LogEvent => ({
+        event: 'fact',
+        position: fact.position,
+        fact: fact.fact,
+      }))
+      yield { event: 'caught_up', position: history.position }
+      yield* live(history.position)
+    }
+    return from_history()
+  }
+
 /** The oracle streams every query natively: its stream is exact, state before and after each fact. */
 const native = (cell: Cell) => ({ strategy: 'native', stream: stream(cell) }) as const
 
 export const memory_adapter = (cell: Cell) => ({
+  log: log(cell),
   tools: {
     ...wlib.command_use_case_ports({
       registry: tools_registry,

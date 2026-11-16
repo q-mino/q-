@@ -916,10 +916,10 @@ export type LogEvent =
 /**
  * The adapter's fact log (DOM-17): the facts it records with their writes
  * (DOM-8), from a position on, inclusive, then each new one as it is
- * recorded. The library reads it to compose streams, and later to deliver
- * facts to reactions (step 8).
+ * recorded; from the first it keeps, with no position. The library reads
+ * it to compose streams and to deliver facts to reactions (DOM-16).
  */
-export type FactLog = (from: position) => AsyncIterable<LogEvent>
+export type FactLog = (from: position | undefined) => AsyncIterable<LogEvent>
 
 /**
  * How an adapter streams a query (LIB-8), declared query by query, since
@@ -2020,6 +2020,104 @@ export type ReactionBuilder = <
     ? unknown
     : { readonly 'a reaction reacts to a fact (DOM-16)': PathOf<Strays<fact, Path<'fact'>>> }),
 ) => Reaction<fact, use_case>
+
+/**
+ * A reaction's operation (DOM-16, D91.3, LIB-10): its scope the reaction's
+ * path ("system · reaction R"), its id a stable function of the library over
+ * that path and the operation that recorded the fact (DOM-10), so that a
+ * fact delivered again is the duplicate branch (DOM-11): Luca retires the
+ * ladder, the consumer falls before saving its position, the fact comes
+ * again, one work sheet (TST-4). The part of a composite fact comes with its
+ * case (D113.3). In the stability corpus: it never changes once released.
+ */
+export declare const reaction_operation: (reaction: string) => (fact: Operation) => Operation
+
+/**
+ * A dead letter of a reaction (D89.7, D67.3): the fact, at its position, and
+ * why. Operational, outside the domains, shown, never a business fact;
+ * redelivered after a fix with the same operation, the command evaluated
+ * again (a refusal leaves no fact, D79.2), or discarded by an operator, with
+ * a trace. Its cause, an ADT:
+ * - `rejected`: the command refused, its failures;
+ * - `identity_already_used`: the operation came back with another
+ *   fingerprint; the first outcome stands.
+ */
+export interface ReactionDeadLetter {
+  readonly reaction: string
+  readonly position: position
+  readonly fact: StoredEnvelope
+  readonly cause:
+    | { readonly cause: 'rejected'; readonly failures: readonly Failure<Outcomes>[] }
+    | { readonly cause: 'identity_already_used' }
+}
+
+/**
+ * Where the consumers of reactions keep their own state, durable (D89.6):
+ * a position per reaction (none before its first fact), its dead letters.
+ */
+export interface ReactionState {
+  readonly position: (reaction: string) => Promise<position | undefined>
+  readonly advance: (reaction: string) => (to: position) => Promise<void>
+  readonly dead_letter: (letter: ReactionDeadLetter) => Promise<void>
+}
+
+/** The paths of the reactions of a registry. */
+type ReactionPaths<registry> = {
+  [path in keyof registry & string]: registry[path] extends { [$Reaction]: unknown } ? path : never
+}[keyof registry & string]
+
+/**
+ * What a reaction is wired to: the fact log of the store of its fact's
+ * domain (DOM-17), and the port of the use case it invokes.
+ */
+export type ReactionWiring<reaction> = reaction extends {
+  [$Reaction]: { invokes: infer use_case }
+}
+  ? { readonly log: FactLog; readonly invokes: CommandUseCasePort<use_case> }
+  : never
+
+/** The wirings of the reactions of a registry, by path: exhaustive, so that a reaction not wired does not compile. */
+export type ReactionWirings<registry> = {
+  readonly [path in ReactionPaths<registry>]: ReactionWiring<registry[path]>
+}
+
+/** The running consumers of a set of reactions: they stop when asked, after the fact they are delivering. */
+export interface ReactionConsumers {
+  readonly stop: () => Promise<void>
+}
+
+/**
+ * The consumers of a set of reactions (DOM-16, PER-12, D89.6): internal
+ * entries, not personas, one durable consumer per reaction, its own delivery
+ * unit, with its own position and dead letters. Each reads its fact log from
+ * its position (the first fact the log keeps, with none: in Shed every
+ * reaction is there from the start; where a reaction added later starts is
+ * the deployment's, D64.3), in the order of the log, so in order per
+ * resource; skips the facts of other paths; translates its fact purely
+ * (D89.3) and invokes its use case with `reaction_operation` and the
+ * clock's `now`. Then, by the outcome:
+ * - applied (an exact duplicate too, the recorded fact): it advances;
+ * - rejected, identity already used: to its dead letter, then it advances;
+ * - a technical abort (the port fails, the process falls): it does not
+ *   advance, and delivers again from its position (D65.6), the duplicate
+ *   branch covering what was applied.
+ * Holding the later facts of a dead-lettered fact's resources (D94.7) comes
+ * with its case. The contract is the order per resource, not a total one: a
+ * consumer may deliver facts of disjoint resources in parallel (partitions
+ * by resource, one consumer active per partition at a time, else two
+ * instances may swap two facts of one tool), its position then the
+ * partition's: the library's and the adapter's, not the domain's (A, 16
+ * Nov 2026). Curried as `effect_executor`: the registry of the
+ * reactions; their wirings; the state and the clock.
+ */
+export declare function reaction_consumers<const registry extends Registry>(reactions: {
+  readonly registry: registry
+}): (
+  wirings: ReactionWirings<registry>,
+) => (ports: {
+  readonly state: ReactionState
+  readonly clock: () => date_time_string
+}) => ReactionConsumers
 
 // ---------------------------------------------------------------------------
 // Lookups (PER-9): a read of one key, which gives its value or "not known",

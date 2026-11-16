@@ -314,22 +314,37 @@ const log =
       const last = facts.at(-1)
       yield* live(last?.event === 'fact' ? last.position : position)
     }
-    async function* from_position(): AsyncGenerator<wlib.LogEvent> {
+    async function* from_position(start: wlib.position): AsyncGenerator<wlib.LogEvent> {
       const [kept] = await database.transaction((tx) =>
-        tx.booleans([sql`exists (select 1 from facts where sequence = ${from})`]),
+        tx.booleans([sql`exists (select 1 from facts where sequence = ${start})`]),
       )
       if (kept !== true) {
         yield { event: 'position_unavailable' }
         return
       }
-      const facts = (await rows(sql`sequence >= ${from}`)).map(as_fact)
+      const facts = (await rows(sql`sequence >= ${start}`)).map(as_fact)
       yield* facts
       const last = facts.at(-1)
-      const position = last?.event === 'fact' ? last.position : from
+      const position = last?.event === 'fact' ? last.position : start
       yield { event: 'caught_up', position }
       yield* live(position)
     }
-    return from_position()
+    async function* from_the_first(): AsyncGenerator<wlib.LogEvent> {
+      // The facts and the position in one snapshot, so that none falls between.
+      const [kept, position] = await database.transaction(
+        async (tx) =>
+          [
+            await tx.rows(
+              sql`select sequence, path, payload, resources, operation_scope, operation_id from facts order by sequence`,
+            ),
+            await tx.position(),
+          ] as const,
+      )
+      yield* kept.map(as_fact)
+      yield { event: 'caught_up', position }
+      yield* live(position)
+    }
+    return from === undefined ? from_the_first() : from_position(from)
   }
 
 // The sources of the queries: where the candidates are, how each field reads.
