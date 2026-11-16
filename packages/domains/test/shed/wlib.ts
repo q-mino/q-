@@ -489,13 +489,18 @@ export interface Failure<outcomes extends Outcomes> {
  * in the paper (D56, D101.2). Whoever consumes facts matches on the path,
  * exhaustively as on an ADT (a `switch` on `path` with a `never` check, or a
  * record by path as `FactWrites`), and never reads the payload to know the
- * fact (D107). The other fields of the envelope come with their cases.
+ * fact (D107). The operation that recorded it is its identity: one
+ * operation in its scope records one fact (DOM-11), and it travels with the
+ * fact through any adapter, where a position may be renumbered; a reaction
+ * derives its own operation from it (LIB-10, A, 16 Nov 2026). The other
+ * fields of the envelope come with their cases.
  */
 export type Envelope<facts extends Component> = facts extends unknown
   ? {
       readonly path: PathOf<facts>
       readonly payload: z.output<facts>
       readonly resources: readonly Resource[]
+      readonly operation: Operation
     }
   : never
 
@@ -516,6 +521,7 @@ export interface StoredEnvelope {
   readonly path: string
   readonly payload: unknown
   readonly resources: readonly Resource[]
+  readonly operation: Operation
 }
 
 /**
