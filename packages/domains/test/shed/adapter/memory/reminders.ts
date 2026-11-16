@@ -18,7 +18,7 @@ export interface Reminder {
   readonly key: string
   readonly phone: string
   readonly tool_name: string
-  readonly due_date: wlib.date_time_string
+  readonly due_date: wlib.date_time
 }
 
 /** A notice of a repair as a phone receives it: the tool booked, and the day it was booked for. */

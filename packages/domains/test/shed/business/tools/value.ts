@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time_string } from '../../wlib.ts'
+import { date_time } from '../../wlib.ts'
 import { id } from './_scope_value.ts'
 
 export const tool_name = z.string().min(1).max(80)
@@ -15,7 +15,7 @@ export const retire_reason = z.enum(['broken', 'lost', 'worn_out', 'given_away']
 
 /** Why and when a tool left service. */
 export const retirement = z.strictObject({
-  date: date_time_string,
+  date: date_time,
   reason: retire_reason,
   notes: notes.optional(),
 })
@@ -27,7 +27,7 @@ export const retirement = z.strictObject({
  */
 export const repair = z.strictObject({
   id: id.repair_id,
-  since: date_time_string,
+  since: date_time,
 })
 
 /** A field a state does not have: in the type, `?: undefined`; in the data, absent. */
@@ -39,7 +39,7 @@ const every_tool_field = z.strictObject({
   name: tool_name,
   category: category,
   notes: notes.optional(),
-  addDate: date_time_string,
+  addDate: date_time,
   status: tool_status,
   repair: repair,
   retirement: retirement,

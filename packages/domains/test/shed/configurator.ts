@@ -47,7 +47,7 @@ import { registry as repair_registry } from './reaction/repair/_registry.ts'
 /** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
 export interface World {
   readonly phones: Phones
-  readonly clock: () => wlib.date_time_string
+  readonly clock: () => wlib.date_time
 }
 
 export const shed = (cell: Cell) => (world: World) => {

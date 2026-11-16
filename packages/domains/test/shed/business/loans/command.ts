@@ -252,7 +252,7 @@ export const remind_the_member_of_the_due_date = command({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_date: wlib.date_time_string,
+    due_date: wlib.date_time,
   }),
   outcomes: {
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [

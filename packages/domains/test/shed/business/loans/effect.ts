@@ -19,7 +19,7 @@ export const wait_until_the_eve_of_the_due_date = effect({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_date: wlib.date_time_string,
+    due_date: wlib.date_time,
   }),
 })
 
@@ -29,7 +29,7 @@ export const send_the_due_date_reminder = effect({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_date: wlib.date_time_string,
+    due_date: wlib.date_time,
   }),
 })
 

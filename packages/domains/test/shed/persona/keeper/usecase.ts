@@ -17,7 +17,7 @@ export const retire_a_tool = command_use_case_over({
   }),
   creator: () => (input) => ({ id: input.tool_id, reason: input.reason, notes: input.notes }),
   events: {
-    the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id, date: wlib.date_time_string }),
+    the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id, date: wlib.date_time }),
     the_tool_was_already_retired: z.strictObject({ tool_id: tools.id.tool_id }),
     /** The keeper knows which tool they asked for: no need to say it back. */
     there_is_no_such_tool: z.strictObject({}),
@@ -49,7 +49,7 @@ export const send_a_tool_to_repair = command_use_case_over({
   events: {
     the_tool_is_in_the_workshop: z.strictObject({
       tool_id: tools.id.tool_id,
-      since: wlib.date_time_string,
+      since: wlib.date_time,
     }),
     the_tool_was_already_in_the_workshop: z.strictObject({ tool_id: tools.id.tool_id }),
     the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id }),

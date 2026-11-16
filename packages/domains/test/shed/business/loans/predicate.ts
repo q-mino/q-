@@ -57,7 +57,7 @@ export const the_loan_is_of_this_tool = predicate({
 export const the_due_date_of_the_loan_is_still_ahead = predicate({
   parameters: z.strictObject({
     loan_id: id.loan_id,
-    now: wlib.date_time_string,
+    now: wlib.date_time,
   }),
 })
 

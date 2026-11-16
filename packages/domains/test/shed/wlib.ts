@@ -4,8 +4,8 @@ import * as z from 'zod'
 // is its name: no domain path is a bare name, so it meets no domain's brand.
 
 /** An instant, ISO 8601 with the time zone. */
-export const date_time_string = z.iso.datetime().brand<'date_time_string'>()
-export type date_time_string = z.output<typeof date_time_string>
+export const date_time = z.iso.datetime().brand<'date_time'>()
+export type date_time = z.output<typeof date_time>
 
 /** A calendar day, `YYYY-MM-DD`. */
 export const day = z.iso.date().brand<'day'>()
@@ -25,7 +25,7 @@ export type day = z.output<typeof day>
  * (D105.1).
  */
 export interface RootContext {
-  readonly now: date_time_string
+  readonly now: date_time
 }
 
 /** The part of the context a construct that reads only the time declares. */
@@ -325,7 +325,7 @@ export type ResolvedEntries<entries extends Entries> = {
   readonly [name in keyof entries]: {
     readonly id: z.input<typeof entry_id>
     readonly payload: z.input<entries[name]>
-    readonly not_before?: z.input<typeof date_time_string>
+    readonly not_before?: z.input<typeof date_time>
   }
 }
 
@@ -675,7 +675,7 @@ export interface StoredEntry {
   readonly effect: string
   readonly id: entry_id
   readonly payload: unknown
-  readonly not_before?: date_time_string
+  readonly not_before?: date_time
 }
 
 /**
@@ -2524,7 +2524,7 @@ export declare function effect_executor<
   readonly outbox: Outbox
   readonly returns: { readonly [name in keyof returns]: CommandUseCasePort<returns[name]> }
   readonly state: ExecutorState
-  readonly clock: () => date_time_string
+  readonly clock: () => date_time
 }) => EffectExecutor
 
 // ---------------------------------------------------------------------------
@@ -2689,7 +2689,7 @@ export declare function reaction_consumers<const registry extends Registry>(reac
   wirings: ReactionWirings<registry>,
 ) => (ports: {
   readonly state: ReactionState
-  readonly clock: () => date_time_string
+  readonly clock: () => date_time
 }) => ReactionConsumers
 
 // ---------------------------------------------------------------------------

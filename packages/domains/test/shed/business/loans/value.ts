@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cursor, date_time_string, day } from '../../wlib.ts'
+import { cursor, date_time, day } from '../../wlib.ts'
 import { id, tools } from './_scope_value.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
@@ -31,7 +31,7 @@ export const loan_ongoing = z.strictObject({
 /** The tool is back: when, and how. Late or on time is derived (dsl). */
 export const loan_returned = z.strictObject({
   stage: z.literal(loan_stage.enum.returned),
-  return_date: date_time_string,
+  return_date: date_time,
   condition: return_condition,
 })
 
@@ -46,8 +46,8 @@ export const loan = z.strictObject({
   id: id.loan_id,
   tool_id: tools.id.tool_id,
   member_id: id.member_id,
-  start_date: date_time_string,
-  due_date: date_time_string,
+  start_date: date_time,
+  due_date: date_time,
   progress: loan_progress,
 })
 
@@ -81,7 +81,7 @@ export const reservation_booked = z.strictObject({
  */
 export const reservation_cancelled = z.strictObject({
   stage: z.literal(reservation_stage.enum.cancelled),
-  cancellation_date: date_time_string,
+  cancellation_date: date_time,
 })
 
 /** Where a reservation is in its course. */
@@ -96,7 +96,7 @@ export const reservation = z.strictObject({
   tool_id: tools.id.tool_id,
   member_id: id.member_id,
   day: day,
-  booking_date: date_time_string,
+  booking_date: date_time,
   progress: reservation_progress,
 })
 
@@ -137,7 +137,7 @@ export const cancellation_cancelling = z.strictObject({
 /** No reservation of the tool is left ahead: the sheet is closed (D112.2). */
 export const cancellation_complete = z.strictObject({
   stage: z.literal(cancellation_stage.enum.complete),
-  end_date: date_time_string,
+  end_date: date_time,
 })
 
 /** Where the cancellation of a tool's reservations is in its course. */
@@ -154,7 +154,7 @@ export const cancellation_progress = z.discriminatedUnion('stage', [
  */
 export const cancellation_of_reservations = z.strictObject({
   tool_id: tools.id.tool_id,
-  start_date: date_time_string,
+  start_date: date_time,
   progress: cancellation_progress,
 })
 
@@ -185,7 +185,7 @@ export const repair_notice_round_notifying = z.strictObject({
 /** No reservation of the tool is left ahead: the round is over (D112.2). */
 export const repair_notice_round_complete = z.strictObject({
   stage: z.literal(repair_notice_round_stage.enum.complete),
-  end_date: date_time_string,
+  end_date: date_time,
 })
 
 /** Where the round of the notices of a repair is in its course. */
@@ -205,7 +205,7 @@ export const repair_notice_round_progress = z.discriminatedUnion('stage', [
 export const repair_notice_round = z.strictObject({
   repair_id: tools.id.repair_id,
   tool_id: tools.id.tool_id,
-  start_date: date_time_string,
+  start_date: date_time,
   progress: repair_notice_round_progress,
 })
 

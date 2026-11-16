@@ -35,7 +35,7 @@ export const borrow_a_tool = command_use_case_over({
     you_have_the_tool: z.strictObject({
       loan_id: loans.id.loan_id,
       tool_id: tools.id.tool_id,
-      due_date: wlib.date_time_string,
+      due_date: wlib.date_time,
     }),
     you_already_have_the_tool: z.strictObject({ tool_id: tools.id.tool_id }),
     /**
@@ -151,8 +151,8 @@ export const my_loans = read_use_case_over({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
-    start_date: wlib.date_time_string,
-    due_date: wlib.date_time_string,
+    start_date: wlib.date_time,
+    due_date: wlib.date_time,
     term: value.loan_term,
   }),
   projection: (entry) => ({
