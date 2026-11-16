@@ -38,6 +38,18 @@ export const the_loan_is_returned = predicate({
 })
 
 /**
+ * The loan is of this tool: the tool the member brings back is the one
+ * the loan lent. The member says which tool they hold, the desk checks it
+ * against the loan's card (A, 16 Nov 2026 (4)).
+ */
+export const the_loan_is_of_this_tool = predicate({
+  parameters: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+  }),
+})
+
+/**
  * The due date on the loan's card is still ahead at an instant: "bring it
  * back tomorrow" is still true. The instant is a parameter, the clock of
  * whoever asks (GR-8): time is not a fact (D92.4), the due date is.

@@ -12,6 +12,7 @@ import {
   the_tool_is_in_service,
   the_tool_is_in_the_catalogue,
   the_tool_is_retired,
+  the_tool_is_under_repair,
 } from '../../business/tools/_dsl.ts'
 import type { the_catalogue } from '../../business/tools/_query.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
@@ -31,6 +32,8 @@ export const tools_fragments: wlib.PredicateFragments<
     the_tool_is_in_service(state.tools.get(p.tool_id)),
   'business/tools/predicate/the_tool_is_retired': (p) => (state) =>
     the_tool_is_retired(state.tools.get(p.tool_id)),
+  'business/tools/predicate/the_tool_is_under_repair': (p) => (state) =>
+    the_tool_is_under_repair(state.tools.get(p.tool_id)),
 }
 
 // The reads of the subject `business/tools/selection/tool`: a tool of the catalogue.
@@ -69,6 +72,26 @@ export const tool_sources: {
   },
 }
 
+/** What every state of a tool keeps; a change of status writes the rest, by subtraction. */
+const what_stays = (the_tool: tool) => ({
+  id: the_tool.id,
+  name: the_tool.name,
+  category: the_tool.category,
+  notes: the_tool.notes,
+  addDate: the_tool.addDate,
+})
+
+/** A tool's change of status: what stays, and what the fact writes; a stay in repair it does not write is over. */
+const with_the_status =
+  (id: tool_id) =>
+  (changed: (stays: ReturnType<typeof what_stays>) => tool) =>
+  (state: ToolsState): ToolsState => {
+    const the_tool = state.tools.get(id)
+    return the_tool === undefined
+      ? state
+      : { tools: new Map(state.tools).set(id, changed(what_stays(the_tool))) }
+  }
+
 export const tools_writes: wlib.FactWrites<
   wlib.FactsIn<typeof tools_fact>,
   (state: ToolsState) => ToolsState
@@ -76,13 +99,13 @@ export const tools_writes: wlib.FactWrites<
   'business/tools/fact/a_tool_has_been_added':
     ({ added_tool }) =>
     (state) => ({ tools: new Map(state.tools).set(added_tool.id, added_tool) }),
-  'business/tools/fact/a_tool_has_been_retired':
-    ({ retired_tool }) =>
-    (state) => {
-      const the_tool = state.tools.get(retired_tool.id)
-      return the_tool === undefined
-        ? state
-        : { tools: new Map(state.tools).set(retired_tool.id, { ...the_tool, ...retired_tool }) }
-    },
+  'business/tools/fact/a_tool_has_been_retired': ({ retired_tool }) =>
+    with_the_status(retired_tool.id)((stays) => ({ ...stays, ...retired_tool })),
   'business/tools/fact/the_tool_was_already_retired': () => (state) => state,
+  'business/tools/fact/a_tool_has_been_sent_to_repair': ({ tool_under_repair }) =>
+    with_the_status(tool_under_repair.id)((stays) => ({ ...stays, ...tool_under_repair })),
+  'business/tools/fact/the_tool_was_already_under_repair': () => (state) => state,
+  'business/tools/fact/the_tool_was_retired_before_the_repair': () => (state) => state,
+  'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool }) =>
+    with_the_status(repaired_tool.id)((stays) => ({ ...stays, ...repaired_tool })),
 }

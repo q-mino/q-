@@ -43,9 +43,10 @@ export const the_member_already_booked_the_tool =
 export type the_member_already_booked_the_tool = z.output<typeof the_member_already_booked_the_tool>
 
 /**
- * A partial value: the loan's id and its new stage, whole. Tool, member and
- * dates stay as they were. Late or damaged are values of the return, not
- * other facts, until the business language needs them apart.
+ * A partial value: the loan's id, the tool it lent and its new stage,
+ * whole; member and dates stay as they were. Late or damaged are values of
+ * the return, not other facts (A, 16 Nov 2026 (4)): a standing order that
+ * cares for the damaged ones translates the others to nothing (D88.2).
  *
  * @see {@link fact.a_tool_has_been_returned}
  */

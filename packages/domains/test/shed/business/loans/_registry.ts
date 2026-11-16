@@ -78,6 +78,7 @@ export const registry = {
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
   'business/loans/predicate/the_loan_is_ongoing': predicate.the_loan_is_ongoing,
   'business/loans/predicate/the_loan_is_returned': predicate.the_loan_is_returned,
+  'business/loans/predicate/the_loan_is_of_this_tool': predicate.the_loan_is_of_this_tool,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead':
     predicate.the_due_date_of_the_loan_is_still_ahead,
   'business/loans/predicate/the_tool_is_on_loan': predicate.the_tool_is_on_loan,

@@ -12,3 +12,6 @@ export const the_tool_is_in_service = (the_tool: value.tool | undefined): boolea
 
 export const the_tool_is_retired = (the_tool: value.tool | undefined): boolean =>
   the_tool?.status === 'retired'
+
+export const the_tool_is_under_repair = (the_tool: value.tool | undefined): boolean =>
+  the_tool?.status === 'underRepair'

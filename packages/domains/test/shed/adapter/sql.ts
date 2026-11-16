@@ -10,7 +10,13 @@ import { registry as loans_registry } from '../business/loans/_registry.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'
 import type * as tools_predicate from '../business/tools/_predicate.ts'
 import type * as tool_selections from '../business/tools/_tool_selection.ts'
-import { add_a_tool, retire_a_tool, the_catalogue } from '../business/tools/_usecase.ts'
+import {
+  add_a_tool,
+  put_a_repaired_tool_back_in_service,
+  retire_a_tool,
+  send_a_tool_to_repair,
+  the_catalogue,
+} from '../business/tools/_usecase.ts'
 import type * as loans_fact from '../business/loans/_fact.ts'
 import type * as loans_predicate from '../business/loans/_predicate.ts'
 import type * as loan_selections from '../business/loans/_loan_selection.ts'
@@ -89,6 +95,8 @@ const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_pr
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'inService')`,
   'business/tools/predicate/the_tool_is_retired': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'retired')`,
+  'business/tools/predicate/the_tool_is_under_repair': (p) =>
+    sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair')`,
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
@@ -103,6 +111,8 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'ongoing')`,
   'business/loans/predicate/the_loan_is_returned': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and stage = 'returned')`,
+  'business/loans/predicate/the_loan_is_of_this_tool': (p) =>
+    sql`exists (select 1 from loans where id = ${p.loan_id} and tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and due_date > ${p.now})`,
   'business/loans/predicate/the_tool_is_on_loan': (p) =>
@@ -173,9 +183,17 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
     sql`insert into tools (id, name, category, notes, add_date, status) values (${t.id}, ${t.name}, ${t.category}, ${t.notes ?? null}, ${t.addDate}, ${t.status})`,
   ],
   'business/tools/fact/a_tool_has_been_retired': ({ retired_tool: t }) => [
-    sql`update tools set status = ${t.status}, retirement_date = ${t.retirement.date}, retirement_reason = ${t.retirement.reason}, retirement_notes = ${t.retirement.notes ?? null} where id = ${t.id}`,
+    sql`update tools set status = ${t.status}, repair_id = null, repair_since = null, retirement_date = ${t.retirement.date}, retirement_reason = ${t.retirement.reason}, retirement_notes = ${t.retirement.notes ?? null} where id = ${t.id}`,
   ],
   'business/tools/fact/the_tool_was_already_retired': () => [],
+  'business/tools/fact/a_tool_has_been_sent_to_repair': ({ tool_under_repair: t }) => [
+    sql`update tools set status = ${t.status}, repair_id = ${t.repair.id}, repair_since = ${t.repair.since} where id = ${t.id}`,
+  ],
+  'business/tools/fact/the_tool_was_already_under_repair': () => [],
+  'business/tools/fact/the_tool_was_retired_before_the_repair': () => [],
+  'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool: t }) => [
+    sql`update tools set status = ${t.status}, repair_id = null, repair_since = null where id = ${t.id}`,
+  ],
 }
 
 const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sql[]> = {
@@ -438,7 +456,12 @@ export const sql_adapter = (database: Database) => ({
   tools: {
     ...wlib.command_use_case_ports({
       registry: tools_registry,
-      use_cases: { add_a_tool, retire_a_tool },
+      use_cases: {
+        add_a_tool,
+        retire_a_tool,
+        send_a_tool_to_repair,
+        put_a_repaired_tool_back_in_service,
+      },
     })({
       algebra: algebra(tools_fragments),
       write: tools_writes,

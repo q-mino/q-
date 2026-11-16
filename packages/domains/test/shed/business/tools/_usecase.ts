@@ -19,6 +19,21 @@ export const add_a_tool = usecase.add_a_tool
 export const retire_a_tool = usecase.retire_a_tool
 
 /**
+ * The tool goes to the workshop: Luca found the drill broken on the shelf,
+ * or a standing order brings the news of a damaged return.
+ *
+ * @see {@link usecase.send_a_tool_to_repair}
+ */
+export const send_a_tool_to_repair = usecase.send_a_tool_to_repair
+
+/**
+ * The keeper puts a repaired tool back on the shelf.
+ *
+ * @see {@link usecase.put_a_repaired_tool_back_in_service}
+ */
+export const put_a_repaired_tool_back_in_service = usecase.put_a_repaired_tool_back_in_service
+
+/**
  * A visitor browses the catalogue: the garden tools, say, read once.
  *
  * @see {@link usecase.the_catalogue}

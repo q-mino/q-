@@ -22,3 +22,9 @@ export const the_tool_is_retired = predicate({
     tool_id: id.tool_id,
   }),
 })
+
+export const the_tool_is_under_repair = predicate({
+  parameters: z.strictObject({
+    tool_id: id.tool_id,
+  }),
+})

@@ -25,7 +25,7 @@ export const notes = value.notes
 export type notes = z.output<typeof notes>
 
 /**
- * Grows with the steps: `underRepair` (step 9).
+ * In service, lent and booked; under repair, neither, until it is back; retired, for good.
  *
  * @see {@link value.tool_status}
  */
@@ -37,6 +37,16 @@ export type tool_status = z.output<typeof tool_status>
  */
 export const retire_reason = value.retire_reason
 export type retire_reason = z.output<typeof retire_reason>
+
+/**
+ * A stay in repair: which one, and since when. Why it went (a damaged
+ * return, a tool found broken) is not the workshop's: the facts that sent
+ * it there say it.
+ *
+ * @see {@link value.repair}
+ */
+export const repair = value.repair
+export type repair = z.output<typeof repair>
 
 /**
  * Why and when a tool left service.
@@ -53,6 +63,14 @@ export type retirement = z.output<typeof retirement>
  */
 export const tool_in_service = value.tool_in_service
 export type tool_in_service = z.output<typeof tool_in_service>
+
+/**
+ * A tool in the workshop: it can be neither lent nor booked until it is back in service.
+ *
+ * @see {@link value.tool_under_repair}
+ */
+export const tool_under_repair = value.tool_under_repair
+export type tool_under_repair = z.output<typeof tool_under_repair>
 
 /**
  * A tool out of service; it stays in the catalogue, for the history of the loans.

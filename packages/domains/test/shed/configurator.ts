@@ -7,7 +7,7 @@
 // to the world the oracle fakes, and brings the eve of a due date, and the
 // due date, back to their returns. The consumers of the reactions (DOM-16)
 // read the fact log of the cell and invoke the use cases of the offices they
-// move: those of a procedure between offices (`retirement`), and those of an
+// move: those of a procedure between offices (`retirement`, `damage`), and those of an
 // office's own process (`loans`, its work sheet). Nothing runs: the library
 // is wished.
 
@@ -24,10 +24,15 @@ import { registry as persona_registry } from './persona/_registry.ts'
 import { registry as member_registry } from './persona/member/_registry.ts'
 import { borrow_a_tool, my_loans } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
-import { retire_a_tool } from './persona/keeper/_usecase.ts'
+import {
+  put_a_repaired_tool_back_in_service,
+  retire_a_tool,
+  send_a_tool_to_repair,
+} from './persona/keeper/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
 import { registry as retirement_registry } from './reaction/retirement/_registry.ts'
+import { registry as damage_registry } from './reaction/damage/_registry.ts'
 
 /** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
 export interface World {
@@ -51,7 +56,7 @@ export const shed = (cell: Cell) => (world: World) => {
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       top: persona,
-      use_cases: { retire_a_tool },
+      use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
     })(invoked),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
@@ -81,6 +86,15 @@ export const shed = (cell: Cell) => (world: World) => {
       'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up': {
         log: adapter.log,
         invokes: adapter.loans.continue_the_cancellation_of_reservations,
+      },
+    })({
+      state: cell.reactions,
+      clock: world.clock,
+    }),
+    damage: wlib.reaction_consumers({ registry: damage_registry })({
+      'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
+        log: adapter.log,
+        invokes: adapter.tools.send_a_tool_to_repair,
       },
     })({
       state: cell.reactions,

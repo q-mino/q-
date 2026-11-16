@@ -57,7 +57,7 @@ export const reserve_a_tool_input = command.reserve_a_tool.input
 export type reserve_a_tool_input = z.output<ReturnType<typeof reserve_a_tool_input>>
 
 /**
- * The requested loan exists and is ongoing.
+ * The requested loan exists, is ongoing, and lent the tool the member brings back.
  *
  * @see {@link command.the_loan_can_be_returned}
  */
@@ -73,6 +73,12 @@ export const the_loan_is_already_returned = command.the_loan_is_already_returned
 export type the_loan_is_already_returned = z.output<typeof the_loan_is_already_returned>
 
 /**
+ * The member brings a tool back, whole or damaged: Marta's drill, damaged,
+ * on Tuesday. She says which loan and which tool she holds; the desk checks
+ * the tool against the loan's card, and the fact names it, so that a
+ * standing order sends a damaged tool to the workshop (`reaction/damage`),
+ * reading only the fact (D89.3).
+ *
  * @see {@link command.return_a_tool}
  */
 export const return_a_tool = command.return_a_tool

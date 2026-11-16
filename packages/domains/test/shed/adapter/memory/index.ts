@@ -22,7 +22,13 @@ import {
   the_member_card_of_an_account,
 } from '../../auth/accounts/_lookup.ts'
 import { accounts_lookups, type AccountsState } from './accounts.ts'
-import { add_a_tool, retire_a_tool, the_catalogue } from '../../business/tools/_usecase.ts'
+import {
+  add_a_tool,
+  put_a_repaired_tool_back_in_service,
+  retire_a_tool,
+  send_a_tool_to_repair,
+  the_catalogue,
+} from '../../business/tools/_usecase.ts'
 import {
   borrow_a_tool,
   cancel_the_reservations_of_a_tool,
@@ -418,7 +424,12 @@ export const memory_adapter = (cell: Cell) => ({
   tools: {
     ...wlib.command_use_case_ports({
       registry: tools_registry,
-      use_cases: { add_a_tool, retire_a_tool },
+      use_cases: {
+        add_a_tool,
+        retire_a_tool,
+        send_a_tool_to_repair,
+        put_a_repaired_tool_back_in_service,
+      },
     })({
       algebra: algebra(tools_fragments),
       write: tools_writes,

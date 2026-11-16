@@ -27,3 +27,10 @@ export type the_tool_is_in_service = z.output<typeof the_tool_is_in_service>
 export const the_tool_is_retired =
   predicate.the_tool_is_retired.brand<'business/tools/predicate/the_tool_is_retired'>()
 export type the_tool_is_retired = z.output<typeof the_tool_is_retired>
+
+/**
+ * @see {@link predicate.the_tool_is_under_repair}
+ */
+export const the_tool_is_under_repair =
+  predicate.the_tool_is_under_repair.brand<'business/tools/predicate/the_tool_is_under_repair'>()
+export type the_tool_is_under_repair = z.output<typeof the_tool_is_under_repair>

@@ -152,10 +152,11 @@ export const reserve_a_tool = command({
   }),
 })
 
-/** The requested loan exists and is ongoing. */
+/** The requested loan exists, is ongoing, and lent the tool the member brings back. */
 export const the_loan_can_be_returned = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  the_requested_loan_is_of_the_tool_brought_back: predicate.the_loan_is_of_this_tool,
 })
 
 /** The requested loan exists and is already returned. */
@@ -164,9 +165,17 @@ export const the_loan_is_already_returned = AND({
   the_requested_loan_is_returned: predicate.the_loan_is_returned,
 })
 
+/**
+ * The member brings a tool back, whole or damaged: Marta's drill, damaged,
+ * on Tuesday. She says which loan and which tool she holds; the desk checks
+ * the tool against the loan's card, and the fact names it, so that a
+ * standing order sends a damaged tool to the workshop (`reaction/damage`),
+ * reading only the fact (D89.3).
+ */
 export const return_a_tool = command({
   input: z.strictObject({
     loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
     condition: value.return_condition,
   }),
   outcomes: {
@@ -181,10 +190,15 @@ export const return_a_tool = command({
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        the_requested_loan_is_of_the_tool_brought_back: {
+          loan_id: input.loan_id,
+          tool_id: input.tool_id,
+        },
       },
       {
         returned_loan: {
           id: input.loan_id,
+          tool_id: input.tool_id,
           progress: {
             stage: 'returned',
             return_date: context.now,

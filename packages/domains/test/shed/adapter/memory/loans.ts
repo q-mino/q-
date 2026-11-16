@@ -68,6 +68,8 @@ export const loans_fragments: wlib.PredicateFragments<
     loans_dsl.the_loan_is_ongoing(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_loan_is_returned': (p) => (state) =>
     loans_dsl.the_loan_is_returned(state.loans.get(p.loan_id)),
+  'business/loans/predicate/the_loan_is_of_this_tool': (p) => (state) =>
+    state.loans.get(p.loan_id)?.tool_id === p.tool_id,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) => (state) =>
     loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.now),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
