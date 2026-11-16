@@ -21,12 +21,19 @@ import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
 } from '../../business/loans/_query.ts'
+import type { continue_the_cancellation_of_reservations } from '../../business/loans/_command.ts'
 import type * as loan_selections from '../../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
 import type { tool_id } from '../../business/tools/_id.ts'
 import * as tools_dsl from '../../business/tools/_dsl.ts'
 import * as loans_dsl from '../../business/loans/_dsl.ts'
-import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
+import {
+  selection_operators,
+  type Field,
+  type ProcessRead,
+  type Selection,
+  type Source,
+} from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
 /** The loans and the reservations, by id; the desk's work sheets, by tool. */
@@ -169,6 +176,31 @@ export const reservation_sources: {
       tool_id: () => (the_reservation) => the_reservation.tool_id,
       tool_name: the_name_of_the_tool,
       day: () => (the_reservation) => the_reservation.day,
+    },
+  },
+}
+
+// The reads of the steps of `loans` (DOM-20): the work sheet by its tool, the
+// reservations it walks, whole.
+
+export const reservation_steps: {
+  readonly continue_the_cancellation_of_reservations: wlib.StepSource<
+    typeof continue_the_cancellation_of_reservations,
+    ProcessRead<Reads>,
+    Source<Reads, reservation>,
+    Field<Reads, reservation>
+  >
+} = {
+  continue_the_cancellation_of_reservations: {
+    reads: (input) => (state) => state.cancellations.get(input.tool_id),
+    from: the_reservations,
+    fields: {
+      id: () => (the_reservation) => the_reservation.id,
+      tool_id: () => (the_reservation) => the_reservation.tool_id,
+      member_id: () => (the_reservation) => the_reservation.member_id,
+      day: () => (the_reservation) => the_reservation.day,
+      booking_date: () => (the_reservation) => the_reservation.booking_date,
+      progress: () => (the_reservation) => the_reservation.progress,
     },
   },
 }

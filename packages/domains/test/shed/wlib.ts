@@ -608,18 +608,25 @@ export type FactWrites<facts extends Component, write> = {
 }
 
 /**
- * A branch ready to execute, in the order of the branches: its condition
- * composed, each leaf apart (to name the failures), its write, its fact in
- * its envelope and its outbox entries, which the adapter records with the
- * write, atomically (DOM-8, D12), for the streams (DOM-17) and the effect
- * executor (DOM-14) to read.
+ * What a branch writes: its writes, one per part of its fact, in the order
+ * of the parts (a command's one; a step's two, the step's part, then the
+ * composed transition's, DOM-10), its fact in its envelope and its outbox
+ * entries, which the adapter records with the writes, atomically (DOM-8,
+ * D12), for the streams (DOM-17) and the effect executor (DOM-14) to read.
  */
-export interface PlannedBranch<fragment, write> {
-  readonly condition: fragment
-  readonly leaves: readonly fragment[]
-  readonly write: write
+export interface PlannedWrite<write> {
+  readonly writes: readonly write[]
   readonly fact: StoredEnvelope
   readonly entries: readonly StoredEntry[]
+}
+
+/**
+ * A branch ready to execute, in the order of the branches: its condition
+ * composed, each leaf apart (to name the failures), and what it writes.
+ */
+export interface PlannedBranch<fragment, write> extends PlannedWrite<write> {
+  readonly condition: fragment
+  readonly leaves: readonly fragment[]
 }
 
 /**
@@ -651,6 +658,94 @@ export type Execution =
 export type Execute<fragment, write> = (
   plan: readonly PlannedBranch<fragment, write>[],
 ) => Promise<Execution>
+
+/**
+ * A field of the order key after which a step chooses (DOM-20, D109): the
+ * adapter's fragment of the field, its direction, and its value, which the
+ * library decodes from the cursor (D114).
+ */
+export interface OrderKeyValue<field> {
+  readonly field: field
+  readonly direction: Direction
+  readonly value: unknown
+}
+
+/**
+ * The operators of the selection of a step's instances: a query's, and the
+ * comparison with the cursor (`after`): the instances after the order key,
+ * its fields then the identity, lexicographic, a descending field reversed,
+ * in the value order of LIB-9.
+ */
+export interface StepAlgebra<predicates extends Component, selection, field> extends Algebra<
+  predicates,
+  selection
+> {
+  readonly after: (key: readonly OrderKeyValue<field>[]) => selection
+}
+
+/**
+ * The choice of a step (D112.2), an ADT: the process not found in the stage
+ * the step reads, nothing to write (the library names the read); or the walk
+ * over the instances, in the order closed by the identity (D109):
+ * - `instances`: the selection's instances after the cursor (every one,
+ *   before the first step);
+ * - `advances`: for an instance as read (its fields), the branches of the
+ *   composed transition, each with the step's part, its cursor at the
+ *   instance, before the transition's;
+ * - `passing_over`: the instances after one on which no branch of the
+ *   transition holds, which the choice passes over: the conditions of the
+ *   transition are part of the choice (D112.2, A, 16 Nov 2026 (3));
+ * - `completes`: none left, the closing.
+ */
+export type StepChoice<fragment, write, selection, source, field> =
+  | { readonly choice: 'not_found' }
+  | {
+      readonly choice: 'walk'
+      readonly instances: PlannedQuery<selection, source, field>
+      readonly advances: (instance: unknown) => readonly PlannedBranch<fragment, write>[]
+      readonly passing_over: (instance: unknown) => PlannedQuery<selection, source, field>
+      readonly completes: PlannedWrite<write>
+    }
+
+/**
+ * A step ready to execute (DOM-20), in one transaction of the adapter (one
+ * message, A, 16 Nov 2026): the read of its process (`read`), whose result,
+ * as stored or none, the adapter gives to `choose`, pure, the library's: it
+ * parses the process with the read's schema, runs the creator and plans the
+ * choice.
+ */
+export interface PlannedStep<fragment, write, read, selection, source, field> {
+  readonly read: read
+  readonly choose: (process: unknown) => StepChoice<fragment, write, selection, source, field>
+}
+
+/**
+ * What the adapter's execution of a step tells the library: it advanced, at
+ * an instance as read, the index of the transition's branch applied and the
+ * position of its fact; it completed, at its position; or the process was
+ * not found in the stage the step reads.
+ */
+export type StepExecution =
+  | {
+      readonly outcome: 'advanced'
+      readonly instance: unknown
+      readonly branch: number
+      readonly position: position
+    }
+  | { readonly outcome: 'completed'; readonly position: position }
+  | { readonly outcome: 'not_found' }
+
+/**
+ * The execution of a planned step, in one consistent step of the adapter:
+ * it reads the process; not found, nothing writes; else, the instances in
+ * order, the first on which a branch of the transition holds writes that
+ * branch, the instances before it passed over; none left, the closing
+ * writes. The oracle filters; SQL reads one instance at a time (`limit 1`),
+ * then the next past one passed over, in the same transaction.
+ */
+export type ExecuteStep<fragment, write, read, selection, source, field> = (
+  plan: PlannedStep<fragment, write, read, selection, source, field>,
+) => Promise<StepExecution>
 
 /** A failed predicate, where it stands: its branch, its components' names, its path. */
 export interface Failure<outcomes extends Outcomes> {
@@ -789,25 +884,117 @@ export type OutcomesOf<command> = command extends { [$Command]: { outcomes: infe
     : never
   : never
 
+/** A command and, for a step, the transition it composes (D111): an adapter covers both. */
+type WithComposed<command> =
+  command | (command extends { [$Step]: { composes: infer composes } } ? composes : never)
+
+/** The predicates of each command of a union, one by one. */
+type PredicatesOfEach<command> = command extends unknown ? PredicatesOf<OutcomesOf<command>> : never
+
+/** The facts of each command of a union, one by one. */
+type FactsOfEach<command> = command extends unknown ? FactsOf<OutcomesOf<command>> : never
+
 /**
- * Every predicate of a set of commands, command by command: the outcomes of
- * two commands are two records, whose common keys would be none.
+ * Every predicate of a set of commands, and of the transitions their steps
+ * compose, command by command: the outcomes of two commands are two
+ * records, whose common keys would be none.
  */
 type AllPredicates<commands extends Commands> = {
-  [name in keyof commands]: PredicatesOf<OutcomesOf<commands[name]>>
+  [name in keyof commands]: PredicatesOfEach<WithComposed<commands[name]>>
 }[keyof commands]
 
-/** Every fact of a set of commands, command by command. */
+/** Every fact of a set of commands, and of the transitions their steps compose, command by command. */
 type AllFacts<commands extends Commands> = {
-  [name in keyof commands]: FactsOf<OutcomesOf<commands[name]>>
+  [name in keyof commands]: FactsOfEach<WithComposed<commands[name]>>
 }[keyof commands]
 
-/** What a state adapter gives for a set of commands, of one or more domains. */
-export interface StateAdapter<commands extends Commands, fragment, write> {
+/** The steps among a set of commands, by name (DOM-20). */
+type StepsAmong<commands extends Commands> = {
+  readonly [
+    name in keyof commands as commands[name] extends { [$Step]: unknown } ? name : never
+  ]: commands[name]
+}
+
+/** The parts of a step for the library: what it reads, composes, and walks. */
+type StepParts<step> = step extends { [$Step]: infer parts } ? parts : never
+
+/** The schema of the instances a step walks, as a query's entries. */
+type StepFieldsOf<step> =
+  StepParts<step> extends { fields: infer fields extends z.ZodObject } ? fields : never
+
+/** Every selection predicate the selections of a set of steps use. */
+type StepSelections<steps extends Commands> =
+  StepParts<steps[keyof steps]> extends { selection: infer selection extends Condition }
+    ? Leaves<selection>
+    : never
+
+/**
+ * Where a step finds what it reads (DOM-20): its process, by its key from
+ * the step's input (`reads`), as stored, which the library parses with the
+ * read's schema (none, or in another stage, is the step's rejection); its
+ * instances, as a query's candidates (`from`, `fields`).
+ */
+export interface StepSource<step, read, source, field> extends QuerySource<
+  StepFieldsOf<step>,
+  source,
+  field
+> {
+  readonly reads: (input: z.output<InputOf<step>>) => read
+}
+
+/**
+ * What a state adapter gives for the steps among its commands (DOM-20): the
+ * operators of the selection of their instances, with the comparison with
+ * the cursor; where each finds its process and its instances, under the
+ * step's name; the execution. Its fragments of reads are of three types, as
+ * a read adapter's (`ReadAdapter`), and one more, the read of a process.
+ */
+export interface StepAdapter<
+  steps extends Commands,
+  fragment,
+  write,
+  read,
+  selection,
+  source,
+  field,
+> {
+  readonly selection: StepAlgebra<StepSelections<steps>, selection, field>
+  readonly sources: {
+    readonly [name in keyof steps]: StepSource<steps[name], read, source, field>
+  }
+  readonly execute: ExecuteStep<fragment, write, read, selection, source, field>
+}
+
+/**
+ * What a state adapter gives for a set of commands, of one or more domains:
+ * the predicates and the facts of the commands and of the transitions their
+ * steps compose; and, if there are steps among them, what they read.
+ */
+export type StateAdapter<
+  commands extends Commands,
+  fragment,
+  write,
+  read = never,
+  selection = never,
+  source = never,
+  field = never,
+> = {
   readonly algebra: Algebra<AllPredicates<commands>, fragment>
   readonly write: FactWrites<AllFacts<commands>, write>
   readonly execute: Execute<fragment, write>
-}
+} & ([keyof StepsAmong<commands>] extends [never]
+  ? unknown
+  : {
+      readonly steps: StepAdapter<
+        StepsAmong<commands>,
+        fragment,
+        write,
+        read,
+        selection,
+        source,
+        field
+      >
+    })
 
 /**
  * A domain's path registry (DOM-24), generated in `_registry.ts`: every path
@@ -1935,8 +2122,8 @@ export type CommandUseCasePort<use_case> = use_case extends {
 export declare function command_use_case_ports<const use_cases extends CommandUseCases>(ports: {
   readonly registry: Registry
   readonly use_cases: use_cases
-}): <fragment, write>(
-  adapter: StateAdapter<CommandsOf<use_cases>, fragment, write>,
+}): <fragment, write, read, selection, source, field>(
+  adapter: StateAdapter<CommandsOf<use_cases>, fragment, write, read, selection, source, field>,
 ) => { readonly [name in keyof use_cases]: CommandUseCasePort<use_cases[name]> }
 
 /**

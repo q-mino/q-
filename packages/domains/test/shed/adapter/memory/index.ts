@@ -26,6 +26,7 @@ import { add_a_tool, retire_a_tool, the_catalogue } from '../../business/tools/_
 import {
   borrow_a_tool,
   cancel_the_reservations_of_a_tool,
+  continue_the_cancellation_of_reservations,
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
   reserve_a_tool,
@@ -33,7 +34,7 @@ import {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
 } from '../../business/loans/_usecase.ts'
-import type { Field, Selection, Source } from './fragments.ts'
+import type { Field, ProcessRead, Selection, Source } from './fragments.ts'
 import {
   loan_selection,
   loan_sources,
@@ -41,6 +42,7 @@ import {
   loans_writes,
   reservation_selection,
   reservation_sources,
+  reservation_steps,
   type LoansState,
 } from './loans.ts'
 import {
@@ -124,6 +126,21 @@ const algebra = <fragments>(predicate: fragments) => ({
       !operand(state),
 })
 
+/** What a branch writes, recorded on a state: its writes in the order of its parts, its fact, its entries. */
+const record =
+  (cell: Cell) =>
+  (state: State) =>
+  (written: wlib.PlannedWrite<Write>): void => {
+    cell.record({
+      fact: written.fact,
+      entries: written.entries,
+      state: written.writes.reduce<State>(
+        (before, write) => ({ ...before, ...write(before) }),
+        state,
+      ),
+    })
+  }
+
 /**
  * A serial writer (DOM-9): every branch and every leaf read on one state; the
  * first branch that holds writes; if none does, the leaves name the failures.
@@ -140,11 +157,7 @@ const execute =
         leaves: plan.map((planned) => planned.leaves.map((leaf) => leaf(state))),
       })
     }
-    cell.record({
-      fact: branch.fact,
-      entries: branch.entries,
-      state: { ...state, ...branch.write(state) },
-    })
+    record(cell)(state)(branch)
     return Promise.resolve<wlib.Execution>({
       outcome: 'applied',
       branch: applied,
@@ -184,6 +197,70 @@ const compare_values = (a: unknown, b: unknown): number =>
           : typeof a === 'boolean' && typeof b === 'boolean'
             ? Number(a) - Number(b)
             : 0
+
+/**
+ * The comparison with a step's cursor (DOM-20): a candidate after the order
+ * key, the first field that differs deciding, a descending one reversed, in
+ * the value order of LIB-9.
+ */
+const after =
+  <state, candidate>(
+    key: readonly wlib.OrderKeyValue<Field<state, candidate>>[],
+  ): Selection<state, candidate> =>
+  (state) =>
+  (candidate) =>
+    (key
+      .map(
+        ({ field, direction, value }) =>
+          (direction === 'ascending' ? 1 : -1) * compare_values(field(state)(candidate), value),
+      )
+      .find((comparison) => comparison !== 0) ?? 0) > 0
+
+/**
+ * A step in one state (DOM-20, D112.2): the process read; not found, nothing
+ * writes; else the instances after the cursor, in order, and the first on
+ * which a branch of the transition holds writes that branch, those before it
+ * passed over; none left, the closing writes. The oracle filters every
+ * instance: `passing_over` is SQL's, which reads one at a time.
+ */
+const execute_step =
+  (cell: Cell) =>
+  <candidate>(
+    plan: wlib.PlannedStep<
+      Fragment,
+      Write,
+      ProcessRead<State>,
+      Selection<State, candidate>,
+      Source<State, candidate>,
+      Field<State, candidate>
+    >,
+  ): Promise<wlib.StepExecution> => {
+    const state = cell.get()
+    const choice = plan.choose(plan.read(state))
+    if (choice.choice === 'not_found') {
+      return Promise.resolve<wlib.StepExecution>({ outcome: 'not_found' })
+    }
+    const advancing = entries_on(choice.instances)(state).flatMap(({ entry }) => {
+      const branches = choice.advances(entry)
+      const applied = branches.findIndex((branch) => branch.condition(state))
+      const branch = branches[applied]
+      return branch === undefined ? [] : [{ instance: entry, applied, branch }]
+    })[0]
+    if (advancing === undefined) {
+      record(cell)(state)(choice.completes)
+      return Promise.resolve<wlib.StepExecution>({
+        outcome: 'completed',
+        position: cell.position(),
+      })
+    }
+    record(cell)(state)(advancing.branch)
+    return Promise.resolve<wlib.StepExecution>({
+      outcome: 'advanced',
+      instance: advancing.instance,
+      branch: advancing.applied,
+      position: cell.position(),
+    })
+  }
 
 /** A planned query over the candidates of one subject. */
 type Plan<candidate> = wlib.PlannedQuery<
@@ -364,11 +441,17 @@ export const memory_adapter = (cell: Cell) => ({
         remind_the_member_of_the_due_date,
         declare_the_loan_overdue,
         cancel_the_reservations_of_a_tool,
+        continue_the_cancellation_of_reservations,
       },
     })({
       algebra: algebra(loans_fragments),
       write: loans_writes,
       execute: execute(cell),
+      steps: {
+        selection: { ...reservation_selection, after },
+        sources: reservation_steps,
+        execute: execute_step(cell),
+      },
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,

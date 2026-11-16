@@ -11,6 +11,9 @@ export type Source<state, candidate> = (state: state) => readonly candidate[]
 /** How a field of an entry reads from a candidate. */
 export type Field<state, candidate> = (state: state) => (candidate: candidate) => unknown
 
+/** The read of a process by its key (DOM-20): the process as stored, or none. */
+export type ProcessRead<state> = (state: state) => unknown
+
 /** AND, OR, NOT over the selections of one subject. */
 export const selection_operators = <state, candidate>() => ({
   and:

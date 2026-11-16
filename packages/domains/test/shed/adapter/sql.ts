@@ -17,6 +17,7 @@ import type * as loan_selections from '../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../business/loans/_reservation_selection.ts'
 import {
   borrow_a_tool,
+  continue_the_cancellation_of_reservations,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
@@ -216,6 +217,23 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
 }
 
 /**
+ * What a branch writes, in a transaction: its writes in the order of its
+ * parts, then its fact and its outbox entries, in the same transaction
+ * (DOM-8, D12).
+ */
+const record =
+  (tx: Transaction) =>
+  (written: wlib.PlannedWrite<readonly sql[]>): Promise<void> =>
+    [
+      ...written.writes.flat(),
+      sql`insert into facts (parts, operation_scope, operation_id) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id})`,
+      ...written.entries.map(
+        (entry) =>
+          sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
+      ),
+    ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
+
+/**
  * One transaction per command. One statement reads every branch's condition
  * and every leaf: the first branch that holds writes; if none does, the
  * leaves name the failures, from the same read.
@@ -231,16 +249,7 @@ const execute =
       const applied = plan.findIndex((_, i) => values[i] === true)
       const branch = plan[applied]
       if (branch !== undefined) {
-        // The fact and its outbox entries are recorded with its write, in the
-        // same transaction (DOM-8, D12).
-        await [
-          ...branch.write,
-          sql`insert into facts (parts, operation_scope, operation_id) values (${JSON.stringify(branch.fact.parts)}, ${branch.fact.operation.scope}, ${branch.fact.operation.id})`,
-          ...branch.entries.map(
-            (entry) =>
-              sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
-          ),
-        ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
+        await record(tx)(branch)
         return { outcome: 'applied', branch: applied, position: await tx.position() }
       }
       const starts = plan.map((_, i) =>
@@ -254,6 +263,18 @@ const execute =
       }
     })
 
+/** The statement of a planned query: the fields of the candidates the selection keeps, in the order. */
+const select = (plan: wlib.PlannedQuery<sql, sql, sql>): sql =>
+  sql`select ${join(
+    Object.entries(plan.fields).map(([name, field]) => sql`${field} as ${identifier(name)}`),
+    ', ',
+  )} from ${plan.from} where ${plan.selection} order by ${join(
+    plan.order.map(
+      ([field, direction]) => sql`${field} ${direction === 'ascending' ? sql`asc` : sql`desc`}`,
+    ),
+    ', ',
+  )}`
+
 /**
  * One statement in one transaction, a snapshot: the fields of the candidates
  * that the selection keeps, in the order, and the position it was read at.
@@ -262,20 +283,65 @@ const read =
   (database: Database): wlib.Read<sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => ({
-      entries: await tx.rows(
-        sql`select ${join(
-          Object.entries(plan.fields).map(([name, field]) => sql`${field} as ${identifier(name)}`),
-          ', ',
-        )} from ${plan.from} where ${plan.selection} order by ${join(
-          plan.order.map(
-            ([field, direction]) =>
-              sql`${field} ${direction === 'ascending' ? sql`asc` : sql`desc`}`,
-          ),
-          ', ',
-        )}`,
-      ),
+      entries: await tx.rows(select(plan)),
       position: await tx.position(),
     }))
+
+/**
+ * The comparison with a step's cursor (DOM-20): the candidates after the
+ * order key, lexicographic, a descending field reversed (`(day, id) > (?, ?)`,
+ * written out so that the directions may differ).
+ */
+const after = (key: readonly wlib.OrderKeyValue<sql>[]): sql => {
+  const [first, ...rest] = key
+  if (first === undefined) {
+    return sql`false`
+  }
+  const beyond =
+    first.direction === 'ascending'
+      ? sql`${first.field} > ${first.value}`
+      : sql`${first.field} < ${first.value}`
+  return rest.length === 0
+    ? beyond
+    : sql`(${beyond} or (${first.field} = ${first.value} and ${after(rest)}))`
+}
+
+/**
+ * A step in one transaction (DOM-20, D112.2): the process read; not found,
+ * nothing writes. Else one instance at a time, the next in the order
+ * (`limit 1`): on the first on which a branch of the transition holds, that
+ * branch writes; one on which none holds is passed over, and the next read
+ * past it; none left, the closing writes.
+ */
+const execute_step =
+  (database: Database): wlib.ExecuteStep<sql, readonly sql[], sql, sql, sql, sql> =>
+  (plan) =>
+    database.transaction(async (tx) => {
+      const [process] = await tx.rows(plan.read)
+      const choice = plan.choose(process)
+      if (choice.choice === 'not_found') {
+        return { outcome: 'not_found' }
+      }
+      const walk = async (
+        instances: wlib.PlannedQuery<sql, sql, sql>,
+      ): Promise<wlib.StepExecution> => {
+        const [instance] = await tx.rows(sql`${select(instances)} limit 1`)
+        if (instance === undefined) {
+          await record(tx)(choice.completes)
+          return { outcome: 'completed', position: await tx.position() }
+        }
+        const branches = choice.advances(instance)
+        const holds = await tx.booleans(branches.map((branch) => branch.condition))
+        const applied = holds.findIndex((value) => value)
+        const branch = branches[applied]
+        if (branch === undefined) {
+          return walk(choice.passing_over(instance))
+        }
+        await record(tx)(branch)
+        return { outcome: 'advanced', instance, branch: applied, position: await tx.position() }
+      }
+      return walk(choice.instances)
+    })
 
 /**
  * A row of the facts table, its sequence the position (DOM-17): one row per
@@ -399,11 +465,38 @@ export const sql_adapter = (database: Database) => ({
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
-      use_cases: { borrow_a_tool, reserve_a_tool, return_a_tool },
+      use_cases: {
+        borrow_a_tool,
+        reserve_a_tool,
+        return_a_tool,
+        continue_the_cancellation_of_reservations,
+      },
     })({
       algebra: algebra(loans_fragments),
       write: loans_writes,
       execute: execute(database),
+      steps: {
+        selection: { ...algebra(reservation_selection_fragments), after },
+        sources: {
+          // The work sheet by its tool, nested as its value (the library
+          // parses it: none, or closed, is the step's rejection); the
+          // reservations it walks, whole.
+          continue_the_cancellation_of_reservations: {
+            reads: (input) =>
+              sql`select tool_id, start_date, json_strip_nulls(json_build_object('stage', stage, 'cursor', cursor, 'end_date', end_date)) as progress from cancellations where tool_id = ${input.tool_id}`,
+            from: sql`reservations as candidate`,
+            fields: {
+              id: sql`candidate.id`,
+              tool_id: sql`candidate.tool_id`,
+              member_id: sql`candidate.member_id`,
+              day: sql`candidate.day`,
+              booking_date: sql`candidate.booking_date`,
+              progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'cancellation_date', candidate.cancellation_date))`,
+            },
+          },
+        },
+        execute: execute_step(database),
+      },
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
