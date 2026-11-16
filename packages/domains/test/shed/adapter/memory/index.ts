@@ -238,7 +238,7 @@ type Event = wlib.StreamEvent<wlib.StoredEnvelope, unknown, unknown>
 /**
  * The events of a fact for a query, the semantics of a stream (DOM-17, V10):
  * the entries before and after the fact, compared by identity. An entry kept
- * after it that the fact touches (its identity among the fact's resources) is
+ * after it that the fact touches (its identity among the resources of a part) is
  * the fact; one that appears untouched entered; one that disappears left,
  * touched or not; an untouched entry that stays gives nothing, even if a
  * field changed. Interpreter rule: the events of one fact come in the order
@@ -252,8 +252,10 @@ const events_of =
     const among = (entries: readonly Identified[]) => (identity: unknown) =>
       entries.some((identified) => identified.identity === identity)
     const touched = (identity: unknown): boolean =>
-      recorded.fact.resources.some(
-        (resource) => resource.path === plan.identity.path && resource.value === identity,
+      recorded.fact.parts.some((part) =>
+        part.resources.some(
+          (resource) => resource.path === plan.identity.path && resource.value === identity,
+        ),
       )
     return [
       ...after.flatMap(({ identity, entry }): readonly Event[] =>

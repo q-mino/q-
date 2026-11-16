@@ -235,7 +235,7 @@ const execute =
         // same transaction (DOM-8, D12).
         await [
           ...branch.write,
-          sql`insert into facts (path, payload, resources, operation_scope, operation_id) values (${branch.fact.path}, ${JSON.stringify(branch.fact.payload)}, ${JSON.stringify(branch.fact.resources)}, ${branch.fact.operation.scope}, ${branch.fact.operation.id})`,
+          sql`insert into facts (parts, operation_scope, operation_id) values (${JSON.stringify(branch.fact.parts)}, ${branch.fact.operation.scope}, ${branch.fact.operation.id})`,
           ...branch.entries.map(
             (entry) =>
               sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
@@ -277,29 +277,33 @@ const read =
       position: await tx.position(),
     }))
 
-/** A row of the facts table, its sequence the position (DOM-17). */
+/**
+ * A row of the facts table, its sequence the position (DOM-17): one row per
+ * fact, its parts in one column, in order (DOM-10).
+ */
 const fact_row = z.strictObject({
   sequence: wlib.position,
-  path: z.string(),
-  payload: z.string(),
-  resources: z.string(),
+  parts: z.string(),
   operation_scope: z.string(),
   operation_id: wlib.operation_id,
 })
 
-const resources = z.array(z.strictObject({ path: z.string(), value: z.unknown() }))
+const parts = z.array(
+  z.strictObject({
+    path: z.string(),
+    payload: z.unknown(),
+    resources: z.array(z.strictObject({ path: z.string(), value: z.unknown() })),
+  }),
+)
 
 const as_fact = (row: unknown): wlib.LogEvent => {
   const fact = fact_row.parse(row)
-  const payload: unknown = JSON.parse(fact.payload)
-  const named: unknown = JSON.parse(fact.resources)
+  const stored: unknown = JSON.parse(fact.parts)
   return {
     event: 'fact',
     position: fact.sequence,
     fact: {
-      path: fact.path,
-      payload,
-      resources: resources.parse(named),
+      parts: parts.parse(stored),
       operation: { scope: fact.operation_scope, id: fact.operation_id },
     },
   }
@@ -308,7 +312,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
 const facts_from = (database: Database) => (where: sql) =>
   database.transaction((tx) =>
     tx.rows(
-      sql`select sequence, path, payload, resources, operation_scope, operation_id from facts where ${where} order by sequence`,
+      sql`select sequence, parts, operation_scope, operation_id from facts where ${where} order by sequence`,
     ),
   )
 
@@ -350,7 +354,7 @@ const log =
         async (tx) =>
           [
             await tx.rows(
-              sql`select sequence, path, payload, resources, operation_scope, operation_id from facts order by sequence`,
+              sql`select sequence, parts, operation_scope, operation_id from facts order by sequence`,
             ),
             await tx.position(),
           ] as const,

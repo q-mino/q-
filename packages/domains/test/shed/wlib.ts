@@ -660,24 +660,35 @@ export interface Failure<outcomes extends Outcomes> {
 }
 
 /**
- * A fact in its event envelope (DOM-10): its path apart from its payload, as
- * in the paper (D56, D101.2). Whoever consumes facts matches on the path,
- * exhaustively as on an ADT (a `switch` on `path` with a `never` check, or a
- * record by path as `FactWrites`), and never reads the payload to know the
- * fact (D107). The operation that recorded it is its identity: one
- * operation in its scope records one fact (DOM-11), and it travels with the
- * fact through any adapter, where a position may be renumbered; a reaction
- * derives its own operation from it (LIB-10, A, 16 Nov 2026). The other
- * fields of the envelope come with their cases.
+ * A part of a fact (DOM-10): its path apart from its payload, as in the paper
+ * (D56, D101.2), and its resources. Whoever consumes facts matches on the
+ * path of each part, exhaustively as on an ADT (a `switch` on `path` with a
+ * `never` check, or a record by path as `FactWrites`), and never reads the
+ * payload to know the fact (D107).
  */
-export type Envelope<facts extends Component> = facts extends unknown
+export type Part<facts extends Component> = facts extends unknown
   ? {
       readonly path: PathOf<facts>
       readonly payload: z.output<facts>
       readonly resources: readonly Resource[]
-      readonly operation: Operation
     }
   : never
+
+/**
+ * A fact in its event envelope (DOM-10): its parts, one per branch applied
+ * (D111), in order; a command records one, a step two (the step's, then the
+ * composed transition's), and every consumer reads them alike (A, 16 Nov
+ * 2026 (2)). A part is named by its position in the fact. The operation that
+ * recorded the fact is its identity: one operation in its scope records one
+ * fact (DOM-11), and it travels with the fact through any adapter, where a
+ * position may be renumbered; a reaction derives its own operation from it
+ * and the part (LIB-10, A, 16 Nov 2026). The other fields of the envelope
+ * come with their cases.
+ */
+export interface Envelope<parts extends readonly StoredPart[]> {
+  readonly parts: parts
+  readonly operation: Operation
+}
 
 /**
  * A resource of a fact (DOM-10): an identity in its payload, by its path and
@@ -691,13 +702,15 @@ export interface Resource {
   readonly value: unknown
 }
 
-/** A fact's envelope as an adapter stores it: the library parses the payload by the path. */
-export interface StoredEnvelope {
+/** A part of a fact as an adapter stores it: the library parses the payload by the path. */
+export interface StoredPart {
   readonly path: string
   readonly payload: unknown
   readonly resources: readonly Resource[]
-  readonly operation: Operation
 }
+
+/** A fact's envelope as an adapter stores it. */
+export type StoredEnvelope = Envelope<readonly StoredPart[]>
 
 /**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with
@@ -712,11 +725,57 @@ export type CommandOutcome<outcomes extends Outcomes> =
         readonly outcome: 'applied'
         readonly branch: branch
         readonly position: position
-        readonly fact: Envelope<outcomes[branch][1]>
+        readonly fact: Envelope<readonly [Part<outcomes[branch][1]>]>
       }
     }[keyof outcomes & string]
   | { readonly outcome: 'rejected'; readonly failures: readonly Failure<outcomes>[] }
   | { readonly outcome: 'identity_already_used' }
+
+/**
+ * A step's rejection (DOM-20): the process is not in the stage the step
+ * reads, named by the read's path, which the library finds in the registry
+ * (a value carries no path of its own in its type).
+ */
+export interface ReadFailure {
+  readonly read: string
+}
+
+/**
+ * The outcome of a step (DOM-20), an ADT: it advanced, its fact composite,
+ * the step's part, then the part of the composed command's applied branch
+ * (DOM-10, D111); it completed, the closing part alone; it was rejected, the
+ * process not in the stage the step reads; or, from the duplicate branch,
+ * the identity of the operation was already used (DOM-11).
+ */
+export type StepOutcome<step> = step extends {
+  [$Command]: {
+    outcomes: {
+      advances: readonly [never, infer advances extends Component]
+      completes: readonly [never, infer completes extends Component]
+    }
+  }
+  [$Step]: { composes: infer composes }
+}
+  ? | {
+        readonly outcome: 'applied'
+        readonly branch: 'advances'
+        readonly position: position
+        readonly fact: Envelope<readonly [Part<advances>, Part<FactsOf<OutcomesOf<composes>>>]>
+      }
+    | {
+        readonly outcome: 'applied'
+        readonly branch: 'completes'
+        readonly position: position
+        readonly fact: Envelope<readonly [Part<completes>]>
+      }
+    | { readonly outcome: 'rejected'; readonly failures: readonly ReadFailure[] }
+    | { readonly outcome: 'identity_already_used' }
+  : never
+
+/** The outcome of a command, or of a step when the command is one. */
+export type OutcomeOf<command> = command extends { [$Step]: unknown }
+  ? StepOutcome<command>
+  : CommandOutcome<OutcomesOf<command>>
 
 /** The commands of a domain, by name. */
 export type Commands = Readonly<
@@ -1863,10 +1922,7 @@ export type CommandUseCasePort<use_case> = use_case extends {
   [$UseCase]: { command: infer command }
 }
   ? command extends { [$Command]: { input: infer input extends z.ZodType } }
-    ? (
-        context: CommandRootContext,
-        input: z.input<input>,
-      ) => AsyncIterable<CommandOutcome<OutcomesOf<command>>>
+    ? (context: CommandRootContext, input: z.input<input>) => AsyncIterable<OutcomeOf<command>>
     : never
   : never
 
@@ -1973,7 +2029,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
           from?: position,
         ) => AsyncIterable<
           ReadEvent<
-            Envelope<facts>,
+            Envelope<readonly Part<facts>[]>,
             z.output<fields>,
             z.output<fields>[identity & keyof z.output<fields>]
           >
@@ -2213,21 +2269,24 @@ export type ReactionBuilder = <
 /**
  * A reaction's operation (DOM-16, D91.3, LIB-10): its scope the reaction's
  * path ("system · reaction R"), its id a stable function of the library over
- * that path and the operation that recorded the fact (DOM-10), so that a
- * fact delivered again is the duplicate branch (DOM-11): Luca retires the
- * ladder, the consumer falls before saving its position, the fact comes
- * again, one work sheet (TST-4). The part of a composite fact comes with its
- * case (D113.3). In the stability corpus: it never changes once released.
+ * that path, the operation that recorded the fact (DOM-10) and the part the
+ * reaction reacts to, by its position in the fact (D113.3), so that a fact
+ * delivered again is the duplicate branch (DOM-11): Luca retires the ladder,
+ * the consumer falls before saving its position, the fact comes again, one
+ * work sheet (TST-4). In the stability corpus: it never changes once
+ * released.
  */
-export declare const reaction_operation: (reaction: string) => (fact: Operation) => Operation
+export declare const reaction_operation: (
+  reaction: string,
+) => (delivered: { readonly operation: Operation; readonly part: number }) => Operation
 
 /**
- * A dead letter of a reaction (D89.7, D67.3): the fact, at its position, and
- * why. Operational, outside the domains, shown, never a business fact;
- * redelivered after a fix with the same operation, the command evaluated
- * again (a refusal leaves no fact, D79.2), or discarded by an operator, with
- * a trace. Its cause, an ADT:
- * - `rejected`: the command refused, its failures;
+ * A dead letter of a reaction (D89.7, D67.3): the fact, at its position, the
+ * part it reacted to, and why. Operational, outside the domains, shown, never
+ * a business fact; redelivered after a fix with the same operation, the
+ * command evaluated again (a refusal leaves no fact, D79.2), or discarded by
+ * an operator, with a trace. Its cause, an ADT:
+ * - `rejected`: the command refused, its failures (a step's, its read);
  * - `identity_already_used`: the operation came back with another
  *   fingerprint; the first outcome stands.
  */
@@ -2235,8 +2294,12 @@ export interface ReactionDeadLetter {
   readonly reaction: string
   readonly position: position
   readonly fact: StoredEnvelope
+  readonly part: number
   readonly cause:
-    | { readonly cause: 'rejected'; readonly failures: readonly Failure<Outcomes>[] }
+    | {
+        readonly cause: 'rejected'
+        readonly failures: readonly (Failure<Outcomes> | ReadFailure)[]
+      }
     | { readonly cause: 'identity_already_used' }
 }
 
@@ -2282,14 +2345,17 @@ export interface ReactionConsumers {
  * its position (the first fact the log keeps, with none: in Shed every
  * reaction is there from the start; where a reaction added later starts is
  * the deployment's, D64.3), in the order of the log, so in order per
- * resource; skips the facts of other paths; translates its fact purely
- * (D89.3) and invokes its use case with `reaction_operation` and the
- * clock's `now`. Then, by the outcome:
- * - applied (an exact duplicate too, the recorded fact): it advances;
- * - rejected, identity already used: to its dead letter, then it advances;
+ * resource; skips the parts of other paths; for each part of its path, in
+ * the order of the parts (DOM-16: at most one command per part), translates
+ * it purely (D89.3) and invokes its use case with `reaction_operation` over
+ * the fact's operation and the part, and the clock's `now`. Then, by the
+ * outcome of each:
+ * - applied (an exact duplicate too, the recorded fact): the next part;
+ * - rejected, identity already used: to its dead letter, then the next part;
  * - a technical abort (the port fails, the process falls): it does not
- *   advance, and delivers again from its position (D65.6), the duplicate
- *   branch covering what was applied.
+ *   advance, and delivers the fact again from its position (D65.6), the
+ *   duplicate branch covering the parts already applied.
+ * After the last part it advances.
  * Holding the later facts of a dead-lettered fact's resources (D94.7) comes
  * with its case. The contract is the order per resource, not a total one: a
  * consumer may deliver facts of disjoint resources in parallel (partitions
