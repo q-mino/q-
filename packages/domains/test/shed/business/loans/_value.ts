@@ -153,20 +153,30 @@ export const reservation_entry = value.reservation_entry
 export type reservation_entry = z.output<typeof reservation_entry>
 
 /**
- * Grows with part 2 of step 8: the cursor, and `complete`.
- *
  * @see {@link value.cancellation_stage}
  */
 export const cancellation_stage = value.cancellation_stage
 export type cancellation_stage = z.output<typeof cancellation_stage>
 
 /**
- * The desk goes through the tool's reservations, one at a time.
+ * The desk goes through the tool's reservations still ahead (booked, from
+ * the day of the retirement on: the tool and the start date are the
+ * selection's parameters, D97.1), one at a time, the closest day first, then
+ * by id (D109); the cursor marks the last one handled, none before the first
+ * (D112.1). The library's, opaque: the desk never writes it.
  *
  * @see {@link value.cancellation_cancelling}
  */
 export const cancellation_cancelling = value.cancellation_cancelling
 export type cancellation_cancelling = z.output<typeof cancellation_cancelling>
+
+/**
+ * No reservation of the tool is left ahead: the sheet is closed (D112.2).
+ *
+ * @see {@link value.cancellation_complete}
+ */
+export const cancellation_complete = value.cancellation_complete
+export type cancellation_complete = z.output<typeof cancellation_complete>
 
 /**
  * Where the cancellation of a tool's reservations is in its course.
@@ -194,3 +204,11 @@ export type cancellation_of_reservations = z.output<typeof cancellation_of_reser
  */
 export const cancellation_under_way = value.cancellation_under_way
 export type cancellation_under_way = z.output<typeof cancellation_under_way>
+
+/**
+ * A closed cancellation: no reservation of the tool is left ahead.
+ *
+ * @see {@link value.completed_cancellation}
+ */
+export const completed_cancellation = value.completed_cancellation
+export type completed_cancellation = z.output<typeof completed_cancellation>

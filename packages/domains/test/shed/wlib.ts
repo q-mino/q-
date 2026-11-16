@@ -819,6 +819,19 @@ export interface PlannedQuery<selection, source, field> {
   readonly order: readonly (readonly [field, Direction])[]
 }
 
+/**
+ * The cursor of a process with a cursor (DOM-20, D112.1): the order key of
+ * the last instance handled, the values of the selection's order fields and
+ * its identity (D109), encoded by the library (D114). Opaque to the business,
+ * ordered and comparable: the library writes it in the step's own mutation,
+ * the author only declares where the process keeps it. The default: a
+ * business that must read it declares its own, the order key's fields, which
+ * the library derives from the order, checks by type and writes the same way
+ * (A, 16 Nov 2026), with its case.
+ */
+export const cursor = z.string().min(1).brand<'cursor'>()
+export type cursor = z.output<typeof cursor>
+
 /** The position of a read: opaque, compared only by order (DOM-17). */
 export const position = z.string().min(1).brand<'position'>()
 export type position = z.output<typeof position>

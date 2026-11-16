@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time_string, day } from '../../wlib.ts'
+import { cursor, date_time_string, day } from '../../wlib.ts'
 import { id, tools } from './_scope_value.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its
@@ -104,16 +104,31 @@ export const reservation_entry = booked_reservation
   .pick({ id: true, tool_id: true, day: true })
   .extend({ tool_name: tool_name })
 
-/** Grows with part 2 of step 8: the cursor, and `complete`. */
-export const cancellation_stage = z.enum(['cancelling'])
+export const cancellation_stage = z.enum(['cancelling', 'complete'])
 
-/** The desk goes through the tool's reservations, one at a time. */
+/**
+ * The desk goes through the tool's reservations still ahead (booked, from
+ * the day of the retirement on: the tool and the start date are the
+ * selection's parameters, D97.1), one at a time, the closest day first, then
+ * by id (D109); the cursor marks the last one handled, none before the first
+ * (D112.1). The library's, opaque: the desk never writes it.
+ */
 export const cancellation_cancelling = z.strictObject({
   stage: z.literal(cancellation_stage.enum.cancelling),
+  cursor: cursor.optional(),
+})
+
+/** No reservation of the tool is left ahead: the sheet is closed (D112.2). */
+export const cancellation_complete = z.strictObject({
+  stage: z.literal(cancellation_stage.enum.complete),
+  end_date: date_time_string,
 })
 
 /** Where the cancellation of a tool's reservations is in its course. */
-export const cancellation_progress = z.discriminatedUnion('stage', [cancellation_cancelling])
+export const cancellation_progress = z.discriminatedUnion('stage', [
+  cancellation_cancelling,
+  cancellation_complete,
+])
 
 /**
  * The desk's work sheet: the reservations of a tool, cancelled one at a
@@ -130,4 +145,9 @@ export const cancellation_of_reservations = z.strictObject({
 /** A cancellation under way. */
 export const cancellation_under_way = cancellation_of_reservations.extend({
   progress: cancellation_cancelling,
+})
+
+/** A closed cancellation: no reservation of the tool is left ahead. */
+export const completed_cancellation = cancellation_of_reservations.extend({
+  progress: cancellation_complete,
 })
