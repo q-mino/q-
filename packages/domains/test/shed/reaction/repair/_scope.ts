@@ -26,4 +26,7 @@ export const {
   lookup,
   reaction,
   node,
+  version,
+  earlier,
+  delegate,
 } = wlib.builders_at<wlib.RootContext>()

@@ -23,7 +23,7 @@ export const the_ongoing_loans_of_a_member = query({
   fields: value.ongoing_loan_entry,
   identity: 'id',
   selection: the_loan_is_ongoing_for_the_member,
-  order: { due_date: 'ascending' },
+  order: { due_day: 'ascending' },
   creator: () => (input) => ({
     the_loan_is_ongoing: {},
     the_loan_is_of_the_member: { member_id: input.member_id },

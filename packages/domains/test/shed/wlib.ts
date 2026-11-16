@@ -12,6 +12,14 @@ export const day = z.iso.date().brand<'day'>()
 export type day = z.output<typeof day>
 
 /**
+ * The calendar day of an instant, in the time zone of its writing (UTC in
+ * Shed): a function of the formats, so that a translation between versions
+ * (`earlier`) can use it and never changes once published, whatever the
+ * domain's `dsl` becomes (DOM-22).
+ */
+export const day_of = (instant: date_time): day => day.parse(instant.slice(0, 10))
+
+/**
  * The context every root of a tree takes, given by the entry (PER-6): the
  * instant of the request, from a trusted frame (D99.4), one for the request,
  * so that the library's mechanisms and the domain's creators read the same.
@@ -144,6 +152,76 @@ export type SelectionBuilder = <const parameters extends z.ZodObject>(selection:
 export type EffectBuilder = <const payload extends z.ZodObject>(effect: {
   readonly payload: payload
 }) => payload
+
+// ---------------------------------------------------------------------------
+// Versions (DOM-22, PER-17, D75.6, D101, A, 16 Nov 2026 (7)): a domain has one
+// version, semver, declared in its `version.ts`; a major that has passed keeps
+// a folder of its own in the domain (`business/loans/1/`), outside the path,
+// with every stored or published shape of that major: a component that
+// changed, at the last minor of the major (`earlier`), and every other
+// delegated to the next major (`delegate`). The current version knows no
+// past: when a major leaves the window, its folder is deleted and nothing
+// else changes. A minor keeps no folder: every shape it leaves still parses
+// with the next minor's schema, which CI checks.
+
+export declare const $Version: unique symbol
+
+/** A version of a domain, semver: major, minor, patch. */
+export const semver = z.templateLiteral([z.number(), '.', z.number(), '.', z.number()])
+export type Semver = z.output<typeof semver>
+
+/** The version of a domain, as its `version.ts` declares it: the one its parts are written at (DOM-10). */
+export interface Version<version extends Semver> {
+  readonly [$Version]: version
+}
+
+/** The version of a domain (`loans = version('2.0.0')`), one per domain, in its `version.ts`. */
+export type VersionBuilder = <const version extends Semver>(version: version) => Version<version>
+
+export declare const $Earlier: unique symbol
+
+/**
+ * A component of a past major that changed in the next one: its shape at the
+ * last minor of its major, written whole (a value of the domain may change
+ * under it, and CI compares every version's schema with the one released),
+ * and the step to the next major's shape. Pure, over the payload alone; it
+ * adds nothing (a field that cannot be derived is "not known", D101.4) and
+ * never changes once published (DOM-22). The library chains the steps from
+ * the version a part was written at to the current one; a reader sees only
+ * the current shape.
+ */
+export type Earlier<next extends Component, payload extends z.ZodObject> = payload & {
+  readonly [$Earlier]: {
+    readonly next: next
+    readonly to_next: (payload: z.output<payload>) => z.input<next>
+  }
+}
+
+/**
+ * The shape a component had in a past major (`earlier(next.fact.a_tool_has_been_lent)`):
+ * the component of the next major it becomes, from the scope's `next`, then its shape and the step.
+ */
+export type EarlierBuilder = <const next extends Component>(
+  next: next,
+) => <const payload extends z.ZodObject>(earlier: {
+  readonly payload: payload
+  readonly to_next: (payload: z.output<payload>) => z.input<next>
+}) => Earlier<next, payload>
+
+export declare const $Delegated: unique symbol
+
+/** A component of a past major with the same shape as in the next one: no step. */
+export interface Delegated<next> {
+  readonly [$Delegated]: next
+}
+
+/**
+ * A component of a past major left unchanged by the next one
+ * (`delegate(next.fact.a_tool_has_been_returned)`): the folder of a major
+ * lists every component of that major, so that one forgotten stops the
+ * generator, not a reader.
+ */
+export type DelegateBuilder = <const next>(next: next) => Delegated<next>
 
 /**
  * A component of a domain that the library meets: a fact, a predicate, a
@@ -819,7 +897,7 @@ export type Part<facts extends Component> = facts extends unknown
  * return follows the repair it opens (A, 16 Nov 2026 (5)). The other fields
  * of the envelope come with their cases.
  */
-export interface Envelope<parts extends readonly StoredPart[]> {
+export interface Envelope<parts extends readonly PartFields[]> {
   readonly parts: parts
   readonly operation: Operation
   readonly correlation: correlation
@@ -837,8 +915,20 @@ export interface Resource {
   readonly value: unknown
 }
 
-/** A part of a fact as an adapter stores it: the library parses the payload by the path. */
-export interface StoredPart {
+/**
+ * A part of a fact as an adapter stores it: the library parses the payload by
+ * the path, at the version of its domain when it was written (DOM-10, D111.3),
+ * through the domain's folder of that major if it has passed, then takes it
+ * to the current shape (`earlier`). The version never leaves the node
+ * (PER-18) and is not in the parsed `Part`: a reader sees the current shape
+ * only (D101).
+ */
+export interface StoredPart extends PartFields {
+  readonly version: Semver
+}
+
+/** What every part of a fact has, parsed or stored: its path, its payload, its resources. */
+export interface PartFields {
   readonly path: string
   readonly payload: unknown
   readonly resources: readonly Resource[]
@@ -1075,6 +1165,8 @@ export type RegistryEntry =
   | Lookup<z.ZodType, z.ZodType>
   | Node<unknown, RootContext, unknown>
   | Reaction<Component, CommandUseCase<Commands[string]>>
+  | Version<Semver>
+  | Delegated<unknown>
 
 /** The components of a generated module of one kind. */
 type ComponentsIn<module, kind extends string> = {
@@ -1842,6 +1934,9 @@ export interface Builders<context extends RootContext, closes> {
   readonly lookup: LookupBuilder
   readonly reaction: ReactionBuilder
   readonly node: NodeBuilder<context, closes>
+  readonly version: VersionBuilder
+  readonly earlier: EarlierBuilder
+  readonly delegate: DelegateBuilder
 }
 
 /** The kinds of construct, the segment of a path after its folders (DOM-24, DOM-25). */
@@ -1858,6 +1953,7 @@ export type ConstructKind =
   | 'lookup'
   | 'node'
   | 'reaction'
+  | 'version'
 
 /**
  * What a folder of the tree sees of the others (LIB-1, DOM-25): for the

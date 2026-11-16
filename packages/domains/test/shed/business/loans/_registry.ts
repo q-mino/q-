@@ -16,8 +16,10 @@ import * as loan_selection from './_loan_selection.ts'
 import * as reservation_selection from './_reservation_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
+import * as version from './_version.ts'
 
 export const registry = {
+  'business/loans/version/loans': version.loans,
   'business/loans/id/loan_id': id.loan_id,
   'business/loans/id/member_id': id.member_id,
   'business/loans/id/reservation_id': id.reservation_id,

@@ -18,7 +18,7 @@ export interface Reminder {
   readonly key: string
   readonly phone: string
   readonly tool_name: string
-  readonly due_date: wlib.date_time
+  readonly due_day: wlib.day
 }
 
 /** A notice of a repair as a phone receives it: the tool booked, and the day it was booked for. */
@@ -83,7 +83,7 @@ export const send_the_due_date_reminder =
         key: `business/loans/effect/send_the_due_date_reminder/${entry.id}`,
         phone: phone,
         tool_name: get().tools.get(entry.payload.tool_id)?.name ?? '',
-        due_date: entry.payload.due_date,
+        due_day: entry.payload.due_day,
       }),
     })
 

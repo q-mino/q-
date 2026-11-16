@@ -145,7 +145,7 @@ export const loan_sources: {
       tool_id: () => (the_loan) => the_loan.tool_id,
       tool_name: the_name_of_the_tool,
       start_date: () => (the_loan) => the_loan.start_date,
-      due_date: () => (the_loan) => the_loan.due_date,
+      due_day: () => (the_loan) => the_loan.due_day,
       term: () => loans_dsl.the_term_of_the_loan,
     },
   },

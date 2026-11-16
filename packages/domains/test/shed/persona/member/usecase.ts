@@ -35,7 +35,7 @@ export const borrow_a_tool = command_use_case_over({
     you_have_the_tool: z.strictObject({
       loan_id: loans.id.loan_id,
       tool_id: tools.id.tool_id,
-      due_date: wlib.date_time,
+      due_day: wlib.day,
     }),
     you_already_have_the_tool: z.strictObject({ tool_id: tools.id.tool_id }),
     /**
@@ -50,7 +50,7 @@ export const borrow_a_tool = command_use_case_over({
       payload: {
         loan_id: fact.new_loan.id,
         tool_id: fact.new_loan.tool_id,
-        due_date: fact.new_loan.due_date,
+        due_day: fact.new_loan.due_day,
       },
     }),
     the_member_already_has_the_tool_so_nothing_changes: (fact) => ({
@@ -152,7 +152,7 @@ export const my_loans = read_use_case_over({
     tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
     start_date: wlib.date_time,
-    due_date: wlib.date_time,
+    due_day: wlib.day,
     term: value.loan_term,
   }),
   projection: (entry) => ({
@@ -160,7 +160,7 @@ export const my_loans = read_use_case_over({
     tool_id: entry.tool_id,
     tool_name: entry.tool_name,
     start_date: entry.start_date,
-    due_date: entry.due_date,
+    due_day: entry.due_day,
     term: entry.term,
   }),
   stream: {

@@ -13,8 +13,10 @@ import * as query from './_query.ts'
 import * as tool_selection from './_tool_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
+import * as version from './_version.ts'
 
 export const registry = {
+  'business/tools/version/tools': version.tools,
   'business/tools/id/tool_id': id.tool_id,
   'business/tools/id/repair_id': id.repair_id,
   'business/tools/value/tool_name': value.tool_name,

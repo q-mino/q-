@@ -50,7 +50,7 @@ export const borrow_a_tool = command({
     ],
   },
   creator: (context) => (input) => {
-    const due_date = dsl.the_due_date_of_a_loan_started_on(context.now)
+    const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
     return {
       the_tool_is_available_so_it_is_lent: [
         {
@@ -65,7 +65,7 @@ export const borrow_a_tool = command({
             tool_id: input.tool_id,
             member_id: input.member_id,
             start_date: context.now,
-            due_date: due_date,
+            due_day: due_day,
             progress: { stage: 'ongoing', term: 'running' },
           },
         },
@@ -76,14 +76,14 @@ export const borrow_a_tool = command({
               loan_id: input.loan_id,
               tool_id: input.tool_id,
               member_id: input.member_id,
-              due_date: due_date,
+              due_day: due_day,
             },
-            not_before: dsl.the_eve_of(due_date),
+            not_before: dsl.the_start_of(dsl.the_eve_of(due_day)),
           },
           wait_until_the_due_date: {
             id: input.loan_id,
             payload: { loan_id: input.loan_id },
-            not_before: due_date,
+            not_before: dsl.the_start_of(dsl.the_day_after(due_day)),
           },
         },
       ],
@@ -252,7 +252,7 @@ export const remind_the_member_of_the_due_date = command({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_date: wlib.date_time,
+    due_day: wlib.day,
   }),
   outcomes: {
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
@@ -284,7 +284,7 @@ export const remind_the_member_of_the_due_date = command({
             loan_id: input.loan_id,
             tool_id: input.tool_id,
             member_id: input.member_id,
-            due_date: input.due_date,
+            due_day: input.due_day,
           },
         },
       },

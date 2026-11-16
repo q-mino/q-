@@ -27,4 +27,7 @@ export const {
   lookup,
   reaction,
   node,
+  version,
+  earlier,
+  delegate,
 } = wlib.builders_at<member_context, member_closes>()

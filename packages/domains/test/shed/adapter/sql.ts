@@ -115,7 +115,7 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
   'business/loans/predicate/the_loan_is_of_this_tool': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) =>
-    sql`exists (select 1 from loans where id = ${p.loan_id} and due_date > ${p.now})`,
+    sql`exists (select 1 from loans where id = ${p.loan_id} and due_day >= ${wlib.day_of(p.now)})`,
   'business/loans/predicate/the_tool_is_on_loan': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and stage = 'ongoing')`,
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
@@ -201,7 +201,7 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
 
 const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sql[]> = {
   'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
-    sql`insert into loans (id, tool_id, member_id, start_date, due_date, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_date}, ${l.progress.stage}, ${l.progress.term})`,
+    sql`insert into loans (id, tool_id, member_id, start_date, due_day, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_day}, ${l.progress.stage}, ${l.progress.term})`,
   ],
   'business/loans/fact/the_member_already_has_the_tool': () => [],
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
@@ -389,6 +389,7 @@ const fact_row = z.strictObject({
 const parts = z.array(
   z.strictObject({
     path: z.string(),
+    version: wlib.semver,
     payload: z.unknown(),
     resources: z.array(z.strictObject({ path: z.string(), value: z.unknown() })),
   }),
@@ -562,7 +563,7 @@ export const sql_adapter = (database: Database) => ({
             // A value of the view of `loans`, read from `tools`: the link.
             tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
             start_date: sql`candidate.start_date`,
-            due_date: sql`candidate.due_date`,
+            due_day: sql`candidate.due_day`,
             term: sql`candidate.term`,
           },
         },

@@ -47,7 +47,8 @@ export const loan = z.strictObject({
   tool_id: tools.id.tool_id,
   member_id: id.member_id,
   start_date: date_time,
-  due_date: date_time,
+  /** The day the tool comes back by, to its end: a day, not an instant, since loans 2.0.0 (A, 16 Nov 2026 (7)). */
+  due_day: day,
   progress: loan_progress,
 })
 
@@ -112,7 +113,7 @@ export const cancelled_reservation = reservation.extend({
 
 /** What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed. */
 export const ongoing_loan_entry = ongoing_loan
-  .pick({ id: true, tool_id: true, start_date: true, due_date: true })
+  .pick({ id: true, tool_id: true, start_date: true, due_day: true })
   .extend({ tool_name: tool_name, term: loan_term })
 
 /** What a member sees of a reservation: the tool, with its name, and the day. */

@@ -26,7 +26,9 @@ const domain = (name) => `^packages/domains/src/${name}/`
 // folder sits in the folder of its kind: Shed's layout, not the library's.
 const shed = '^packages/domains/test/shed/'
 const kinds = `(?:${Object.keys(sight).join('|')})`
-const tree = `${shed}${kinds}/(?:[^@/][^/]*/|)`
+// A folder named by a number is a past major of its domain (business/loans/1/): in the tree, outside the path (DOM-25, PER-17).
+const major = '[0-9]+/'
+const tree = `${shed}${kinds}/(?:[^@/][^/]*/|)(?:${major}|)`
 const authored = `${tree}[^_/][^/]*\\.ts$`
 const tests = '\\.test\\.ts$'
 const sightRules = Object.entries(sight).map(([from, seen]) => ({
@@ -38,6 +40,21 @@ const sightRules = Object.entries(sight).map(([from, seen]) => ({
     path: `${shed}${kinds}/`,
     pathNot: [
       `${shed}${from}/$1_[^/]+\\.ts$`,
+      `${shed}${from}/_[^/]+\\.ts$`,
+      ...Object.keys(seen).map((folder) => `${shed}${folder}/[^/]+/_door_${from}\\.ts$`),
+    ],
+  },
+}))
+const pastMajorRules = Object.entries(sight).map(([from, seen]) => ({
+  name: `shed-past-major-of-${from}`,
+  comment: `Shed: the scopes of a past major of a domain under ${from} (business/loans/1/) take, besides their own twins and what the domain's scopes take, the twins of the next major: a later major's folder, or the domain's own (PER-17, DOM-25).`,
+  severity: 'error',
+  from: { path: `${shed}${from}/([^@/][^/]*/)(${major})_scope_[a-z]+\\.ts$` },
+  to: {
+    path: `${shed}${kinds}/`,
+    pathNot: [
+      `${shed}${from}/$1$2_[^/]+\\.ts$`,
+      `${shed}${from}/$1(?:${major}|)_[^/]+\\.ts$`,
       `${shed}${from}/_[^/]+\\.ts$`,
       ...Object.keys(seen).map((folder) => `${shed}${folder}/[^/]+/_door_${from}\\.ts$`),
     ],
@@ -59,16 +76,25 @@ export default {
   forbidden: [
     ...arrowRules,
     ...sightRules,
+    ...pastMajorRules,
     {
       name: 'shed-authored-through-its-scope',
       comment:
         "Shed: an authored file of the tree imports of the tree only its scope, which carries its folder's components, the doors of its ancestors to the folders below (_door_below.ts) and the doors sight.ts opens to it (DOM-25, LIB-1).",
       severity: 'error',
-      from: { path: `${shed}(${kinds})/([^@/][^/]*/|)[^_/][^/]*\\.ts$`, pathNot: tests },
+      from: { path: `${shed}(${kinds})/([^@/][^/]*/|)(${major}|)[^_/][^/]*\\.ts$`, pathNot: tests },
       to: {
         path: `${shed}${kinds}/`,
-        pathNot: `${shed}$1/$2_scope_[a-z]+\\.ts$`,
+        pathNot: `${shed}$1/$2$3_scope_[a-z]+\\.ts$`,
       },
+    },
+    {
+      name: 'shed-the-current-knows-no-past',
+      comment:
+        "Shed: no file of a domain's current version imports a past major (business/loans/1/): the past major goes to the current, never back, so that deleting its folder changes nothing else (PER-17, DOM-25).",
+      severity: 'error',
+      from: { path: `${shed}${kinds}/[^@/][^/]*/[^/]+\\.ts$` },
+      to: { path: `${shed}${kinds}/[^@/][^/]*/${major}` },
     },
     {
       name: 'authored-only-through-generated',
