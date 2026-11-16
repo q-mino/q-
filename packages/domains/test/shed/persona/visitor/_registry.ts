@@ -7,8 +7,10 @@
 import type * as wlib from '../../wlib.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
+import * as version from './_version.ts'
 
 export const registry = {
+  'persona/visitor/version/visitor': version.visitor,
   'persona/visitor/value/category': value.category,
   'persona/visitor/value/categories': value.categories,
   'persona/visitor/value/tool_name': value.tool_name,

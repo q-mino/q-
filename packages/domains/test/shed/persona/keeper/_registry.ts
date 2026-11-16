@@ -8,8 +8,10 @@ import type * as wlib from '../../wlib.ts'
 import * as node from './_node.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
+import * as version from './_version.ts'
 
 export const registry = {
+  'persona/keeper/version/keeper': version.keeper,
   'persona/keeper/node/keeper': node.keeper,
   'persona/keeper/value/retirement_reason': value.retirement_reason,
   'persona/keeper/value/notes': value.notes,
