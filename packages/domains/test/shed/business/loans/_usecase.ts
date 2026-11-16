@@ -79,3 +79,22 @@ export const the_ongoing_loans_of_a_member = usecase.the_ongoing_loans_of_a_memb
  * @see {@link usecase.the_reservations_of_a_member}
  */
 export const the_reservations_of_a_member = usecase.the_reservations_of_a_member
+
+/**
+ * The desk begins its round of the notices of a repair: the drill is in the
+ * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
+ * a reaction to the repair (DOM-16).
+ *
+ * @see {@link usecase.notify_the_members_of_a_repair}
+ */
+export const notify_the_members_of_a_repair = usecase.notify_the_members_of_a_repair
+
+/**
+ * The desk goes one member further on its round of the notices of a repair,
+ * or closes it: a step of the round (DOM-20). Invoked by the desk's own
+ * standing orders (DOM-16): when the round begins, and after each step that
+ * advanced it.
+ *
+ * @see {@link usecase.continue_the_repair_notice_round}
+ */
+export const continue_the_repair_notice_round = usecase.continue_the_repair_notice_round

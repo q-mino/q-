@@ -229,3 +229,66 @@ export type cancellation_under_way = z.output<typeof cancellation_under_way>
  */
 export const completed_cancellation = value.completed_cancellation
 export type completed_cancellation = z.output<typeof completed_cancellation>
+
+/**
+ * @see {@link value.repair_notice_round_stage}
+ */
+export const repair_notice_round_stage = value.repair_notice_round_stage
+export type repair_notice_round_stage = z.output<typeof repair_notice_round_stage>
+
+/**
+ * The desk goes round the members who booked a tool sent to repair: the
+ * tool's reservations still ahead (booked, from the day of the repair on:
+ * the tool and the start date are the selection's parameters, D97.1), one
+ * at a time, the closest day first, then by id (D109); the cursor marks the
+ * last one handled, none before the first (D112.1). The library's, opaque.
+ *
+ * @see {@link value.repair_notice_round_notifying}
+ */
+export const repair_notice_round_notifying = value.repair_notice_round_notifying
+export type repair_notice_round_notifying = z.output<typeof repair_notice_round_notifying>
+
+/**
+ * No reservation of the tool is left ahead: the round is over (D112.2).
+ *
+ * @see {@link value.repair_notice_round_complete}
+ */
+export const repair_notice_round_complete = value.repair_notice_round_complete
+export type repair_notice_round_complete = z.output<typeof repair_notice_round_complete>
+
+/**
+ * Where the round of the notices of a repair is in its course.
+ *
+ * @see {@link value.repair_notice_round_progress}
+ */
+export const repair_notice_round_progress = value.repair_notice_round_progress
+export type repair_notice_round_progress = z.output<typeof repair_notice_round_progress>
+
+/**
+ * The desk's round of the notices of a repair: when a tool goes to the
+ * workshop, the desk notifies, one at a time, the members who booked it,
+ * and their reservations stay (A, 16 Nov 2026 (4)). A process with a cursor
+ * (DOM-20, DOM-23), its own aggregate in `loans`, keyed by the stay in
+ * repair (`tools`' `repair_id`, DOM-12): a tool repaired twice gets two
+ * rounds. By nesting, as a loan.
+ *
+ * @see {@link value.repair_notice_round}
+ */
+export const repair_notice_round = value.repair_notice_round
+export type repair_notice_round = z.output<typeof repair_notice_round>
+
+/**
+ * A round of notices under way.
+ *
+ * @see {@link value.repair_notice_round_under_way}
+ */
+export const repair_notice_round_under_way = value.repair_notice_round_under_way
+export type repair_notice_round_under_way = z.output<typeof repair_notice_round_under_way>
+
+/**
+ * A round of notices over: no reservation of the tool is left ahead.
+ *
+ * @see {@link value.completed_repair_notice_round}
+ */
+export const completed_repair_notice_round = value.completed_repair_notice_round
+export type completed_repair_notice_round = z.output<typeof completed_repair_notice_round>

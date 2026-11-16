@@ -134,3 +134,14 @@ export const a_cancellation_of_the_reservations_of_the_tool_has_begun =
 export type a_cancellation_of_the_reservations_of_the_tool_has_begun = z.output<
   typeof a_cancellation_of_the_reservations_of_the_tool_has_begun
 >
+
+/**
+ * The desk has begun its round of the notices of the repair.
+ *
+ * @see {@link predicate.the_notice_round_of_the_repair_has_begun}
+ */
+export const the_notice_round_of_the_repair_has_begun =
+  predicate.the_notice_round_of_the_repair_has_begun.brand<'business/loans/predicate/the_notice_round_of_the_repair_has_begun'>()
+export type the_notice_round_of_the_repair_has_begun = z.output<
+  typeof the_notice_round_of_the_repair_has_begun
+>

@@ -69,3 +69,22 @@ export const the_ongoing_loans_of_a_member = read_use_case({
 export const the_reservations_of_a_member = read_use_case({
   query: query.the_reservations_of_a_member,
 })
+
+/**
+ * The desk begins its round of the notices of a repair: the drill is in the
+ * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
+ * a reaction to the repair (DOM-16).
+ */
+export const notify_the_members_of_a_repair = command_use_case({
+  command: command.notify_the_members_of_a_repair,
+})
+
+/**
+ * The desk goes one member further on its round of the notices of a repair,
+ * or closes it: a step of the round (DOM-20). Invoked by the desk's own
+ * standing orders (DOM-16): when the round begins, and after each step that
+ * advanced it.
+ */
+export const continue_the_repair_notice_round = command_use_case({
+  command: command.continue_the_repair_notice_round,
+})

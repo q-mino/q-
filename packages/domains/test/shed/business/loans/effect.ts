@@ -44,3 +44,18 @@ export const wait_until_the_due_date = effect({
     loan_id: id.loan_id,
   }),
 })
+
+/**
+ * Gianni reads on their phone "the drill you booked for Thursday is in
+ * repair". No return: nothing comes back to `loans`. One notice per stay in
+ * repair and reservation: Paolo, booked three weeks on, is notified once for
+ * each repair of the drill (the entry's id, `dsl`).
+ */
+export const send_the_repair_notice = effect({
+  payload: z.strictObject({
+    reservation_id: id.reservation_id,
+    member_id: id.member_id,
+    tool_id: tools.id.tool_id,
+    day: wlib.day,
+  }),
+})

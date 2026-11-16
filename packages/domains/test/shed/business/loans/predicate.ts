@@ -112,3 +112,10 @@ export const a_cancellation_of_the_reservations_of_the_tool_has_begun = predicat
     tool_id: tools.id.tool_id,
   }),
 })
+
+/** The desk has begun its round of the notices of the repair. */
+export const the_notice_round_of_the_repair_has_begun = predicate({
+  parameters: z.strictObject({
+    repair_id: tools.id.repair_id,
+  }),
+})

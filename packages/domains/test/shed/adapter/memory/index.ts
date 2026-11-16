@@ -33,7 +33,9 @@ import {
   borrow_a_tool,
   cancel_the_reservations_of_a_tool,
   continue_the_cancellation_of_reservations,
+  continue_the_repair_notice_round,
   declare_the_loan_overdue,
+  notify_the_members_of_a_repair,
   remind_the_member_of_the_due_date,
   reserve_a_tool,
   return_a_tool,
@@ -453,6 +455,8 @@ export const memory_adapter = (cell: Cell) => ({
         declare_the_loan_overdue,
         cancel_the_reservations_of_a_tool,
         continue_the_cancellation_of_reservations,
+        notify_the_members_of_a_repair,
+        continue_the_repair_notice_round,
       },
     })({
       algebra: algebra(loans_fragments),

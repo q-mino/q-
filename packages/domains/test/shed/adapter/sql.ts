@@ -24,6 +24,7 @@ import type * as reservation_selections from '../business/loans/_reservation_sel
 import {
   borrow_a_tool,
   continue_the_cancellation_of_reservations,
+  continue_the_repair_notice_round,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
@@ -129,6 +130,8 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun': (p) =>
     sql`exists (select 1 from cancellations where tool_id = ${p.tool_id})`,
+  'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) =>
+    sql`exists (select 1 from repair_notice_rounds where repair_id = ${p.repair_id})`,
 }
 
 // The fragments of the selection predicates, grouped by subject (DOM-18): a
@@ -231,6 +234,16 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     completed_cancellation: c,
   }) => [
     sql`update cancellations set stage = ${c.progress.stage}, cursor = null, end_date = ${c.progress.end_date} where tool_id = ${c.tool_id}`,
+  ],
+  'business/loans/fact/a_repair_notice_round_has_begun': ({ new_round: r }) => [
+    sql`insert into repair_notice_rounds (repair_id, tool_id, start_date, stage) values (${r.repair_id}, ${r.tool_id}, ${r.start_date}, ${r.progress.stage})`,
+  ],
+  'business/loans/fact/a_member_has_been_notified_of_the_repair': () => [],
+  'business/loans/fact/the_repair_notice_round_has_advanced': (r) => [
+    sql`update repair_notice_rounds set cursor = ${r.cursor} where repair_id = ${r.repair_id}`,
+  ],
+  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round: r }) => [
+    sql`update repair_notice_rounds set stage = ${r.progress.stage}, cursor = null, end_date = ${r.progress.end_date} where repair_id = ${r.repair_id}`,
   ],
 }
 
@@ -452,6 +465,19 @@ const log =
 
 // The sources of the queries: where the candidates are, how each field reads.
 
+/** The reservations a step of `loans` walks, whole: both its sheets walk them (DOM-20). */
+const the_whole_reservation = {
+  from: sql`reservations as candidate`,
+  fields: {
+    id: sql`candidate.id`,
+    tool_id: sql`candidate.tool_id`,
+    member_id: sql`candidate.member_id`,
+    day: sql`candidate.day`,
+    booking_date: sql`candidate.booking_date`,
+    progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'cancellation_date', candidate.cancellation_date))`,
+  },
+}
+
 export const sql_adapter = (database: Database) => ({
   tools: {
     ...wlib.command_use_case_ports({
@@ -493,6 +519,7 @@ export const sql_adapter = (database: Database) => ({
         reserve_a_tool,
         return_a_tool,
         continue_the_cancellation_of_reservations,
+        continue_the_repair_notice_round,
       },
     })({
       algebra: algebra(loans_fragments),
@@ -507,15 +534,13 @@ export const sql_adapter = (database: Database) => ({
           continue_the_cancellation_of_reservations: {
             reads: (input) =>
               sql`select tool_id, start_date, json_strip_nulls(json_build_object('stage', stage, 'cursor', cursor, 'end_date', end_date)) as progress from cancellations where tool_id = ${input.tool_id}`,
-            from: sql`reservations as candidate`,
-            fields: {
-              id: sql`candidate.id`,
-              tool_id: sql`candidate.tool_id`,
-              member_id: sql`candidate.member_id`,
-              day: sql`candidate.day`,
-              booking_date: sql`candidate.booking_date`,
-              progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'cancellation_date', candidate.cancellation_date))`,
-            },
+            ...the_whole_reservation,
+          },
+          // The round of notices by its stay in repair, the same reservations.
+          continue_the_repair_notice_round: {
+            reads: (input) =>
+              sql`select repair_id, tool_id, start_date, json_strip_nulls(json_build_object('stage', stage, 'cursor', cursor, 'end_date', end_date)) as progress from repair_notice_rounds where repair_id = ${input.repair_id}`,
+            ...the_whole_reservation,
           },
         },
         execute: execute_step(database),

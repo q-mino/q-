@@ -38,3 +38,15 @@ export type send_the_due_date_reminder = z.output<typeof send_the_due_date_remin
 export const wait_until_the_due_date =
   effect.wait_until_the_due_date.brand<'business/loans/effect/wait_until_the_due_date'>()
 export type wait_until_the_due_date = z.output<typeof wait_until_the_due_date>
+
+/**
+ * Gianni reads on their phone "the drill you booked for Thursday is in
+ * repair". No return: nothing comes back to `loans`. One notice per stay in
+ * repair and reservation: Paolo, booked three weeks on, is notified once for
+ * each repair of the drill (the entry's id, `dsl`).
+ *
+ * @see {@link effect.send_the_repair_notice}
+ */
+export const send_the_repair_notice =
+  effect.send_the_repair_notice.brand<'business/loans/effect/send_the_repair_notice'>()
+export type send_the_repair_notice = z.output<typeof send_the_repair_notice>

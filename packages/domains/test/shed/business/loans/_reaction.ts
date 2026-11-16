@@ -23,3 +23,24 @@ export const the_first_reservation_on_the_sheet_is_taken_up =
  */
 export const the_next_reservation_on_the_sheet_is_taken_up =
   reaction.the_next_reservation_on_the_sheet_is_taken_up
+
+/**
+ * When the desk begins its round of the notices of a repair, it notifies
+ * the first member: the drill went to repair on Tuesday, Gianni, booked for
+ * Thursday, comes first. With no reservation ahead, the first step closes
+ * the round.
+ *
+ * @see {@link reaction.the_first_member_on_the_round_is_notified}
+ */
+export const the_first_member_on_the_round_is_notified =
+  reaction.the_first_member_on_the_round_is_notified
+
+/**
+ * When the desk has gone one member further on the round, it notifies the
+ * next: Gianni is notified, Paolo comes next; after Paolo, the step closes the
+ * round, and no one reacts to the closing.
+ *
+ * @see {@link reaction.the_next_member_on_the_round_is_notified}
+ */
+export const the_next_member_on_the_round_is_notified =
+  reaction.the_next_member_on_the_round_is_notified

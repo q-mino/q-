@@ -250,3 +250,84 @@ export const continue_the_cancellation_of_reservations_input =
 export type continue_the_cancellation_of_reservations_input = z.output<
   typeof continue_the_cancellation_of_reservations_input
 >
+
+/**
+ * The desk has not yet begun its round of the notices of the repair.
+ *
+ * @see {@link command.no_notice_round_of_the_repair_has_begun}
+ */
+export const no_notice_round_of_the_repair_has_begun =
+  command.no_notice_round_of_the_repair_has_begun
+export type no_notice_round_of_the_repair_has_begun = z.output<
+  typeof no_notice_round_of_the_repair_has_begun
+>
+
+/**
+ * The desk begins its round of the notices of a repair: the drill went to
+ * the workshop on Tuesday, and a reaction brings the news (DOM-16). The
+ * members who booked it are notified one at a time, by the steps of the
+ * round (DOM-20, D97, D112): `continue_the_repair_notice_round`; their
+ * reservations stay, and on the day a tool still in repair is refused to the
+ * borrower (`the_tool_is_in_service`). A second round for one stay in repair
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, to the reaction's dead letter.
+ *
+ * @see {@link command.notify_the_members_of_a_repair}
+ */
+export const notify_the_members_of_a_repair = command.notify_the_members_of_a_repair
+
+/**
+ * The input of `notify_the_members_of_a_repair`, declared inline.
+ *
+ * @see {@link command.notify_the_members_of_a_repair}
+ */
+export const notify_the_members_of_a_repair_input = command.notify_the_members_of_a_repair.input
+export type notify_the_members_of_a_repair_input = z.output<
+  typeof notify_the_members_of_a_repair_input
+>
+
+/**
+ * The desk notifies the member who booked a tool that it is in repair; the
+ * reservation stays. A transition of the reservation's life cycle (DOM-19)
+ * that changes nothing in the state (D95): it records the notice and queues
+ * it toward the world (DOM-13). With no use case of its own: the round
+ * composes it into its step (D111), and gives it, from the reservation the
+ * step read, the member, the tool and the day the notice carries, since a
+ * creator reads no state.
+ *
+ * @see {@link command.notify_a_member_of_the_repair}
+ */
+export const notify_a_member_of_the_repair = command.notify_a_member_of_the_repair
+
+/**
+ * The input of `notify_a_member_of_the_repair`, declared inline.
+ *
+ * @see {@link command.notify_a_member_of_the_repair}
+ */
+export const notify_a_member_of_the_repair_input = command.notify_a_member_of_the_repair.input
+export type notify_a_member_of_the_repair_input = z.output<
+  typeof notify_a_member_of_the_repair_input
+>
+
+/**
+ * The desk takes the next member on its round of the notices of a repair
+ * and notifies them, or, none left, closes the round (DOM-20, D112.2): the
+ * drill went to repair on Tuesday, the first step notifies Gianni, booked
+ * for Thursday, the second Paolo, booked three weeks on, the third closes. A
+ * reservation cancelled in the meantime (the drill retired beyond repair,
+ * its own sheet at work) is no longer booked: it leaves the selection, and
+ * its member is not notified.
+ *
+ * @see {@link command.continue_the_repair_notice_round}
+ */
+export const continue_the_repair_notice_round = command.continue_the_repair_notice_round
+
+/**
+ * The input of `continue_the_repair_notice_round`, declared inline.
+ *
+ * @see {@link command.continue_the_repair_notice_round}
+ */
+export const continue_the_repair_notice_round_input = command.continue_the_repair_notice_round.input
+export type continue_the_repair_notice_round_input = z.output<
+  typeof continue_the_repair_notice_round_input
+>

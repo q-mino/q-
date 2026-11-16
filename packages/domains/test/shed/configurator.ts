@@ -7,13 +7,17 @@
 // to the world the oracle fakes, and brings the eve of a due date, and the
 // due date, back to their returns. The consumers of the reactions (DOM-16)
 // read the fact log of the cell and invoke the use cases of the offices they
-// move: those of a procedure between offices (`retirement`, `damage`), and those of an
-// office's own process (`loans`, its work sheet). Nothing runs: the library
-// is wished.
+// move: those of a procedure between offices (`retirement`, `damage`,
+// `repair`), and those of an office's own processes (`loans`, its work sheet
+// and its rounds of notices). Nothing runs: the library is wished.
 
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
-import { send_the_due_date_reminder, type Phones } from './adapter/memory/reminders.ts'
+import {
+  send_the_due_date_reminder,
+  send_the_repair_notice,
+  type Phones,
+} from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './business/loans/_registry.ts'
 import {
   declare_the_loan_overdue,
@@ -33,6 +37,7 @@ import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
 import { registry as retirement_registry } from './reaction/retirement/_registry.ts'
 import { registry as damage_registry } from './reaction/damage/_registry.ts'
+import { registry as repair_registry } from './reaction/repair/_registry.ts'
 
 /** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
 export interface World {
@@ -72,6 +77,9 @@ export const shed = (cell: Cell) => (world: World) => {
       'business/loans/effect/send_the_due_date_reminder': send_the_due_date_reminder(cell.get)(
         world.phones,
       ),
+      'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(
+        world.phones,
+      ),
     })({
       outbox: cell.outbox,
       returns: adapter.loans,
@@ -87,6 +95,14 @@ export const shed = (cell: Cell) => (world: World) => {
         log: adapter.log,
         invokes: adapter.loans.continue_the_cancellation_of_reservations,
       },
+      'business/loans/reaction/the_first_member_on_the_round_is_notified': {
+        log: adapter.log,
+        invokes: adapter.loans.continue_the_repair_notice_round,
+      },
+      'business/loans/reaction/the_next_member_on_the_round_is_notified': {
+        log: adapter.log,
+        invokes: adapter.loans.continue_the_repair_notice_round,
+      },
     })({
       state: cell.reactions,
       clock: world.clock,
@@ -95,6 +111,15 @@ export const shed = (cell: Cell) => (world: World) => {
       'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
         log: adapter.log,
         invokes: adapter.tools.send_a_tool_to_repair,
+      },
+    })({
+      state: cell.reactions,
+      clock: world.clock,
+    }),
+    repair: wlib.reaction_consumers({ registry: repair_registry })({
+      'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified': {
+        log: adapter.log,
+        invokes: adapter.loans.notify_the_members_of_a_repair,
       },
     })({
       state: cell.reactions,

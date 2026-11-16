@@ -14,6 +14,8 @@ import type {
   cancellation_progress,
   loan,
   loan_progress,
+  repair_notice_round,
+  repair_notice_round_progress,
   reservation,
   reservation_progress,
 } from '../../business/loans/_value.ts'
@@ -21,10 +23,13 @@ import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
 } from '../../business/loans/_query.ts'
-import type { continue_the_cancellation_of_reservations } from '../../business/loans/_command.ts'
+import type {
+  continue_the_cancellation_of_reservations,
+  continue_the_repair_notice_round,
+} from '../../business/loans/_command.ts'
 import type * as loan_selections from '../../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
-import type { tool_id } from '../../business/tools/_id.ts'
+import type { repair_id, tool_id } from '../../business/tools/_id.ts'
 import * as tools_dsl from '../../business/tools/_dsl.ts'
 import * as loans_dsl from '../../business/loans/_dsl.ts'
 import {
@@ -36,11 +41,15 @@ import {
 } from './fragments.ts'
 import type { ToolsState } from './tools.ts'
 
-/** The loans and the reservations, by id; the desk's work sheets, by tool. */
+/**
+ * The loans and the reservations, by id; the desk's work sheets, by tool;
+ * its rounds of the notices of a repair, by stay in repair.
+ */
 export interface LoansState {
   readonly loans: ReadonlyMap<loan_id, loan>
   readonly reservations: ReadonlyMap<reservation_id, reservation>
   readonly cancellations: ReadonlyMap<tool_id, cancellation_of_reservations>
+  readonly notice_rounds: ReadonlyMap<repair_id, repair_notice_round>
 }
 
 /** What the predicates of `loans` read: its state, and the state of `tools` for its view of the tools. */
@@ -96,6 +105,8 @@ export const loans_fragments: wlib.PredicateFragments<
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
     (p) => (state) =>
       state.cancellations.has(p.tool_id),
+  'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) => (state) =>
+    state.notice_rounds.has(p.repair_id),
 }
 
 /** The name of a tool, read from the catalogue of `tools`: the link of the view of `loans`. */
@@ -183,7 +194,17 @@ export const reservation_sources: {
 }
 
 // The reads of the steps of `loans` (DOM-20): the work sheet by its tool, the
-// reservations it walks, whole.
+// round of notices by its stay in repair; both walk the reservations, whole,
+// one subject, so one selection serves both (`StepAdapter`).
+
+const the_whole_reservation = {
+  id: () => (the_reservation: reservation) => the_reservation.id,
+  tool_id: () => (the_reservation: reservation) => the_reservation.tool_id,
+  member_id: () => (the_reservation: reservation) => the_reservation.member_id,
+  day: () => (the_reservation: reservation) => the_reservation.day,
+  booking_date: () => (the_reservation: reservation) => the_reservation.booking_date,
+  progress: () => (the_reservation: reservation) => the_reservation.progress,
+}
 
 export const reservation_steps: {
   readonly continue_the_cancellation_of_reservations: wlib.StepSource<
@@ -192,18 +213,22 @@ export const reservation_steps: {
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
+  readonly continue_the_repair_notice_round: wlib.StepSource<
+    typeof continue_the_repair_notice_round,
+    ProcessRead<Reads>,
+    Source<Reads, reservation>,
+    Field<Reads, reservation>
+  >
 } = {
   continue_the_cancellation_of_reservations: {
     reads: (input) => (state) => state.cancellations.get(input.tool_id),
     from: the_reservations,
-    fields: {
-      id: () => (the_reservation) => the_reservation.id,
-      tool_id: () => (the_reservation) => the_reservation.tool_id,
-      member_id: () => (the_reservation) => the_reservation.member_id,
-      day: () => (the_reservation) => the_reservation.day,
-      booking_date: () => (the_reservation) => the_reservation.booking_date,
-      progress: () => (the_reservation) => the_reservation.progress,
-    },
+    fields: the_whole_reservation,
+  },
+  continue_the_repair_notice_round: {
+    reads: (input) => (state) => state.notice_rounds.get(input.repair_id),
+    from: the_reservations,
+    fields: the_whole_reservation,
   },
 }
 
@@ -255,6 +280,22 @@ const with_the_sheet_progress =
         }
   }
 
+/** A round's change of stage, by nesting: the stay in repair, the tool and the start date stay. */
+const with_the_round_progress =
+  (changed: { readonly repair_id: repair_id; readonly progress: repair_notice_round_progress }) =>
+  (state: LoansState): LoansState => {
+    const the_round = state.notice_rounds.get(changed.repair_id)
+    return the_round === undefined
+      ? state
+      : {
+          ...state,
+          notice_rounds: new Map(state.notice_rounds).set(changed.repair_id, {
+            ...the_round,
+            progress: changed.progress,
+          }),
+        }
+  }
+
 export const loans_writes: wlib.FactWrites<
   wlib.FactsIn<typeof loans_fact>,
   (state: LoansState) => LoansState
@@ -294,4 +335,17 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
     completed_cancellation,
   }) => with_the_sheet_progress(completed_cancellation),
+  'business/loans/fact/a_repair_notice_round_has_begun':
+    ({ new_round }) =>
+    (state) => ({
+      ...state,
+      notice_rounds: new Map(state.notice_rounds).set(new_round.repair_id, new_round),
+    }),
+  'business/loans/fact/a_member_has_been_notified_of_the_repair': () => (state) => state,
+  'business/loans/fact/the_repair_notice_round_has_advanced':
+    ({ repair_id, cursor }) =>
+    (state) =>
+      with_the_round_progress({ repair_id, progress: { stage: 'notifying', cursor } })(state),
+  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round }) =>
+    with_the_round_progress(completed_round),
 }

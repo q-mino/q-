@@ -48,6 +48,13 @@ export const registry = {
   'business/loans/value/cancellation_of_reservations': value.cancellation_of_reservations,
   'business/loans/value/cancellation_under_way': value.cancellation_under_way,
   'business/loans/value/completed_cancellation': value.completed_cancellation,
+  'business/loans/value/repair_notice_round_stage': value.repair_notice_round_stage,
+  'business/loans/value/repair_notice_round_notifying': value.repair_notice_round_notifying,
+  'business/loans/value/repair_notice_round_complete': value.repair_notice_round_complete,
+  'business/loans/value/repair_notice_round_progress': value.repair_notice_round_progress,
+  'business/loans/value/repair_notice_round': value.repair_notice_round,
+  'business/loans/value/repair_notice_round_under_way': value.repair_notice_round_under_way,
+  'business/loans/value/completed_repair_notice_round': value.completed_repair_notice_round,
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
   'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
@@ -69,10 +76,18 @@ export const registry = {
   'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete':
     fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+  'business/loans/fact/a_repair_notice_round_has_begun': fact.a_repair_notice_round_has_begun,
+  'business/loans/fact/a_member_has_been_notified_of_the_repair':
+    fact.a_member_has_been_notified_of_the_repair,
+  'business/loans/fact/the_repair_notice_round_has_advanced':
+    fact.the_repair_notice_round_has_advanced,
+  'business/loans/fact/the_repair_notice_round_is_complete':
+    fact.the_repair_notice_round_is_complete,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
   'business/loans/effect/wait_until_the_due_date': effect.wait_until_the_due_date,
+  'business/loans/effect/send_the_repair_notice': effect.send_the_repair_notice,
   'business/loans/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/loans/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
@@ -92,6 +107,8 @@ export const registry = {
     predicate.the_tool_is_booked_for_the_day_by_this_member,
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
     predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
+  'business/loans/predicate/the_notice_round_of_the_repair_has_begun':
+    predicate.the_notice_round_of_the_repair_has_begun,
   'business/loans/command/the_tool_can_be_lent': command.the_tool_can_be_lent,
   'business/loans/command/borrow_a_tool': command.borrow_a_tool,
   'business/loans/command/borrow_a_tool_input': command.borrow_a_tool_input,
@@ -127,6 +144,18 @@ export const registry = {
     command.continue_the_cancellation_of_reservations,
   'business/loans/command/continue_the_cancellation_of_reservations_input':
     command.continue_the_cancellation_of_reservations_input,
+  'business/loans/command/no_notice_round_of_the_repair_has_begun':
+    command.no_notice_round_of_the_repair_has_begun,
+  'business/loans/command/notify_the_members_of_a_repair': command.notify_the_members_of_a_repair,
+  'business/loans/command/notify_the_members_of_a_repair_input':
+    command.notify_the_members_of_a_repair_input,
+  'business/loans/command/notify_a_member_of_the_repair': command.notify_a_member_of_the_repair,
+  'business/loans/command/notify_a_member_of_the_repair_input':
+    command.notify_a_member_of_the_repair_input,
+  'business/loans/command/continue_the_repair_notice_round':
+    command.continue_the_repair_notice_round,
+  'business/loans/command/continue_the_repair_notice_round_input':
+    command.continue_the_repair_notice_round_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -158,10 +187,17 @@ export const registry = {
     usecase.cancel_the_reservations_of_a_tool,
   'business/loans/usecase/continue_the_cancellation_of_reservations':
     usecase.continue_the_cancellation_of_reservations,
+  'business/loans/usecase/notify_the_members_of_a_repair': usecase.notify_the_members_of_a_repair,
+  'business/loans/usecase/continue_the_repair_notice_round':
+    usecase.continue_the_repair_notice_round,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
   'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up':
     reaction.the_first_reservation_on_the_sheet_is_taken_up,
   'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up':
     reaction.the_next_reservation_on_the_sheet_is_taken_up,
+  'business/loans/reaction/the_first_member_on_the_round_is_notified':
+    reaction.the_first_member_on_the_round_is_notified,
+  'business/loans/reaction/the_next_member_on_the_round_is_notified':
+    reaction.the_next_member_on_the_round_is_notified,
 } satisfies wlib.Registry

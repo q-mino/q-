@@ -26,3 +26,28 @@ export const the_next_reservation_on_the_sheet_is_taken_up = reaction({
   invokes: usecase.continue_the_cancellation_of_reservations,
   translation: (fact) => ({ tool_id: fact.tool_id }),
 })
+
+// The round of the notices of a repair moves itself on the same way.
+
+/**
+ * When the desk begins its round of the notices of a repair, it notifies
+ * the first member: the drill went to repair on Tuesday, Gianni, booked for
+ * Thursday, comes first. With no reservation ahead, the first step closes
+ * the round.
+ */
+export const the_first_member_on_the_round_is_notified = reaction({
+  when: fact.a_repair_notice_round_has_begun,
+  invokes: usecase.continue_the_repair_notice_round,
+  translation: (fact) => ({ repair_id: fact.new_round.repair_id }),
+})
+
+/**
+ * When the desk has gone one member further on the round, it notifies the
+ * next: Gianni is notified, Paolo comes next; after Paolo, the step closes the
+ * round, and no one reacts to the closing.
+ */
+export const the_next_member_on_the_round_is_notified = reaction({
+  when: fact.the_repair_notice_round_has_advanced,
+  invokes: usecase.continue_the_repair_notice_round,
+  translation: (fact) => ({ repair_id: fact.repair_id }),
+})

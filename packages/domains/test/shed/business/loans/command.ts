@@ -418,7 +418,11 @@ export const cancel_a_reservation = command({
   }),
 })
 
-/** The reservations the work sheet goes through: booked, of the tool, from the day on. */
+/**
+ * The reservations still ahead for a tool: booked, of the tool, from the day
+ * on. The desk goes through them on both its sheets: the cancellation of a
+ * retired tool's reservations, and the round of the notices of a repair.
+ */
 export const the_reservation_is_still_ahead_for_the_tool = AND({
   the_reservation_is_booked: reservation_selection.the_reservation_is_booked,
   the_reservation_is_of_the_tool: reservation_selection.the_reservation_is_of_this_tool,
@@ -459,6 +463,139 @@ export const continue_the_cancellation_of_reservations = cursor_step({
     completes: {
       completed_cancellation: {
         tool_id: sheet.tool_id,
+        progress: { stage: 'complete', end_date: context.now },
+      },
+    },
+  }),
+})
+
+/** The desk has not yet begun its round of the notices of the repair. */
+export const no_notice_round_of_the_repair_has_begun = NOT(
+  predicate.the_notice_round_of_the_repair_has_begun,
+)
+
+/**
+ * The desk begins its round of the notices of a repair: the drill went to
+ * the workshop on Tuesday, and a reaction brings the news (DOM-16). The
+ * members who booked it are notified one at a time, by the steps of the
+ * round (DOM-20, D97, D112): `continue_the_repair_notice_round`; their
+ * reservations stay, and on the day a tool still in repair is refused to the
+ * borrower (`the_tool_is_in_service`). A second round for one stay in repair
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, to the reaction's dead letter.
+ */
+export const notify_the_members_of_a_repair = command({
+  input: z.strictObject({
+    repair_id: tools.id.repair_id,
+    tool_id: tools.id.tool_id,
+  }),
+  outcomes: {
+    no_round_has_begun_so_one_begins: [
+      no_notice_round_of_the_repair_has_begun,
+      fact.a_repair_notice_round_has_begun,
+    ],
+  },
+  creator: (context) => (input) => ({
+    no_round_has_begun_so_one_begins: [
+      { repair_id: input.repair_id },
+      {
+        new_round: {
+          repair_id: input.repair_id,
+          tool_id: input.tool_id,
+          start_date: context.now,
+          progress: { stage: 'notifying' },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The desk notifies the member who booked a tool that it is in repair; the
+ * reservation stays. A transition of the reservation's life cycle (DOM-19)
+ * that changes nothing in the state (D95): it records the notice and queues
+ * it toward the world (DOM-13). With no use case of its own: the round
+ * composes it into its step (D111), and gives it, from the reservation the
+ * step read, the member, the tool and the day the notice carries, since a
+ * creator reads no state.
+ */
+export const notify_a_member_of_the_repair = command({
+  input: z.strictObject({
+    reservation_id: id.reservation_id,
+    repair_id: tools.id.repair_id,
+    member_id: id.member_id,
+    tool_id: tools.id.tool_id,
+    day: wlib.day,
+  }),
+  outcomes: {
+    the_reservation_is_booked_so_its_member_is_notified: [
+      predicate.the_reservation_is_booked,
+      fact.a_member_has_been_notified_of_the_repair,
+      pick(effect, 'send_the_repair_notice'),
+    ],
+  },
+  creator: () => (input) => ({
+    the_reservation_is_booked_so_its_member_is_notified: [
+      { reservation_id: input.reservation_id },
+      { reservation_id: input.reservation_id, repair_id: input.repair_id },
+      {
+        send_the_repair_notice: {
+          id: dsl.the_notice_of_the_repair_to_the_reservation({
+            repair_id: input.repair_id,
+            reservation_id: input.reservation_id,
+          }),
+          payload: {
+            reservation_id: input.reservation_id,
+            member_id: input.member_id,
+            tool_id: input.tool_id,
+            day: input.day,
+          },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The desk takes the next member on its round of the notices of a repair
+ * and notifies them, or, none left, closes the round (DOM-20, D112.2): the
+ * drill went to repair on Tuesday, the first step notifies Gianni, booked
+ * for Thursday, the second Paolo, booked three weeks on, the third closes. A
+ * reservation cancelled in the meantime (the drill retired beyond repair,
+ * its own sheet at work) is no longer booked: it leaves the selection, and
+ * its member is not notified.
+ */
+export const continue_the_repair_notice_round = cursor_step({
+  input: z.strictObject({
+    repair_id: tools.id.repair_id,
+  }),
+  reads: value.repair_notice_round_under_way,
+  fields: value.booked_reservation,
+  identity: 'id',
+  selection: the_reservation_is_still_ahead_for_the_tool,
+  order: { day: 'ascending' },
+  composes: notify_a_member_of_the_repair,
+  outcomes: {
+    advances: fact.the_repair_notice_round_has_advanced,
+    completes: fact.the_repair_notice_round_is_complete,
+  },
+  creator: (context) => () => (round) => ({
+    selection: {
+      the_reservation_is_booked: {},
+      the_reservation_is_of_the_tool: { tool_id: round.tool_id },
+      the_day_has_not_passed: { day: dsl.today(round.start_date) },
+    },
+    composes: (reservation) => ({
+      reservation_id: reservation.id,
+      repair_id: round.repair_id,
+      member_id: reservation.member_id,
+      tool_id: reservation.tool_id,
+      day: reservation.day,
+    }),
+    advances: { repair_id: round.repair_id },
+    completes: {
+      completed_round: {
+        repair_id: round.repair_id,
         progress: { stage: 'complete', end_date: context.now },
       },
     },

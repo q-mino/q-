@@ -167,3 +167,52 @@ export const the_cancellation_of_the_reservations_of_a_tool_is_complete =
 export type the_cancellation_of_the_reservations_of_a_tool_is_complete = z.output<
   typeof the_cancellation_of_the_reservations_of_a_tool_is_complete
 >
+
+/**
+ * The desk has begun its round of the notices of a repair (D97, D112): the
+ * whole new round. Its steps notify one member each.
+ *
+ * @see {@link fact.a_repair_notice_round_has_begun}
+ */
+export const a_repair_notice_round_has_begun =
+  fact.a_repair_notice_round_has_begun.brand<'business/loans/fact/a_repair_notice_round_has_begun'>()
+export type a_repair_notice_round_has_begun = z.output<typeof a_repair_notice_round_has_begun>
+
+/**
+ * The desk notified a member that the tool they booked is in repair: the
+ * reservation, which stays, and the stay in repair. Nothing changes in the
+ * state (D95): the notice is on its way. Recorded as a part of a step of the
+ * round (D111).
+ *
+ * @see {@link fact.a_member_has_been_notified_of_the_repair}
+ */
+export const a_member_has_been_notified_of_the_repair =
+  fact.a_member_has_been_notified_of_the_repair.brand<'business/loans/fact/a_member_has_been_notified_of_the_repair'>()
+export type a_member_has_been_notified_of_the_repair = z.output<
+  typeof a_member_has_been_notified_of_the_repair
+>
+
+/**
+ * The desk went one member further on the round of the notices of a repair:
+ * the step's part (D111, D112.2), beside the notice it recorded. A partial
+ * value: the round stays under way, its cursor at the reservation handled,
+ * written by the library (DOM-20).
+ *
+ * @see {@link fact.the_repair_notice_round_has_advanced}
+ */
+export const the_repair_notice_round_has_advanced =
+  fact.the_repair_notice_round_has_advanced.brand<'business/loans/fact/the_repair_notice_round_has_advanced'>()
+export type the_repair_notice_round_has_advanced = z.output<
+  typeof the_repair_notice_round_has_advanced
+>
+
+/**
+ * No reservation of the tool is left ahead: the desk closes its round of notices (D112.2).
+ *
+ * @see {@link fact.the_repair_notice_round_is_complete}
+ */
+export const the_repair_notice_round_is_complete =
+  fact.the_repair_notice_round_is_complete.brand<'business/loans/fact/the_repair_notice_round_is_complete'>()
+export type the_repair_notice_round_is_complete = z.output<
+  typeof the_repair_notice_round_is_complete
+>

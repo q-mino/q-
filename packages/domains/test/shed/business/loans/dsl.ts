@@ -2,7 +2,7 @@
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
 import { date_time_string, day } from '../../wlib.ts'
-import { value } from './_scope_dsl.ts'
+import { id, tools, value } from './_scope_dsl.ts'
 
 const loan_period_in_days = 14
 const booking_window_in_days = 30
@@ -58,3 +58,14 @@ export const the_term_of_the_loan = (the_loan: value.loan): value.loan_term | un
 export const the_reservation_is_booked = (
   the_reservation: value.reservation | undefined,
 ): boolean => the_reservation?.progress.stage === 'booked'
+
+/**
+ * The key of the notice of a repair to a reservation, the id of its entry
+ * (DOM-13): one notice per stay in repair and reservation, so that Paolo,
+ * booked three weeks on, is notified once for each repair of the drill. Both
+ * values, encoded with no ambiguity: an id may hold any character.
+ */
+export const the_notice_of_the_repair_to_the_reservation = (notice: {
+  readonly repair_id: tools.id.repair_id
+  readonly reservation_id: id.reservation_id
+}): string => JSON.stringify([notice.repair_id, notice.reservation_id])

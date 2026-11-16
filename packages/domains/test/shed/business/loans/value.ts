@@ -167,3 +167,54 @@ export const cancellation_under_way = cancellation_of_reservations.extend({
 export const completed_cancellation = cancellation_of_reservations.extend({
   progress: cancellation_complete,
 })
+
+export const repair_notice_round_stage = z.enum(['notifying', 'complete'])
+
+/**
+ * The desk goes round the members who booked a tool sent to repair: the
+ * tool's reservations still ahead (booked, from the day of the repair on:
+ * the tool and the start date are the selection's parameters, D97.1), one
+ * at a time, the closest day first, then by id (D109); the cursor marks the
+ * last one handled, none before the first (D112.1). The library's, opaque.
+ */
+export const repair_notice_round_notifying = z.strictObject({
+  stage: z.literal(repair_notice_round_stage.enum.notifying),
+  cursor: cursor.optional(),
+})
+
+/** No reservation of the tool is left ahead: the round is over (D112.2). */
+export const repair_notice_round_complete = z.strictObject({
+  stage: z.literal(repair_notice_round_stage.enum.complete),
+  end_date: date_time_string,
+})
+
+/** Where the round of the notices of a repair is in its course. */
+export const repair_notice_round_progress = z.discriminatedUnion('stage', [
+  repair_notice_round_notifying,
+  repair_notice_round_complete,
+])
+
+/**
+ * The desk's round of the notices of a repair: when a tool goes to the
+ * workshop, the desk notifies, one at a time, the members who booked it,
+ * and their reservations stay (A, 16 Nov 2026 (4)). A process with a cursor
+ * (DOM-20, DOM-23), its own aggregate in `loans`, keyed by the stay in
+ * repair (`tools`' `repair_id`, DOM-12): a tool repaired twice gets two
+ * rounds. By nesting, as a loan.
+ */
+export const repair_notice_round = z.strictObject({
+  repair_id: tools.id.repair_id,
+  tool_id: tools.id.tool_id,
+  start_date: date_time_string,
+  progress: repair_notice_round_progress,
+})
+
+/** A round of notices under way. */
+export const repair_notice_round_under_way = repair_notice_round.extend({
+  progress: repair_notice_round_notifying,
+})
+
+/** A round of notices over: no reservation of the tool is left ahead. */
+export const completed_repair_notice_round = repair_notice_round.extend({
+  progress: repair_notice_round_complete,
+})
