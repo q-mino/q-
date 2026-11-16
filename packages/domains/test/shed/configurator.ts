@@ -7,7 +7,9 @@
 // to the world the oracle fakes, and brings the eve of a due date, and the
 // due date, back to their returns. The consumers of the reactions (DOM-16)
 // read the fact log of the cell and invoke the use cases of the offices they
-// move. Nothing runs: the library is wished.
+// move: those of a procedure between offices (`retirement`), and those of an
+// office's own process (`loans`, its work sheet). Nothing runs: the library
+// is wished.
 
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
@@ -69,6 +71,19 @@ export const shed = (cell: Cell) => (world: World) => {
       outbox: cell.outbox,
       returns: adapter.loans,
       state: cell.executor,
+      clock: world.clock,
+    }),
+    loans_reactions: wlib.reaction_consumers({ registry: loans_registry })({
+      'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.loans.continue_the_cancellation_of_reservations,
+      },
+      'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.loans.continue_the_cancellation_of_reservations,
+      },
+    })({
+      state: cell.reactions,
       clock: world.clock,
     }),
     retirement: wlib.reaction_consumers({ registry: retirement_registry })({

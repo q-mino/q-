@@ -11,6 +11,7 @@ import * as fact from './_fact.ts'
 import * as id from './_id.ts'
 import * as predicate from './_predicate.ts'
 import * as query from './_query.ts'
+import * as reaction from './_reaction.ts'
 import * as loan_selection from './_loan_selection.ts'
 import * as reservation_selection from './_reservation_selection.ts'
 import * as usecase from './_usecase.ts'
@@ -158,4 +159,8 @@ export const registry = {
     usecase.continue_the_cancellation_of_reservations,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
+  'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up':
+    reaction.the_first_reservation_on_the_sheet_is_taken_up,
+  'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up':
+    reaction.the_next_reservation_on_the_sheet_is_taken_up,
 } satisfies wlib.Registry

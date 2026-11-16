@@ -47,7 +47,8 @@ export const cancel_the_reservations_of_a_tool = command_use_case({
 /**
  * The desk goes one reservation further on its work sheet, or closes it: a
  * step of the cancellation of a tool's reservations (DOM-20). Invoked by the
- * desk's own standing order, after each step.
+ * desk's own standing orders (DOM-16): when the sheet opens, and after each
+ * step that advanced it.
  */
 export const continue_the_cancellation_of_reservations = command_use_case({
   command: command.continue_the_cancellation_of_reservations,
