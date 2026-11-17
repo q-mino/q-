@@ -193,7 +193,8 @@ export const return_a_tool = command_use_case_over({
 /**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
- * date passes on one, a return takes it away. When the due date passes she
+ * date passes on one, a return takes it away, a tool renamed by the keeper
+ * shows its new name (SC-19). When the due date passes she
  * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
  */

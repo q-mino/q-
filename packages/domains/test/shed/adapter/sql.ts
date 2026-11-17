@@ -13,6 +13,7 @@ import type * as tool_selections from '../business/tools/_tool_selection.ts'
 import {
   add_a_tool,
   put_a_repaired_tool_back_in_service,
+  rename_a_tool,
   retire_a_tool,
   send_a_tool_to_repair,
   the_catalogue,
@@ -213,6 +214,9 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   'business/tools/fact/the_tool_was_retired_before_the_repair': () => [],
   'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool: t }) => [
     sql`update tools set status = ${t.status}, repair_id = null, repair_since = null where id = ${t.id}`,
+  ],
+  'business/tools/fact/a_tool_has_been_renamed': ({ renamed_tool: t }) => [
+    sql`update tools set name = ${t.name} where id = ${t.id}`,
   ],
 }
 
@@ -599,6 +603,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         retire_a_tool,
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
+        rename_a_tool,
       },
     })({
       algebra: algebra(tools_fragments),
@@ -695,7 +700,9 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         },
       },
       read: read(database),
-      // A member's loans and reservations are few: a whole read per fact is cheap.
+      // A member's loans and reservations are few: a whole read per fact of the
+      // node is cheap, and a fact of `tools` that renames a tool reads again
+      // the name of its rows (SC-19).
       streams: {
         the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },

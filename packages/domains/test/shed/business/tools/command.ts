@@ -176,3 +176,27 @@ export const put_a_repaired_tool_back_in_service = command({
     ],
   }),
 })
+
+/**
+ * Luca gives the drill a name the members recognise on the shelf: any tool
+ * of the catalogue, retired ones too, since their name stays in the history
+ * of the loans (SC-19).
+ */
+export const rename_a_tool = command({
+  input: z.strictObject({
+    tool_id: id.tool_id,
+    name: value.tool_name,
+  }),
+  outcomes: {
+    the_tool_is_in_the_catalogue_so_it_is_renamed: [
+      predicate.a_tool_has_this_id,
+      fact.a_tool_has_been_renamed,
+    ],
+  },
+  creator: () => (input) => ({
+    the_tool_is_in_the_catalogue_so_it_is_renamed: [
+      { tool_id: input.tool_id },
+      { renamed_tool: { id: input.tool_id, name: input.name } },
+    ],
+  }),
+})

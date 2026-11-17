@@ -97,3 +97,20 @@ export const put_a_repaired_tool_back_in_service_input =
 export type put_a_repaired_tool_back_in_service_input = z.output<
   typeof put_a_repaired_tool_back_in_service_input
 >
+
+/**
+ * Luca gives the drill a name the members recognise on the shelf: any tool
+ * of the catalogue, retired ones too, since their name stays in the history
+ * of the loans (SC-19).
+ *
+ * @see {@link command.rename_a_tool}
+ */
+export const rename_a_tool = command.rename_a_tool
+
+/**
+ * The input of `rename_a_tool`, declared inline.
+ *
+ * @see {@link command.rename_a_tool}
+ */
+export const rename_a_tool_input = command.rename_a_tool.input
+export type rename_a_tool_input = z.output<typeof rename_a_tool_input>

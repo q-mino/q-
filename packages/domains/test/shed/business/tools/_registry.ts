@@ -39,6 +39,7 @@ export const registry = {
   'business/tools/fact/the_tool_was_retired_before_the_repair':
     fact.the_tool_was_retired_before_the_repair,
   'business/tools/fact/a_tool_has_been_repaired': fact.a_tool_has_been_repaired,
+  'business/tools/fact/a_tool_has_been_renamed': fact.a_tool_has_been_renamed,
   'business/tools/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/tools/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/tools/predicate/the_tool_is_retired': predicate.the_tool_is_retired,
@@ -57,6 +58,8 @@ export const registry = {
     command.put_a_repaired_tool_back_in_service,
   'business/tools/command/put_a_repaired_tool_back_in_service_input':
     command.put_a_repaired_tool_back_in_service_input,
+  'business/tools/command/rename_a_tool': command.rename_a_tool,
+  'business/tools/command/rename_a_tool_input': command.rename_a_tool_input,
   'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
     tool_selection.the_tool_is_in_one_of_these_categories,
@@ -69,5 +72,6 @@ export const registry = {
   'business/tools/usecase/send_a_tool_to_repair': usecase.send_a_tool_to_repair,
   'business/tools/usecase/put_a_repaired_tool_back_in_service':
     usecase.put_a_repaired_tool_back_in_service,
+  'business/tools/usecase/rename_a_tool': usecase.rename_a_tool,
   'business/tools/usecase/the_catalogue': usecase.the_catalogue,
 } satisfies wlib.Registry

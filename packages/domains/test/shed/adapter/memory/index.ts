@@ -25,6 +25,7 @@ import { accounts_lookups, type AccountsState } from './accounts.ts'
 import {
   add_a_tool,
   put_a_repaired_tool_back_in_service,
+  rename_a_tool,
   retire_a_tool,
   send_a_tool_to_repair,
   the_catalogue,
@@ -351,37 +352,82 @@ const read =
 type Event = wlib.StreamEvent<wlib.StoredEnvelope, unknown, unknown>
 
 /**
+ * Whether two values are the same, field by field and deeply: how an entry
+ * that stays is compared with itself before a fact (an interpreter rule,
+ * SC-19).
+ */
+const same_value = (a: unknown, b: unknown): boolean => {
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
+    return Object.is(a, b)
+  }
+  const other = new Map<string, unknown>(Object.entries(b))
+  return (
+    Array.isArray(a) === Array.isArray(b) &&
+    Object.keys(a).length === other.size &&
+    Object.entries(a).every(([key, value]) => other.has(key) && same_value(value, other.get(key)))
+  )
+}
+
+/**
  * The events of a fact for a query, the semantics of a stream (DOM-17, V10):
- * the entries before and after the fact, compared by identity. An entry kept
- * after it that the fact touches (its identity among the resources of a part) is
- * the fact; one that appears untouched entered; one that disappears left,
- * touched or not; an untouched entry that stays gives nothing, even if a
- * field changed. Interpreter rule: the events of one fact come in the order
- * of the entries after it, then those that left, in their order before it.
+ * the entries before and after the fact, compared by identity and value. An
+ * entry kept after it that the fact touches (a fact of the query's domain,
+ * its identity among the resources of a part) is the fact; one that stays
+ * untouched and is no longer the same changed (a fact of `tools` renamed the
+ * drill a loan's entry reads, SC-19); one that appears untouched entered; one
+ * that disappears left, touched or not; an untouched entry that stays the
+ * same gives nothing. Every fact of the log counts, of any domain: a query's
+ * entries may read another domain's state (GR-3), and only `fact` carries the
+ * fact, of the query's domain alone (DOM-8, D64.3). Interpreter rule: the
+ * events of one fact come in the order of the entries after it, then those
+ * that left, in their order before it.
  */
 const events_of =
+  (registry: wlib.Registry) =>
   <candidate>(plan: Plan<candidate>) =>
   (recorded: Recorded): readonly Event[] => {
     const before = entries_on(plan)(recorded.before)
     const after = entries_on(plan)(recorded.after)
-    const among = (entries: readonly Identified[]) => (identity: unknown) =>
-      entries.some((identified) => identified.identity === identity)
+    const before_it = (identity: unknown): Identified | undefined =>
+      before.find((identified) => identified.identity === identity)
+    const among_after = (identity: unknown): boolean =>
+      after.some((identified) => identified.identity === identity)
     const touched = (identity: unknown): boolean =>
+      is_of_the_domain(registry)(recorded) &&
       recorded.fact.parts.some((part) =>
         part.resources.some(
           (resource) => resource.path === plan.identity.path && resource.value === identity,
         ),
       )
+    const untouched = (identified: Identified): readonly Event[] => {
+      const was = before_it(identified.identity)
+      const at = {
+        position: recorded.position,
+        identity: identified.identity,
+        entry: identified.entry,
+      }
+      return was === undefined
+        ? [{ event: 'entered', ...at }]
+        : same_value(was.entry, identified.entry)
+          ? []
+          : [{ event: 'changed', ...at }]
+    }
     return [
-      ...after.flatMap(({ identity, entry }): readonly Event[] =>
-        touched(identity)
-          ? [{ event: 'fact', position: recorded.position, identity, fact: recorded.fact, entry }]
-          : among(before)(identity)
-            ? []
-            : [{ event: 'entered', position: recorded.position, identity, entry }],
+      ...after.flatMap((identified): readonly Event[] =>
+        touched(identified.identity)
+          ? [
+              {
+                event: 'fact',
+                position: recorded.position,
+                identity: identified.identity,
+                fact: recorded.fact,
+                entry: identified.entry,
+              },
+            ]
+          : untouched(identified),
       ),
       ...before
-        .filter(({ identity }) => !among(after)(identity))
+        .filter(({ identity }) => !among_after(identity))
         .map(({ identity }): Event => ({ event: 'left', position: recorded.position, identity })),
     ]
   }
@@ -398,18 +444,19 @@ const is_of_the_domain =
 /**
  * A stream from a position: the events of the facts kept from there, then
  * "caught up", then the events of each new fact; or "position no longer
- * available", when the cell keeps that position no longer. Only the facts of
- * the query's domain, as if it had a log of its own (DOM-8, D64.3): the
- * cell keeps every domain's, and a fact of `loans` holding the drill's id
- * would otherwise touch the drill in `tools`' catalogue (A, 16 Nov 2026 (6)).
+ * available", when the cell keeps that position no longer. Every fact of
+ * the cell counts for what it changes of the entries; only a fact of the
+ * query's domain touches one (`events_of`), so that a fact of `loans`
+ * holding the drill's id does not touch the drill in `tools`' catalogue (A,
+ * 16 Nov 2026 (6)), while a fact of `tools` that renames it changes Marta's
+ * row of its loan (SC-19).
  */
 const stream =
   (cell: Cell) =>
   (registry: wlib.Registry) =>
   <candidate>(plan: Plan<candidate>) =>
   (from: wlib.position): AsyncIterable<Event> => {
-    const events = (recorded: Recorded): readonly Event[] =>
-      is_of_the_domain(registry)(recorded) ? events_of(plan)(recorded) : []
+    const events = events_of(registry)(plan)
     async function* live(position: wlib.position): AsyncGenerator<Event> {
       const recorded = await cell.after(position)
       yield* recorded.flatMap(events)
@@ -464,7 +511,7 @@ const log =
 
 /**
  * The oracle streams every query natively: its stream is exact, state before
- * and after each fact, over the facts of the query's domain.
+ * and after each fact of the cell.
  */
 const native = (cell: Cell) => (registry: wlib.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
@@ -480,6 +527,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         retire_a_tool,
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
+        rename_a_tool,
       },
     })({
       algebra: algebra(tools_fragments),

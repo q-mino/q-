@@ -1823,12 +1823,16 @@ export interface Snapshot<entry> {
  * The events of a stream, a closed ADT (DOM-3). Every event but the terminal
  * one carries the position of the fact that caused it; resume is inclusive,
  * so a consumer deduplicates by position and identity (DOM-17).
- * - `fact`: the fact touched a candidate that the selection keeps after it:
+ * - `fact`: a fact of the query's domain touched a candidate that the
+ *   selection keeps after it:
  *   the fact in its envelope, the entry as it is after it (D72). A candidate
  *   that comes in through a fact that touches it comes this way, not as
  *   `entered`.
  * - `entered`: a candidate the fact did not touch now satisfies the
  *   selection, because a selection predicate reads another instance: its entry.
+ * - `changed`: a candidate the fact did not touch stays in the selection,
+ *   and its entry is no longer the same, because a field reads another
+ *   instance (`tool_name`, read from `tools`' catalogue): its entry (SC-19).
  * - `left`: a candidate, touched or not, no longer satisfies the selection:
  *   its identity only (D72.5).
  * - `caught_up`: the end of the historical part, once (D72.5).
@@ -1845,6 +1849,12 @@ export type StreamEvent<envelope, entry, identity> =
     }
   | {
       readonly event: 'entered'
+      readonly position: position
+      readonly identity: identity
+      readonly entry: entry
+    }
+  | {
+      readonly event: 'changed'
       readonly position: position
       readonly identity: identity
       readonly entry: entry
@@ -1886,17 +1896,23 @@ export type FactLog = (from: position | undefined) => AsyncIterable<LogEvent>
  * business:
  * - `native`: the adapter's own stream (the oracle, a replication);
  * - `composed`: the library composes it from the adapter's read and fact
- *   log. For each fact after P it reads the query again and compares the
- *   entries with the previous ones by identity, as the oracle does (DOM-17):
- *   an entry the fact touches and that stays is the fact, a new untouched one
- *   entered, a missing one left. A whole read per fact of the domain: the
- *   adapter's author chooses it for the queries where that is cheap.
- * A query with no strategy is only read. Either way a query's stream sees
- * only the facts of its domain, as if each had a log of its own (DOM-8,
- * D64.3): the native stream by the adapter, the composed one by the library,
- * which skips a fact whose paths are not in the domain's registry, so that a
- * fact of `loans` holding the drill's id touches no entry of `tools`'
- * catalogue (A, 16 Nov 2026 (6)).
+ *   log. For each fact after P, of any domain, it reads the query again and
+ *   compares the entries with the previous ones by identity and value, as
+ *   the oracle does (DOM-17): an entry that a fact of the query's domain
+ *   touches and that stays is the fact, an untouched one that stays and is
+ *   no longer the same changed, a new untouched one entered, a missing one
+ *   left. A whole read per fact of the node: the adapter's author chooses it
+ *   for the queries where that is cheap.
+ * A query with no strategy is only read. Either way a query's stream carries
+ * only the facts of its domain (`fact`), as if each had a log of its own
+ * (DOM-8, D64.3), so that a fact of `loans` holding the drill's id touches
+ * no entry of `tools`' catalogue (A, 16 Nov 2026 (6)); a fact of another
+ * domain counts for what it changes of the entries, which read that
+ * domain's state through the adapter (GR-3): Luca renames the drill, and
+ * Marta's row of the loan of the drill changed (SC-19). A native stream
+ * finds the entries such a fact may change as it can, by crossing the
+ * fact's resources with the identities its entries hold (the drill's
+ * `tool_id`), and is compared with the oracle (TST-2).
  */
 export type StreamStrategy<selection, source, field> =
   | { readonly strategy: 'native'; readonly stream: Stream<selection, source, field> }
@@ -2237,7 +2253,7 @@ type FieldsHolding<entry extends z.ZodObject, identity> = {
  *
  * With no `stream` it gives the snapshot alone, and its port is not
  * `Streamed`, so that no live view can take it (D24, D77). With `stream`, its
- * port is `Streamed`: every entry of the stream (`fact`, `entered`) is
+ * port is `Streamed`: every entry of the stream (`fact`, `entered`, `changed`) is
  * projected as in the snapshot, and `left` names the entry by the field of its
  * own entry that `stream.identity` declares, which must hold the identity of
  * the query's entry, as it is (A, 13 Nov 2026 (2)). Among the facts the read
@@ -2705,7 +2721,10 @@ export type CommandLeafPort<entry, majors, name extends string> = <const version
  * own event (`events`), with the entry it leaves and its payload, projected
  * from the fact (D72.6, A, 14 Nov 2026), or from its part that touches the
  * entry (A, 16 Nov 2026 (6)); any other, as `fact`, with the entry and not
- * the fact. The position goes out as it is, opaque (D72.6);
+ * the fact. An entry `changed` by a fact that did not touch it goes out as
+ * `fact` too, the row alone: Marta's client updates the row of the drill
+ * renamed by `tools`, with no event the persona must add (PER-17, SC-19).
+ * The position goes out as it is, opaque (D72.6);
  * the envelope and its resources never (PER-18, D107.4).
  */
 export type LeafStreamEvent<entry, identity, events extends Events = never> =

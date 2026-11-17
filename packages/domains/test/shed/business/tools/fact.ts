@@ -59,3 +59,15 @@ export const a_tool_has_been_repaired = fact({
     repaired_tool: value.tool_in_service.pick({ id: true, status: true }),
   }),
 })
+
+/**
+ * The keeper gave the tool another name (SC-19): a partial value, its id and
+ * its new name. Whoever shows the tool by name reads the new one: the
+ * catalogue, and the rows of the members' loans and reservations, whose
+ * view of the tools `loans` reads from the catalogue (GR-3).
+ */
+export const a_tool_has_been_renamed = fact({
+  payload: z.strictObject({
+    renamed_tool: z.strictObject({ id: id.tool_id, name: value.tool_name }),
+  }),
+})

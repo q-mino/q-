@@ -34,6 +34,13 @@ export const send_a_tool_to_repair = usecase.send_a_tool_to_repair
 export const put_a_repaired_tool_back_in_service = usecase.put_a_repaired_tool_back_in_service
 
 /**
+ * The keeper renames a tool: the members read the new name on their rows (SC-19).
+ *
+ * @see {@link usecase.rename_a_tool}
+ */
+export const rename_a_tool = usecase.rename_a_tool
+
+/**
  * A visitor browses the catalogue: the garden tools, say, read once.
  *
  * @see {@link usecase.the_catalogue}

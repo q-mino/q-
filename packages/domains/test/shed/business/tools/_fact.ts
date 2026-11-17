@@ -74,3 +74,15 @@ export type the_tool_was_retired_before_the_repair = z.output<
 export const a_tool_has_been_repaired =
   fact.a_tool_has_been_repaired.brand<'business/tools/fact/a_tool_has_been_repaired'>()
 export type a_tool_has_been_repaired = z.output<typeof a_tool_has_been_repaired>
+
+/**
+ * The keeper gave the tool another name (SC-19): a partial value, its id and
+ * its new name. Whoever shows the tool by name reads the new one: the
+ * catalogue, and the rows of the members' loans and reservations, whose
+ * view of the tools `loans` reads from the catalogue (GR-3).
+ *
+ * @see {@link fact.a_tool_has_been_renamed}
+ */
+export const a_tool_has_been_renamed =
+  fact.a_tool_has_been_renamed.brand<'business/tools/fact/a_tool_has_been_renamed'>()
+export type a_tool_has_been_renamed = z.output<typeof a_tool_has_been_renamed>

@@ -108,4 +108,17 @@ export const tools_writes: wlib.FactWrites<
   'business/tools/fact/the_tool_was_retired_before_the_repair': () => (state) => state,
   'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool }) =>
     with_the_status(repaired_tool.id)((stays) => ({ ...stays, ...repaired_tool })),
+  'business/tools/fact/a_tool_has_been_renamed':
+    ({ renamed_tool }) =>
+    (state) => {
+      const the_tool = state.tools.get(renamed_tool.id)
+      return the_tool === undefined
+        ? state
+        : {
+            tools: new Map(state.tools).set(renamed_tool.id, {
+              ...the_tool,
+              name: renamed_tool.name,
+            }),
+          }
+    },
 }
