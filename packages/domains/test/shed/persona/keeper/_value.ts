@@ -21,3 +21,19 @@ export type retirement_reason = z.output<typeof retirement_reason>
  */
 export const notes = value.notes
 export type notes = z.output<typeof notes>
+
+/**
+ * The name of a tool, as the keeper reads it on the shelf.
+ *
+ * @see {@link value.tool_name}
+ */
+export const tool_name = value.tool_name
+export type tool_name = z.output<typeof tool_name>
+
+/**
+ * How many times a tool went out.
+ *
+ * @see {@link value.number_of_loans}
+ */
+export const number_of_loans = value.number_of_loans
+export type number_of_loans = z.output<typeof number_of_loans>

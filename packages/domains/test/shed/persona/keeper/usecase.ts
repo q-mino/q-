@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { command_use_case_over, value, tools } from './_scope_usecase.ts'
+import { command_use_case_over, read_use_case_over, value, tools, loans } from './_scope_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
 // shed. Each invokes a use case of a business domain and speaks to the keeper
@@ -91,4 +91,21 @@ export const put_a_repaired_tool_back_in_service = command_use_case_over({
     }),
     rejected: () => ({ event: 'the_tool_is_not_in_the_workshop', payload: {} }),
   },
+})
+
+/**
+ * Luca reads how many times each tool of the shed went out this month, the
+ * idle ones at zero, once (SC-21): the snapshot alone, as the visitor's
+ * catalogue.
+ */
+export const the_loans_of_the_month = read_use_case_over({
+  use_case: loans.usecase.the_loans_of_each_tool_this_month,
+  input: z.strictObject({}),
+  creator: () => () => ({}),
+  entry: z.strictObject({
+    tool_id: tools.id.tool_id,
+    name: value.tool_name,
+    loans: value.number_of_loans,
+  }),
+  projection: (entry) => ({ tool_id: entry.tool_id, name: entry.tool_name, loans: entry.loans }),
 })

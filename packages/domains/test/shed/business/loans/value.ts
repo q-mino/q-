@@ -131,6 +131,15 @@ export const ongoing_loan_entry = ongoing_loan
   .pick({ id: true, tool_id: true, start_date: true, due_day: true })
   .extend({ tool_name: tool_name, term: loan_term })
 
+/** How many loans: a count of the desk's register (SC-21). */
+export const number_of_loans = z.number().int().nonnegative()
+
+/** A tool of the shed, as the desk names it: the tool, with its name. */
+export const tool_of_the_shed_entry = z.strictObject({
+  tool_id: tools.id.tool_id,
+  tool_name: tool_name,
+})
+
 /** What a member sees of a reservation: the tool, with its name, and the day. */
 export const reservation_entry = booked_reservation
   .pick({ id: true, tool_id: true, day: true })

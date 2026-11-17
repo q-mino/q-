@@ -33,6 +33,27 @@ export const the_day_after = (due_date: day): day => days_after(due_date, 1)
 /** The calendar day of an instant, as its writer told it: `now` is told in the shed's zone. */
 export const today = (now: date_time): day => day_of(now)
 
+/** The first day of the month of an instant, as its writer told it: `now` is told in the shed's zone. */
+export const the_first_day_of_the_month = (now: date_time): day =>
+  day.parse(`${today(now).slice(0, 7)}-01`)
+
+/**
+ * The last day of the month of an instant: the day before the first of the
+ * next month, on the calendar (day 0 of a month is the last of the one before).
+ */
+export const the_last_day_of_the_month = (now: date_time): day =>
+  day.parse(
+    new Date(Date.UTC(Number(today(now).slice(0, 4)), Number(today(now).slice(5, 7)), 0))
+      .toISOString()
+      .slice(0, 10),
+  )
+
+/** The loan started between two days, both included, on its day as written (SC-12, SC-21). */
+export const the_loan_started_between =
+  (days: { readonly first_day: day; readonly last_day: day }) =>
+  (the_loan: value.loan): boolean =>
+    day_of(the_loan.start_date) >= days.first_day && day_of(the_loan.start_date) <= days.last_day
+
 /** A day can be booked after today and within the booking window, days of the shed. A static rule: validation. */
 export const the_day_is_within_the_booking_window = (the_day: string, now: date_time): boolean =>
   the_day > today(now) && the_day <= days_after(today(now), booking_window_in_days)

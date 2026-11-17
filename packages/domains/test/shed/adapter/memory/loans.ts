@@ -3,7 +3,7 @@
 // (GR-3, V11), typed, and the arrow `loans → tools` that dependency-cruiser
 // shows (GR-1). Where the view of `loans` means what `tools` means, the
 // fragment reuses the `dsl` of `tools`. Its reads are typed by subject
-// (DOM-18): a loan, a reservation.
+// (DOM-18): a loan, a reservation, a tool of the shed.
 
 import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../business/loans/_fact.ts'
@@ -23,6 +23,7 @@ import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
   the_reservations_of_a_member_in_the_workshop,
+  the_loans_of_each_tool_this_month,
 } from '../../business/loans/_query.ts'
 import type {
   continue_the_cancellation_of_reservations,
@@ -30,7 +31,10 @@ import type {
 } from '../../business/loans/_command.ts'
 import type * as loan_selections from '../../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
+import type * as tool_selections from '../../business/loans/_tool_selection.ts'
+import type * as tool_calculations from '../../business/loans/_tool_calculation.ts'
 import type { repair_id, tool_id } from '../../business/tools/_id.ts'
+import type { tool } from '../../business/tools/_value.ts'
 import * as tools_dsl from '../../business/tools/_dsl.ts'
 import * as loans_dsl from '../../business/loans/_dsl.ts'
 import {
@@ -218,6 +222,51 @@ export const reservation_sources: {
 } = {
   the_reservations_of_a_member: the_reservation_entry,
   the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
+}
+
+// The reads of the subject `business/loans/selection/tool`: a tool of the shed
+// as the desk sees it, read from the catalogue of `tools` (GR-3, V11).
+
+export const tool_selection: wlib.Algebra<
+  wlib.SelectionsIn<typeof tool_selections>,
+  Selection<Reads, tool>
+> = {
+  ...selection_operators<Reads, tool>(),
+  predicate: {
+    'business/loans/selection/tool/the_tool_is_still_in_the_shed': () => () => (the_tool) =>
+      !tools_dsl.the_tool_is_retired(the_tool),
+  },
+}
+
+/** The calculations over a tool of the shed: the desk's register, read in its words (SC-21). */
+export const tool_calculation: wlib.CalculationFragments<
+  wlib.CalculationsIn<typeof tool_calculations>,
+  Field<Reads, tool>
+> = {
+  'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days':
+    (days) => (state) => (the_tool) =>
+      [...state.loans.values()].filter(
+        (the_loan) =>
+          the_loan.tool_id === the_tool.id && loans_dsl.the_loan_started_between(days)(the_loan),
+      ).length,
+}
+
+const the_tools: Source<Reads, tool> = (state) => [...state.tools.values()]
+
+export const tool_sources: {
+  readonly the_loans_of_each_tool_this_month: wlib.QuerySource<
+    wlib.FieldsOf<typeof the_loans_of_each_tool_this_month>,
+    Source<Reads, tool>,
+    Field<Reads, tool>
+  >
+} = {
+  the_loans_of_each_tool_this_month: {
+    from: the_tools,
+    fields: {
+      tool_id: () => (the_tool) => the_tool.id,
+      tool_name: () => (the_tool) => the_tool.name,
+    },
+  },
 }
 
 // The reads of the steps of `loans` (DOM-20): the work sheet by its tool, the

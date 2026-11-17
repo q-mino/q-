@@ -24,7 +24,9 @@ export const the_catalogue = query({
   selection: the_tool_is_shown_in_the_catalogue,
   order: { category: 'ascending', name: 'ascending' },
   creator: () => (input) => ({
-    the_tool_is_in_service: {},
-    the_tool_is_in_a_chosen_category: { categories: input.categories },
+    selection: {
+      the_tool_is_in_service: {},
+      the_tool_is_in_a_chosen_category: { categories: input.categories },
+    },
   }),
 })

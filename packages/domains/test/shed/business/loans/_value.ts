@@ -187,6 +187,22 @@ export const reservation_entry = value.reservation_entry
 export type reservation_entry = z.output<typeof reservation_entry>
 
 /**
+ * How many loans: a count of the desk's register (SC-21).
+ *
+ * @see {@link value.number_of_loans}
+ */
+export const number_of_loans = value.number_of_loans
+export type number_of_loans = z.output<typeof number_of_loans>
+
+/**
+ * A tool of the shed, as the desk names it: the tool, with its name.
+ *
+ * @see {@link value.tool_of_the_shed_entry}
+ */
+export const tool_of_the_shed_entry = value.tool_of_the_shed_entry
+export type tool_of_the_shed_entry = z.output<typeof tool_of_the_shed_entry>
+
+/**
  * @see {@link value.cancellation_stage}
  */
 export const cancellation_stage = value.cancellation_stage

@@ -22,6 +22,8 @@ import type * as loans_fact from '../business/loans/_fact.ts'
 import type * as loans_predicate from '../business/loans/_predicate.ts'
 import type * as loan_selections from '../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../business/loans/_reservation_selection.ts'
+import type * as loans_tool_selections from '../business/loans/_tool_selection.ts'
+import type * as loans_tool_calculations from '../business/loans/_tool_calculation.ts'
 import {
   borrow_a_tool,
   correct_the_tool_of_a_loan,
@@ -33,6 +35,7 @@ import {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
   the_reservations_of_a_member_in_the_workshop,
+  the_loans_of_each_tool_this_month,
 } from '../business/loans/_usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
@@ -190,6 +193,28 @@ const reservation_selection_fragments: wlib.PredicateFragments<
   // The link: the view of `loans` over the tools, read from `tools` (SC-20).
   'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop': () =>
     sql`exists (select 1 from tools where tools.id = candidate.tool_id and tools.status = 'underRepair')`,
+}
+
+// The view of `loans` over the tools of the shed: the catalogue of `tools`,
+// read where `tools` keeps it (GR-3, V11).
+const loans_tool_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof loans_tool_selections>,
+  sql
+> = {
+  'business/loans/selection/tool/the_tool_is_still_in_the_shed': () =>
+    sql`candidate.status <> 'retired'`,
+}
+
+// The fragments of the calculations, grouped by subject (DOM-18, SC-21): a
+// field of the candidate, read with the parameters of the read.
+
+const loans_tool_calculation_fragments: wlib.CalculationFragments<
+  wlib.CalculationsIn<typeof loans_tool_calculations>,
+  sql
+> = {
+  // A loan's day is the day of its start as written (SC-12): the first ten characters.
+  'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days': (p) =>
+    sql`(select count(*) from loans where loans.tool_id = candidate.id and left(loans.start_date, 10) between ${p.first_day} and ${p.last_day})`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -692,9 +717,15 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         the_ongoing_loans_of_a_member,
         the_reservations_of_a_member,
         the_reservations_of_a_member_in_the_workshop,
+        the_loans_of_each_tool_this_month,
       },
     })({
-      algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),
+      algebra: algebra({
+        ...loan_selection_fragments,
+        ...reservation_selection_fragments,
+        ...loans_tool_selection_fragments,
+      }),
+      calculations: loans_tool_calculation_fragments,
       sources: {
         the_ongoing_loans_of_a_member: {
           from: sql`loans as candidate`,
@@ -710,11 +741,20 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         },
         the_reservations_of_a_member: the_reservation_entry,
         the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
+        the_loans_of_each_tool_this_month: {
+          from: sql`tools as candidate`,
+          fields: {
+            tool_id: sql`candidate.id`,
+            tool_name: sql`candidate.name`,
+          },
+        },
       },
       read: read(database),
       // A member's loans and reservations are few: a whole read per fact of the
       // node is cheap, and a fact of `tools` that renames a tool reads again
-      // the name of its rows (SC-19).
+      // the name of its rows (SC-19). The loans of each tool this month are
+      // only read: the keeper reads them once, and a count over the whole
+      // catalogue per fact is not cheap.
       streams: {
         the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },

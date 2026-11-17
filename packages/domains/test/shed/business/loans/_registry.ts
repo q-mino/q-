@@ -14,6 +14,8 @@ import * as query from './_query.ts'
 import * as reaction from './_reaction.ts'
 import * as loan_selection from './_loan_selection.ts'
 import * as reservation_selection from './_reservation_selection.ts'
+import * as tool_calculation from './_tool_calculation.ts'
+import * as tool_selection from './_tool_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
 import * as version from './_version.ts'
@@ -45,6 +47,8 @@ export const registry = {
   'business/loans/value/cancelled_reservation': value.cancelled_reservation,
   'business/loans/value/ongoing_loan_entry': value.ongoing_loan_entry,
   'business/loans/value/reservation_entry': value.reservation_entry,
+  'business/loans/value/number_of_loans': value.number_of_loans,
+  'business/loans/value/tool_of_the_shed_entry': value.tool_of_the_shed_entry,
   'business/loans/value/cancellation_stage': value.cancellation_stage,
   'business/loans/value/cancellation_cancelling': value.cancellation_cancelling,
   'business/loans/value/cancellation_complete': value.cancellation_complete,
@@ -203,6 +207,10 @@ export const registry = {
     reservation_selection.the_tool_of_the_reservation_is_in_the_workshop,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
     reservation_selection.the_reservation_is_from_this_day_on,
+  'business/loans/selection/tool/the_tool_is_still_in_the_shed':
+    tool_selection.the_tool_is_still_in_the_shed,
+  'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days':
+    tool_calculation.the_loans_of_the_tool_between_these_days,
   'business/loans/query/the_loan_is_ongoing_for_the_member':
     query.the_loan_is_ongoing_for_the_member,
   'business/loans/query/the_ongoing_loans_of_a_member': query.the_ongoing_loans_of_a_member,
@@ -219,6 +227,9 @@ export const registry = {
     query.the_reservations_of_a_member_in_the_workshop,
   'business/loans/query/the_reservations_of_a_member_in_the_workshop_input':
     query.the_reservations_of_a_member_in_the_workshop_input,
+  'business/loans/query/the_loans_of_each_tool_this_month': query.the_loans_of_each_tool_this_month,
+  'business/loans/query/the_loans_of_each_tool_this_month_input':
+    query.the_loans_of_each_tool_this_month_input,
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'business/loans/usecase/lend_a_booked_tool': usecase.lend_a_booked_tool,
   'business/loans/usecase/correct_the_tool_of_a_loan': usecase.correct_the_tool_of_a_loan,
@@ -238,6 +249,8 @@ export const registry = {
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member_in_the_workshop':
     usecase.the_reservations_of_a_member_in_the_workshop,
+  'business/loans/usecase/the_loans_of_each_tool_this_month':
+    usecase.the_loans_of_each_tool_this_month,
   'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up':
     reaction.the_first_reservation_on_the_sheet_is_taken_up,
   'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up':

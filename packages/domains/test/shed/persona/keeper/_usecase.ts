@@ -52,3 +52,20 @@ export const put_a_repaired_tool_back_in_service_input =
 export type put_a_repaired_tool_back_in_service_input = z.output<
   typeof put_a_repaired_tool_back_in_service_input
 >
+
+/**
+ * Luca reads how many times each tool of the shed went out this month, the
+ * idle ones at zero, once (SC-21): the snapshot alone, as the visitor's
+ * catalogue.
+ *
+ * @see {@link usecase.the_loans_of_the_month}
+ */
+export const the_loans_of_the_month = usecase.the_loans_of_the_month
+
+/**
+ * The input of `the_loans_of_the_month`, declared inline.
+ *
+ * @see {@link usecase.the_loans_of_the_month}
+ */
+export const the_loans_of_the_month_input = usecase.the_loans_of_the_month.input
+export type the_loans_of_the_month_input = z.output<typeof the_loans_of_the_month_input>

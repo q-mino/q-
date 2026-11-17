@@ -86,3 +86,22 @@ export const the_reservations_of_a_member_in_the_workshop_input =
 export type the_reservations_of_a_member_in_the_workshop_input = z.output<
   typeof the_reservations_of_a_member_in_the_workshop_input
 >
+
+/**
+ * The tools still in the shed with their loans this month, the shed's month
+ * (SC-12): the most lent first, then by name, and those never lent this
+ * month too, at zero, so that the keeper sees the tools standing idle (SC-21).
+ *
+ * @see {@link query.the_loans_of_each_tool_this_month}
+ */
+export const the_loans_of_each_tool_this_month = query.the_loans_of_each_tool_this_month
+
+/**
+ * The input of `the_loans_of_each_tool_this_month`, declared inline.
+ *
+ * @see {@link query.the_loans_of_each_tool_this_month}
+ */
+export const the_loans_of_each_tool_this_month_input = query.the_loans_of_each_tool_this_month.input
+export type the_loans_of_each_tool_this_month_input = z.output<
+  typeof the_loans_of_each_tool_this_month_input
+>

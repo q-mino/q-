@@ -239,6 +239,36 @@ export type SelectionBuilder = <const parameters extends z.ZodObject>(selection:
   readonly parameters: parameters
 }) => parameters
 
+export declare const $Calculation: unique symbol
+
+/**
+ * A calculation (DOM-18, SC-21): the schema of its parameters, which carries
+ * the schema of the value it gives.
+ */
+export type Calculation<parameters extends z.ZodObject, value extends z.ZodType> = parameters & {
+  readonly [$Calculation]: { readonly value: value }
+}
+
+/**
+ * A calculation (DOM-18, D50.7, SC-21): a value of the candidate of a query
+ * that depends on parameters of the read, a concept of the business named in
+ * its vocabulary, whose meaning is the adapter's, as a selection predicate's
+ * (the loans of a tool between two days: a count in SQL, a function over the
+ * state in the oracle). The library calculates nothing and knows no kind of
+ * aggregation: it binds the parameters and gives the adapter's fragment to
+ * the read as a field. Of its subject, which the generator writes after the
+ * kind (`business/loans/calculation/tool/the_loans_of_the_tool_between_these_days`);
+ * its value, the schema of the field it gives.
+ */
+export type CalculationBuilder = <
+  const parameters extends z.ZodObject,
+  const value extends z.ZodType,
+>(calculation: {
+  readonly subject: string
+  readonly parameters: parameters
+  readonly value: value
+}) => Calculation<parameters, value>
+
 /**
  * An effect (DOM-13, D108.1): what the domain asks of the world, named by a
  * business phrase, and its payload, what the delivery needs. A branch queues
@@ -480,6 +510,9 @@ export type PathOf<schema> = schema extends { _zod: { output: { [z.core.$brand]:
  * subject, which the generator writes after the kind, before its name.
  */
 type SelectionPath = `${string}/selection/${string}/${string}`
+
+/** The path of a calculation (DOM-18): its subject after the kind, as a selection predicate's. */
+type CalculationPath = `${string}/calculation/${string}/${string}`
 
 /** The components of a union whose path is not of a kind: a fact where a predicate goes. */
 type Strays<components, path extends string> = components extends unknown
@@ -1570,6 +1603,12 @@ export type PredicatesIn<module> = ComponentsIn<module, 'predicate'>
 /** The selection predicates of a generated module (`_loan_selection.ts`, one subject in Shed), for an adapter's fragments. */
 export type SelectionsIn<module> = ComponentsIn<module, 'selection'>
 
+/** The calculations of a generated module (`_tool_calculation.ts`, one subject in Shed), for an adapter's fragments. */
+export type CalculationsIn<module> = Extract<
+  ComponentsIn<module, 'calculation'>,
+  CalculationComponent
+>
+
 /** The facts declared in a generated module (`_fact.ts`), for an adapter's writes. */
 export type FactsIn<module> = ComponentsIn<module, 'fact'>
 
@@ -1589,8 +1628,14 @@ export type Direction = 'ascending' | 'descending'
  * The library closes it with the entry's identity, ascending, so that it is
  * total (LIB-9, D109).
  */
-export type Order<fields extends z.ZodObject> = {
-  readonly [field in keyof z.output<fields>]?: Direction
+export type Order<fields extends z.ZodObject> = EntryOrder<z.output<fields>>
+
+/**
+ * The order of the entries by any field of an entry, read or calculated
+ * (SC-21: the tools by their loans of the month, the most lent first).
+ */
+export type EntryOrder<entry> = {
+  readonly [field in keyof entry]?: Direction
 }
 
 type BrandOf<value> = value extends { readonly [z.core.$brand]: infer brand }
@@ -1652,36 +1697,125 @@ export type OneSubject<selection extends Condition> = [
     }
 
 /**
- * What a query declares besides its input and creator. Its `identity` is the
- * field that names an entry: an identity, unique per entry, which the
- * business's commands keep unique (`NOT(a_loan_has_this_id)`); the library
- * cannot check the uniqueness, the author declares it. It closes the order
- * (LIB-9) and names the entry in a stream (DOM-17).
+ * What a query declares besides its input, its calculations and its creator.
+ * Its `identity` is the field that names an entry: an identity, unique per
+ * entry, which the business's commands keep unique (`NOT(a_loan_has_this_id)`);
+ * the library cannot check the uniqueness, the author declares it. It closes
+ * the order (LIB-9) and names the entry in a stream (DOM-17). The order is
+ * over the entry, its fields read and calculated.
  */
 export interface QueryShape<
   fields extends z.ZodObject,
   identity extends string,
   selection extends Condition,
+  entry = z.output<fields>,
 > {
   readonly fields: fields
   readonly identity: identity
   readonly selection: selection
-  readonly order: Order<fields>
+  readonly order: EntryOrder<entry>
 }
+
+/** A calculation as a component: its parameters, branded with its path, and its value (DOM-18). */
+export type CalculationComponent = Component & {
+  readonly [$Calculation]: { readonly value: z.ZodType }
+}
+
+/** The calculations of a query, by the name of the field each gives (SC-21). */
+export type Calculations = Readonly<Record<string, CalculationComponent>>
+
+/** The schema of the value a calculation gives. */
+type ValueOf<calculation> = calculation extends {
+  readonly [$Calculation]: { readonly value: infer value extends z.ZodType }
+}
+  ? value
+  : never
+
+/**
+ * An entry of a query: the fields it reads from a candidate, and one field
+ * per calculation, its value; the library parses the entries with both.
+ */
+export type Entry<
+  fields extends z.ZodObject,
+  calculations extends Calculations,
+> = z.output<fields> &
+  ([calculations] extends [never]
+    ? unknown
+    : { readonly [name in keyof calculations]: z.output<ValueOf<calculations[name]>> })
+
+/** The subject of a calculation, as a selection predicate names it, so that the two compare. */
+type SubjectOfCalculation<calculation> = calculation extends unknown
+  ? PathOf<calculation> extends `${infer head}/calculation/${infer subject}/${string}`
+    ? `${head}/selection/${subject}`
+    : never
+  : never
+
+/**
+ * The calculations of a query that fit it are themselves; others ask for a
+ * field no query has, whose name says why and whose type lists the culprits:
+ * a component that is no calculation, a calculation of another subject than
+ * the selection's (it reads the same candidate), a name a read field
+ * already has. DOM-18
+ */
+export type CalculationsFit<
+  fields extends z.ZodObject,
+  selection extends Condition,
+  calculations extends Calculations,
+> = [calculations] extends [never]
+  ? unknown
+  : [Strays<calculations[keyof calculations], CalculationPath>] extends [never]
+    ? [
+        Exclude<
+          SubjectOfCalculation<calculations[keyof calculations]>,
+          SubjectOf<Leaves<selection>>
+        >,
+      ] extends [never]
+      ? [keyof calculations & keyof z.output<fields>] extends [never]
+        ? unknown
+        : {
+            readonly 'a calculation gives a field of its own, not one the query reads (DOM-18)': keyof calculations &
+              keyof z.output<fields>
+          }
+      : {
+          readonly 'a calculation is of the subject of the selection (DOM-18)': SubjectOfCalculation<
+            calculations[keyof calculations]
+          >
+        }
+    : {
+        readonly 'the calculations of a query are calculations (DOM-18)': PathOf<
+          Strays<calculations[keyof calculations], CalculationPath>
+        >
+      }
 
 /** A query's input: a schema, or a function of the part of the context it needs. DOM-21 */
 export type QueryInput<inputSchema extends z.ZodType, context = never> =
   inputSchema | ((context: context) => inputSchema)
 
 /**
+ * What a query's creator binds, by part, as a step's creator does (SC-21):
+ * the parameters of its selection and, if it calculates, those of each
+ * calculation, under the name of the field it gives. A query that
+ * calculates nothing has `never` for its calculations, and binds none.
+ */
+export type QueryBinding<selection extends Condition, calculations extends Calculations> = {
+  readonly selection: ConditionInput<selection>
+} & ([calculations] extends [never]
+  ? { readonly calculations?: never }
+  : {
+      readonly calculations: { readonly [name in keyof calculations]: z.input<calculations[name]> }
+    })
+
+/**
  * From the part of the context it declares, which the tree must give at the
- * query's point, and the input, the parameters bound to the selection.
+ * query's point, and the input, the parameters bound to the selection and the
+ * calculations.
  */
 export type QueryCreator<
   inputSchema extends z.ZodType,
   selection extends Condition,
+  calculations extends Calculations,
   context = never,
-> = (context: context) => (input: z.output<inputSchema>) => ConditionInput<selection>
+> = (context: context) => (input: z.output<inputSchema>) => QueryBinding<selection, calculations>
 
 export declare const $Query: unique symbol
 /**
@@ -1693,50 +1827,85 @@ export type Query<
   fields extends z.ZodObject,
   identity extends string,
   selection extends Condition,
+  calculations extends Calculations,
   context,
-> = QueryCreator<SchemaOf<input>, selection, context> & {
+> = QueryCreator<SchemaOf<input>, selection, calculations, context> & {
   readonly input: input
-  [$Query]: { input: SchemaOf<input> } & QueryShape<fields, identity, selection>
+  [$Query]: { input: SchemaOf<input>; calculations: calculations } & QueryShape<
+    fields,
+    identity,
+    selection,
+    Entry<fields, calculations>
+  >
 }
 
 /**
  * A query, declared in one argument whose parts have names: the input,
- * declared inline, the fields, the identity, the selection, the order, and
- * last the creator that binds the selection. DOM-25. Its identity is a field
- * whose value is an identity, and the leaves of its selection come from one
- * subject, checked by type (DOM-18).
+ * declared inline, the fields it reads, the calculations it gives beside
+ * them if any (SC-21), the identity, the selection, the order, and last the
+ * creator that binds the selection and the calculations. DOM-25. Its
+ * identity is a field read whose value is an identity, the leaves of its
+ * selection and its calculations come from one subject, checked by type
+ * (DOM-18).
  */
 export type QueryBuilder<context> = <
   const input extends QueryInput<z.ZodType, context>,
   fields extends z.ZodObject,
   const identity extends IdentityFields<fields>,
   const selection extends Condition,
+  const calculations extends Calculations = never,
 >(
-  query: { readonly input: input } & QueryShape<fields, identity, selection> & {
+  query: { readonly input: input } & QueryShape<
+    fields,
+    identity,
+    selection,
+    NoInfer<Entry<fields, calculations>>
+  > & { readonly calculations?: calculations } & {
       readonly selection: OneSubject<selection>
-      readonly creator: QueryCreator<SchemaOf<input>, selection, context>
+      readonly calculations?: CalculationsFit<fields, selection, calculations>
+      readonly creator: QueryCreator<SchemaOf<input>, selection, NoInfer<calculations>, context>
     },
-) => Query<input, fields, identity, selection, context>
+) => Query<input, fields, identity, selection, calculations, context>
 
 // Read adapters (LIB-14): the operators of the commands (ADP-8), a fragment
-// per selection predicate, one source per query, one read. No concept of
-// state here.
+// per selection predicate and per calculation, one source per query, one
+// read. No concept of state here.
 
 /** The queries of a domain, by name. */
 export type Queries = Readonly<
   Record<
     string,
     {
-      readonly [$Query]: { input: z.ZodType } & QueryShape<z.ZodObject, string, Condition>
+      readonly [$Query]: { input: z.ZodType; calculations: Calculations } & QueryShape<
+        z.ZodObject,
+        string,
+        Condition
+      >
     }
   >
 >
 
 type QueryParts<query> = query extends { [$Query]: infer parts } ? parts : never
 
-/** The schema of a query's entries. */
+/** The schema of the fields a query reads from a candidate: its source's. */
 export type FieldsOf<query> =
   QueryParts<query> extends { fields: infer fields extends z.ZodObject } ? fields : never
+
+/** A query's entry: its fields read and calculated, as the library parses it. */
+export type QueryEntryOf<query> =
+  QueryParts<query> extends {
+    fields: infer fields extends z.ZodObject
+    calculations: infer calculations extends Calculations
+  }
+    ? Entry<fields, calculations>
+    : never
+
+/** Every calculation a set of queries gives. */
+export type CalculationsOfQueries<queries extends Queries> = {
+  [name in keyof queries]: QueryParts<queries[name]>['calculations'][keyof QueryParts<
+    queries[name]
+  >['calculations']]
+}[keyof queries]
 
 /** Every selection predicate the selections of a set of queries use. */
 export type PredicatesOfQueries<queries extends Queries> = Leaves<
@@ -1755,7 +1924,9 @@ export interface QuerySource<fields extends z.ZodObject, source, field> {
 /**
  * A query ready to read: the selection composed, the fields and the order as
  * fragments, the order closed by the identity; the identity by its field's
- * name and its path, for a stream to know which entries a fact touches.
+ * name and its path, for a stream to know which entries a fact touches. A
+ * calculation, bound to its parameters, is one more field (SC-21): the
+ * adapter's read, its order and its stream meet fields alone.
  */
 export interface PlannedQuery<selection, source, field> {
   readonly from: source
@@ -1799,13 +1970,28 @@ export type Read<selection, source, field> = (
  * candidate (the in-memory oracle) serves the queries of one subject at a
  * time (DOM-18).
  */
-export interface ReadAdapter<queries extends Queries, selection, source, field> {
+export type ReadAdapter<queries extends Queries, selection, source, field> = {
   readonly algebra: Algebra<PredicatesOfQueries<queries>, selection>
   readonly sources: {
     readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, source, field>
   }
   readonly read: Read<selection, source, field>
-}
+} & ([CalculationsOfQueries<queries>] extends [never]
+  ? { readonly calculations?: never }
+  : { readonly calculations: CalculationFragments<CalculationsOfQueries<queries>, field> })
+
+/**
+ * The adapter's fragment for each calculation, under its path, from its
+ * parsed parameters: a field read from a candidate, of the type its sources
+ * give (a SQL subquery, a function over the candidate and the state). One
+ * translation per calculation, reused by every query (ADP-8); its meaning is
+ * the adapter's, as a selection predicate's (SC-21). An adapter whose queries
+ * calculate nothing gives none.
+ */
+export type CalculationFragments<
+  calculations extends CalculationComponent,
+  field,
+> = PredicateFragments<calculations, field>
 
 /** The outcome of a read: the entries, typed by the query's fields, and the position read at. */
 export interface Snapshot<entry> {
@@ -2279,7 +2465,7 @@ export type ReadUseCaseOverBuilder<context, closes> = <
     QueryParts<QueryOfUseCase<use_case>> extends { input: infer i extends z.ZodType } ? i : never
   >
   readonly entry: entry
-  readonly projection: (entry: z.output<FieldsOf<QueryOfUseCase<use_case>>>) => z.input<entry>
+  readonly projection: (entry: QueryEntryOf<QueryOfUseCase<use_case>>) => z.input<entry>
   readonly stream?: {
     readonly identity: identity
     readonly events?: events
@@ -2442,6 +2628,7 @@ export interface Builders<context extends RootContext, closes> {
   readonly fact: FactBuilder
   readonly predicate: PredicateBuilder
   readonly selection: SelectionBuilder
+  readonly calculation: CalculationBuilder
   readonly effect: EffectBuilder
   readonly AND: AndBuilder
   readonly OR: OrBuilder
@@ -2468,6 +2655,7 @@ export type ConstructKind =
   | 'fact'
   | 'predicate'
   | 'selection'
+  | 'calculation'
   | 'effect'
   | 'command'
   | 'query'
@@ -3021,7 +3209,7 @@ export type ReadEvent<envelope, entry, identity> =
 /**
  * A read use case port, typed by what its adapter gives: with a stream, the
  * input and an optional position in, the snapshot and the stream out, the
- * facts typed by the registry's, the entries by the query's fields, the
+ * facts typed by the registry's, the entries by the query's entry, the
  * identity by its field; with none, the input in, the snapshot alone out.
  * `streamed` says which, at runtime and in the type: by subtyping a port that
  * gives the snapshot alone would serve a consumer of every event, so a
@@ -3041,7 +3229,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
         ) => AsyncIterable<
           ReadEvent<
             Envelope<readonly Part<facts>[]>,
-            z.output<fields>,
+            QueryEntryOf<query>,
             z.output<fields>[identity & keyof z.output<fields>]
           >
         >) &
@@ -3049,7 +3237,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
       : ((
           context: RootContext,
           input: z.input<input>,
-        ) => AsyncIterable<SnapshotEvent<z.output<fields>>>) & { readonly streamed: false }
+        ) => AsyncIterable<SnapshotEvent<QueryEntryOf<query>>>) & { readonly streamed: false }
     : never
 
 /** What a consumer of a live view asks of a read use case port. */

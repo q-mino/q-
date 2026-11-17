@@ -45,6 +45,7 @@ import {
   put_a_repaired_tool_back_in_service,
   retire_a_tool,
   send_a_tool_to_repair,
+  the_loans_of_the_month,
 } from './persona/keeper/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { majors as visitor_majors } from './persona/visitor/_majors.ts'
@@ -99,7 +100,12 @@ export const shed = (cell: Cell) => async (world: World) => {
       versions,
       majors: keeper_majors,
       top: persona,
-      use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
+      use_cases: {
+        retire_a_tool,
+        send_a_tool_to_repair,
+        put_a_repaired_tool_back_in_service,
+        the_loans_of_the_month,
+      },
     })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },

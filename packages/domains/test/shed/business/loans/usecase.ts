@@ -95,6 +95,14 @@ export const the_reservations_of_a_member_in_the_workshop = read_use_case({
 })
 
 /**
+ * Luca sees how many times each tool of the shed went out this month, the
+ * idle ones at zero: a count of the desk's register (SC-21).
+ */
+export const the_loans_of_each_tool_this_month = read_use_case({
+  query: query.the_loans_of_each_tool_this_month,
+})
+
+/**
  * The desk begins its round of the notices of a repair: the drill is in the
  * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
  * a reaction to the repair (DOM-16).

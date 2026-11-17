@@ -45,6 +45,7 @@ import {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
   the_reservations_of_a_member_in_the_workshop,
+  the_loans_of_each_tool_this_month,
 } from '../../business/loans/_usecase.ts'
 import type { Field, ProcessRead, Selection, Source } from './fragments.ts'
 import {
@@ -55,6 +56,9 @@ import {
   reservation_selection,
   reservation_sources,
   reservation_steps,
+  tool_calculation as loans_tool_calculation,
+  tool_selection as loans_tool_selection,
+  tool_sources as loans_tool_sources,
   type LoansState,
 } from './loans.ts'
 import {
@@ -595,6 +599,17 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         the_reservations_of_a_member: native(cell)(loans_registry),
         the_reservations_of_a_member_in_the_workshop: native(cell)(loans_registry),
       },
+    }),
+    ...wlib.read_use_case_ports({
+      registry: loans_registry,
+      versions,
+      use_cases: { the_loans_of_each_tool_this_month },
+    })({
+      algebra: loans_tool_selection,
+      calculations: loans_tool_calculation,
+      sources: loans_tool_sources,
+      read: read(cell),
+      streams: { the_loans_of_each_tool_this_month: native(cell)(loans_registry) },
     }),
   },
   accounts: wlib.lookup_ports({
