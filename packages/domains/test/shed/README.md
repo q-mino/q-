@@ -72,6 +72,25 @@ Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`]
     - done, part 2, block 4 (A, 17 Nov 2026): expand-contract, readers first (PER-17). A minor widens what the tree reads and narrows what its clients read; every other change is a major with its folder, whose deletion is the contraction; reads stay strict on both sides. A folder of a business domain deleted too early stops the start: the store gives what it keeps by path and version (`wlib.StoredVersions`, `cell.stored_versions`, the SQL adapter's `stored_versions`), checked by `wlib.versions` at wiring.
     - done, part 3 (A, 17 Nov 2026): the identity of a past read leaf (PER-17, PER-18). A read leaf of a past major whose next streams declares the field of its own entry that names a row (`stream: { identity: 'loan_id', … }`), checked by type to hold the identity the next leaf's stream gives, as the current leaf declares its own: a row of 1.x without it does not compile, where before its stream's events became none in silence; a renamed identity (1.x `id`, 2.0.0 `loan_id`) declares its old name.
     - the scenario: on 5 Nov Gianni's new phone borrows the ladder at `member` 2.0.0 and reads `due_day` 19 Nov; Marta's old phone, at 1.4.0, borrows the drill and reads `due_date` 19 Nov at 23:59:59.999Z, and so does its "my loans".
+    - closed (A, 17 Nov 2026): Shed keeps no code to write for it; what it leaves is in § Left by Shed.
+
+## Left by Shed
+
+What the steps of Shed leave, with its destination (A, 17 Nov 2026). [`wlib.ts`](wlib.ts) already declares the signatures; what is missing is a body, a generator, or a case.
+
+To the library steps of [the plan](../../../../docs/plan.md):
+
+- **The generator's output for a delegated leaf** (DOM-24, PER-17). The registry of [`persona/member/1/`](persona/member/1/_registry.ts) lists the inputs of its own leaves, not those of the delegated ones (`return_a_tool_input`). At runtime nothing breaks: Marta's old phone at `1.4.0` sends `return_a_tool`, the library finds the delegated leaf in the registry of `1/` and parses with the next major's input, which a minor may only widen. What lacks it is the map of 1.x: the JSON Schema export for the clients of 1.x and CI's comparison by path and version. The generator's step decides whether a past registry lists a delegated leaf's input.
+- **The generator's checks** (DOM-22, DOM-24, DOM-25): `_majors.ts` written from the folders; the CI rule of a minor by direction (what the tree reads only widens, what its clients read only narrows); a component of a past major forgotten in its folder; the twins and the registries, written by hand in Shed.
+- **The check of `tree_ports` at wiring** (CFG-2, PER-17): a current leaf given by the configurator that is not the one of its path in the current major (`my_loans` of `1/` in place of the current one) passes the types, since leaves are structural, with no brand of their path; only the identity of the object in the registry tells, at runtime. Declared in the JSDoc of `tree_ports`.
+
+To the catalogue of the scenarios, each with its case (LIB-3):
+
+- **Holding the later facts of a dead-lettered fact's resources** (D94.7, DOM-16): a fact of a resource in a dead letter, and the next fact of the same resource delivered after it.
+- **A persona's limit on reads** (PER-18, D80): a leaf that streams for some wearers and not for others, by their values (step 6).
+- **A business domain's own tree** (D105): a business use case under a node that adds its conditions to the command ("a pending order", step 6).
+
+To the first domain of q-: the map of q- (its `sight.ts`), the folders its domains see (DOM-25).
 
 ## Experiments
 
