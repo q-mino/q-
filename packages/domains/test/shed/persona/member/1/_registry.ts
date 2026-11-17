@@ -3,7 +3,8 @@
 // The path registry of `member` 1.x (DOM-24, A, 16 Nov 2026 (7)): every leaf
 // of the major with its component, over the next major's or delegated, and
 // the inputs of its own; the same paths as the current's, the version apart.
-// The configurator gives it to the library beside the current's, by major.
+// The persona's majors list it (`../_majors.ts`), where the library finds a
+// leaf at the version a message carries (A, 17 Nov 2026).
 
 import type * as wlib from '../../../wlib.ts'
 import * as usecase from './_usecase.ts'

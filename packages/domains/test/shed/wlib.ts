@@ -85,6 +85,20 @@ export interface CorrelationContext {
   readonly correlation: correlation
 }
 
+/**
+ * What the entry gives a tree's leaf beside the context of its top: the
+ * version of the persona the client was built at, whole (`1.4.0`), which the
+ * message carries beside its path, never in the input nor in the path (D75,
+ * D72.7). Its major picks the leaf, its minor serves the gate (PER-17). A
+ * claim: a client may name any version, and chooses only the words it is
+ * answered in, since every major ends in the current leaf, with its limits
+ * and its creator; no guarantee rests on it. No creator and no projection
+ * sees it: to them the version is the leaf (A, 17 Nov 2026).
+ */
+export interface VersionContext<version extends Semver = Semver> {
+  readonly version: version
+}
+
 /** The context of a command at the root of its tree: what its port takes. */
 export type CommandRootContext = RootContext & OperationContext & CorrelationContext
 
@@ -2359,19 +2373,18 @@ export type CommandLeafEvent<leaf> = leaf extends {
 
 /**
  * The port of a command leaf: what the entry gives the top of its tree, with
- * the operation (its id and its scope, which the entry composes, DOM-11), and
- * the leaf's input in; its events out. The library computes the operation's
+ * the operation (its id and its scope, which the entry composes, DOM-11), the
+ * version the message carries (`VersionContext`), and the input of the leaf
+ * at that version in; its events out. The library computes the operation's
  * fingerprint at the leaf, over its path and its input as sent, after the
  * schema (D100), and gives it with the operation to the command port, which
  * compares it (D79.5). The entry gives the correlation too, the client's or
  * a new one (D72.7), which the leaf follows, if it follows (`Follows`).
  */
-export type CommandLeafPort<entry, leaf> = leaf extends { readonly input: infer input }
-  ? (
-      context: entry & OperationContext & CorrelationContext,
-      input: z.input<SchemaOf<input>>,
-    ) => AsyncIterable<CommandLeafEvent<leaf>>
-  : never
+export type CommandLeafPort<entry, majors, name extends string> = <const version extends Semver>(
+  context: entry & OperationContext & CorrelationContext & VersionContext<version>,
+  input: LeafInput<LeafAt<majors, name, version>>,
+) => AsyncIterable<CommandLeafEvent<LeafAt<majors, name, version>>>
 
 /**
  * The events of the stream of a read leaf, as its port gives them (D72.5, A,
@@ -2437,26 +2450,26 @@ export type ReadLeafEvent<leaf> = leaf extends {
 
 /**
  * The port of a read leaf: what the entry gives the top of its tree, with no
- * operation (a read has none), the leaf's input, and, if it streams, a
- * position to resume from, as the stream gave it; its events out. With
- * `stream` it is `Streamed`; a stream over a port of the invoked tree that
- * does not stream is a composition fault, stopped at wiring (CFG-2).
+ * operation (a read has none), the version the message carries
+ * (`VersionContext`), the input of the leaf at that version, and, if it
+ * streams, a position to resume from, as the stream gave it; its events out.
+ * With `stream` (the current leaf's, which every major's follows) it is
+ * `Streamed`; a stream over a port of the invoked tree that does not stream
+ * is a composition fault, stopped at wiring (CFG-2).
  */
-export type ReadLeafPort<entry, leaf> = leaf extends {
-  readonly input: infer input
-  readonly [$UseCase]: { stream: infer stream }
-}
-  ? stream extends LeafStream
-    ? ((
-        context: entry,
-        input: z.input<SchemaOf<input>>,
-        from?: position,
-      ) => AsyncIterable<ReadLeafEvent<leaf>>) &
-        Streamed
-    : ((context: entry, input: z.input<SchemaOf<input>>) => AsyncIterable<ReadLeafEvent<leaf>>) & {
-        readonly streamed: false
-      }
-  : never
+export type ReadLeafPort<entry, majors, name extends string, stream> = stream extends LeafStream
+  ? (<const version extends Semver>(
+      context: entry & VersionContext<version>,
+      input: LeafInput<LeafAt<majors, name, version>>,
+      from?: position,
+    ) => AsyncIterable<ReadLeafEvent<LeafAt<majors, name, version>>>) &
+      Streamed
+  : (<const version extends Semver>(
+      context: entry & VersionContext<version>,
+      input: LeafInput<LeafAt<majors, name, version>>,
+    ) => AsyncIterable<ReadLeafEvent<LeafAt<majors, name, version>>>) & {
+      readonly streamed: false
+    }
 
 /** The leaves of a tree, by name: command and read use cases over another. */
 export type TreeLeaves = Readonly<
@@ -2479,10 +2492,51 @@ export type TreeLeaves = Readonly<
   >
 >
 
-/** The port of a leaf, by its kind: a read leaf declares its entry, a command leaf its events. */
-export type LeafPort<entry, leaf> = leaf extends { [$UseCase]: { entry: z.ZodObject } }
-  ? ReadLeafPort<entry, leaf>
-  : CommandLeafPort<entry, leaf>
+/** The major of a version (`1` for `'1.4.0'`); any major for a version the type does not know. */
+export type MajorOf<version extends Semver> =
+  version extends `${infer major extends number}.${number}.${number}` ? major : number
+
+/** A leaf as it answers: a delegated one is the leaf of the next major. */
+type Answering<leaf> = leaf extends Delegated<infer next> ? Answering<next> : leaf
+
+/** The leaf of a name in a major's registry, by its path (`…/usecase/borrow_a_tool`), as it answers. */
+type LeafIn<registry, name extends string> = Answering<
+  registry[Extract<keyof registry, `${string}/usecase/${name}`>]
+>
+
+/** The input of a leaf, as a client sends it. */
+type LeafInput<leaf> = leaf extends { readonly input: infer input }
+  ? z.input<SchemaOf<input>>
+  : never
+
+/**
+ * The leaf of a name at a version: the one of its major; none if the tree
+ * has no such major; for a version the type does not know, any of them.
+ */
+export type LeafAt<majors, name extends string, version extends Semver> =
+  MajorOf<version> extends infer major
+    ? number extends major
+      ? { [each in keyof majors]: LeafIn<majors[each], name> }[keyof majors]
+      : major extends keyof majors
+        ? LeafIn<majors[major], name>
+        : never
+    : never
+
+/**
+ * The port of a leaf of a tree with its majors, by its kind, a read leaf
+ * declaring its entry, a command leaf its events (PER-17, D72.7, A, 17 Nov
+ * 2026): one per name, the version in the context picking the major, in
+ * whose registry the library finds the leaf by its path; a delegated leaf is
+ * the next major's. A path a major has not is `not_a_leaf`; a major out of
+ * the window, the gate. Typed by the version: Marta's test client at
+ * `'1.4.0'` reads the events of 1.x, the generic entry, with any version, the
+ * union of the majors.
+ */
+export type LeafPort<entry, majors, name extends string, leaf> = leaf extends {
+  [$UseCase]: { entry: z.ZodObject; stream: infer stream }
+}
+  ? ReadLeafPort<entry, majors, name, stream>
+  : CommandLeafPort<entry, majors, name>
 
 /**
  * The ports that a tree invokes, by the path of their folder
@@ -2494,18 +2548,28 @@ export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>
 
 /**
  * The ports of the leaves of a tree (PER-6): the registry where the library
- * finds the nodes and the leaves by path, the node at the top, which takes
- * what the entry gives, and the leaves, command and read. Curried as
+ * finds the nodes and the leaves by path, the versions of the store it reads
+ * (`Follows`), the majors of the persona (`persona/member/_majors.ts`,
+ * generated from its folders, A, 17 Nov 2026), where it finds the leaf of a
+ * past major at the message's version, the node at the top, which takes
+ * what the entry gives, and the current leaves, command and read, one port
+ * per name (`LeafPort`). At wiring (CFG-2) it stops on a current
+ * leaf that is not the one of its path in the current major. Curried as
  * `command_use_case_ports`: then the ports the tree invokes, and the fact
  * log a leaf that follows reads, by correlation (`Follows`).
  */
-export declare function tree_ports<const top, const use_cases extends TreeLeaves>(ports: {
+export declare function tree_ports<
+  const top,
+  const majors extends Majors,
+  const use_cases extends TreeLeaves,
+>(ports: {
   readonly registry: Registry
   readonly versions: Versions
+  readonly majors: majors
   readonly top: top
   readonly use_cases: use_cases
 }): (wired: { readonly invoked: Invoked; readonly log: FactLog }) => {
-  readonly [name in keyof use_cases]: LeafPort<EntryOf<top>, use_cases[name]>
+  readonly [name in keyof use_cases & string]: LeafPort<EntryOf<top>, majors, name, use_cases[name]>
 }
 
 /** The command use cases of a domain, by name. */

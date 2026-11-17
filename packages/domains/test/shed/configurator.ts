@@ -30,6 +30,7 @@ import {
 import { persona } from './persona/_node.ts'
 import { registry as persona_registry } from './persona/_registry.ts'
 import { registry as member_registry } from './persona/member/_registry.ts'
+import { majors as member_majors } from './persona/member/_majors.ts'
 import {
   borrow_a_tool,
   my_loans,
@@ -37,12 +38,14 @@ import {
   return_a_tool,
 } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
+import { majors as keeper_majors } from './persona/keeper/_majors.ts'
 import {
   put_a_repaired_tool_back_in_service,
   retire_a_tool,
   send_a_tool_to_repair,
 } from './persona/keeper/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
+import { majors as visitor_majors } from './persona/visitor/_majors.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
 import { registry as retirement_registry } from './reaction/retirement/_registry.ts'
 import { registry as damage_registry } from './reaction/damage/_registry.ts'
@@ -70,18 +73,21 @@ export const shed = (cell: Cell) => (world: World) => {
     member: wlib.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       versions,
+      majors: member_majors,
       top: persona,
       use_cases: { borrow_a_tool, return_a_tool, my_loans, my_reservations },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions,
+      majors: keeper_majors,
       top: persona,
       use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
     })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
       versions,
+      majors: visitor_majors,
       top: persona,
       use_cases: { the_catalogue },
     })({ invoked, log: adapter.log }),
