@@ -201,7 +201,7 @@ export const return_a_tool = command_use_case_over({
 export const my_loans = read_use_case_over({
   use_case: loans.usecase.the_ongoing_loans_of_a_member,
   input: z.strictObject({}),
-  creator: (context) => () => ({ member_id: context.card.id }),
+  creator: (context) => () => ({ query: { member_id: context.card.id } }),
   entry: z.strictObject({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
@@ -241,7 +241,7 @@ export const my_loans = read_use_case_over({
 export const my_reservations = read_use_case_over({
   use_case: loans.usecase.the_reservations_of_a_member,
   input: z.strictObject({}),
-  creator: (context) => () => ({ member_id: context.card.id }),
+  creator: (context) => () => ({ query: { member_id: context.card.id } }),
   entry: z.strictObject({
     reservation_id: loans.id.reservation_id,
     tool_id: tools.id.tool_id,
@@ -279,7 +279,7 @@ export const my_reservations = read_use_case_over({
 export const my_reservations_in_the_workshop = read_use_case_over({
   use_case: loans.usecase.the_reservations_of_a_member_in_the_workshop,
   input: z.strictObject({}),
-  creator: (context) => () => ({ member_id: context.card.id }),
+  creator: (context) => () => ({ query: { member_id: context.card.id } }),
   entry: z.strictObject({
     reservation_id: loans.id.reservation_id,
     tool_id: tools.id.tool_id,

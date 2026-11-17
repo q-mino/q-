@@ -60,6 +60,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | query · selezione · campi · ordine                  | query · selection · fields · order                                                         |                                      |
 | predicato di selezione · soggetto                   | selection predicate · subject                                                              |                                      |
 | calcolo                                             | calculation (a value of the candidate, by the parameters of a read: SC-21)                 | derived field (D50.7)                |
+| pagina · cursore · totale                           | page · cursor · total (a read in pages: SC-22; the cursor of a step: DOM-20)               | keyset pagination                    |
 | candidato · voce (di q-)                            | candidate · entry                                                                          |                                      |
 | lettura dichiarata · forma istanza · forma insieme  | declared read · instance form · set form                                                   |                                      |
 | percorso · tipo (di un costrutto) · interpretazione | path · kind (of a construct) · interpretation (`dsl`)                                      |                                      |

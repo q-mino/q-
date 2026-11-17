@@ -101,7 +101,7 @@ export const put_a_repaired_tool_back_in_service = command_use_case_over({
 export const the_loans_of_the_month = read_use_case_over({
   use_case: loans.usecase.the_loans_of_each_tool_this_month,
   input: z.strictObject({}),
-  creator: () => () => ({}),
+  creator: () => () => ({ query: {} }),
   entry: z.strictObject({
     tool_id: tools.id.tool_id,
     name: value.tool_name,

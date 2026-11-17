@@ -1163,9 +1163,9 @@ export type Execution =
 export type Execute<fragment, write> = (plan: PlannedCommand<fragment, write>) => Promise<Execution>
 
 /**
- * A field of the order key after which a step chooses (DOM-20, D109): the
- * adapter's fragment of the field, its direction, and its value, which the
- * library decodes from the cursor (D114).
+ * A field of the order key after which a step chooses (DOM-20, D109), or a
+ * page starts (SC-22): the adapter's fragment of the field, its direction,
+ * and its value, which the library decodes from the cursor (D114).
  */
 export interface OrderKeyValue<field> {
   readonly field: field
@@ -1174,12 +1174,13 @@ export interface OrderKeyValue<field> {
 }
 
 /**
- * The operators of the selection of a step's instances: a query's, and the
- * comparison with the cursor (`after`): the instances after the order key,
- * its fields then the identity, lexicographic, a descending field reversed,
- * in the value order of LIB-9.
+ * The operators of a selection walked by a cursor, a step's instances
+ * (DOM-20) or a query's pages (SC-22): a query's, and the comparison with the
+ * cursor (`after`): the candidates after the order key, its fields then the
+ * identity, lexicographic, a descending field reversed, in the value order of
+ * LIB-9. One translation, reused by every step and every query (ADP-8).
  */
-export interface StepAlgebra<predicates extends Component, selection, field> extends Algebra<
+export interface CursorAlgebra<predicates extends Component, selection, field> extends Algebra<
   predicates,
   selection
 > {
@@ -1508,7 +1509,7 @@ export interface StepAdapter<
   source,
   field,
 > {
-  readonly selection: StepAlgebra<StepSelections<steps>, selection, field>
+  readonly selection: CursorAlgebra<StepSelections<steps>, selection, field>
   readonly sources: {
     readonly [name in keyof steps]: StepSource<steps[name], read, source, field>
   }
@@ -1944,7 +1945,9 @@ export interface PlannedQuery<selection, source, field> {
  * the author only declares where the process keeps it. The default: a
  * business that must read it declares its own, the order key's fields, which
  * the library derives from the order, checks by type and writes the same way
- * (A, 16 Nov 2026), with its case.
+ * (A, 16 Nov 2026), with its case. The same cursor closes a page of a
+ * query (SC-22): the order key of its last entry, from which the next page
+ * starts; carried by the persona and the client, never read by them (D57).
  */
 export const cursor = z.string().min(1).brand<'cursor'>()
 export type cursor = z.output<typeof cursor>
@@ -1962,20 +1965,53 @@ export type Read<selection, source, field> = (
 ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
 
 /**
+ * A page of a planned query (SC-22): the selection of the page, the query's
+ * after the cursor, composed by the library with the adapter's `after` (the
+ * query's alone on the first page); how many entries at most (the library
+ * asks one more than the page, to know whether another follows). The query's
+ * selection still counts the total.
+ */
+export interface PlannedPage<selection, source, field> extends PlannedQuery<
+  selection,
+  source,
+  field
+> {
+  readonly page: selection
+  readonly limit: number
+}
+
+/**
+ * The adapter's read of a page, in one consistent snapshot (D72.8): the
+ * entries the page's selection keeps, in the order, at most `limit`, as
+ * stored; how many the query's selection keeps there, the total; and the
+ * position read at.
+ */
+export type ReadPage<selection, source, field> = (
+  plan: PlannedPage<selection, source, field>,
+) => Promise<{
+  readonly entries: readonly unknown[]
+  readonly total: number
+  readonly position: position
+}>
+
+/**
  * What a read adapter gives for a set of queries, of one or more domains. Its
  * fragments are of three types: a condition over a candidate (`selection`),
  * where the candidates are (`source`), how a field reads from a candidate
  * (`field`). In SQL the three are one type, and one adapter serves the
  * queries of every subject; an adapter whose fragments are typed by the
  * candidate (the in-memory oracle) serves the queries of one subject at a
- * time (DOM-18).
+ * time (DOM-18). Every query reads whole or in pages (SC-22): the algebra
+ * compares with a cursor (`after`, a step's), and the adapter reads a page
+ * with its total (`page`).
  */
 export type ReadAdapter<queries extends Queries, selection, source, field> = {
-  readonly algebra: Algebra<PredicatesOfQueries<queries>, selection>
+  readonly algebra: CursorAlgebra<PredicatesOfQueries<queries>, selection, field>
   readonly sources: {
     readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, source, field>
   }
   readonly read: Read<selection, source, field>
+  readonly page: ReadPage<selection, source, field>
 } & ([CalculationsOfQueries<queries>] extends [never]
   ? { readonly calculations?: never }
   : { readonly calculations: CalculationFragments<CalculationsOfQueries<queries>, field> })
@@ -1993,10 +2029,17 @@ export type CalculationFragments<
   field,
 > = PredicateFragments<calculations, field>
 
-/** The outcome of a read: the entries, typed by the query's fields, and the position read at. */
+/**
+ * The outcome of a read, one page (SC-22): its entries, typed by the query's
+ * entry; the position read at; how many entries the selection keeps there,
+ * the total; and, if another page follows, its cursor (D72.4). A read whole
+ * is one page: every entry, its count, no cursor.
+ */
 export interface Snapshot<entry> {
   readonly entries: readonly entry[]
   readonly position: position
+  readonly total: number
+  readonly next?: cursor
 }
 
 // ---------------------------------------------------------------------------
@@ -2428,10 +2471,31 @@ type FieldsHolding<entry extends z.ZodObject, identity> = {
     : never
 }[keyof z.output<entry> & string]
 
+/** The input of the query a read use case reads, as its creator gives it. */
+type QueryInputOfUseCase<use_case> =
+  QueryParts<QueryOfUseCase<use_case>> extends { input: infer input extends z.ZodType }
+    ? z.input<input>
+    : never
+
+/**
+ * What a read leaf's creator binds, by part, as a query's creator does since
+ * SC-21: the input of the query it reads and, if it reads in pages, their
+ * size (SC-22), a whole number from 1, which may come from its own input,
+ * bounded by its schema (D50.3, D72.8: the node declares the page). With no
+ * page, one page: every entry, one snapshot. A leaf that streams reads
+ * whole: its creator binds no page, until a case asks for both (LIB-3).
+ */
+export type ReadBinding<input, streams extends boolean> = {
+  readonly query: input
+} & (streams extends true
+  ? { readonly page?: never }
+  : { readonly page?: { readonly size: number } })
+
 /**
  * A read use case over another, declared in one argument whose parts have
  * names, in the order of the flow: the read use case it invokes, its input,
- * the creator that turns it into the invoked one's input, its entry, the
+ * the creator that turns it into the invoked one's input and the page, by
+ * part (`{ query, page }`, SC-22), its entry, the
  * projection that builds an entry of its own from one of the invoked one,
  * field by field (D45): a field it does not write never leaves (PER-18); and
  * last, if it streams, how (`stream`). Its creator reads the context of its
@@ -2461,9 +2525,7 @@ export type ReadUseCaseOverBuilder<context, closes> = <
     context: context,
   ) => (
     input: z.output<SchemaOf<input>>,
-  ) => z.input<
-    QueryParts<QueryOfUseCase<use_case>> extends { input: infer i extends z.ZodType } ? i : never
-  >
+  ) => ReadBinding<QueryInputOfUseCase<use_case>, [identity] extends [never] ? false : true>
   readonly entry: entry
   readonly projection: (entry: QueryEntryOf<QueryOfUseCase<use_case>>) => z.input<entry>
   readonly stream?: {
@@ -2833,13 +2895,15 @@ export type NodeEvent<reason extends string> = NotFound | Refused<reason>
 
 /**
  * A base event (D106.3), in the union of every leaf: at the entry of the
- * tree, the path is not a leaf (an inner node, none at that version), or the
- * input is not in its schema. A formal reason: the contract is public, so it
- * tells nothing more. Terminal.
+ * tree, the path is not a leaf (an inner node, none at that version), the
+ * input is not in its schema, or a read's cursor does not decode to its
+ * query's order key (SC-22; one forged that decodes starts the page
+ * elsewhere, and the selection holds, D57). A formal reason: the contract
+ * is public, so it tells nothing more. Terminal.
  */
 export interface InvalidRequest {
   readonly event: 'invalid_request'
-  readonly reason: 'not_a_leaf' | 'input_not_in_schema'
+  readonly reason: 'not_a_leaf' | 'input_not_in_schema' | 'cursor_not_in_schema'
 }
 
 /**
@@ -2971,7 +3035,10 @@ export type ReadLeafEvent<leaf> = leaf extends {
  * The port of a read leaf: what the entry gives the top of its tree, with no
  * operation (a read has none), the version the message carries
  * (`VersionContext`), the input of the leaf at that version, and, if it
- * streams, a position to resume from, as the stream gave it; its events out.
+ * streams, a position to resume from, as the stream gave it; if it does not,
+ * a cursor to resume its pages from, as a snapshot gave it (`next`, SC-22),
+ * one snapshot per page, read when the consumer asks for the next; its
+ * events out.
  * With `stream` (the current leaf's, which every major's follows) it is
  * `Streamed`; a stream over a port of the invoked tree that does not stream
  * is a composition fault, stopped at wiring (CFG-2).
@@ -2986,6 +3053,7 @@ export type ReadLeafPort<entry, majors, name extends string, stream> = stream ex
   : (<const version extends Semver>(
       context: entry & VersionContext<version>,
       input: LeafInput<LeafAt<majors, name, version>>,
+      after?: cursor,
     ) => AsyncIterable<ReadLeafEvent<LeafAt<majors, name, version>>>) & {
       readonly streamed: false
     }
@@ -3207,6 +3275,32 @@ export type ReadEvent<envelope, entry, identity> =
   SnapshotEvent<entry> | StreamEvent<envelope, entry, identity>
 
 /**
+ * A page asked of a read (SC-22): how many entries at most, and the cursor it
+ * starts after, the `next` of the snapshot before it. With no size, every
+ * entry; with no cursor, from the first.
+ */
+export interface Page {
+  readonly size?: number
+  readonly after?: cursor
+}
+
+/**
+ * A query read in pages (SC-22): one snapshot per page, read when the
+ * consumer asks for the next (pull), each at its own position and with its
+ * total, so the pages are not one snapshot (D72.8, D53): a tool added before
+ * the cursor is not met going on, one renamed past it comes again. The
+ * stream ends after the last page, or when its consumer stops; from the
+ * cursor of a page it resumes after it, as a stream from a position (D57).
+ * A cursor that does not decode to the query's order key is no page:
+ * `invalid_request` at a leaf.
+ */
+export type Pages<input, entry> = (
+  context: RootContext,
+  input: input,
+  page: Page,
+) => AsyncIterable<SnapshotEvent<entry>>
+
+/**
  * A read use case port, typed by what its adapter gives: with a stream, the
  * input and an optional position in, the snapshot and the stream out, the
  * facts typed by the registry's, the entries by the query's entry, the
@@ -3214,6 +3308,8 @@ export type ReadEvent<envelope, entry, identity> =
  * `streamed` says which, at runtime and in the type: by subtyping a port that
  * gives the snapshot alone would serve a consumer of every event, so a
  * consumer that needs a live view asks for `streamed: true` (`Streamed`).
+ * Either way the snapshot is one page, the whole read, and `pages` reads the
+ * query in pages (SC-22).
  */
 export type ReadUseCasePort<query, facts extends Component, streamed extends boolean> =
   QueryParts<query> extends {
@@ -3221,23 +3317,27 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
     fields: infer fields extends z.ZodObject
     identity: infer identity extends string
   }
-    ? streamed extends true
-      ? ((
-          context: RootContext,
-          input: z.input<input>,
-          from?: position,
-        ) => AsyncIterable<
-          ReadEvent<
-            Envelope<readonly Part<facts>[]>,
-            QueryEntryOf<query>,
-            z.output<fields>[identity & keyof z.output<fields>]
-          >
-        >) &
-          Streamed
-      : ((
-          context: RootContext,
-          input: z.input<input>,
-        ) => AsyncIterable<SnapshotEvent<QueryEntryOf<query>>>) & { readonly streamed: false }
+    ? (streamed extends true
+        ? ((
+            context: RootContext,
+            input: z.input<input>,
+            from?: position,
+          ) => AsyncIterable<
+            ReadEvent<
+              Envelope<readonly Part<facts>[]>,
+              QueryEntryOf<query>,
+              z.output<fields>[identity & keyof z.output<fields>]
+            >
+          >) &
+            Streamed
+        : ((
+            context: RootContext,
+            input: z.input<input>,
+          ) => AsyncIterable<SnapshotEvent<QueryEntryOf<query>>>) & {
+            readonly streamed: false
+          }) & {
+        readonly pages: Pages<z.input<input>, QueryEntryOf<query>>
+      }
     : never
 
 /** What a consumer of a live view asks of a read use case port. */

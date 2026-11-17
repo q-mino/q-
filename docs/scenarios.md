@@ -35,7 +35,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-19** (covered, Shed 11) Luca renames the drill: the row of Marta's "my loans" shows the new name, an entry that reads another domain. DOM-17, GR-3, V11.
 - **SC-20** (covered, Shed 11) Gianni's "my reservations" shows whether the tool is in the workshop: a selection over another domain's state. DOM-18, GR-3.
 - **SC-21** (covered, Shed 11) Luca asks how many loans each tool had this month: a read that counts, not a list of entries; a calculation beside the fields. DOM-18, D50.7.
-- **SC-22** (open, reshapes) The catalogue holds 2,000 tools: the snapshot read in pages. DOM-17, D64.3.
+- **SC-22** (covered, Shed 11) The catalogue holds 2,000 tools: the snapshot read in pages, a stream of snapshots pulled by the consumer, each with its position, the total and the next page's cursor. DOM-18, D50, D72.8.
 
 ## Trees and personas (step 6)
 

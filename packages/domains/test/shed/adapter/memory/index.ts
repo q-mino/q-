@@ -238,9 +238,9 @@ const compare_values = (a: unknown, b: unknown): number =>
             : 0
 
 /**
- * The comparison with a step's cursor (DOM-20): a candidate after the order
- * key, the first field that differs deciding, a descending one reversed, in
- * the value order of LIB-9.
+ * The comparison with a cursor, a step's (DOM-20) or a page's (SC-22): a
+ * candidate after the order key, the first field that differs deciding, a
+ * descending one reversed, in the value order of LIB-9.
  */
 const after =
   <state, candidate>(
@@ -353,6 +353,30 @@ const read =
       entries: entries_on(plan)(cell.get()).map((identified) => identified.entry),
       position: cell.position(),
     })
+
+/**
+ * A page on one state (SC-22): the entries the page's selection keeps, in the
+ * order, at most `limit`; the total, how many the query's selection keeps;
+ * and the position. One state, so the page and its total are one snapshot.
+ */
+const page =
+  (cell: Cell) =>
+  <candidate>(
+    plan: wlib.PlannedPage<
+      Selection<State, candidate>,
+      Source<State, candidate>,
+      Field<State, candidate>
+    >,
+  ) => {
+    const state = cell.get()
+    return Promise.resolve({
+      entries: entries_on({ ...plan, selection: plan.page })(state)
+        .slice(0, plan.limit)
+        .map((identified) => identified.entry),
+      total: entries_on(plan)(state).length,
+      position: cell.position(),
+    })
+  }
 
 type Event = wlib.StreamEvent<wlib.StoredEnvelope, unknown, unknown>
 
@@ -544,9 +568,10 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       versions,
       use_cases: { the_catalogue },
     })({
-      algebra: tool_selection,
+      algebra: { ...tool_selection, after },
       sources: tool_sources,
       read: read(cell),
+      page: page(cell),
       streams: { the_catalogue: native(cell)(tools_registry) },
     }),
   },
@@ -582,9 +607,10 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       versions,
       use_cases: { the_ongoing_loans_of_a_member },
     })({
-      algebra: loan_selection,
+      algebra: { ...loan_selection, after },
       sources: loan_sources,
       read: read(cell),
+      page: page(cell),
       streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
     }),
     ...wlib.read_use_case_ports({
@@ -592,9 +618,10 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       versions,
       use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
     })({
-      algebra: reservation_selection,
+      algebra: { ...reservation_selection, after },
       sources: reservation_sources,
       read: read(cell),
+      page: page(cell),
       streams: {
         the_reservations_of_a_member: native(cell)(loans_registry),
         the_reservations_of_a_member_in_the_workshop: native(cell)(loans_registry),
@@ -605,10 +632,11 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       versions,
       use_cases: { the_loans_of_each_tool_this_month },
     })({
-      algebra: loans_tool_selection,
+      algebra: { ...loans_tool_selection, after },
       calculations: loans_tool_calculation,
       sources: loans_tool_sources,
       read: read(cell),
+      page: page(cell),
       streams: { the_loans_of_each_tool_this_month: native(cell)(loans_registry) },
     }),
   },

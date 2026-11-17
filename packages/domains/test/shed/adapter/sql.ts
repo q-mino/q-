@@ -402,10 +402,30 @@ const read =
       position: await tx.position(),
     }))
 
+/** The count of a page's total: one row, one number. */
+const the_total = z.tuple([z.strictObject({ total: z.coerce.number().int().min(0) })])
+
 /**
- * The comparison with a step's cursor (DOM-20): the candidates after the
- * order key, lexicographic, a descending field reversed (`(day, id) > (?, ?)`,
- * written out so that the directions may differ).
+ * A page in one transaction, a snapshot (SC-22, D72.8): the fields of the
+ * candidates that the page's selection keeps, in the order, `limit` at most;
+ * how many the query's selection keeps; and the position. The transaction
+ * is serializable (SC-11), so the two statements read one state.
+ */
+const page =
+  (database: Database): wlib.ReadPage<sql, sql, sql> =>
+  (plan) =>
+    database.transaction(async (tx) => ({
+      entries: await tx.rows(sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`),
+      total: the_total.parse(
+        await tx.rows(sql`select count(*) as total from ${plan.from} where ${plan.selection}`),
+      )[0].total,
+      position: await tx.position(),
+    }))
+
+/**
+ * The comparison with a cursor, a step's (DOM-20) or a page's (SC-22): the
+ * candidates after the order key, lexicographic, a descending field reversed
+ * (`(day, id) > (?, ?)`, written out so that the directions may differ).
  */
 const after = (key: readonly wlib.OrderKeyValue<sql>[]): sql => {
   const [first, ...rest] = key
@@ -650,13 +670,13 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       write: tools_writes,
       execute: execute(database),
     }),
-    // The catalogue is only read: a visitor reads it once, no case streams it.
+    // The catalogue is only read: a visitor reads it in pages, no case streams it.
     ...wlib.read_use_case_ports({
       registry: tools_registry,
       versions,
       use_cases: { the_catalogue },
     })({
-      algebra: algebra(tool_selection_fragments),
+      algebra: { ...algebra(tool_selection_fragments), after },
       sources: {
         the_catalogue: {
           from: sql`tools as candidate`,
@@ -669,6 +689,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         },
       },
       read: read(database),
+      page: page(database),
       streams: {},
     }),
   },
@@ -720,11 +741,14 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         the_loans_of_each_tool_this_month,
       },
     })({
-      algebra: algebra({
-        ...loan_selection_fragments,
-        ...reservation_selection_fragments,
-        ...loans_tool_selection_fragments,
-      }),
+      algebra: {
+        ...algebra({
+          ...loan_selection_fragments,
+          ...reservation_selection_fragments,
+          ...loans_tool_selection_fragments,
+        }),
+        after,
+      },
       calculations: loans_tool_calculation_fragments,
       sources: {
         the_ongoing_loans_of_a_member: {
@@ -750,6 +774,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         },
       },
       read: read(database),
+      page: page(database),
       // A member's loans and reservations are few: a whole read per fact of the
       // node is cheap, and a fact of `tools` that renames a tool reads again
       // the name of its rows (SC-19). The loans of each tool this month are

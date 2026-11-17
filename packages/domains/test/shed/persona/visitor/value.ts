@@ -12,3 +12,6 @@ export const categories = z.array(category).min(1)
 
 /** The name of a tool, as the visitor reads it. */
 export const tool_name = z.string().min(1).max(80)
+
+/** How many tools a page of the catalogue shows, as the visitor's phone asks: at most 100 (SC-22). */
+export const page_size = z.number().int().min(1).max(100)
