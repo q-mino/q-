@@ -3,13 +3,13 @@
 The catalogue of the scenarios that the library, zen0, must hold: its own use cases, and those typical of applications and systems (Alessandro's goal, 16 Nov 2026). Each scenario is a story of Shed, the test domains in [`packages/domains/test/shed/`](../packages/domains/test/shed/README.md), with the rules it exercises (ids of [`architecture.md`](architecture.md)), its status and the library step of [the plan](plan.md) that runs it.
 
 - **Covered**: Shed holds it, in the step named; the library step runs it as a test on the oracle at its close.
-- **Open, reshapes**: Shed does not hold it yet, and it may change the shape of what its library step builds; that step opens by writing it in Shed (LIB-3: no rule without its case).
-- **Open, adds**: it adds a component or a test without changing a shape; after the library, or with the domain of q- that brings it.
+- **Open, reshapes**: Shed does not hold it yet, and it may change the shape of what the library builds (LIB-3: no rule without its case).
+- **Open, adds**: Shed does not hold it yet; it adds a component or a test without changing a shape.
 - **Out of scope**: not the library's in stage 1, with the reason.
 
-Ids are stable: a scenario keeps its id when its status changes. A new scenario takes the next id.
+Every open scenario is written in Shed at step 2 of the plan, before any code of the library, those that reshape first in each part (Alessandro, 17 Nov 2026); at its close every scenario in scope is covered. The catalogue is closed at the start of step 2: a scenario found later is added as open and enters step 2 only if Alessandro decides. Ids are stable: a scenario keeps its id when its status changes. A new scenario takes the next id.
 
-## Commands and facts (step 3)
+## Commands and facts (step 4)
 
 - **SC-1** (covered, Shed 1) Luca adds the drill to the catalogue: a command, its branch, its fact. DOM-1, DOM-5, DOM-10.
 - **SC-2** (covered, Shed 2) Luca retires the drill, already retired: the branch "nothing to do" records a fact, never a silent no-op; a rejection names every failed predicate. DOM-5, DOM-6, D95.
@@ -25,7 +25,7 @@ Ids are stable: a scenario keeps its id when its status changes. A new scenario 
 - **SC-12** (open, reshapes) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22.
 - **SC-13** (open, adds) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101.
 
-## Reads and streams (step 4)
+## Reads and streams (step 5)
 
 - **SC-14** (covered, Shed 4, 6) The visitor's catalogue: a query with its selection, order and identity; the snapshot alone, no stream; projected field by field, without the keeper's notes. DOM-18, LIB-9, PER-18.
 - **SC-15** (covered, Shed 4, 6) Marta's live "my loans": the stream from a position, `entered`, `left`, `fact`, `caught_up`, a resume, `position_unavailable`. DOM-17, D64, D72.6.
@@ -37,7 +37,7 @@ Ids are stable: a scenario keeps its id when its status changes. A new scenario 
 - **SC-21** (open, reshapes) Luca asks how many loans each tool had this month: a read that counts, not a list of entries. DOM-18.
 - **SC-22** (open, reshapes) The catalogue holds 2,000 tools: the snapshot read in pages. DOM-17, D64.3.
 
-## Trees and personas (step 5)
+## Trees and personas (step 6)
 
 - **SC-23** (covered, Shed 5, 6) Luca retires a tool as keeper: a leaf in the full form, its own input and events, creator, projection of every branch and of the rejection. PER-6, DOM-2, D45.
 - **SC-24** (covered, Shed 6) Marta's node: her card from auth, the hat as a perimeter (`not_found`); an expired card blocks borrowing, not reading her loans (`refused`, a limit of the leaf). PER-7, PER-9, PER-14.
@@ -52,7 +52,7 @@ Ids are stable: a scenario keeps its id when its status changes. A new scenario 
 - **SC-33** (open, reshapes) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
 - **SC-34** (open, reshapes) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
 
-## Effects, reactions, processes (step 6)
+## Effects, reactions, processes (step 7)
 
 - **SC-35** (covered, Shed 7) The due-date reminder: a wait until the eve, its return reminds Marta only if she still has the tool. DOM-13..15, D68.3.
 - **SC-36** (covered, Shed 7) The deadline as a fact: the overdue wait stamps the loan. D68.3, D92.4.
@@ -65,7 +65,7 @@ Ids are stable: a scenario keeps its id when its status changes. A new scenario 
 - **SC-43** (open, adds) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
 - **SC-44** (open, adds) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
 
-## The generator (step 2)
+## The generator (step 3)
 
 - **SC-45** (covered, Shed 2-10) The map: a persona sees of a business domain its use cases, identities and facts; a business domain of another only its identities; a reaction above them. DOM-25, GR-1, GR-3, GR-9.
 - **SC-46** (covered as a rule, Shed 10) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. DOM-22, DOM-24, PER-17.
