@@ -199,6 +199,8 @@ export const registry = {
     reservation_selection.the_reservation_is_of_this_member,
   'business/loans/selection/reservation/the_reservation_is_of_this_tool':
     reservation_selection.the_reservation_is_of_this_tool,
+  'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop':
+    reservation_selection.the_tool_of_the_reservation_is_in_the_workshop,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
     reservation_selection.the_reservation_is_from_this_day_on,
   'business/loans/query/the_loan_is_ongoing_for_the_member':
@@ -211,6 +213,12 @@ export const registry = {
   'business/loans/query/the_reservations_of_a_member': query.the_reservations_of_a_member,
   'business/loans/query/the_reservations_of_a_member_input':
     query.the_reservations_of_a_member_input,
+  'business/loans/query/the_reservation_ahead_waits_for_the_workshop':
+    query.the_reservation_ahead_waits_for_the_workshop,
+  'business/loans/query/the_reservations_of_a_member_in_the_workshop':
+    query.the_reservations_of_a_member_in_the_workshop,
+  'business/loans/query/the_reservations_of_a_member_in_the_workshop_input':
+    query.the_reservations_of_a_member_in_the_workshop_input,
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'business/loans/usecase/lend_a_booked_tool': usecase.lend_a_booked_tool,
   'business/loans/usecase/correct_the_tool_of_a_loan': usecase.correct_the_tool_of_a_loan,
@@ -228,6 +236,8 @@ export const registry = {
     usecase.continue_the_repair_notice_round,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
+  'business/loans/usecase/the_reservations_of_a_member_in_the_workshop':
+    usecase.the_reservations_of_a_member_in_the_workshop,
   'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up':
     reaction.the_first_reservation_on_the_sheet_is_taken_up,
   'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up':

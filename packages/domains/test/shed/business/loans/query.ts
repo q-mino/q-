@@ -52,3 +52,31 @@ export const the_reservations_of_a_member = query({
     the_day_has_not_passed: { day: dsl.today(context.now) },
   }),
 })
+
+/** The reservation is ahead for the member, and its tool is in the workshop. */
+export const the_reservation_ahead_waits_for_the_workshop = AND({
+  the_reservation_is_ahead: the_reservation_is_ahead_for_the_member,
+  the_tool_is_in_the_workshop: reservation_selection.the_tool_of_the_reservation_is_in_the_workshop,
+})
+
+/**
+ * The member's reservations from today on whose tool is in the workshop, the
+ * closest day first: those that may not be ready on their day (SC-20).
+ */
+export const the_reservations_of_a_member_in_the_workshop = query({
+  input: z.strictObject({
+    member_id: id.member_id,
+  }),
+  fields: value.reservation_entry,
+  identity: 'id',
+  selection: the_reservation_ahead_waits_for_the_workshop,
+  order: { day: 'ascending' },
+  creator: (context) => (input) => ({
+    the_reservation_is_ahead: {
+      the_reservation_is_booked: {},
+      the_reservation_is_of_the_member: { member_id: input.member_id },
+      the_day_has_not_passed: { day: dsl.today(context.now) },
+    },
+    the_tool_is_in_the_workshop: {},
+  }),
+})

@@ -23,6 +23,9 @@ export const registry = {
   'persona/member/usecase/my_loans_input': usecase.my_loans_input,
   'persona/member/usecase/my_reservations': usecase.my_reservations,
   'persona/member/usecase/my_reservations_input': usecase.my_reservations_input,
+  'persona/member/usecase/my_reservations_in_the_workshop': usecase.my_reservations_in_the_workshop,
+  'persona/member/usecase/my_reservations_in_the_workshop_input':
+    usecase.my_reservations_in_the_workshop_input,
   'persona/member/value/tool_name': value.tool_name,
   'persona/member/value/loan_term': value.loan_term,
 } satisfies wlib.Registry

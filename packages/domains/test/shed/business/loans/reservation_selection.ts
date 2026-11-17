@@ -30,3 +30,13 @@ export const the_reservation_is_from_this_day_on = selection({
     day: wlib.day,
   }),
 })
+
+/**
+ * The tool held by the reservation is in the workshop: a selection over the
+ * state of `tools`, which `loans` sees as its own view of the tools (GR-3),
+ * and the adapter reads from the catalogue (SC-20).
+ */
+export const the_tool_of_the_reservation_is_in_the_workshop = selection({
+  subject: 'reservation',
+  parameters: z.strictObject({}),
+})

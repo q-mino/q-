@@ -32,6 +32,7 @@ import {
   return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
+  the_reservations_of_a_member_in_the_workshop,
 } from '../business/loans/_usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
@@ -186,6 +187,9 @@ const reservation_selection_fragments: wlib.PredicateFragments<
     sql`candidate.tool_id = ${p.tool_id}`,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
     sql`candidate.day >= ${p.day}`,
+  // The link: the view of `loans` over the tools, read from `tools` (SC-20).
+  'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop': () =>
+    sql`exists (select 1 from tools where tools.id = candidate.tool_id and tools.status = 'underRepair')`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -592,6 +596,17 @@ const the_whole_reservation = {
   },
 }
 
+/** A member's reservation, as the member sees it: the tool with its name, read from `tools`, and the day. */
+const the_reservation_entry = {
+  from: sql`reservations as candidate`,
+  fields: {
+    id: sql`candidate.id`,
+    tool_id: sql`candidate.tool_id`,
+    tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
+    day: sql`candidate.day`,
+  },
+}
+
 export const sql_adapter = (database: Database) => (versions: wlib.Versions) => ({
   rebuild: rebuild(database)(versions),
   tools: {
@@ -673,7 +688,11 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
     ...wlib.read_use_case_ports({
       registry: loans_registry,
       versions,
-      use_cases: { the_ongoing_loans_of_a_member, the_reservations_of_a_member },
+      use_cases: {
+        the_ongoing_loans_of_a_member,
+        the_reservations_of_a_member,
+        the_reservations_of_a_member_in_the_workshop,
+      },
     })({
       algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),
       sources: {
@@ -689,15 +708,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
             term: sql`candidate.term`,
           },
         },
-        the_reservations_of_a_member: {
-          from: sql`reservations as candidate`,
-          fields: {
-            id: sql`candidate.id`,
-            tool_id: sql`candidate.tool_id`,
-            tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
-            day: sql`candidate.day`,
-          },
-        },
+        the_reservations_of_a_member: the_reservation_entry,
+        the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
       },
       read: read(database),
       // A member's loans and reservations are few: a whole read per fact of the
@@ -706,6 +718,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       streams: {
         the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },
+        the_reservations_of_a_member_in_the_workshop: { strategy: 'composed', log: log(database) },
       },
     }),
   },

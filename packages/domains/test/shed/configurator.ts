@@ -35,6 +35,7 @@ import {
   borrow_a_tool,
   my_loans,
   my_reservations,
+  my_reservations_in_the_workshop,
   return_a_tool,
   take_the_tool_you_booked,
 } from './persona/member/_usecase.ts'
@@ -90,6 +91,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         return_a_tool,
         my_loans,
         my_reservations,
+        my_reservations_in_the_workshop,
       },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({

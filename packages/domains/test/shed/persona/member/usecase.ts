@@ -268,3 +268,29 @@ export const my_reservations = read_use_case_over({
     },
   },
 })
+
+/**
+ * Gianni opens "in the workshop", among his reservations: those whose tool
+ * is in repair, which may not be ready on their day. On Tuesday the drill
+ * he booked for Thursday goes to the workshop and its row comes in; on
+ * Friday it is back in service and the row goes: facts of `tools`, which
+ * touch no reservation, by what they change of the selection (SC-20).
+ */
+export const my_reservations_in_the_workshop = read_use_case_over({
+  use_case: loans.usecase.the_reservations_of_a_member_in_the_workshop,
+  input: z.strictObject({}),
+  creator: (context) => () => ({ member_id: context.card.id }),
+  entry: z.strictObject({
+    reservation_id: loans.id.reservation_id,
+    tool_id: tools.id.tool_id,
+    tool_name: value.tool_name,
+    day: wlib.day,
+  }),
+  projection: (entry) => ({
+    reservation_id: entry.id,
+    tool_id: entry.tool_id,
+    tool_name: entry.tool_name,
+    day: entry.day,
+  }),
+  stream: { identity: 'reservation_id' },
+})

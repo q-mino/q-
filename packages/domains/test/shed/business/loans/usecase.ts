@@ -86,6 +86,15 @@ export const the_reservations_of_a_member = read_use_case({
 })
 
 /**
+ * Gianni sees the reservations whose tool is in the workshop: the drill he
+ * booked for Thursday comes in when it goes to repair, and goes when it is
+ * back in service, by facts of `tools` (SC-20).
+ */
+export const the_reservations_of_a_member_in_the_workshop = read_use_case({
+  query: query.the_reservations_of_a_member_in_the_workshop,
+})
+
+/**
  * The desk begins its round of the notices of a repair: the drill is in the
  * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
  * a reaction to the repair (DOM-16).

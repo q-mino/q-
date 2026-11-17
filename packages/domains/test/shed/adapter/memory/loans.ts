@@ -22,6 +22,7 @@ import type {
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
+  the_reservations_of_a_member_in_the_workshop,
 } from '../../business/loans/_query.ts'
 import type {
   continue_the_cancellation_of_reservations,
@@ -183,10 +184,25 @@ export const reservation_selection: wlib.Algebra<
     'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
       (p) => () => (the_reservation) =>
         the_reservation.day >= p.day,
+    // The link: the view of `loans` over the tools, read from `tools` (SC-20).
+    'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop':
+      () => (state) => (the_reservation) =>
+        tools_dsl.the_tool_is_under_repair(state.tools.get(the_reservation.tool_id)),
   },
 }
 
 const the_reservations: Source<Reads, reservation> = (state) => [...state.reservations.values()]
+
+/** A member's reservation, as the member sees it: the tool with its name, and the day. */
+const the_reservation_entry = {
+  from: the_reservations,
+  fields: {
+    id: () => (the_reservation: reservation) => the_reservation.id,
+    tool_id: () => (the_reservation: reservation) => the_reservation.tool_id,
+    tool_name: the_name_of_the_tool,
+    day: () => (the_reservation: reservation) => the_reservation.day,
+  },
+}
 
 export const reservation_sources: {
   readonly the_reservations_of_a_member: wlib.QuerySource<
@@ -194,16 +210,14 @@ export const reservation_sources: {
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
+  readonly the_reservations_of_a_member_in_the_workshop: wlib.QuerySource<
+    wlib.FieldsOf<typeof the_reservations_of_a_member_in_the_workshop>,
+    Source<Reads, reservation>,
+    Field<Reads, reservation>
+  >
 } = {
-  the_reservations_of_a_member: {
-    from: the_reservations,
-    fields: {
-      id: () => (the_reservation) => the_reservation.id,
-      tool_id: () => (the_reservation) => the_reservation.tool_id,
-      tool_name: the_name_of_the_tool,
-      day: () => (the_reservation) => the_reservation.day,
-    },
-  },
+  the_reservations_of_a_member: the_reservation_entry,
+  the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
 }
 
 // The reads of the steps of `loans` (DOM-20): the work sheet by its tool, the

@@ -76,6 +76,27 @@ export const my_reservations_input = usecase.my_reservations.input
 export type my_reservations_input = z.output<typeof my_reservations_input>
 
 /**
+ * Gianni opens "in the workshop", among his reservations: those whose tool
+ * is in repair, which may not be ready on their day. On Tuesday the drill
+ * he booked for Thursday goes to the workshop and its row comes in; on
+ * Friday it is back in service and the row goes: facts of `tools`, which
+ * touch no reservation, by what they change of the selection (SC-20).
+ *
+ * @see {@link usecase.my_reservations_in_the_workshop}
+ */
+export const my_reservations_in_the_workshop = usecase.my_reservations_in_the_workshop
+
+/**
+ * The input of `my_reservations_in_the_workshop`, declared inline.
+ *
+ * @see {@link usecase.my_reservations_in_the_workshop}
+ */
+export const my_reservations_in_the_workshop_input = usecase.my_reservations_in_the_workshop.input
+export type my_reservations_in_the_workshop_input = z.output<
+  typeof my_reservations_in_the_workshop_input
+>
+
+/**
  * Marta brings the drill back, and her screen follows what her return sets
  * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
  * open until the workshop takes the drill in, a fact of `tools` that a

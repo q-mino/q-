@@ -55,3 +55,34 @@ export const the_reservations_of_a_member = query.the_reservations_of_a_member
  */
 export const the_reservations_of_a_member_input = query.the_reservations_of_a_member.input
 export type the_reservations_of_a_member_input = z.output<typeof the_reservations_of_a_member_input>
+
+/**
+ * The reservation is ahead for the member, and its tool is in the workshop.
+ *
+ * @see {@link query.the_reservation_ahead_waits_for_the_workshop}
+ */
+export const the_reservation_ahead_waits_for_the_workshop =
+  query.the_reservation_ahead_waits_for_the_workshop
+export type the_reservation_ahead_waits_for_the_workshop = z.output<
+  typeof the_reservation_ahead_waits_for_the_workshop
+>
+
+/**
+ * The member's reservations from today on whose tool is in the workshop, the
+ * closest day first: those that may not be ready on their day (SC-20).
+ *
+ * @see {@link query.the_reservations_of_a_member_in_the_workshop}
+ */
+export const the_reservations_of_a_member_in_the_workshop =
+  query.the_reservations_of_a_member_in_the_workshop
+
+/**
+ * The input of `the_reservations_of_a_member_in_the_workshop`, declared inline.
+ *
+ * @see {@link query.the_reservations_of_a_member_in_the_workshop}
+ */
+export const the_reservations_of_a_member_in_the_workshop_input =
+  query.the_reservations_of_a_member_in_the_workshop.input
+export type the_reservations_of_a_member_in_the_workshop_input = z.output<
+  typeof the_reservations_of_a_member_in_the_workshop_input
+>

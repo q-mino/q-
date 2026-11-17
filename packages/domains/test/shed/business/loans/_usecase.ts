@@ -99,6 +99,16 @@ export const the_ongoing_loans_of_a_member = usecase.the_ongoing_loans_of_a_memb
 export const the_reservations_of_a_member = usecase.the_reservations_of_a_member
 
 /**
+ * Gianni sees the reservations whose tool is in the workshop: the drill he
+ * booked for Thursday comes in when it goes to repair, and goes when it is
+ * back in service, by facts of `tools` (SC-20).
+ *
+ * @see {@link usecase.the_reservations_of_a_member_in_the_workshop}
+ */
+export const the_reservations_of_a_member_in_the_workshop =
+  usecase.the_reservations_of_a_member_in_the_workshop
+
+/**
  * The desk begins its round of the notices of a repair: the drill is in the
  * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
  * a reaction to the repair (DOM-16).
