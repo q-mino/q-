@@ -19,6 +19,13 @@ export const borrow_a_tool = usecase.borrow_a_tool
 export const lend_a_booked_tool = usecase.lend_a_booked_tool
 
 /**
+ * The keeper corrects the tool on a loan's card: Luca handed Marta the sander, not the drill.
+ *
+ * @see {@link usecase.correct_the_tool_of_a_loan}
+ */
+export const correct_the_tool_of_a_loan = usecase.correct_the_tool_of_a_loan
+
+/**
  * A member books a tool for a day ahead: the ladder for Saturday.
  *
  * @see {@link usecase.reserve_a_tool}

@@ -12,6 +12,11 @@ export const borrow_a_tool = command_use_case({ command: command.borrow_a_tool }
 /** A member takes the tool they booked, on its day: Gianni, the drill, Thursday. */
 export const lend_a_booked_tool = command_use_case({ command: command.lend_a_booked_tool })
 
+/** The keeper corrects the tool on a loan's card: Luca handed Marta the sander, not the drill. */
+export const correct_the_tool_of_a_loan = command_use_case({
+  command: command.correct_the_tool_of_a_loan,
+})
+
 /** A member books a tool for a day ahead: the ladder for Saturday. */
 export const reserve_a_tool = command_use_case({ command: command.reserve_a_tool })
 

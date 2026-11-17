@@ -146,6 +146,17 @@ export const the_member_can_still_be_reminded = command.the_member_can_still_be_
 export type the_member_can_still_be_reminded = z.output<typeof the_member_can_still_be_reminded>
 
 /**
+ * The member still has a tool, but the card names another since the eve was queued (SC-13).
+ *
+ * @see {@link command.the_tool_of_the_ongoing_loan_was_corrected}
+ */
+export const the_tool_of_the_ongoing_loan_was_corrected =
+  command.the_tool_of_the_ongoing_loan_was_corrected
+export type the_tool_of_the_ongoing_loan_was_corrected = z.output<
+  typeof the_tool_of_the_ongoing_loan_was_corrected
+>
+
+/**
  * The member still has the tool, but its due date has passed: the eve came late.
  *
  * @see {@link command.the_due_date_of_the_ongoing_loan_has_passed}
@@ -191,6 +202,33 @@ export const remind_the_member_of_the_due_date_input =
 export type remind_the_member_of_the_due_date_input = z.output<
   typeof remind_the_member_of_the_due_date_input
 >
+
+/**
+ * The card of the ongoing loan says what the keeper read on it, and the
+ * tool the member has can go out (SC-13).
+ *
+ * @see {@link command.the_tool_of_the_loan_can_be_corrected}
+ */
+export const the_tool_of_the_loan_can_be_corrected = command.the_tool_of_the_loan_can_be_corrected
+export type the_tool_of_the_loan_can_be_corrected = z.output<
+  typeof the_tool_of_the_loan_can_be_corrected
+>
+
+/**
+ * The keeper corrects the tool on a loan's card (SC-13): the loan stays, its
+ * fact stays in the log, a new fact corrects it (DOM-22, D101).
+ *
+ * @see {@link command.correct_the_tool_of_a_loan}
+ */
+export const correct_the_tool_of_a_loan = command.correct_the_tool_of_a_loan
+
+/**
+ * The input of `correct_the_tool_of_a_loan`, declared inline.
+ *
+ * @see {@link command.correct_the_tool_of_a_loan}
+ */
+export const correct_the_tool_of_a_loan_input = command.correct_the_tool_of_a_loan.input
+export type correct_the_tool_of_a_loan_input = z.output<typeof correct_the_tool_of_a_loan_input>
 
 /**
  * The return of the due date (D68.3), guarded as the reminder: if the member

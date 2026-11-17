@@ -79,6 +79,10 @@ export const loans_fragments: wlib.PredicateFragments<
     loans_dsl.the_loan_is_returned(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_loan_is_of_this_tool': (p) => (state) =>
     state.loans.get(p.loan_id)?.tool_id === p.tool_id,
+  'business/loans/predicate/the_loan_is_of_this_member': (p) => (state) =>
+    state.loans.get(p.loan_id)?.member_id === p.member_id,
+  'business/loans/predicate/the_loan_is_due_on_this_day': (p) => (state) =>
+    state.loans.get(p.loan_id)?.due_day === p.due_day,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) => (state) =>
     loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.now),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
@@ -257,6 +261,19 @@ const with_the_progress =
         }
   }
 
+/** A loan's tool corrected (SC-13): member, dates and stage stay as they were. */
+const with_the_tool =
+  (changed: { readonly id: loan_id; readonly tool_id: tool_id }) =>
+  (state: LoansState): LoansState => {
+    const the_loan = state.loans.get(changed.id)
+    return the_loan === undefined
+      ? state
+      : {
+          ...state,
+          loans: new Map(state.loans).set(changed.id, { ...the_loan, tool_id: changed.tool_id }),
+        }
+  }
+
 /** A reservation's change of stage, by nesting, as a loan's. */
 const with_the_reservation_progress =
   (changed: { readonly id: reservation_id; readonly progress: reservation_progress }) =>
@@ -323,6 +340,10 @@ export const loans_writes: wlib.FactWrites<
     with_the_progress(overdue_loan),
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,
   'business/loans/fact/the_due_day_was_not_over': () => (state) => state,
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan }) =>
+    with_the_tool(corrected_loan),
+  'business/loans/fact/the_tool_of_the_loan_was_already_corrected': () => (state) => state,
+  'business/loans/fact/the_tool_was_corrected_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({

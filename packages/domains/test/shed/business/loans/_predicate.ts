@@ -58,6 +58,24 @@ export const the_loan_is_of_this_tool =
 export type the_loan_is_of_this_tool = z.output<typeof the_loan_is_of_this_tool>
 
 /**
+ * The loan's card names this member (SC-13): a claim of whoever corrects it.
+ *
+ * @see {@link predicate.the_loan_is_of_this_member}
+ */
+export const the_loan_is_of_this_member =
+  predicate.the_loan_is_of_this_member.brand<'business/loans/predicate/the_loan_is_of_this_member'>()
+export type the_loan_is_of_this_member = z.output<typeof the_loan_is_of_this_member>
+
+/**
+ * The loan's card says it is due on this day (SC-13): a claim of whoever corrects it.
+ *
+ * @see {@link predicate.the_loan_is_due_on_this_day}
+ */
+export const the_loan_is_due_on_this_day =
+  predicate.the_loan_is_due_on_this_day.brand<'business/loans/predicate/the_loan_is_due_on_this_day'>()
+export type the_loan_is_due_on_this_day = z.output<typeof the_loan_is_due_on_this_day>
+
+/**
  * The due date on the loan's card is still ahead at an instant: "bring it
  * back tomorrow" is still true. The instant is a parameter, the clock of
  * whoever asks (GR-8): time is not a fact (D92.4), the due date is.

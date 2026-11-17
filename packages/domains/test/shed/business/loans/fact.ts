@@ -52,6 +52,40 @@ export const the_loan_was_already_returned = fact({
   }),
 })
 
+/**
+ * The desk wrote the wrong tool on the loan's card, and corrects it (SC-13):
+ * a partial value, the loan's id and the tool the member has, which the
+ * state takes; and the tool the card named, for the record. The fact of the
+ * loan stays as it was recorded: a mistake is corrected by a fact, never by
+ * one removed (DOM-22, D101).
+ */
+export const the_tool_of_a_loan_has_been_corrected = fact({
+  payload: z.strictObject({
+    corrected_loan: value.loan.pick({ id: true, tool_id: true }),
+    tool_named_before: tools.id.tool_id,
+  }),
+})
+
+/** Nothing to do (DOM-6): the card already names the tool the member has. */
+export const the_tool_of_the_loan_was_already_corrected = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+  }),
+})
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for the tool the card named
+ * before a correction, and no reminder goes for it; the correction queued
+ * the eve of the tool the member has (SC-13).
+ */
+export const the_tool_was_corrected_before_the_reminder = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+  }),
+})
+
 /** The eve of the due date came while the member had the tool: the reminder is on its way. Nothing changes in the state (D95). */
 export const the_member_has_been_reminded_of_the_due_date = fact({
   payload: z.strictObject({

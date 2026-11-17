@@ -79,6 +79,12 @@ export const registry = {
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
   'business/loans/fact/a_reservation_has_been_taken_up': fact.a_reservation_has_been_taken_up,
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected':
+    fact.the_tool_of_a_loan_has_been_corrected,
+  'business/loans/fact/the_tool_of_the_loan_was_already_corrected':
+    fact.the_tool_of_the_loan_was_already_corrected,
+  'business/loans/fact/the_tool_was_corrected_before_the_reminder':
+    fact.the_tool_was_corrected_before_the_reminder,
   'business/loans/fact/the_reservation_was_already_taken_up':
     fact.the_reservation_was_already_taken_up,
   'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
@@ -109,6 +115,8 @@ export const registry = {
     predicate.the_tool_is_on_loan_to_this_member,
   'business/loans/predicate/a_reservation_has_this_id': predicate.a_reservation_has_this_id,
   'business/loans/predicate/the_reservation_is_booked': predicate.the_reservation_is_booked,
+  'business/loans/predicate/the_loan_is_of_this_member': predicate.the_loan_is_of_this_member,
+  'business/loans/predicate/the_loan_is_due_on_this_day': predicate.the_loan_is_due_on_this_day,
   'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day':
     predicate.the_reservation_holds_the_tool_for_the_member_on_the_day,
   'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up':
@@ -130,6 +138,13 @@ export const registry = {
   'business/loans/command/take_up_a_reservation_input': command.take_up_a_reservation_input,
   'business/loans/command/lend_a_booked_tool': command.lend_a_booked_tool,
   'business/loans/command/lend_a_booked_tool_input': command.lend_a_booked_tool_input,
+  'business/loans/command/the_tool_of_the_ongoing_loan_was_corrected':
+    command.the_tool_of_the_ongoing_loan_was_corrected,
+  'business/loans/command/the_tool_of_the_loan_can_be_corrected':
+    command.the_tool_of_the_loan_can_be_corrected,
+  'business/loans/command/correct_the_tool_of_a_loan': command.correct_the_tool_of_a_loan,
+  'business/loans/command/correct_the_tool_of_a_loan_input':
+    command.correct_the_tool_of_a_loan_input,
   'business/loans/command/the_tool_can_be_booked': command.the_tool_can_be_booked,
   'business/loans/command/reserve_a_tool': command.reserve_a_tool,
   'business/loans/command/reserve_a_tool_input': command.reserve_a_tool_input,
@@ -198,6 +213,7 @@ export const registry = {
     query.the_reservations_of_a_member_input,
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'business/loans/usecase/lend_a_booked_tool': usecase.lend_a_booked_tool,
+  'business/loans/usecase/correct_the_tool_of_a_loan': usecase.correct_the_tool_of_a_loan,
   'business/loans/usecase/reserve_a_tool': usecase.reserve_a_tool,
   'business/loans/usecase/return_a_tool': usecase.return_a_tool,
   'business/loans/usecase/remind_the_member_of_the_due_date':

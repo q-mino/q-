@@ -49,6 +49,22 @@ export const the_loan_is_of_this_tool = predicate({
   }),
 })
 
+/** The loan's card names this member (SC-13): a claim of whoever corrects it. */
+export const the_loan_is_of_this_member = predicate({
+  parameters: z.strictObject({
+    loan_id: id.loan_id,
+    member_id: id.member_id,
+  }),
+})
+
+/** The loan's card says it is due on this day (SC-13): a claim of whoever corrects it. */
+export const the_loan_is_due_on_this_day = predicate({
+  parameters: z.strictObject({
+    loan_id: id.loan_id,
+    due_day: wlib.day,
+  }),
+})
+
 /**
  * The due date on the loan's card is still ahead at an instant: "bring it
  * back tomorrow" is still true. The instant is a parameter, the clock of

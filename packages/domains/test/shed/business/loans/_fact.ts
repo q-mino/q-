@@ -64,6 +64,42 @@ export const the_loan_was_already_returned =
 export type the_loan_was_already_returned = z.output<typeof the_loan_was_already_returned>
 
 /**
+ * The desk wrote the wrong tool on the loan's card, and corrects it (SC-13):
+ * the loan's id and the tool the member has; and the tool the card named.
+ * The fact of the loan stays as recorded (DOM-22, D101).
+ *
+ * @see {@link fact.the_tool_of_a_loan_has_been_corrected}
+ */
+export const the_tool_of_a_loan_has_been_corrected =
+  fact.the_tool_of_a_loan_has_been_corrected.brand<'business/loans/fact/the_tool_of_a_loan_has_been_corrected'>()
+export type the_tool_of_a_loan_has_been_corrected = z.output<
+  typeof the_tool_of_a_loan_has_been_corrected
+>
+
+/**
+ * Nothing to do (DOM-6): the card already names the tool the member has.
+ *
+ * @see {@link fact.the_tool_of_the_loan_was_already_corrected}
+ */
+export const the_tool_of_the_loan_was_already_corrected =
+  fact.the_tool_of_the_loan_was_already_corrected.brand<'business/loans/fact/the_tool_of_the_loan_was_already_corrected'>()
+export type the_tool_of_the_loan_was_already_corrected = z.output<
+  typeof the_tool_of_the_loan_was_already_corrected
+>
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for the tool the card named
+ * before a correction (SC-13).
+ *
+ * @see {@link fact.the_tool_was_corrected_before_the_reminder}
+ */
+export const the_tool_was_corrected_before_the_reminder =
+  fact.the_tool_was_corrected_before_the_reminder.brand<'business/loans/fact/the_tool_was_corrected_before_the_reminder'>()
+export type the_tool_was_corrected_before_the_reminder = z.output<
+  typeof the_tool_was_corrected_before_the_reminder
+>
+
+/**
  * The eve of the due date came while the member had the tool: the reminder is on its way. Nothing changes in the state (D95).
  *
  * @see {@link fact.the_member_has_been_reminded_of_the_due_date}
