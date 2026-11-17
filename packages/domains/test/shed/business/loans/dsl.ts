@@ -8,14 +8,16 @@ const loan_period_in_days = 14
 const booking_window_in_days = 30
 const a_day_in_milliseconds = 24 * 60 * 60 * 1000
 
-/** The first instant of a day. */
-export const the_start_of = (the_day: day): date_time => date_time.parse(`${the_day}T00:00:00.000Z`)
-
+/**
+ * A day some days after another: arithmetic of the calendar, in no zone (a
+ * day is a day wherever the shed is), counted over the days' UTC midnights,
+ * which no change of offset moves.
+ */
 const days_after = (the_day: day, days: number): day =>
-  day_of(
-    date_time.parse(
-      new Date(Date.parse(the_start_of(the_day)) + days * a_day_in_milliseconds).toISOString(),
-    ),
+  day.parse(
+    new Date(Date.parse(`${the_day}T00:00:00Z`) + days * a_day_in_milliseconds)
+      .toISOString()
+      .slice(0, 10),
   )
 
 /** The day a loan is due: the tool comes back by the end of the loan period's last day (A, 16 Nov 2026 (7)). */
@@ -28,18 +30,12 @@ export const the_eve_of = (due_date: day): day => days_after(due_date, -1)
 /** The day after a due date, when a loan whose tool is still out becomes overdue. */
 export const the_day_after = (due_date: day): day => days_after(due_date, 1)
 
-/** The calendar day of an instant. */
+/** The calendar day of an instant, as its writer told it: `now` is told in the shed's zone. */
 export const today = (now: date_time): day => day_of(now)
 
-/** A day can be booked after today and within the booking window. A static rule: validation. */
-export const the_day_is_within_the_booking_window = (day: string, now: date_time): boolean =>
-  day > day_of(now) &&
-  day <=
-    day_of(
-      date_time.parse(
-        new Date(Date.parse(now) + booking_window_in_days * a_day_in_milliseconds).toISOString(),
-      ),
-    )
+/** A day can be booked after today and within the booking window, days of the shed. A static rule: validation. */
+export const the_day_is_within_the_booking_window = (the_day: string, now: date_time): boolean =>
+  the_day > today(now) && the_day <= days_after(today(now), booking_window_in_days)
 
 /** A loan returned after its due date, a day: on the due date itself it is on time. */
 export const the_loan_was_returned_late = (the_loan: value.returned_loan): boolean =>

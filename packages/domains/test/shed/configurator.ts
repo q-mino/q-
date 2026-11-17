@@ -51,10 +51,15 @@ import { registry as retirement_registry } from './reaction/retirement/_registry
 import { registry as damage_registry } from './reaction/damage/_registry.ts'
 import { registry as repair_registry } from './reaction/repair/_registry.ts'
 
-/** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
+/**
+ * The world outside the shed, as the oracle fakes it: the members' phones,
+ * and the clock of the executors and the consumers. The clock tells the zone
+ * of the shed's calendar, which the shed's configuration declares (Toronto,
+ * `America/Toronto`), not a domain: `loans` lends in any town (SC-12).
+ */
 export interface World {
   readonly phones: Phones
-  readonly clock: () => wlib.date_time
+  readonly clock: wlib.Clock
 }
 
 export const shed = (cell: Cell) => async (world: World) => {

@@ -3,8 +3,15 @@ import * as z from 'zod'
 // Formats (DOM-24): branded values with no word of a domain. A format's brand
 // is its name: no domain path is a bare name, so it meets no domain's brand.
 
-/** An instant, ISO 8601 with the time zone. */
-export const date_time = z.iso.datetime().brand<'date_time'>()
+/**
+ * An instant, ISO 8601, written in the time zone of its writer, with its
+ * offset (`2026-11-02T23:30:00-05:00`): the wall clock of the node that wrote
+ * it, so that its day is a property of the record (`day_of`), the same for
+ * every reader, every peer and every version (SC-12, C, 17 Nov 2026). Two
+ * instants compare by their value, never as text: two offsets, and the hour
+ * that repeats in autumn, tell one moment in two ways.
+ */
+export const date_time = z.iso.datetime({ offset: true }).brand<'date_time'>()
 export type date_time = z.output<typeof date_time>
 
 /** A calendar day, `YYYY-MM-DD`. */
@@ -12,15 +19,48 @@ export const day = z.iso.date().brand<'day'>()
 export type day = z.output<typeof day>
 
 /**
- * The calendar day of an instant, in the time zone of its writing (UTC in
- * Shed): a function of the formats, so that a translation between versions
- * (`earlier`) can use it and never changes once published, whatever the
- * domain's `dsl` becomes (DOM-22).
+ * A time zone, by its IANA name (`America/Toronto`), with its rules: the
+ * calendar of a node, by which its days start and end. An offset is not a
+ * zone: in Toronto a loan taken on 20 October at `-04:00` is due on 3
+ * November at `-05:00`. The library checks the name against the zones of its
+ * runtime.
+ */
+export const time_zone = z.string().min(1).brand<'time_zone'>()
+export type time_zone = z.output<typeof time_zone>
+
+/**
+ * The calendar day of an instant, the day of its writing: pure over the
+ * instant alone, its date as its writer told it, so that a translation
+ * between versions (`earlier`) can use it and never changes once published,
+ * whatever the domain's `dsl` or the node's zone becomes (DOM-22). Marta took
+ * the drill at 23:30 on 2 November in Toronto (`-05:00`): the 2nd, though it
+ * was already the 3rd in UTC.
  */
 export const day_of = (instant: date_time): day => day.parse(instant.slice(0, 10))
 
-/** The last instant of a day, in UTC: a deadline "by the end of the day" told as an instant. */
-export const end_of = (the_day: day): date_time => date_time.parse(`${the_day}T23:59:59.999Z`)
+/**
+ * The first instant of a day in a zone, told in its offset that day: when a
+ * wait for a day may go (`not_before`). From a day to an instant only with a
+ * zone and its rules, so only where the context gives it (a creator, a leaf
+ * of a past major), never in a translation of a fact, whose payload has none
+ * (DOM-22). A, 17 Nov 2026 (SC-12): a body of the library, over the zones of
+ * its runtime.
+ */
+export declare const start_of: (zone: time_zone) => (the_day: day) => date_time
+
+/**
+ * The last instant of a day in a zone, told in its offset that day: a
+ * deadline "by the end of the day" told as an instant (`2026-11-16T23:59:59.999-05:00`).
+ * Only where the context gives the zone, as `start_of`.
+ */
+export declare const end_of: (zone: time_zone) => (the_day: day) => date_time
+
+/**
+ * An instant told in a zone: the same moment, in the offset the zone has at
+ * it. The library tells the context's `now` in the context's zone at every
+ * port, whatever offset the entry or the clock gave (SC-12).
+ */
+export declare const in_zone: (zone: time_zone) => (instant: date_time) => date_time
 
 /**
  * The context every root of a tree takes, given by the entry (PER-6): the
@@ -34,13 +74,29 @@ export const end_of = (the_day: day): date_time => date_time.parse(`${the_day}T2
  * so that it serves any context that has it. When a leaf invokes another
  * tree, the library gives its root this context, copied, and nothing else
  * (D105.1).
+ *
+ * The node's calendar is part of it (SC-12, C, 17 Nov 2026): its zone
+ * (`time_zone`), declared by the configuration of the node, not by a domain,
+ * since one domain serves sheds in many towns; and `now` told in that zone.
  */
 export interface RootContext {
   readonly now: date_time
+  readonly time_zone: time_zone
 }
 
 /** The part of the context a construct that reads only the time declares. */
 export type Now = Pick<RootContext, 'now'>
+
+/**
+ * The clock of a node (SC-12, C, 17 Nov 2026): the instant, in any offset,
+ * and the zone of the node's calendar, which its configuration declares. An
+ * internal entry (the effect executor, the reaction consumers) builds its
+ * context from it: `now` told in the zone (`in_zone`), and the zone.
+ */
+export interface Clock {
+  readonly now: () => date_time
+  readonly time_zone: time_zone
+}
 
 /** An operation's identity (DOM-11, DOM-12): created before the first attempt, kept on a retry. */
 export const operation_id = z.string().min(1).brand<'operation_id'>()
@@ -220,9 +276,14 @@ export type Earlier<next extends Component, payload extends z.ZodObject> = paylo
  * (`earlier(next.a_tool_has_been_lent)`), its shape and the step to the next
  * one; a leaf of a persona (`earlier(next.borrow_a_tool)`, A, 16 Nov 2026
  * (7)), its input and the step forward, its events or entry and the steps
- * back (`EarlierCommandLeaf`, `EarlierReadLeaf`).
+ * back (`EarlierCommandLeaf`, `EarlierReadLeaf`). A fact's step reads its
+ * payload alone, stored data that every reader translates alike (DOM-22); a
+ * leaf's steps run at the request and read the context of its point first,
+ * once, as a creator (`(context) => (input) => …`, A, 17 Nov 2026, SC-12):
+ * Marta's old phone reads her due day as its last instant in the shed's zone
+ * (`end_of(context.time_zone)`).
  */
-export interface EarlierBuilder {
+export interface EarlierBuilder<context> {
   <const next extends Component>(
     next: next,
   ): <const payload extends z.ZodObject>(earlier: {
@@ -233,9 +294,11 @@ export interface EarlierBuilder {
     next: next,
   ): <const input extends z.ZodType, const events extends Events>(earlier: {
     readonly input: input
-    readonly to_next: (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+    readonly to_next: (
+      context: context,
+    ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
     readonly events: events
-    readonly from_next: FromNextEvents<EventsOfLeaf<next>, events>
+    readonly from_next: (context: context) => FromNextEvents<EventsOfLeaf<next>, events>
   }) => EarlierCommandLeaf<next, input, events>
   <const next extends AnyReadLeaf>(
     next: next,
@@ -247,10 +310,14 @@ export interface EarlierBuilder {
   >(
     earlier: {
       readonly input: input
-      readonly to_next: (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+      readonly to_next: (
+        context: context,
+      ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
       readonly entry: entry
-      readonly from_next: (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
-    } & EarlierStream<next, identity, events>,
+      readonly from_next: (
+        context: context,
+      ) => (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
+    } & EarlierStream<next, identity, events, context>,
   ) => EarlierReadLeaf<next, input, entry, identity, events>
 }
 
@@ -265,7 +332,7 @@ export interface EarlierBuilder {
  * events of its own, and one step back per event of the next. If the next
  * does not stream, no `stream`.
  */
-type EarlierStream<next, identity extends string, events extends Events> = [
+type EarlierStream<next, identity extends string, events extends Events, context> = [
   IdentityOfLeafStream<next>,
 ] extends [never]
   ? { readonly stream?: never }
@@ -273,7 +340,7 @@ type EarlierStream<next, identity extends string, events extends Events> = [
       readonly stream: {
         readonly identity: identity
         readonly events: events
-        readonly from_next: FromNextEvents<StreamEventsOfLeaf<next>, events>
+        readonly from_next: (context: context) => FromNextEvents<StreamEventsOfLeaf<next>, events>
       }
     }
 
@@ -2209,7 +2276,7 @@ export interface Builders<context extends RootContext, closes> {
   readonly reaction: ReactionBuilder
   readonly node: NodeBuilder<context, closes>
   readonly version: VersionBuilder
-  readonly earlier: EarlierBuilder
+  readonly earlier: EarlierBuilder<context>
   readonly delegate: DelegateBuilder
 }
 
@@ -2955,7 +3022,7 @@ export interface EffectExecutor {
  * "system · executor of effect E" (D91.3): the scope is the effect's path,
  * the operation's id the entry's, so that a double report is the duplicate
  * branch (DOM-11) and the fingerprint covers the entry and what the world
- * said (D108.3); the context's `now` is the clock's. Curried as
+ * said (D108.3); the context is the clock's, `now` told in its zone. Curried as
  * `command_use_case_ports`: the registry and the domain's return use cases,
  * where it finds each effect's return; then the deliveries; then its ports.
  */
@@ -2972,7 +3039,7 @@ export declare function effect_executor<
   readonly outbox: Outbox
   readonly returns: { readonly [name in keyof returns]: CommandUseCasePort<returns[name]> }
   readonly state: ExecutorState
-  readonly clock: () => date_time
+  readonly clock: Clock
 }) => EffectExecutor
 
 // ---------------------------------------------------------------------------
@@ -3114,7 +3181,7 @@ export interface ReactionConsumers {
  * the order of the parts (DOM-16: at most one command per part), read at
  * the current shape (`Versions`: Marta's damaged return, recorded at 1.x
  * and delivered after 2.0.0), translates it purely (D89.3) and invokes its use case with `reaction_operation` over
- * the fact's operation and the part, and the clock's `now`; a part
+ * the fact's operation and the part, and the clock's context; a part
  * translated to `nothing` invokes nothing (D88.2). Then, by the outcome of
  * each:
  * - applied (an exact duplicate too, the recorded fact): the next part;
@@ -3137,10 +3204,7 @@ export declare function reaction_consumers<const registry extends Registry>(reac
   readonly versions: Versions
 }): (
   wirings: ReactionWirings<registry>,
-) => (ports: {
-  readonly state: ReactionState
-  readonly clock: () => date_time
-}) => ReactionConsumers
+) => (ports: { readonly state: ReactionState; readonly clock: Clock }) => ReactionConsumers
 
 // ---------------------------------------------------------------------------
 // Lookups (PER-9): a read of one key, which gives its value or "not known",

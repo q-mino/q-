@@ -30,7 +30,9 @@ export const the_tool_can_be_lent = AND({
  * member, on the due date `declare_the_loan_overdue` stamps the loan
  * overdue, each only if the member still has the tool. Both queued here, not
  * one by the other's return: neither decides the other. One loan, one wait of
- * each: the loan's id is each entry's.
+ * each: the loan's id is each entry's. Days of the shed (SC-12): Marta takes
+ * the drill at 23:30 on 2 November in Toronto, already the 3rd in UTC, and it
+ * is due on the 16th; her eve's wait goes at the start of the 15th there.
  */
 export const borrow_a_tool = command({
   input: z.strictObject({
@@ -78,12 +80,12 @@ export const borrow_a_tool = command({
               member_id: input.member_id,
               due_day: due_day,
             },
-            not_before: dsl.the_start_of(dsl.the_eve_of(due_day)),
+            not_before: wlib.start_of(context.time_zone)(dsl.the_eve_of(due_day)),
           },
           wait_until_the_due_date: {
             id: input.loan_id,
             payload: { loan_id: input.loan_id },
-            not_before: dsl.the_start_of(dsl.the_day_after(due_day)),
+            not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(due_day)),
           },
         },
       ],
@@ -375,7 +377,7 @@ export const declare_the_loan_overdue = command({
             day: dsl.today(context.now),
           }),
           payload: { loan_id: input.loan_id },
-          not_before: dsl.the_start_of(dsl.the_day_after(dsl.today(context.now))),
+          not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(dsl.today(context.now))),
         },
       },
     ],
