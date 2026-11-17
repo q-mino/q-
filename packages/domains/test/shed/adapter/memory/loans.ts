@@ -313,6 +313,7 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan }) =>
     with_the_progress(overdue_loan),
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,
+  'business/loans/fact/the_due_day_was_not_over': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({

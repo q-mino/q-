@@ -9,7 +9,9 @@
 // read the fact log of the cell and invoke the use cases of the offices they
 // move: those of a procedure between offices (`retirement`, `damage`,
 // `repair`), and those of an office's own processes (`loans`, its work sheet
-// and its rounds of notices). Nothing runs: the library is wished.
+// and its rounds of notices). Everything that reads what the cell stored
+// takes its versions, so that a fact or an effect of `loans` 1.x reaches
+// every reader at 2.0.0 (DOM-22). Nothing runs: the library is wished.
 
 import * as wlib from './wlib.ts'
 import { memory_adapter, type Cell } from './adapter/memory/index.ts'
@@ -19,6 +21,8 @@ import {
   type Phones,
 } from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './business/loans/_registry.ts'
+import { majors as loans_majors } from './business/loans/_majors.ts'
+import { majors as tools_majors } from './business/tools/_majors.ts'
 import {
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
@@ -51,7 +55,12 @@ export interface World {
 }
 
 export const shed = (cell: Cell) => (world: World) => {
-  const adapter = memory_adapter(cell)
+  // The versions of the cell, composed once from the majors of every domain
+  // whose facts and effects it keeps, and given to everything that reads
+  // them: the library alone takes what was stored to the current shapes
+  // (DOM-22, A, 17 Nov 2026).
+  const versions = wlib.versions([loans_majors, tools_majors])
+  const adapter = memory_adapter(cell)(versions)
   const invoked = {
     'business/tools': adapter.tools,
     'business/loans': adapter.loans,
@@ -60,21 +69,25 @@ export const shed = (cell: Cell) => (world: World) => {
   return {
     member: wlib.tree_ports({
       registry: { ...persona_registry, ...member_registry },
+      versions,
       top: persona,
       use_cases: { borrow_a_tool, return_a_tool, my_loans, my_reservations },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
+      versions,
       top: persona,
       use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
     })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
+      versions,
       top: persona,
       use_cases: { the_catalogue },
     })({ invoked, log: adapter.log }),
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
+      versions,
       returns: { remind_the_member_of_the_due_date, declare_the_loan_overdue },
     })({
       'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
@@ -91,7 +104,7 @@ export const shed = (cell: Cell) => (world: World) => {
       state: cell.executor,
       clock: world.clock,
     }),
-    loans_reactions: wlib.reaction_consumers({ registry: loans_registry })({
+    loans_reactions: wlib.reaction_consumers({ registry: loans_registry, versions })({
       'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {
         log: adapter.log,
         invokes: adapter.loans.continue_the_cancellation_of_reservations,
@@ -112,7 +125,7 @@ export const shed = (cell: Cell) => (world: World) => {
       state: cell.reactions,
       clock: world.clock,
     }),
-    damage: wlib.reaction_consumers({ registry: damage_registry })({
+    damage: wlib.reaction_consumers({ registry: damage_registry, versions })({
       'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
         log: adapter.log,
         invokes: adapter.tools.send_a_tool_to_repair,
@@ -121,7 +134,7 @@ export const shed = (cell: Cell) => (world: World) => {
       state: cell.reactions,
       clock: world.clock,
     }),
-    repair: wlib.reaction_consumers({ registry: repair_registry })({
+    repair: wlib.reaction_consumers({ registry: repair_registry, versions })({
       'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified': {
         log: adapter.log,
         invokes: adapter.loans.notify_the_members_of_a_repair,
@@ -130,7 +143,7 @@ export const shed = (cell: Cell) => (world: World) => {
       state: cell.reactions,
       clock: world.clock,
     }),
-    retirement: wlib.reaction_consumers({ registry: retirement_registry })({
+    retirement: wlib.reaction_consumers({ registry: retirement_registry, versions })({
       'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled': {
         log: adapter.log,
         invokes: adapter.loans.cancel_the_reservations_of_a_tool,

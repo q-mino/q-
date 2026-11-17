@@ -2,8 +2,9 @@
 
 // The path registry of `loans` 1.x (DOM-24, A, 16 Nov 2026 (7)): every path
 // of the major with its component, its shape at 1.x or its delegation; the
-// same paths as the current's, the version apart. The configurator gives it
-// to the library beside the current's, by major.
+// same paths as the current's, the version apart. The domain's majors list
+// it (`../_majors.ts`), which the configurator composes into the versions of
+// the store (A, 17 Nov 2026).
 
 import type * as wlib from '../../../wlib.ts'
 import * as effect from './_effect.ts'

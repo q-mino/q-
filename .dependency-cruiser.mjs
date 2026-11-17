@@ -91,9 +91,12 @@ export default {
     {
       name: 'shed-the-current-knows-no-past',
       comment:
-        "Shed: no file of a domain's current version imports a past major (business/loans/1/): the past major goes to the current, never back, so that deleting its folder changes nothing else (PER-17, DOM-25).",
+        "Shed: no file of a domain's current version imports a past major (business/loans/1/): the past major goes to the current, never back, so that deleting its folder changes nothing else (PER-17, DOM-25). The one exception is the generator's list of the domain's majors (_majors.ts), which it rewrites when a folder is deleted (DOM-22).",
       severity: 'error',
-      from: { path: `${shed}${kinds}/[^@/][^/]*/[^/]+\\.ts$` },
+      from: {
+        path: `${shed}${kinds}/[^@/][^/]*/[^/]+\\.ts$`,
+        pathNot: `${shed}${kinds}/[^@/][^/]*/_majors\\.ts$`,
+      },
       to: { path: `${shed}${kinds}/[^@/][^/]*/${major}` },
     },
     {

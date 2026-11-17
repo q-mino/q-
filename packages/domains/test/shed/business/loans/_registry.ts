@@ -72,6 +72,7 @@ export const registry = {
   'business/loans/fact/a_loan_has_become_overdue': fact.a_loan_has_become_overdue,
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue':
     fact.the_loan_was_returned_before_it_became_overdue,
+  'business/loans/fact/the_due_day_was_not_over': fact.the_due_day_was_not_over,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
@@ -121,11 +122,12 @@ export const registry = {
   'business/loans/command/the_loan_is_already_returned': command.the_loan_is_already_returned,
   'business/loans/command/return_a_tool': command.return_a_tool,
   'business/loans/command/return_a_tool_input': command.return_a_tool_input,
-  'business/loans/command/the_member_still_has_the_tool': command.the_member_still_has_the_tool,
   'business/loans/command/the_member_can_still_be_reminded':
     command.the_member_can_still_be_reminded,
   'business/loans/command/the_due_date_of_the_ongoing_loan_has_passed':
     command.the_due_date_of_the_ongoing_loan_has_passed,
+  'business/loans/command/the_due_day_of_the_ongoing_loan_is_not_over':
+    command.the_due_day_of_the_ongoing_loan_is_not_over,
   'business/loans/command/remind_the_member_of_the_due_date':
     command.remind_the_member_of_the_due_date,
   'business/loans/command/remind_the_member_of_the_due_date_input':

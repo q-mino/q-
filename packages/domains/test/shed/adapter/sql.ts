@@ -215,6 +215,7 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`update loans set term = ${l.progress.term} where id = ${l.id}`,
   ],
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => [],
+  'business/loans/fact/the_due_day_was_not_over': () => [],
   'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
@@ -260,7 +261,7 @@ const record =
       sql`insert into facts (parts, operation_scope, operation_id, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
-          sql`insert into outbox (effect, id, payload, not_before) values (${entry.effect}, ${entry.id}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
+          sql`insert into outbox (effect, id, version, payload, not_before) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
       ),
     ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
 
@@ -466,6 +467,37 @@ const log =
     return from === undefined ? from_the_first() : from_position(from)
   }
 
+/** The tables the facts write, which a rebuild empties first. */
+const the_tables = ['tools', 'loans', 'reservations', 'cancellations', 'repair_notice_rounds']
+
+/** Statements run one after the other, in a transaction. */
+const run_in_order =
+  (tx: Transaction) =>
+  (statements: readonly sql[]): Promise<void> =>
+    statements.reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
+
+/**
+ * The rebuild of the tables from the facts (DOM-22, A, 17 Nov 2026): with a
+ * release that changes them (`loans` 2.0.0, its `due_date` column become
+ * `due_day`), the adapter empties them and writes again every fact the log
+ * keeps, which the library gives at the current shapes (`replay`), through
+ * the same writes as a command's. Marta's loan, lent at 1.x due at 10:12 on
+ * 16 November, comes back due on that day; no value is rewritten by hand. One
+ * transaction: no reader sees the tables half done.
+ */
+const rebuild = (database: Database) => (versions: wlib.Versions) => (): Promise<void> => {
+  const facts = wlib.replay<
+    wlib.FactsIn<typeof tools_fact> | wlib.FactsIn<typeof loans_fact>,
+    readonly sql[]
+  >({ versions, writes: { ...tools_writes, ...loans_writes } })(log(database))
+  return database.transaction(async (tx) => {
+    await run_in_order(tx)(the_tables.map((table) => sql`delete from ${identifier(table)}`))
+    for await (const fact of facts) {
+      await run_in_order(tx)(fact.writes.flat())
+    }
+  })
+}
+
 // The sources of the queries: where the candidates are, how each field reads.
 
 /** The reservations a step of `loans` walks, whole: both its sheets walk them (DOM-20). */
@@ -481,10 +513,12 @@ const the_whole_reservation = {
   },
 }
 
-export const sql_adapter = (database: Database) => ({
+export const sql_adapter = (database: Database) => (versions: wlib.Versions) => ({
+  rebuild: rebuild(database)(versions),
   tools: {
     ...wlib.command_use_case_ports({
       registry: tools_registry,
+      versions,
       use_cases: {
         add_a_tool,
         retire_a_tool,
@@ -497,7 +531,11 @@ export const sql_adapter = (database: Database) => ({
       execute: execute(database),
     }),
     // The catalogue is only read: a visitor reads it once, no case streams it.
-    ...wlib.read_use_case_ports({ registry: tools_registry, use_cases: { the_catalogue } })({
+    ...wlib.read_use_case_ports({
+      registry: tools_registry,
+      versions,
+      use_cases: { the_catalogue },
+    })({
       algebra: algebra(tool_selection_fragments),
       sources: {
         the_catalogue: {
@@ -517,6 +555,7 @@ export const sql_adapter = (database: Database) => ({
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
+      versions,
       use_cases: {
         borrow_a_tool,
         reserve_a_tool,
@@ -551,6 +590,7 @@ export const sql_adapter = (database: Database) => ({
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
+      versions,
       use_cases: { the_ongoing_loans_of_a_member, the_reservations_of_a_member },
     })({
       algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),

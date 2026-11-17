@@ -92,14 +92,6 @@ export const return_a_tool_input = command.return_a_tool.input
 export type return_a_tool_input = z.output<typeof return_a_tool_input>
 
 /**
- * The requested loan exists and the member still has the tool.
- *
- * @see {@link command.the_member_still_has_the_tool}
- */
-export const the_member_still_has_the_tool = command.the_member_still_has_the_tool
-export type the_member_still_has_the_tool = z.output<typeof the_member_still_has_the_tool>
-
-/**
  * The member still has the tool and its due date is still ahead: the eve is not late.
  *
  * @see {@link command.the_member_can_still_be_reminded}
@@ -116,6 +108,17 @@ export const the_due_date_of_the_ongoing_loan_has_passed =
   command.the_due_date_of_the_ongoing_loan_has_passed
 export type the_due_date_of_the_ongoing_loan_has_passed = z.output<
   typeof the_due_date_of_the_ongoing_loan_has_passed
+>
+
+/**
+ * The member still has the tool and its due day is not over: the wait for the overdue came early.
+ *
+ * @see {@link command.the_due_day_of_the_ongoing_loan_is_not_over}
+ */
+export const the_due_day_of_the_ongoing_loan_is_not_over =
+  command.the_due_day_of_the_ongoing_loan_is_not_over
+export type the_due_day_of_the_ongoing_loan_is_not_over = z.output<
+  typeof the_due_day_of_the_ongoing_loan_is_not_over
 >
 
 /**

@@ -122,6 +122,19 @@ export type the_loan_was_returned_before_it_became_overdue = z.output<
 >
 
 /**
+ * Not yet (D68.3, D95): the wait for the overdue came while the due day was
+ * not over, so the desk waits again, until the day after. A wait queued when
+ * a loan was due at an instant (1.x) goes at that instant, on the due day
+ * itself: Marta's drill, due at 10:12 on 16 November, is on time until that
+ * day ends (A, 17 Nov 2026).
+ *
+ * @see {@link fact.the_due_day_was_not_over}
+ */
+export const the_due_day_was_not_over =
+  fact.the_due_day_was_not_over.brand<'business/loans/fact/the_due_day_was_not_over'>()
+export type the_due_day_was_not_over = z.output<typeof the_due_day_was_not_over>
+
+/**
  * The desk has opened its work sheet for the tool's reservations (D97,
  * D112): the whole new cancellation. Its steps cancel one reservation each.
  *

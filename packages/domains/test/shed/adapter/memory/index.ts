@@ -439,11 +439,12 @@ const log =
 const native = (cell: Cell) => (registry: wlib.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
-export const memory_adapter = (cell: Cell) => ({
+export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
   log: log(cell),
   tools: {
     ...wlib.command_use_case_ports({
       registry: tools_registry,
+      versions,
       use_cases: {
         add_a_tool,
         retire_a_tool,
@@ -455,7 +456,11 @@ export const memory_adapter = (cell: Cell) => ({
       write: tools_writes,
       execute: execute(cell),
     }),
-    ...wlib.read_use_case_ports({ registry: tools_registry, use_cases: { the_catalogue } })({
+    ...wlib.read_use_case_ports({
+      registry: tools_registry,
+      versions,
+      use_cases: { the_catalogue },
+    })({
       algebra: tool_selection,
       sources: tool_sources,
       read: read(cell),
@@ -465,6 +470,7 @@ export const memory_adapter = (cell: Cell) => ({
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
+      versions,
       use_cases: {
         borrow_a_tool,
         reserve_a_tool,
@@ -488,6 +494,7 @@ export const memory_adapter = (cell: Cell) => ({
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
+      versions,
       use_cases: { the_ongoing_loans_of_a_member },
     })({
       algebra: loan_selection,
@@ -497,6 +504,7 @@ export const memory_adapter = (cell: Cell) => ({
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
+      versions,
       use_cases: { the_reservations_of_a_member },
     })({
       algebra: reservation_selection,

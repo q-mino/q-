@@ -257,6 +257,64 @@ export interface Delegated<next> {
 export type DelegateBuilder = <const next>(next: next) => Delegated<next>
 
 /**
+ * The majors of a domain whose data a store keeps, by number: the current
+ * one's registry and each past major's (`business/loans/1/`). The generator
+ * writes them from the folders (`business/loans/_majors.ts`), so that no
+ * major is forgotten: the only file of the current version that names a past
+ * major, which the generator rewrites when a folder is deleted.
+ */
+export type Majors = Readonly<Record<number, Registry>>
+
+export declare const $Versions: unique symbol
+
+/**
+ * The versions of a store (DOM-22, A, 17 Nov 2026): the one place where
+ * stored data becomes parsed data. By the path and the version a part of a
+ * fact or an outbox entry carries, the major picks the folder (`1/`, or the
+ * current); `earlier` parses with the past shape and chains the steps to the
+ * next major, `delegate` passes to it, the current parses with its schema;
+ * each part of a fact by its own version. Every reader meets the current
+ * shapes only, never a version: the ports of the commands (the duplicate
+ * branch gives back the fact recorded, maybe at 1.x), of the reads and their
+ * streams, native or composed, the trees (`follows`), the reaction
+ * consumers, the effect executor, the adapter's rebuild (`replay`). A
+ * version the library does not know (a 2.1.0 written by a newer instance
+ * during a rolling release, read by one at 2.0.0; a major whose folder is
+ * gone) stops the reader, which retries; it never skips nor guesses. The
+ * translation is the domain's, in its folders: the library runs it, as it
+ * runs the steps of a leaf of a past major. The log is never rewritten.
+ */
+export interface Versions {
+  readonly [$Versions]: true
+}
+
+/**
+ * The versions of a store, composed once by the configurator from the
+ * majors of every domain whose data it keeps (`versions([loans, tools])`)
+ * and given to every builder that reads stored data. At wiring (CFG-2) the
+ * library stops on a builder that reads a domain absent here (the consumer
+ * of `damage` reads a fact of `loans`), and on a domain whose current major
+ * is not the one of its `version.ts`.
+ */
+export declare function versions(majors: readonly Majors[]): Versions
+
+/**
+ * The facts of a log for an adapter's rebuild of its state (DOM-22: stored
+ * state is migrated only through the translation, A, 17 Nov 2026): from the
+ * first fact the log keeps to the end of what it had recorded when the
+ * rebuild began, in order, each part at the current shape through the
+ * adapter's writes, which know that shape alone. When (a release that
+ * changes its tables: `loans` from `due_date` to `due_day`) and how it
+ * writes are the adapter's; no adapter rewrites a value by hand.
+ */
+export declare function replay<const facts extends Component, write>(replay: {
+  readonly versions: Versions
+  readonly writes: FactWrites<facts, write>
+}): (
+  log: FactLog,
+) => AsyncIterable<{ readonly position: position; readonly writes: readonly write[] }>
+
+/**
  * A component of a domain that the library meets: a fact, a predicate, a
  * selection predicate, an effect. An object schema that the generator brands with its
  * path in its generated module, as an identity (`_fact.ts`): the same object as the
@@ -779,12 +837,19 @@ export interface PlannedBranch<fragment, write> extends PlannedWrite<write> {
 
 /**
  * An outbox entry as an adapter stores it (DOM-13): the path of its effect,
- * its id, its payload (the library parses it by the path) and the instant it
- * may go at the earliest.
+ * its id, the version of its domain when it was queued (DOM-10, DOM-22), its
+ * payload and the instant it may go at the earliest. The library parses the
+ * payload by the path at that version and takes it to the current shape
+ * (`Versions`) before the delivery, so that a wait queued at 1.x gives its
+ * return the input of 2.0.0; the version the adapter keeps opaque, as a
+ * position. A translation touches the payload alone: when the entry may go
+ * stays as it was queued, and a new rule of the business that moves it is
+ * the return's guard (D68.3; A, 17 Nov 2026).
  */
 export interface StoredEntry {
   readonly effect: string
   readonly id: entry_id
+  readonly version: Semver
   readonly payload: unknown
   readonly not_before?: date_time
 }
@@ -952,7 +1017,7 @@ export interface Resource {
  * A part of a fact as an adapter stores it: the library parses the payload by
  * the path, at the version of its domain when it was written (DOM-10, D111.3),
  * through the domain's folder of that major if it has passed, then takes it
- * to the current shape (`earlier`). The version never leaves the node
+ * to the current shape (`earlier`, `Versions`). The version never leaves the node
  * (PER-18) and is not in the parsed `Part`: a reader sees the current shape
  * only (D101).
  */
@@ -2436,6 +2501,7 @@ export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>
  */
 export declare function tree_ports<const top, const use_cases extends TreeLeaves>(ports: {
   readonly registry: Registry
+  readonly versions: Versions
   readonly top: top
   readonly use_cases: use_cases
 }): (wired: { readonly invoked: Invoked; readonly log: FactLog }) => {
@@ -2466,11 +2532,14 @@ export type CommandUseCasePort<use_case> = use_case extends {
 /**
  * The ports of a set of command use cases over a state adapter for their
  * commands, with the registry where the library finds the paths of their
- * predicates and facts. Curried, so that the use cases fix the types before
- * the adapter is written. The command ports stay inside the library.
+ * predicates and facts, and the versions of the store, which read the fact
+ * that the duplicate branch gives back, recorded maybe at a past major
+ * (`Versions`). Curried, so that the use cases fix the types before the
+ * adapter is written. The command ports stay inside the library.
  */
 export declare function command_use_case_ports<const use_cases extends CommandUseCases>(ports: {
   readonly registry: Registry
+  readonly versions: Versions
   readonly use_cases: use_cases
 }): <fragment, write, read, selection, source, field>(
   adapter: StateAdapter<CommandsOf<use_cases>, fragment, write, read, selection, source, field>,
@@ -2595,6 +2664,7 @@ export declare function read_use_case_ports<
   const use_cases extends ReadUseCases,
 >(ports: {
   readonly registry: registry
+  readonly versions: Versions
   readonly use_cases: use_cases
 }): <
   selection,
@@ -2734,7 +2804,9 @@ export interface EffectExecutor {
  * The effect executor of a domain (DOM-14, PER-12): an internal entry, a
  * durable consumer of its outbox, one delivery unit per effect, with its own
  * position, order and dead letters. For each entry it waits for
- * `not_before` by its clock, delivers it at least once, and, if the world
+ * `not_before` by its clock, reads its payload at the current shape
+ * (`Versions`: Marta's eve, queued at 1.x, reaches its return at 2.0.0),
+ * delivers it at least once, and, if the world
  * answered and the effect has a return, invokes the return's port as
  * "system · executor of effect E" (D91.3): the scope is the effect's path,
  * the operation's id the entry's, so that a double report is the duplicate
@@ -2748,6 +2820,7 @@ export declare function effect_executor<
   const returns extends CommandUseCases,
 >(executor: {
   readonly registry: registry
+  readonly versions: Versions
   readonly returns: returns
 }): (
   deliveries: Deliveries<registry, returns>,
@@ -2894,8 +2967,9 @@ export interface ReactionConsumers {
  * reaction is there from the start; where a reaction added later starts is
  * the deployment's, D64.3), in the order of the log, so in order per
  * resource; skips the parts of other paths; for each part of its path, in
- * the order of the parts (DOM-16: at most one command per part), translates
- * it purely (D89.3) and invokes its use case with `reaction_operation` over
+ * the order of the parts (DOM-16: at most one command per part), read at
+ * the current shape (`Versions`: Marta's damaged return, recorded at 1.x
+ * and delivered after 2.0.0), translates it purely (D89.3) and invokes its use case with `reaction_operation` over
  * the fact's operation and the part, and the clock's `now`; a part
  * translated to `nothing` invokes nothing (D88.2). Then, by the outcome of
  * each:
@@ -2916,6 +2990,7 @@ export interface ReactionConsumers {
  */
 export declare function reaction_consumers<const registry extends Registry>(reactions: {
   readonly registry: registry
+  readonly versions: Versions
 }): (
   wirings: ReactionWirings<registry>,
 ) => (ports: {

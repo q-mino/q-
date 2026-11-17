@@ -217,12 +217,6 @@ export const return_a_tool = command({
   }),
 })
 
-/** The requested loan exists and the member still has the tool. */
-export const the_member_still_has_the_tool = AND({
-  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
-  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
-})
-
 /** The member still has the tool and its due date is still ahead: the eve is not late. */
 export const the_member_can_still_be_reminded = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
@@ -235,6 +229,13 @@ export const the_due_date_of_the_ongoing_loan_has_passed = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
   its_due_date_has_passed: NOT(predicate.the_due_date_of_the_loan_is_still_ahead),
+})
+
+/** The member still has the tool and its due day is not over: the wait for the overdue came early. */
+export const the_due_day_of_the_ongoing_loan_is_not_over = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
 })
 
 /**
@@ -309,30 +310,42 @@ export const remind_the_member_of_the_due_date = command({
 
 /**
  * The return of the due date (D68.3), guarded as the reminder: if the member
- * still has the tool, the loan is stamped overdue and stays ongoing; if the
- * tool is back, nothing changes (D95). Its input is the payload of the wait;
- * its operation is the entry's (DOM-14), so a second delivery of the wait is
- * a duplicate, not a second stamp.
+ * still has the tool after the due day, the loan is stamped overdue and stays
+ * ongoing; if the tool is back, nothing changes (D95); if the due day is not
+ * over, the desk waits again, until the start of the day after today. The
+ * guard reads the day at the executor's `now`: a wait queued when a loan was
+ * due at an instant (1.x) goes on the due day itself, and the translation of
+ * the entry touches its payload, never when it goes (DOM-22). Marta's drill,
+ * due at 10:12 on 16 November, becomes overdue on the 17th, as Gianni's
+ * ladder after its due day (A, 17 Nov 2026). Its input is the payload of the
+ * wait; its operation is the entry's (DOM-14), so a second delivery of the
+ * wait is a duplicate, not a second stamp.
  */
 export const declare_the_loan_overdue = command({
   input: z.strictObject({
     loan_id: id.loan_id,
   }),
   outcomes: {
-    the_member_still_has_the_tool_so_the_loan_is_overdue: [
-      the_member_still_has_the_tool,
+    the_member_still_has_the_tool_after_the_due_day_so_the_loan_is_overdue: [
+      the_due_date_of_the_ongoing_loan_has_passed,
       fact.a_loan_has_become_overdue,
     ],
     the_loan_was_returned_so_nothing_changes: [
       the_loan_is_already_returned,
       fact.the_loan_was_returned_before_it_became_overdue,
     ],
+    the_due_day_is_not_over_so_the_desk_waits_until_the_day_after: [
+      the_due_day_of_the_ongoing_loan_is_not_over,
+      fact.the_due_day_was_not_over,
+      pick(effect, 'wait_until_the_due_date'),
+    ],
   },
-  creator: () => (input) => ({
-    the_member_still_has_the_tool_so_the_loan_is_overdue: [
+  creator: (context) => (input) => ({
+    the_member_still_has_the_tool_after_the_due_day_so_the_loan_is_overdue: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
       },
       {
         overdue_loan: {
@@ -347,6 +360,24 @@ export const declare_the_loan_overdue = command({
         the_requested_loan_is_returned: { loan_id: input.loan_id },
       },
       { loan_id: input.loan_id },
+    ],
+    the_due_day_is_not_over_so_the_desk_waits_until_the_day_after: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
+      },
+      { loan_id: input.loan_id },
+      {
+        wait_until_the_due_date: {
+          id: dsl.the_wait_for_the_overdue_put_off_on_a_day({
+            loan_id: input.loan_id,
+            day: dsl.today(context.now),
+          }),
+          payload: { loan_id: input.loan_id },
+          not_before: dsl.the_start_of(dsl.the_day_after(dsl.today(context.now))),
+        },
+      },
     ],
   }),
 })

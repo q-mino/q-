@@ -81,3 +81,14 @@ export const the_notice_of_the_repair_to_the_reservation = (notice: {
   readonly repair_id: tools.id.repair_id
   readonly reservation_id: id.reservation_id
 }): string => JSON.stringify([notice.repair_id, notice.reservation_id])
+
+/**
+ * The key of a wait for the overdue put off to the day after, the id of its
+ * entry (DOM-13): the first wait's key is the loan's, and the operation of
+ * the return that put it off (DOM-11), so the new one has its own, the loan
+ * and the day it was put off on, encoded with no ambiguity (A, 17 Nov 2026).
+ */
+export const the_wait_for_the_overdue_put_off_on_a_day = (wait: {
+  readonly loan_id: id.loan_id
+  readonly day: day
+}): string => JSON.stringify([wait.loan_id, wait.day])
