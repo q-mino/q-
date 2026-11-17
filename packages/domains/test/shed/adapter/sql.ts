@@ -73,7 +73,14 @@ export const sql = (strings: TemplateStringsArray, ...values: readonly unknown[]
 /** A name the adapter writes itself, never a value. */
 const identifier = (name: string): sql => ({ text: `"${name}"`, values: [] })
 
-/** The database, a port. Its transactions are serializable. */
+/**
+ * The database, a port. Its transactions are serializable; one the database
+ * aborts for a conflict (a serialization failure, or the unique key of the
+ * facts' operation, `operation_scope` and `operation_id`) it runs again,
+ * whole, until it commits: `work` touches nothing but `tx`, and a plan is
+ * data. So two commands at the same instant give the outcomes of some serial
+ * order (DOM-9, TST-5, SC-11).
+ */
 export interface Database {
   readonly transaction: <result>(work: (tx: Transaction) => Promise<result>) => Promise<result>
   /** Resolves when a fact after the position is recorded (`listen`/`notify`). */
@@ -277,7 +284,7 @@ const record =
   (written: wlib.PlannedWrite<readonly sql[]>): Promise<void> =>
     [
       ...written.writes.flat(),
-      sql`insert into facts (parts, operation_scope, operation_id, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.correlation})`,
+      sql`insert into facts (parts, operation_scope, operation_id, branch, fingerprint, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.branch}, ${written.fact.fingerprint}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
           sql`insert into outbox (effect, id, version, payload, not_before) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
@@ -285,30 +292,54 @@ const record =
     ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
 
 /**
- * One transaction per command. One statement reads every branch's condition
- * and every leaf: the first branch that holds writes; if none does, the
- * leaves name the failures, from the same read.
+ * The fact an operation recorded, read in the transaction that would record
+ * it (the duplicate branch, DOM-11): the first statement of every command and
+ * step (SC-11).
+ */
+const recorded_by =
+  (tx: Transaction) =>
+  async (operation: wlib.Operation): Promise<wlib.AlreadyRecorded | undefined> => {
+    const [row] = await tx.rows(
+      sql`select ${the_fact_columns} from facts where operation_scope = ${operation.scope} and operation_id = ${operation.id}`,
+    )
+    const fact = row === undefined ? undefined : as_fact(row)
+    return fact?.event === 'fact'
+      ? { outcome: 'recorded', position: fact.position, fact: fact.fact }
+      : undefined
+  }
+
+/**
+ * One transaction per command. The operation looked up first; then one
+ * statement reads every branch's condition and every leaf: the first branch
+ * that holds writes; if none does, the leaves name the failures, from the
+ * same read.
  */
 const execute =
   (database: Database): wlib.Execute<sql, readonly sql[]> =>
   (plan) =>
     database.transaction(async (tx) => {
+      const recorded = await recorded_by(tx)(plan.operation)
+      if (recorded !== undefined) {
+        return recorded
+      }
       const values = await tx.booleans([
-        ...plan.map((branch) => branch.condition),
-        ...plan.flatMap((branch) => branch.leaves),
+        ...plan.branches.map((branch) => branch.condition),
+        ...plan.branches.flatMap((branch) => branch.leaves),
       ])
-      const applied = plan.findIndex((_, i) => values[i] === true)
-      const branch = plan[applied]
+      const applied = plan.branches.findIndex((_, i) => values[i] === true)
+      const branch = plan.branches[applied]
       if (branch !== undefined) {
         await record(tx)(branch)
         return { outcome: 'applied', branch: applied, position: await tx.position() }
       }
-      const starts = plan.map((_, i) =>
-        plan.slice(0, i).reduce((start, previous) => start + previous.leaves.length, plan.length),
+      const starts = plan.branches.map((_, i) =>
+        plan.branches
+          .slice(0, i)
+          .reduce((start, previous) => start + previous.leaves.length, plan.branches.length),
       )
       return {
         outcome: 'rejected',
-        leaves: plan.map((planned, i) =>
+        leaves: plan.branches.map((planned, i) =>
           planned.leaves.map((_, j) => values[(starts[i] ?? 0) + j] === true),
         ),
       }
@@ -358,8 +389,8 @@ const after = (key: readonly wlib.OrderKeyValue<sql>[]): sql => {
 }
 
 /**
- * A step in one transaction (DOM-20, D112.2): the process read; not found,
- * nothing writes. Else one instance at a time, the next in the order
+ * A step in one transaction (DOM-20, D112.2): the operation looked up first,
+ * as a command's; then the process read; not found, nothing writes. Else one instance at a time, the next in the order
  * (`limit 1`): on the first on which a branch of the transition holds, that
  * branch writes; one on which none holds is passed over, and the next read
  * past it; none left, the closing writes.
@@ -368,6 +399,10 @@ const execute_step =
   (database: Database): wlib.ExecuteStep<sql, readonly sql[], sql, sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => {
+      const recorded = await recorded_by(tx)(plan.operation)
+      if (recorded !== undefined) {
+        return recorded
+      }
       const [process] = await tx.rows(plan.read)
       const choice = plan.choose(process)
       if (choice.choice === 'not_found') {
@@ -403,8 +438,13 @@ const fact_row = z.strictObject({
   parts: z.string(),
   operation_scope: z.string(),
   operation_id: wlib.operation_id,
+  branch: z.string(),
+  fingerprint: wlib.fingerprint,
   correlation: wlib.correlation,
 })
+
+/** The columns of a fact, as `fact_row` reads them. */
+const the_fact_columns = sql`sequence, parts, operation_scope, operation_id, branch, fingerprint, correlation`
 
 const parts = z.array(
   z.strictObject({
@@ -424,6 +464,8 @@ const as_fact = (row: unknown): wlib.LogEvent => {
     fact: {
       parts: parts.parse(stored),
       operation: { scope: fact.operation_scope, id: fact.operation_id },
+      branch: fact.branch,
+      fingerprint: fact.fingerprint,
       correlation: fact.correlation,
     },
   }
@@ -431,9 +473,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
 
 const facts_from = (database: Database) => (where: sql) =>
   database.transaction((tx) =>
-    tx.rows(
-      sql`select sequence, parts, operation_scope, operation_id, correlation from facts where ${where} order by sequence`,
-    ),
+    tx.rows(sql`select ${the_fact_columns} from facts where ${where} order by sequence`),
   )
 
 /**
@@ -473,9 +513,7 @@ const log =
       const [kept, position] = await database.transaction(
         async (tx) =>
           [
-            await tx.rows(
-              sql`select sequence, parts, operation_scope, operation_id, correlation from facts order by sequence`,
-            ),
+            await tx.rows(sql`select ${the_fact_columns} from facts order by sequence`),
             await tx.position(),
           ] as const,
       )

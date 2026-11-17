@@ -155,8 +155,30 @@ export interface VersionContext<version extends Semver = Semver> {
   readonly version: version
 }
 
+/**
+ * The fingerprint of an operation (DOM-11, D100): computed by the library
+ * where the request enters, over its path and its input as sent, and kept
+ * with the fact the operation records, so that the duplicate branch tells a
+ * retry from another request under the same identity. Opaque, compared for
+ * equality only; it never leaves the node (PER-18).
+ */
+export const fingerprint = z.string().min(1).brand<'fingerprint'>()
+export type fingerprint = z.output<typeof fingerprint>
+
+/**
+ * What the library adds to the context of a command's port, beside its
+ * operation: the operation's fingerprint, which the port gives the adapter
+ * with the plan (`PlannedCommand`). A creator never sees it. SC-11
+ */
+export interface FingerprintContext {
+  readonly fingerprint: fingerprint
+}
+
 /** The context of a command at the root of its tree: what its port takes. */
-export type CommandRootContext = RootContext & OperationContext & CorrelationContext
+export type CommandRootContext = RootContext &
+  OperationContext &
+  CorrelationContext &
+  FingerprintContext
 
 /**
  * The path of a component (DOM-24, DOM-25): its folders from the root, the
@@ -1059,22 +1081,53 @@ export interface StoredEntry {
 }
 
 /**
- * What the adapter's execution tells the library: the index of the applied
- * branch and the position of its fact; or, when none applies, the value of
- * every leaf of every branch, read in the same step or in a second one, as
- * the technology allows.
+ * A command ready to execute: the operation it runs under, which the
+ * adapter looks up first (the duplicate branch, DOM-11), and its branches,
+ * in order. The fact each branch writes carries the operation, the branch's
+ * name and the fingerprint (`StoredEnvelope`). SC-11
+ */
+export interface PlannedCommand<fragment, write> {
+  readonly operation: Operation
+  readonly branches: readonly PlannedBranch<fragment, write>[]
+}
+
+/**
+ * The fact an operation had already recorded, as stored, at its position:
+ * the duplicate branch (DOM-11). The library compares its fingerprint with
+ * the request's: the same, the recorded outcome, its branch by name; another,
+ * `identity_already_used`. SC-11
+ */
+export interface AlreadyRecorded {
+  readonly outcome: 'recorded'
+  readonly position: position
+  readonly fact: StoredEnvelope
+}
+
+/**
+ * What the adapter's execution tells the library: the operation's fact,
+ * already recorded; the index of the applied branch and the position of its
+ * fact; or, when none applies, the value of every leaf of every branch, read
+ * in the same step or in a second one, as the technology allows.
  */
 export type Execution =
+  | AlreadyRecorded
   | { readonly outcome: 'applied'; readonly branch: number; readonly position: position }
   | { readonly outcome: 'rejected'; readonly leaves: readonly (readonly boolean[])[] }
 
 /**
- * The execution of a planned command, in one consistent step of the adapter:
- * the first branch whose condition holds writes; nothing writes otherwise.
+ * The execution of a planned command, in one consistent step of the adapter
+ * (DOM-9): the fact the operation recorded, if any, read first; else the
+ * first branch whose condition holds writes; nothing writes otherwise. The
+ * step is isolated from every other: run at the same time as others, the
+ * outcomes are those of some serial order (TST-5). A step the technology
+ * aborts for a conflict (a serializable transaction, the unique key of an
+ * operation) the adapter runs again, whole: the plan is data, and nothing
+ * left the step. SC-11: Marta and Gianni ask for the drill at the same
+ * instant, one has it, the other reads `the_tool_is_not_available`; Marta's
+ * phone sends her request again while the first is in flight, and the
+ * second reads the first's fact, never a second fact for one operation.
  */
-export type Execute<fragment, write> = (
-  plan: readonly PlannedBranch<fragment, write>[],
-) => Promise<Execution>
+export type Execute<fragment, write> = (plan: PlannedCommand<fragment, write>) => Promise<Execution>
 
 /**
  * A field of the order key after which a step chooses (DOM-20, D109): the
@@ -1126,23 +1179,27 @@ export type StepChoice<fragment, write, selection, source, field> =
 
 /**
  * A step ready to execute (DOM-20), in one transaction of the adapter (one
- * message, A, 16 Nov 2026): the read of its process (`read`), whose result,
+ * message, A, 16 Nov 2026): the operation it runs under, which the adapter
+ * looks up first, as a command's (SC-11); the read of its process (`read`), whose result,
  * as stored or none, the adapter gives to `choose`, pure, the library's: it
  * parses the process with the read's schema, runs the creator and plans the
  * choice.
  */
 export interface PlannedStep<fragment, write, read, selection, source, field> {
+  readonly operation: Operation
   readonly read: read
   readonly choose: (process: unknown) => StepChoice<fragment, write, selection, source, field>
 }
 
 /**
- * What the adapter's execution of a step tells the library: it advanced, at
- * an instance as read, the index of the transition's branch applied and the
+ * What the adapter's execution of a step tells the library: the operation's
+ * fact, already recorded (a reaction's redelivery); it advanced, at an
+ * instance as read, the index of the transition's branch applied and the
  * position of its fact; it completed, at its position; or the process was
  * not found in the stage the step reads.
  */
 export type StepExecution =
+  | AlreadyRecorded
   | {
       readonly outcome: 'advanced'
       readonly instance: unknown
@@ -1153,8 +1210,9 @@ export type StepExecution =
   | { readonly outcome: 'not_found' }
 
 /**
- * The execution of a planned step, in one consistent step of the adapter:
- * it reads the process; not found, nothing writes; else, the instances in
+ * The execution of a planned step, in one consistent step of the adapter,
+ * isolated as a command's (`Execute`): the fact the operation recorded, if
+ * any, read first; else it reads the process; not found, nothing writes; else, the instances in
  * order, the first on which a branch of the transition holds writes that
  * branch, the instances before it passed over; none left, the closing
  * writes. The oracle filters; SQL reads one instance at a time (`limit 1`),
@@ -1243,8 +1301,18 @@ export interface PartFields {
   readonly resources: readonly Resource[]
 }
 
-/** A fact's envelope as an adapter stores it. */
-export type StoredEnvelope = Envelope<readonly StoredPart[]>
+/**
+ * A fact's envelope as an adapter stores it: its parts as stored, and what
+ * the duplicate branch reads of the operation that recorded it (DOM-11): the
+ * name of the branch applied (two branches may record one fact, as
+ * `retire_a_tool`'s) and the fingerprint. The library writes both and reads
+ * them back; the adapter keeps them opaque, as a part's version, and they
+ * never leave the node (PER-18). SC-11
+ */
+export interface StoredEnvelope extends Envelope<readonly StoredPart[]> {
+  readonly branch: string
+  readonly fingerprint: fingerprint
+}
 
 /**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with

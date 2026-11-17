@@ -91,6 +91,11 @@ export interface Cell {
   readonly history: (from: wlib.position | undefined) => History
   /** The facts recorded after a position, as soon as there is one. */
   readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
+  /**
+   * The fact an operation recorded, at its position: kept as long as the
+   * operations are (DOM-11), whatever the history keeps (SC-11).
+   */
+  readonly recorded_by: (operation: wlib.Operation) => Recorded | undefined
   /** The entries recorded with the facts, effect by effect (DOM-14). */
   readonly outbox: wlib.Outbox
   /** The paths and versions of the facts and the entries it keeps, distinct (DOM-22). */
@@ -153,20 +158,36 @@ const record =
     })
   }
 
+/** The fact an operation already recorded, as the duplicate branch gives it back (DOM-11). */
+const already_recorded = (recorded: Recorded): wlib.AlreadyRecorded => ({
+  outcome: 'recorded',
+  position: recorded.position,
+  fact: recorded.fact,
+})
+
 /**
- * A serial writer (DOM-9): every branch and every leaf read on one state; the
- * first branch that holds writes; if none does, the leaves name the failures.
+ * A serial writer (DOM-9): the operation looked up, then every branch and
+ * every leaf read on one state; the first branch that holds writes; if none
+ * does, the leaves name the failures. Nothing awaits between the reads and
+ * the write, so two commands sent at the same instant run one after the
+ * other, in the order the event loop takes them: the outcomes of a serial
+ * order, by construction (SC-11). An interpreter rule: the oracle never
+ * awaits inside an execution.
  */
 const execute =
   (cell: Cell): wlib.Execute<Fragment, Write> =>
   (plan) => {
+    const recorded = cell.recorded_by(plan.operation)
+    if (recorded !== undefined) {
+      return Promise.resolve<wlib.Execution>(already_recorded(recorded))
+    }
     const state = cell.get()
-    const applied = plan.findIndex((branch) => branch.condition(state))
-    const branch = plan[applied]
+    const applied = plan.branches.findIndex((branch) => branch.condition(state))
+    const branch = plan.branches[applied]
     if (branch === undefined) {
       return Promise.resolve<wlib.Execution>({
         outcome: 'rejected',
-        leaves: plan.map((planned) => planned.leaves.map((leaf) => leaf(state))),
+        leaves: plan.branches.map((planned) => planned.leaves.map((leaf) => leaf(state))),
       })
     }
     record(cell)(state)(branch)
@@ -229,7 +250,8 @@ const after =
       .find((comparison) => comparison !== 0) ?? 0) > 0
 
 /**
- * A step in one state (DOM-20, D112.2): the process read; not found, nothing
+ * A step in one state (DOM-20, D112.2), a serial writer as a command (SC-11):
+ * the operation looked up; then the process read; not found, nothing
  * writes; else the instances after the cursor, in order, and the first on
  * which a branch of the transition holds writes that branch, those before it
  * passed over; none left, the closing writes. The oracle filters every
@@ -247,6 +269,10 @@ const execute_step =
       Field<State, candidate>
     >,
   ): Promise<wlib.StepExecution> => {
+    const recorded = cell.recorded_by(plan.operation)
+    if (recorded !== undefined) {
+      return Promise.resolve<wlib.StepExecution>(already_recorded(recorded))
+    }
     const state = cell.get()
     const choice = plan.choose(plan.read(state))
     if (choice.choice === 'not_found') {
