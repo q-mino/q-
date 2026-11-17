@@ -60,6 +60,7 @@ export const my_loans = earlier(next.my_loans)({
     term: entry.term,
   }),
   stream: {
+    identity: 'loan_id',
     events: { your_loan_is_overdue: z.strictObject({}) },
     from_next: {
       your_loan_is_overdue: () => ({ event: 'your_loan_is_overdue', payload: {} }),

@@ -242,18 +242,40 @@ export interface EarlierBuilder {
   ): <
     const input extends z.ZodType,
     const entry extends z.ZodObject,
+    const identity extends FieldsHolding<entry, IdentityOfLeafStream<next>> = never,
     const events extends Events = never,
-  >(earlier: {
-    readonly input: input
-    readonly to_next: (input: z.output<input>) => z.input<SchemaOf<next['input']>>
-    readonly entry: entry
-    readonly from_next: (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
-    readonly stream?: {
-      readonly events: events
-      readonly from_next: FromNextEvents<StreamEventsOfLeaf<next>, events>
-    }
-  }) => EarlierReadLeaf<next, input, entry, events>
+  >(
+    earlier: {
+      readonly input: input
+      readonly to_next: (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+      readonly entry: entry
+      readonly from_next: (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
+    } & EarlierStream<next, identity, events>,
+  ) => EarlierReadLeaf<next, input, entry, identity, events>
 }
+
+/**
+ * How a read leaf of a past major streams (PER-18, A, 17 Nov 2026): as the
+ * next leaf does, which the port follows. If the next streams, the past leaf
+ * declares the field of its own entry that names a row (`identity`), checked
+ * by type to hold the identity the next leaf's stream gives, as the current
+ * leaf declares its own (`read_use_case_over`): an entry of 1.x that names the
+ * loan `id`, where 2.0.0 names it `loan_id`, declares `id`, and one with no
+ * such field does not compile, instead of a stream whose events are none. Its
+ * events of its own, and one step back per event of the next. If the next
+ * does not stream, no `stream`.
+ */
+type EarlierStream<next, identity extends string, events extends Events> = [
+  IdentityOfLeafStream<next>,
+] extends [never]
+  ? { readonly stream?: never }
+  : {
+      readonly stream: {
+        readonly identity: identity
+        readonly events: events
+        readonly from_next: FromNextEvents<StreamEventsOfLeaf<next>, events>
+      }
+    }
 
 export declare const $Delegated: unique symbol
 
@@ -2074,6 +2096,16 @@ type StreamEventsOfLeaf<leaf> = leaf extends {
   ? events
   : never
 
+/** The identity a read leaf's stream gives in its events: the value of the field it declares; none if it does not stream. */
+type IdentityOfLeafStream<leaf> = leaf extends {
+  [$UseCase]: {
+    entry: infer entry extends z.ZodObject
+    stream: { identity: infer identity extends string }
+  }
+}
+  ? z.output<entry>[identity & keyof z.output<entry>]
+  : never
+
 /** One step back per event of the next major: from its payload to an event of the past one. */
 export type FromNextEvents<next_events extends Events, events extends Events> = {
   readonly [name in keyof next_events & string]: (
@@ -2103,13 +2135,15 @@ export type EarlierCommandLeaf<
 
 /**
  * A read leaf of a past major: its own input and entry, the next leaf's use
- * case and closings; if the next leaf streams, the same identity field, which
- * the past entry holds as it is, and the events of its own.
+ * case and closings; if the next leaf streams, the field of its own entry
+ * that holds the identity the next one gives (`EarlierStream`), and the
+ * events of its own.
  */
 export type EarlierReadLeaf<
   next,
   input extends z.ZodType,
   entry extends z.ZodObject,
+  identity extends string,
   events extends Events,
 > = next extends {
   readonly [$UseCase]: {
@@ -2124,7 +2158,7 @@ export type EarlierReadLeaf<
       entry,
       closes,
       stream extends LeafStream
-        ? { readonly identity: stream['identity']; readonly events: events }
+        ? { readonly identity: identity; readonly events: events }
         : undefined
     > &
       OverTheNext<next>
