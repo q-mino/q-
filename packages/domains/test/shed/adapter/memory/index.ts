@@ -91,6 +91,8 @@ export interface Cell {
   readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
   /** The entries recorded with the facts, effect by effect (DOM-14). */
   readonly outbox: wlib.Outbox
+  /** The paths and versions of the facts and the entries it keeps, distinct (DOM-22). */
+  readonly stored_versions: wlib.StoredVersions
   /** The state of the effect executors: positions per effect, dead letters, shown to a test. */
   readonly executor: wlib.ExecutorState
   /** The state of the consumers of the reactions: positions per reaction, dead letters, shown to a test. */

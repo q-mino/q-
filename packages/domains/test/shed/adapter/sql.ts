@@ -467,6 +467,24 @@ const log =
     return from === undefined ? from_the_first() : from_position(from)
   }
 
+/**
+ * The paths and versions the database keeps, distinct, among the parts of
+ * its facts and its outbox entries: what the library checks its versions
+ * against at wiring (DOM-22, A, 17 Nov 2026).
+ */
+export const stored_versions =
+  (database: Database): wlib.StoredVersions =>
+  async () =>
+    z
+      .array(z.strictObject({ path: z.string(), version: wlib.semver }))
+      .parse(
+        await database.transaction((tx) =>
+          tx.rows(
+            sql`select distinct part->>'path' as path, part->>'version' as version from facts, jsonb_array_elements(parts::jsonb) as part union select distinct effect as path, version from outbox`,
+          ),
+        ),
+      )
+
 /** The tables the facts write, which a rebuild empties first. */
 const the_tables = ['tools', 'loans', 'reservations', 'cancellations', 'repair_notice_rounds']
 

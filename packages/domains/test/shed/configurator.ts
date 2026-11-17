@@ -57,12 +57,15 @@ export interface World {
   readonly clock: () => wlib.date_time
 }
 
-export const shed = (cell: Cell) => (world: World) => {
+export const shed = (cell: Cell) => async (world: World) => {
   // The versions of the cell, composed once from the majors of every domain
-  // whose facts and effects it keeps, and given to everything that reads
-  // them: the library alone takes what was stored to the current shapes
-  // (DOM-22, A, 17 Nov 2026).
-  const versions = wlib.versions([loans_majors, tools_majors])
+  // whose facts and effects it keeps, checked against what it keeps (a past
+  // major deleted too early stops the start), and given to everything that
+  // reads them: the library alone takes what was stored to the current
+  // shapes (DOM-22, A, 17 Nov 2026).
+  const versions = await wlib.versions([loans_majors, tools_majors])({
+    stored: cell.stored_versions,
+  })
   const adapter = memory_adapter(cell)(versions)
   const invoked = {
     'business/tools': adapter.tools,

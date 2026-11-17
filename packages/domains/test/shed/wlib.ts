@@ -302,15 +302,36 @@ export interface Versions {
   readonly [$Versions]: true
 }
 
+/** A path and a version a store keeps, among the parts of its facts and its outbox entries. */
+export interface StoredVersion {
+  readonly path: string
+  readonly version: Semver
+}
+
+/**
+ * What a store keeps, by path and version, distinct: a few rows, one per
+ * shape and version, among the parts of its facts and its outbox entries
+ * (DOM-22, A, 17 Nov 2026). The adapter gives it, so that the library can
+ * tell at wiring whether its versions read all it keeps.
+ */
+export type StoredVersions = () => Promise<readonly StoredVersion[]>
+
 /**
  * The versions of a store, composed once by the configurator from the
- * majors of every domain whose data it keeps (`versions([loans, tools])`)
- * and given to every builder that reads stored data. At wiring (CFG-2) the
- * library stops on a builder that reads a domain absent here (the consumer
- * of `damage` reads a fact of `loans`), and on a domain whose current major
- * is not the one of its `version.ts`.
+ * majors of every domain whose data it keeps (`versions([loans, tools])`),
+ * then checked against what the store keeps, and given to every builder
+ * that reads stored data. At wiring (CFG-2) the library stops on a path and
+ * version the store keeps and no major reads, naming them: a past major's
+ * folder deleted while a fact or a wait of it is kept (D101: a folder goes
+ * when nothing kept has its major), so that the release does not start,
+ * rather than a reader stopping weeks later. It stops too on a builder that
+ * reads a domain absent here (the consumer of `damage` reads a fact of
+ * `loans`), and on a domain whose current major is not the one of its
+ * `version.ts` (A, 17 Nov 2026).
  */
-export declare function versions(majors: readonly Majors[]): Versions
+export declare function versions(
+  majors: readonly Majors[],
+): (store: { readonly stored: StoredVersions }) => Promise<Versions>
 
 /**
  * The facts of a log for an adapter's rebuild of its state (DOM-22: stored
