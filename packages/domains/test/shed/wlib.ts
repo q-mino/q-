@@ -1898,7 +1898,12 @@ type StreamEvents<closes> = Events &
   Partial<
     Readonly<
       Record<
-        | EventNames<LeafStreamEvent<unknown, unknown> | SnapshotEvent<unknown> | InvalidRequest>
+        | EventNames<
+            | LeafStreamEvent<unknown, unknown>
+            | SnapshotEvent<unknown>
+            | InvalidRequest
+            | VersionNotSupported
+          >
         | EventNames<closes>,
         never
       >
@@ -2347,6 +2352,24 @@ export interface InvalidRequest {
 }
 
 /**
+ * The gate (PER-17, A, 17 Nov 2026), a base event in the union of every
+ * leaf: at the entry of the tree, before any node (no lookup runs), the
+ * version the message carries is out of the tree's window, which is its
+ * majors, the folders the generator lists (`_majors.ts`): a major the tree
+ * has not (a `1.2.0` once `1/` is deleted; a `3.0.0` that meets an instance
+ * still at 2.0.0 during a release), or the current major at a higher minor
+ * (a client at `2.1.0`, which may send a field 2.0.0 does not know, on a
+ * server at 2.0.0). The patch does not count. It tells the version the tree
+ * speaks and its oldest major, so that the client knows whether to update,
+ * to speak a lower minor or to wait: the contract is public. Terminal.
+ */
+export interface VersionNotSupported {
+  readonly event: 'version_not_supported'
+  readonly current: Semver
+  readonly oldest: number
+}
+
+/**
  * A base event (DOM-11, D79.4), in the union of every command leaf: the
  * operation's identity, in its scope, was used with another fingerprint. It
  * comes from the duplicate branch of the command port and crosses the leaf
@@ -2368,7 +2391,7 @@ export type EventOutOf<events extends Events> = {
 export type CommandLeafEvent<leaf> = leaf extends {
   [$UseCase]: { events: infer events extends Events; closes: infer closes; waits: infer waits }
 }
-  ? EventOutOf<events> | closes | waits | InvalidRequest | IdentityAlreadyUsed
+  ? EventOutOf<events> | closes | waits | InvalidRequest | VersionNotSupported | IdentityAlreadyUsed
   : never
 
 /**
@@ -2432,7 +2455,8 @@ type NamedFactEvent<entry, identity, events extends Events> = [events] extends [
 /**
  * The events of a read leaf: the snapshot of its own entries, then, if it
  * streams, the events of its stream; how its path may close it; the base
- * event of a request (no operation, so no `identity_already_used`).
+ * events of a request, the gate and an invalid request (no operation, so no
+ * `identity_already_used`).
  */
 export type ReadLeafEvent<leaf> = leaf extends {
   [$UseCase]: { entry: infer entry extends z.ZodObject; closes: infer closes; stream: infer stream }
@@ -2446,6 +2470,7 @@ export type ReadLeafEvent<leaf> = leaf extends {
         : never)
     | closes
     | InvalidRequest
+    | VersionNotSupported
   : never
 
 /**
@@ -2528,7 +2553,7 @@ export type LeafAt<majors, name extends string, version extends Semver> =
  * 2026): one per name, the version in the context picking the major, in
  * whose registry the library finds the leaf by its path; a delegated leaf is
  * the next major's. A path a major has not is `not_a_leaf`; a major out of
- * the window, the gate. Typed by the version: Marta's test client at
+ * the window, the gate (`VersionNotSupported`). Typed by the version: Marta's test client at
  * `'1.4.0'` reads the events of 1.x, the generic entry, with any version, the
  * union of the majors.
  */
