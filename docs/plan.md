@@ -1,8 +1,10 @@
 # Development plan
 
-How the prototype gets built: stage 1 in steps, stages 2 and 3 in outline. Each step is one Claude session in this repository, on its own branch, through a pull request that Alessandro reviews and merges. The rules cited by id are in [`architecture.md`](architecture.md); the words in [`glossary.md`](glossary.md).
+How the prototype gets built: stage 1 in steps, stages 2 and 3 in outline. Each step is one Claude session in this repository, or more when it grows past the thresholds below, on its own branch, through a pull request that Alessandro reviews and merges. The rules cited by id are in [`architecture.md`](architecture.md); the words in [`glossary.md`](glossary.md).
 
 Written on 6 Nov 2026, after the derived architecture document (PR #4). Points that document left to the plan are closed there as rules marked `[Q, plan]`: DOM-9, DOM-11, DOM-23, GR-7, GR-9, PER-4, PER-21, TST-9, and the adapters of § 6.
+
+Re-planned on 17 Nov 2026, at the close of step 1 (Alessandro): the library, wished in the test domains of Shed, is built whole in steps 2–6, by area, before the domains of q-, each step against the [catalogue of the scenarios](scenarios.md).
 
 ## How a step works
 
@@ -11,170 +13,192 @@ Written on 6 Nov 2026, after the derived architecture document (PR #4). Points t
 - **Done**: `pnpm check` and `pnpm build` pass locally and in CI; the step's checks below pass; the pull request lists the rules it implements by id.
 - **Reading at the start**: `CLAUDE.md`, this step, `architecture.md` (all of it), `glossary.md`, and the code of the steps it depends on. Not the paper.
 - **Stop and ask** when `architecture.md` does not answer: a gap is reported (to Alessandro; a gap of the paper goes to the paper), never filled in the code. A decision taken while coding goes back into `architecture.md` in the same pull request, marked `[Q]`.
+- **A library step** (2–6) builds the part of Shed's `wlib.ts` of its area in `domains/src/library/` (zen0), and Shed imports it in place of `wlib.ts`. It opens with its Shed part: the scenarios of its area that are open and reshape ([`scenarios.md`](scenarios.md)), written in Shed and decided with Alessandro before code (judgment). Then the implementation (local). It closes when the covered scenarios of its area run as tests on Shed's oracle. Scenarios that only add come after the library, or with the domain of q- that brings them.
 - **Decisions in a step**: some steps carry a decision to take with Alessandro before writing code; they are listed under the step.
 - **Context**: the estimate is the session's total, starting from a base of about 90k (tools, rules, `architecture.md`, this plan). Type: _J_ judgment (design, decisions), _L_ local (each piece checks itself). Thresholds: plan 250k (J) or 450k (L), stop 400k (J) or 600k (L). A step that grows past them is split at its last closed milestone.
 - **End of a step**: the session writes its log entry in Alessandro's notes (see `CLAUDE.local.md`) and the prompt for the next step.
 
 ## Stage 1, "they write to each other"
 
-Scope: first face, introduction, relay; handshake by crossed QR and by link; direct chats; groups without separation (found, invite, join, leave and rejoin); news channel; export and import; update with notice. One face per person, with the data model of faces. The assistant is a normal user, built by a separate project that imports `domains` (it can start after step 14).
+Scope: first face, introduction, relay; handshake by crossed QR and by link; direct chats; groups without separation (found, invite, join, leave and rejoin); news channel; export and import; update with notice. One face per person, with the data model of faces. The assistant is a normal user, built by a separate project that imports `domains` (it can start after step 16).
 
 ### (a) Pure domains
 
-**1. Library nucleus I: commands and facts** — `library` · J · 230k
+**1. Domains by example (Shed)** — done: `step/01-domains-by-example`, 9–17 Nov 2026
 
-- Goal: the routing of commands (LIB-14, V10); commands as data (branches, conditions; the fact carries the change of state, V9); predicates declared by their parameters; facts with the event envelope; typed outcomes; the in-memory command port with the built-in duplicate branch and the fingerprint; strict zod schemas and their JSON Schema export; total order; the registry of library rules. Driven by test domains written for the purpose, with no word of q-.
-- Rules: LIB-1..11, DOM-1, DOM-5..8, DOM-10..12, DOM-21, LIB-9, TST-1..3, TST-5, TST-7.
-- Checks: library test cases on the test domains; property tests (fast-check, hand-written arbitraries, TST-9) of the routing against scenarios; duplicate and different-fingerprint cases; a stability corpus for the fingerprint; JSON Schema snapshots in CI.
-- Watch: the library must not eat stage 1 (LIB-3). The smallest rule that closes each point.
-- Decisions with Alessandro, before code: the requirements, characteristics and approach of the library. His direction (6 Nov 2026): **convention over configuration, and a compilation of the domains**. Writing a domain, and defining its structure (use cases, ports, and so on), is only a folder structure, with conventions for folder names, module names and module exports, so that a compiler generates the representation of all domains and their components as paths, in one interface. The session starts from these questions, records the answers in `architecture.md` and re-plans steps 1 and 2 if the compiler changes their size.
+- Goal: the library wished before it is written. Test domains with no word of q- ([Shed](../packages/domains/test/shed/README.md): a tool shed, its catalogue, loans, repairs, personas), written from business specifications one at a time and reviewed against the paper and this document; [`wlib.ts`](../packages/domains/test/shed/wlib.ts), the types and signatures the domains want from the library, without bodies, the requirement of steps 2–6; the catalogue of the scenarios, [`scenarios.md`](scenarios.md).
+- Replaces the library steps of the first plan (1, 2, 6, 7), re-planned below from Shed and the catalogue (Alessandro, 17 Nov 2026). What Shed leaves to them: its README, § Left by Shed.
 
-**2. Library nucleus II: use cases, streams, interface and persona** — `library` · J · 230k
+**2. Library: the generator** — `library` · J, then L · 2–3 sessions × 200k
 
-- Goal: use cases that open an event stream with a closed set of events; at most one command per use case; read port and stream read from an opaque position (base events, "position no longer available", inclusive resume); the interface component (contract version, then hat); the persona component (use-case tree, leaves only, entry checks in their fixed order, perimeter and limit constraints, explicit `Caller`); the trace of rejections.
-- Rules: DOM-2..4, DOM-17, DOM-18, PER-4..8, PER-13, PER-14, PER-17, PER-18, F6.
-- Checks: test cases for each entry check and its order; stream reads with injected redeliveries and resume (TST-4); perimeter hides from the caller, the trace keeps it.
-- Depends on: 1.
+- Goal: the compilation of the domains (Alessandro's direction of 6 Nov 2026: convention over configuration). From the map (`sight.ts`) and the folders: the twins (`_fact.ts`, …), the scopes by kind (`_scope_<kind>.ts`), the doors by audience, the registries, the majors (`_majors.ts`), the points of the nodes (`_node.ts`); the rules of `.dependency-cruiser.mjs` from the map. Its checks: one object, one path; a past major's folder complete; the registry compared with `main`'s, by direction; generated files committed, regenerated in CI. Where it lives (a package with Node's I/O, a pure core in the library) is decided at its start.
+- Shed part: the inputs of a delegated leaf in a past major's registry.
+- Rules: DOM-22, DOM-24, DOM-25, GR-1, GR-3, GR-9, PER-17.
+- Scenarios: SC-45, SC-46.
+- Checks: regenerating Shed gives its hand-written files, each difference decided; each check stops a fixture with its message.
 
-**3. `mailbox` and `desk`** — J · 170k
+**3. Library: commands and facts** — `library` · J, then L · 3 sessions × 230k
+
+- Goal: the builders at runtime; conditions (AND, OR, NOT, two-valued, every predicate evaluated); commands with their branches and outbox entries, as data; the command port over a state adapter (`FactWrites`), with the operation, the duplicate branch and the fingerprint; the event envelope (path, version, resources, correlation); the versions of the facts (`versions`, `replay`, the store's versions checked at wiring); strict zod schemas and their JSON Schema export; total order. The oracle runs the commands of `tools` and `loans`.
+- Shed part: SC-10, SC-12.
+- Rules: LIB-1..11, DOM-1, DOM-5..12, DOM-19..22, DOM-24, TST-1..3, TST-5, TST-7, V9..V11, V14.
+- Scenarios: SC-1..9; SC-11 as a test.
+- Checks: the scenarios as tests on the oracle; property tests of the routing (fast-check, hand-written arbitraries, TST-9); a stability corpus for the fingerprint; JSON Schema snapshots in CI.
+- Depends on: 2.
+
+**4. Library: reads and streams** — `library` · J, then L · 2–3 sessions × 200k
+
+- Goal: queries as data, selection predicates over a subject, the identity of an entry; read adapters; the read use case, its snapshot and its stream from an opaque position (base events, `position_unavailable`, inclusive resume), native or composed (`FactLog`), over its domain's facts only; facts, and parts of a fact, by name.
+- Shed part: SC-19..22.
+- Rules: DOM-2, DOM-8, DOM-17, DOM-18, LIB-8, LIB-9, V12.
+- Scenarios: SC-14..18.
+- Checks: the scenarios as tests on the oracle; injected redeliveries and resume (TST-4).
+- Depends on: 3.
+
+**5. Library: trees and personas** — `library` · J, then L · 3 sessions × 230k
+
+- Goal: use cases, command and read; the leaves (own input, creator, limits, projection, `ends`, `follows`); nodes (lookups, perimeters, limits, bindings) and lookups; the builders at a point; the ports of a tree, with the entry checks in their fixed order (the gate, `invalid_request`, the nodes, the leaf's limits) and the check at wiring; the versions of a surface (`LeafPort`, the leaves of a past major); correlation; the trace of rejections.
+- Shed part: SC-31, SC-33, SC-34.
+- Rules: DOM-2..4, PER-4..9, PER-13, PER-14, PER-17, PER-18, V13, F6.
+- Scenarios: SC-23..30.
+- Checks: the scenarios as tests on the oracle; each entry check in its order; a perimeter hides from the caller, the trace keeps it.
+- Depends on: 4.
+
+**6. Library: effects, reactions, processes** — `library` · J, then L · 3 sessions × 220k
+
+- Goal: outbox entries with the command's fact; the effect executor as a durable consumer (at least once, the entry's id as key, `not_before`, the return use case, position and dead letters per effect); the reaction consumers (operation ids from fact, reaction and part; rejections to dead letter; no hat); the step of a process with a cursor; waits queued at a past major.
+- Shed part: SC-42.
+- Rules: DOM-13..16, DOM-19, DOM-20, DOM-23, GR-9, PER-12, LIB-10.
+- Scenarios: SC-35..41.
+- Checks: the scenarios as tests on the oracle; injected loss, duplication and abort (TST-4); a redelivered fact gives one command; an exhausted effect becomes a dead letter, shown, never a business fact.
+- Depends on: 5.
+
+**7. `mailbox` and `desk`** — J · 170k
 
 - Goal: the first real domain, the smallest one, to prove the nucleus. `mailbox`: deposit on D, collect from a position, 7 days of retention, no deletion on collect. `desk`: the relay's personas (whoever deposits; whoever collects with R, `Caller` id = D = hash(R), the hash behind a port).
 - Rules: PER-19, DOM-17, F5, V5, GR-8.
 - Checks: domain tests on the in-memory ports; collect as a stream read, positions compared only by order; deposits on D reachable only with R.
-- Depends on: 2. Feeds back into the library what the nucleus missed.
+- Depends on: 6. Feeds back into the library what Shed missed.
 
-**4. `seals`** — J · 200k
+**8. `seals`** — J · 200k
 
 - Goal: the secrets and their state: seeds (32 random bytes, declared scheme `slip10-flat`), faces `m/i'` (SLIP-0010 over the HMAC-SHA512 of the primitives port), seal for / open / sign / verify, group keys, R and D of a mailbox. Opaque references outward; indices of a seed never reused.
 - Rules: GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of § 4 (Domains of q-).
-- Checks: core tests with a fake primitives port; derivation invisible from outside (only public keys and references leave). The SLIP-0010 vectors run in step 15, with the real HMAC.
-- Depends on: 2.
-
-**5. `post`: the protocol** — J · 200k
-
-- Goal: envelope (D, format version, sealed blob), letter (schema version, 16-byte identity, sender's face key, declared time, persona and use case invoked, content), the signature covering D; opening and verifying: a valid signature gives the `Caller`, otherwise `anonymous` with the id of PER-4 and the annotation of PER-2; the mailbox port of `post`.
-- Rules: F2, F3, F4, GR-6, PER-2, PER-4, PER-13, DOM-11 (identity of a letter).
-- Checks: a letter re-addressed to another D fails; a removed or broken signature gives `anonymous`; envelope hash stable for the same bytes.
-- Depends on: 4.
-
-**6. Library: outbox, effect executor, dead letters; "deliver M on bond L"** — J · 220k
-
-- Goal: outbox entries with the command's fact; the effect executor as a durable consumer (at least once, entry id as key, position and dead letters per effect); the return use case; the three ways of failing; `post` executes "deliver M on bond L".
-- Rules: DOM-13..15, DOM-17, LIB-1, F5, stage 1 point 2 of § 3.
-- Checks: injected loss, duplication and abort on the mailbox port; a duplicate deposit is deduplicated by the receiver; an exhausted effect becomes a dead letter and is shown, never a business fact.
-- Depends on: 5.
-
-**7. Library: reactions and processes** — J · 200k
-
-- Goal: reactions ("when fact E, command C") with deterministic operation ids from (event, reaction, part), each a delivery unit, rejections to dead letter, internal `Caller`; process steps as reactions (DOM-23); the module for reactions above the domains, on test domains.
-- Rules: DOM-16, DOM-19, DOM-23, GR-9, PER-12, LIB-10, stage 1 points 5 and 6 of § 3.
-- Checks: redelivered facts give one command (TST-4); a saga with a step that fails records a fact, not a rejection.
+- Checks: core tests with a fake primitives port; derivation invisible from outside (only public keys and references leave). The SLIP-0010 vectors run in step 17, with the real HMAC.
 - Depends on: 6.
 
-**8. `bonds` I: faces, tickets, introduction** — J · 230k
+**9. `post`: the protocol** — J · 200k
+
+- Goal: envelope (D, format version, sealed blob), letter (schema version, 16-byte identity, sender's face key, declared time, persona and use case invoked, content), the signature covering D; opening and verifying: a valid signature gives the `Caller`, otherwise `anonymous` with the id of PER-4 and the annotation of PER-2; the mailbox port of `post`.
+- "Deliver M on bond L", executed by `post` with the library's outbox and executor (step 6); from the first plan's step 6.
+- Rules: F2, F3, F4, F5, GR-6, PER-2, PER-4, PER-13, DOM-11 (identity of a letter), DOM-13..15.
+- Checks: a letter re-addressed to another D fails; a removed or broken signature gives `anonymous`; envelope hash stable for the same bytes; injected loss, duplication and abort on the mailbox port; a duplicate deposit is deduplicated by the receiver; an exhausted delivery becomes a dead letter and is shown, never a business fact.
+- Depends on: 8.
+
+**10. `bonds` I: faces, tickets, introduction** — J · 230k
 
 - Goal: faces as data (name, position in the tree, public key, opaque reference; one face in stage 1, model ready for more); the first face, the ticket (preparing → ready → used or expired, 48 hours) and the introduction as processes of `bonds`, with the steps toward `seals` as reactions; bonds (my face, its key, its relay and D, my mailbox, name, annotations such as "in person").
 - Rules: DOM-23, GR-9, PER-11, PER-21, DOM-12, the invariants of § 4.
 - Decisions: the place of the reactions module in the tree (GR-9), at the first step written.
 - Checks: crossed QR = the same flow done by both sides; a ticket used twice or expired is rejected; every bond belongs to exactly one of my faces.
-- Depends on: 7, 4.
+- Depends on: 6, 8.
 
-**9. `bonds` II: groups and channel** — J · 220k
+**11. `bonds` II: groups and channel** — J · 220k
 
 - Goal: groups (shared, no owner: key, mailbox, members with who introduced them), memberships (a group + one of my faces), found, invite, join, leave, rejoin (7 days of history from the mailbox); the news channel (public key, mailbox).
 - Decisions with Alessandro, before code: the rules of groups (invitation, entry, who accepts a new member) and the form of the news channel, open in the architecture notes.
 - Rules: DOM-19, DOM-20, DOM-23, PER-1.
-- Depends on: 8.
+- Depends on: 10.
 
-**10. `conversations`** — J · 200k
+**12. `conversations`** — J · 200k
 
 - Goal: chats of a bond or of a group (they are not created); messages ("I wrote M" with "deliver M on bond L"; "I received M from X" with its annotations: valid signature, known bond, arrival mailbox, declared time, relay time); the news channel as a chat that keeps only letters signed by the channel's key.
 - Rules: GR-3, F4, F6, DOM-11, DOM-12, PER-13.
 - Checks: a duplicate letter gives the recorded fact; the identity of the letter is the message id (natural idempotency).
-- Depends on: 9.
+- Depends on: 11.
 
-**11. `auth` and `persona`** — J · 230k
+**13. `auth` and `persona`** — J · 230k
 
 - Goal: auth's read ports in its own language (which faces I have, which bond or group a key belongs to, which personas a caller may wear); the four persona trees (`self`; `known`: write in the chats of its bonds and groups; `unknown`: introduce itself with a ticket; `anonymous`: empty, reject and annotate); the inbound path from an opened letter to the persona.
 - Rules: GR-4, GR-7 (with its ESLint rule), PER-1..18, PER-21, F6.
 - Checks: every entry check in order on letters; a known key outside its bond is "not found" to the peer and visible to the user; `anonymous` letters annotated.
-- Depends on: 10.
+- Depends on: 12.
 
-**12. `user`** — J · 200k
+**14. `user`** — J · 200k
 
 - Goal: activities (one command at most each) and user concepts: drafts, active face, pending activities and retries (queue policy of the library), "nothing happens in silence": annotations, dead letters and the trace shown; technical outcomes as user concepts.
 - Rules: ADP-2, ADP-7, DOM-12, DOM-15, LIB-12, GR-7, F6.
-- Depends on: 11.
+- Depends on: 13.
 
-**13. `ui`: the screen model** — J · 200k
+**15. `ui`: the screen model** — J · 200k
 
 - Goal: the screens of stage 1, their states and gestures, as a pure domain (presentational state only), from Alessandro's notes on screens and flows.
 - Rules: V2, ADP-7, GR-2.
-- Depends on: 12.
+- Depends on: 14.
 
-**14. The `memory` stack** — L · 200k
+**16. The `memory` stack** — L · 200k
 
 - Goal: two phones and the relay in one process, `mailbox` imported through `desk`; the scenarios of stage 1 end to end: first face, crossed QR, link, chat, group, channel, leave and rejoin.
 - Rules: CFG-1, CFG-3, TST-2, PER-19.
 - Checks: the scenarios pass with injected loss and duplication on the mailbox. This stack is the oracle of the adapters.
-- Depends on: 13.
+- Depends on: 15.
 
 ### (b) Adapters
 
-**15. libsodium** (`adapters-common`) — L · 160k
+**17. libsodium** (`adapters-common`) — L · 160k
 
 - Goal: the primitives port of `seals`; the SLIP-0010 test vectors; the `seals` suite run against it.
 - Rules: TST-1, TST-6, ADP-1.
 
-**16. The relay's adapters** (`adapters-node`) — L · 180k
+**18. The relay's adapters** (`adapters-node`) — L · 180k
 
 - Goal: `mailbox` storage on SQLite (`node:sqlite`), compared with the in-memory oracle; the Hono HTTP interface through `desk`; no access logs.
 - Rules: ADP-4..6, TST-2..5, PER-19, CFG-3.
 
-**17. The relay's HTTP client** (`adapters-web`) — L · 150k
+**19. The relay's HTTP client** (`adapters-web`) — L · 150k
 
 - Goal: the transport for the mailbox port of `post`; injected loss, duplication and abort.
 - Rules: ADP-4, ADP-5, TST-4.
-- Depends on: 16 (tested against the real relay adapter in Node).
+- Depends on: 18 (tested against the real relay adapter in Node).
 
-**18. IndexedDB** (`adapters-web`) — J · 240k
+**20. IndexedDB** (`adapters-web`) — J · 240k
 
 - Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain.
 - Rules: DOM-8, DOM-9, DOM-17, ADP-6, TST-1..6.
 - Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write.
 
-**19. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
+**21. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
 
 - Goal: the rendering of the `ui` model, gestures to activities, Italian texts in `packages/phone/src/texts/`.
 - Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`.
 
-**20. Browser I/O** (`adapters-web`) — L · 160k
+**22. Browser I/O** (`adapters-web`) — L · 160k
 
 - Goal: QR drawn and scanned with the camera; the ticket link (after `#`); files for export and import; clock and randomness as injected sources.
 - Rules: ADP-1, ADP-4.
 
 ### (c) Configurators
 
-**21. `relay`** — L · 170k
+**23. `relay`** — L · 170k
 
 - Goal: the relay's composition root; the deploy script (VPS in the EU, Node under systemd, Caddy); the public configuration that screen 1c points to.
 - Rules: CFG-1..4, PER-19.
 - Decisions: Alessandro runs the deploy; no server secret in GitHub.
 
-**22. `phone`** — L · 220k
+**24. `phone`** — L · 220k
 
 - Goal: the PWA's composition root; the composition check before the first request (a library piece, at its trigger); the service worker and the update with notice.
 - Rules: CFG-1, CFG-2, CFG-4, DOM-9.
 
 ### (d) Delivery
 
-**23. Export and import** — J · 220k
+**25. Export and import** — J · 220k
 
 - Goal: the export of every domain's state with its schema version, encrypted with a phrase (Argon2id); the import on a new device.
 - Decisions with Alessandro: gap G1 (positions, operation ids, pending outbox entries, duplicates still in the mailbox), recorded as a q- decision and reported to the paper.
 - Rules: DOM-22, G1.
 
-**24. Full-stack trial and release** — L · 160k
+**26. Full-stack trial and release** — L · 160k
 
 - Goal: the scenarios on real phones against the deployed relay; fixes; release notes. The tag `v0.1` is Alessandro's.
 
