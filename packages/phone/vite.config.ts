@@ -34,8 +34,8 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: false,
       manifest: {
-        name: 'Q-',
-        short_name: 'Q-',
+        name: 'q-',
+        short_name: 'q-',
         description: 'Cumino',
         lang: 'it',
         start_url: '/q-/',

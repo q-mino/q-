@@ -2,7 +2,7 @@
 // with the same shape, without touching the code.
 export const texts = {
   app: {
-    name: 'Q-',
+    name: 'q-',
     reading: 'Cumino',
     empty: 'Qui non c’è ancora niente: è solo lo scheletro dell’app.',
     testChannel: 'Versione di prova',

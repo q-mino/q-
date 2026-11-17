@@ -1,0 +1,634 @@
+import { z } from 'zod'
+import * as wlib from '../../wlib.ts'
+import {
+  command,
+  cursor_step,
+  AND,
+  NOT,
+  pick,
+  dsl,
+  effect,
+  fact,
+  id,
+  predicate,
+  reservation_selection,
+  value,
+  tools,
+} from './_scope_command.ts'
+
+/** The tool can be lent: named components, bound one by one by the creator. */
+export const the_tool_can_be_lent = AND({
+  a_loan_has_not_the_requested_id: NOT(predicate.a_loan_has_this_id),
+  a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
+  the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
+  the_requested_tool_is_not_on_loan: NOT(predicate.the_tool_is_on_loan),
+})
+
+/**
+ * The tool is lent, its term running, and two dates are awaited (DOM-13):
+ * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
+ * member, on the due date `declare_the_loan_overdue` stamps the loan
+ * overdue, each only if the member still has the tool. Both queued here, not
+ * one by the other's return: neither decides the other. One loan, one wait of
+ * each: the loan's id is each entry's.
+ */
+export const borrow_a_tool = command({
+  input: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+    member_id: id.member_id,
+  }),
+  outcomes: {
+    the_tool_is_available_so_it_is_lent: [
+      the_tool_can_be_lent,
+      fact.a_tool_has_been_lent,
+      pick(effect, 'wait_until_the_eve_of_the_due_date', 'wait_until_the_due_date'),
+    ],
+    the_member_already_has_the_tool_so_nothing_changes: [
+      predicate.the_tool_is_on_loan_to_this_member,
+      fact.the_member_already_has_the_tool,
+    ],
+  },
+  creator: (context) => (input) => {
+    const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
+    return {
+      the_tool_is_available_so_it_is_lent: [
+        {
+          a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
+          a_tool_has_the_requested_id: { tool_id: input.tool_id },
+          the_requested_tool_is_in_service: { tool_id: input.tool_id },
+          the_requested_tool_is_not_on_loan: { tool_id: input.tool_id },
+        },
+        {
+          new_loan: {
+            id: input.loan_id,
+            tool_id: input.tool_id,
+            member_id: input.member_id,
+            start_date: context.now,
+            due_day: due_day,
+            progress: { stage: 'ongoing', term: 'running' },
+          },
+        },
+        {
+          wait_until_the_eve_of_the_due_date: {
+            id: input.loan_id,
+            payload: {
+              loan_id: input.loan_id,
+              tool_id: input.tool_id,
+              member_id: input.member_id,
+              due_day: due_day,
+            },
+            not_before: dsl.the_start_of(dsl.the_eve_of(due_day)),
+          },
+          wait_until_the_due_date: {
+            id: input.loan_id,
+            payload: { loan_id: input.loan_id },
+            not_before: dsl.the_start_of(dsl.the_day_after(due_day)),
+          },
+        },
+      ],
+      the_member_already_has_the_tool_so_nothing_changes: [
+        { tool_id: input.tool_id, member_id: input.member_id },
+        { tool_id: input.tool_id, member_id: input.member_id },
+      ],
+    }
+  },
+})
+
+/** The tool can be booked for the day. */
+export const the_tool_can_be_booked = AND({
+  a_reservation_has_not_the_requested_id: NOT(predicate.a_reservation_has_this_id),
+  a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
+  the_requested_tool_is_in_service: predicate.the_tool_is_in_service,
+  the_requested_tool_is_not_booked_that_day: NOT(predicate.the_tool_is_booked_for_the_day),
+})
+
+export const reserve_a_tool = command({
+  /** The day is validated against the clock: the schema needs `now`, nothing else. */
+  input: (context) =>
+    z
+      .strictObject({
+        reservation_id: id.reservation_id,
+        tool_id: tools.id.tool_id,
+        member_id: id.member_id,
+        day: wlib.day,
+      })
+      .refine((input) => dsl.the_day_is_within_the_booking_window(input.day, context.now), {
+        path: ['day'],
+      }),
+  outcomes: {
+    the_tool_is_free_that_day_so_it_is_booked: [
+      the_tool_can_be_booked,
+      fact.a_tool_has_been_booked,
+    ],
+    the_member_already_booked_the_tool_so_nothing_changes: [
+      predicate.the_tool_is_booked_for_the_day_by_this_member,
+      fact.the_member_already_booked_the_tool,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_tool_is_free_that_day_so_it_is_booked: [
+      {
+        a_reservation_has_not_the_requested_id: { reservation_id: input.reservation_id },
+        a_tool_has_the_requested_id: { tool_id: input.tool_id },
+        the_requested_tool_is_in_service: { tool_id: input.tool_id },
+        the_requested_tool_is_not_booked_that_day: { tool_id: input.tool_id, day: input.day },
+      },
+      {
+        new_reservation: {
+          id: input.reservation_id,
+          tool_id: input.tool_id,
+          member_id: input.member_id,
+          day: input.day,
+          booking_date: context.now,
+          progress: { stage: 'booked' },
+        },
+      },
+    ],
+    the_member_already_booked_the_tool_so_nothing_changes: [
+      { tool_id: input.tool_id, day: input.day, member_id: input.member_id },
+      { tool_id: input.tool_id, day: input.day, member_id: input.member_id },
+    ],
+  }),
+})
+
+/** The requested loan exists, is ongoing, and lent the tool the member brings back. */
+export const the_loan_can_be_returned = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  the_requested_loan_is_of_the_tool_brought_back: predicate.the_loan_is_of_this_tool,
+})
+
+/** The requested loan exists and is already returned. */
+export const the_loan_is_already_returned = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_returned: predicate.the_loan_is_returned,
+})
+
+/**
+ * The member brings a tool back, whole or damaged: Marta's drill, damaged,
+ * on Tuesday. She says which loan and which tool she holds; the desk checks
+ * the tool against the loan's card, and the fact names it, so that a
+ * standing order sends a damaged tool to the workshop (`reaction/damage`),
+ * reading only the fact (D89.3).
+ */
+export const return_a_tool = command({
+  input: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+    condition: value.return_condition,
+  }),
+  outcomes: {
+    the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, fact.a_tool_has_been_returned],
+    the_loan_was_already_returned_so_nothing_changes: [
+      the_loan_is_already_returned,
+      fact.the_loan_was_already_returned,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_loan_is_ongoing_so_it_is_closed: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        the_requested_loan_is_of_the_tool_brought_back: {
+          loan_id: input.loan_id,
+          tool_id: input.tool_id,
+        },
+      },
+      {
+        returned_loan: {
+          id: input.loan_id,
+          tool_id: input.tool_id,
+          progress: {
+            stage: 'returned',
+            return_date: context.now,
+            condition: input.condition,
+          },
+        },
+      },
+    ],
+    the_loan_was_already_returned_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_returned: { loan_id: input.loan_id },
+      },
+      { loan_id: input.loan_id },
+    ],
+  }),
+})
+
+/** The member still has the tool and its due date is still ahead: the eve is not late. */
+export const the_member_can_still_be_reminded = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
+})
+
+/** The member still has the tool, but its due date has passed: the eve came late. */
+export const the_due_date_of_the_ongoing_loan_has_passed = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_has_passed: NOT(predicate.the_due_date_of_the_loan_is_still_ahead),
+})
+
+/** The member still has the tool and its due day is not over: the wait for the overdue came early. */
+export const the_due_day_of_the_ongoing_loan_is_not_over = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
+})
+
+/**
+ * The return of the eve of the due date (D68.3): the guard is the command's,
+ * not the infrastructure's, so a return before the eve meets a branch that
+ * records a fact and changes nothing (D95), never a rejection. The eve may
+ * come late (the executor was down): no order holds between two effects
+ * (D108), so the due date may even have stamped the loan first; the guard
+ * reads the due date at the executor's `now`, and a late eve reminds no one
+ * (A, 15 Nov 2026). Its input is the payload of the wait, given back by the
+ * executor; its operation is the entry's (DOM-14).
+ */
+export const remind_the_member_of_the_due_date = command({
+  input: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+    member_id: id.member_id,
+    due_day: wlib.day,
+  }),
+  outcomes: {
+    the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
+      the_member_can_still_be_reminded,
+      fact.the_member_has_been_reminded_of_the_due_date,
+      pick(effect, 'send_the_due_date_reminder'),
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      the_loan_is_already_returned,
+      fact.the_loan_was_returned_before_the_reminder,
+    ],
+    the_due_date_has_passed_so_nothing_changes: [
+      the_due_date_of_the_ongoing_loan_has_passed,
+      fact.the_due_date_came_before_the_reminder,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
+      },
+      { loan_id: input.loan_id },
+      {
+        send_the_due_date_reminder: {
+          id: input.loan_id,
+          payload: {
+            loan_id: input.loan_id,
+            tool_id: input.tool_id,
+            member_id: input.member_id,
+            due_day: input.due_day,
+          },
+        },
+      },
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_returned: { loan_id: input.loan_id },
+      },
+      { loan_id: input.loan_id },
+    ],
+    the_due_date_has_passed_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
+      },
+      { loan_id: input.loan_id },
+    ],
+  }),
+})
+
+/**
+ * The return of the due date (D68.3), guarded as the reminder: if the member
+ * still has the tool after the due day, the loan is stamped overdue and stays
+ * ongoing; if the tool is back, nothing changes (D95); if the due day is not
+ * over, the desk waits again, until the start of the day after today. The
+ * guard reads the day at the executor's `now`: a wait queued when a loan was
+ * due at an instant (1.x) goes on the due day itself, and the translation of
+ * the entry touches its payload, never when it goes (DOM-22). Marta's drill,
+ * due at 10:12 on 16 November, becomes overdue on the 17th, as Gianni's
+ * ladder after its due day (A, 17 Nov 2026). Its input is the payload of the
+ * wait; its operation is the entry's (DOM-14), so a second delivery of the
+ * wait is a duplicate, not a second stamp.
+ */
+export const declare_the_loan_overdue = command({
+  input: z.strictObject({
+    loan_id: id.loan_id,
+  }),
+  outcomes: {
+    the_member_still_has_the_tool_after_the_due_day_so_the_loan_is_overdue: [
+      the_due_date_of_the_ongoing_loan_has_passed,
+      fact.a_loan_has_become_overdue,
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      the_loan_is_already_returned,
+      fact.the_loan_was_returned_before_it_became_overdue,
+    ],
+    the_due_day_is_not_over_so_the_desk_waits_until_the_day_after: [
+      the_due_day_of_the_ongoing_loan_is_not_over,
+      fact.the_due_day_was_not_over,
+      pick(effect, 'wait_until_the_due_date'),
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_member_still_has_the_tool_after_the_due_day_so_the_loan_is_overdue: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
+      },
+      {
+        overdue_loan: {
+          id: input.loan_id,
+          progress: { stage: 'ongoing', term: 'overdue' },
+        },
+      },
+    ],
+    the_loan_was_returned_so_nothing_changes: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_returned: { loan_id: input.loan_id },
+      },
+      { loan_id: input.loan_id },
+    ],
+    the_due_day_is_not_over_so_the_desk_waits_until_the_day_after: [
+      {
+        a_loan_has_the_requested_id: { loan_id: input.loan_id },
+        the_requested_loan_is_ongoing: { loan_id: input.loan_id },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
+      },
+      { loan_id: input.loan_id },
+      {
+        wait_until_the_due_date: {
+          id: dsl.the_wait_for_the_overdue_put_off_on_a_day({
+            loan_id: input.loan_id,
+            day: dsl.today(context.now),
+          }),
+          payload: { loan_id: input.loan_id },
+          not_before: dsl.the_start_of(dsl.the_day_after(dsl.today(context.now))),
+        },
+      },
+    ],
+  }),
+})
+
+/** The desk has not yet begun cancelling the reservations of the tool. */
+export const no_cancellation_of_the_reservations_of_the_tool_has_begun = NOT(
+  predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
+)
+
+/**
+ * The desk opens its work sheet for the reservations of a tool that can no
+ * longer be lent: Luca retired the ladder, and a reaction brings the news
+ * (DOM-16). A set chosen by a condition is never changed by one fact: the
+ * sheet is a process with a cursor, one reservation a step (DOM-20, D97,
+ * D112, D113.4): `continue_the_cancellation_of_reservations`. A second sheet for one tool
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, which a reaction sends to its dead letter, in sight.
+ */
+export const cancel_the_reservations_of_a_tool = command({
+  input: z.strictObject({
+    tool_id: tools.id.tool_id,
+  }),
+  outcomes: {
+    no_cancellation_has_begun_so_one_begins: [
+      no_cancellation_of_the_reservations_of_the_tool_has_begun,
+      fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
+    ],
+  },
+  creator: (context) => (input) => ({
+    no_cancellation_has_begun_so_one_begins: [
+      { tool_id: input.tool_id },
+      {
+        new_cancellation: {
+          tool_id: input.tool_id,
+          start_date: context.now,
+          progress: { stage: 'cancelling' },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The desk cancels a reservation that still holds the tool. A transition of
+ * the reservation's life cycle (DOM-19) with no use case of its own: no one
+ * cancels a reservation by itself yet; the work sheet composes it into its
+ * step (D111).
+ */
+export const cancel_a_reservation = command({
+  input: z.strictObject({
+    reservation_id: id.reservation_id,
+  }),
+  outcomes: {
+    the_reservation_is_booked_so_it_is_cancelled: [
+      predicate.the_reservation_is_booked,
+      fact.a_reservation_has_been_cancelled,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_reservation_is_booked_so_it_is_cancelled: [
+      { reservation_id: input.reservation_id },
+      {
+        cancelled_reservation: {
+          id: input.reservation_id,
+          progress: { stage: 'cancelled', cancellation_date: context.now },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The reservations still ahead for a tool: booked, of the tool, from the day
+ * on. The desk goes through them on both its sheets: the cancellation of a
+ * retired tool's reservations, and the round of the notices of a repair.
+ */
+export const the_reservation_is_still_ahead_for_the_tool = AND({
+  the_reservation_is_booked: reservation_selection.the_reservation_is_booked,
+  the_reservation_is_of_the_tool: reservation_selection.the_reservation_is_of_this_tool,
+  the_day_has_not_passed: reservation_selection.the_reservation_is_from_this_day_on,
+})
+
+/**
+ * The desk takes the next reservation on its work sheet and cancels it, or,
+ * none left, closes the sheet (DOM-20, D112.2): the ladder is retired, the
+ * first step cancels Marta's Saturday, the second Gianni's Sunday, the third
+ * closes. The reservations still ahead from the day the sheet was opened,
+ * the closest day first, then by id (D109); the cursor the library keeps on
+ * the sheet marks where the desk stands, so that a step delivered again is
+ * the same step (DOM-11), and one reservation is cancelled once.
+ */
+export const continue_the_cancellation_of_reservations = cursor_step({
+  input: z.strictObject({
+    tool_id: tools.id.tool_id,
+  }),
+  reads: value.cancellation_under_way,
+  fields: value.booked_reservation,
+  identity: 'id',
+  selection: the_reservation_is_still_ahead_for_the_tool,
+  order: { day: 'ascending' },
+  composes: cancel_a_reservation,
+  outcomes: {
+    advances: fact.the_cancellation_has_advanced,
+    completes: fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+  },
+  creator: (context) => () => (sheet) => ({
+    selection: {
+      the_reservation_is_booked: {},
+      the_reservation_is_of_the_tool: { tool_id: sheet.tool_id },
+      the_day_has_not_passed: { day: dsl.today(sheet.start_date) },
+    },
+    composes: (reservation) => ({ reservation_id: reservation.id }),
+    advances: { tool_id: sheet.tool_id },
+    completes: {
+      completed_cancellation: {
+        tool_id: sheet.tool_id,
+        progress: { stage: 'complete', end_date: context.now },
+      },
+    },
+  }),
+})
+
+/** The desk has not yet begun its round of the notices of the repair. */
+export const no_notice_round_of_the_repair_has_begun = NOT(
+  predicate.the_notice_round_of_the_repair_has_begun,
+)
+
+/**
+ * The desk begins its round of the notices of a repair: the drill went to
+ * the workshop on Tuesday, and a reaction brings the news (DOM-16). The
+ * members who booked it are notified one at a time, by the steps of the
+ * round (DOM-20, D97, D112): `continue_the_repair_notice_round`; their
+ * reservations stay, and on the day a tool still in repair is refused to the
+ * borrower (`the_tool_is_in_service`). A second round for one stay in repair
+ * is no expected occurrence (a redelivery is the duplicate branch, DOM-11):
+ * a rejection, to the reaction's dead letter.
+ */
+export const notify_the_members_of_a_repair = command({
+  input: z.strictObject({
+    repair_id: tools.id.repair_id,
+    tool_id: tools.id.tool_id,
+  }),
+  outcomes: {
+    no_round_has_begun_so_one_begins: [
+      no_notice_round_of_the_repair_has_begun,
+      fact.a_repair_notice_round_has_begun,
+    ],
+  },
+  creator: (context) => (input) => ({
+    no_round_has_begun_so_one_begins: [
+      { repair_id: input.repair_id },
+      {
+        new_round: {
+          repair_id: input.repair_id,
+          tool_id: input.tool_id,
+          start_date: context.now,
+          progress: { stage: 'notifying' },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The desk notifies the member who booked a tool that it is in repair; the
+ * reservation stays. A transition of the reservation's life cycle (DOM-19)
+ * that changes nothing in the state (D95): it records the notice and queues
+ * it toward the world (DOM-13). With no use case of its own: the round
+ * composes it into its step (D111), and gives it, from the reservation the
+ * step read, the member, the tool and the day the notice carries, since a
+ * creator reads no state.
+ */
+export const notify_a_member_of_the_repair = command({
+  input: z.strictObject({
+    reservation_id: id.reservation_id,
+    repair_id: tools.id.repair_id,
+    member_id: id.member_id,
+    tool_id: tools.id.tool_id,
+    day: wlib.day,
+  }),
+  outcomes: {
+    the_reservation_is_booked_so_its_member_is_notified: [
+      predicate.the_reservation_is_booked,
+      fact.a_member_has_been_notified_of_the_repair,
+      pick(effect, 'send_the_repair_notice'),
+    ],
+  },
+  creator: () => (input) => ({
+    the_reservation_is_booked_so_its_member_is_notified: [
+      { reservation_id: input.reservation_id },
+      { reservation_id: input.reservation_id, repair_id: input.repair_id },
+      {
+        send_the_repair_notice: {
+          id: dsl.the_notice_of_the_repair_to_the_reservation({
+            repair_id: input.repair_id,
+            reservation_id: input.reservation_id,
+          }),
+          payload: {
+            reservation_id: input.reservation_id,
+            member_id: input.member_id,
+            tool_id: input.tool_id,
+            day: input.day,
+          },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The desk takes the next member on its round of the notices of a repair
+ * and notifies them, or, none left, closes the round (DOM-20, D112.2): the
+ * drill went to repair on Tuesday, the first step notifies Gianni, booked
+ * for Thursday, the second Paolo, booked three weeks on, the third closes. A
+ * reservation cancelled in the meantime (the drill retired beyond repair,
+ * its own sheet at work) is no longer booked: it leaves the selection, and
+ * its member is not notified.
+ */
+export const continue_the_repair_notice_round = cursor_step({
+  input: z.strictObject({
+    repair_id: tools.id.repair_id,
+  }),
+  reads: value.repair_notice_round_under_way,
+  fields: value.booked_reservation,
+  identity: 'id',
+  selection: the_reservation_is_still_ahead_for_the_tool,
+  order: { day: 'ascending' },
+  composes: notify_a_member_of_the_repair,
+  outcomes: {
+    advances: fact.the_repair_notice_round_has_advanced,
+    completes: fact.the_repair_notice_round_is_complete,
+  },
+  creator: (context) => () => (round) => ({
+    selection: {
+      the_reservation_is_booked: {},
+      the_reservation_is_of_the_tool: { tool_id: round.tool_id },
+      the_day_has_not_passed: { day: dsl.today(round.start_date) },
+    },
+    composes: (reservation) => ({
+      reservation_id: reservation.id,
+      repair_id: round.repair_id,
+      member_id: reservation.member_id,
+      tool_id: reservation.tool_id,
+      day: reservation.day,
+    }),
+    advances: { repair_id: round.repair_id },
+    completes: {
+      completed_round: {
+        repair_id: round.repair_id,
+        progress: { stage: 'complete', end_date: context.now },
+      },
+    },
+  }),
+})

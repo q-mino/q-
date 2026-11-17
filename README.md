@@ -1,6 +1,6 @@
-# Q-
+# q-
 
-**Q-** (read _Cumino_) is a network of messages between real people, with no center: people exchange their signs in person or at a distance, and every node decides what to spread. This repository holds the first prototype, a PWA for a small test community.
+**q-** (read _Cumino_) is a network of messages between real people, with no center: people exchange their signs in person or at a distance, and every node decides what to spread. This repository holds the first prototype, a PWA for a small test community.
 
 Status: skeleton. Nothing works yet.
 
@@ -14,7 +14,7 @@ Status: skeleton. Nothing works yet.
 | `adapters-node`   | Node adapters: the relay's HTTP server and storage                                     |
 | `phone`           | Configurator: the PWA                                                                  |
 | `relay`           | Configurator: the relay server                                                         |
-| `memory`          | Configurator: phone and relay in one process, the oracle of the tests                  |
+| `memory`          | Configurator: phone and relay in one process, the stack of the oracles                 |
 
 Architecture: [`docs/architecture.md`](docs/architecture.md). Development plan: [`docs/plan.md`](docs/plan.md). Vocabulary: [`docs/glossary.md`](docs/glossary.md).
 
@@ -35,4 +35,4 @@ pnpm --filter @q-mino/phone dev
 
 ## License
 
-Q- is free software under the [GNU AGPL-3.0](LICENSE). A commercial license is available on request for those who cannot meet the AGPL's terms. Contributions require signing the [CLA](CLA.md). The names and the logo are trademarks: see [TRADEMARK.md](TRADEMARK.md).
+q- is free software under the [GNU AGPL-3.0](LICENSE). A commercial license is available on request for those who cannot meet the AGPL's terms. Contributions require signing the [CLA](CLA.md). The names and the logo are trademarks: see [TRADEMARK.md](TRADEMARK.md).

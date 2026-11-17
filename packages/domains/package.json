@@ -16,5 +16,8 @@
     "./persona": "./src/persona/index.ts",
     "./user": "./src/user/index.ts",
     "./ui": "./src/ui/index.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }
