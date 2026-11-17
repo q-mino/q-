@@ -102,6 +102,15 @@ export const loans_fragments: wlib.PredicateFragments<
         the_reservation.day === p.day &&
         the_reservation.member_id === p.member_id,
     ),
+  'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day':
+    (p) => (state) =>
+      loans_dsl.the_reservation_holds_the_tool_for_the_member_on_the_day(
+        state.reservations.get(p.reservation_id),
+      )(p),
+  'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up': (p) => (state) =>
+    loans_dsl.the_reservation_of_the_member_has_been_taken_up(
+      state.reservations.get(p.reservation_id),
+    )(p),
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
     (p) => (state) =>
       state.cancellations.has(p.tool_id),
@@ -327,6 +336,9 @@ export const loans_writes: wlib.FactWrites<
       ...state,
       cancellations: new Map(state.cancellations).set(new_cancellation.tool_id, new_cancellation),
     }),
+  'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation }) =>
+    with_the_reservation_progress(taken_up_reservation),
+  'business/loans/fact/the_reservation_was_already_taken_up': () => (state) => state,
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation }) =>
     with_the_reservation_progress(cancelled_reservation),
   'business/loans/fact/the_cancellation_has_advanced':

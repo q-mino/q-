@@ -68,6 +68,28 @@ export const the_reservation_is_booked = (
 ): boolean => the_reservation?.progress.stage === 'booked'
 
 /**
+ * The reservation holds this tool for this member on this day: booked, and
+ * its card says so. One that does not exist holds nothing (SC-10).
+ */
+export const the_reservation_holds_the_tool_for_the_member_on_the_day =
+  (the_reservation: value.reservation | undefined) =>
+  (claim: {
+    readonly tool_id: tools.id.tool_id
+    readonly member_id: id.member_id
+    readonly day: day
+  }): boolean =>
+    the_reservation_is_booked(the_reservation) &&
+    the_reservation?.tool_id === claim.tool_id &&
+    the_reservation.member_id === claim.member_id &&
+    the_reservation.day === claim.day
+
+/** The member's reservation has been taken up: they took the tool on its day (SC-10). */
+export const the_reservation_of_the_member_has_been_taken_up =
+  (the_reservation: value.reservation | undefined) =>
+  (claim: { readonly member_id: id.member_id }): boolean =>
+    the_reservation?.progress.stage === 'taken_up' && the_reservation.member_id === claim.member_id
+
+/**
  * The key of the notice of a repair to a reservation, the id of its entry
  * (DOM-13): one notice per stay in repair and reservation, so that Paolo,
  * booked three weeks on, is notified once for each repair of the drill. Both

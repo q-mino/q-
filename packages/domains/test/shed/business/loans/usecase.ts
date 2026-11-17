@@ -9,6 +9,9 @@ import { command_use_case, read_use_case, command, effect, fact, query } from '.
 /** A member borrows a tool: Marta takes the drill home. */
 export const borrow_a_tool = command_use_case({ command: command.borrow_a_tool })
 
+/** A member takes the tool they booked, on its day: Gianni, the drill, Thursday. */
+export const lend_a_booked_tool = command_use_case({ command: command.lend_a_booked_tool })
+
 /** A member books a tool for a day ahead: the ladder for Saturday. */
 export const reserve_a_tool = command_use_case({ command: command.reserve_a_tool })
 

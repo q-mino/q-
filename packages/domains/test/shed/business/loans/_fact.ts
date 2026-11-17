@@ -159,6 +159,29 @@ export const a_reservation_has_been_cancelled =
 export type a_reservation_has_been_cancelled = z.output<typeof a_reservation_has_been_cancelled>
 
 /**
+ * The member took the tool on the day they booked it: a partial value, as a
+ * return, the reservation's id and its new progress, whole, with the loan
+ * that took it up. Recorded as a part of the loan's fact (D111, SC-10), never
+ * alone: the reservation is taken up by a loan.
+ *
+ * @see {@link fact.a_reservation_has_been_taken_up}
+ */
+export const a_reservation_has_been_taken_up =
+  fact.a_reservation_has_been_taken_up.brand<'business/loans/fact/a_reservation_has_been_taken_up'>()
+export type a_reservation_has_been_taken_up = z.output<typeof a_reservation_has_been_taken_up>
+
+/**
+ * Nothing to do (DOM-6): the member already took the tool they booked; the loan stands.
+ *
+ * @see {@link fact.the_reservation_was_already_taken_up}
+ */
+export const the_reservation_was_already_taken_up =
+  fact.the_reservation_was_already_taken_up.brand<'business/loans/fact/the_reservation_was_already_taken_up'>()
+export type the_reservation_was_already_taken_up = z.output<
+  typeof the_reservation_was_already_taken_up
+>
+
+/**
  * The desk went one reservation further on the work sheet of the tool: the
  * step's part (D111, D112.2), beside the cancellation it applied. A partial
  * value: the sheet stays under way, its cursor at the reservation handled,

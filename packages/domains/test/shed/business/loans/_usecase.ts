@@ -12,6 +12,13 @@ import * as usecase from './usecase.ts'
 export const borrow_a_tool = usecase.borrow_a_tool
 
 /**
+ * A member takes the tool they booked, on its day: Gianni, the drill, Thursday.
+ *
+ * @see {@link usecase.lend_a_booked_tool}
+ */
+export const lend_a_booked_tool = usecase.lend_a_booked_tool
+
+/**
  * A member books a tool for a day ahead: the ladder for Saturday.
  *
  * @see {@link usecase.reserve_a_tool}

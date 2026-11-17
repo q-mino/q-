@@ -15,6 +15,8 @@ export const registry = {
   'persona/member/node/member': node.member,
   'persona/member/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'persona/member/usecase/borrow_a_tool_input': usecase.borrow_a_tool_input,
+  'persona/member/usecase/take_the_tool_you_booked': usecase.take_the_tool_you_booked,
+  'persona/member/usecase/take_the_tool_you_booked_input': usecase.take_the_tool_you_booked_input,
   'persona/member/usecase/return_a_tool': usecase.return_a_tool,
   'persona/member/usecase/return_a_tool_input': usecase.return_a_tool_input,
   'persona/member/usecase/my_loans': usecase.my_loans,

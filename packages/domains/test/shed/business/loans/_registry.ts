@@ -36,10 +36,12 @@ export const registry = {
   'business/loans/value/returned_loan': value.returned_loan,
   'business/loans/value/reservation_stage': value.reservation_stage,
   'business/loans/value/reservation_booked': value.reservation_booked,
+  'business/loans/value/reservation_taken_up': value.reservation_taken_up,
   'business/loans/value/reservation_cancelled': value.reservation_cancelled,
   'business/loans/value/reservation_progress': value.reservation_progress,
   'business/loans/value/reservation': value.reservation,
   'business/loans/value/booked_reservation': value.booked_reservation,
+  'business/loans/value/taken_up_reservation': value.taken_up_reservation,
   'business/loans/value/cancelled_reservation': value.cancelled_reservation,
   'business/loans/value/ongoing_loan_entry': value.ongoing_loan_entry,
   'business/loans/value/reservation_entry': value.reservation_entry,
@@ -76,6 +78,9 @@ export const registry = {
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
+  'business/loans/fact/a_reservation_has_been_taken_up': fact.a_reservation_has_been_taken_up,
+  'business/loans/fact/the_reservation_was_already_taken_up':
+    fact.the_reservation_was_already_taken_up,
   'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete':
     fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
@@ -104,6 +109,10 @@ export const registry = {
     predicate.the_tool_is_on_loan_to_this_member,
   'business/loans/predicate/a_reservation_has_this_id': predicate.a_reservation_has_this_id,
   'business/loans/predicate/the_reservation_is_booked': predicate.the_reservation_is_booked,
+  'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day':
+    predicate.the_reservation_holds_the_tool_for_the_member_on_the_day,
+  'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up':
+    predicate.the_reservation_of_the_member_has_been_taken_up,
   'business/loans/predicate/the_tool_is_booked_for_the_day':
     predicate.the_tool_is_booked_for_the_day,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member':
@@ -115,6 +124,12 @@ export const registry = {
   'business/loans/command/the_tool_can_be_lent': command.the_tool_can_be_lent,
   'business/loans/command/borrow_a_tool': command.borrow_a_tool,
   'business/loans/command/borrow_a_tool_input': command.borrow_a_tool_input,
+  'business/loans/command/the_tool_can_be_lent_to_anyone_today':
+    command.the_tool_can_be_lent_to_anyone_today,
+  'business/loans/command/take_up_a_reservation': command.take_up_a_reservation,
+  'business/loans/command/take_up_a_reservation_input': command.take_up_a_reservation_input,
+  'business/loans/command/lend_a_booked_tool': command.lend_a_booked_tool,
+  'business/loans/command/lend_a_booked_tool_input': command.lend_a_booked_tool_input,
   'business/loans/command/the_tool_can_be_booked': command.the_tool_can_be_booked,
   'business/loans/command/reserve_a_tool': command.reserve_a_tool,
   'business/loans/command/reserve_a_tool_input': command.reserve_a_tool_input,
@@ -182,6 +197,7 @@ export const registry = {
   'business/loans/query/the_reservations_of_a_member_input':
     query.the_reservations_of_a_member_input,
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
+  'business/loans/usecase/lend_a_booked_tool': usecase.lend_a_booked_tool,
   'business/loans/usecase/reserve_a_tool': usecase.reserve_a_tool,
   'business/loans/usecase/return_a_tool': usecase.return_a_tool,
   'business/loans/usecase/remind_the_member_of_the_due_date':

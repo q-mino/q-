@@ -20,7 +20,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-7** (covered, Shed 9) The drill goes to the workshop: its stay named by `tools` from the operation, since nobody outside can name it. DOM-23, D75.8.
 - **SC-8** (covered, Shed 10) Marta's loan of `loans` 1.x read after 2.0.0, by every reader at the current shape; the SQL table rebuilt from the log. DOM-22, V14.
 - **SC-9** (covered, Shed 10) `business/loans/1/` deleted while a fact of 1.x is kept: the release stops at its start. DOM-22, PER-17.
-- **SC-10** (open, reshapes) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
+- **SC-10** (covered, Shed 11) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
 - **SC-11** (open, adds) Marta and Gianni ask for the last drill at the same instant: one loan, the other `the_tool_is_not_available`; concurrency equals some serial order. DOM-9, ADP-8.
 - **SC-12** (covered, Shed 11) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22, PER-17.
 - **SC-13** (open, adds) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101.

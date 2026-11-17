@@ -134,6 +134,26 @@ export const a_reservation_has_been_cancelled = fact({
 })
 
 /**
+ * The member took the tool on the day they booked it: a partial value, as a
+ * return, the reservation's id and its new progress, whole, with the loan
+ * that took it up. Recorded as a part of the loan's fact (D111, SC-10), never
+ * alone: the reservation is taken up by a loan.
+ */
+export const a_reservation_has_been_taken_up = fact({
+  payload: z.strictObject({
+    taken_up_reservation: value.taken_up_reservation.pick({ id: true, progress: true }),
+  }),
+})
+
+/** Nothing to do (DOM-6): the member already took the tool they booked; the loan stands. */
+export const the_reservation_was_already_taken_up = fact({
+  payload: z.strictObject({
+    reservation_id: id.reservation_id,
+    member_id: id.member_id,
+  }),
+})
+
+/**
  * The desk went one reservation further on the work sheet of the tool: the
  * step's part (D111, D112.2), beside the cancellation it applied. A partial
  * value: the sheet stays under way, its cursor at the reservation handled,

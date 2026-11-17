@@ -62,6 +62,60 @@ export const borrow_a_tool = command_use_case_over({
 })
 
 /**
+ * Gianni takes the drill he booked for Thursday, from the row of his
+ * reservation (R8) in "my reservations", while his card is valid: the desk
+ * lends it and takes the reservation up, one fact in two parts (SC-10). The
+ * leaf answers from the loan, the branch's own part; R8 leaves his "my
+ * reservations" by its stream, from the reservation's part.
+ */
+export const take_the_tool_you_booked = command_use_case_over({
+  use_case: loans.usecase.lend_a_booked_tool,
+  input: z.strictObject({
+    loan_id: loans.id.loan_id,
+    reservation_id: loans.id.reservation_id,
+    tool_id: tools.id.tool_id,
+  }),
+  is_refused_unless: {
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: (context) => (input) => ({
+    loan_id: input.loan_id,
+    reservation_id: input.reservation_id,
+    tool_id: input.tool_id,
+    member_id: context.card.id,
+  }),
+  events: {
+    you_have_the_tool: z.strictObject({
+      loan_id: loans.id.loan_id,
+      tool_id: tools.id.tool_id,
+      due_day: wlib.day,
+    }),
+    you_already_took_the_tool: z.strictObject({ reservation_id: loans.id.reservation_id }),
+    /**
+     * Not booked by the member for today, in the workshop, or still out with
+     * someone else: the member need not know which.
+     */
+    the_tool_is_not_available: z.strictObject({}),
+  },
+  projection: {
+    the_member_booked_the_tool_for_today_so_it_is_lent: (fact) => ({
+      event: 'you_have_the_tool',
+      payload: {
+        loan_id: fact.new_loan.id,
+        tool_id: fact.new_loan.tool_id,
+        due_day: fact.new_loan.due_day,
+      },
+    }),
+    the_member_already_took_the_tool_so_nothing_changes: (fact) => ({
+      event: 'you_already_took_the_tool',
+      payload: { reservation_id: fact.reservation_id },
+    }),
+    rejected: () => ({ event: 'the_tool_is_not_available', payload: {} }),
+  },
+})
+
+/**
  * Marta brings the drill back, and her screen follows what her return sets
  * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
  * open until the workshop takes the drill in, a fact of `tools` that a

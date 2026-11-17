@@ -105,6 +105,30 @@ export const the_reservation_is_booked =
 export type the_reservation_is_booked = z.output<typeof the_reservation_is_booked>
 
 /**
+ * The reservation holds this tool for this member on this day: Gianni's R8,
+ * the drill, Thursday. The member's phone names the reservation, and the
+ * desk checks it against its card (SC-10).
+ *
+ * @see {@link predicate.the_reservation_holds_the_tool_for_the_member_on_the_day}
+ */
+export const the_reservation_holds_the_tool_for_the_member_on_the_day =
+  predicate.the_reservation_holds_the_tool_for_the_member_on_the_day.brand<'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day'>()
+export type the_reservation_holds_the_tool_for_the_member_on_the_day = z.output<
+  typeof the_reservation_holds_the_tool_for_the_member_on_the_day
+>
+
+/**
+ * The member's reservation has been taken up: they took the tool on its day.
+ *
+ * @see {@link predicate.the_reservation_of_the_member_has_been_taken_up}
+ */
+export const the_reservation_of_the_member_has_been_taken_up =
+  predicate.the_reservation_of_the_member_has_been_taken_up.brand<'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up'>()
+export type the_reservation_of_the_member_has_been_taken_up = z.output<
+  typeof the_reservation_of_the_member_has_been_taken_up
+>
+
+/**
  * The tool is booked for the day, by whoever.
  *
  * @see {@link predicate.the_tool_is_booked_for_the_day}

@@ -19,8 +19,11 @@ export type the_tool_can_be_lent = z.output<typeof the_tool_can_be_lent>
  * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
  * member, on the due date `declare_the_loan_overdue` stamps the loan
  * overdue, each only if the member still has the tool. Both queued here, not
- * one by the other's return: neither decides the other. One loan, one wait of
- * each: the loan's id is each entry's.
+ * one by the other's return: neither decides the other. Days of the shed
+ * (SC-12): Marta takes the drill at 23:30 on 2 November in Toronto, already
+ * the 3rd in UTC, and it is due on the 16th; her eve's wait goes at the start
+ * of the 15th there. A tool booked for today is lent to no one by this
+ * command: its member takes it up (SC-10).
  *
  * @see {@link command.borrow_a_tool}
  */
@@ -33,6 +36,49 @@ export const borrow_a_tool = command.borrow_a_tool
  */
 export const borrow_a_tool_input = command.borrow_a_tool.input
 export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
+
+/**
+ * The tool can be lent today to whoever asks: on its day a reservation holds
+ * the tool for its member (SC-10).
+ *
+ * @see {@link command.the_tool_can_be_lent_to_anyone_today}
+ */
+export const the_tool_can_be_lent_to_anyone_today = command.the_tool_can_be_lent_to_anyone_today
+export type the_tool_can_be_lent_to_anyone_today = z.output<
+  typeof the_tool_can_be_lent_to_anyone_today
+>
+
+/**
+ * The member takes up their reservation on its day: a transition with no
+ * use case of its own, which the loan composes (D111, SC-10).
+ *
+ * @see {@link command.take_up_a_reservation}
+ */
+export const take_up_a_reservation = command.take_up_a_reservation
+
+/**
+ * The input of `take_up_a_reservation`, declared inline.
+ *
+ * @see {@link command.take_up_a_reservation}
+ */
+export const take_up_a_reservation_input = command.take_up_a_reservation.input
+export type take_up_a_reservation_input = z.output<typeof take_up_a_reservation_input>
+
+/**
+ * The member takes the tool they booked, on its day: one fact in two parts,
+ * the loan's then the reservation's (D111, SC-10).
+ *
+ * @see {@link command.lend_a_booked_tool}
+ */
+export const lend_a_booked_tool = command.lend_a_booked_tool
+
+/**
+ * The input of `lend_a_booked_tool`, declared inline.
+ *
+ * @see {@link command.lend_a_booked_tool}
+ */
+export const lend_a_booked_tool_input = command.lend_a_booked_tool.input
+export type lend_a_booked_tool_input = z.output<typeof lend_a_booked_tool_input>
 
 /**
  * The tool can be booked for the day.

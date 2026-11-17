@@ -31,6 +31,7 @@ import {
 } from '../../business/tools/_usecase.ts'
 import {
   borrow_a_tool,
+  lend_a_booked_tool,
   cancel_the_reservations_of_a_tool,
   continue_the_cancellation_of_reservations,
   continue_the_repair_notice_round,
@@ -475,6 +476,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       versions,
       use_cases: {
         borrow_a_tool,
+        lend_a_booked_tool,
         reserve_a_tool,
         return_a_tool,
         remind_the_member_of_the_due_date,

@@ -569,13 +569,57 @@ export declare function pick<
   const names extends readonly (keyof namespace & string)[],
 >(namespace: namespace, ...names: names): { readonly [name in names[number]]: namespace[name] }
 
+export declare const $Composition: unique symbol
+
 /**
- * A branch, declared: the condition, the fact it records and, if it asks
- * the world for something, its outbox entries. DOM-5
+ * The transitions a branch composes, by name, each a command of its own
+ * domain (D111, DOM-19): the transitions of other instances the branch
+ * applies with no choice, outside a step (SC-10, C, 17 Nov 2026). A composed
+ * transition composes nothing in turn, until a case asks (LIB-3).
+ */
+export type Transitions = Readonly<Record<string, Commands[string]>>
+
+/** A branch's composition: its transitions, by name. */
+export interface Composition<transitions extends Transitions> {
+  readonly [$Composition]: transitions
+}
+
+/**
+ * The transitions a branch composes, by name, as its outbox entries are by
+ * name (`pick`): `composes({ the_reservation_is_taken_up:
+ * take_up_a_reservation })`, the creator giving each its input under the same
+ * name (A, 17 Nov 2026, SC-10). Not a builder: it builds no component, it
+ * names the transitions a branch applies.
+ *
+ * Gianni takes the drill he booked for Thursday: the branch lends it and
+ * composes the taking up of his reservation, one fact in two parts, the
+ * branch's own then one per transition, in the order written. The branch
+ * applies when its condition and a branch of each transition hold, the
+ * first in their order: the conditions of a transition are part of the
+ * branch, as in the choice of a step (D112.2); a rejection names the failed
+ * predicates of both. The instance comes from the input, never from a read:
+ * a creator reads no state, and whoever invokes has read it (Gianni's phone
+ * names his reservation, which the transition's condition checks).
+ */
+export declare function composes<const transitions extends Transitions>(
+  transitions: transitions,
+): Composition<transitions>
+
+/**
+ * A branch, declared: the condition, the fact it records, if it asks the
+ * world for something its outbox entries, and, if it applies the transitions
+ * of other instances of its domain, their composition (`composes`, after the
+ * entries, `{}` when it queues none). DOM-5, D111
  */
 export type Outcome =
   | readonly [condition: Condition, fact: Component]
   | readonly [condition: Condition, fact: Component, entries: Entries]
+  | readonly [
+      condition: Condition,
+      fact: Component,
+      entries: Entries,
+      composes: Composition<Transitions>,
+    ]
 /**
  * The closed set of a command's branches, each under a business name: at
  * most one applies, tried in the order they are written. DOM-5, DOM-3
@@ -592,13 +636,29 @@ export type ResolvedOutcomes<outcomes extends Outcomes> = {
     Condition,
     Component,
     infer entries extends Entries,
+    Composition<infer transitions>,
   ]
     ? readonly [
         condition: ConditionInput<outcomes[k][0]>,
         fact: z.input<outcomes[k][1]>,
         entries: ResolvedEntries<entries>,
+        composes: ResolvedTransitions<transitions>,
       ]
-    : readonly [condition: ConditionInput<outcomes[k][0]>, fact: z.input<outcomes[k][1]>]
+    : outcomes[k] extends readonly [Condition, Component, infer entries extends Entries]
+      ? readonly [
+          condition: ConditionInput<outcomes[k][0]>,
+          fact: z.input<outcomes[k][1]>,
+          entries: ResolvedEntries<entries>,
+        ]
+      : readonly [condition: ConditionInput<outcomes[k][0]>, fact: z.input<outcomes[k][1]>]
+}
+
+/**
+ * The inputs of the transitions a branch composes, under their names: the
+ * instance each applies to, from the input (SC-10).
+ */
+export type ResolvedTransitions<transitions extends Transitions> = {
+  readonly [name in keyof transitions]: z.input<InputOf<transitions[name]>>
 }
 
 /** The identity of an outbox entry (DOM-13, D48): written by the domain, the key sent outside with its effect. */
@@ -898,9 +958,25 @@ type EffectsOfOutcome<outcome> = outcome extends readonly [
   Condition,
   Component,
   infer entries extends Entries,
+  ...unknown[],
 ]
   ? entries[keyof entries]
   : never
+
+/** The transitions a branch composes, none if it composes none (SC-10). */
+type TransitionsOfOutcome<outcome> = outcome extends readonly [
+  Condition,
+  Component,
+  Entries,
+  Composition<infer transitions>,
+]
+  ? transitions[keyof transitions]
+  : never
+
+/** Every transition a command's branches compose (SC-10). */
+export type TransitionsOf<outcomes extends Outcomes> = TransitionsOfOutcome<
+  outcomes[keyof outcomes]
+>
 
 /** Every effect a command can queue. */
 export type EffectsOf<outcomes extends Outcomes> = EffectsOfOutcome<outcomes[keyof outcomes]>
@@ -939,8 +1015,9 @@ export type FactWrites<facts extends Component, write> = {
 
 /**
  * What a branch writes: its writes, one per part of its fact, in the order
- * of the parts (a command's one; a step's two, the step's part, then the
- * composed transition's, DOM-10), its fact in its envelope and its outbox
+ * of the parts (a command's one, then one per transition its branch
+ * composes; a step's two, the step's part, then the composed transition's,
+ * DOM-10), its fact in its envelope and its outbox
  * entries, which the adapter records with the writes, atomically (DOM-8,
  * D12), for the streams (DOM-17) and the effect executor (DOM-14) to read.
  */
@@ -952,7 +1029,10 @@ export interface PlannedWrite<write> {
 
 /**
  * A branch ready to execute, in the order of the branches: its condition
- * composed, each leaf apart (to name the failures), and what it writes.
+ * composed, each leaf apart (to name the failures), and what it writes. A
+ * branch that composes is planned once per branch of its transition, in
+ * their order, its condition with the transition's (SC-10): the adapter
+ * meets plain branches, and the library maps the index it applied back.
  */
 export interface PlannedBranch<fragment, write> extends PlannedWrite<write> {
   readonly condition: fragment
@@ -1088,8 +1168,15 @@ export type ExecuteStep<fragment, write, read, selection, source, field> = (
 export interface Failure<outcomes extends Outcomes> {
   readonly branch: keyof outcomes & string
   readonly components: readonly string[]
-  readonly predicate: PathOf<PredicatesOf<outcomes>>
+  readonly predicate: PathOf<PredicatesOf<outcomes> | ComposedPredicatesOf<outcomes>>
 }
+
+/**
+ * The predicates of the transitions a command's branches compose, which a
+ * rejection may name too, under the transition's name then its own
+ * components (`the_reservation_is_taken_up`, …). SC-10
+ */
+type ComposedPredicatesOf<outcomes extends Outcomes> = PredicatesOfEach<TransitionsOf<outcomes>>
 
 /**
  * A part of a fact (DOM-10): its path apart from its payload, as in the paper
@@ -1172,7 +1259,12 @@ export type CommandOutcome<outcomes extends Outcomes> =
         readonly outcome: 'applied'
         readonly branch: branch
         readonly position: position
-        readonly fact: Envelope<readonly [Part<outcomes[branch][1]>]>
+        readonly fact: Envelope<
+          readonly [
+            Part<outcomes[branch][1]>,
+            ...Part<FactsOfEach<TransitionsOfOutcome<outcomes[branch]>>>[],
+          ]
+        >
       }
     }[keyof outcomes & string]
   | { readonly outcome: 'rejected'; readonly failures: readonly Failure<outcomes>[] }
@@ -1236,9 +1328,14 @@ export type OutcomesOf<command> = command extends { [$Command]: { outcomes: infe
     : never
   : never
 
-/** A command and, for a step, the transition it composes (D111): an adapter covers both. */
+/**
+ * A command and the transitions it composes (D111), for a step its own, for
+ * a branch its composition (SC-10): an adapter covers all.
+ */
 type WithComposed<command> =
-  command | (command extends { [$Step]: { composes: infer composes } } ? composes : never)
+  | command
+  | (command extends { [$Step]: { composes: infer composes } } ? composes : never)
+  | TransitionsOf<OutcomesOf<command>>
 
 /** The predicates of each command of a union, one by one. */
 type PredicatesOfEach<command> = command extends unknown ? PredicatesOf<OutcomesOf<command>> : never
@@ -2715,7 +2812,17 @@ export declare function tree_ports<
   readonly majors: majors
   readonly top: top
   readonly use_cases: use_cases
-}): (wired: { readonly invoked: Invoked; readonly log: FactLog }) => {
+}): (wired: {
+  readonly invoked: Invoked
+  readonly log: FactLog
+}) => TreePorts<top, majors, use_cases>
+
+/**
+ * The ports of a tree, one per leaf, by name (PER-6): a named type, so that
+ * a configurator's declaration names it with its arguments instead of
+ * spelling every leaf's port out.
+ */
+export type TreePorts<top, majors extends Majors, use_cases extends TreeLeaves> = {
   readonly [name in keyof use_cases & string]: LeafPort<EntryOf<top>, majors, name, use_cases[name]>
 }
 

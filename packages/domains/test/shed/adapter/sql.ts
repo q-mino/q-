@@ -23,6 +23,7 @@ import type * as loan_selections from '../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../business/loans/_reservation_selection.ts'
 import {
   borrow_a_tool,
+  lend_a_booked_tool,
   continue_the_cancellation_of_reservations,
   continue_the_repair_notice_round,
   reserve_a_tool,
@@ -128,6 +129,10 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
+  'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id} and tool_id = ${p.tool_id} and member_id = ${p.member_id} and day = ${p.day} and stage = 'booked')`,
+  'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id} and member_id = ${p.member_id} and stage = 'taken_up')`,
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun': (p) =>
     sql`exists (select 1 from cancellations where tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) =>
@@ -225,6 +230,10 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   }) => [
     sql`insert into cancellations (tool_id, start_date, stage) values (${c.tool_id}, ${c.start_date}, ${c.progress.stage})`,
   ],
+  'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation: r }) => [
+    sql`update reservations set stage = ${r.progress.stage}, loan_id = ${r.progress.loan_id} where id = ${r.id}`,
+  ],
+  'business/loans/fact/the_reservation_was_already_taken_up': () => [],
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation: r }) => [
     sql`update reservations set stage = ${r.progress.stage}, cancellation_date = ${r.progress.cancellation_date} where id = ${r.id}`,
   ],
@@ -527,7 +536,7 @@ const the_whole_reservation = {
     member_id: sql`candidate.member_id`,
     day: sql`candidate.day`,
     booking_date: sql`candidate.booking_date`,
-    progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'cancellation_date', candidate.cancellation_date))`,
+    progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'loan_id', candidate.loan_id, 'cancellation_date', candidate.cancellation_date))`,
   },
 }
 
@@ -576,6 +585,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       versions,
       use_cases: {
         borrow_a_tool,
+        lend_a_booked_tool,
         reserve_a_tool,
         return_a_tool,
         continue_the_cancellation_of_reservations,

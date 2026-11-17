@@ -21,6 +21,22 @@ export const borrow_a_tool_input = usecase.borrow_a_tool.input
 export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
 
 /**
+ * Gianni takes the drill he booked for Thursday, from the row of his
+ * reservation, while his card is valid (SC-10).
+ *
+ * @see {@link usecase.take_the_tool_you_booked}
+ */
+export const take_the_tool_you_booked = usecase.take_the_tool_you_booked
+
+/**
+ * The input of `take_the_tool_you_booked`, declared inline.
+ *
+ * @see {@link usecase.take_the_tool_you_booked}
+ */
+export const take_the_tool_you_booked_input = usecase.take_the_tool_you_booked.input
+export type take_the_tool_you_booked_input = z.output<typeof take_the_tool_you_booked_input>
+
+/**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
  * date passes on one, a return takes it away. When the due date passes she

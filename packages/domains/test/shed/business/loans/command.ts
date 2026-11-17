@@ -6,6 +6,7 @@ import {
   AND,
   NOT,
   pick,
+  composes,
   dsl,
   effect,
   fact,
@@ -25,14 +26,72 @@ export const the_tool_can_be_lent = AND({
 })
 
 /**
+ * The tool can be lent today to whoever asks: on its day a reservation holds
+ * the tool for its member, who takes it up (`lend_a_booked_tool`); to anyone
+ * else it is not available (SC-10).
+ */
+export const the_tool_can_be_lent_to_anyone_today = AND({
+  the_tool_can_be_lent: the_tool_can_be_lent,
+  no_one_booked_the_tool_for_today: NOT(predicate.the_tool_is_booked_for_the_day),
+})
+
+/** Who borrows which tool, under which loan: what a loan is opened with. */
+interface LoanRequest {
+  readonly loan_id: id.loan_id
+  readonly tool_id: tools.id.tool_id
+  readonly member_id: id.member_id
+}
+
+/** The loan the desk opens now: due on the day the loan period ends, its term running. */
+const the_loan_lent =
+  (context: wlib.RootContext) =>
+  (loan: LoanRequest): z.input<typeof fact.a_tool_has_been_lent> => ({
+    new_loan: {
+      id: loan.loan_id,
+      tool_id: loan.tool_id,
+      member_id: loan.member_id,
+      start_date: context.now,
+      due_day: dsl.the_due_date_of_a_loan_started_on(context.now),
+      progress: { stage: 'ongoing', term: 'running' },
+    },
+  })
+
+/**
+ * The two waits of a loan opened now (DOM-13), at the start of their days in
+ * the shed's zone (SC-12): the eve of its due day, and the day after it. One
+ * loan, one wait of each: the loan's id is each entry's.
+ */
+const the_waits_of_the_loan = (context: wlib.RootContext) => (loan: LoanRequest) => {
+  const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
+  return {
+    wait_until_the_eve_of_the_due_date: {
+      id: loan.loan_id,
+      payload: {
+        loan_id: loan.loan_id,
+        tool_id: loan.tool_id,
+        member_id: loan.member_id,
+        due_day: due_day,
+      },
+      not_before: wlib.start_of(context.time_zone)(dsl.the_eve_of(due_day)),
+    },
+    wait_until_the_due_date: {
+      id: loan.loan_id,
+      payload: { loan_id: loan.loan_id },
+      not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(due_day)),
+    },
+  }
+}
+
+/**
  * The tool is lent, its term running, and two dates are awaited (DOM-13):
  * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
  * member, on the due date `declare_the_loan_overdue` stamps the loan
  * overdue, each only if the member still has the tool. Both queued here, not
- * one by the other's return: neither decides the other. One loan, one wait of
- * each: the loan's id is each entry's. Days of the shed (SC-12): Marta takes
- * the drill at 23:30 on 2 November in Toronto, already the 3rd in UTC, and it
- * is due on the 16th; her eve's wait goes at the start of the 15th there.
+ * one by the other's return: neither decides the other. Days of the shed
+ * (SC-12): Marta takes the drill at 23:30 on 2 November in Toronto, already
+ * the 3rd in UTC, and it is due on the 16th; her eve's wait goes at the start
+ * of the 15th there. A tool booked for today is lent to no one by this
+ * command: its member takes it up (SC-10).
  */
 export const borrow_a_tool = command({
   input: z.strictObject({
@@ -42,7 +101,7 @@ export const borrow_a_tool = command({
   }),
   outcomes: {
     the_tool_is_available_so_it_is_lent: [
-      the_tool_can_be_lent,
+      the_tool_can_be_lent_to_anyone_today,
       fact.a_tool_has_been_lent,
       pick(effect, 'wait_until_the_eve_of_the_due_date', 'wait_until_the_due_date'),
     ],
@@ -51,50 +110,120 @@ export const borrow_a_tool = command({
       fact.the_member_already_has_the_tool,
     ],
   },
-  creator: (context) => (input) => {
-    const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
-    return {
-      the_tool_is_available_so_it_is_lent: [
-        {
+  creator: (context) => (input) => ({
+    the_tool_is_available_so_it_is_lent: [
+      {
+        the_tool_can_be_lent: {
           a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
           a_tool_has_the_requested_id: { tool_id: input.tool_id },
           the_requested_tool_is_in_service: { tool_id: input.tool_id },
           the_requested_tool_is_not_on_loan: { tool_id: input.tool_id },
         },
-        {
-          new_loan: {
-            id: input.loan_id,
-            tool_id: input.tool_id,
-            member_id: input.member_id,
-            start_date: context.now,
-            due_day: due_day,
-            progress: { stage: 'ongoing', term: 'running' },
-          },
+        no_one_booked_the_tool_for_today: {
+          tool_id: input.tool_id,
+          day: dsl.today(context.now),
         },
-        {
-          wait_until_the_eve_of_the_due_date: {
-            id: input.loan_id,
-            payload: {
-              loan_id: input.loan_id,
-              tool_id: input.tool_id,
-              member_id: input.member_id,
-              due_day: due_day,
-            },
-            not_before: wlib.start_of(context.time_zone)(dsl.the_eve_of(due_day)),
-          },
-          wait_until_the_due_date: {
-            id: input.loan_id,
-            payload: { loan_id: input.loan_id },
-            not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(due_day)),
-          },
-        },
-      ],
-      the_member_already_has_the_tool_so_nothing_changes: [
-        { tool_id: input.tool_id, member_id: input.member_id },
-        { tool_id: input.tool_id, member_id: input.member_id },
-      ],
-    }
+      },
+      the_loan_lent(context)(input),
+      the_waits_of_the_loan(context)(input),
+    ],
+    the_member_already_has_the_tool_so_nothing_changes: [
+      { tool_id: input.tool_id, member_id: input.member_id },
+      { tool_id: input.tool_id, member_id: input.member_id },
+    ],
+  }),
+})
+
+/**
+ * The member takes up their reservation on its day, the tool lent to them
+ * by a loan: a transition of the reservation's life cycle (DOM-19) with no
+ * use case of its own, which the loan composes (D111, SC-10).
+ */
+export const take_up_a_reservation = command({
+  input: z.strictObject({
+    reservation_id: id.reservation_id,
+    tool_id: tools.id.tool_id,
+    member_id: id.member_id,
+    day: wlib.day,
+    loan_id: id.loan_id,
+  }),
+  outcomes: {
+    the_reservation_holds_the_tool_for_the_member_today_so_it_is_taken_up: [
+      predicate.the_reservation_holds_the_tool_for_the_member_on_the_day,
+      fact.a_reservation_has_been_taken_up,
+    ],
   },
+  creator: () => (input) => ({
+    the_reservation_holds_the_tool_for_the_member_today_so_it_is_taken_up: [
+      {
+        reservation_id: input.reservation_id,
+        tool_id: input.tool_id,
+        member_id: input.member_id,
+        day: input.day,
+      },
+      {
+        taken_up_reservation: {
+          id: input.reservation_id,
+          progress: { stage: 'taken_up', loan_id: input.loan_id },
+        },
+      },
+    ],
+  }),
+})
+
+/**
+ * The member takes the tool they booked, on its day: Gianni, from the row of
+ * his reservation of the drill for Thursday (R8). The desk lends it, as any
+ * loan, with its waits, and takes the reservation up: one fact in two parts,
+ * the loan's then the reservation's (D111, SC-10). His phone names the
+ * reservation, a claim the transition's condition checks against its card:
+ * a creator reads no state. A second tap, after the drill went out, records
+ * that the reservation was already taken up.
+ */
+export const lend_a_booked_tool = command({
+  input: z.strictObject({
+    loan_id: id.loan_id,
+    reservation_id: id.reservation_id,
+    tool_id: tools.id.tool_id,
+    member_id: id.member_id,
+  }),
+  outcomes: {
+    the_member_booked_the_tool_for_today_so_it_is_lent: [
+      the_tool_can_be_lent,
+      fact.a_tool_has_been_lent,
+      pick(effect, 'wait_until_the_eve_of_the_due_date', 'wait_until_the_due_date'),
+      composes({ the_reservation_is_taken_up: take_up_a_reservation }),
+    ],
+    the_member_already_took_the_tool_so_nothing_changes: [
+      predicate.the_reservation_of_the_member_has_been_taken_up,
+      fact.the_reservation_was_already_taken_up,
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_member_booked_the_tool_for_today_so_it_is_lent: [
+      {
+        a_loan_has_not_the_requested_id: { loan_id: input.loan_id },
+        a_tool_has_the_requested_id: { tool_id: input.tool_id },
+        the_requested_tool_is_in_service: { tool_id: input.tool_id },
+        the_requested_tool_is_not_on_loan: { tool_id: input.tool_id },
+      },
+      the_loan_lent(context)(input),
+      the_waits_of_the_loan(context)(input),
+      {
+        the_reservation_is_taken_up: {
+          reservation_id: input.reservation_id,
+          tool_id: input.tool_id,
+          member_id: input.member_id,
+          day: dsl.today(context.now),
+          loan_id: input.loan_id,
+        },
+      },
+    ],
+    the_member_already_took_the_tool_so_nothing_changes: [
+      { reservation_id: input.reservation_id, member_id: input.member_id },
+      { reservation_id: input.reservation_id, member_id: input.member_id },
+    ],
+  }),
 })
 
 /** The tool can be booked for the day. */

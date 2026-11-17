@@ -36,6 +36,7 @@ import {
   my_loans,
   my_reservations,
   return_a_tool,
+  take_the_tool_you_booked,
 } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import { majors as keeper_majors } from './persona/keeper/_majors.ts'
@@ -83,7 +84,13 @@ export const shed = (cell: Cell) => async (world: World) => {
       versions,
       majors: member_majors,
       top: persona,
-      use_cases: { borrow_a_tool, return_a_tool, my_loans, my_reservations },
+      use_cases: {
+        borrow_a_tool,
+        take_the_tool_you_booked,
+        return_a_tool,
+        my_loans,
+        my_reservations,
+      },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },

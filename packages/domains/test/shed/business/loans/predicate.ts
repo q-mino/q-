@@ -89,6 +89,28 @@ export const the_reservation_is_booked = predicate({
   }),
 })
 
+/**
+ * The reservation holds this tool for this member on this day: Gianni's R8,
+ * the drill, Thursday. The member's phone names the reservation, and the
+ * desk checks it against its card (SC-10).
+ */
+export const the_reservation_holds_the_tool_for_the_member_on_the_day = predicate({
+  parameters: z.strictObject({
+    reservation_id: id.reservation_id,
+    tool_id: tools.id.tool_id,
+    member_id: id.member_id,
+    day: wlib.day,
+  }),
+})
+
+/** The member's reservation has been taken up: they took the tool on its day. */
+export const the_reservation_of_the_member_has_been_taken_up = predicate({
+  parameters: z.strictObject({
+    reservation_id: id.reservation_id,
+    member_id: id.member_id,
+  }),
+})
+
 /** The tool is booked for the day, by whoever. */
 export const the_tool_is_booked_for_the_day = predicate({
   parameters: z.strictObject({
