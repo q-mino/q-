@@ -374,7 +374,7 @@ const record =
       sql`insert into facts (parts, operation_scope, operation_id, branch, fingerprint, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.branch}, ${written.fact.fingerprint}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
-          sql`insert into outbox (effect, id, version, payload, not_before) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
+          sql`insert into outbox (effect, id, version, payload, not_before, resources) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null}, ${JSON.stringify(entry.resources)})`,
       ),
     ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
 

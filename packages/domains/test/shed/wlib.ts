@@ -1122,6 +1122,13 @@ export interface StoredEntry {
   readonly version: Semver
   readonly payload: unknown
   readonly not_before?: date_time
+  /**
+   * The resources of the part whose branch queued it (D108, D107, D113.3;
+   * SC-53), which the library writes from the fact's envelope: nobody
+   * writes them, and a translation leaves them as queued. On them the
+   * executor keeps the order of its effect and holds behind a dead letter.
+   */
+  readonly resources: readonly Resource[]
 }
 
 /**
@@ -3963,17 +3970,21 @@ export type Deliveries<registry, returns> = {
  * effect from a position on, inclusive (from the first with none), in the
  * order they were recorded, then each new one as it is recorded.
  */
-export type Outbox = (
-  effect: string,
-) => (
-  from: position | undefined,
-) => AsyncIterable<{ readonly position: position; readonly entry: StoredEntry }>
+export type Outbox = (effect: string) => (from: position | undefined) => AsyncIterable<QueuedEntry>
+
+/** An entry as its effect's executor meets it: at its position in the outbox, named by its effect and its id. */
+export interface QueuedEntry {
+  readonly position: position
+  readonly entry: StoredEntry
+}
 
 /**
  * A dead letter of the effect executor (DOM-15, D67.3): operational,
  * outside the domains, shown, never a business fact; redelivered after a
- * fix with the same identity, or discarded by an operator, with a trace.
- * Its cause, an ADT:
+ * fix with the same identity, or discarded by an operator, with a trace
+ * (`EffectExecutor`). It holds its entry's resources for its effect (D108,
+ * SC-53): the later entries of the effect that touch one of them wait
+ * behind it (`WaitingEntry`). Its cause, an ADT:
  * - `exhausted`: the delivery gave up; redelivered, the effect runs again;
  * - `rejected`: the return rejected what the world said, kept with its
  *   failures; redelivered, the return runs again with it, never the effect
@@ -3981,8 +3992,8 @@ export type Outbox = (
  * - `identity_already_used`: the entry came back with another outcome; the
  *   first stands (D108.4).
  */
-export interface DeadLetter {
-  readonly entry: StoredEntry
+export interface EffectDeadLetter extends QueuedEntry {
+  readonly held: 'dead_letter'
   readonly cause:
     | { readonly cause: 'exhausted'; readonly reason: string }
     | {
@@ -3993,16 +4004,62 @@ export interface DeadLetter {
     | { readonly cause: 'identity_already_used'; readonly returns: unknown }
 }
 
-/** Where an executor keeps its own state, durable (DOM-14): its position per effect, its dead letters. */
+/**
+ * An entry waiting behind a held one (D108, D67.3; SC-53): an entry of the
+ * same effect that touches a resource a dead letter, or an entry waiting
+ * before it, holds; not delivered, it holds its own resources in turn, so
+ * that no later entry of one of them overtakes it. Gianni's notice of the
+ * drill's first repair is in a dead letter; his notice of the second waits
+ * behind it. Shown with the dead letters: the software informs.
+ */
+export interface WaitingEntry extends QueuedEntry {
+  readonly held: 'waiting'
+}
+
+/** An entry an effect holds, an ADT: a dead letter, or an entry waiting behind one. */
+export type HeldEntry = EffectDeadLetter | WaitingEntry
+
+/**
+ * Where an executor keeps its own state, durable (DOM-14): its position per
+ * effect, the entries each effect holds (its dead letters and the entries
+ * waiting behind them, SC-53), and the traces of the letters discarded. A
+ * held entry is named by its effect and its id, the key (DOM-13): holding
+ * one again replaces it, so that an entry met again after a fall is held
+ * once, a waiting entry delivered and refused becomes a dead letter in its
+ * place, and a letter redelivered and refused again keeps its new cause.
+ */
 export interface ExecutorState {
   readonly position: (effect: string) => Promise<position | undefined>
   readonly advance: (effect: string) => (to: position) => Promise<void>
-  readonly dead_letter: (letter: DeadLetter) => Promise<void>
+  /** The entries an effect holds, in the order of its outbox. */
+  readonly held: (effect: string) => Promise<readonly HeldEntry[]>
+  readonly hold: (entry: HeldEntry) => Promise<void>
+  /** A held entry let go: delivered at last, or its letter discarded. */
+  readonly release: (entry: QueuedEntry) => Promise<void>
+  readonly discarded: (trace: Discarded<EffectDeadLetter>) => Promise<void>
 }
 
-/** A running executor: it stops when asked, after the entry it is delivering. */
+/**
+ * A running executor: it stops when asked, after the entry it is
+ * delivering; and an operator resolves its dead letters through it (D67.3,
+ * SC-53), since a letter's delivery and the entries waiting behind it are
+ * its effect's, in its own order:
+ * - `redeliver`: the letter's entry again, after a fix, with the same
+ *   identity: `exhausted`, the effect runs again; `rejected`, the return
+ *   runs again with what the world said, never the effect (D108.4);
+ *   `identity_already_used`, the return refuses it again, since the first
+ *   outcome stands, and the operator discards it. Delivered, the executor
+ *   releases it and delivers the entries that waited behind it, in the
+ *   order of the outbox;
+ * - `discard`: the letter let go, with a trace (who, why), its entry never
+ *   delivered; the entries behind it go on as after a delivery.
+ */
 export interface EffectExecutor {
   readonly stop: () => Promise<void>
+  readonly redeliver: (letter: EffectDeadLetter) => Promise<Redelivered<EffectDeadLetter>>
+  readonly discard: (
+    letter: EffectDeadLetter,
+  ) => (trace: { readonly by: string; readonly reason: string }) => Promise<void>
 }
 
 /**
@@ -4016,7 +4073,22 @@ export interface EffectExecutor {
  * "system · executor of effect E" (D91.3): the scope is the effect's path,
  * the operation's id the entry's, so that a double report is the duplicate
  * branch (DOM-11) and the fingerprint covers the entry and what the world
- * said (D108.3); the context is the clock's, `now` told in its zone. Curried as
+ * said (D108.3); the context is the clock's, `now` told in its zone.
+ * A dead letter holds its entry's resources for its effect (D108, D67.3;
+ * SC-53), those of the part that queued it (`StoredEntry.resources`): a
+ * later entry of the effect that touches one of them is not delivered; it
+ * waits behind (`WaitingEntry`), and holds its own resources in turn. A
+ * wait is never exhausted, but its return may refuse it: held the same way.
+ * The position goes on past a held entry, and the other resources flow: a
+ * dead letter stops its resources in its effect, never its effect, nor
+ * another effect of the same resources (D108, the delivery unit is the
+ * effect). When a letter is delivered at last or discarded
+ * (`EffectExecutor`), the executor delivers the entries waiting behind it
+ * that nothing held before them still holds, in the order of the outbox,
+ * each as an entry met for the first time: it waits for its `not_before`,
+ * and one refused becomes a dead letter in its place. It reads what it
+ * holds from its state when it starts. An effect that tolerates reordering
+ * (D67.3) comes with its case. Curried as
  * `command_use_case_ports`: the registry and the domain's return use cases,
  * where it finds each effect's return; then the deliveries; then its ports.
  */
@@ -4155,9 +4227,13 @@ export interface WaitingPart extends ReactionPart {
 /** A part a reaction holds, an ADT: a dead letter, or a part waiting behind one. */
 export type HeldPart = ReactionDeadLetter | WaitingPart
 
-/** The trace of a dead letter discarded (D67.3): the letter, who discarded it, why, and when, by the consumers' clock. */
-export interface Discarded {
-  readonly letter: ReactionDeadLetter
+/**
+ * The trace of a dead letter discarded (D67.3): the letter, a reaction's or
+ * an effect's (SC-53), who discarded it, why, and when, by the clock of its
+ * consumer.
+ */
+export interface Discarded<letter = ReactionDeadLetter> {
+  readonly letter: letter
   readonly by: string
   readonly reason: string
   readonly at: date_time
@@ -4205,15 +4281,16 @@ export type ReactionWirings<registry> = {
 }
 
 /**
- * What a dead letter redelivered gives (D67.3), an ADT: `delivered`, its
- * command applied (or nothing to invoke, D88.2), and the parts waiting
- * behind it go on; `dead_letter`, refused again, still holding, with what
- * the command said this time; `not_held`, the letter no longer held
- * (redelivered or discarded before).
+ * What a dead letter redelivered gives (D67.3), an ADT, a reaction's or an
+ * effect's (SC-53): `delivered`, its command applied (or nothing to invoke,
+ * D88.2; for an effect, the world answered and the return applied), and the
+ * parts or entries waiting behind it go on; `dead_letter`, refused or
+ * exhausted again, still holding, with what was said this time; `not_held`,
+ * the letter no longer held (redelivered or discarded before).
  */
-export type Redelivered =
+export type Redelivered<letter = ReactionDeadLetter> =
   | { readonly outcome: 'delivered' }
-  | { readonly outcome: 'dead_letter'; readonly letter: ReactionDeadLetter }
+  | { readonly outcome: 'dead_letter'; readonly letter: letter }
   | { readonly outcome: 'not_held' }
 
 /**

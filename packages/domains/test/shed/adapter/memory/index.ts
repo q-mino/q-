@@ -117,7 +117,7 @@ export interface Cell {
   readonly outbox: wlib.Outbox
   /** The paths and versions of the facts and the entries it keeps, distinct (DOM-22). */
   readonly stored_versions: wlib.StoredVersions
-  /** The state of the effect executors: positions per effect, dead letters, shown to a test. */
+  /** The state of the effect executors: positions per effect, the entries each holds (SC-53), shown to a test. */
   readonly executor: wlib.ExecutorState
   /**
    * The state of the consumers of the reactions: positions per reaction, the

@@ -64,7 +64,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-42** (covered, Shed 11) A fact of the drill goes to a dead letter, and the next fact of the drill waits behind it. D94.7, DOM-16.
 - **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
 - **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
-- **SC-53** (open, reshapes; found at SC-42, enters step 2, Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
+- **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
 
 ## The generator (step 3)
 
