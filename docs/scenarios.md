@@ -18,6 +18,8 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-5** (covered, Shed 3, 9) A value with states: a loan by stages (nesting), a tool under repair (subtraction). DOM-19, § Experiments of Shed.
 - **SC-6** (covered, Shed 4) Gianni books the ladder for a day outside the window: `invalid_request`, a static rule over the input and `now`. DOM-21.
 - **SC-7** (covered, Shed 9) The drill goes to the workshop: its stay named by `tools` from the operation, since nobody outside can name it. DOM-23, D75.8.
+- **SC-54** (open, reshapes; a second definition of SC-44, entered step 2 by Alessandro, 18 Nov 2026 (5)) Luca loads a short sheet in one go: a list of named instances, atomic, a branch and a part per line, a line whose id is taken a part of its own (D95). DOM-20, D113, D97.
+- **SC-55** (open, reshapes; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) A fact declares resources narrower than every identity of its payload, the instances it changes and its target (D94.6): Gianni's dead notice holds his reservation alone, and the round's other notices flow. DOM-10, D94.6, D108.
 - **SC-8** (covered, Shed 10) Marta's loan of `loans` 1.x read after 2.0.0, by every reader at the current shape; the SQL table rebuilt from the log. DOM-22, V14.
 - **SC-9** (covered, Shed 10) `business/loans/1/` deleted while a fact of 1.x is kept: the release stops at its start. DOM-22, PER-17.
 - **SC-10** (covered, Shed 11) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
@@ -65,6 +67,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
 - **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
 - **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
+- **SC-56** (open, reshapes; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: the repair notices flow past Gianni's. DOM-14, DOM-16, D67.3.
 
 ## The generator (step 3)
 
