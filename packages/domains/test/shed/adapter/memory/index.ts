@@ -31,6 +31,7 @@ import {
   retire_a_tool,
   send_a_tool_to_repair,
   load_the_tools_of_a_sheet,
+  load_the_tools_of_a_short_sheet,
   continue_the_loading_of_a_sheet,
   the_catalogue,
 } from '../../business/tools/_usecase.ts'
@@ -187,9 +188,43 @@ const already_recorded = (recorded: Recorded): wlib.AlreadyRecorded => ({
 })
 
 /**
+ * The branch of the transition each element of a list applies, the first
+ * whose condition holds on the state, -1 where none does (SC-54): none for a
+ * plain branch.
+ */
+const chosen =
+  (state: State) =>
+  (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly number[] =>
+    'elements' in branch
+      ? branch.elements.map((element) => element.findIndex((each) => each.condition(state)))
+      : []
+
+/** A branch holds: its condition, and, over a list, a branch of the transition on every element (SC-54). */
+const holds =
+  (state: State) =>
+  (branch: wlib.PlannedCommandBranch<Fragment, Write>): boolean =>
+    branch.condition(state) && chosen(state)(branch).every((index) => index !== -1)
+
+/** What a branch writes: a plain branch its own, a branch over a list the library's from the choice (SC-54). */
+const written = (
+  branch: wlib.PlannedCommandBranch<Fragment, Write>,
+  elements: readonly number[],
+): wlib.PlannedWrite<Write> => ('elements' in branch ? branch.applies(elements) : branch)
+
+/** Every leaf of a branch: its own, then, over a list, each element's branches' (SC-54). */
+const leaves = (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly Fragment[] => [
+  ...branch.leaves,
+  ...('elements' in branch
+    ? branch.elements.flatMap((element) => element.flatMap((each) => each.leaves))
+    : []),
+]
+
+/**
  * A serial writer (DOM-9): the operation looked up, then every branch and
  * every leaf read on one state; the first branch that holds writes; if none
- * does, the leaves name the failures. Nothing awaits between the reads and
+ * does, the leaves name the failures. Over a list, each element applies the
+ * first branch of the transition that holds on the state before the
+ * command, with no combination between the elements (SC-54, D113.1). Nothing awaits between the reads and
  * the write, so two commands sent at the same instant run one after the
  * other, in the order the event loop takes them: the outcomes of a serial
  * order, by construction (SC-11). An interpreter rule: the oracle never
@@ -203,18 +238,20 @@ const execute =
       return Promise.resolve<wlib.Execution>(already_recorded(recorded))
     }
     const state = cell.get()
-    const applied = plan.branches.findIndex((branch) => branch.condition(state))
+    const applied = plan.branches.findIndex(holds(state))
     const branch = plan.branches[applied]
     if (branch === undefined) {
       return Promise.resolve<wlib.Execution>({
         outcome: 'rejected',
-        leaves: plan.branches.map((planned) => planned.leaves.map((leaf) => leaf(state))),
+        leaves: plan.branches.map((planned) => leaves(planned).map((leaf) => leaf(state))),
       })
     }
-    record(cell)(state)(branch)
+    const elements = chosen(state)(branch)
+    record(cell)(state)(written(branch, elements))
     return Promise.resolve<wlib.Execution>({
       outcome: 'applied',
       branch: applied,
+      elements,
       position: cell.position(),
     })
   }
@@ -588,6 +625,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         close_a_repair,
         rename_a_tool,
         load_the_tools_of_a_sheet,
+        load_the_tools_of_a_short_sheet,
         continue_the_loading_of_a_sheet,
       },
     })({

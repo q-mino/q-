@@ -37,6 +37,14 @@ export const load_the_tools_of_a_sheet = command_use_case({
 })
 
 /**
+ * The keeper loads a short sheet in one go: Paolo's twelve tools, what went
+ * in and what was left told at once (SC-54).
+ */
+export const load_the_tools_of_a_short_sheet = command_use_case({
+  command: command.load_the_tools_of_a_short_sheet,
+})
+
+/**
  * The desk goes one line further on a sheet of tools, or closes it: a step
  * of the loading of a sheet (DOM-20). Invoked by the desk's own standing
  * orders (DOM-16): when the sheet opens, and after each step that advanced

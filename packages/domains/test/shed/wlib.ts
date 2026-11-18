@@ -636,14 +636,50 @@ export declare function pick<
 >(namespace: namespace, ...names: names): { readonly [name in names[number]]: namespace[name] }
 
 export declare const $Composition: unique symbol
+export declare const $Each: unique symbol
+
+/**
+ * A transition a branch composes on each element of a list (SC-54, D113):
+ * the instances named by the input, as many as the list, each applying its
+ * own branch and recording its own part.
+ */
+export interface Each<transition extends Commands[string]> {
+  readonly [$Each]: transition
+}
+
+/**
+ * A transition composed on each element of a list (SC-54; A, 18 Nov 2026
+ * (6)): `composes({ its_lines_are_loaded: each(add_a_tool_from_a_line) })`,
+ * the creator giving a list of inputs under the same name, one per element,
+ * in the order of the list. Not a builder: it builds no component, it says
+ * that the transition goes over a list.
+ *
+ * Paolo gives the shed twelve tools on a short sheet, and Luca loads it in
+ * one go: one fact, the branch's own part, then one part per line, the
+ * branch each line applies (D113.1-2), the tool added or the line left
+ * (D95). Each element applies its own branch, the first that holds, with no
+ * combination between the elements' branches (D113.1), every element
+ * reading the state as it was before the command: so a list names each
+ * instance once, which its schema checks (D113, the parts of a list of ids
+ * without repeats). The branch applies when its condition holds and a
+ * branch of the transition holds on every element: all or nothing (D113.1,
+ * D97, the corollary on known ids).
+ */
+export declare function each<const transition extends Commands[string]>(
+  transition: transition,
+): Each<transition>
+
+/** The command a composition applies: the transition, or the one composed on each element of a list. */
+type TransitionOf<composed> = composed extends Each<infer transition> ? transition : composed
 
 /**
  * The transitions a branch composes, by name, each a command of its own
  * domain (D111, DOM-19): the transitions of other instances the branch
- * applies with no choice, outside a step (SC-10, C, 17 Nov 2026). A composed
+ * applies with no choice, outside a step (SC-10, C, 17 Nov 2026), on one
+ * instance or on each element of a list (`each`, SC-54). A composed
  * transition composes nothing in turn, until a case asks (LIB-3).
  */
-export type Transitions = Readonly<Record<string, Commands[string]>>
+export type Transitions = Readonly<Record<string, Commands[string] | Each<Commands[string]>>>
 
 /** A branch's composition: its transitions, by name. */
 export interface Composition<transitions extends Transitions> {
@@ -721,10 +757,13 @@ export type ResolvedOutcomes<outcomes extends Outcomes> = {
 
 /**
  * The inputs of the transitions a branch composes, under their names: the
- * instance each applies to, from the input (SC-10).
+ * instance each applies to, from the input (SC-10); for a transition on a
+ * list, one input per element, in the order of the list (SC-54).
  */
 export type ResolvedTransitions<transitions extends Transitions> = {
-  readonly [name in keyof transitions]: z.input<InputOf<transitions[name]>>
+  readonly [name in keyof transitions]: transitions[name] extends Each<infer transition>
+    ? readonly z.input<InputOf<transition>>[]
+    : z.input<InputOf<transitions[name]>>
 }
 
 /** The identity of an outbox entry (DOM-13, D48): written by the domain, the key sent outside with its effect. */
@@ -1029,14 +1068,14 @@ type EffectsOfOutcome<outcome> = outcome extends readonly [
   ? entries[keyof entries]
   : never
 
-/** The transitions a branch composes, none if it composes none (SC-10). */
+/** The transitions a branch composes, none if it composes none (SC-10), a list's by its transition (SC-54). */
 type TransitionsOfOutcome<outcome> = outcome extends readonly [
   Condition,
   Component,
   Entries,
   Composition<infer transitions>,
 ]
-  ? transitions[keyof transitions]
+  ? TransitionOf<transitions[keyof transitions]>
   : never
 
 /** Every transition a command's branches compose (SC-10). */
@@ -1098,12 +1137,45 @@ export interface PlannedWrite<write> {
  * composed, each leaf apart (to name the failures), and what it writes. A
  * branch that composes is planned once per branch of its transition, in
  * their order, its condition with the transition's (SC-10): the adapter
- * meets plain branches, and the library maps the index it applied back.
+ * meets plain branches, and the library maps the index it applied back. A
+ * transition on a list is planned per element (`PlannedBranchOverAList`).
  */
 export interface PlannedBranch<fragment, write> extends PlannedWrite<write> {
   readonly condition: fragment
   readonly leaves: readonly fragment[]
 }
+
+/** A branch of the transition an element of a list may apply (SC-54): its condition composed, each leaf apart. */
+export interface PlannedElementBranch<fragment> {
+  readonly condition: fragment
+  readonly leaves: readonly fragment[]
+}
+
+/**
+ * A branch that composes a transition on each element of a list, ready to
+ * execute (SC-54, D113.1): its condition, with its single transitions' as
+ * a plain branch's (SC-10), each leaf apart; then, per element, in the order
+ * of the list, the branches of the transition in their order. Planned once
+ * per branch of a list's transition, its branches would be as many as their
+ * combinations (2^N for a sheet of N lines and two branches), and the
+ * elements choose on their own (D113.1): so the adapter chooses, for each
+ * element, the first branch that holds, and the branch holds when its
+ * condition does and every element has one. What it writes is a pure
+ * function of the library over the choice (`applies`), as a step's
+ * `choose`: its writes, its fact, the branch's own part then each
+ * element's, and its outbox entries, which the adapter records as a plain
+ * branch's, in the same step.
+ */
+export interface PlannedBranchOverAList<fragment, write> {
+  readonly condition: fragment
+  readonly leaves: readonly fragment[]
+  readonly elements: readonly (readonly PlannedElementBranch<fragment>[])[]
+  readonly applies: (chosen: readonly number[]) => PlannedWrite<write>
+}
+
+/** A branch of a command, as planned: plain, or over a list (SC-54). */
+export type PlannedCommandBranch<fragment, write> =
+  PlannedBranch<fragment, write> | PlannedBranchOverAList<fragment, write>
 
 /**
  * An outbox entry as an adapter stores it (DOM-13): the path of its effect,
@@ -1139,7 +1211,7 @@ export interface StoredEntry {
  */
 export interface PlannedCommand<fragment, write> {
   readonly operation: Operation
-  readonly branches: readonly PlannedBranch<fragment, write>[]
+  readonly branches: readonly PlannedCommandBranch<fragment, write>[]
 }
 
 /**
@@ -1156,19 +1228,29 @@ export interface AlreadyRecorded {
 
 /**
  * What the adapter's execution tells the library: the operation's fact,
- * already recorded; the index of the applied branch and the position of its
- * fact; or, when none applies, the value of every leaf of every branch, read
- * in the same step or in a second one, as the technology allows.
+ * already recorded; the index of the applied branch, for a branch over a
+ * list the index of the transition's branch each element applied, in the
+ * order of the list (none for a plain branch, SC-54), and the position of
+ * its fact; or, when none applies, the value of every leaf of every branch,
+ * read in the same step or in a second one, as the technology allows: for a
+ * branch over a list its own leaves, then those of each element's branches,
+ * element by element, branch by branch.
  */
 export type Execution =
   | AlreadyRecorded
-  | { readonly outcome: 'applied'; readonly branch: number; readonly position: position }
+  | {
+      readonly outcome: 'applied'
+      readonly branch: number
+      readonly elements: readonly number[]
+      readonly position: position
+    }
   | { readonly outcome: 'rejected'; readonly leaves: readonly (readonly boolean[])[] }
 
 /**
  * The execution of a planned command, in one consistent step of the adapter
  * (DOM-9): the fact the operation recorded, if any, read first; else the
- * first branch whose condition holds writes; nothing writes otherwise. The
+ * first branch that holds writes (over a list, its condition and a branch
+ * of the transition on every element, SC-54); nothing writes otherwise. The
  * step is isolated from every other: run at the same time as others, the
  * outcomes are those of some serial order (TST-5). A step the technology
  * aborts for a conflict (a serializable transaction, the unique key of an
@@ -2353,8 +2435,42 @@ type LeavesOfUseCase<use_case> = use_case extends {
   : never
 
 /**
+ * A part a branch composed, as a leaf reads it (SC-54): the branch of the
+ * transition applied, by name, and its fact's payload, an ADT by branch, as
+ * a command's outcome.
+ */
+export type ComposedPart<transition> = {
+  [branch in keyof OutcomesOf<transition> & string]: {
+    readonly branch: branch
+    readonly fact: z.output<OutcomesOf<transition>[branch][1]>
+  }
+}[keyof OutcomesOf<transition> & string]
+
+/**
+ * The parts a branch composed, under the names of its composition (SC-10,
+ * SC-54): a transition's part, or, for a transition on a list, one part per
+ * element, in the order of the list; nothing for a branch that composes
+ * none. Luca's screen reads which lines of his short sheet went in and
+ * which were left.
+ */
+export type ComposedParts<outcome> = outcome extends readonly [
+  Condition,
+  Component,
+  Entries,
+  Composition<infer transitions>,
+]
+  ? {
+      readonly [name in keyof transitions]: transitions[name] extends Each<infer transition>
+        ? readonly ComposedPart<transition>[]
+        : ComposedPart<transitions[name]>
+    }
+  : Readonly<Record<string, never>>
+
+/**
  * The projection of the invoked use case's outcome into the events of the
- * use case over it (D45): one function per branch, from its fact's payload,
+ * use case over it (D45): one function per branch, from its fact's payload
+ * and the parts its branch composed, by name (SC-54; A, 18 Nov 2026 (6):
+ * a second parameter, which a projection that does not need it leaves out),
  * and one for the rejection, from its failures. Exhaustive, as a match over
  * an ADT: a new branch below does not compile above. What never leaves the
  * node (the fact's resources, attribution, versions, PER-18) is never given
@@ -2369,6 +2485,7 @@ export type Projection<
 > = {
   readonly [branch in Exclude<keyof outcomes, 'rejected'>]: (
     fact: z.output<outcomes[branch][1]>,
+    composed: ComposedParts<outcomes[branch]>,
   ) => EventOf<events>
 } & {
   readonly rejected: (

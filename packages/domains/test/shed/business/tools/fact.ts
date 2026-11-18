@@ -118,3 +118,14 @@ export const the_sheet_has_been_loaded = fact({
     loaded_sheet: value.loaded_sheet.pick({ id: true, progress: true }),
   }),
 })
+
+/**
+ * The desk has loaded a short sheet in one go (D113, SC-54): the sheet,
+ * filed complete at once, beside the sheets it walks line by line. Its lines
+ * are the fact's other parts, one per line, the tool added or the line left.
+ */
+export const a_sheet_has_been_loaded_at_once = fact({
+  payload: z.strictObject({
+    loaded_sheet: value.loaded_sheet,
+  }),
+})

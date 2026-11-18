@@ -30,4 +30,7 @@ export const registry = {
   'persona/keeper/usecase/the_loans_of_the_month_input': usecase.the_loans_of_the_month_input,
   'persona/keeper/usecase/load_tools_from_a_sheet': usecase.load_tools_from_a_sheet,
   'persona/keeper/usecase/load_tools_from_a_sheet_input': usecase.load_tools_from_a_sheet_input,
+  'persona/keeper/usecase/load_tools_from_a_short_sheet': usecase.load_tools_from_a_short_sheet,
+  'persona/keeper/usecase/load_tools_from_a_short_sheet_input':
+    usecase.load_tools_from_a_short_sheet_input,
 } satisfies wlib.Registry

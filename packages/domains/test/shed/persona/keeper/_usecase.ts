@@ -90,3 +90,23 @@ export const load_tools_from_a_sheet = usecase.load_tools_from_a_sheet
  */
 export const load_tools_from_a_sheet_input = usecase.load_tools_from_a_sheet.input
 export type load_tools_from_a_sheet_input = z.output<typeof load_tools_from_a_sheet_input>
+
+/**
+ * Luca loads a short sheet in one go (SC-54): Paolo gives the shed the
+ * twelve tools of his garage, on a sheet his screen sends as it is, and
+ * reads at once what went in and what was left, from the parts of the one
+ * fact (D113).
+ *
+ * @see {@link usecase.load_tools_from_a_short_sheet}
+ */
+export const load_tools_from_a_short_sheet = usecase.load_tools_from_a_short_sheet
+
+/**
+ * The input of `load_tools_from_a_short_sheet`, declared inline.
+ *
+ * @see {@link usecase.load_tools_from_a_short_sheet}
+ */
+export const load_tools_from_a_short_sheet_input = usecase.load_tools_from_a_short_sheet.input
+export type load_tools_from_a_short_sheet_input = z.output<
+  typeof load_tools_from_a_short_sheet_input
+>

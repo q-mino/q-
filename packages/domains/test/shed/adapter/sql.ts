@@ -19,6 +19,7 @@ import {
   retire_a_tool,
   send_a_tool_to_repair,
   load_the_tools_of_a_sheet,
+  load_the_tools_of_a_short_sheet,
   continue_the_loading_of_a_sheet,
   the_catalogue,
 } from '../business/tools/_usecase.ts'
@@ -287,6 +288,9 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet: s }) => [
     sql`update loading_sheets set stage = ${s.progress.stage}, cursor = null, end_date = ${s.progress.end_date} where id = ${s.id}`,
   ],
+  'business/tools/fact/a_sheet_has_been_loaded_at_once': ({ loaded_sheet: s }) => [
+    sql`insert into loading_sheets (id, start_date, stage, end_date) values (${s.id}, ${s.start_date}, ${s.progress.stage}, ${s.progress.end_date})`,
+  ],
 }
 
 const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sql[]> = {
@@ -395,11 +399,65 @@ const recorded_by =
       : undefined
   }
 
+/** Consecutive slices of the values, of the given lengths, in order. */
+const slices =
+  (lengths: readonly number[]) =>
+  (values: readonly boolean[]): readonly (readonly boolean[])[] =>
+    lengths.map((length, i) => {
+      const start = lengths.slice(0, i).reduce((sum, previous) => sum + previous, 0)
+      return values.slice(start, start + length)
+    })
+
+/** The conditions of the transition's branches, element by element (SC-54); none for a plain branch. */
+const element_conditions = (
+  branch: wlib.PlannedCommandBranch<sql, readonly sql[]>,
+): readonly (readonly sql[])[] =>
+  'elements' in branch
+    ? branch.elements.map((element) => element.map((each) => each.condition))
+    : []
+
+/** Every leaf of a branch: its own, then, over a list, each element's branches' (SC-54). */
+const leaves_of = (branch: wlib.PlannedCommandBranch<sql, readonly sql[]>): readonly sql[] => [
+  ...branch.leaves,
+  ...('elements' in branch
+    ? branch.elements.flatMap((element) => element.flatMap((each) => each.leaves))
+    : []),
+]
+
+/** A branch as read: whether it holds, the branch each element applies (-1 where none), its leaves. */
+interface Evaluated {
+  readonly holds: boolean
+  readonly elements: readonly number[]
+  readonly leaves: readonly boolean[]
+}
+
+/**
+ * A branch's values, read in one statement as its condition, each
+ * element's branches' conditions, then its leaves: it holds when its
+ * condition does and every element has a branch that holds, the first
+ * (SC-54, D113.1).
+ */
+const evaluated =
+  (conditions: readonly (readonly sql[])[]) =>
+  (values: readonly boolean[]): Evaluated => {
+    const [condition, ...rest] = values
+    const count = conditions.reduce((sum, element) => sum + element.length, 0)
+    const elements = slices(conditions.map((element) => element.length))(rest).map((element) =>
+      element.findIndex((value) => value),
+    )
+    return {
+      holds: condition === true && elements.every((index) => index !== -1),
+      elements,
+      leaves: rest.slice(count),
+    }
+  }
+
 /**
  * One transaction per command. The operation looked up first; then one
- * statement reads every branch's condition and every leaf: the first branch
- * that holds writes; if none does, the leaves name the failures, from the
- * same read.
+ * statement reads every branch's condition and every leaf, and, over a
+ * list, every element's branches' conditions (SC-54): the first branch that
+ * holds writes; if none does, the leaves name the failures, from the same
+ * read.
  */
 const execute =
   (database: Database): wlib.Execute<sql, readonly sql[]> =>
@@ -409,27 +467,33 @@ const execute =
       if (recorded !== undefined) {
         return recorded
       }
-      const values = await tx.booleans([
-        ...plan.branches.map((branch) => branch.condition),
-        ...plan.branches.flatMap((branch) => branch.leaves),
+      const reads = plan.branches.map((branch) => ({
+        branch,
+        conditions: element_conditions(branch),
+        leaves: leaves_of(branch),
+      }))
+      const statement = reads.map((read) => [
+        read.branch.condition,
+        ...read.conditions.flat(),
+        ...read.leaves,
       ])
-      const applied = plan.branches.findIndex((_, i) => values[i] === true)
-      const branch = plan.branches[applied]
-      if (branch !== undefined) {
-        await record(tx)(branch)
-        return { outcome: 'applied', branch: applied, position: await tx.position() }
-      }
-      const starts = plan.branches.map((_, i) =>
-        plan.branches
-          .slice(0, i)
-          .reduce((start, previous) => start + previous.leaves.length, plan.branches.length),
+      const values = slices(statement.map((fragments) => fragments.length))(
+        await tx.booleans(statement.flat()),
       )
-      return {
-        outcome: 'rejected',
-        leaves: plan.branches.map((planned, i) =>
-          planned.leaves.map((_, j) => values[(starts[i] ?? 0) + j] === true),
-        ),
+      const branches = reads.map((read, i) => evaluated(read.conditions)(values[i] ?? []))
+      const applied = branches.findIndex((branch) => branch.holds)
+      const branch = plan.branches[applied]
+      const chosen = branches[applied]?.elements ?? []
+      if (branch !== undefined) {
+        await record(tx)('elements' in branch ? branch.applies(chosen) : branch)
+        return {
+          outcome: 'applied',
+          branch: applied,
+          elements: chosen,
+          position: await tx.position(),
+        }
       }
+      return { outcome: 'rejected', leaves: branches.map((evaluation) => evaluation.leaves) }
     })
 
 /** The statement of a planned query: the fields of the candidates the selection keeps, in the order. */
@@ -754,6 +818,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         close_a_repair,
         rename_a_tool,
         load_the_tools_of_a_sheet,
+        load_the_tools_of_a_short_sheet,
         continue_the_loading_of_a_sheet,
       },
     })({

@@ -209,4 +209,7 @@ export const tools_writes: wlib.FactWrites<
   'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue': () => (state) => state,
   'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet }) =>
     with_the_sheet_progress(loaded_sheet),
+  'business/tools/fact/a_sheet_has_been_loaded_at_once':
+    ({ loaded_sheet }) =>
+    (state) => ({ ...state, sheets: new Map(state.sheets).set(loaded_sheet.id, loaded_sheet) }),
 }

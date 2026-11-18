@@ -31,3 +31,11 @@ export const the_line_of_the_sheet = (line: {
   readonly sheet_id: id.sheet_id
   readonly number: number
 }): id.line_id => id.line_id.parse(JSON.stringify([line.sheet_id, line.number]))
+
+/**
+ * No two lines of a short sheet name one tool (SC-54): loaded in one go,
+ * every line reads the catalogue as it was before the sheet, so a repeated
+ * id would be added twice (D113, the lines of a list without repeats).
+ */
+export const each_tool_is_on_one_line = (lines: readonly { readonly id: id.tool_id }[]): boolean =>
+  new Set(lines.map((line) => line.id)).size === lines.length

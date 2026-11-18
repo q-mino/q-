@@ -133,3 +133,14 @@ export type the_tool_of_the_line_was_already_in_the_catalogue = z.output<
 export const the_sheet_has_been_loaded =
   fact.the_sheet_has_been_loaded.brand<'business/tools/fact/the_sheet_has_been_loaded'>()
 export type the_sheet_has_been_loaded = z.output<typeof the_sheet_has_been_loaded>
+
+/**
+ * The desk has loaded a short sheet in one go (D113, SC-54): the sheet,
+ * filed complete at once, beside the sheets it walks line by line. Its lines
+ * are the fact's other parts, one per line, the tool added or the line left.
+ *
+ * @see {@link fact.a_sheet_has_been_loaded_at_once}
+ */
+export const a_sheet_has_been_loaded_at_once =
+  fact.a_sheet_has_been_loaded_at_once.brand<'business/tools/fact/a_sheet_has_been_loaded_at_once'>()
+export type a_sheet_has_been_loaded_at_once = z.output<typeof a_sheet_has_been_loaded_at_once>

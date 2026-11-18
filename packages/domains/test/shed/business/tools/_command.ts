@@ -223,3 +223,25 @@ export const continue_the_loading_of_a_sheet_input = command.continue_the_loadin
 export type continue_the_loading_of_a_sheet_input = z.output<
   typeof continue_the_loading_of_a_sheet_input
 >
+
+/**
+ * Luca hands the desk a short sheet, and the desk loads it in one go (SC-54):
+ * Paolo gives the shed the twelve tools of his garage, and Luca's screen
+ * reads at once what went in and what was left. The second definition of a
+ * list of named instances (DOM-20): atomic, one fact, a part per line (D113),
+ * beside the sheet walked line by line (`load_the_tools_of_a_sheet`), the
+ * author's choice.
+ *
+ * @see {@link command.load_the_tools_of_a_short_sheet}
+ */
+export const load_the_tools_of_a_short_sheet = command.load_the_tools_of_a_short_sheet
+
+/**
+ * The input of `load_the_tools_of_a_short_sheet`, declared inline.
+ *
+ * @see {@link command.load_the_tools_of_a_short_sheet}
+ */
+export const load_the_tools_of_a_short_sheet_input = command.load_the_tools_of_a_short_sheet.input
+export type load_the_tools_of_a_short_sheet_input = z.output<
+  typeof load_the_tools_of_a_short_sheet_input
+>

@@ -59,6 +59,7 @@ export const registry = {
   'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue':
     fact.the_tool_of_the_line_was_already_in_the_catalogue,
   'business/tools/fact/the_sheet_has_been_loaded': fact.the_sheet_has_been_loaded,
+  'business/tools/fact/a_sheet_has_been_loaded_at_once': fact.a_sheet_has_been_loaded_at_once,
   'business/tools/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/tools/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/tools/predicate/the_tool_is_retired': predicate.the_tool_is_retired,
@@ -93,6 +94,9 @@ export const registry = {
   'business/tools/command/continue_the_loading_of_a_sheet': command.continue_the_loading_of_a_sheet,
   'business/tools/command/continue_the_loading_of_a_sheet_input':
     command.continue_the_loading_of_a_sheet_input,
+  'business/tools/command/load_the_tools_of_a_short_sheet': command.load_the_tools_of_a_short_sheet,
+  'business/tools/command/load_the_tools_of_a_short_sheet_input':
+    command.load_the_tools_of_a_short_sheet_input,
   'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
     tool_selection.the_tool_is_in_one_of_these_categories,
@@ -109,6 +113,7 @@ export const registry = {
   'business/tools/usecase/close_a_repair': usecase.close_a_repair,
   'business/tools/usecase/rename_a_tool': usecase.rename_a_tool,
   'business/tools/usecase/load_the_tools_of_a_sheet': usecase.load_the_tools_of_a_sheet,
+  'business/tools/usecase/load_the_tools_of_a_short_sheet': usecase.load_the_tools_of_a_short_sheet,
   'business/tools/usecase/continue_the_loading_of_a_sheet': usecase.continue_the_loading_of_a_sheet,
   'business/tools/usecase/the_catalogue': usecase.the_catalogue,
   'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up':

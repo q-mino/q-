@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import {
   command,
+  composes,
   cursor_step,
+  each,
   identity_of,
   AND,
   NOT,
@@ -377,5 +379,58 @@ export const continue_the_loading_of_a_sheet = cursor_step({
     completes: {
       loaded_sheet: { id: sheet.id, progress: { stage: 'complete', end_date: context.now } },
     },
+  }),
+})
+
+/**
+ * Luca hands the desk a short sheet, and the desk loads it in one go (SC-54):
+ * Paolo gives the shed the twelve tools of his garage, and Luca's screen
+ * reads at once what went in and what was left. The second definition of a
+ * list of named instances (DOM-20): atomic, one fact, a part per line (D113),
+ * beside the sheet walked line by line (`load_the_tools_of_a_sheet`), the
+ * author's choice. Each line applies its own branch of
+ * `add_a_tool_from_a_line`, on the catalogue as it was before the sheet: a
+ * line whose id is taken is left (D95), and never stops the others. So no
+ * two lines may name one tool, which the schema refuses (`invalid_request`,
+ * DOM-21) before the desk reads anything: on Luca's sheet line 9 repeats the
+ * id of line 3, and he corrects it. A short sheet, so that one transaction
+ * and one fact hold it, and the catalogue is held for a moment only: fifty
+ * lines at most; a longer one goes line by line.
+ */
+export const load_the_tools_of_a_short_sheet = command({
+  input: z.strictObject({
+    lines: z.array(value.tool_on_a_line).min(1).max(50).refine(dsl.each_tool_is_on_one_line),
+  }),
+  outcomes: {
+    the_sheet_is_new_so_it_is_loaded_at_once: [
+      the_sheet_is_new,
+      fact.a_sheet_has_been_loaded_at_once,
+      {},
+      composes({ its_lines_are_loaded: each(add_a_tool_from_a_line) }),
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_sheet_is_new_so_it_is_loaded_at_once: [
+      { sheet_id: identity_of(id.sheet_id)(context.operation) },
+      {
+        loaded_sheet: {
+          id: identity_of(id.sheet_id)(context.operation),
+          start_date: context.now,
+          progress: { stage: 'complete', end_date: context.now },
+        },
+      },
+      {},
+      {
+        its_lines_are_loaded: input.lines.map((tool, index) => ({
+          sheet_id: identity_of(id.sheet_id)(context.operation),
+          line_id: dsl.the_line_of_the_sheet({
+            sheet_id: identity_of(id.sheet_id)(context.operation),
+            number: index + 1,
+          }),
+          number: index + 1,
+          tool,
+        })),
+      },
+    ],
   }),
 })

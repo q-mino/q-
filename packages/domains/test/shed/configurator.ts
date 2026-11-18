@@ -54,6 +54,7 @@ import {
   send_a_tool_to_repair,
   the_loans_of_the_month,
   load_tools_from_a_sheet,
+  load_tools_from_a_short_sheet,
 } from './persona/keeper/_usecase.ts'
 import { registry as workshop_registry } from './persona/workshop/_registry.ts'
 import { majors as workshop_majors } from './persona/workshop/_majors.ts'
@@ -120,6 +121,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         put_a_repaired_tool_back_in_service,
         the_loans_of_the_month,
         load_tools_from_a_sheet,
+        load_tools_from_a_short_sheet,
       },
     })({ invoked, log: adapter.log }),
     // Rossi's workshop, an actor from outside (D88.1, D91.1): its interface
