@@ -2487,7 +2487,11 @@ export interface WaitIsOver {
  * projection into its events, by the name in their path, exhaustive; how
  * long it waits at most (`at_most`, in milliseconds), after which
  * `the_wait_is_over`. Marta returns the drill damaged; her screen stays
- * open until `tools` takes it into the workshop.
+ * open until `tools` takes it into the workshop. A fact it follows may be a
+ * part of a fact (D111), as one a read use case names (DOM-17): each part of
+ * the chain under a followed name is projected, in the order of the log
+ * (SC-44: Luca's screen follows the loading of his sheet, a step's fact
+ * holding the line's part beside the step's).
  */
 export interface Follows<events extends Events, followed extends Component> {
   readonly facts: readonly followed[]

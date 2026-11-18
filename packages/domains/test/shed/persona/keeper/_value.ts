@@ -31,6 +31,14 @@ export const tool_name = value.tool_name
 export type tool_name = z.output<typeof tool_name>
 
 /**
+ * The shelf a tool goes on, as the keeper sorts the shed.
+ *
+ * @see {@link value.category}
+ */
+export const category = value.category
+export type category = z.output<typeof category>
+
+/**
  * How many times a tool went out.
  *
  * @see {@link value.number_of_loans}

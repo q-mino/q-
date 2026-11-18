@@ -44,3 +44,12 @@ export type the_tool_is_under_repair = z.output<typeof the_tool_is_under_repair>
 export const the_tool_is_under_this_repair =
   predicate.the_tool_is_under_this_repair.brand<'business/tools/predicate/the_tool_is_under_this_repair'>()
 export type the_tool_is_under_this_repair = z.output<typeof the_tool_is_under_this_repair>
+
+/**
+ * A sheet of tools with this id is in the desk's hands, being loaded or loaded (SC-44).
+ *
+ * @see {@link predicate.a_sheet_has_this_id}
+ */
+export const a_sheet_has_this_id =
+  predicate.a_sheet_has_this_id.brand<'business/tools/predicate/a_sheet_has_this_id'>()
+export type a_sheet_has_this_id = z.output<typeof a_sheet_has_this_id>

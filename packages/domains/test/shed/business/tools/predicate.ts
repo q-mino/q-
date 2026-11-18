@@ -39,3 +39,10 @@ export const the_tool_is_under_this_repair = predicate({
     repair_id: id.repair_id,
   }),
 })
+
+/** A sheet of tools with this id is in the desk's hands, being loaded or loaded (SC-44). */
+export const a_sheet_has_this_id = predicate({
+  parameters: z.strictObject({
+    sheet_id: id.sheet_id,
+  }),
+})

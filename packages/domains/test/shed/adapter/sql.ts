@@ -10,6 +10,7 @@ import { registry as loans_registry } from '../business/loans/_registry.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'
 import type * as tools_predicate from '../business/tools/_predicate.ts'
 import type * as tool_selections from '../business/tools/_tool_selection.ts'
+import type * as line_selections from '../business/tools/_line_selection.ts'
 import {
   add_a_tool,
   close_a_repair,
@@ -17,6 +18,8 @@ import {
   rename_a_tool,
   retire_a_tool,
   send_a_tool_to_repair,
+  load_the_tools_of_a_sheet,
+  continue_the_loading_of_a_sheet,
   the_catalogue,
 } from '../business/tools/_usecase.ts'
 import type * as loans_fact from '../business/loans/_fact.ts'
@@ -118,6 +121,8 @@ const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_pr
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair')`,
   'business/tools/predicate/the_tool_is_under_this_repair': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair' and repair_id = ${p.repair_id})`,
+  'business/tools/predicate/a_sheet_has_this_id': (p) =>
+    sql`exists (select 1 from loading_sheets where id = ${p.sheet_id})`,
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
@@ -179,6 +184,15 @@ const tool_selection_fragments: wlib.PredicateFragments<
   'business/tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) =>
     sql`candidate.category in (${p.categories})`,
+}
+
+/** The lines of the sheets of tools the desk loads (SC-44), a line a row. */
+const line_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof line_selections>,
+  sql
+> = {
+  'business/tools/selection/line/the_line_is_on_the_sheet': (p) =>
+    sql`candidate.sheet_id = ${p.sheet_id}`,
 }
 
 const loan_selection_fragments: wlib.PredicateFragments<
@@ -258,6 +272,20 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   ],
   'business/tools/fact/a_tool_has_been_renamed': ({ renamed_tool: t }) => [
     sql`update tools set name = ${t.name} where id = ${t.id}`,
+  ],
+  'business/tools/fact/the_loading_of_a_sheet_has_begun': ({ new_sheet: s, lines }) => [
+    sql`insert into loading_sheets (id, start_date, stage) values (${s.id}, ${s.start_date}, ${s.progress.stage})`,
+    ...lines.map(
+      (l) =>
+        sql`insert into sheet_lines (id, sheet_id, number, tool_id, name, category, notes) values (${l.id}, ${l.sheet_id}, ${l.number}, ${l.tool.id}, ${l.tool.name}, ${l.tool.category}, ${l.tool.notes ?? null})`,
+    ),
+  ],
+  'business/tools/fact/the_loading_of_the_sheet_has_advanced': (s) => [
+    sql`update loading_sheets set cursor = ${s.cursor} where id = ${s.sheet_id}`,
+  ],
+  'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue': () => [],
+  'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet: s }) => [
+    sql`update loading_sheets set stage = ${s.progress.stage}, cursor = null, end_date = ${s.progress.end_date} where id = ${s.id}`,
   ],
 }
 
@@ -649,6 +677,8 @@ export const stored_versions =
 /** The tables the facts write, which a rebuild empties first. */
 const the_tables = [
   'tools',
+  'loading_sheets',
+  'sheet_lines',
   'loans',
   'reservations',
   'cancellations',
@@ -723,11 +753,33 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         put_a_repaired_tool_back_in_service,
         close_a_repair,
         rename_a_tool,
+        load_the_tools_of_a_sheet,
+        continue_the_loading_of_a_sheet,
       },
     })({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(database),
+      steps: {
+        selection: { ...algebra(line_selection_fragments), after },
+        sources: {
+          // The sheet by its id, nested as its value (the library parses it:
+          // none, or loaded, is the step's rejection); the lines it walks,
+          // their tool as the line writes it (SC-44).
+          continue_the_loading_of_a_sheet: {
+            reads: (input) =>
+              sql`select id, start_date, json_strip_nulls(json_build_object('stage', stage, 'cursor', cursor, 'end_date', end_date)) as progress from loading_sheets where id = ${input.sheet_id}`,
+            from: sql`sheet_lines as candidate`,
+            fields: {
+              id: sql`candidate.id`,
+              sheet_id: sql`candidate.sheet_id`,
+              number: sql`candidate.number`,
+              tool: sql`json_strip_nulls(json_build_object('id', candidate.tool_id, 'name', candidate.name, 'category', candidate.category, 'notes', candidate.notes))`,
+            },
+          },
+        },
+        execute: execute_step(database),
+      },
     }),
     // The catalogue: a visitor reads it in pages; a member with a valid card
     // follows it live (SC-32), composed from the fact log.

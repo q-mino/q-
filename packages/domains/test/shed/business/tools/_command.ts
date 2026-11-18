@@ -147,3 +147,79 @@ export const rename_a_tool = command.rename_a_tool
  */
 export const rename_a_tool_input = command.rename_a_tool.input
 export type rename_a_tool_input = z.output<typeof rename_a_tool_input>
+
+/**
+ * No sheet in the desk's hands has the id the desk gives this one.
+ *
+ * @see {@link command.the_sheet_is_new}
+ */
+export const the_sheet_is_new = command.the_sheet_is_new
+export type the_sheet_is_new = z.output<typeof the_sheet_is_new>
+
+/**
+ * Luca hands the desk a sheet of tools to load into the catalogue: the town
+ * library gives the shed its 200 tools in one spreadsheet (SC-44). Each line
+ * stands on its own: a line whose id is in the catalogue already is left and
+ * said, the others go in. So the sheet is a process with a cursor, one line
+ * a step (DOM-20, D97, D112): `continue_the_loading_of_a_sheet`, its lines
+ * the sheet's parts (D94.1), numbered in the order Luca gives them. A sheet
+ * has no name of its own, so `tools` derives its id from the operation
+ * (D75.8): a retry of Luca's request is the duplicate branch, the same
+ * sheet. Its opening fact carries every line, so the sheet is bounded (D97),
+ * wider than the shed's catalogue; a line the schema refuses refuses the
+ * sheet, `invalid_request`, before any line goes in (DOM-21).
+ *
+ * @see {@link command.load_the_tools_of_a_sheet}
+ */
+export const load_the_tools_of_a_sheet = command.load_the_tools_of_a_sheet
+
+/**
+ * The input of `load_the_tools_of_a_sheet`, declared inline.
+ *
+ * @see {@link command.load_the_tools_of_a_sheet}
+ */
+export const load_the_tools_of_a_sheet_input = command.load_the_tools_of_a_sheet.input
+export type load_the_tools_of_a_sheet_input = z.output<typeof load_the_tools_of_a_sheet_input>
+
+/**
+ * The desk adds the tool a line of a sheet writes, or, if its id is in the
+ * catalogue already, leaves the line (D95), which a fact says: never a line
+ * passed over in silence (D112.2), nor one that stops the sheet. A
+ * transition of the tool's life cycle (DOM-19) with no use case of its own:
+ * the loading's step composes it (D111). Luca's own `add_a_tool` keeps its
+ * one branch: on his form a taken id is refused, and he picks another.
+ *
+ * @see {@link command.add_a_tool_from_a_line}
+ */
+export const add_a_tool_from_a_line = command.add_a_tool_from_a_line
+
+/**
+ * The input of `add_a_tool_from_a_line`, declared inline.
+ *
+ * @see {@link command.add_a_tool_from_a_line}
+ */
+export const add_a_tool_from_a_line_input = command.add_a_tool_from_a_line.input
+export type add_a_tool_from_a_line_input = z.output<typeof add_a_tool_from_a_line_input>
+
+/**
+ * The desk takes the next line of the sheet and adds its tool, or leaves the
+ * line, or, none left, closes the sheet (DOM-20, D112.2): line 1, the
+ * library's rake, goes in; line 37, `drill-7`, the label of the shed's own
+ * drill, is left; after line 200 the sheet is loaded. The lines in their
+ * order on the sheet, then by id (D109); the cursor the library keeps on the
+ * sheet marks where the desk stands, so that a step delivered again is the
+ * same step (DOM-11), and one line adds one tool, once.
+ *
+ * @see {@link command.continue_the_loading_of_a_sheet}
+ */
+export const continue_the_loading_of_a_sheet = command.continue_the_loading_of_a_sheet
+
+/**
+ * The input of `continue_the_loading_of_a_sheet`, declared inline.
+ *
+ * @see {@link command.continue_the_loading_of_a_sheet}
+ */
+export const continue_the_loading_of_a_sheet_input = command.continue_the_loading_of_a_sheet.input
+export type continue_the_loading_of_a_sheet_input = z.output<
+  typeof continue_the_loading_of_a_sheet_input
+>

@@ -13,5 +13,8 @@ export const notes = z.string().max(500)
 /** The name of a tool, as the keeper reads it on the shelf. */
 export const tool_name = z.string().min(1)
 
+/** The shelf a tool goes on, as the keeper sorts the shed. */
+export const category = z.enum(['garden', 'power', 'hand', 'ladder'])
+
 /** How many times a tool went out. */
 export const number_of_loans = z.number().int().nonnegative()

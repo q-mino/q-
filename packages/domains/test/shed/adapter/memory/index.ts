@@ -30,6 +30,8 @@ import {
   rename_a_tool,
   retire_a_tool,
   send_a_tool_to_repair,
+  load_the_tools_of_a_sheet,
+  continue_the_loading_of_a_sheet,
   the_catalogue,
 } from '../../business/tools/_usecase.ts'
 import {
@@ -69,6 +71,8 @@ import {
   type LoansState,
 } from './loans.ts'
 import {
+  line_selection,
+  line_steps,
   tool_selection,
   tool_sources,
   tools_fragments,
@@ -583,11 +587,20 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         put_a_repaired_tool_back_in_service,
         close_a_repair,
         rename_a_tool,
+        load_the_tools_of_a_sheet,
+        continue_the_loading_of_a_sheet,
       },
     })({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(cell),
+      // The loading of a sheet of tools walks its lines (SC-44): one
+      // subject, its own selection.
+      steps: {
+        selection: { ...line_selection, after },
+        sources: line_steps,
+        execute: execute_step(cell),
+      },
     }),
     ...wlib.read_use_case_ports({
       registry: tools_registry,

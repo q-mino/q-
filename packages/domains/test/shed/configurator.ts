@@ -23,6 +23,7 @@ import {
   type Phones,
 } from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './business/loans/_registry.ts'
+import { registry as tools_registry } from './business/tools/_registry.ts'
 import { majors as loans_majors } from './business/loans/_majors.ts'
 import { majors as tools_majors } from './business/tools/_majors.ts'
 import {
@@ -52,6 +53,7 @@ import {
   retire_a_tool,
   send_a_tool_to_repair,
   the_loans_of_the_month,
+  load_tools_from_a_sheet,
 } from './persona/keeper/_usecase.ts'
 import { registry as workshop_registry } from './persona/workshop/_registry.ts'
 import { majors as workshop_majors } from './persona/workshop/_majors.ts'
@@ -117,6 +119,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
         the_loans_of_the_month,
+        load_tools_from_a_sheet,
       },
     })({ invoked, log: adapter.log }),
     // Rossi's workshop, an actor from outside (D88.1, D91.1): its interface
@@ -178,6 +181,20 @@ export const shed = (cell: Cell) => async (world: World) => {
       'business/loans/reaction/the_next_member_on_the_round_is_notified': {
         log: adapter.log,
         invokes: adapter.loans.continue_the_repair_notice_round,
+      },
+    })({
+      state: cell.reactions,
+      clock: world.clock,
+    }),
+    // The desk's loading of a sheet of tools moves itself on (SC-44).
+    tools_reactions: wlib.reaction_consumers({ registry: tools_registry, versions })({
+      'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.tools.continue_the_loading_of_a_sheet,
+      },
+      'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.tools.continue_the_loading_of_a_sheet,
       },
     })({
       state: cell.reactions,

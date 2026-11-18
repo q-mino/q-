@@ -36,7 +36,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
   1. formats, commands and facts: SC-12, SC-10, SC-13, SC-11;
   2. reads and streams: SC-19..22;
   3. trees and personas: SC-31, SC-33, SC-34, SC-32;
-  4. effects, reactions, processes: SC-42, SC-43, SC-44;
+  4. effects, reactions, processes: SC-42, SC-43, SC-44, SC-53 (found at SC-42, entered by Alessandro on 18 Nov 2026);
   5. the generator's output for a delegated leaf (Shed's README, § Left by Shed); the closure: README, catalogue and this plan read again.
 - The catalogue is closed at the start of the step: a scenario found along the way is added to it as open, and enters the step only if Alessandro decides; otherwise it waits for the library to be built.
 - Checks: each scenario's story in Shed's README, with the part that covers it; in the catalogue no scenario in scope left open.

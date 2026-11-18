@@ -109,3 +109,75 @@ export const the_loans_of_the_month = read_use_case_over({
   }),
   projection: (entry) => ({ tool_id: entry.tool_id, name: entry.tool_name, loans: entry.loans }),
 })
+
+/**
+ * Luca loads a sheet of tools into the catalogue (SC-44): the town library
+ * gives the shed its 200 tools in one spreadsheet, a line a tool, which his
+ * screen sends as it is. The desk goes down the lines one at a time, and his
+ * screen follows it (D58.2): a tool in the catalogue, a line left because
+ * its id is taken, until the sheet is loaded; or its wait is over, and he
+ * follows it again from where it was (D72.8). A line the schema refuses
+ * refuses the sheet, before any line goes in.
+ */
+export const load_tools_from_a_sheet = command_use_case_over({
+  use_case: tools.usecase.load_the_tools_of_a_sheet,
+  input: z.strictObject({
+    lines: z
+      .array(
+        z.strictObject({
+          tool_id: tools.id.tool_id,
+          name: value.tool_name,
+          category: value.category,
+          notes: value.notes.optional(),
+        }),
+      )
+      .min(1)
+      .max(5000),
+  }),
+  creator: () => (input) => ({
+    lines: input.lines.map((line) => ({
+      id: line.tool_id,
+      name: line.name,
+      category: line.category,
+      notes: line.notes,
+    })),
+  }),
+  events: {
+    the_sheet_is_being_loaded: z.strictObject({ lines: z.number().int().min(1) }),
+    the_tool_is_in_the_catalogue: z.strictObject({ tool_id: tools.id.tool_id }),
+    the_id_of_the_line_is_taken: z.strictObject({
+      line: z.number().int().min(1),
+      tool_id: tools.id.tool_id,
+    }),
+    the_sheet_is_loaded: z.strictObject({}),
+    /** No branch but the opening: the sheet's id is new to every operation. */
+    the_sheet_cannot_be_loaded: z.strictObject({}),
+  },
+  ends: ['the_sheet_is_loaded', 'the_sheet_cannot_be_loaded'],
+  projection: {
+    the_sheet_is_new_so_its_loading_begins: (fact) => ({
+      event: 'the_sheet_is_being_loaded',
+      payload: { lines: fact.lines.length },
+    }),
+    rejected: () => ({ event: 'the_sheet_cannot_be_loaded', payload: {} }),
+  },
+  follows: {
+    facts: [
+      tools.fact.a_tool_has_been_added,
+      tools.fact.the_tool_of_the_line_was_already_in_the_catalogue,
+      tools.fact.the_sheet_has_been_loaded,
+    ],
+    projection: {
+      a_tool_has_been_added: (fact) => ({
+        event: 'the_tool_is_in_the_catalogue',
+        payload: { tool_id: fact.added_tool.id },
+      }),
+      the_tool_of_the_line_was_already_in_the_catalogue: (fact) => ({
+        event: 'the_id_of_the_line_is_taken',
+        payload: { line: fact.number, tool_id: fact.tool_id },
+      }),
+      the_sheet_has_been_loaded: () => ({ event: 'the_sheet_is_loaded', payload: {} }),
+    },
+    at_most: 600_000,
+  },
+})

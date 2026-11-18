@@ -86,3 +86,50 @@ export type a_tool_has_been_repaired = z.output<typeof a_tool_has_been_repaired>
 export const a_tool_has_been_renamed =
   fact.a_tool_has_been_renamed.brand<'business/tools/fact/a_tool_has_been_renamed'>()
 export type a_tool_has_been_renamed = z.output<typeof a_tool_has_been_renamed>
+
+/**
+ * The desk has begun loading a sheet of tools (D97, D112, SC-44): the whole
+ * new sheet and its lines, as Luca handed them over. Its steps add one tool
+ * a line.
+ *
+ * @see {@link fact.the_loading_of_a_sheet_has_begun}
+ */
+export const the_loading_of_a_sheet_has_begun =
+  fact.the_loading_of_a_sheet_has_begun.brand<'business/tools/fact/the_loading_of_a_sheet_has_begun'>()
+export type the_loading_of_a_sheet_has_begun = z.output<typeof the_loading_of_a_sheet_has_begun>
+
+/**
+ * The desk has gone one line further on the sheet: the step's part (DOM-20),
+ * beside the line's own, the tool added or the line left. The cursor is the
+ * library's, which writes it.
+ *
+ * @see {@link fact.the_loading_of_the_sheet_has_advanced}
+ */
+export const the_loading_of_the_sheet_has_advanced =
+  fact.the_loading_of_the_sheet_has_advanced.brand<'business/tools/fact/the_loading_of_the_sheet_has_advanced'>()
+export type the_loading_of_the_sheet_has_advanced = z.output<
+  typeof the_loading_of_the_sheet_has_advanced
+>
+
+/**
+ * Nothing to add (D95): the id the line gives its tool is in the catalogue
+ * already, a tool of the shed or one an earlier line of the sheet added. The
+ * line is left, and the catalogue does not change: line 37 names `drill-7`,
+ * the label of the shed's own drill.
+ *
+ * @see {@link fact.the_tool_of_the_line_was_already_in_the_catalogue}
+ */
+export const the_tool_of_the_line_was_already_in_the_catalogue =
+  fact.the_tool_of_the_line_was_already_in_the_catalogue.brand<'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue'>()
+export type the_tool_of_the_line_was_already_in_the_catalogue = z.output<
+  typeof the_tool_of_the_line_was_already_in_the_catalogue
+>
+
+/**
+ * No line of the sheet is left to go down: the desk closes it (D112.2).
+ *
+ * @see {@link fact.the_sheet_has_been_loaded}
+ */
+export const the_sheet_has_been_loaded =
+  fact.the_sheet_has_been_loaded.brand<'business/tools/fact/the_sheet_has_been_loaded'>()
+export type the_sheet_has_been_loaded = z.output<typeof the_sheet_has_been_loaded>
