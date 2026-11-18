@@ -25,6 +25,7 @@ Lowercase, as written; read with a capital.
 | `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                   |
 | `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node` |
 | `telefono` · `relay` · `memoria`                  | `phone` · `relay` · `memory`                         |
+| `generatore`                                      | `generator` (the compilation of the domains, DOM-25) |
 
 ## Domain terms
 
