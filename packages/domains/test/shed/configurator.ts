@@ -1,7 +1,8 @@
 // A sketch of the configurator of the shed (§ 7 of architecture.md): it wires
-// the trees of the personas over the ports of the in-memory oracle. The tree
-// of a persona enters from the node of the persona base, which takes the
-// `Caller` (PER-4, PER-6); its leaves, command and read, invoke the use cases
+// the trees of the personas over the ports of the in-memory oracle, those of
+// the people of the shed and that of Rossi's workshop, a system outside it
+// (SC-34). The tree of a persona enters from the node of the persona base,
+// which takes the `Caller` (PER-4, PER-6); its leaves, command and read, invoke the use cases
 // of `tools` and `loans`, its nodes the lookups of `accounts`, found by path
 // (`Invoked`). The effect executor of `loans` (DOM-14) delivers its effects
 // to the world the oracle fakes, and brings the eve of a due date, and the
@@ -48,6 +49,9 @@ import {
   send_a_tool_to_repair,
   the_loans_of_the_month,
 } from './persona/keeper/_usecase.ts'
+import { registry as workshop_registry } from './persona/workshop/_registry.ts'
+import { majors as workshop_majors } from './persona/workshop/_majors.ts'
+import { close_a_job } from './persona/workshop/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { majors as visitor_majors } from './persona/visitor/_majors.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
@@ -108,6 +112,17 @@ export const shed = (cell: Cell) => async (world: World) => {
         put_a_repaired_tool_back_in_service,
         the_loans_of_the_month,
       },
+    })({ invoked, log: adapter.log }),
+    // Rossi's workshop, an actor from outside (D88.1, D91.1): its interface
+    // verifies the signature of its system's key and gives the `Caller`
+    // (PER-4), and the scope of its operations, whose ids its notifications
+    // carry (SC-34).
+    workshop: wlib.tree_ports({
+      registry: { ...persona_registry, ...workshop_registry },
+      versions,
+      majors: workshop_majors,
+      top: persona,
+      use_cases: { close_a_job },
     })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },

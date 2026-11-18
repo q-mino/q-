@@ -177,6 +177,47 @@ export const put_a_repaired_tool_back_in_service = command({
   }),
 })
 
+/** The requested tool is in the catalogue and in the workshop for the requested stay (SC-34). */
+export const the_tool_is_in_the_workshop_for_this_repair = AND({
+  a_tool_has_the_requested_id: predicate.a_tool_has_this_id,
+  the_requested_tool_is_under_the_requested_repair: predicate.the_tool_is_under_this_repair,
+})
+
+/**
+ * The workshop closes a stay in repair (SC-34): Rossi's van brought the
+ * drill back on the shelf, and his system says so, naming the stay it closes
+ * (RP1, from the job ticket Luca handed over with the drill). The stay, not
+ * the tool alone: a notice that comes late, after Luca put the drill back by
+ * hand and Marta broke it again (RP2), finds the drill in another stay and
+ * changes nothing, so a retry from outside is safe by the business, not only
+ * by the operation's identity (D91.2). Luca, who holds the drill, puts it
+ * back by the tool alone.
+ */
+export const close_a_repair = command({
+  input: z.strictObject({
+    tool_id: id.tool_id,
+    repair_id: id.repair_id,
+  }),
+  outcomes: {
+    the_tool_is_under_this_repair_so_it_is_back_in_service: [
+      the_tool_is_in_the_workshop_for_this_repair,
+      fact.a_tool_has_been_repaired,
+    ],
+  },
+  creator: () => (input) => ({
+    the_tool_is_under_this_repair_so_it_is_back_in_service: [
+      {
+        a_tool_has_the_requested_id: { tool_id: input.tool_id },
+        the_requested_tool_is_under_the_requested_repair: {
+          tool_id: input.tool_id,
+          repair_id: input.repair_id,
+        },
+      },
+      { repaired_tool: { id: input.tool_id, status: 'inService' } },
+    ],
+  }),
+})
+
 /**
  * Luca gives the drill a name the members recognise on the shelf: any tool
  * of the catalogue, retired ones too, since their name stays in the history

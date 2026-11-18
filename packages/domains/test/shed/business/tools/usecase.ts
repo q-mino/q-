@@ -22,6 +22,9 @@ export const put_a_repaired_tool_back_in_service = command_use_case({
   command: command.put_a_repaired_tool_back_in_service,
 })
 
+/** The workshop closes a stay in repair: Rossi's system, the drill back on the shelf (SC-34). */
+export const close_a_repair = command_use_case({ command: command.close_a_repair })
+
 /** The keeper renames a tool: the members read the new name on their rows (SC-19). */
 export const rename_a_tool = command_use_case({ command: command.rename_a_tool })
 

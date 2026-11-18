@@ -19,11 +19,13 @@ import { registry as loans_registry } from '../../business/loans/_registry.ts'
 import { registry as accounts_registry } from '../../auth/accounts/_registry.ts'
 import {
   the_hats_of_an_account,
+  the_hats_of_a_key,
   the_member_card_of_an_account,
 } from '../../auth/accounts/_lookup.ts'
 import { accounts_lookups, type AccountsState } from './accounts.ts'
 import {
   add_a_tool,
+  close_a_repair,
   put_a_repaired_tool_back_in_service,
   rename_a_tool,
   retire_a_tool,
@@ -573,6 +575,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         retire_a_tool,
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
+        close_a_repair,
         rename_a_tool,
       },
     })({
@@ -663,6 +666,6 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
   },
   accounts: wlib.lookup_ports({
     registry: accounts_registry,
-    lookups: { the_hats_of_an_account, the_member_card_of_an_account },
+    lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
   })(accounts_lookups(cell.get)),
 })

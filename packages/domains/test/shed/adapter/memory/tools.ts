@@ -13,6 +13,7 @@ import {
   the_tool_is_in_the_catalogue,
   the_tool_is_retired,
   the_tool_is_under_repair,
+  the_tool_is_under_this_repair,
 } from '../../business/tools/_dsl.ts'
 import type { the_catalogue } from '../../business/tools/_query.ts'
 import { selection_operators, type Field, type Selection, type Source } from './fragments.ts'
@@ -34,6 +35,8 @@ export const tools_fragments: wlib.PredicateFragments<
     the_tool_is_retired(state.tools.get(p.tool_id)),
   'business/tools/predicate/the_tool_is_under_repair': (p) => (state) =>
     the_tool_is_under_repair(state.tools.get(p.tool_id)),
+  'business/tools/predicate/the_tool_is_under_this_repair': (p) => (state) =>
+    the_tool_is_under_this_repair(state.tools.get(p.tool_id))(p.repair_id),
 }
 
 // The reads of the subject `business/tools/selection/tool`: a tool of the catalogue.

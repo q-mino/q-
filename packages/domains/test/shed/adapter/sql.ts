@@ -12,6 +12,7 @@ import type * as tools_predicate from '../business/tools/_predicate.ts'
 import type * as tool_selections from '../business/tools/_tool_selection.ts'
 import {
   add_a_tool,
+  close_a_repair,
   put_a_repaired_tool_back_in_service,
   rename_a_tool,
   retire_a_tool,
@@ -115,6 +116,8 @@ const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_pr
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'retired')`,
   'business/tools/predicate/the_tool_is_under_repair': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair')`,
+  'business/tools/predicate/the_tool_is_under_this_repair': (p) =>
+    sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair' and repair_id = ${p.repair_id})`,
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
@@ -697,6 +700,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         retire_a_tool,
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
+        close_a_repair,
         rename_a_tool,
       },
     })({

@@ -44,6 +44,7 @@ export const registry = {
   'business/tools/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/tools/predicate/the_tool_is_retired': predicate.the_tool_is_retired,
   'business/tools/predicate/the_tool_is_under_repair': predicate.the_tool_is_under_repair,
+  'business/tools/predicate/the_tool_is_under_this_repair': predicate.the_tool_is_under_this_repair,
   'business/tools/command/the_tool_is_new': command.the_tool_is_new,
   'business/tools/command/add_a_tool': command.add_a_tool,
   'business/tools/command/add_a_tool_input': command.add_a_tool_input,
@@ -58,6 +59,10 @@ export const registry = {
     command.put_a_repaired_tool_back_in_service,
   'business/tools/command/put_a_repaired_tool_back_in_service_input':
     command.put_a_repaired_tool_back_in_service_input,
+  'business/tools/command/the_tool_is_in_the_workshop_for_this_repair':
+    command.the_tool_is_in_the_workshop_for_this_repair,
+  'business/tools/command/close_a_repair': command.close_a_repair,
+  'business/tools/command/close_a_repair_input': command.close_a_repair_input,
   'business/tools/command/rename_a_tool': command.rename_a_tool,
   'business/tools/command/rename_a_tool_input': command.rename_a_tool_input,
   'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
@@ -72,6 +77,7 @@ export const registry = {
   'business/tools/usecase/send_a_tool_to_repair': usecase.send_a_tool_to_repair,
   'business/tools/usecase/put_a_repaired_tool_back_in_service':
     usecase.put_a_repaired_tool_back_in_service,
+  'business/tools/usecase/close_a_repair': usecase.close_a_repair,
   'business/tools/usecase/rename_a_tool': usecase.rename_a_tool,
   'business/tools/usecase/the_catalogue': usecase.the_catalogue,
 } satisfies wlib.Registry

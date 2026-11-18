@@ -99,6 +99,39 @@ export type put_a_repaired_tool_back_in_service_input = z.output<
 >
 
 /**
+ * The requested tool is in the catalogue and in the workshop for the requested stay (SC-34).
+ *
+ * @see {@link command.the_tool_is_in_the_workshop_for_this_repair}
+ */
+export const the_tool_is_in_the_workshop_for_this_repair =
+  command.the_tool_is_in_the_workshop_for_this_repair
+export type the_tool_is_in_the_workshop_for_this_repair = z.output<
+  typeof the_tool_is_in_the_workshop_for_this_repair
+>
+
+/**
+ * The workshop closes a stay in repair (SC-34): Rossi's van brought the
+ * drill back on the shelf, and his system says so, naming the stay it closes
+ * (RP1, from the job ticket Luca handed over with the drill). The stay, not
+ * the tool alone: a notice that comes late, after Luca put the drill back by
+ * hand and Marta broke it again (RP2), finds the drill in another stay and
+ * changes nothing, so a retry from outside is safe by the business, not only
+ * by the operation's identity (D91.2). Luca, who holds the drill, puts it
+ * back by the tool alone.
+ *
+ * @see {@link command.close_a_repair}
+ */
+export const close_a_repair = command.close_a_repair
+
+/**
+ * The input of `close_a_repair`, declared inline.
+ *
+ * @see {@link command.close_a_repair}
+ */
+export const close_a_repair_input = command.close_a_repair.input
+export type close_a_repair_input = z.output<typeof close_a_repair_input>
+
+/**
  * Luca gives the drill a name the members recognise on the shelf: any tool
  * of the catalogue, retired ones too, since their name stays in the history
  * of the loans (SC-19).

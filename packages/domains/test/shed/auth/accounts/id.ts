@@ -15,6 +15,14 @@ export const account_id = id({ format: z.string().min(1) })
 export const session_id = id({ format: z.string().min(1) })
 
 /**
+ * A key the shed gave a system outside it (SC-34, D88.1, D91.1): the id of
+ * the `Caller` that signs its calls with it, verified (PER-4). Rossi's
+ * workshop holds `K-ROSSI`, and its system confirms the repairs with it.
+ * Neither an account nor a session: no person signs in with it.
+ */
+export const key_id = id({ format: z.string().min(1) })
+
+/**
  * A member card of the shed, a value of the hat `member` (PER-1). The persona
  * gives its number to `loans`, as the member of a loan (D33).
  */

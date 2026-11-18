@@ -121,6 +121,17 @@ export interface OperationContext {
 }
 
 /**
+ * What the entry gives a leaf whose input names its operation (SC-34, D91.2,
+ * C, 18 Nov 2026 (3)): the scope alone, which it composes as for any leaf
+ * (the hat and the `Caller`'s id, `workshop/K-ROSSI`); the library reads the
+ * id from the input, where the leaf says (`operation.identity`), after its
+ * schema, and gives the leaf's creator the whole operation.
+ */
+export interface OperationScopeContext {
+  readonly operation: Pick<Operation, 'scope'>
+}
+
+/**
  * The correlation of a chain of facts born of one intention (DOM-10, D56, §
  * "La busta e la pila"): created at the origin, by the client if it gives
  * one (D72.7), else by the entry; neither a secret nor a permission. Every
@@ -1600,6 +1611,7 @@ export type RegistryEntry =
       Events,
       unknown,
       unknown,
+      string,
       string
     >
   | ReadUseCaseOver<
@@ -2422,8 +2434,9 @@ export interface Applicability<
  * A command use case over another: the use case it invokes, its own input
  * as declared (`input`, from which the generator writes `<use case>_input`,
  * DOM-25), its events, how the nodes above it may close a request
- * (`closes`), which its port adds to its events, and the names of its own
- * limits, which its applicability gives (`limits`, SC-33).
+ * (`closes`), which its port adds to its events, the names of its own
+ * limits, which its applicability gives (`limits`, SC-33), and the field of
+ * its input that names its operation, if it names one (`operation`, SC-34).
  */
 export interface CommandUseCaseOver<
   use_case extends CommandUseCase<Commands[string]>,
@@ -2432,6 +2445,7 @@ export interface CommandUseCaseOver<
   closes,
   waits = never,
   limits extends string = never,
+  operation extends string = never,
 > {
   readonly input: input
   readonly [$UseCase]: {
@@ -2440,8 +2454,18 @@ export interface CommandUseCaseOver<
     readonly closes: closes
     readonly waits: waits
     readonly limits: limits
+    readonly operation: operation
   }
 }
+
+/**
+ * The fields of an input that may name its operation (SC-34): those that
+ * always hold a string, an optional one not, since an operation always has
+ * an identity (DOM-11).
+ */
+type OperationFields<input> = {
+  [field in keyof input & string]: [input[field]] extends [string] ? field : never
+}[keyof input & string]
 
 /**
  * The base event of a leaf that follows (D58.2, § "Il caso d'uso resta
@@ -2506,6 +2530,18 @@ export type LeafFlow<events extends Events, followed extends Component> =
  * creator (PER-5.5); every limit is evaluated, and the failed ones close the
  * request with `refused`, their names the reasons, which the leaf adds to how
  * the nodes above close (`closes`).
+ *
+ * The leaf of an actor from outside whose sender names its requests (D91.2,
+ * SC-34, C, 18 Nov 2026 (3); A for the shape) says which field of its input
+ * names its operation (`operation: { identity: 'notification_id' }`, as a
+ * read leaf's `stream.identity` names a field of its entry), checked by type
+ * to hold a string: Rossi's system sends notification N-88 again, the same,
+ * when the shed does not answer, and its id is in what it sends, not beside
+ * it, since the system speaks its own language, not the shed's envelope. The
+ * library reads it after the schema (PER-5.3; for a past major, from the
+ * current leaf's input, after `to_next`), and the entry gives the scope
+ * alone (`OperationScopeContext`). The fingerprint covers it, as the whole
+ * input: N-88 with another body is `identity_already_used`.
  */
 export type CommandUseCaseOverBuilder<context, closes> = <
   const use_case extends CommandUseCase<Commands[string]>,
@@ -2513,10 +2549,12 @@ export type CommandUseCaseOverBuilder<context, closes> = <
   const events extends Events,
   const limits extends string = never,
   const followed extends Component = never,
+  const identity extends OperationFields<z.output<SchemaOf<input>>> = never,
 >(
   use_case: {
     readonly use_case: use_case
     readonly input: input
+    readonly operation?: { readonly identity: identity }
     readonly is_refused_unless?: Readonly<
       Record<limits, (context: context) => (input: z.output<SchemaOf<input>>) => boolean>
     >
@@ -2536,7 +2574,8 @@ export type CommandUseCaseOverBuilder<context, closes> = <
   events,
   closes | ([limits] extends [never] ? never : Refused<limits>),
   [followed] extends [never] ? never : WaitIsOver,
-  limits
+  limits,
+  identity
 >
 
 /** The query a read use case reads. */
@@ -2818,6 +2857,7 @@ type AnyCommandLeaf = CommandUseCaseOver<
   Events,
   unknown,
   unknown,
+  string,
   string
 >
 
@@ -3322,11 +3362,23 @@ export type CommandLeafEvent<leaf> = leaf extends {
  * schema (D100), and gives it with the operation to the command port, which
  * compares it (D79.5). The entry gives the correlation too, the client's or
  * a new one (D72.7), which the leaf follows, if it follows (`Follows`).
+ * For a current leaf whose input names its operation (SC-34), the entry
+ * gives its scope alone, at every major: the library reads the id from the
+ * input (`OperationScopeContext`).
  */
-export type CommandLeafPort<entry, majors, name extends string> = <const version extends Semver>(
-  context: entry & OperationContext & CorrelationContext & VersionContext<version>,
+export type CommandLeafPort<entry, majors, name extends string, leaf> = <
+  const version extends Semver,
+>(
+  context: entry & OperationGiven<leaf> & CorrelationContext & VersionContext<version>,
   input: LeafInput<LeafAt<majors, name, version>>,
 ) => AsyncIterable<CommandLeafEvent<LeafAt<majors, name, version>>>
+
+/** What the entry gives a command leaf of its operation: the whole, or the scope alone if its input names it (SC-34). */
+type OperationGiven<leaf> = leaf extends { [$UseCase]: { operation: infer identity } }
+  ? [identity] extends [never]
+    ? OperationContext
+    : OperationScopeContext
+  : OperationContext
 
 /**
  * The events of the stream of a read leaf, as its port gives them (D72.5, A,
@@ -3432,6 +3484,7 @@ export type TreeLeaves = Readonly<
         Events,
         unknown,
         unknown,
+        string,
         string
       >
     | ReadUseCaseOver<
@@ -3489,7 +3542,7 @@ export type LeafPort<entry, majors, name extends string, leaf> = leaf extends {
   [$UseCase]: { entry: z.ZodObject; stream: infer stream }
 }
   ? ReadLeafPort<entry, majors, name, stream>
-  : CommandLeafPort<entry, majors, name>
+  : CommandLeafPort<entry, majors, name, leaf>
 
 /**
  * The ports that a tree invokes, by the path of their folder

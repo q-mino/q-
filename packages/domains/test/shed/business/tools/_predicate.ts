@@ -34,3 +34,13 @@ export type the_tool_is_retired = z.output<typeof the_tool_is_retired>
 export const the_tool_is_under_repair =
   predicate.the_tool_is_under_repair.brand<'business/tools/predicate/the_tool_is_under_repair'>()
 export type the_tool_is_under_repair = z.output<typeof the_tool_is_under_repair>
+
+/**
+ * The tool is in the workshop for this stay in repair, not another (SC-34):
+ * Rossi's system names the stay it closes, RP1, written on its job ticket.
+ *
+ * @see {@link predicate.the_tool_is_under_this_repair}
+ */
+export const the_tool_is_under_this_repair =
+  predicate.the_tool_is_under_this_repair.brand<'business/tools/predicate/the_tool_is_under_this_repair'>()
+export type the_tool_is_under_this_repair = z.output<typeof the_tool_is_under_this_repair>

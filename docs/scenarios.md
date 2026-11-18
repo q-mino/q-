@@ -50,7 +50,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-31** (covered, Shed 11) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"): Marta extends her loan under "an ongoing loan". D105, D51.
 - **SC-32** (open, adds) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80.
 - **SC-33** (covered, Shed 11) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
-- **SC-34** (open, reshapes) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
+- **SC-34** (covered, Shed 11) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
 
 ## Effects, reactions, processes (step 7)
 
