@@ -67,7 +67,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
 - **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
 - **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
-- **SC-56** (open, reshapes; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: the repair notices flow past Gianni's. DOM-14, DOM-16, D67.3.
+- **SC-56** (covered, Shed 11, for an effect; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: Marta's next week's summary goes past her dead one (C: the repair notices keep their order, SC-53, and pass each other since SC-55). A reaction's comes with its case. DOM-14, DOM-16, D67.3.
 
 ## The generator (step 3)
 

@@ -329,11 +329,36 @@ export type CalculationBuilder = <
 /**
  * An effect (DOM-13, D108.1): what the domain asks of the world, named by a
  * business phrase, and its payload, what the delivery needs. A branch queues
- * it with its fact; the domain never runs it (D12).
+ * it with its fact; the domain never runs it (D12). Its order, the order per
+ * resource by default (D64.4, LIB-8), or none if it tolerates reordering
+ * (`order: 'any'`, D67.3, SC-56): its dead letters then hold nothing.
  */
-export type EffectBuilder = <const payload extends z.ZodObject>(effect: {
+export type EffectBuilder = <
+  const payload extends z.ZodObject,
+  const order extends DeliveryOrder = 'per_resource',
+>(effect: {
   readonly payload: payload
-}) => payload
+  readonly order?: order
+}) => [order] extends ['per_resource'] ? payload : Ordered<payload, order>
+
+/**
+ * The order a consumer keeps (D64.4, D67.3), an ADT: `per_resource`, the
+ * default, the facts or entries of a resource in their order, a dead letter
+ * holding its resources; `any`, a consumer that tolerates reordering, whose
+ * dead letters hold nothing (SC-56).
+ */
+export type DeliveryOrder = 'per_resource' | 'any'
+
+export declare const $Order: unique symbol
+
+/** An effect that declares its order (D67.3, SC-56): its payload, which carries it, for the executor to read. */
+export type Ordered<payload extends z.ZodObject, order extends DeliveryOrder> = payload &
+  OrderOf<order>
+
+/** The order an effect declares (D67.3, SC-56), as its payload carries it. */
+export interface OrderOf<order extends DeliveryOrder> {
+  readonly [$Order]: order
+}
 
 // ---------------------------------------------------------------------------
 // Versions (DOM-22, PER-17, D75.6, D101, A, 16 Nov 2026 (7)): a domain has one
@@ -4150,7 +4175,8 @@ export interface QueuedEntry {
  * fix with the same identity, or discarded by an operator, with a trace
  * (`EffectExecutor`). It holds its entry's resources for its effect (D108,
  * SC-53): the later entries of the effect that touch one of them wait
- * behind it (`WaitingEntry`). Its cause, an ADT:
+ * behind it (`WaitingEntry`); unless its effect tolerates reordering
+ * (`order: 'any'`, SC-56), and then it holds nothing. Its cause, an ADT:
  * - `exhausted`: the delivery gave up; redelivered, the effect runs again;
  * - `rejected`: the return rejected what the world said, kept with its
  *   failures; redelivered, the return runs again with it, never the effect
@@ -4254,7 +4280,8 @@ export interface EffectExecutor {
  * each as an entry met for the first time: it waits for its `not_before`,
  * and one refused becomes a dead letter in its place. It reads what it
  * holds from its state when it starts. An effect that tolerates reordering
- * (D67.3) comes with its case. Curried as
+ * (`order: 'any'`, D67.3, SC-56) holds nothing: its dead letters wait for
+ * the operator, and its later entries go on, of any resource. Curried as
  * `command_use_case_ports`: the registry and the domain's return use cases,
  * where it finds each effect's return; then the deliveries; then its ports.
  */

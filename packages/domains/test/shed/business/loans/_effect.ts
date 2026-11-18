@@ -62,7 +62,8 @@ export const wait_until_monday =
 export type wait_until_monday = z.output<typeof wait_until_monday>
 
 /**
- * Marta reads on her phone "your week at the shed".
+ * Marta reads on her phone "your week at the shed". It tolerates reordering
+ * (D67.3, SC-56).
  *
  * @see {@link effect.send_the_weeks_summary}
  */

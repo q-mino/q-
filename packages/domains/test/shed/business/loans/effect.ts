@@ -78,11 +78,15 @@ export const wait_until_monday = effect({
 /**
  * Marta reads on her phone "your week at the shed, from Monday 23
  * November": the phone opens her loans and her reservations, read when she
- * looks (SC-43). No return: nothing comes back to `loans`.
+ * looks (SC-43). No return: nothing comes back to `loans`. It tolerates
+ * reordering (D67.3, SC-56): each summary names its Monday and the phone
+ * reads the rest live, so one in a dead letter holds back none of the
+ * member's next ones.
  */
 export const send_the_weeks_summary = effect({
   payload: z.strictObject({
     member_id: id.member_id,
     monday: wlib.day,
   }),
+  order: 'any',
 })
