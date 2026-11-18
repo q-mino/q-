@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import * as wlib from '../../wlib.ts'
 import { fact, id, value } from './_scope_fact.ts'
 
 /**
@@ -22,7 +23,7 @@ export const a_tool_has_been_retired = fact({
 })
 
 /** Nothing to do (DOM-6): the first retirement stands, the state does not change. */
-export const the_tool_was_already_retired = fact({
+export const a_tool_has_been_retired_again = fact({
   payload: z.strictObject({
     tool_id: id.tool_id,
   }),
@@ -40,7 +41,7 @@ export const a_tool_has_been_sent_to_repair = fact({
 })
 
 /** Nothing to do (DOM-6, D93): the tool is in the workshop already, its stay in repair stands. */
-export const the_tool_was_already_under_repair = fact({
+export const a_tool_has_been_sent_to_repair_again = fact({
   payload: z.strictObject({
     tool_id: id.tool_id,
   }),
@@ -57,5 +58,74 @@ export const the_tool_was_retired_before_the_repair = fact({
 export const a_tool_has_been_repaired = fact({
   payload: z.strictObject({
     repaired_tool: value.tool_in_service.pick({ id: true, status: true }),
+  }),
+})
+
+/**
+ * The keeper gave the tool another name (SC-19): a partial value, its id and
+ * its new name. Whoever shows the tool by name reads the new one: the
+ * catalogue, and the rows of the members' loans and reservations, whose
+ * view of the tools `loans` reads from the catalogue (GR-3).
+ */
+export const a_tool_has_been_renamed = fact({
+  payload: z.strictObject({
+    renamed_tool: z.strictObject({ id: id.tool_id, name: value.tool_name }),
+  }),
+})
+
+/**
+ * The desk has begun loading a sheet of tools (D97, D112, SC-44): the whole
+ * new sheet and its lines, as Luca handed them over. Its steps add one tool
+ * a line.
+ */
+export const the_loading_of_a_sheet_has_begun = fact({
+  payload: z.strictObject({
+    new_sheet: value.sheet_being_loaded,
+    lines: z.array(value.sheet_line).min(1),
+  }),
+})
+
+/**
+ * The desk has gone one line further on the sheet: the step's part (DOM-20),
+ * beside the line's own, the tool added or the line left. The cursor is the
+ * library's, which writes it.
+ */
+export const the_loading_of_the_sheet_has_advanced = fact({
+  payload: z.strictObject({
+    sheet_id: id.sheet_id,
+    cursor: wlib.cursor,
+  }),
+})
+
+/**
+ * Nothing to add (D95): the id the line gives its tool is in the catalogue
+ * already, a tool of the shed or one an earlier line of the sheet added. The
+ * line is left, and the catalogue does not change: line 37 names `drill-7`,
+ * the label of the shed's own drill.
+ */
+export const a_tool_has_been_added_again = fact({
+  payload: z.strictObject({
+    sheet_id: id.sheet_id,
+    line_id: id.line_id,
+    number: value.sheet_line.shape.number,
+    tool_id: id.tool_id,
+  }),
+})
+
+/** No line of the sheet is left to go down: the desk closes it (D112.2). */
+export const the_sheet_has_been_loaded = fact({
+  payload: z.strictObject({
+    loaded_sheet: value.loaded_sheet.pick({ id: true, progress: true }),
+  }),
+})
+
+/**
+ * The desk has loaded a short sheet in one go (D113, SC-54): the sheet,
+ * filed complete at once, beside the sheets it walks line by line. Its lines
+ * are the fact's other parts, one per line, the tool added or the line left.
+ */
+export const a_sheet_has_been_loaded_at_once = fact({
+  payload: z.strictObject({
+    loaded_sheet: value.loaded_sheet,
   }),
 })

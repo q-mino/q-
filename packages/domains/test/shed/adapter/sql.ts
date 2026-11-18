@@ -10,26 +10,41 @@ import { registry as loans_registry } from '../business/loans/_registry.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'
 import type * as tools_predicate from '../business/tools/_predicate.ts'
 import type * as tool_selections from '../business/tools/_tool_selection.ts'
+import type * as line_selections from '../business/tools/_line_selection.ts'
 import {
   add_a_tool,
+  close_a_repair,
   put_a_repaired_tool_back_in_service,
+  rename_a_tool,
   retire_a_tool,
   send_a_tool_to_repair,
+  load_the_tools_of_a_sheet,
+  load_the_tools_of_a_short_sheet,
+  continue_the_loading_of_a_sheet,
   the_catalogue,
 } from '../business/tools/_usecase.ts'
 import type * as loans_fact from '../business/loans/_fact.ts'
 import type * as loans_predicate from '../business/loans/_predicate.ts'
 import type * as loan_selections from '../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../business/loans/_reservation_selection.ts'
+import type * as loans_tool_selections from '../business/loans/_tool_selection.ts'
+import type * as loans_tool_calculations from '../business/loans/_tool_calculation.ts'
 import {
   borrow_a_tool,
+  lend_a_booked_tool,
   continue_the_cancellation_of_reservations,
   continue_the_repair_notice_round,
   reserve_a_tool,
   return_a_tool,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
+  the_reservations_of_a_member_in_the_workshop,
+  the_loans_of_each_tool_this_month,
 } from '../business/loans/_usecase.ts'
+import {
+  correct_the_tool_of_a_loan,
+  extend_the_loan,
+} from '../business/loans/an_ongoing_loan/_usecase.ts'
 
 /** A SQL fragment: its text, with `?` for each value. */
 export interface sql {
@@ -71,7 +86,14 @@ export const sql = (strings: TemplateStringsArray, ...values: readonly unknown[]
 /** A name the adapter writes itself, never a value. */
 const identifier = (name: string): sql => ({ text: `"${name}"`, values: [] })
 
-/** The database, a port. Its transactions are serializable. */
+/**
+ * The database, a port. Its transactions are serializable; one the database
+ * aborts for a conflict (a serialization failure, or the unique key of the
+ * facts' operation, `operation_scope` and `operation_id`) it runs again,
+ * whole, until it commits: `work` touches nothing but `tx`, and a plan is
+ * data. So two commands at the same instant give the outcomes of some serial
+ * order (DOM-9, TST-5, SC-11).
+ */
 export interface Database {
   readonly transaction: <result>(work: (tx: Transaction) => Promise<result>) => Promise<result>
   /** Resolves when a fact after the position is recorded (`listen`/`notify`). */
@@ -98,6 +120,10 @@ const tools_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof tools_pr
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'retired')`,
   'business/tools/predicate/the_tool_is_under_repair': (p) =>
     sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair')`,
+  'business/tools/predicate/the_tool_is_under_this_repair': (p) =>
+    sql`exists (select 1 from tools where id = ${p.tool_id} and status = 'underRepair' and repair_id = ${p.repair_id})`,
+  'business/tools/predicate/a_sheet_has_this_id': (p) =>
+    sql`exists (select 1 from loading_sheets where id = ${p.sheet_id})`,
 }
 
 const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_predicate>, sql> = {
@@ -124,14 +150,28 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from reservations where id = ${p.reservation_id})`,
   'business/loans/predicate/the_reservation_is_booked': (p) =>
     sql`exists (select 1 from reservations where id = ${p.reservation_id} and stage = 'booked')`,
+  'business/loans/predicate/the_tool_is_booked_on_a_day_up_to': (p) =>
+    sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day <= ${p.day} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and stage = 'booked')`,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member': (p) =>
     sql`exists (select 1 from reservations where tool_id = ${p.tool_id} and day = ${p.day} and member_id = ${p.member_id} and stage = 'booked')`,
+  'business/loans/predicate/the_loan_is_of_this_member': (p) =>
+    sql`exists (select 1 from loans where id = ${p.loan_id} and member_id = ${p.member_id})`,
+  'business/loans/predicate/the_loan_is_due_on_this_day': (p) =>
+    sql`exists (select 1 from loans where id = ${p.loan_id} and due_day = ${p.due_day})`,
+  'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id} and tool_id = ${p.tool_id} and member_id = ${p.member_id} and day = ${p.day} and stage = 'booked')`,
+  'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up': (p) =>
+    sql`exists (select 1 from reservations where id = ${p.reservation_id} and member_id = ${p.member_id} and stage = 'taken_up')`,
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun': (p) =>
     sql`exists (select 1 from cancellations where tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) =>
     sql`exists (select 1 from repair_notice_rounds where repair_id = ${p.repair_id})`,
+  'business/loans/predicate/a_weekly_summary_goes_to_the_member': (p) =>
+    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id})`,
+  'business/loans/predicate/the_week_of_the_summary_is_not_over': (p) =>
+    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id} and next_monday + 7 > ${wlib.day_of(p.now)}::date)`,
 }
 
 // The fragments of the selection predicates, grouped by subject (DOM-18): a
@@ -145,6 +185,15 @@ const tool_selection_fragments: wlib.PredicateFragments<
   'business/tools/selection/tool/the_tool_is_in_service': () => sql`candidate.status = 'inService'`,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories': (p) =>
     sql`candidate.category in (${p.categories})`,
+}
+
+/** The lines of the sheets of tools the desk loads (SC-44), a line a row. */
+const line_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof line_selections>,
+  sql
+> = {
+  'business/tools/selection/line/the_line_is_on_the_sheet': (p) =>
+    sql`candidate.sheet_id = ${p.sheet_id}`,
 }
 
 const loan_selection_fragments: wlib.PredicateFragments<
@@ -168,6 +217,31 @@ const reservation_selection_fragments: wlib.PredicateFragments<
     sql`candidate.tool_id = ${p.tool_id}`,
   'business/loans/selection/reservation/the_reservation_is_from_this_day_on': (p) =>
     sql`candidate.day >= ${p.day}`,
+  // The link: the view of `loans` over the tools, read from `tools` (SC-20).
+  'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop': () =>
+    sql`exists (select 1 from tools where tools.id = candidate.tool_id and tools.status = 'underRepair')`,
+}
+
+// The view of `loans` over the tools of the shed: the catalogue of `tools`,
+// read where `tools` keeps it (GR-3, V11).
+const loans_tool_selection_fragments: wlib.PredicateFragments<
+  wlib.SelectionsIn<typeof loans_tool_selections>,
+  sql
+> = {
+  'business/loans/selection/tool/the_tool_is_still_in_the_shed': () =>
+    sql`candidate.status <> 'retired'`,
+}
+
+// The fragments of the calculations, grouped by subject (DOM-18, SC-21): a
+// field of the candidate, read with the parameters of the read.
+
+const loans_tool_calculation_fragments: wlib.CalculationFragments<
+  wlib.CalculationsIn<typeof loans_tool_calculations>,
+  sql
+> = {
+  // A loan's day is the day of its start as written (SC-12): the first ten characters.
+  'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days': (p) =>
+    sql`(select count(*) from loans where loans.tool_id = candidate.id and left(loans.start_date, 10) between ${p.first_day} and ${p.last_day})`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -188,14 +262,34 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   'business/tools/fact/a_tool_has_been_retired': ({ retired_tool: t }) => [
     sql`update tools set status = ${t.status}, repair_id = null, repair_since = null, retirement_date = ${t.retirement.date}, retirement_reason = ${t.retirement.reason}, retirement_notes = ${t.retirement.notes ?? null} where id = ${t.id}`,
   ],
-  'business/tools/fact/the_tool_was_already_retired': () => [],
+  'business/tools/fact/a_tool_has_been_retired_again': () => [],
   'business/tools/fact/a_tool_has_been_sent_to_repair': ({ tool_under_repair: t }) => [
     sql`update tools set status = ${t.status}, repair_id = ${t.repair.id}, repair_since = ${t.repair.since} where id = ${t.id}`,
   ],
-  'business/tools/fact/the_tool_was_already_under_repair': () => [],
+  'business/tools/fact/a_tool_has_been_sent_to_repair_again': () => [],
   'business/tools/fact/the_tool_was_retired_before_the_repair': () => [],
   'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool: t }) => [
     sql`update tools set status = ${t.status}, repair_id = null, repair_since = null where id = ${t.id}`,
+  ],
+  'business/tools/fact/a_tool_has_been_renamed': ({ renamed_tool: t }) => [
+    sql`update tools set name = ${t.name} where id = ${t.id}`,
+  ],
+  'business/tools/fact/the_loading_of_a_sheet_has_begun': ({ new_sheet: s, lines }) => [
+    sql`insert into loading_sheets (id, start_date, stage) values (${s.id}, ${s.start_date}, ${s.progress.stage})`,
+    ...lines.map(
+      (l) =>
+        sql`insert into sheet_lines (id, sheet_id, number, tool_id, name, category, notes) values (${l.id}, ${l.sheet_id}, ${l.number}, ${l.tool.id}, ${l.tool.name}, ${l.tool.category}, ${l.tool.notes ?? null})`,
+    ),
+  ],
+  'business/tools/fact/the_loading_of_the_sheet_has_advanced': (s) => [
+    sql`update loading_sheets set cursor = ${s.cursor} where id = ${s.sheet_id}`,
+  ],
+  'business/tools/fact/a_tool_has_been_added_again': () => [],
+  'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet: s }) => [
+    sql`update loading_sheets set stage = ${s.progress.stage}, cursor = null, end_date = ${s.progress.end_date} where id = ${s.id}`,
+  ],
+  'business/tools/fact/a_sheet_has_been_loaded_at_once': ({ loaded_sheet: s }) => [
+    sql`insert into loading_sheets (id, start_date, stage, end_date) values (${s.id}, ${s.start_date}, ${s.progress.stage}, ${s.progress.end_date})`,
   ],
 }
 
@@ -203,11 +297,11 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
     sql`insert into loans (id, tool_id, member_id, start_date, due_day, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_day}, ${l.progress.stage}, ${l.progress.term})`,
   ],
-  'business/loans/fact/the_member_already_has_the_tool': () => [],
+  'business/loans/fact/a_tool_has_been_lent_again': () => [],
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
     sql`update loans set stage = ${l.progress.stage}, term = null, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
   ],
-  'business/loans/fact/the_loan_was_already_returned': () => [],
+  'business/loans/fact/a_tool_has_been_returned_again': () => [],
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => [],
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => [],
   'business/loans/fact/the_due_date_came_before_the_reminder': () => [],
@@ -215,23 +309,36 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`update loans set term = ${l.progress.term} where id = ${l.id}`,
   ],
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => [],
-  'business/loans/fact/the_due_day_was_not_over': () => [],
+  'business/loans/fact/the_overdue_check_has_been_put_off': () => [],
   'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
-  'business/loans/fact/the_member_already_booked_the_tool': () => [],
+  'business/loans/fact/a_tool_has_been_booked_again': () => [],
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun': ({
     new_cancellation: c,
   }) => [
     sql`insert into cancellations (tool_id, start_date, stage) values (${c.tool_id}, ${c.start_date}, ${c.progress.stage})`,
   ],
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan: l }) => [
+    sql`update loans set tool_id = ${l.tool_id} where id = ${l.id}`,
+  ],
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again': () => [],
+  'business/loans/fact/a_loan_has_been_extended': ({ extended_loan: l }) => [
+    sql`update loans set due_day = ${l.due_day} where id = ${l.id}`,
+  ],
+  'business/loans/fact/the_due_day_was_moved_before_the_reminder': () => [],
+  'business/loans/fact/the_tool_was_corrected_before_the_reminder': () => [],
+  'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation: r }) => [
+    sql`update reservations set stage = ${r.progress.stage}, loan_id = ${r.progress.loan_id} where id = ${r.id}`,
+  ],
+  'business/loans/fact/a_reservation_has_been_taken_up_again': () => [],
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation: r }) => [
     sql`update reservations set stage = ${r.progress.stage}, cancellation_date = ${r.progress.cancellation_date} where id = ${r.id}`,
   ],
   'business/loans/fact/the_cancellation_has_advanced': (c) => [
     sql`update cancellations set cursor = ${c.cursor} where tool_id = ${c.tool_id}`,
   ],
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended': ({
     completed_cancellation: c,
   }) => [
     sql`update cancellations set stage = ${c.progress.stage}, cursor = null, end_date = ${c.progress.end_date} where tool_id = ${c.tool_id}`,
@@ -243,8 +350,18 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/the_repair_notice_round_has_advanced': (r) => [
     sql`update repair_notice_rounds set cursor = ${r.cursor} where repair_id = ${r.repair_id}`,
   ],
-  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round: r }) => [
+  'business/loans/fact/the_repair_notice_round_has_ended': ({ completed_round: r }) => [
     sql`update repair_notice_rounds set stage = ${r.progress.stage}, cursor = null, end_date = ${r.progress.end_date} where repair_id = ${r.repair_id}`,
+  ],
+  'business/loans/fact/a_weekly_summary_has_begun': ({ new_summary: w }) => [
+    sql`insert into weekly_summaries (member_id, next_monday) values (${w.member_id}, ${w.next_monday})`,
+  ],
+  'business/loans/fact/a_weekly_summary_has_begun_again': () => [],
+  'business/loans/fact/the_weeks_summary_has_been_sent': (w) => [
+    sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
+  ],
+  'business/loans/fact/a_past_weeks_summary_has_been_skipped': (w) => [
+    sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
   ],
 }
 
@@ -258,45 +375,129 @@ const record =
   (written: wlib.PlannedWrite<readonly sql[]>): Promise<void> =>
     [
       ...written.writes.flat(),
-      sql`insert into facts (parts, operation_scope, operation_id, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.correlation})`,
+      sql`insert into facts (parts, operation_scope, operation_id, branch, fingerprint, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.branch}, ${written.fact.fingerprint}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
-          sql`insert into outbox (effect, id, version, payload, not_before) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null})`,
+          sql`insert into outbox (effect, id, version, payload, not_before, resources) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null}, ${JSON.stringify(entry.resources)})`,
       ),
     ].reduce((done, statement) => done.then(() => tx.run(statement)), Promise.resolve())
 
 /**
- * One transaction per command. One statement reads every branch's condition
- * and every leaf: the first branch that holds writes; if none does, the
- * leaves name the failures, from the same read.
+ * The fact an operation recorded, read in the transaction that would record
+ * it (the duplicate branch, DOM-11): the first statement of every command and
+ * step (SC-11).
+ */
+const recorded_by =
+  (tx: Transaction) =>
+  async (operation: wlib.Operation): Promise<wlib.AlreadyRecorded | undefined> => {
+    const [row] = await tx.rows(
+      sql`select ${the_fact_columns} from facts where operation_scope = ${operation.scope} and operation_id = ${operation.id}`,
+    )
+    const fact = row === undefined ? undefined : as_fact(row)
+    return fact?.event === 'fact'
+      ? { outcome: 'recorded', position: fact.position, fact: fact.fact }
+      : undefined
+  }
+
+/** Consecutive slices of the values, of the given lengths, in order. */
+const slices =
+  (lengths: readonly number[]) =>
+  (values: readonly boolean[]): readonly (readonly boolean[])[] =>
+    lengths.map((length, i) => {
+      const start = lengths.slice(0, i).reduce((sum, previous) => sum + previous, 0)
+      return values.slice(start, start + length)
+    })
+
+/** The conditions of the transition's branches, element by element (SC-54); none for a plain branch. */
+const element_conditions = (
+  branch: wlib.PlannedCommandBranch<sql, readonly sql[]>,
+): readonly (readonly sql[])[] =>
+  'elements' in branch
+    ? branch.elements.map((element) => element.map((each) => each.condition))
+    : []
+
+/** Every leaf of a branch: its own, then, over a list, each element's branches' (SC-54). */
+const leaves_of = (branch: wlib.PlannedCommandBranch<sql, readonly sql[]>): readonly sql[] => [
+  ...branch.leaves,
+  ...('elements' in branch
+    ? branch.elements.flatMap((element) => element.flatMap((each) => each.leaves))
+    : []),
+]
+
+/** A branch as read: whether it holds, the branch each element applies (-1 where none), its leaves. */
+interface Evaluated {
+  readonly holds: boolean
+  readonly elements: readonly number[]
+  readonly leaves: readonly boolean[]
+}
+
+/**
+ * A branch's values, read in one statement as its condition, each
+ * element's branches' conditions, then its leaves: it holds when its
+ * condition does and every element has a branch that holds, the first
+ * (SC-54, D113.1).
+ */
+const evaluated =
+  (conditions: readonly (readonly sql[])[]) =>
+  (values: readonly boolean[]): Evaluated => {
+    const [condition, ...rest] = values
+    const count = conditions.reduce((sum, element) => sum + element.length, 0)
+    const elements = slices(conditions.map((element) => element.length))(rest).map((element) =>
+      element.findIndex((value) => value),
+    )
+    return {
+      holds: condition === true && elements.every((index) => index !== -1),
+      elements,
+      leaves: rest.slice(count),
+    }
+  }
+
+/**
+ * One transaction per command. The operation looked up first; then one
+ * statement reads every branch's condition and every leaf, and, over a
+ * list, every element's branches' conditions (SC-54): the first branch that
+ * holds writes; if none does, the leaves name the failures, from the same
+ * read.
  */
 const execute =
   (database: Database): wlib.Execute<sql, readonly sql[]> =>
   (plan) =>
     database.transaction(async (tx) => {
-      const values = await tx.booleans([
-        ...plan.map((branch) => branch.condition),
-        ...plan.flatMap((branch) => branch.leaves),
+      const recorded = await recorded_by(tx)(plan.operation)
+      if (recorded !== undefined) {
+        return recorded
+      }
+      const reads = plan.branches.map((branch) => ({
+        branch,
+        conditions: element_conditions(branch),
+        leaves: leaves_of(branch),
+      }))
+      const statement = reads.map((read) => [
+        read.branch.condition,
+        ...read.conditions.flat(),
+        ...read.leaves,
       ])
-      const applied = plan.findIndex((_, i) => values[i] === true)
-      const branch = plan[applied]
-      if (branch !== undefined) {
-        await record(tx)(branch)
-        return { outcome: 'applied', branch: applied, position: await tx.position() }
-      }
-      const starts = plan.map((_, i) =>
-        plan.slice(0, i).reduce((start, previous) => start + previous.leaves.length, plan.length),
+      const values = slices(statement.map((fragments) => fragments.length))(
+        await tx.booleans(statement.flat()),
       )
-      return {
-        outcome: 'rejected',
-        leaves: plan.map((planned, i) =>
-          planned.leaves.map((_, j) => values[(starts[i] ?? 0) + j] === true),
-        ),
+      const branches = reads.map((read, i) => evaluated(read.conditions)(values[i] ?? []))
+      const applied = branches.findIndex((branch) => branch.holds)
+      const branch = plan.branches[applied]
+      const chosen = branches[applied]?.elements ?? []
+      if (branch !== undefined) {
+        await record(tx)('elements' in branch ? branch.applies(chosen) : branch)
+        return {
+          outcome: 'applied',
+          branch: applied,
+          elements: chosen,
+          position: await tx.position(),
+        }
       }
+      return { outcome: 'rejected', leaves: branches.map((evaluation) => evaluation.leaves) }
     })
 
 /** The statement of a planned query: the fields of the candidates the selection keeps, in the order. */
-const select = (plan: wlib.PlannedQuery<sql, sql, sql>): sql =>
+const select = (plan: wlib.PlannedQuery<sql, sql, sql, sql>): sql =>
   sql`select ${join(
     Object.entries(plan.fields).map(([name, field]) => sql`${field} as ${identifier(name)}`),
     ', ',
@@ -307,22 +508,67 @@ const select = (plan: wlib.PlannedQuery<sql, sql, sql>): sql =>
     ', ',
   )}`
 
+/** A row as the driver gives it: its columns by name. */
+const row = z.record(z.string(), z.unknown())
+
+/**
+ * The leaves of a read's actions on its rows (SC-33), in the read's
+ * transaction, so in its snapshot: for each row, its conditions in one
+ * statement, every one, written as one more field. A statement per row: a
+ * member's loans are few.
+ */
+const with_leaves =
+  (tx: Transaction) =>
+  (leaves: wlib.PlannedLeaves<sql> | undefined) =>
+  async (rows: readonly unknown[]): Promise<readonly unknown[]> =>
+    leaves === undefined
+      ? rows
+      : Promise.all(
+          rows.map(async (stored) => {
+            const entry = row.parse(stored)
+            return { ...entry, [leaves.field]: await tx.booleans(leaves.of(entry)) }
+          }),
+        )
+
 /**
  * One statement in one transaction, a snapshot: the fields of the candidates
- * that the selection keeps, in the order, and the position it was read at.
+ * that the selection keeps, in the order, with the leaves of its actions, if
+ * any, and the position it was read at.
  */
 const read =
-  (database: Database): wlib.Read<sql, sql, sql> =>
+  (database: Database): wlib.Read<sql, sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => ({
-      entries: await tx.rows(select(plan)),
+      entries: await with_leaves(tx)(plan.leaves)(await tx.rows(select(plan))),
+      position: await tx.position(),
+    }))
+
+/** The count of a page's total: one row, one number. */
+const the_total = z.tuple([z.strictObject({ total: z.coerce.number().int().min(0) })])
+
+/**
+ * A page in one transaction, a snapshot (SC-22, D72.8): the fields of the
+ * candidates that the page's selection keeps, in the order, `limit` at most;
+ * how many the query's selection keeps; and the position. The transaction
+ * is serializable (SC-11), so the two statements read one state.
+ */
+const page =
+  (database: Database): wlib.ReadPage<sql, sql, sql, sql> =>
+  (plan) =>
+    database.transaction(async (tx) => ({
+      entries: await with_leaves(tx)(plan.leaves)(
+        await tx.rows(sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`),
+      ),
+      total: the_total.parse(
+        await tx.rows(sql`select count(*) as total from ${plan.from} where ${plan.selection}`),
+      )[0].total,
       position: await tx.position(),
     }))
 
 /**
- * The comparison with a step's cursor (DOM-20): the candidates after the
- * order key, lexicographic, a descending field reversed (`(day, id) > (?, ?)`,
- * written out so that the directions may differ).
+ * The comparison with a cursor, a step's (DOM-20) or a page's (SC-22): the
+ * candidates after the order key, lexicographic, a descending field reversed
+ * (`(day, id) > (?, ?)`, written out so that the directions may differ).
  */
 const after = (key: readonly wlib.OrderKeyValue<sql>[]): sql => {
   const [first, ...rest] = key
@@ -339,8 +585,8 @@ const after = (key: readonly wlib.OrderKeyValue<sql>[]): sql => {
 }
 
 /**
- * A step in one transaction (DOM-20, D112.2): the process read; not found,
- * nothing writes. Else one instance at a time, the next in the order
+ * A step in one transaction (DOM-20, D112.2): the operation looked up first,
+ * as a command's; then the process read; not found, nothing writes. Else one instance at a time, the next in the order
  * (`limit 1`): on the first on which a branch of the transition holds, that
  * branch writes; one on which none holds is passed over, and the next read
  * past it; none left, the closing writes.
@@ -349,6 +595,10 @@ const execute_step =
   (database: Database): wlib.ExecuteStep<sql, readonly sql[], sql, sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => {
+      const recorded = await recorded_by(tx)(plan.operation)
+      if (recorded !== undefined) {
+        return recorded
+      }
       const [process] = await tx.rows(plan.read)
       const choice = plan.choose(process)
       if (choice.choice === 'not_found') {
@@ -384,8 +634,13 @@ const fact_row = z.strictObject({
   parts: z.string(),
   operation_scope: z.string(),
   operation_id: wlib.operation_id,
+  branch: z.string(),
+  fingerprint: wlib.fingerprint,
   correlation: wlib.correlation,
 })
+
+/** The columns of a fact, as `fact_row` reads them. */
+const the_fact_columns = sql`sequence, parts, operation_scope, operation_id, branch, fingerprint, correlation`
 
 const parts = z.array(
   z.strictObject({
@@ -405,6 +660,8 @@ const as_fact = (row: unknown): wlib.LogEvent => {
     fact: {
       parts: parts.parse(stored),
       operation: { scope: fact.operation_scope, id: fact.operation_id },
+      branch: fact.branch,
+      fingerprint: fact.fingerprint,
       correlation: fact.correlation,
     },
   }
@@ -412,9 +669,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
 
 const facts_from = (database: Database) => (where: sql) =>
   database.transaction((tx) =>
-    tx.rows(
-      sql`select sequence, parts, operation_scope, operation_id, correlation from facts where ${where} order by sequence`,
-    ),
+    tx.rows(sql`select ${the_fact_columns} from facts where ${where} order by sequence`),
   )
 
 /**
@@ -454,9 +709,7 @@ const log =
       const [kept, position] = await database.transaction(
         async (tx) =>
           [
-            await tx.rows(
-              sql`select sequence, parts, operation_scope, operation_id, correlation from facts order by sequence`,
-            ),
+            await tx.rows(sql`select ${the_fact_columns} from facts order by sequence`),
             await tx.position(),
           ] as const,
       )
@@ -486,7 +739,16 @@ export const stored_versions =
       )
 
 /** The tables the facts write, which a rebuild empties first. */
-const the_tables = ['tools', 'loans', 'reservations', 'cancellations', 'repair_notice_rounds']
+const the_tables = [
+  'tools',
+  'loading_sheets',
+  'sheet_lines',
+  'loans',
+  'reservations',
+  'cancellations',
+  'repair_notice_rounds',
+  'weekly_summaries',
+]
 
 /** Statements run one after the other, in a transaction. */
 const run_in_order =
@@ -527,7 +789,18 @@ const the_whole_reservation = {
     member_id: sql`candidate.member_id`,
     day: sql`candidate.day`,
     booking_date: sql`candidate.booking_date`,
-    progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'cancellation_date', candidate.cancellation_date))`,
+    progress: sql`json_strip_nulls(json_build_object('stage', candidate.stage, 'loan_id', candidate.loan_id, 'cancellation_date', candidate.cancellation_date))`,
+  },
+}
+
+/** A member's reservation, as the member sees it: the tool with its name, read from `tools`, and the day. */
+const the_reservation_entry = {
+  from: sql`reservations as candidate`,
+  fields: {
+    id: sql`candidate.id`,
+    tool_id: sql`candidate.tool_id`,
+    tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
+    day: sql`candidate.day`,
   },
 }
 
@@ -542,19 +815,45 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         retire_a_tool,
         send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service,
+        close_a_repair,
+        rename_a_tool,
+        load_the_tools_of_a_sheet,
+        load_the_tools_of_a_short_sheet,
+        continue_the_loading_of_a_sheet,
       },
     })({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(database),
+      steps: {
+        selection: { ...algebra(line_selection_fragments), after },
+        sources: {
+          // The sheet by its id, nested as its value (the library parses it:
+          // none, or loaded, is the step's rejection); the lines it walks,
+          // their tool as the line writes it (SC-44).
+          continue_the_loading_of_a_sheet: {
+            reads: (input) =>
+              sql`select id, start_date, json_strip_nulls(json_build_object('stage', stage, 'cursor', cursor, 'end_date', end_date)) as progress from loading_sheets where id = ${input.sheet_id}`,
+            from: sql`sheet_lines as candidate`,
+            fields: {
+              id: sql`candidate.id`,
+              sheet_id: sql`candidate.sheet_id`,
+              number: sql`candidate.number`,
+              tool: sql`json_strip_nulls(json_build_object('id', candidate.tool_id, 'name', candidate.name, 'category', candidate.category, 'notes', candidate.notes))`,
+            },
+          },
+        },
+        execute: execute_step(database),
+      },
     }),
-    // The catalogue is only read: a visitor reads it once, no case streams it.
+    // The catalogue: a visitor reads it in pages; a member with a valid card
+    // follows it live (SC-32), composed from the fact log.
     ...wlib.read_use_case_ports({
       registry: tools_registry,
       versions,
       use_cases: { the_catalogue },
     })({
-      algebra: algebra(tool_selection_fragments),
+      algebra: { ...algebra(tool_selection_fragments), after },
       sources: {
         the_catalogue: {
           from: sql`tools as candidate`,
@@ -567,7 +866,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         },
       },
       read: read(database),
-      streams: {},
+      page: page(database),
+      streams: { the_catalogue: { strategy: 'composed', log: log(database) } },
     }),
   },
   loans: {
@@ -576,6 +876,9 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       versions,
       use_cases: {
         borrow_a_tool,
+        lend_a_booked_tool,
+        extend_the_loan,
+        correct_the_tool_of_a_loan,
         reserve_a_tool,
         return_a_tool,
         continue_the_cancellation_of_reservations,
@@ -609,9 +912,22 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
     ...wlib.read_use_case_ports({
       registry: loans_registry,
       versions,
-      use_cases: { the_ongoing_loans_of_a_member, the_reservations_of_a_member },
+      use_cases: {
+        the_ongoing_loans_of_a_member,
+        the_reservations_of_a_member,
+        the_reservations_of_a_member_in_the_workshop,
+        the_loans_of_each_tool_this_month,
+      },
     })({
-      algebra: algebra({ ...loan_selection_fragments, ...reservation_selection_fragments }),
+      algebra: {
+        ...algebra({
+          ...loan_selection_fragments,
+          ...reservation_selection_fragments,
+          ...loans_tool_selection_fragments,
+        }),
+        after,
+      },
+      calculations: loans_tool_calculation_fragments,
       sources: {
         the_ongoing_loans_of_a_member: {
           from: sql`loans as candidate`,
@@ -625,22 +941,32 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
             term: sql`candidate.term`,
           },
         },
-        the_reservations_of_a_member: {
-          from: sql`reservations as candidate`,
+        the_reservations_of_a_member: the_reservation_entry,
+        the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
+        the_loans_of_each_tool_this_month: {
+          from: sql`tools as candidate`,
           fields: {
-            id: sql`candidate.id`,
-            tool_id: sql`candidate.tool_id`,
-            tool_name: sql`(select name from tools where tools.id = candidate.tool_id)`,
-            day: sql`candidate.day`,
+            tool_id: sql`candidate.id`,
+            tool_name: sql`candidate.name`,
           },
         },
       },
       read: read(database),
-      // A member's loans and reservations are few: a whole read per fact is cheap.
+      page: page(database),
+      // A member's loans and reservations are few: a whole read per fact of
+      // the node is cheap, and a fact of `tools` that renames a tool reads
+      // again the name of their rows (SC-19). The loans of each tool this
+      // month are only read: the keeper reads them once, and a count over
+      // the whole catalogue per fact is not cheap.
       streams: {
         the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },
+        the_reservations_of_a_member_in_the_workshop: { strategy: 'composed', log: log(database) },
       },
+      // Only the member's loans carry buttons (SC-33): they are few, so
+      // the commands' own fragments run per row in the read's transaction
+      // (ADP-8).
+      applicability: { the_ongoing_loans_of_a_member: loans_fragments },
     }),
   },
 })

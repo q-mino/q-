@@ -51,3 +51,22 @@ export type wait_until_the_due_date = z.output<typeof wait_until_the_due_date>
 export const send_the_repair_notice =
   effect.send_the_repair_notice.brand<'business/loans/effect/send_the_repair_notice'>()
 export type send_the_repair_notice = z.output<typeof send_the_repair_notice>
+
+/**
+ * Wait until a Monday, at the start of the shed's day.
+ *
+ * @see {@link effect.wait_until_monday}
+ */
+export const wait_until_monday =
+  effect.wait_until_monday.brand<'business/loans/effect/wait_until_monday'>()
+export type wait_until_monday = z.output<typeof wait_until_monday>
+
+/**
+ * Marta reads on her phone "your week at the shed". It tolerates reordering
+ * (D67.3, SC-56).
+ *
+ * @see {@link effect.send_the_weeks_summary}
+ */
+export const send_the_weeks_summary =
+  effect.send_the_weeks_summary.brand<'business/loans/effect/send_the_weeks_summary'>()
+export type send_the_weeks_summary = z.output<typeof send_the_weeks_summary>

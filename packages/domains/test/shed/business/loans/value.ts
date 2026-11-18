@@ -69,11 +69,20 @@ export const returned_loan = loan.extend({
   progress: loan_returned,
 })
 
-export const reservation_stage = z.enum(['booked', 'cancelled'])
+export const reservation_stage = z.enum(['booked', 'taken_up', 'cancelled'])
 
 /** The tool is held for the member on the day. */
 export const reservation_booked = z.strictObject({
   stage: z.literal(reservation_stage.enum.booked),
+})
+
+/**
+ * The member took the tool on its day (SC-10): the loan that took the
+ * reservation up, which the tool is now out on.
+ */
+export const reservation_taken_up = z.strictObject({
+  stage: z.literal(reservation_stage.enum.taken_up),
+  loan_id: id.loan_id,
 })
 
 /**
@@ -88,6 +97,7 @@ export const reservation_cancelled = z.strictObject({
 /** Where a reservation is in its course. */
 export const reservation_progress = z.discriminatedUnion('stage', [
   reservation_booked,
+  reservation_taken_up,
   reservation_cancelled,
 ])
 
@@ -106,6 +116,11 @@ export const booked_reservation = reservation.extend({
   progress: reservation_booked,
 })
 
+/** A reservation the member took up, taking the tool on its day. */
+export const taken_up_reservation = reservation.extend({
+  progress: reservation_taken_up,
+})
+
 /** A reservation the desk cancelled. */
 export const cancelled_reservation = reservation.extend({
   progress: reservation_cancelled,
@@ -115,6 +130,15 @@ export const cancelled_reservation = reservation.extend({
 export const ongoing_loan_entry = ongoing_loan
   .pick({ id: true, tool_id: true, start_date: true, due_day: true })
   .extend({ tool_name: tool_name, term: loan_term })
+
+/** How many loans: a count of the desk's register (SC-21). */
+export const number_of_loans = z.number().int().nonnegative()
+
+/** A tool of the shed, as the desk names it: the tool, with its name. */
+export const tool_of_the_shed_entry = z.strictObject({
+  tool_id: tools.id.tool_id,
+  tool_name: tool_name,
+})
 
 /** What a member sees of a reservation: the tool, with its name, and the day. */
 export const reservation_entry = booked_reservation
@@ -218,4 +242,15 @@ export const repair_notice_round_under_way = repair_notice_round.extend({
 /** A round of notices over: no reservation of the tool is left ahead. */
 export const completed_repair_notice_round = repair_notice_round.extend({
   progress: repair_notice_round_complete,
+})
+
+/**
+ * The week's summary the desk sends a member every Monday, which the member
+ * asked for (SC-43): who gets it, and the Monday it waits for, at the start
+ * of the shed's day. One per member; it goes on until the member stops it
+ * (with its case).
+ */
+export const weekly_summary = z.strictObject({
+  member_id: id.member_id,
+  next_monday: day,
 })

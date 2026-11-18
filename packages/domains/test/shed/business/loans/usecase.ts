@@ -9,6 +9,9 @@ import { command_use_case, read_use_case, command, effect, fact, query } from '.
 /** A member borrows a tool: Marta takes the drill home. */
 export const borrow_a_tool = command_use_case({ command: command.borrow_a_tool })
 
+/** A member takes the tool they booked, on its day: Gianni, the drill, Thursday. */
+export const lend_a_booked_tool = command_use_case({ command: command.lend_a_booked_tool })
+
 /** A member books a tool for a day ahead: the ladder for Saturday. */
 export const reserve_a_tool = command_use_case({ command: command.reserve_a_tool })
 
@@ -78,6 +81,23 @@ export const the_reservations_of_a_member = read_use_case({
 })
 
 /**
+ * Gianni sees the reservations whose tool is in the workshop: the drill he
+ * booked for Thursday comes in when it goes to repair, and goes when it is
+ * back in service, by facts of `tools` (SC-20).
+ */
+export const the_reservations_of_a_member_in_the_workshop = read_use_case({
+  query: query.the_reservations_of_a_member_in_the_workshop,
+})
+
+/**
+ * Luca sees how many times each tool of the shed went out this month, the
+ * idle ones at zero: a count of the desk's register (SC-21).
+ */
+export const the_loans_of_each_tool_this_month = read_use_case({
+  query: query.the_loans_of_each_tool_this_month,
+})
+
+/**
  * The desk begins its round of the notices of a repair: the drill is in the
  * workshop, and Gianni and Paolo, who booked it, will hear of it. Invoked by
  * a reaction to the repair (DOM-16).
@@ -94,4 +114,22 @@ export const notify_the_members_of_a_repair = command_use_case({
  */
 export const continue_the_repair_notice_round = command_use_case({
   command: command.continue_the_repair_notice_round,
+})
+
+/**
+ * A member asks the desk for the week's summary every Monday: Marta, on
+ * Thursday 19 November, gets her first on Monday the 23rd (SC-43).
+ */
+export const begin_a_weekly_summary = command_use_case({
+  command: command.begin_a_weekly_summary,
+})
+
+/**
+ * On a Monday the effect executor comes back (DOM-13): the desk sends the
+ * member the week's summary and waits for the next Monday. The return of
+ * the wait queued by the summary's beginning, and by itself (SC-43).
+ */
+export const sum_up_the_week_for_the_member = command_use_case({
+  command: command.sum_up_the_week_for_the_member,
+  returns_from: effect.wait_until_monday,
 })

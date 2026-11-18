@@ -7,3 +7,4 @@
 export * as usecase from './_usecase.ts'
 export * as id from './_id.ts'
 export * as fact from './_fact.ts'
+export * as an_ongoing_loan from './an_ongoing_loan/_door_persona.ts'

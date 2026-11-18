@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as wlib from '../../wlib.ts'
-import { command_use_case_over, value, tools } from './_scope_usecase.ts'
+import { command_use_case_over, read_use_case_over, value, tools, loans } from './_scope_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
 // shed. Each invokes a use case of a business domain and speaks to the keeper
@@ -90,5 +90,152 @@ export const put_a_repaired_tool_back_in_service = command_use_case_over({
       payload: { tool_id: fact.repaired_tool.id },
     }),
     rejected: () => ({ event: 'the_tool_is_not_in_the_workshop', payload: {} }),
+  },
+})
+
+/**
+ * Luca reads how many times each tool of the shed went out this month, the
+ * idle ones at zero, once (SC-21): the snapshot alone, as the visitor's
+ * catalogue.
+ */
+export const the_loans_of_the_month = read_use_case_over({
+  use_case: loans.usecase.the_loans_of_each_tool_this_month,
+  input: z.strictObject({}),
+  creator: () => () => ({ query: {} }),
+  entry: z.strictObject({
+    tool_id: tools.id.tool_id,
+    name: value.tool_name,
+    loans: value.number_of_loans,
+  }),
+  projection: (entry) => ({ tool_id: entry.tool_id, name: entry.tool_name, loans: entry.loans }),
+})
+
+/**
+ * Luca loads a sheet of tools into the catalogue (SC-44): the town library
+ * gives the shed its 200 tools in one spreadsheet, a line a tool, which his
+ * screen sends as it is. The desk goes down the lines one at a time, and his
+ * screen follows it (D58.2): a tool in the catalogue, a line left because
+ * its id is taken, until the sheet is loaded; or its wait is over, and he
+ * follows it again from where it was (D72.8). A line the schema refuses
+ * refuses the sheet, before any line goes in.
+ */
+export const load_tools_from_a_sheet = command_use_case_over({
+  use_case: tools.usecase.load_the_tools_of_a_sheet,
+  input: z.strictObject({
+    lines: z
+      .array(
+        z.strictObject({
+          tool_id: tools.id.tool_id,
+          name: value.tool_name,
+          category: value.category,
+          notes: value.notes.optional(),
+        }),
+      )
+      .min(1)
+      .max(5000),
+  }),
+  creator: () => (input) => ({
+    lines: input.lines.map((line) => ({
+      id: line.tool_id,
+      name: line.name,
+      category: line.category,
+      notes: line.notes,
+    })),
+  }),
+  events: {
+    the_sheet_is_being_loaded: z.strictObject({ lines: z.number().int().min(1) }),
+    the_tool_is_in_the_catalogue: z.strictObject({ tool_id: tools.id.tool_id }),
+    the_id_of_the_line_is_taken: z.strictObject({
+      line: z.number().int().min(1),
+      tool_id: tools.id.tool_id,
+    }),
+    the_sheet_is_loaded: z.strictObject({}),
+    /** No branch but the opening: the sheet's id is new to every operation. */
+    the_sheet_cannot_be_loaded: z.strictObject({}),
+  },
+  ends: ['the_sheet_is_loaded', 'the_sheet_cannot_be_loaded'],
+  projection: {
+    the_sheet_is_new_so_its_loading_begins: (fact) => ({
+      event: 'the_sheet_is_being_loaded',
+      payload: { lines: fact.lines.length },
+    }),
+    rejected: () => ({ event: 'the_sheet_cannot_be_loaded', payload: {} }),
+  },
+  follows: {
+    facts: [
+      tools.fact.a_tool_has_been_added,
+      tools.fact.a_tool_has_been_added_again,
+      tools.fact.the_sheet_has_been_loaded,
+    ],
+    projection: {
+      a_tool_has_been_added: (fact) => ({
+        event: 'the_tool_is_in_the_catalogue',
+        payload: { tool_id: fact.added_tool.id },
+      }),
+      a_tool_has_been_added_again: (fact) => ({
+        event: 'the_id_of_the_line_is_taken',
+        payload: { line: fact.number, tool_id: fact.tool_id },
+      }),
+      the_sheet_has_been_loaded: () => ({ event: 'the_sheet_is_loaded', payload: {} }),
+    },
+    at_most: 600_000,
+  },
+})
+
+/**
+ * Luca loads a short sheet in one go (SC-54): Paolo gives the shed the
+ * twelve tools of his garage, on a sheet his screen sends as it is, and
+ * reads at once what went in and what was left, from the parts of the one
+ * fact (D113): every line its own, the tool added, or the line left because
+ * its id is taken (D95). A sheet with two lines of one tool is refused
+ * before the desk reads anything, and he corrects it; a longer sheet goes
+ * line by line (`load_tools_from_a_sheet`).
+ */
+export const load_tools_from_a_short_sheet = command_use_case_over({
+  use_case: tools.usecase.load_the_tools_of_a_short_sheet,
+  input: z.strictObject({
+    lines: z
+      .array(
+        z.strictObject({
+          tool_id: tools.id.tool_id,
+          name: value.tool_name,
+          category: value.category,
+          notes: value.notes.optional(),
+        }),
+      )
+      .min(1)
+      .max(50),
+  }),
+  creator: () => (input) => ({
+    lines: input.lines.map((line) => ({
+      id: line.tool_id,
+      name: line.name,
+      category: line.category,
+      notes: line.notes,
+    })),
+  }),
+  events: {
+    the_sheet_is_loaded: z.strictObject({
+      added: z.array(tools.id.tool_id),
+      left: z.array(z.strictObject({ line: z.number().int().min(1), tool_id: tools.id.tool_id })),
+    }),
+    /** No branch but the loading: the sheet's id is new to every operation. */
+    the_sheet_cannot_be_loaded: z.strictObject({}),
+  },
+  projection: {
+    the_sheet_is_new_so_it_is_loaded_at_once: (_, { its_lines_are_loaded }) => ({
+      event: 'the_sheet_is_loaded',
+      payload: {
+        added: its_lines_are_loaded.flatMap((line) =>
+          line.branch === 'the_tool_is_new_so_it_is_added' ? [line.fact.added_tool.id] : [],
+        ),
+        left: its_lines_are_loaded.flatMap((line) =>
+          line.branch === 'the_tool_is_in_the_catalogue_so_the_line_is_left'
+            ? [{ line: line.fact.number, tool_id: line.fact.tool_id }]
+            : [],
+        ),
+      },
+    }),
+    rejected: () => ({ event: 'the_sheet_cannot_be_loaded', payload: {} }),
   },
 })

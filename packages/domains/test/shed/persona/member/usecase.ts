@@ -62,6 +62,91 @@ export const borrow_a_tool = command_use_case_over({
 })
 
 /**
+ * Gianni takes the drill he booked for Thursday, from the row of his
+ * reservation (R8) in "my reservations", while his card is valid: the desk
+ * lends it and takes the reservation up, one fact in two parts (SC-10). The
+ * leaf answers from the loan, the branch's own part; R8 leaves his "my
+ * reservations" by its stream, from the reservation's part.
+ */
+export const take_the_tool_you_booked = command_use_case_over({
+  use_case: loans.usecase.lend_a_booked_tool,
+  input: z.strictObject({
+    loan_id: loans.id.loan_id,
+    reservation_id: loans.id.reservation_id,
+    tool_id: tools.id.tool_id,
+  }),
+  is_refused_unless: {
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: (context) => (input) => ({
+    loan_id: input.loan_id,
+    reservation_id: input.reservation_id,
+    tool_id: input.tool_id,
+    member_id: context.card.id,
+  }),
+  events: {
+    you_have_the_tool: z.strictObject({
+      loan_id: loans.id.loan_id,
+      tool_id: tools.id.tool_id,
+      due_day: wlib.day,
+    }),
+    you_already_took_the_tool: z.strictObject({ reservation_id: loans.id.reservation_id }),
+    /**
+     * Not booked by the member for today, in the workshop, or still out with
+     * someone else: the member need not know which.
+     */
+    the_tool_is_not_available: z.strictObject({}),
+  },
+  projection: {
+    the_member_booked_the_tool_for_today_so_it_is_lent: (fact) => ({
+      event: 'you_have_the_tool',
+      payload: {
+        loan_id: fact.new_loan.id,
+        tool_id: fact.new_loan.tool_id,
+        due_day: fact.new_loan.due_day,
+      },
+    }),
+    the_member_already_took_the_tool_so_nothing_changes: (fact) => ({
+      event: 'you_already_took_the_tool',
+      payload: { reservation_id: fact.reservation_id },
+    }),
+    rejected: () => ({ event: 'the_tool_is_not_available', payload: {} }),
+  },
+})
+
+/**
+ * Marta asks the desk for her week every Monday (SC-43): from the next
+ * Monday on, at the start of the shed's day, her phone shows "your week at
+ * the shed", and opens her loans and her reservations, read when she looks.
+ * Asked again, she already gets it.
+ */
+export const send_me_my_week_on_mondays = command_use_case_over({
+  use_case: loans.usecase.begin_a_weekly_summary,
+  input: z.strictObject({}),
+  creator: (context) => () => ({
+    member_id: context.card.id,
+  }),
+  events: {
+    you_will_get_your_week_on_mondays: z.strictObject({ from: wlib.day }),
+    you_already_get_your_week_on_mondays: z.strictObject({}),
+    /** Never in Shed: the desk's two branches cover every member; a leaf still names its rejection. */
+    your_week_cannot_be_sent: z.strictObject({}),
+  },
+  projection: {
+    no_summary_goes_to_the_member_so_one_begins: (fact) => ({
+      event: 'you_will_get_your_week_on_mondays',
+      payload: { from: fact.new_summary.next_monday },
+    }),
+    a_summary_already_goes_to_the_member_so_nothing_changes: () => ({
+      event: 'you_already_get_your_week_on_mondays',
+      payload: {},
+    }),
+    rejected: () => ({ event: 'your_week_cannot_be_sent', payload: {} }),
+  },
+})
+
+/**
  * Marta brings the drill back, and her screen follows what her return sets
  * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
  * open until the workshop takes the drill in, a fact of `tools` that a
@@ -116,7 +201,7 @@ export const return_a_tool = command_use_case_over({
   follows: {
     facts: [
       tools.fact.a_tool_has_been_sent_to_repair,
-      tools.fact.the_tool_was_already_under_repair,
+      tools.fact.a_tool_has_been_sent_to_repair_again,
       tools.fact.the_tool_was_retired_before_the_repair,
     ],
     projection: {
@@ -124,7 +209,7 @@ export const return_a_tool = command_use_case_over({
         event: 'the_tool_is_in_the_workshop',
         payload: { tool_id: fact.tool_under_repair.id },
       }),
-      the_tool_was_already_under_repair: (fact) => ({
+      a_tool_has_been_sent_to_repair_again: (fact) => ({
         event: 'the_tool_was_already_in_the_workshop',
         payload: { tool_id: fact.tool_id },
       }),
@@ -137,16 +222,88 @@ export const return_a_tool = command_use_case_over({
   },
 })
 /**
+ * Marta keeps the drill two more weeks, from the row of L7 in "my loans",
+ * while her card is valid (SC-31): she sends the loan, the tool and the due
+ * day the row shows, and the desk moves the due day on, unless someone
+ * booked the drill up to then; the row follows by its stream. The loan is
+ * the target of the node above the business's leaf (`an_ongoing_loan`),
+ * given beside the rest of the input, flat. Told apart, a booking by someone
+ * else; any other failure, the loan's or the node's, the member need not
+ * know which.
+ */
+export const extend_your_loan = command_use_case_over({
+  use_case: loans.an_ongoing_loan.usecase.extend_the_loan,
+  input: z.strictObject({
+    loan_id: loans.id.loan_id,
+    tool_id: tools.id.tool_id,
+    due_day: wlib.day,
+  }),
+  is_refused_unless: {
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: (context) => (input) => ({
+    loan_id: input.loan_id,
+    tool_id: input.tool_id,
+    due_day: input.due_day,
+    member_id: context.card.id,
+  }),
+  events: {
+    your_loan_is_extended: z.strictObject({ loan_id: loans.id.loan_id, due_day: wlib.day }),
+    /** Gianni booked the drill for Thursday: Marta brings it back on its due day. */
+    someone_booked_the_tool: z.strictObject({}),
+    /** Not hers, not of that tool, not due on that day, past its due date, or back in the shed. */
+    the_loan_cannot_be_extended: z.strictObject({}),
+  },
+  projection: {
+    the_loan_can_be_extended_so_its_due_day_moves_on: (fact) => ({
+      event: 'your_loan_is_extended',
+      payload: { loan_id: fact.extended_loan.id, due_day: fact.extended_loan.due_day },
+    }),
+    rejected: (failures) =>
+      dsl.only_a_booking_stands_in_the_way(failures)
+        ? { event: 'someone_booked_the_tool', payload: {} }
+        : { event: 'the_loan_cannot_be_extended', payload: {} },
+  },
+})
+
+/**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
- * date passes on one, a return takes it away. When the due date passes she
+ * date passes on one, a return takes it away, a tool renamed by the keeper
+ * shows its new name (SC-19). When the due date passes she
  * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
+ *
+ * Each row tells which of its buttons is active (SC-33): bring it back,
+ * always, scanning at the desk the tool she brings, which the row cannot
+ * know; keep it longer, from the row as she would send it, unless someone
+ * booked the tool (the ladder, booked by Gianni for Thursday), the loan is
+ * past its due date (the sander), or her card is not valid today. Gianni
+ * books the drill while she reads: its row changes.
  */
 export const my_loans = read_use_case_over({
   use_case: loans.usecase.the_ongoing_loans_of_a_member,
   input: z.strictObject({}),
-  creator: (context) => () => ({ member_id: context.card.id }),
+  actions: {
+    bring_it_back: return_a_tool,
+    keep_it_longer: extend_your_loan,
+  },
+  creator: (context) => () => ({
+    query: { member_id: context.card.id },
+    actions: {
+      bring_it_back: (loan) => ({
+        loan_id: loan.id,
+        tool_id: wlib.given_by_the_caller,
+        condition: wlib.given_by_the_caller,
+      }),
+      keep_it_longer: (loan) => ({
+        loan_id: loan.id,
+        tool_id: loan.tool_id,
+        due_day: loan.due_day,
+      }),
+    },
+  }),
   entry: z.strictObject({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
@@ -154,6 +311,8 @@ export const my_loans = read_use_case_over({
     start_date: wlib.date_time,
     due_day: wlib.day,
     term: value.loan_term,
+    bring_it_back: value.return_on_the_row,
+    keep_it_longer: value.extension_on_the_row,
   }),
   projection: (entry) => ({
     loan_id: entry.id,
@@ -162,6 +321,8 @@ export const my_loans = read_use_case_over({
     start_date: entry.start_date,
     due_day: entry.due_day,
     term: entry.term,
+    bring_it_back: dsl.the_return_on_the_row(entry.bring_it_back),
+    keep_it_longer: dsl.the_extension_on_the_row(entry.keep_it_longer),
   }),
   stream: {
     identity: 'loan_id',
@@ -186,7 +347,7 @@ export const my_loans = read_use_case_over({
 export const my_reservations = read_use_case_over({
   use_case: loans.usecase.the_reservations_of_a_member,
   input: z.strictObject({}),
-  creator: (context) => () => ({ member_id: context.card.id }),
+  creator: (context) => () => ({ query: { member_id: context.card.id } }),
   entry: z.strictObject({
     reservation_id: loans.id.reservation_id,
     tool_id: tools.id.tool_id,
@@ -212,4 +373,55 @@ export const my_reservations = read_use_case_over({
       }),
     },
   },
+})
+
+/**
+ * Gianni opens "in the workshop", among his reservations: those whose tool
+ * is in repair, which may not be ready on their day. On Tuesday the drill
+ * he booked for Thursday goes to the workshop and its row comes in; on
+ * Friday it is back in service and the row goes: facts of `tools`, which
+ * touch no reservation, by what they change of the selection (SC-20).
+ */
+export const my_reservations_in_the_workshop = read_use_case_over({
+  use_case: loans.usecase.the_reservations_of_a_member_in_the_workshop,
+  input: z.strictObject({}),
+  creator: (context) => () => ({ query: { member_id: context.card.id } }),
+  entry: z.strictObject({
+    reservation_id: loans.id.reservation_id,
+    tool_id: tools.id.tool_id,
+    tool_name: value.tool_name,
+    day: wlib.day,
+  }),
+  projection: (entry) => ({
+    reservation_id: entry.id,
+    tool_id: entry.tool_id,
+    tool_name: entry.tool_name,
+    day: entry.day,
+  }),
+  stream: { identity: 'reservation_id' },
+})
+
+/**
+ * Marta follows the shelf live (SC-32): the tools of the shed in service,
+ * by shelf and name, and as they go out, come back or go to the workshop,
+ * her phone follows. A benefit of an active card, not a trade of its own
+ * (D77: a value from auth limits it, not another persona): with her card
+ * expired she is refused and told why, and reads the catalogue once, as
+ * anyone does (`visitor`), until she renews it.
+ */
+export const the_shelf = read_use_case_over({
+  use_case: tools.usecase.the_catalogue,
+  input: z.strictObject({}),
+  is_refused_unless: {
+    /** Card M-12 is valid until 31 March 2027: on 1 April the shelf is no longer live for her. */
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: () => () => ({ query: {} }),
+  entry: z.strictObject({
+    tool_id: tools.id.tool_id,
+    name: value.tool_name,
+  }),
+  projection: (entry) => ({ tool_id: entry.id, name: entry.name }),
+  stream: { identity: 'tool_id' },
 })

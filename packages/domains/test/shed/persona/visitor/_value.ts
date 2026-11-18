@@ -29,3 +29,11 @@ export type categories = z.output<typeof categories>
  */
 export const tool_name = value.tool_name
 export type tool_name = z.output<typeof tool_name>
+
+/**
+ * How many tools a page of the catalogue shows, as the visitor's phone asks: at most 100 (SC-22).
+ *
+ * @see {@link value.page_size}
+ */
+export const page_size = value.page_size
+export type page_size = z.output<typeof page_size>

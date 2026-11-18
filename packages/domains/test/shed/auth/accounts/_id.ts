@@ -23,6 +23,17 @@ export const session_id = id.session_id.brand<'auth/accounts/id/session_id'>()
 export type session_id = z.output<typeof session_id>
 
 /**
+ * A key the shed gave a system outside it (SC-34, D88.1, D91.1): the id of
+ * the `Caller` that signs its calls with it, verified (PER-4). Rossi's
+ * workshop holds `K-ROSSI`, and its system confirms the repairs with it.
+ * Neither an account nor a session: no person signs in with it.
+ *
+ * @see {@link id.key_id}
+ */
+export const key_id = id.key_id.brand<'auth/accounts/id/key_id'>()
+export type key_id = z.output<typeof key_id>
+
+/**
  * A member card of the shed, a value of the hat `member` (PER-1). The persona
  * gives its number to `loans`, as the member of a loan (D33).
  *

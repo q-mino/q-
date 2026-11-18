@@ -12,6 +12,13 @@ import * as lookup from './lookup.ts'
 export const the_hats_of_an_account = lookup.the_hats_of_an_account
 
 /**
+ * The hats of a key the shed gave: Rossi's workshop's, `workshop` (SC-34).
+ *
+ * @see {@link lookup.the_hats_of_a_key}
+ */
+export const the_hats_of_a_key = lookup.the_hats_of_a_key
+
+/**
  * The member card of an account: Marta, card M-12, valid until 31 March 2027.
  *
  * @see {@link lookup.the_member_card_of_an_account}

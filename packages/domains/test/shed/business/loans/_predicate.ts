@@ -58,6 +58,24 @@ export const the_loan_is_of_this_tool =
 export type the_loan_is_of_this_tool = z.output<typeof the_loan_is_of_this_tool>
 
 /**
+ * The loan's card names this member (SC-13): a claim of whoever corrects it.
+ *
+ * @see {@link predicate.the_loan_is_of_this_member}
+ */
+export const the_loan_is_of_this_member =
+  predicate.the_loan_is_of_this_member.brand<'business/loans/predicate/the_loan_is_of_this_member'>()
+export type the_loan_is_of_this_member = z.output<typeof the_loan_is_of_this_member>
+
+/**
+ * The loan's card says it is due on this day (SC-13): a claim of whoever corrects it.
+ *
+ * @see {@link predicate.the_loan_is_due_on_this_day}
+ */
+export const the_loan_is_due_on_this_day =
+  predicate.the_loan_is_due_on_this_day.brand<'business/loans/predicate/the_loan_is_due_on_this_day'>()
+export type the_loan_is_due_on_this_day = z.output<typeof the_loan_is_due_on_this_day>
+
+/**
  * The due date on the loan's card is still ahead at an instant: "bring it
  * back tomorrow" is still true. The instant is a parameter, the clock of
  * whoever asks (GR-8): time is not a fact (D92.4), the due date is.
@@ -105,6 +123,30 @@ export const the_reservation_is_booked =
 export type the_reservation_is_booked = z.output<typeof the_reservation_is_booked>
 
 /**
+ * The reservation holds this tool for this member on this day: Gianni's R8,
+ * the drill, Thursday. The member's phone names the reservation, and the
+ * desk checks it against its card (SC-10).
+ *
+ * @see {@link predicate.the_reservation_holds_the_tool_for_the_member_on_the_day}
+ */
+export const the_reservation_holds_the_tool_for_the_member_on_the_day =
+  predicate.the_reservation_holds_the_tool_for_the_member_on_the_day.brand<'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day'>()
+export type the_reservation_holds_the_tool_for_the_member_on_the_day = z.output<
+  typeof the_reservation_holds_the_tool_for_the_member_on_the_day
+>
+
+/**
+ * The member's reservation has been taken up: they took the tool on its day.
+ *
+ * @see {@link predicate.the_reservation_of_the_member_has_been_taken_up}
+ */
+export const the_reservation_of_the_member_has_been_taken_up =
+  predicate.the_reservation_of_the_member_has_been_taken_up.brand<'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up'>()
+export type the_reservation_of_the_member_has_been_taken_up = z.output<
+  typeof the_reservation_of_the_member_has_been_taken_up
+>
+
+/**
  * The tool is booked for the day, by whoever.
  *
  * @see {@link predicate.the_tool_is_booked_for_the_day}
@@ -112,6 +154,15 @@ export type the_reservation_is_booked = z.output<typeof the_reservation_is_booke
 export const the_tool_is_booked_for_the_day =
   predicate.the_tool_is_booked_for_the_day.brand<'business/loans/predicate/the_tool_is_booked_for_the_day'>()
 export type the_tool_is_booked_for_the_day = z.output<typeof the_tool_is_booked_for_the_day>
+
+/**
+ * The tool is booked for a day from today up to this one, by whoever (SC-31).
+ *
+ * @see {@link predicate.the_tool_is_booked_on_a_day_up_to}
+ */
+export const the_tool_is_booked_on_a_day_up_to =
+  predicate.the_tool_is_booked_on_a_day_up_to.brand<'business/loans/predicate/the_tool_is_booked_on_a_day_up_to'>()
+export type the_tool_is_booked_on_a_day_up_to = z.output<typeof the_tool_is_booked_on_a_day_up_to>
 
 /**
  * The tool is booked for the day by this member.
@@ -144,4 +195,26 @@ export const the_notice_round_of_the_repair_has_begun =
   predicate.the_notice_round_of_the_repair_has_begun.brand<'business/loans/predicate/the_notice_round_of_the_repair_has_begun'>()
 export type the_notice_round_of_the_repair_has_begun = z.output<
   typeof the_notice_round_of_the_repair_has_begun
+>
+
+/**
+ * The desk sends this member the week's summary every Monday.
+ *
+ * @see {@link predicate.a_weekly_summary_goes_to_the_member}
+ */
+export const a_weekly_summary_goes_to_the_member =
+  predicate.a_weekly_summary_goes_to_the_member.brand<'business/loans/predicate/a_weekly_summary_goes_to_the_member'>()
+export type a_weekly_summary_goes_to_the_member = z.output<
+  typeof a_weekly_summary_goes_to_the_member
+>
+
+/**
+ * The week of the Monday the member's summary waits for is not over.
+ *
+ * @see {@link predicate.the_week_of_the_summary_is_not_over}
+ */
+export const the_week_of_the_summary_is_not_over =
+  predicate.the_week_of_the_summary_is_not_over.brand<'business/loans/predicate/the_week_of_the_summary_is_not_over'>()
+export type the_week_of_the_summary_is_not_over = z.output<
+  typeof the_week_of_the_summary_is_not_over
 >

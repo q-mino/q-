@@ -29,22 +29,23 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 - Goal: the library wished before it is written. Test domains with no word of q- ([Shed](../packages/domains/test/shed/README.md): a tool shed, its catalogue, loans, repairs, personas), written from business specifications one at a time and reviewed against the paper and this document; [`wlib.ts`](../packages/domains/test/shed/wlib.ts), the types and signatures the domains want from the library, without bodies, the requirement of steps 3–7; the catalogue of the scenarios, [`scenarios.md`](scenarios.md).
 - Replaces the library steps of the first plan (1, 2, 6, 7), re-planned below from Shed and the catalogue (Alessandro, 17 Nov 2026). What Shed leaves to them: its README, § Left by Shed.
 
-**2. Domains by example II: the catalogue** — Shed · J · 5–8 sessions × 230k
+**2. Domains by example II: the catalogue** — done: `step/02-catalogue`, 17–18 Nov 2026, 11 sessions
 
 - Goal: Shed holds every scenario in scope of the [catalogue](scenarios.md) before any code of the library (Alessandro, 17 Nov 2026): each open scenario written as a story of Shed, from a business specification, with what it asks of `wlib.ts`. At its close no scenario in scope is open, and `wlib.ts` is the whole requirement of steps 3–7.
 - Parts, by the library's areas, in each the scenarios that reshape first:
   1. formats, commands and facts: SC-12, SC-10, SC-13, SC-11;
   2. reads and streams: SC-19..22;
   3. trees and personas: SC-31, SC-33, SC-34, SC-32;
-  4. effects, reactions, processes: SC-42, SC-43, SC-44;
-  5. the generator's output for a delegated leaf (Shed's README, § Left by Shed); the closure: README, catalogue and this plan read again.
+  4. effects, reactions, processes: SC-42, SC-43, SC-44, SC-53 (found at SC-42, entered by Alessandro on 18 Nov 2026);
+  5. the second definitions (Alessandro, 18 Nov 2026: one need has two or more definitions, so that the author uses the one that suits and has a fallback when a technical need arises): SC-54, SC-55, SC-56;
+  6. the generator's output for a delegated leaf (Shed's README, § Left by Shed); the closure: README, catalogue and this plan read again.
 - The catalogue is closed at the start of the step: a scenario found along the way is added to it as open, and enters the step only if Alessandro decides; otherwise it waits for the library to be built.
 - Checks: each scenario's story in Shed's README, with the part that covers it; in the catalogue no scenario in scope left open.
 - Depends on: 1.
 
 **3. Library: the generator** — `library` · L · 2–3 sessions × 200k
 
-- Goal: the compilation of the domains (Alessandro's direction of 6 Nov 2026: convention over configuration). From the map (`sight.ts`) and the folders: the twins (`_fact.ts`, …), the scopes by kind (`_scope_<kind>.ts`), the doors by audience, the registries, the majors (`_majors.ts`), the points of the nodes (`_node.ts`); the rules of `.dependency-cruiser.mjs` from the map. Its checks: one object, one path; a past major's folder complete; the registry compared with `main`'s, by direction; generated files committed, regenerated in CI. Where it lives (a package with Node's I/O, a pure core in the library) is decided at its start.
+- Goal: the compilation of the domains (Alessandro's direction of 6 Nov 2026: convention over configuration). From the map (`sight.ts`) and the folders: the twins (`_fact.ts`, …), the scopes by kind (`_scope_<kind>.ts`), the doors by audience, the registries (a past major's with the inputs of its delegated leaves), the majors (`_majors.ts`), the points of the nodes (`_node.ts`); the rules of `.dependency-cruiser.mjs` from the map. Its checks: one object, one path; a past major's folder complete; the registry compared with `main`'s, by direction; generated files committed, regenerated in CI. Where it lives (a package with Node's I/O, a pure core in the library) is decided at its start.
 - Rules: DOM-22, DOM-24, DOM-25, GR-1, GR-3, GR-9, PER-17.
 - Scenarios: SC-45, SC-46.
 - Checks: regenerating Shed gives its hand-written files, each difference decided; each check stops a fixture with its message.
@@ -53,7 +54,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 - Goal: the builders at runtime; conditions (AND, OR, NOT, two-valued, every predicate evaluated); commands with their branches and outbox entries, as data; the command port over a state adapter (`FactWrites`), with the operation, the duplicate branch and the fingerprint; the event envelope (path, version, resources, correlation); the versions of the facts (`versions`, `replay`, the store's versions checked at wiring); strict zod schemas and their JSON Schema export; total order. The oracle runs the commands of `tools` and `loans`.
 - Rules: LIB-1..11, DOM-1, DOM-5..12, DOM-19..22, DOM-24, TST-1..3, TST-5, TST-7, V9..V11, V14.
-- Scenarios: SC-1..13.
+- Scenarios: SC-1..13, SC-54, SC-55.
 - Checks: the scenarios as tests on the oracle; property tests of the routing (fast-check, hand-written arbitraries, TST-9); a stability corpus for the fingerprint; JSON Schema snapshots in CI.
 - Depends on: 3.
 
@@ -77,7 +78,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 - Goal: outbox entries with the command's fact; the effect executor as a durable consumer (at least once, the entry's id as key, `not_before`, the return use case, position and dead letters per effect); the reaction consumers (operation ids from fact, reaction and part; rejections to dead letter; no hat); the step of a process with a cursor; waits queued at a past major.
 - Rules: DOM-13..16, DOM-19, DOM-20, DOM-23, GR-9, PER-12, LIB-10.
-- Scenarios: SC-35..44.
+- Scenarios: SC-35..44, SC-53, SC-56.
 - Checks: the scenarios as tests on the oracle; injected loss, duplication and abort (TST-4); a redelivered fact gives one command; an exhausted effect becomes a dead letter, shown, never a business fact.
 - Depends on: 6.
 

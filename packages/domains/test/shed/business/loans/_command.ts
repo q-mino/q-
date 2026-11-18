@@ -19,8 +19,11 @@ export type the_tool_can_be_lent = z.output<typeof the_tool_can_be_lent>
  * on the eve of the due date `remind_the_member_of_the_due_date` reminds the
  * member, on the due date `declare_the_loan_overdue` stamps the loan
  * overdue, each only if the member still has the tool. Both queued here, not
- * one by the other's return: neither decides the other. One loan, one wait of
- * each: the loan's id is each entry's.
+ * one by the other's return: neither decides the other. Days of the shed
+ * (SC-12): Marta takes the drill at 23:30 on 2 November in Toronto, already
+ * the 3rd in UTC, and it is due on the 16th; her eve's wait goes at the start
+ * of the 15th there. A tool booked for today is lent to no one by this
+ * command: its member takes it up (SC-10).
  *
  * @see {@link command.borrow_a_tool}
  */
@@ -33,6 +36,49 @@ export const borrow_a_tool = command.borrow_a_tool
  */
 export const borrow_a_tool_input = command.borrow_a_tool.input
 export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
+
+/**
+ * The tool can be lent today to whoever asks: on its day a reservation holds
+ * the tool for its member (SC-10).
+ *
+ * @see {@link command.the_tool_can_be_lent_to_anyone_today}
+ */
+export const the_tool_can_be_lent_to_anyone_today = command.the_tool_can_be_lent_to_anyone_today
+export type the_tool_can_be_lent_to_anyone_today = z.output<
+  typeof the_tool_can_be_lent_to_anyone_today
+>
+
+/**
+ * The member takes up their reservation on its day: a transition with no
+ * use case of its own, which the loan composes (D111, SC-10).
+ *
+ * @see {@link command.take_up_a_reservation}
+ */
+export const take_up_a_reservation = command.take_up_a_reservation
+
+/**
+ * The input of `take_up_a_reservation`, declared inline.
+ *
+ * @see {@link command.take_up_a_reservation}
+ */
+export const take_up_a_reservation_input = command.take_up_a_reservation.input
+export type take_up_a_reservation_input = z.output<typeof take_up_a_reservation_input>
+
+/**
+ * The member takes the tool they booked, on its day: one fact in two parts,
+ * the loan's then the reservation's (D111, SC-10).
+ *
+ * @see {@link command.lend_a_booked_tool}
+ */
+export const lend_a_booked_tool = command.lend_a_booked_tool
+
+/**
+ * The input of `lend_a_booked_tool`, declared inline.
+ *
+ * @see {@link command.lend_a_booked_tool}
+ */
+export const lend_a_booked_tool_input = command.lend_a_booked_tool.input
+export type lend_a_booked_tool_input = z.output<typeof lend_a_booked_tool_input>
 
 /**
  * The tool can be booked for the day.
@@ -98,6 +144,28 @@ export type return_a_tool_input = z.output<typeof return_a_tool_input>
  */
 export const the_member_can_still_be_reminded = command.the_member_can_still_be_reminded
 export type the_member_can_still_be_reminded = z.output<typeof the_member_can_still_be_reminded>
+
+/**
+ * The member still has the tool, but the loan was extended since the eve was queued (SC-31).
+ *
+ * @see {@link command.the_due_day_of_the_ongoing_loan_was_moved}
+ */
+export const the_due_day_of_the_ongoing_loan_was_moved =
+  command.the_due_day_of_the_ongoing_loan_was_moved
+export type the_due_day_of_the_ongoing_loan_was_moved = z.output<
+  typeof the_due_day_of_the_ongoing_loan_was_moved
+>
+
+/**
+ * The member still has a tool, but the card names another since the eve was queued (SC-13).
+ *
+ * @see {@link command.the_tool_of_the_ongoing_loan_was_corrected}
+ */
+export const the_tool_of_the_ongoing_loan_was_corrected =
+  command.the_tool_of_the_ongoing_loan_was_corrected
+export type the_tool_of_the_ongoing_loan_was_corrected = z.output<
+  typeof the_tool_of_the_ongoing_loan_was_corrected
+>
 
 /**
  * The member still has the tool, but its due date has passed: the eve came late.
@@ -333,4 +401,74 @@ export const continue_the_repair_notice_round = command.continue_the_repair_noti
 export const continue_the_repair_notice_round_input = command.continue_the_repair_notice_round.input
 export type continue_the_repair_notice_round_input = z.output<
   typeof continue_the_repair_notice_round_input
+>
+
+/**
+ * The desk sends this member no week's summary yet.
+ *
+ * @see {@link command.no_weekly_summary_goes_to_the_member}
+ */
+export const no_weekly_summary_goes_to_the_member = command.no_weekly_summary_goes_to_the_member
+export type no_weekly_summary_goes_to_the_member = z.output<
+  typeof no_weekly_summary_goes_to_the_member
+>
+
+/**
+ * The desk already sends this member the week's summary.
+ *
+ * @see {@link command.a_weekly_summary_already_goes_to_the_member}
+ */
+export const a_weekly_summary_already_goes_to_the_member =
+  command.a_weekly_summary_already_goes_to_the_member
+export type a_weekly_summary_already_goes_to_the_member = z.output<
+  typeof a_weekly_summary_already_goes_to_the_member
+>
+
+/**
+ * A member asks the desk for the week's summary every Monday.
+ *
+ * @see {@link command.begin_a_weekly_summary}
+ */
+export const begin_a_weekly_summary = command.begin_a_weekly_summary
+
+/**
+ * The input of `begin_a_weekly_summary`, declared inline.
+ *
+ * @see {@link command.begin_a_weekly_summary}
+ */
+export const begin_a_weekly_summary_input = command.begin_a_weekly_summary.input
+export type begin_a_weekly_summary_input = z.output<typeof begin_a_weekly_summary_input>
+
+/**
+ * The week of the Monday the member's summary waits for is not over.
+ *
+ * @see {@link command.the_week_of_the_summary_is_on}
+ */
+export const the_week_of_the_summary_is_on = command.the_week_of_the_summary_is_on
+export type the_week_of_the_summary_is_on = z.output<typeof the_week_of_the_summary_is_on>
+
+/**
+ * The week of the Monday the member's summary waits for is over.
+ *
+ * @see {@link command.the_week_of_the_summary_is_over}
+ */
+export const the_week_of_the_summary_is_over = command.the_week_of_the_summary_is_over
+export type the_week_of_the_summary_is_over = z.output<typeof the_week_of_the_summary_is_over>
+
+/**
+ * On a Monday the desk sums up the week for the member: the summary, and the
+ * wait for the next Monday.
+ *
+ * @see {@link command.sum_up_the_week_for_the_member}
+ */
+export const sum_up_the_week_for_the_member = command.sum_up_the_week_for_the_member
+
+/**
+ * The input of `sum_up_the_week_for_the_member`, declared inline.
+ *
+ * @see {@link command.sum_up_the_week_for_the_member}
+ */
+export const sum_up_the_week_for_the_member_input = command.sum_up_the_week_for_the_member.input
+export type sum_up_the_week_for_the_member_input = z.output<
+  typeof sum_up_the_week_for_the_member_input
 >

@@ -28,19 +28,26 @@ const shed = '^packages/domains/test/shed/'
 const kinds = `(?:${Object.keys(sight).join('|')})`
 // A folder named by a number is a past major of its domain (business/loans/1/): in the tree, outside the path (DOM-25, PER-17).
 const major = '[0-9]+/'
-const tree = `${shed}${kinds}/(?:[^@/][^/]*/|)(?:${major}|)`
+// The folders of the tree, at any depth below its top (a business domain's own tree, business/loans/an_ongoing_loan/, D105), then a past major if any.
+// One pattern with no nested repetition, which depcruise refuses as unsafe: a first folder not a major, then any folders with no `@`.
+const folders = '(?:[^@/0-9][^@]*/|)'
+const tree = `${shed}${kinds}/${folders}(?:${major}|)`
 const authored = `${tree}[^_/][^/]*\\.ts$`
 const tests = '\\.test\\.ts$'
 const sightRules = Object.entries(sight).map(([from, seen]) => ({
   name: `shed-sight-of-${from}`,
   comment: `Shed: the scopes of a folder under ${from} take of another folder only the door sight.ts opens to ${from} (_door_${from}.ts), besides their own folder's twins and their ancestors' (LIB-1, DOM-25).`,
   severity: 'error',
-  from: { path: `${shed}${from}/([^@/][^/]*/|)_scope_[a-z]+\\.ts$` },
+  from: {
+    path: `${shed}${from}/(${folders})_scope_[a-z]+\\.ts$`,
+    pathNot: `${shed}${from}/[^/]+/${major}`,
+  },
   to: {
     path: `${shed}${kinds}/`,
     pathNot: [
       `${shed}${from}/$1_[^/]+\\.ts$`,
       `${shed}${from}/_[^/]+\\.ts$`,
+      `${shed}${from}/${folders}_door_below\\.ts$`,
       ...Object.keys(seen).map((folder) => `${shed}${folder}/[^/]+/_door_${from}\\.ts$`),
     ],
   },
@@ -82,7 +89,7 @@ export default {
       comment:
         "Shed: an authored file of the tree imports of the tree only its scope, which carries its folder's components, the doors of its ancestors to the folders below (_door_below.ts) and the doors sight.ts opens to it (DOM-25, LIB-1).",
       severity: 'error',
-      from: { path: `${shed}(${kinds})/([^@/][^/]*/|)(${major}|)[^_/][^/]*\\.ts$`, pathNot: tests },
+      from: { path: `${shed}(${kinds})/(${folders})(${major}|)[^_/][^/]*\\.ts$`, pathNot: tests },
       to: {
         path: `${shed}${kinds}/`,
         pathNot: `${shed}$1/$2$3_scope_[a-z]+\\.ts$`,

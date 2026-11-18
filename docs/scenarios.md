@@ -18,12 +18,14 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-5** (covered, Shed 3, 9) A value with states: a loan by stages (nesting), a tool under repair (subtraction). DOM-19, § Experiments of Shed.
 - **SC-6** (covered, Shed 4) Gianni books the ladder for a day outside the window: `invalid_request`, a static rule over the input and `now`. DOM-21.
 - **SC-7** (covered, Shed 9) The drill goes to the workshop: its stay named by `tools` from the operation, since nobody outside can name it. DOM-23, D75.8.
+- **SC-54** (covered, Shed 11; a second definition of SC-44, entered step 2 by Alessandro, 18 Nov 2026 (5)) Luca loads a short sheet in one go: a list of named instances, atomic, a branch and a part per line, a line whose id is taken a part of its own (D95). DOM-20, D113, D97.
+- **SC-55** (covered, Shed 11; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) A fact declares resources narrower than every identity of its payload, the instances it changes and its target (D94.6): Gianni's dead notice holds his reservation alone, and the round's other notices flow. DOM-10, D94.6, D108.
 - **SC-8** (covered, Shed 10) Marta's loan of `loans` 1.x read after 2.0.0, by every reader at the current shape; the SQL table rebuilt from the log. DOM-22, V14.
 - **SC-9** (covered, Shed 10) `business/loans/1/` deleted while a fact of 1.x is kept: the release stops at its start. DOM-22, PER-17.
-- **SC-10** (open, reshapes) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
-- **SC-11** (open, adds) Marta and Gianni ask for the last drill at the same instant: one loan, the other `the_tool_is_not_available`; concurrency equals some serial order. DOM-9, ADP-8.
-- **SC-12** (open, reshapes) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22.
-- **SC-13** (open, adds) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101.
+- **SC-10** (covered, Shed 11) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
+- **SC-11** (covered, Shed 11) Marta and Gianni ask for the last drill at the same instant: one loan, the other `the_tool_is_not_available`; concurrency equals some serial order; a retry in flight reads the first's fact. DOM-9, DOM-11, ADP-8.
+- **SC-12** (covered, Shed 11) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22, PER-17.
+- **SC-13** (covered, Shed 11) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101.
 
 ## Reads and streams (step 5)
 
@@ -32,10 +34,10 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-16** (covered, Shed 7) "Your loan is overdue": a fact by name in a persona's stream; every other fact as the row. PER-18, D72.5.
 - **SC-17** (covered, Shed 9) Gianni's R8 reads "the tool you booked is in repair" from the part of a composite fact that touches it. DOM-17, D111.
 - **SC-18** (covered, Shed 9) A fact of `loans` does not reach the visitor's catalogue: a query's stream sees its domain's facts only. DOM-17, DOM-8.
-- **SC-19** (open, reshapes) Luca renames the drill: the row of Marta's "my loans" shows the new name, an entry that reads another domain. DOM-17, GR-3, V11.
-- **SC-20** (open, reshapes) Gianni's "my reservations" shows whether the tool is in the workshop: a selection over another domain's state. DOM-18, GR-3.
-- **SC-21** (open, reshapes) Luca asks how many loans each tool had this month: a read that counts, not a list of entries. DOM-18.
-- **SC-22** (open, reshapes) The catalogue holds 2,000 tools: the snapshot read in pages. DOM-17, D64.3.
+- **SC-19** (covered, Shed 11) Luca renames the drill: the row of Marta's "my loans" shows the new name, an entry that reads another domain. DOM-17, GR-3, V11.
+- **SC-20** (covered, Shed 11) Gianni's "my reservations" shows whether the tool is in the workshop: a selection over another domain's state. DOM-18, GR-3.
+- **SC-21** (covered, Shed 11) Luca asks how many loans each tool had this month: a read that counts, not a list of entries; a calculation beside the fields. DOM-18, D50.7.
+- **SC-22** (covered, Shed 11) The catalogue holds 2,000 tools: the snapshot read in pages, a stream of snapshots pulled by the consumer, each with its position, the total and the next page's cursor. DOM-18, D50, D72.8.
 
 ## Trees and personas (step 6)
 
@@ -47,10 +49,10 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-28** (covered, Shed 10) Marta's old phone at `1.4.0` and Gianni's new one at `2.0.0` borrow by the same path and read the deadline each in its own words. PER-17, D72.7.
 - **SC-29** (covered, Shed 10) The gate: `2.1.0` on a server at 2.0.0, `1.2.0` after `1/` is deleted, `3.0.0` during a release. PER-17.
 - **SC-30** (covered, Shed 10) A past read leaf names its rows by a field it declares, checked by type. PER-17, PER-18.
-- **SC-31** (open, reshapes) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"). D105.
-- **SC-32** (open, adds) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80.
-- **SC-33** (open, reshapes) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
-- **SC-34** (open, reshapes) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
+- **SC-31** (covered, Shed 11) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"): Marta extends her loan under "an ongoing loan". D105, D51.
+- **SC-32** (covered, Shed 11) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80.
+- **SC-33** (covered, Shed 11) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
+- **SC-34** (covered, Shed 11) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
 
 ## Effects, reactions, processes (step 7)
 
@@ -61,14 +63,16 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-39** (covered, Shed 8) Luca retires the ladder: a reaction opens the desk's work sheet, whose steps cancel R3 then R5 by a cursor; a redelivery cancels R5 once. DOM-16, DOM-20, D97, D112, TST-4.
 - **SC-40** (covered, Shed 9) A damaged return sends the drill to the workshop, a whole one does nothing; a redelivery opens one stay. DOM-16, D88.2.
 - **SC-41** (covered, Shed 9) The round of repair notices: one notice per repair and reservation, a second round for a second stay. DOM-13, DOM-20.
-- **SC-42** (open, reshapes) A fact of the drill goes to a dead letter, and the next fact of the drill waits behind it. D94.7, DOM-16.
-- **SC-43** (open, adds) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
-- **SC-44** (open, adds) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
+- **SC-42** (covered, Shed 11) A fact of the drill goes to a dead letter, and the next fact of the drill waits behind it. D94.7, DOM-16.
+- **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
+- **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
+- **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
+- **SC-56** (covered, Shed 11, for an effect; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: Marta's next week's summary goes past her dead one (C: the repair notices keep their order, SC-53, and pass each other since SC-55). A reaction's comes with its case. DOM-14, DOM-16, D67.3.
 
 ## The generator (step 3)
 
 - **SC-45** (covered, Shed 2-10) The map: a persona sees of a business domain its use cases, identities and facts; a business domain of another only its identities; a reaction above them. DOM-25, GR-1, GR-3, GR-9.
-- **SC-46** (covered as a rule, Shed 10) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. DOM-22, DOM-24, PER-17.
+- **SC-46** (covered as a rule, Shed 10, 11) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. A past major's registry is its whole map, the input of a delegated leaf delegated to the next major's (Shed 11, part 6). DOM-22, DOM-24, PER-17.
 
 ## Out of scope
 

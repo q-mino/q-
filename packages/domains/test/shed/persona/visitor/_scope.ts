@@ -13,6 +13,7 @@ export const {
   fact,
   predicate,
   selection,
+  calculation,
   effect,
   AND,
   OR,

@@ -1,7 +1,8 @@
 // A sketch of the configurator of the shed (§ 7 of architecture.md): it wires
-// the trees of the personas over the ports of the in-memory oracle. The tree
-// of a persona enters from the node of the persona base, which takes the
-// `Caller` (PER-4, PER-6); its leaves, command and read, invoke the use cases
+// the trees of the personas over the ports of the in-memory oracle, those of
+// the people of the shed and that of Rossi's workshop, a system outside it
+// (SC-34). The tree of a persona enters from the node of the persona base,
+// which takes the `Caller` (PER-4, PER-6); its leaves, command and read, invoke the use cases
 // of `tools` and `loans`, its nodes the lookups of `accounts`, found by path
 // (`Invoked`). The effect executor of `loans` (DOM-14) delivers its effects
 // to the world the oracle fakes, and brings the eve of a due date, and the
@@ -18,14 +19,17 @@ import { memory_adapter, type Cell } from './adapter/memory/index.ts'
 import {
   send_the_due_date_reminder,
   send_the_repair_notice,
+  send_the_weeks_summary,
   type Phones,
 } from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './business/loans/_registry.ts'
+import { registry as tools_registry } from './business/tools/_registry.ts'
 import { majors as loans_majors } from './business/loans/_majors.ts'
 import { majors as tools_majors } from './business/tools/_majors.ts'
 import {
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
+  sum_up_the_week_for_the_member,
 } from './business/loans/_usecase.ts'
 import { persona } from './persona/_node.ts'
 import { registry as persona_registry } from './persona/_registry.ts'
@@ -33,9 +37,14 @@ import { registry as member_registry } from './persona/member/_registry.ts'
 import { majors as member_majors } from './persona/member/_majors.ts'
 import {
   borrow_a_tool,
+  extend_your_loan,
   my_loans,
   my_reservations,
+  my_reservations_in_the_workshop,
   return_a_tool,
+  send_me_my_week_on_mondays,
+  take_the_tool_you_booked,
+  the_shelf,
 } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import { majors as keeper_majors } from './persona/keeper/_majors.ts'
@@ -43,7 +52,13 @@ import {
   put_a_repaired_tool_back_in_service,
   retire_a_tool,
   send_a_tool_to_repair,
+  the_loans_of_the_month,
+  load_tools_from_a_sheet,
+  load_tools_from_a_short_sheet,
 } from './persona/keeper/_usecase.ts'
+import { registry as workshop_registry } from './persona/workshop/_registry.ts'
+import { majors as workshop_majors } from './persona/workshop/_majors.ts'
+import { close_a_job } from './persona/workshop/_usecase.ts'
 import { registry as visitor_registry } from './persona/visitor/_registry.ts'
 import { majors as visitor_majors } from './persona/visitor/_majors.ts'
 import { the_catalogue } from './persona/visitor/_usecase.ts'
@@ -51,10 +66,15 @@ import { registry as retirement_registry } from './reaction/retirement/_registry
 import { registry as damage_registry } from './reaction/damage/_registry.ts'
 import { registry as repair_registry } from './reaction/repair/_registry.ts'
 
-/** The world outside the shed, as the oracle fakes it: the members' phones, and the clock of the executors. */
+/**
+ * The world outside the shed, as the oracle fakes it: the members' phones,
+ * and the clock of the executors and the consumers. The clock tells the zone
+ * of the shed's calendar, which the shed's configuration declares (Toronto,
+ * `America/Toronto`), not a domain: `loans` lends in any town (SC-12).
+ */
 export interface World {
   readonly phones: Phones
-  readonly clock: () => wlib.date_time
+  readonly clock: wlib.Clock
 }
 
 export const shed = (cell: Cell) => async (world: World) => {
@@ -78,14 +98,42 @@ export const shed = (cell: Cell) => async (world: World) => {
       versions,
       majors: member_majors,
       top: persona,
-      use_cases: { borrow_a_tool, return_a_tool, my_loans, my_reservations },
+      use_cases: {
+        borrow_a_tool,
+        take_the_tool_you_booked,
+        return_a_tool,
+        extend_your_loan,
+        my_loans,
+        my_reservations,
+        my_reservations_in_the_workshop,
+        the_shelf,
+        send_me_my_week_on_mondays,
+      },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions,
       majors: keeper_majors,
       top: persona,
-      use_cases: { retire_a_tool, send_a_tool_to_repair, put_a_repaired_tool_back_in_service },
+      use_cases: {
+        retire_a_tool,
+        send_a_tool_to_repair,
+        put_a_repaired_tool_back_in_service,
+        the_loans_of_the_month,
+        load_tools_from_a_sheet,
+        load_tools_from_a_short_sheet,
+      },
+    })({ invoked, log: adapter.log }),
+    // Rossi's workshop, an actor from outside (D88.1, D91.1): its interface
+    // verifies the signature of its system's key and gives the `Caller`
+    // (PER-4), and the scope of its operations, whose ids its notifications
+    // carry (SC-34).
+    workshop: wlib.tree_ports({
+      registry: { ...persona_registry, ...workshop_registry },
+      versions,
+      majors: workshop_majors,
+      top: persona,
+      use_cases: { close_a_job },
     })({ invoked, log: adapter.log }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
@@ -97,7 +145,11 @@ export const shed = (cell: Cell) => async (world: World) => {
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
       versions,
-      returns: { remind_the_member_of_the_due_date, declare_the_loan_overdue },
+      returns: {
+        remind_the_member_of_the_due_date,
+        declare_the_loan_overdue,
+        sum_up_the_week_for_the_member,
+      },
     })({
       'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
       'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
@@ -107,6 +159,8 @@ export const shed = (cell: Cell) => async (world: World) => {
       'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(
         world.phones,
       ),
+      'business/loans/effect/wait_until_monday': wlib.returns_the_payload,
+      'business/loans/effect/send_the_weeks_summary': send_the_weeks_summary(world.phones),
     })({
       outbox: cell.outbox,
       returns: adapter.loans,
@@ -129,6 +183,20 @@ export const shed = (cell: Cell) => async (world: World) => {
       'business/loans/reaction/the_next_member_on_the_round_is_notified': {
         log: adapter.log,
         invokes: adapter.loans.continue_the_repair_notice_round,
+      },
+    })({
+      state: cell.reactions,
+      clock: world.clock,
+    }),
+    // The desk's loading of a sheet of tools moves itself on (SC-44).
+    tools_reactions: wlib.reaction_consumers({ registry: tools_registry, versions })({
+      'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.tools.continue_the_loading_of_a_sheet,
+      },
+      'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up': {
+        log: adapter.log,
+        invokes: adapter.tools.continue_the_loading_of_a_sheet,
       },
     })({
       state: cell.reactions,

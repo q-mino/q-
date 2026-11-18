@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time } from '../../wlib.ts'
+import { cursor, date_time } from '../../wlib.ts'
 import { id } from './_scope_value.ts'
 
 export const tool_name = z.string().min(1).max(80)
@@ -77,4 +77,73 @@ export const catalogue_entry = tool_in_service.pick({
   name: true,
   category: true,
   notes: true,
+})
+
+/**
+ * A tool as a line of a sheet writes it: its id, the label Luca will stick
+ * on it, its name, category and notes; the rest the catalogue gives it when
+ * it is added (SC-44).
+ */
+export const tool_on_a_line = tool_in_service.pick({
+  id: true,
+  name: true,
+  category: true,
+  notes: true,
+})
+
+/**
+ * A line of a sheet of tools: a part of the sheet (D94.1), its number on the
+ * sheet, from 1, and the tool it writes. The desk goes down the lines in
+ * their order, one tool a line.
+ */
+export const sheet_line = z.strictObject({
+  id: id.line_id,
+  sheet_id: id.sheet_id,
+  number: z.number().int().min(1),
+  tool: tool_on_a_line,
+})
+
+export const loading_stage = z.enum(['loading', 'complete'])
+
+/**
+ * The desk goes down the sheet's lines, one at a time, by number (D109);
+ * the cursor marks the last line handled, none before the first (D112.1).
+ * The library's, opaque: the desk never writes it.
+ */
+export const loading_under_way = z.strictObject({
+  stage: z.literal(loading_stage.enum.loading),
+  cursor: cursor.optional(),
+})
+
+/** No line is left to go down: the sheet is loaded (D112.2). */
+export const loading_complete = z.strictObject({
+  stage: z.literal(loading_stage.enum.complete),
+  end_date: date_time,
+})
+
+/** Where the loading of a sheet is in its course. */
+export const loading_progress = z.discriminatedUnion('stage', [loading_under_way, loading_complete])
+
+/**
+ * A sheet of tools Luca hands to the desk to load into the catalogue, a
+ * process with a cursor (DOM-20, DOM-23, D97, D112), whose state is its own
+ * aggregate in `tools`, which owns the life cycle of the tools it adds: when
+ * it was opened and how far the desk has gone. Its lines are its parts
+ * (`sheet_line`), kept beside it by the sheet's id. By nesting, as the
+ * desk's sheets in `loans`.
+ */
+export const loading_sheet = z.strictObject({
+  id: id.sheet_id,
+  start_date: date_time,
+  progress: loading_progress,
+})
+
+/** A sheet the desk is loading. */
+export const sheet_being_loaded = loading_sheet.extend({
+  progress: loading_under_way,
+})
+
+/** A sheet the desk has gone down to its last line. */
+export const loaded_sheet = loading_sheet.extend({
+  progress: loading_complete,
 })

@@ -113,6 +113,15 @@ export const reservation_booked = value.reservation_booked
 export type reservation_booked = z.output<typeof reservation_booked>
 
 /**
+ * The member took the tool on its day (SC-10): the loan that took the
+ * reservation up, which the tool is now out on.
+ *
+ * @see {@link value.reservation_taken_up}
+ */
+export const reservation_taken_up = value.reservation_taken_up
+export type reservation_taken_up = z.output<typeof reservation_taken_up>
+
+/**
  * The tool is no longer held: the desk cancelled the reservation, when. Why
  * (the tool retired) is the work sheet's, not the reservation's.
  *
@@ -154,6 +163,14 @@ export const cancelled_reservation = value.cancelled_reservation
 export type cancelled_reservation = z.output<typeof cancelled_reservation>
 
 /**
+ * A reservation the member took up, taking the tool on its day.
+ *
+ * @see {@link value.taken_up_reservation}
+ */
+export const taken_up_reservation = value.taken_up_reservation
+export type taken_up_reservation = z.output<typeof taken_up_reservation>
+
+/**
  * What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed.
  *
  * @see {@link value.ongoing_loan_entry}
@@ -168,6 +185,22 @@ export type ongoing_loan_entry = z.output<typeof ongoing_loan_entry>
  */
 export const reservation_entry = value.reservation_entry
 export type reservation_entry = z.output<typeof reservation_entry>
+
+/**
+ * How many loans: a count of the desk's register (SC-21).
+ *
+ * @see {@link value.number_of_loans}
+ */
+export const number_of_loans = value.number_of_loans
+export type number_of_loans = z.output<typeof number_of_loans>
+
+/**
+ * A tool of the shed, as the desk names it: the tool, with its name.
+ *
+ * @see {@link value.tool_of_the_shed_entry}
+ */
+export const tool_of_the_shed_entry = value.tool_of_the_shed_entry
+export type tool_of_the_shed_entry = z.output<typeof tool_of_the_shed_entry>
 
 /**
  * @see {@link value.cancellation_stage}
@@ -292,3 +325,11 @@ export type repair_notice_round_under_way = z.output<typeof repair_notice_round_
  */
 export const completed_repair_notice_round = value.completed_repair_notice_round
 export type completed_repair_notice_round = z.output<typeof completed_repair_notice_round>
+
+/**
+ * The week's summary the desk sends a member every Monday.
+ *
+ * @see {@link value.weekly_summary}
+ */
+export const weekly_summary = value.weekly_summary
+export type weekly_summary = z.output<typeof weekly_summary>

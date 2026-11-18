@@ -3,12 +3,12 @@
 // (GR-3, V11), typed, and the arrow `loans → tools` that dependency-cruiser
 // shows (GR-1). Where the view of `loans` means what `tools` means, the
 // fragment reuses the `dsl` of `tools`. Its reads are typed by subject
-// (DOM-18): a loan, a reservation.
+// (DOM-18): a loan, a reservation, a tool of the shed.
 
 import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../business/loans/_fact.ts'
 import type * as loans_predicate from '../../business/loans/_predicate.ts'
-import type { loan_id, reservation_id } from '../../business/loans/_id.ts'
+import type { loan_id, member_id, reservation_id } from '../../business/loans/_id.ts'
 import type {
   cancellation_of_reservations,
   cancellation_progress,
@@ -18,10 +18,13 @@ import type {
   repair_notice_round_progress,
   reservation,
   reservation_progress,
+  weekly_summary,
 } from '../../business/loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
+  the_reservations_of_a_member_in_the_workshop,
+  the_loans_of_each_tool_this_month,
 } from '../../business/loans/_query.ts'
 import type {
   continue_the_cancellation_of_reservations,
@@ -29,7 +32,10 @@ import type {
 } from '../../business/loans/_command.ts'
 import type * as loan_selections from '../../business/loans/_loan_selection.ts'
 import type * as reservation_selections from '../../business/loans/_reservation_selection.ts'
+import type * as tool_selections from '../../business/loans/_tool_selection.ts'
+import type * as tool_calculations from '../../business/loans/_tool_calculation.ts'
 import type { repair_id, tool_id } from '../../business/tools/_id.ts'
+import type { tool } from '../../business/tools/_value.ts'
 import * as tools_dsl from '../../business/tools/_dsl.ts'
 import * as loans_dsl from '../../business/loans/_dsl.ts'
 import {
@@ -43,13 +49,15 @@ import type { ToolsState } from './tools.ts'
 
 /**
  * The loans and the reservations, by id; the desk's work sheets, by tool;
- * its rounds of the notices of a repair, by stay in repair.
+ * its rounds of the notices of a repair, by stay in repair; the week's
+ * summaries it sends, by member (SC-43).
  */
 export interface LoansState {
   readonly loans: ReadonlyMap<loan_id, loan>
   readonly reservations: ReadonlyMap<reservation_id, reservation>
   readonly cancellations: ReadonlyMap<tool_id, cancellation_of_reservations>
   readonly notice_rounds: ReadonlyMap<repair_id, repair_notice_round>
+  readonly weekly_summaries: ReadonlyMap<member_id, weekly_summary>
 }
 
 /** What the predicates of `loans` read: its state, and the state of `tools` for its view of the tools. */
@@ -79,6 +87,10 @@ export const loans_fragments: wlib.PredicateFragments<
     loans_dsl.the_loan_is_returned(state.loans.get(p.loan_id)),
   'business/loans/predicate/the_loan_is_of_this_tool': (p) => (state) =>
     state.loans.get(p.loan_id)?.tool_id === p.tool_id,
+  'business/loans/predicate/the_loan_is_of_this_member': (p) => (state) =>
+    state.loans.get(p.loan_id)?.member_id === p.member_id,
+  'business/loans/predicate/the_loan_is_due_on_this_day': (p) => (state) =>
+    state.loans.get(p.loan_id)?.due_day === p.due_day,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) => (state) =>
     loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.now),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
@@ -91,6 +103,10 @@ export const loans_fragments: wlib.PredicateFragments<
     state.reservations.has(p.reservation_id),
   'business/loans/predicate/the_reservation_is_booked': (p) => (state) =>
     loans_dsl.the_reservation_is_booked(state.reservations.get(p.reservation_id)),
+  'business/loans/predicate/the_tool_is_booked_on_a_day_up_to': (p) => (state) =>
+    booked(state).some(
+      (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day <= p.day,
+    ),
   'business/loans/predicate/the_tool_is_booked_for_the_day': (p) => (state) =>
     booked(state).some(
       (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day === p.day,
@@ -102,11 +118,29 @@ export const loans_fragments: wlib.PredicateFragments<
         the_reservation.day === p.day &&
         the_reservation.member_id === p.member_id,
     ),
+  'business/loans/predicate/the_reservation_holds_the_tool_for_the_member_on_the_day':
+    (p) => (state) =>
+      loans_dsl.the_reservation_holds_the_tool_for_the_member_on_the_day(
+        state.reservations.get(p.reservation_id),
+      )(p),
+  'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up': (p) => (state) =>
+    loans_dsl.the_reservation_of_the_member_has_been_taken_up(
+      state.reservations.get(p.reservation_id),
+    )(p),
   'business/loans/predicate/a_cancellation_of_the_reservations_of_the_tool_has_begun':
     (p) => (state) =>
       state.cancellations.has(p.tool_id),
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) => (state) =>
     state.notice_rounds.has(p.repair_id),
+  'business/loans/predicate/a_weekly_summary_goes_to_the_member': (p) => (state) =>
+    state.weekly_summaries.has(p.member_id),
+  'business/loans/predicate/the_week_of_the_summary_is_not_over': (p) => (state) => {
+    const the_summary = state.weekly_summaries.get(p.member_id)
+    return (
+      the_summary !== undefined &&
+      loans_dsl.the_week_is_not_over_on(loans_dsl.today(p.now))(the_summary.next_monday)
+    )
+  },
 }
 
 /** The name of a tool, read from the catalogue of `tools`: the link of the view of `loans`. */
@@ -170,10 +204,25 @@ export const reservation_selection: wlib.Algebra<
     'business/loans/selection/reservation/the_reservation_is_from_this_day_on':
       (p) => () => (the_reservation) =>
         the_reservation.day >= p.day,
+    // The link: the view of `loans` over the tools, read from `tools` (SC-20).
+    'business/loans/selection/reservation/the_tool_of_the_reservation_is_in_the_workshop':
+      () => (state) => (the_reservation) =>
+        tools_dsl.the_tool_is_under_repair(state.tools.get(the_reservation.tool_id)),
   },
 }
 
 const the_reservations: Source<Reads, reservation> = (state) => [...state.reservations.values()]
+
+/** A member's reservation, as the member sees it: the tool with its name, and the day. */
+const the_reservation_entry = {
+  from: the_reservations,
+  fields: {
+    id: () => (the_reservation: reservation) => the_reservation.id,
+    tool_id: () => (the_reservation: reservation) => the_reservation.tool_id,
+    tool_name: the_name_of_the_tool,
+    day: () => (the_reservation: reservation) => the_reservation.day,
+  },
+}
 
 export const reservation_sources: {
   readonly the_reservations_of_a_member: wlib.QuerySource<
@@ -181,14 +230,57 @@ export const reservation_sources: {
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
+  readonly the_reservations_of_a_member_in_the_workshop: wlib.QuerySource<
+    wlib.FieldsOf<typeof the_reservations_of_a_member_in_the_workshop>,
+    Source<Reads, reservation>,
+    Field<Reads, reservation>
+  >
 } = {
-  the_reservations_of_a_member: {
-    from: the_reservations,
+  the_reservations_of_a_member: the_reservation_entry,
+  the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
+}
+
+// The reads of the subject `business/loans/selection/tool`: a tool of the shed
+// as the desk sees it, read from the catalogue of `tools` (GR-3, V11).
+
+export const tool_selection: wlib.Algebra<
+  wlib.SelectionsIn<typeof tool_selections>,
+  Selection<Reads, tool>
+> = {
+  ...selection_operators<Reads, tool>(),
+  predicate: {
+    'business/loans/selection/tool/the_tool_is_still_in_the_shed': () => () => (the_tool) =>
+      !tools_dsl.the_tool_is_retired(the_tool),
+  },
+}
+
+/** The calculations over a tool of the shed: the desk's register, read in its words (SC-21). */
+export const tool_calculation: wlib.CalculationFragments<
+  wlib.CalculationsIn<typeof tool_calculations>,
+  Field<Reads, tool>
+> = {
+  'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days':
+    (days) => (state) => (the_tool) =>
+      [...state.loans.values()].filter(
+        (the_loan) =>
+          the_loan.tool_id === the_tool.id && loans_dsl.the_loan_started_between(days)(the_loan),
+      ).length,
+}
+
+const the_tools: Source<Reads, tool> = (state) => [...state.tools.values()]
+
+export const tool_sources: {
+  readonly the_loans_of_each_tool_this_month: wlib.QuerySource<
+    wlib.FieldsOf<typeof the_loans_of_each_tool_this_month>,
+    Source<Reads, tool>,
+    Field<Reads, tool>
+  >
+} = {
+  the_loans_of_each_tool_this_month: {
+    from: the_tools,
     fields: {
-      id: () => (the_reservation) => the_reservation.id,
-      tool_id: () => (the_reservation) => the_reservation.tool_id,
-      tool_name: the_name_of_the_tool,
-      day: () => (the_reservation) => the_reservation.day,
+      tool_id: () => (the_tool) => the_tool.id,
+      tool_name: () => (the_tool) => the_tool.name,
     },
   },
 }
@@ -248,6 +340,32 @@ const with_the_progress =
         }
   }
 
+/** A loan's tool corrected (SC-13): member, dates and stage stay as they were. */
+const with_the_tool =
+  (changed: { readonly id: loan_id; readonly tool_id: tool_id }) =>
+  (state: LoansState): LoansState => {
+    const the_loan = state.loans.get(changed.id)
+    return the_loan === undefined
+      ? state
+      : {
+          ...state,
+          loans: new Map(state.loans).set(changed.id, { ...the_loan, tool_id: changed.tool_id }),
+        }
+  }
+
+/** A loan's new due day (SC-31): the rest of the loan as it is. */
+const with_the_due_day =
+  (changed: { readonly id: loan_id; readonly due_day: wlib.day }) =>
+  (state: LoansState): LoansState => {
+    const the_loan = state.loans.get(changed.id)
+    return the_loan === undefined
+      ? state
+      : {
+          ...state,
+          loans: new Map(state.loans).set(changed.id, { ...the_loan, due_day: changed.due_day }),
+        }
+  }
+
 /** A reservation's change of stage, by nesting, as a loan's. */
 const with_the_reservation_progress =
   (changed: { readonly id: reservation_id; readonly progress: reservation_progress }) =>
@@ -280,6 +398,20 @@ const with_the_sheet_progress =
         }
   }
 
+/** A member's summary now waits for its next Monday. */
+const with_the_next_monday =
+  (summary: {
+    readonly member_id: member_id
+    readonly next_monday: weekly_summary['next_monday']
+  }) =>
+  (state: LoansState): LoansState => ({
+    ...state,
+    weekly_summaries: new Map(state.weekly_summaries).set(summary.member_id, {
+      member_id: summary.member_id,
+      next_monday: summary.next_monday,
+    }),
+  })
+
 /** A round's change of stage, by nesting: the stay in repair, the tool and the start date stay. */
 const with_the_round_progress =
   (changed: { readonly repair_id: repair_id; readonly progress: repair_notice_round_progress }) =>
@@ -303,37 +435,47 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/a_tool_has_been_lent':
     ({ new_loan }) =>
     (state) => ({ ...state, loans: new Map(state.loans).set(new_loan.id, new_loan) }),
-  'business/loans/fact/the_member_already_has_the_tool': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_lent_again': () => (state) => state,
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan }) =>
     with_the_progress(returned_loan),
-  'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_returned_again': () => (state) => state,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => (state) => state,
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => (state) => state,
   'business/loans/fact/the_due_date_came_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan }) =>
     with_the_progress(overdue_loan),
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,
-  'business/loans/fact/the_due_day_was_not_over': () => (state) => state,
+  'business/loans/fact/the_overdue_check_has_been_put_off': () => (state) => state,
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan }) =>
+    with_the_tool(corrected_loan),
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again': () => (state) => state,
+  'business/loans/fact/a_loan_has_been_extended': ({ extended_loan }) =>
+    with_the_due_day(extended_loan),
+  'business/loans/fact/the_due_day_was_moved_before_the_reminder': () => (state) => state,
+  'business/loans/fact/the_tool_was_corrected_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>
     (state) => ({
       ...state,
       reservations: new Map(state.reservations).set(new_reservation.id, new_reservation),
     }),
-  'business/loans/fact/the_member_already_booked_the_tool': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_booked_again': () => (state) => state,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     ({ new_cancellation }) =>
     (state) => ({
       ...state,
       cancellations: new Map(state.cancellations).set(new_cancellation.tool_id, new_cancellation),
     }),
+  'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation }) =>
+    with_the_reservation_progress(taken_up_reservation),
+  'business/loans/fact/a_reservation_has_been_taken_up_again': () => (state) => state,
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation }) =>
     with_the_reservation_progress(cancelled_reservation),
   'business/loans/fact/the_cancellation_has_advanced':
     ({ tool_id, cursor }) =>
     (state) =>
       with_the_sheet_progress({ tool_id, progress: { stage: 'cancelling', cursor } })(state),
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended': ({
     completed_cancellation,
   }) => with_the_sheet_progress(completed_cancellation),
   'business/loans/fact/a_repair_notice_round_has_begun':
@@ -347,6 +489,16 @@ export const loans_writes: wlib.FactWrites<
     ({ repair_id, cursor }) =>
     (state) =>
       with_the_round_progress({ repair_id, progress: { stage: 'notifying', cursor } })(state),
-  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round }) =>
+  'business/loans/fact/the_repair_notice_round_has_ended': ({ completed_round }) =>
     with_the_round_progress(completed_round),
+  'business/loans/fact/a_weekly_summary_has_begun':
+    ({ new_summary }) =>
+    (state) => ({
+      ...state,
+      weekly_summaries: new Map(state.weekly_summaries).set(new_summary.member_id, new_summary),
+    }),
+  'business/loans/fact/a_weekly_summary_has_begun_again': () => (state) => state,
+  'business/loans/fact/the_weeks_summary_has_been_sent': (sent) => with_the_next_monday(sent),
+  'business/loans/fact/a_past_weeks_summary_has_been_skipped': (missed) =>
+    with_the_next_monday(missed),
 }

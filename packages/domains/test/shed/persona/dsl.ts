@@ -10,3 +10,11 @@ export const the_account_of_the_caller = (context: {
   context.caller.identified_by === 'account'
     ? { answer: 'known', value: context.caller.id }
     : { answer: 'not_known' }
+
+/** The key of who asks, if a system signs with one: a person has none (SC-34, D30). */
+export const the_key_of_the_caller = (context: {
+  readonly caller: value.caller
+}): wlib.Answer<accounts.id.key_id> =>
+  context.caller.identified_by === 'key'
+    ? { answer: 'known', value: context.caller.id }
+    : { answer: 'not_known' }

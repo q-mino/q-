@@ -8,8 +8,10 @@ import type * as wlib from '../../wlib.ts'
 import * as command from './_command.ts'
 import * as fact from './_fact.ts'
 import * as id from './_id.ts'
+import * as line_selection from './_line_selection.ts'
 import * as predicate from './_predicate.ts'
 import * as query from './_query.ts'
+import * as reaction from './_reaction.ts'
 import * as tool_selection from './_tool_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
@@ -19,6 +21,8 @@ export const registry = {
   'business/tools/version/tools': version.tools,
   'business/tools/id/tool_id': id.tool_id,
   'business/tools/id/repair_id': id.repair_id,
+  'business/tools/id/sheet_id': id.sheet_id,
+  'business/tools/id/line_id': id.line_id,
   'business/tools/value/tool_name': value.tool_name,
   'business/tools/value/category': value.category,
   'business/tools/value/notes': value.notes,
@@ -31,18 +35,37 @@ export const registry = {
   'business/tools/value/retired_tool': value.retired_tool,
   'business/tools/value/tool': value.tool,
   'business/tools/value/catalogue_entry': value.catalogue_entry,
+  'business/tools/value/tool_on_a_line': value.tool_on_a_line,
+  'business/tools/value/sheet_line': value.sheet_line,
+  'business/tools/value/loading_stage': value.loading_stage,
+  'business/tools/value/loading_under_way': value.loading_under_way,
+  'business/tools/value/loading_complete': value.loading_complete,
+  'business/tools/value/loading_progress': value.loading_progress,
+  'business/tools/value/loading_sheet': value.loading_sheet,
+  'business/tools/value/sheet_being_loaded': value.sheet_being_loaded,
+  'business/tools/value/loaded_sheet': value.loaded_sheet,
   'business/tools/fact/a_tool_has_been_added': fact.a_tool_has_been_added,
   'business/tools/fact/a_tool_has_been_retired': fact.a_tool_has_been_retired,
-  'business/tools/fact/the_tool_was_already_retired': fact.the_tool_was_already_retired,
+  'business/tools/fact/a_tool_has_been_retired_again': fact.a_tool_has_been_retired_again,
   'business/tools/fact/a_tool_has_been_sent_to_repair': fact.a_tool_has_been_sent_to_repair,
-  'business/tools/fact/the_tool_was_already_under_repair': fact.the_tool_was_already_under_repair,
+  'business/tools/fact/a_tool_has_been_sent_to_repair_again':
+    fact.a_tool_has_been_sent_to_repair_again,
   'business/tools/fact/the_tool_was_retired_before_the_repair':
     fact.the_tool_was_retired_before_the_repair,
   'business/tools/fact/a_tool_has_been_repaired': fact.a_tool_has_been_repaired,
+  'business/tools/fact/a_tool_has_been_renamed': fact.a_tool_has_been_renamed,
+  'business/tools/fact/the_loading_of_a_sheet_has_begun': fact.the_loading_of_a_sheet_has_begun,
+  'business/tools/fact/the_loading_of_the_sheet_has_advanced':
+    fact.the_loading_of_the_sheet_has_advanced,
+  'business/tools/fact/a_tool_has_been_added_again': fact.a_tool_has_been_added_again,
+  'business/tools/fact/the_sheet_has_been_loaded': fact.the_sheet_has_been_loaded,
+  'business/tools/fact/a_sheet_has_been_loaded_at_once': fact.a_sheet_has_been_loaded_at_once,
   'business/tools/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/tools/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/tools/predicate/the_tool_is_retired': predicate.the_tool_is_retired,
   'business/tools/predicate/the_tool_is_under_repair': predicate.the_tool_is_under_repair,
+  'business/tools/predicate/the_tool_is_under_this_repair': predicate.the_tool_is_under_this_repair,
+  'business/tools/predicate/a_sheet_has_this_id': predicate.a_sheet_has_this_id,
   'business/tools/command/the_tool_is_new': command.the_tool_is_new,
   'business/tools/command/add_a_tool': command.add_a_tool,
   'business/tools/command/add_a_tool_input': command.add_a_tool_input,
@@ -57,9 +80,27 @@ export const registry = {
     command.put_a_repaired_tool_back_in_service,
   'business/tools/command/put_a_repaired_tool_back_in_service_input':
     command.put_a_repaired_tool_back_in_service_input,
+  'business/tools/command/the_tool_is_in_the_workshop_for_this_repair':
+    command.the_tool_is_in_the_workshop_for_this_repair,
+  'business/tools/command/close_a_repair': command.close_a_repair,
+  'business/tools/command/close_a_repair_input': command.close_a_repair_input,
+  'business/tools/command/rename_a_tool': command.rename_a_tool,
+  'business/tools/command/rename_a_tool_input': command.rename_a_tool_input,
+  'business/tools/command/the_sheet_is_new': command.the_sheet_is_new,
+  'business/tools/command/load_the_tools_of_a_sheet': command.load_the_tools_of_a_sheet,
+  'business/tools/command/load_the_tools_of_a_sheet_input': command.load_the_tools_of_a_sheet_input,
+  'business/tools/command/add_a_tool_from_a_line': command.add_a_tool_from_a_line,
+  'business/tools/command/add_a_tool_from_a_line_input': command.add_a_tool_from_a_line_input,
+  'business/tools/command/continue_the_loading_of_a_sheet': command.continue_the_loading_of_a_sheet,
+  'business/tools/command/continue_the_loading_of_a_sheet_input':
+    command.continue_the_loading_of_a_sheet_input,
+  'business/tools/command/load_the_tools_of_a_short_sheet': command.load_the_tools_of_a_short_sheet,
+  'business/tools/command/load_the_tools_of_a_short_sheet_input':
+    command.load_the_tools_of_a_short_sheet_input,
   'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
   'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
     tool_selection.the_tool_is_in_one_of_these_categories,
+  'business/tools/selection/line/the_line_is_on_the_sheet': line_selection.the_line_is_on_the_sheet,
   'business/tools/query/the_tool_is_shown_in_the_catalogue':
     query.the_tool_is_shown_in_the_catalogue,
   'business/tools/query/the_catalogue': query.the_catalogue,
@@ -69,5 +110,14 @@ export const registry = {
   'business/tools/usecase/send_a_tool_to_repair': usecase.send_a_tool_to_repair,
   'business/tools/usecase/put_a_repaired_tool_back_in_service':
     usecase.put_a_repaired_tool_back_in_service,
+  'business/tools/usecase/close_a_repair': usecase.close_a_repair,
+  'business/tools/usecase/rename_a_tool': usecase.rename_a_tool,
+  'business/tools/usecase/load_the_tools_of_a_sheet': usecase.load_the_tools_of_a_sheet,
+  'business/tools/usecase/load_the_tools_of_a_short_sheet': usecase.load_the_tools_of_a_short_sheet,
+  'business/tools/usecase/continue_the_loading_of_a_sheet': usecase.continue_the_loading_of_a_sheet,
   'business/tools/usecase/the_catalogue': usecase.the_catalogue,
+  'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up':
+    reaction.the_first_line_of_the_sheet_is_taken_up,
+  'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up':
+    reaction.the_next_line_of_the_sheet_is_taken_up,
 } satisfies wlib.Registry

@@ -10,7 +10,7 @@ export const a_tool_has_been_lent = fact({
 })
 
 /** Nothing to do (DOM-6): the member's ongoing loan of the tool stands. */
-export const the_member_already_has_the_tool = fact({
+export const a_tool_has_been_lent_again = fact({
   payload: z.strictObject({
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
@@ -25,7 +25,7 @@ export const a_tool_has_been_booked = fact({
 })
 
 /** Nothing to do (DOM-6): the member's reservation of the tool for the day stands. */
-export const the_member_already_booked_the_tool = fact({
+export const a_tool_has_been_booked_again = fact({
   payload: z.strictObject({
     tool_id: tools.id.tool_id,
     day: wlib.day,
@@ -46,9 +46,65 @@ export const a_tool_has_been_returned = fact({
 })
 
 /** Nothing to do (DOM-6): the first return stands. */
-export const the_loan_was_already_returned = fact({
+export const a_tool_has_been_returned_again = fact({
   payload: z.strictObject({
     loan_id: id.loan_id,
+  }),
+})
+
+/**
+ * The desk wrote the wrong tool on the loan's card, and corrects it (SC-13):
+ * a partial value, the loan's id and the tool the member has, which the
+ * state takes; and the tool the card named, for the record. The fact of the
+ * loan stays as it was recorded: a mistake is corrected by a fact, never by
+ * one removed (DOM-22, D101).
+ */
+export const the_tool_of_a_loan_has_been_corrected = fact({
+  payload: z.strictObject({
+    corrected_loan: value.loan.pick({ id: true, tool_id: true }),
+    tool_named_before: tools.id.tool_id,
+  }),
+})
+
+/**
+ * The member keeps the tool longer (SC-31): a partial value, the loan's id
+ * and its new due day, which the state takes. The term stays running.
+ */
+export const a_loan_has_been_extended = fact({
+  payload: z.strictObject({
+    extended_loan: value.loan.pick({ id: true, due_day: true }),
+  }),
+})
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for a due day the loan no longer
+ * has, since it was extended; the extension queued the eve of its new due
+ * day (SC-31).
+ */
+export const the_due_day_was_moved_before_the_reminder = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    due_day: wlib.day,
+  }),
+})
+
+/** Nothing to do (DOM-6): the card already names the tool the member has. */
+export const the_tool_of_a_loan_has_been_corrected_again = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
+  }),
+})
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for the tool the card named
+ * before a correction, and no reminder goes for it; the correction queued
+ * the eve of the tool the member has (SC-13).
+ */
+export const the_tool_was_corrected_before_the_reminder = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    tool_id: tools.id.tool_id,
   }),
 })
 
@@ -105,7 +161,7 @@ export const the_loan_was_returned_before_it_became_overdue = fact({
  * itself: Marta's drill, due at 10:12 on 16 November, is on time until that
  * day ends (A, 17 Nov 2026).
  */
-export const the_due_day_was_not_over = fact({
+export const the_overdue_check_has_been_put_off = fact({
   payload: z.strictObject({
     loan_id: id.loan_id,
   }),
@@ -134,6 +190,26 @@ export const a_reservation_has_been_cancelled = fact({
 })
 
 /**
+ * The member took the tool on the day they booked it: a partial value, as a
+ * return, the reservation's id and its new progress, whole, with the loan
+ * that took it up. Recorded as a part of the loan's fact (D111, SC-10), never
+ * alone: the reservation is taken up by a loan.
+ */
+export const a_reservation_has_been_taken_up = fact({
+  payload: z.strictObject({
+    taken_up_reservation: value.taken_up_reservation.pick({ id: true, progress: true }),
+  }),
+})
+
+/** Nothing to do (DOM-6): the member already took the tool they booked; the loan stands. */
+export const a_reservation_has_been_taken_up_again = fact({
+  payload: z.strictObject({
+    reservation_id: id.reservation_id,
+    member_id: id.member_id,
+  }),
+})
+
+/**
  * The desk went one reservation further on the work sheet of the tool: the
  * step's part (D111, D112.2), beside the cancellation it applied. A partial
  * value: the sheet stays under way, its cursor at the reservation handled,
@@ -147,7 +223,7 @@ export const the_cancellation_has_advanced = fact({
 })
 
 /** No reservation of the tool is left ahead: the desk closes its work sheet (D112.2). */
-export const the_cancellation_of_the_reservations_of_a_tool_is_complete = fact({
+export const the_cancellation_of_the_reservations_of_a_tool_has_ended = fact({
   payload: z.strictObject({
     completed_cancellation: value.completed_cancellation.pick({ tool_id: true, progress: true }),
   }),
@@ -167,13 +243,16 @@ export const a_repair_notice_round_has_begun = fact({
  * The desk notified a member that the tool they booked is in repair: the
  * reservation, which stays, and the stay in repair. Nothing changes in the
  * state (D95): the notice is on its way. Recorded as a part of a step of the
- * round (D111).
+ * round (D111). Its resource is its target alone, the reservation (D94.6,
+ * SC-55): the stay is the round's, and a dead notice holds its member's
+ * reservation, not the round's other notices.
  */
 export const a_member_has_been_notified_of_the_repair = fact({
   payload: z.strictObject({
     reservation_id: id.reservation_id,
     repair_id: tools.id.repair_id,
   }),
+  resources: ['reservation_id'],
 })
 
 /**
@@ -190,8 +269,50 @@ export const the_repair_notice_round_has_advanced = fact({
 })
 
 /** No reservation of the tool is left ahead: the desk closes its round of notices (D112.2). */
-export const the_repair_notice_round_is_complete = fact({
+export const the_repair_notice_round_has_ended = fact({
   payload: z.strictObject({
     completed_round: value.completed_repair_notice_round.pick({ repair_id: true, progress: true }),
+  }),
+})
+
+/**
+ * The desk will send a member the week's summary every Monday, as they
+ * asked: the summary, waiting for the next Monday (SC-43).
+ */
+export const a_weekly_summary_has_begun = fact({
+  payload: z.strictObject({
+    new_summary: value.weekly_summary,
+  }),
+})
+
+/** The member asked again for the week's summary they already get: nothing changes (D95). */
+export const a_weekly_summary_has_begun_again = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+  }),
+})
+
+/**
+ * On a Monday the desk sent a member the week's summary, and waits for the
+ * next Monday: the Monday sent, and the one now awaited (SC-43).
+ */
+export const the_weeks_summary_has_been_sent = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+    next_monday: wlib.day,
+  }),
+})
+
+/**
+ * The Monday's wait came after its week was over (the executor was down):
+ * no summary of a past week; the desk awaits the Monday of the current
+ * week, which goes at once (SC-43, D95).
+ */
+export const a_past_weeks_summary_has_been_skipped = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+    next_monday: wlib.day,
   }),
 })
