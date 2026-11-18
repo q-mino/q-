@@ -40,6 +40,7 @@ import {
   my_reservations_in_the_workshop,
   return_a_tool,
   take_the_tool_you_booked,
+  the_shelf,
 } from './persona/member/_usecase.ts'
 import { registry as keeper_registry } from './persona/keeper/_registry.ts'
 import { majors as keeper_majors } from './persona/keeper/_majors.ts'
@@ -99,6 +100,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         my_loans,
         my_reservations,
         my_reservations_in_the_workshop,
+        the_shelf,
       },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({

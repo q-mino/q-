@@ -131,3 +131,23 @@ export const return_a_tool = usecase.return_a_tool
  */
 export const return_a_tool_input = usecase.return_a_tool.input
 export type return_a_tool_input = z.output<typeof return_a_tool_input>
+
+/**
+ * Marta follows the shelf live (SC-32): the tools of the shed in service,
+ * by shelf and name, and as they go out, come back or go to the workshop,
+ * her phone follows. A benefit of an active card, not a trade of its own
+ * (D77: a value from auth limits it, not another persona): with her card
+ * expired she is refused and told why, and reads the catalogue once, as
+ * anyone does (`visitor`), until she renews it.
+ *
+ * @see {@link usecase.the_shelf}
+ */
+export const the_shelf = usecase.the_shelf
+
+/**
+ * The input of `the_shelf`, declared inline.
+ *
+ * @see {@link usecase.the_shelf}
+ */
+export const the_shelf_input = usecase.the_shelf.input
+export type the_shelf_input = z.output<typeof the_shelf_input>

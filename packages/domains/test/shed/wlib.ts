@@ -2794,19 +2794,36 @@ export type ReadBinding<input, streams extends boolean> = {
  * another domain comes with its case. Its port needs an adapter that
  * evaluates actions (D110): a leaf that lists some over one that does not is
  * a fault at wiring (CFG-2).
+ *
+ * A read leaf may hold limits of its own (`is_refused_unless`, SC-32, D80,
+ * C, 18 Nov 2026 (3)), as a command leaf: pure, over the context of its
+ * point and the input, run after the nodes of its path and before the read
+ * (PER-5.5); the failed ones close the request with `refused`, their names
+ * the reasons, before any snapshot. A limit that holds for some wearers and
+ * not for others, by their values (PER-1, D77): Marta follows the shelf live
+ * while her card is valid; with it expired she is refused, told why, and
+ * reads the catalogue once, as anyone. It never filters a row: a constraint
+ * that takes rows away is a perimeter (D80, on reads). Evaluated at the
+ * request: a stream opened before the card expires stays open, and the next
+ * request, a resume too, is refused.
  */
 export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
   const input extends QueryInput<z.ZodType, context>,
   const entry extends z.ZodObject,
   const identity extends FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> = never,
-  const events extends StreamEvents<closes> = never,
+  const events extends StreamEvents<closes | ([limits] extends [never] ? never : Refused<limits>)> =
+    never,
   const actions extends Actions = never,
+  const limits extends string = never,
 >(
   use_case: {
     readonly use_case: use_case
     readonly input: input
     readonly actions?: actions
+    readonly is_refused_unless?: Readonly<
+      Record<limits, (context: context) => (input: z.output<SchemaOf<input>>) => boolean>
+    >
   } & {
     readonly actions?: ActionsFit<QueryEntryOf<QueryOfUseCase<use_case>>, actions>
     readonly creator: (
@@ -2829,7 +2846,7 @@ export type ReadUseCaseOverBuilder<context, closes> = <
   use_case,
   input,
   entry,
-  closes,
+  closes | ([limits] extends [never] ? never : Refused<limits>),
   [identity] extends [never]
     ? undefined
     : {

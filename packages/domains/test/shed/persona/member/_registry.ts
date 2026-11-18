@@ -28,6 +28,8 @@ export const registry = {
   'persona/member/usecase/my_reservations_in_the_workshop': usecase.my_reservations_in_the_workshop,
   'persona/member/usecase/my_reservations_in_the_workshop_input':
     usecase.my_reservations_in_the_workshop_input,
+  'persona/member/usecase/the_shelf': usecase.the_shelf,
+  'persona/member/usecase/the_shelf_input': usecase.the_shelf_input,
   'persona/member/value/tool_name': value.tool_name,
   'persona/member/value/loan_term': value.loan_term,
 } satisfies wlib.Registry

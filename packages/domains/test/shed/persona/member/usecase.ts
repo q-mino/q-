@@ -369,3 +369,28 @@ export const my_reservations_in_the_workshop = read_use_case_over({
   }),
   stream: { identity: 'reservation_id' },
 })
+
+/**
+ * Marta follows the shelf live (SC-32): the tools of the shed in service,
+ * by shelf and name, and as they go out, come back or go to the workshop,
+ * her phone follows. A benefit of an active card, not a trade of its own
+ * (D77: a value from auth limits it, not another persona): with her card
+ * expired she is refused and told why, and reads the catalogue once, as
+ * anyone does (`visitor`), until she renews it.
+ */
+export const the_shelf = read_use_case_over({
+  use_case: tools.usecase.the_catalogue,
+  input: z.strictObject({}),
+  is_refused_unless: {
+    /** Card M-12 is valid until 31 March 2027: on 1 April the shelf is no longer live for her. */
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: () => () => ({ query: {} }),
+  entry: z.strictObject({
+    tool_id: tools.id.tool_id,
+    name: value.tool_name,
+  }),
+  projection: (entry) => ({ tool_id: entry.id, name: entry.name }),
+  stream: { identity: 'tool_id' },
+})

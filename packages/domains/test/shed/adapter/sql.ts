@@ -708,7 +708,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       write: tools_writes,
       execute: execute(database),
     }),
-    // The catalogue is only read: a visitor reads it in pages, no case streams it.
+    // The catalogue: a visitor reads it in pages; a member with a valid card
+    // follows it live (SC-32), composed from the fact log.
     ...wlib.read_use_case_ports({
       registry: tools_registry,
       versions,
@@ -728,7 +729,7 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       },
       read: read(database),
       page: page(database),
-      streams: {},
+      streams: { the_catalogue: { strategy: 'composed', log: log(database) } },
     }),
   },
   loans: {
