@@ -2,7 +2,8 @@
 
 // The path registry of `loans` (DOM-24): every path with its component, in
 // the order of the modules. The configurator gives it to the library, which
-// reads it in reverse, from a component to its path, by object identity.
+// reads it in reverse, from a component to its path, by object identity. The
+// folders below the domain's, its subtree (D105), come with it: one store.
 
 import type * as wlib from '../../wlib.ts'
 import * as command from './_command.ts'
@@ -19,6 +20,7 @@ import * as tool_selection from './_tool_selection.ts'
 import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
 import * as version from './_version.ts'
+import { registry as an_ongoing_loan } from './an_ongoing_loan/_registry.ts'
 
 export const registry = {
   'business/loans/version/loans': version.loans,
@@ -85,6 +87,9 @@ export const registry = {
   'business/loans/fact/a_reservation_has_been_taken_up': fact.a_reservation_has_been_taken_up,
   'business/loans/fact/the_tool_of_a_loan_has_been_corrected':
     fact.the_tool_of_a_loan_has_been_corrected,
+  'business/loans/fact/a_loan_has_been_extended': fact.a_loan_has_been_extended,
+  'business/loans/fact/the_due_day_was_moved_before_the_reminder':
+    fact.the_due_day_was_moved_before_the_reminder,
   'business/loans/fact/the_tool_of_the_loan_was_already_corrected':
     fact.the_tool_of_the_loan_was_already_corrected,
   'business/loans/fact/the_tool_was_corrected_before_the_reminder':
@@ -125,6 +130,8 @@ export const registry = {
     predicate.the_reservation_holds_the_tool_for_the_member_on_the_day,
   'business/loans/predicate/the_reservation_of_the_member_has_been_taken_up':
     predicate.the_reservation_of_the_member_has_been_taken_up,
+  'business/loans/predicate/the_tool_is_booked_on_a_day_up_to':
+    predicate.the_tool_is_booked_on_a_day_up_to,
   'business/loans/predicate/the_tool_is_booked_for_the_day':
     predicate.the_tool_is_booked_for_the_day,
   'business/loans/predicate/the_tool_is_booked_for_the_day_by_this_member':
@@ -142,13 +149,10 @@ export const registry = {
   'business/loans/command/take_up_a_reservation_input': command.take_up_a_reservation_input,
   'business/loans/command/lend_a_booked_tool': command.lend_a_booked_tool,
   'business/loans/command/lend_a_booked_tool_input': command.lend_a_booked_tool_input,
+  'business/loans/command/the_due_day_of_the_ongoing_loan_was_moved':
+    command.the_due_day_of_the_ongoing_loan_was_moved,
   'business/loans/command/the_tool_of_the_ongoing_loan_was_corrected':
     command.the_tool_of_the_ongoing_loan_was_corrected,
-  'business/loans/command/the_tool_of_the_loan_can_be_corrected':
-    command.the_tool_of_the_loan_can_be_corrected,
-  'business/loans/command/correct_the_tool_of_a_loan': command.correct_the_tool_of_a_loan,
-  'business/loans/command/correct_the_tool_of_a_loan_input':
-    command.correct_the_tool_of_a_loan_input,
   'business/loans/command/the_tool_can_be_booked': command.the_tool_can_be_booked,
   'business/loans/command/reserve_a_tool': command.reserve_a_tool,
   'business/loans/command/reserve_a_tool_input': command.reserve_a_tool_input,
@@ -232,7 +236,6 @@ export const registry = {
     query.the_loans_of_each_tool_this_month_input,
   'business/loans/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'business/loans/usecase/lend_a_booked_tool': usecase.lend_a_booked_tool,
-  'business/loans/usecase/correct_the_tool_of_a_loan': usecase.correct_the_tool_of_a_loan,
   'business/loans/usecase/reserve_a_tool': usecase.reserve_a_tool,
   'business/loans/usecase/return_a_tool': usecase.return_a_tool,
   'business/loans/usecase/remind_the_member_of_the_due_date':
@@ -259,4 +262,5 @@ export const registry = {
     reaction.the_first_member_on_the_round_is_notified,
   'business/loans/reaction/the_next_member_on_the_round_is_notified':
     reaction.the_next_member_on_the_round_is_notified,
+  ...an_ongoing_loan,
 } satisfies wlib.Registry

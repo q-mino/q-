@@ -37,6 +37,22 @@ export const take_the_tool_you_booked_input = usecase.take_the_tool_you_booked.i
 export type take_the_tool_you_booked_input = z.output<typeof take_the_tool_you_booked_input>
 
 /**
+ * Marta keeps the drill two more weeks, from the row of L7 in "my loans",
+ * while her card is valid (SC-31).
+ *
+ * @see {@link usecase.extend_your_loan}
+ */
+export const extend_your_loan = usecase.extend_your_loan
+
+/**
+ * The input of `extend_your_loan`, declared inline.
+ *
+ * @see {@link usecase.extend_your_loan}
+ */
+export const extend_your_loan_input = usecase.extend_your_loan.input
+export type extend_your_loan_input = z.output<typeof extend_your_loan_input>
+
+/**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
  * date passes on one, a return takes it away. When the due date passes she

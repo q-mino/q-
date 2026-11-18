@@ -24,6 +24,10 @@ const days_after = (the_day: day, days: number): day =>
 export const the_due_date_of_a_loan_started_on = (start_date: date_time): day =>
   days_after(day_of(start_date), loan_period_in_days)
 
+/** The due day of a loan extended (SC-31): one loan period after the day it was due. */
+export const the_due_day_after_an_extension_of = (due_day: day): day =>
+  days_after(due_day, loan_period_in_days)
+
 /** The day before a due date, when the member is reminded. */
 export const the_eve_of = (due_date: day): day => days_after(due_date, -1)
 
@@ -130,6 +134,16 @@ export const the_eve_of_the_loan_corrected_to_the_tool = (wait: {
   readonly loan_id: id.loan_id
   readonly tool_id: tools.id.tool_id
 }): string => JSON.stringify([wait.loan_id, wait.tool_id])
+
+/**
+ * The key of the eve's wait queued by an extension of the loan, the id of
+ * its entry (DOM-13): the first eve's key is the loan's, so the new one has
+ * its own, the loan and the due day it reminds of (SC-31).
+ */
+export const the_eve_of_the_loan_extended_to_the_day = (wait: {
+  readonly loan_id: id.loan_id
+  readonly due_day: day
+}): string => JSON.stringify([wait.loan_id, wait.due_day])
 
 /**
  * The key of a wait for the overdue put off to the day after, the id of its

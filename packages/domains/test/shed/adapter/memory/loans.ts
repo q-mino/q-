@@ -100,6 +100,10 @@ export const loans_fragments: wlib.PredicateFragments<
     state.reservations.has(p.reservation_id),
   'business/loans/predicate/the_reservation_is_booked': (p) => (state) =>
     loans_dsl.the_reservation_is_booked(state.reservations.get(p.reservation_id)),
+  'business/loans/predicate/the_tool_is_booked_on_a_day_up_to': (p) => (state) =>
+    booked(state).some(
+      (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day <= p.day,
+    ),
   'business/loans/predicate/the_tool_is_booked_for_the_day': (p) => (state) =>
     booked(state).some(
       (the_reservation) => the_reservation.tool_id === p.tool_id && the_reservation.day === p.day,
@@ -337,6 +341,19 @@ const with_the_tool =
         }
   }
 
+/** A loan's new due day (SC-31): the rest of the loan as it is. */
+const with_the_due_day =
+  (changed: { readonly id: loan_id; readonly due_day: wlib.day }) =>
+  (state: LoansState): LoansState => {
+    const the_loan = state.loans.get(changed.id)
+    return the_loan === undefined
+      ? state
+      : {
+          ...state,
+          loans: new Map(state.loans).set(changed.id, { ...the_loan, due_day: changed.due_day }),
+        }
+  }
+
 /** A reservation's change of stage, by nesting, as a loan's. */
 const with_the_reservation_progress =
   (changed: { readonly id: reservation_id; readonly progress: reservation_progress }) =>
@@ -406,6 +423,9 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan }) =>
     with_the_tool(corrected_loan),
   'business/loans/fact/the_tool_of_the_loan_was_already_corrected': () => (state) => state,
+  'business/loans/fact/a_loan_has_been_extended': ({ extended_loan }) =>
+    with_the_due_day(extended_loan),
+  'business/loans/fact/the_due_day_was_moved_before_the_reminder': () => (state) => state,
   'business/loans/fact/the_tool_was_corrected_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_tool_has_been_booked':
     ({ new_reservation }) =>

@@ -156,6 +156,15 @@ export const the_tool_is_booked_for_the_day =
 export type the_tool_is_booked_for_the_day = z.output<typeof the_tool_is_booked_for_the_day>
 
 /**
+ * The tool is booked for a day from today up to this one, by whoever (SC-31).
+ *
+ * @see {@link predicate.the_tool_is_booked_on_a_day_up_to}
+ */
+export const the_tool_is_booked_on_a_day_up_to =
+  predicate.the_tool_is_booked_on_a_day_up_to.brand<'business/loans/predicate/the_tool_is_booked_on_a_day_up_to'>()
+export type the_tool_is_booked_on_a_day_up_to = z.output<typeof the_tool_is_booked_on_a_day_up_to>
+
+/**
  * The tool is booked for the day by this member.
  *
  * @see {@link predicate.the_tool_is_booked_for_the_day_by_this_member}

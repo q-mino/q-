@@ -349,14 +349,24 @@ export const return_a_tool = command({
 })
 
 /**
- * The member still has the tool the eve reminds of, and its due date is
- * still ahead: the eve is not late, and the card was not corrected since.
+ * The member still has the tool the eve reminds of, due on the day it
+ * reminds of, and its due date is still ahead: the eve is not late, and
+ * the card was neither corrected nor extended since.
  */
 export const the_member_can_still_be_reminded = AND({
   a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
   the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
   it_is_of_the_tool_reminded: predicate.the_loan_is_of_this_tool,
+  it_is_due_on_the_day_reminded: predicate.the_loan_is_due_on_this_day,
   its_due_date_is_still_ahead: predicate.the_due_date_of_the_loan_is_still_ahead,
+})
+
+/** The member still has the tool, but the loan was extended since the eve was queued (SC-31). */
+export const the_due_day_of_the_ongoing_loan_was_moved = AND({
+  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
+  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
+  it_is_of_the_tool_reminded: predicate.the_loan_is_of_this_tool,
+  it_is_no_longer_due_on_the_day_reminded: NOT(predicate.the_loan_is_due_on_this_day),
 })
 
 /** The member still has a tool, but the card names another since the eve was queued (SC-13). */
@@ -389,7 +399,9 @@ export const the_due_day_of_the_ongoing_loan_is_not_over = AND({
  * reads the due date at the executor's `now`, and a late eve reminds no one
  * (A, 15 Nov 2026). The eve names the tool it was queued for: if the desk
  * corrected the tool on the card since, it reminds of nothing, and the
- * correction queued the eve of the right tool (SC-13). Its input is the
+ * correction queued the eve of the right tool (SC-13); if the loan was
+ * extended since, it reminds of nothing either, and the extension queued
+ * the eve of the new due day (SC-31). Its input is the
  * payload of the wait, given back by the executor; its operation is the
  * entry's (DOM-14).
  */
@@ -418,6 +430,10 @@ export const remind_the_member_of_the_due_date = command({
       the_tool_of_the_ongoing_loan_was_corrected,
       fact.the_tool_was_corrected_before_the_reminder,
     ],
+    the_due_day_was_moved_so_nothing_changes: [
+      the_due_day_of_the_ongoing_loan_was_moved,
+      fact.the_due_day_was_moved_before_the_reminder,
+    ],
   },
   creator: (context) => (input) => ({
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
@@ -425,6 +441,7 @@ export const remind_the_member_of_the_due_date = command({
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
         it_is_of_the_tool_reminded: { loan_id: input.loan_id, tool_id: input.tool_id },
+        it_is_due_on_the_day_reminded: { loan_id: input.loan_id, due_day: input.due_day },
         its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
       },
       { loan_id: input.loan_id },
@@ -463,89 +480,17 @@ export const remind_the_member_of_the_due_date = command({
       },
       { loan_id: input.loan_id, tool_id: input.tool_id },
     ],
-  }),
-})
-
-/**
- * The card of the ongoing loan says what the keeper read on it: the tool
- * written, the member, the due day. The tool the member has can go out: in
- * the shed, in service, and on no loan, since the card named another.
- */
-export const the_tool_of_the_loan_can_be_corrected = AND({
-  a_loan_has_the_requested_id: predicate.a_loan_has_this_id,
-  the_requested_loan_is_ongoing: predicate.the_loan_is_ongoing,
-  its_card_names_the_tool_written: predicate.the_loan_is_of_this_tool,
-  its_card_names_the_member: predicate.the_loan_is_of_this_member,
-  its_card_names_the_due_day: predicate.the_loan_is_due_on_this_day,
-  a_tool_has_the_id_of_the_tool_handed: predicate.a_tool_has_this_id,
-  the_tool_handed_is_in_service: predicate.the_tool_is_in_service,
-  the_tool_handed_is_not_on_loan: NOT(predicate.the_tool_is_on_loan),
-})
-
-/**
- * The keeper corrects the tool on a loan's card (SC-13): Luca wrote the
- * drill on Marta's loan, and handed her the sander. The loan stays, with its
- * dates; its fact stays in the log as recorded, and a new fact corrects it
- * (DOM-22, D101). The eve's wait in flight names the drill, and its return
- * will remind of nothing: the correction queues the eve of the sander,
- * under a key of its own. A creator reads no state: Luca's screen read the
- * card, and the command checks what it says (the member and the due day
- * the new eve carries).
- */
-export const correct_the_tool_of_a_loan = command({
-  input: z.strictObject({
-    loan_id: id.loan_id,
-    tool_written: tools.id.tool_id,
-    tool_handed: tools.id.tool_id,
-    member_id: id.member_id,
-    due_day: wlib.day,
-  }),
-  outcomes: {
-    the_card_named_another_tool_so_it_is_corrected: [
-      the_tool_of_the_loan_can_be_corrected,
-      fact.the_tool_of_a_loan_has_been_corrected,
-      pick(effect, 'wait_until_the_eve_of_the_due_date'),
-    ],
-    the_card_already_names_the_tool_handed_so_nothing_changes: [
-      predicate.the_loan_is_of_this_tool,
-      fact.the_tool_of_the_loan_was_already_corrected,
-    ],
-  },
-  creator: (context) => (input) => ({
-    the_card_named_another_tool_so_it_is_corrected: [
+    the_due_day_was_moved_so_nothing_changes: [
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
-        its_card_names_the_tool_written: { loan_id: input.loan_id, tool_id: input.tool_written },
-        its_card_names_the_member: { loan_id: input.loan_id, member_id: input.member_id },
-        its_card_names_the_due_day: { loan_id: input.loan_id, due_day: input.due_day },
-        a_tool_has_the_id_of_the_tool_handed: { tool_id: input.tool_handed },
-        the_tool_handed_is_in_service: { tool_id: input.tool_handed },
-        the_tool_handed_is_not_on_loan: { tool_id: input.tool_handed },
-      },
-      {
-        corrected_loan: { id: input.loan_id, tool_id: input.tool_handed },
-        tool_named_before: input.tool_written,
-      },
-      {
-        wait_until_the_eve_of_the_due_date: {
-          id: dsl.the_eve_of_the_loan_corrected_to_the_tool({
-            loan_id: input.loan_id,
-            tool_id: input.tool_handed,
-          }),
-          payload: {
-            loan_id: input.loan_id,
-            tool_id: input.tool_handed,
-            member_id: input.member_id,
-            due_day: input.due_day,
-          },
-          not_before: wlib.start_of(context.time_zone)(dsl.the_eve_of(input.due_day)),
+        it_is_of_the_tool_reminded: { loan_id: input.loan_id, tool_id: input.tool_id },
+        it_is_no_longer_due_on_the_day_reminded: {
+          loan_id: input.loan_id,
+          due_day: input.due_day,
         },
       },
-    ],
-    the_card_already_names_the_tool_handed_so_nothing_changes: [
-      { loan_id: input.loan_id, tool_id: input.tool_handed },
-      { loan_id: input.loan_id, tool_id: input.tool_handed },
+      { loan_id: input.loan_id, due_day: input.due_day },
     ],
   }),
 })

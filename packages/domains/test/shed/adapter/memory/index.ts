@@ -32,7 +32,6 @@ import {
 } from '../../business/tools/_usecase.ts'
 import {
   borrow_a_tool,
-  correct_the_tool_of_a_loan,
   lend_a_booked_tool,
   cancel_the_reservations_of_a_tool,
   continue_the_cancellation_of_reservations,
@@ -47,6 +46,10 @@ import {
   the_reservations_of_a_member_in_the_workshop,
   the_loans_of_each_tool_this_month,
 } from '../../business/loans/_usecase.ts'
+import {
+  correct_the_tool_of_a_loan,
+  extend_the_loan,
+} from '../../business/loans/an_ongoing_loan/_usecase.ts'
 import type { Field, ProcessRead, Selection, Source } from './fragments.ts'
 import {
   loan_selection,
@@ -582,6 +585,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       use_cases: {
         borrow_a_tool,
         lend_a_booked_tool,
+        extend_the_loan,
         correct_the_tool_of_a_loan,
         reserve_a_tool,
         return_a_tool,

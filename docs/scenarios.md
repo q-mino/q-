@@ -47,7 +47,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-28** (covered, Shed 10) Marta's old phone at `1.4.0` and Gianni's new one at `2.0.0` borrow by the same path and read the deadline each in its own words. PER-17, D72.7.
 - **SC-29** (covered, Shed 10) The gate: `2.1.0` on a server at 2.0.0, `1.2.0` after `1/` is deleted, `3.0.0` during a release. PER-17.
 - **SC-30** (covered, Shed 10) A past read leaf names its rows by a field it declares, checked by type. PER-17, PER-18.
-- **SC-31** (open, reshapes) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"). D105.
+- **SC-31** (covered, Shed 11) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"): Marta extends her loan under "an ongoing loan". D105, D51.
 - **SC-32** (open, adds) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80.
 - **SC-33** (open, reshapes) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
 - **SC-34** (open, reshapes) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.

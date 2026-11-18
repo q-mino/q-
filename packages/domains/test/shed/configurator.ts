@@ -33,6 +33,7 @@ import { registry as member_registry } from './persona/member/_registry.ts'
 import { majors as member_majors } from './persona/member/_majors.ts'
 import {
   borrow_a_tool,
+  extend_your_loan,
   my_loans,
   my_reservations,
   my_reservations_in_the_workshop,
@@ -90,6 +91,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         borrow_a_tool,
         take_the_tool_you_booked,
         return_a_tool,
+        extend_your_loan,
         my_loans,
         my_reservations,
         my_reservations_in_the_workshop,

@@ -81,6 +81,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | persona · cappello                                  | persona · hat (the persona worn)                                                           |                                      |
 | albero di casi d'uso                                | use-case tree                                                                              |                                      |
 | nodo · contesto (di un nodo)                        | node · context                                                                             |                                      |
+| bersaglio · condizione del percorso                 | target · condition of the path (`binds`, `requires`: a node of a business tree, SC-31)     | guard (D105)                         |
 | domanda (di auth, di q-)                            | lookup                                                                                     | key-value lookup                     |
 | porta (di una cartella, per un pubblico, di q-)     | door (`_door_persona.ts`; to the folders below, `_door_below.ts`)                          |                                      |
 | ambito (di una cartella, di un tipo, di q-)         | scope (`_scope.ts`, of the folder; `_scope_command.ts`, one per kind of construct)         |                                      |

@@ -66,6 +66,28 @@ export const the_tool_of_a_loan_has_been_corrected = fact({
   }),
 })
 
+/**
+ * The member keeps the tool longer (SC-31): a partial value, the loan's id
+ * and its new due day, which the state takes. The term stays running.
+ */
+export const a_loan_has_been_extended = fact({
+  payload: z.strictObject({
+    extended_loan: value.loan.pick({ id: true, due_day: true }),
+  }),
+})
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for a due day the loan no longer
+ * has, since it was extended; the extension queued the eve of its new due
+ * day (SC-31).
+ */
+export const the_due_day_was_moved_before_the_reminder = fact({
+  payload: z.strictObject({
+    loan_id: id.loan_id,
+    due_day: wlib.day,
+  }),
+})
+
 /** Nothing to do (DOM-6): the card already names the tool the member has. */
 export const the_tool_of_the_loan_was_already_corrected = fact({
   payload: z.strictObject({

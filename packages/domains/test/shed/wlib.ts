@@ -1264,6 +1264,23 @@ export interface Failure<outcomes extends Outcomes> {
 }
 
 /**
+ * A failed predicate of a node of the command's path (D105.4, SC-31): its
+ * components' names in the node's condition, its path. No branch: the
+ * condition holds for every branch, so it is named once (D105, on who
+ * composes); never the node, structure of the code, not the outcome's
+ * meaning.
+ */
+export interface PathFailure<leaves extends Component> {
+  readonly components: readonly string[]
+  readonly predicate: PathOf<leaves>
+}
+
+/** The failures of a path's predicates: none with no node that requires. */
+export type PathFailures<leaves extends Component> = [leaves] extends [never]
+  ? never
+  : PathFailure<leaves>
+
+/**
  * The predicates of the transitions a command's branches compose, which a
  * rejection may name too, under the transition's name then its own
  * components (`the_reservation_is_taken_up`, …). SC-10
@@ -1355,7 +1372,7 @@ export interface StoredEnvelope extends Envelope<readonly StoredPart[]> {
  * of the operation already used with another fingerprint (DOM-11, D79.4),
  * which no projection sees: it crosses a use case over another as it is.
  */
-export type CommandOutcome<outcomes extends Outcomes> =
+export type CommandOutcome<outcomes extends Outcomes, leaves extends Component = never> =
   | {
       [branch in keyof outcomes & string]: {
         readonly outcome: 'applied'
@@ -1369,7 +1386,10 @@ export type CommandOutcome<outcomes extends Outcomes> =
         >
       }
     }[keyof outcomes & string]
-  | { readonly outcome: 'rejected'; readonly failures: readonly Failure<outcomes>[] }
+  | {
+      readonly outcome: 'rejected'
+      readonly failures: readonly (Failure<outcomes> | PathFailures<leaves>)[]
+    }
   | { readonly outcome: 'identity_already_used' }
 
 /**
@@ -1413,10 +1433,15 @@ export type StepOutcome<step> = step extends {
     | { readonly outcome: 'identity_already_used' }
   : never
 
-/** The outcome of a command, or of a step when the command is one. */
-export type OutcomeOf<command> = command extends { [$Step]: unknown }
+/**
+ * The outcome of a command, or of a step when the command is one; below a
+ * node, its rejection may name the predicates of the path (`leaves`, SC-31).
+ */
+export type OutcomeOf<command, leaves extends Component = never> = command extends {
+  [$Step]: unknown
+}
   ? StepOutcome<command>
-  : CommandOutcome<OutcomesOf<command>>
+  : CommandOutcome<OutcomesOf<command>, leaves>
 
 /** The commands of a domain, by name. */
 export type Commands = Readonly<
@@ -1584,7 +1609,7 @@ export type RegistryEntry =
       LeafStream | undefined
     >
   | Lookup<z.ZodType, z.ZodType>
-  | Node<unknown, RootContext, unknown>
+  | Node<unknown, RootContext, unknown, Accumulated<unknown, Component>>
   | Reaction<Component, CommandUseCase<Commands[string]>>
   | Version<Semver>
   | Delegated<unknown>
@@ -2169,8 +2194,16 @@ export declare const $UseCase: unique symbol
  * own (an input and a creator, events after the outcome, their terminals)
  * come with the case that composes something.
  */
-export interface CommandUseCase<command extends Commands[string], returns_from = unknown> {
-  readonly [$UseCase]: { readonly command: command; readonly returns_from: returns_from }
+export interface CommandUseCase<
+  command extends Commands[string],
+  returns_from = unknown,
+  accumulated extends Accumulated<unknown, Component> = Accumulated<unknown, Component>,
+> {
+  readonly [$UseCase]: {
+    readonly command: command
+    readonly returns_from: returns_from
+    readonly accumulated: accumulated
+  }
 }
 
 /**
@@ -2182,14 +2215,44 @@ export interface CommandUseCase<command extends Commands[string], returns_from =
  * command that queues an effect and a use case over a command would import
  * each other (A, 13 Nov 2026 (3)). An effect has one return at most, which
  * the generator checks.
+ *
+ * Below a node of a business tree (D105, SC-31) the use case is invoked at
+ * the leaf's path, with the target the nodes above it bind beside its
+ * command's input, flat: `extend_the_loan`, under `an_ongoing_loan`, takes
+ * `loan_id` with its command's own; the library gives the target to the
+ * nodes and the rest to the command. A command below binds none of it again
+ * (D105.2).
  */
-export type CommandUseCaseBuilder = <
+export type CommandUseCaseBuilder<
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+> = <
   const command extends Commands[string],
   const returns_from extends Component | undefined = undefined,
->(use_case: {
-  readonly command: command
-  readonly returns_from?: returns_from
-}) => CommandUseCase<command, returns_from>
+>(
+  use_case: {
+    readonly command: command
+    readonly returns_from?: returns_from
+  } & NotDeclaredAgain<accumulated, command>,
+) => CommandUseCase<command, returns_from, accumulated>
+
+/** The keys of a command's input bound by a node above it (D105.2): none, or a field no command has. */
+type NotDeclaredAgain<accumulated extends Accumulated<unknown, Component>, command> = [
+  Extract<keyof InputOfCommand<command>, keyof accumulated['binds']>,
+] extends [never]
+  ? unknown
+  : {
+      readonly 'a command declares no key a node above it binds (D105.2)': Extract<
+        keyof InputOfCommand<command>,
+        keyof accumulated['binds']
+      >
+    }
+
+/** The input of a command, as its invoker gives it. */
+type InputOfCommand<command> = command extends {
+  [$Command]: { input: infer input extends z.ZodType }
+}
+  ? z.input<input>
+  : never
 
 // ---------------------------------------------------------------------------
 // A use case over another (DOM-2, D105): it runs no command of its own, it
@@ -2222,11 +2285,22 @@ type CommandOfUseCase<use_case> = use_case extends { [$UseCase]: { command: infe
   ? command
   : never
 
-/** The input schema of the command a command use case runs. */
-type InputOfUseCase<use_case> =
-  CommandOfUseCase<use_case> extends { [$Command]: { input: infer input extends z.ZodType } }
-    ? input
-    : never
+/**
+ * The input of a command use case, as its invoker gives it: the target the
+ * nodes of its path bind and its command's own, flat (D105, SC-31).
+ */
+type InputOfUseCase<use_case> = use_case extends {
+  [$UseCase]: { accumulated: { binds: infer binds } }
+}
+  ? InputOfCommand<CommandOfUseCase<use_case>> & binds
+  : never
+
+/** The predicates the nodes of a command use case's path require, which its rejection may name. */
+type LeavesOfUseCase<use_case> = use_case extends {
+  [$UseCase]: { accumulated: { leaves: infer leaves extends Component } }
+}
+  ? leaves
+  : never
 
 /**
  * The projection of the invoked use case's outcome into the events of the
@@ -2238,12 +2312,18 @@ type InputOfUseCase<use_case> =
  * outcomes are still generic, a mapped type may hold any key, and `rejected`
  * would get two signatures and lose its parameter's type (A, 13 Nov 2026).
  */
-export type Projection<outcomes extends Outcomes, events extends Events> = {
+export type Projection<
+  outcomes extends Outcomes,
+  events extends Events,
+  leaves extends Component = never,
+> = {
   readonly [branch in Exclude<keyof outcomes, 'rejected'>]: (
     fact: z.output<outcomes[branch][1]>,
   ) => EventOf<events>
 } & {
-  readonly rejected: (failures: readonly Failure<outcomes>[]) => EventOf<events>
+  readonly rejected: (
+    failures: readonly (Failure<outcomes> | PathFailures<leaves>)[],
+  ) => EventOf<events>
 }
 
 /**
@@ -2347,9 +2427,13 @@ export type CommandUseCaseOverBuilder<context, closes> = <
     >
     readonly creator: (
       context: context & OperationContext,
-    ) => (input: z.output<SchemaOf<input>>) => z.input<InputOfUseCase<use_case>>
+    ) => (input: z.output<SchemaOf<input>>) => InputOfUseCase<use_case>
     readonly events: events
-    readonly projection: Projection<OutcomesOf<CommandOfUseCase<use_case>>, events>
+    readonly projection: Projection<
+      OutcomesOf<CommandOfUseCase<use_case>>,
+      events,
+      LeavesOfUseCase<use_case>
+    >
   } & LeafFlow<events, followed>,
 ) => CommandUseCaseOver<
   use_case,
@@ -2685,7 +2769,11 @@ export type EarlierReadLeaf<
  * and a use case over one, add their operation (`OperationContext`). The
  * others are the same at every point.
  */
-export interface Builders<context extends RootContext, closes> {
+export interface Builders<
+  context extends RootContext,
+  closes,
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+> {
   readonly id: IdBuilder
   readonly fact: FactBuilder
   readonly predicate: PredicateBuilder
@@ -2698,13 +2786,13 @@ export interface Builders<context extends RootContext, closes> {
   readonly command: CommandBuilder<context>
   readonly cursor_step: CursorStepBuilder<context>
   readonly query: QueryBuilder<context>
-  readonly command_use_case: CommandUseCaseBuilder
+  readonly command_use_case: CommandUseCaseBuilder<accumulated>
   readonly read_use_case: ReadUseCaseBuilder
   readonly command_use_case_over: CommandUseCaseOverBuilder<context, closes>
   readonly read_use_case_over: ReadUseCaseOverBuilder<context, closes>
   readonly lookup: LookupBuilder
   readonly reaction: ReactionBuilder
-  readonly node: NodeBuilder<context, closes>
+  readonly node: NodeBuilder<context, closes, accumulated>
   readonly version: VersionBuilder
   readonly earlier: EarlierBuilder<context>
   readonly delegate: DelegateBuilder
@@ -2745,11 +2833,15 @@ export type Sight = Readonly<Record<string, Readonly<Record<string, readonly Con
  * builder of the node the generator writes in `_scope_node.ts`, and the
  * context the node gives, in `_scope.ts`, from which the scope of the leaves
  * takes its builders (`_scope_usecase.ts`); so that no import goes round.
+ * Below a node of a business tree the point carries what the nodes above it
+ * add to the commands (`accumulated`, `<node>_accumulated` in `_node.ts`,
+ * SC-31), which its use cases take.
  */
-export declare function builders_at<context extends RootContext, closes = never>(): Builders<
-  context,
-  closes
->
+export declare function builders_at<
+  context extends RootContext,
+  closes = never,
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+>(): Builders<context, closes, accumulated>
 
 // ---------------------------------------------------------------------------
 // Nodes (PER-6, PER-14): at most one in a folder, met by the library as it
@@ -2765,13 +2857,46 @@ export declare function builders_at<context extends RootContext, closes = never>
 export declare const $Node: unique symbol
 
 /**
- * A node: the context it takes, the context it gives, and how it and the
- * nodes above it may close a request (`closes`, a union of `NodeEvent`s), for
- * the leaves below it to carry.
+ * What the nodes above a point of a tree add to the commands below it (D105,
+ * SC-31): the input of the target they bind (`binds`), which the input of a
+ * use case below carries beside its command's own, and the predicates of
+ * their conditions (`requires`), which a rejection may name. Nothing at a
+ * point with no such node, as everywhere in a persona's tree.
  */
-export interface Node<taken, gives extends RootContext, closes> {
-  readonly [$Node]: { readonly takes: taken; readonly gives: gives; readonly closes: closes }
+export interface Accumulated<binds, leaves extends Component> {
+  readonly binds: binds
+  readonly leaves: leaves
 }
+
+/** What a point accumulates with no node above it that binds or requires. */
+export type NothingAccumulated = Accumulated<unknown, never>
+
+/**
+ * A node: the context it takes, the context it gives, how it and the nodes
+ * above it may close a request (`closes`, a union of `NodeEvent`s), and what
+ * they add to the commands below (`accumulated`), for the leaves below it to
+ * carry.
+ */
+export interface Node<
+  taken,
+  gives extends RootContext,
+  closes,
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+> {
+  readonly [$Node]: {
+    readonly takes: taken
+    readonly gives: gives
+    readonly closes: closes
+    readonly accumulated: accumulated
+  }
+}
+
+/** What a node and the nodes above it add to the commands below, for the `_scope.ts` of its folder. */
+export type AccumulatedOf<node> = node extends {
+  [$Node]: { accumulated: infer accumulated extends Accumulated<unknown, Component> }
+}
+  ? accumulated
+  : never
 
 /** The context a node gives, for the `_scope.ts` of its folder. */
 export type ContextOf<node> = node extends { [$Node]: { gives: infer context extends RootContext } }
@@ -2838,24 +2963,91 @@ type NodeConditions<name extends string, context, lookups> = Readonly<
  * is evaluated, every failure named. The node adds to how the nodes above
  * close (`closes`) what it may close with: `not_found` if it looks up or
  * holds perimeters, `refused` with the names of its limits if it has some.
+ *
+ * A node of a business tree (D105, SC-31, C, 18 Nov 2026; A for the shape)
+ * adds to every command below it what the domain holds true there for
+ * whoever asks (D105.1): it `binds` the target, part of the input of the use
+ * case invoked below it, which it gives down in the context, so that no leaf
+ * declares it again nor binds it to another value (D105.2); it `requires` a
+ * condition in the vocabulary of the domain's predicates, whose parameters
+ * its `creator` binds from the target and the context. The library composes
+ * the condition into every branch of the command below, after the duplicate
+ * branch (D105.3), evaluated with the write, and a rejection names its failed
+ * predicates, never the node (D105.4). The same builder as a persona's node,
+ * whose parts a business node does not use (LIB-1: the library knows no kind
+ * of domain); a node binds no key bound above it.
  */
-export type NodeBuilder<context, closes> = <
+export type NodeBuilder<
+  context,
+  closes,
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+> = <
   const takes extends z.ZodObject | undefined = undefined,
   const lookups extends NodeLookups = NoLookups,
   const perimeters extends string = never,
   const limits extends string = never,
   const gives extends Readonly<Record<string, unknown>> | undefined = undefined,
->(node: {
-  readonly takes?: takes
-  readonly looks_up?: lookups & NodeLookupsOf<Taken<context, takes>, lookups>
-  readonly is_found_only_if?: NodeConditions<perimeters, Taken<context, takes>, lookups>
-  readonly is_refused_unless?: NodeConditions<limits, Taken<context, takes>, lookups>
-  readonly gives?: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
-}) => Node<
+  const binds extends z.ZodObject | undefined = undefined,
+  const requires extends Condition | undefined = undefined,
+>(
+  node: {
+    readonly takes?: takes
+    readonly looks_up?: lookups & NodeLookupsOf<Taken<context, takes>, lookups>
+    readonly is_found_only_if?: NodeConditions<perimeters, Taken<context, takes>, lookups>
+    readonly is_refused_unless?: NodeConditions<limits, Taken<context, takes>, lookups>
+    readonly gives?: (context: Taken<context, takes>) => (found: Found<lookups>) => gives
+    readonly binds?: binds
+    readonly requires?: requires & NodePredicates<requires>
+  } & Requirement<Taken<context, takes>, binds, requires> &
+    NotRebound<Taken<context, takes>, binds>,
+) => Node<
   Taken<context, takes>,
-  Taken<context, takes> & Given<gives> & RootContext,
-  closes | ClosesBy<lookups, perimeters, limits>
+  Taken<context, takes> & Given<gives> & Bound<binds> & RootContext,
+  closes | ClosesBy<lookups, perimeters, limits>,
+  Accumulated<
+    accumulated['binds'] & (binds extends z.ZodObject ? z.input<binds> : unknown),
+    accumulated['leaves'] | (requires extends Condition ? Leaves<requires> : never)
+  >
 >
+
+/** The target a node binds, as the context below it holds it: nothing more when it binds none. */
+type Bound<binds> = binds extends z.ZodObject ? z.output<binds> : unknown
+
+/**
+ * The creator of a node's condition, when it requires one: from the context
+ * of its point and the target it binds, the parameters of the condition.
+ */
+type Requirement<context, binds, requires> = requires extends Condition
+  ? {
+      readonly creator: (context: context) => (bound: Bound<binds>) => ConditionInput<requires>
+    }
+  : { readonly creator?: never }
+
+/**
+ * A node's condition made of predicates is itself; another asks for a field
+ * no node has, whose name says why and whose type lists the paths of the
+ * strays. DOM-5, D105.2
+ */
+type NodePredicates<requires> = requires extends Condition
+  ? [Strays<Leaves<requires>, Path<'predicate'>>] extends [never]
+    ? unknown
+    : {
+        readonly 'a node requires a condition made of predicates (D105.2)': PathOf<
+          Strays<Leaves<requires>, Path<'predicate'>>
+        >
+      }
+  : unknown
+
+/** The keys a node would bind again, bound above it (D105.2): none, or a field no node has. */
+type NotRebound<context, binds> = [
+  binds extends z.ZodObject ? Extract<keyof z.output<binds>, keyof context> : never,
+] extends [never]
+  ? unknown
+  : {
+      readonly 'a node binds what no node above it bound (D105.2)': binds extends z.ZodObject
+        ? Extract<keyof z.output<binds>, keyof context>
+        : never
+    }
 
 /** The lookups of a node that runs none: nothing is found, and no name reads. */
 type NoLookups = Readonly<Record<string, never>>
@@ -3185,9 +3377,10 @@ type CommandsOf<use_cases extends CommandUseCases> = {
 export type CommandUseCasePort<use_case> = use_case extends {
   [$UseCase]: { command: infer command }
 }
-  ? command extends { [$Command]: { input: infer input extends z.ZodType } }
-    ? (context: CommandRootContext, input: z.input<input>) => AsyncIterable<OutcomeOf<command>>
-    : never
+  ? (
+      context: CommandRootContext,
+      input: InputOfUseCase<use_case>,
+    ) => AsyncIterable<OutcomeOf<command, LeavesOfUseCase<use_case>>>
   : never
 
 /**
@@ -3572,9 +3765,7 @@ export type ReactionBuilder = <
   reaction: {
     readonly when: fact
     readonly invokes: use_case
-    readonly translation: (
-      fact: z.output<fact>,
-    ) => z.input<InputOfUseCase<use_case>> | typeof nothing
+    readonly translation: (fact: z.output<fact>) => InputOfUseCase<use_case> | typeof nothing
   } & ([Strays<fact, Path<'fact'>>] extends [never]
     ? unknown
     : { readonly 'a reaction reacts to a fact (DOM-16)': PathOf<Strays<fact, Path<'fact'>>> }),

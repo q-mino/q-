@@ -135,6 +135,17 @@ export const the_tool_is_booked_for_the_day = predicate({
   }),
 })
 
+/**
+ * The tool is booked for a day from today up to this one, by whoever: a loan
+ * that would keep it out until then takes a booked day from someone (SC-31).
+ */
+export const the_tool_is_booked_on_a_day_up_to = predicate({
+  parameters: z.strictObject({
+    tool_id: tools.id.tool_id,
+    day: wlib.day,
+  }),
+})
+
 /** The tool is booked for the day by this member. */
 export const the_tool_is_booked_for_the_day_by_this_member = predicate({
   parameters: z.strictObject({

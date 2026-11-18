@@ -191,6 +191,55 @@ export const return_a_tool = command_use_case_over({
   },
 })
 /**
+ * Marta keeps the drill two more weeks, from the row of L7 in "my loans",
+ * while her card is valid (SC-31): she sends the loan, the tool and the due
+ * day the row shows, and the desk moves the due day on, unless someone
+ * booked the drill up to then; the row follows by its stream. The loan is
+ * the target of the node above the business's leaf (`an_ongoing_loan`),
+ * given beside the rest of the input, flat. Told apart, a booking by someone
+ * else; any other failure, the loan's or the node's, the member need not
+ * know which.
+ */
+export const extend_your_loan = command_use_case_over({
+  use_case: loans.an_ongoing_loan.usecase.extend_the_loan,
+  input: z.strictObject({
+    loan_id: loans.id.loan_id,
+    tool_id: tools.id.tool_id,
+    due_day: wlib.day,
+  }),
+  is_refused_unless: {
+    the_member_card_is_valid_today: (context) => () =>
+      dsl.the_card_is_valid_on(context.now)(context.card),
+  },
+  creator: (context) => (input) => ({
+    loan_id: input.loan_id,
+    tool_id: input.tool_id,
+    due_day: input.due_day,
+    member_id: context.card.id,
+  }),
+  events: {
+    your_loan_is_extended: z.strictObject({ loan_id: loans.id.loan_id, due_day: wlib.day }),
+    /** Gianni booked the drill for Thursday: Marta brings it back on its due day. */
+    someone_booked_the_tool: z.strictObject({}),
+    /** Not hers, not of that tool, not due on that day, past its due date, or back in the shed. */
+    the_loan_cannot_be_extended: z.strictObject({}),
+  },
+  projection: {
+    the_loan_can_be_extended_so_its_due_day_moves_on: (fact) => ({
+      event: 'your_loan_is_extended',
+      payload: { loan_id: fact.extended_loan.id, due_day: fact.extended_loan.due_day },
+    }),
+    rejected: (failures) =>
+      failures.every(
+        (failure) =>
+          failure.predicate === 'business/loans/predicate/the_tool_is_booked_on_a_day_up_to',
+      )
+        ? { event: 'someone_booked_the_tool', payload: {} }
+        : { event: 'the_loan_cannot_be_extended', payload: {} },
+  },
+})
+
+/**
  * Marta opens "my loans": the tools she has at home, when each is due and
  * whether it is overdue, then follows them live; a loan appears, the due
  * date passes on one, a return takes it away, a tool renamed by the keeper

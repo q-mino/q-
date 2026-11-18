@@ -77,6 +77,27 @@ export type the_tool_of_a_loan_has_been_corrected = z.output<
 >
 
 /**
+ * The member keeps the tool longer (SC-31): the loan's new due day.
+ *
+ * @see {@link fact.a_loan_has_been_extended}
+ */
+export const a_loan_has_been_extended =
+  fact.a_loan_has_been_extended.brand<'business/loans/fact/a_loan_has_been_extended'>()
+export type a_loan_has_been_extended = z.output<typeof a_loan_has_been_extended>
+
+/**
+ * Nothing to do (DOM-6, D95): the eve came for a due day the loan no longer
+ * has (SC-31).
+ *
+ * @see {@link fact.the_due_day_was_moved_before_the_reminder}
+ */
+export const the_due_day_was_moved_before_the_reminder =
+  fact.the_due_day_was_moved_before_the_reminder.brand<'business/loans/fact/the_due_day_was_moved_before_the_reminder'>()
+export type the_due_day_was_moved_before_the_reminder = z.output<
+  typeof the_due_day_was_moved_before_the_reminder
+>
+
+/**
  * Nothing to do (DOM-6): the card already names the tool the member has.
  *
  * @see {@link fact.the_tool_of_the_loan_was_already_corrected}
