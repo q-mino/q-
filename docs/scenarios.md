@@ -72,7 +72,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 ## The generator (step 3)
 
 - **SC-45** (covered, Shed 2-10) The map: a persona sees of a business domain its use cases, identities and facts; a business domain of another only its identities; a reaction above them. DOM-25, GR-1, GR-3, GR-9.
-- **SC-46** (covered as a rule, Shed 10) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. DOM-22, DOM-24, PER-17.
+- **SC-46** (covered as a rule, Shed 10, 11) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. A past major's registry is its whole map, the input of a delegated leaf delegated to the next major's (Shed 11, part 6). DOM-22, DOM-24, PER-17.
 
 ## Out of scope
 

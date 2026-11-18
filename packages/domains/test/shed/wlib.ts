@@ -489,7 +489,13 @@ export interface Delegated<next> {
  * A component of a past major left unchanged by the next one
  * (`delegate(next.fact.a_tool_has_been_returned)`): the folder of a major
  * lists every component of that major, so that one forgotten stops the
- * generator, not a reader.
+ * generator, not a reader. A delegated leaf of a persona has its input
+ * delegated too, written by the generator where the next major has one
+ * (`return_a_tool_input = delegate(next.return_a_tool_input)` in
+ * `persona/member/1/_usecase.ts`, C, 18 Nov 2026 (7)): the registry of a
+ * major is its whole map, every path its clients were released with, which
+ * the JSON Schema export and CI's comparison by path and version read,
+ * resolving a delegation to the next major as the port resolves a leaf.
  */
 export type DelegateBuilder = <const next>(next: next) => Delegated<next>
 
