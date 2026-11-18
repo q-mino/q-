@@ -90,7 +90,7 @@ export type ReadUseCasePort<
   actions = never,
 > =
   QueryParts<query> extends {
-    input: infer input extends z.ZodType
+    input?: infer input extends z.ZodType
     fields: infer fields extends z.ZodObject
     identity: infer identity extends string
   }

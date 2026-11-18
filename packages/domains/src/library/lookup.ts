@@ -1,4 +1,5 @@
 import type * as z from 'zod'
+import { mark } from './kind.ts'
 
 // Lookups (PER-9): a read of one key, which gives its value or "not known",
 // with no list and no stream. A node runs its lookups, then its conditions
@@ -48,3 +49,10 @@ export type LookupAdapter<lookups extends Lookups> = {
 export type LookupPort<lookup> = (
   key: z.input<LookupParts<lookup>['key']>,
 ) => Promise<Answer<z.output<LookupParts<lookup>['value']>>>
+
+// The builder's body (part 3.2): a lookup is its key and its value.
+
+export const lookup_builder: LookupBuilder = (lookup) => ({
+  [$Lookup]: { key: lookup.key, value: lookup.value },
+  ...mark({ kind: 'lookup' }),
+})

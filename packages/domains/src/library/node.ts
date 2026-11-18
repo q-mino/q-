@@ -1,4 +1,5 @@
 import type * as z from 'zod'
+import { mark } from './kind.ts'
 import type { RootContext } from './context.ts'
 import type { Answer, Lookup, LookupParts } from './lookup.ts'
 import type { Component, Path, PathOf, Strays } from './component.ts'
@@ -36,7 +37,8 @@ export type NothingAccumulated = Accumulated<unknown, never>
  * A node: the context it takes, the context it gives, how it and the nodes
  * above it may close a request (`closes`, a union of `NodeEvent`s), and what
  * they add to the commands below (`accumulated`), for the leaves below it to
- * carry.
+ * carry: the types' alone. At runtime it holds its declaration whole, for
+ * the library to run (`declared`).
  */
 export interface Node<
   taken,
@@ -45,30 +47,33 @@ export interface Node<
   accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
 > {
   readonly [$Node]: {
-    readonly takes: taken
-    readonly gives: gives
-    readonly closes: closes
-    readonly accumulated: accumulated
+    readonly declared: object
+    readonly takes?: taken
+    readonly gives?: gives
+    readonly closes?: closes
+    readonly accumulated?: accumulated
   }
 }
 
 /** What a node and the nodes above it add to the commands below, for the `_scope.ts` of its folder. */
 export type AccumulatedOf<node> = node extends {
-  [$Node]: { accumulated: infer accumulated extends Accumulated<unknown, Component> }
+  [$Node]: { accumulated?: infer accumulated extends Accumulated<unknown, Component> }
 }
   ? accumulated
   : never
 
 /** The context a node gives, for the `_scope.ts` of its folder. */
-export type ContextOf<node> = node extends { [$Node]: { gives: infer context extends RootContext } }
+export type ContextOf<node> = node extends {
+  [$Node]: { gives?: infer context extends RootContext }
+}
   ? context
   : never
 
 /** How a node and the nodes above it may close a request, for the `_scope.ts` of its folder. */
-export type ClosesOf<node> = node extends { [$Node]: { closes: infer closes } } ? closes : never
+export type ClosesOf<node> = node extends { [$Node]: { closes?: infer closes } } ? closes : never
 
 /** What the entry gives the node at the top of a tree: the root's context and what the node takes. */
-export type EntryOf<node> = node extends { [$Node]: { takes: infer taken } } ? taken : never
+export type EntryOf<node> = node extends { [$Node]: { takes?: infer taken } } ? taken : never
 
 /**
  * A lookup a node runs: the lookup, the key it runs `of`, from the context
@@ -220,3 +225,15 @@ type Given<gives> = gives extends undefined ? unknown : gives
 type ClosesBy<lookups, perimeters extends string, limits extends string> =
   | ([lookups] extends [NoLookups] ? ([perimeters] extends [never] ? never : NotFound) : NotFound)
   | ([limits] extends [never] ? never : Refused<limits>)
+
+// The builder's body (part 3.2): a node holds its declaration whole, which
+// the library runs as it walks a path down (steps 6 of the plan).
+
+export const node_builder =
+  <
+    context,
+    closes,
+    accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+  >(): NodeBuilder<context, closes, accumulated> =>
+  (node) =>
+    Object.assign({ [$Node]: { declared: node } }, mark({ kind: 'node' }))

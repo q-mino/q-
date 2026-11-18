@@ -1,9 +1,9 @@
 import type * as z from 'zod'
 import type { Component } from './component.ts'
-import type { $Earlier, Earlier } from './version.ts'
-import type { Commands, SchemaOf } from './command.ts'
-import type { Queries } from './query.ts'
-import type { $UseCase, CommandUseCase, ReadUseCase } from './use_case.ts'
+import { $Earlier, marked_as } from './version.ts'
+import type { Earlier } from './version.ts'
+import type { SchemaOf } from './command.ts'
+import { $UseCase } from './use_case.ts'
 import type { EventOutOf, Events } from './use_case_over.ts'
 import type { AnyCommandLeaf, CommandUseCaseOver } from './command_leaf.ts'
 import type { AnyReadLeaf, FieldsHolding, LeafStream, ReadUseCaseOver } from './read_leaf.ts'
@@ -104,7 +104,7 @@ type EntryOfLeaf<leaf> = leaf extends { [$UseCase]: { entry: infer entry extends
 
 /** The events of its own a read leaf's stream declares; none if it does not stream. */
 type StreamEventsOfLeaf<leaf> = leaf extends {
-  [$UseCase]: { stream: { events: infer events extends Events } }
+  [$UseCase]: { entry: unknown; stream?: { events: infer events extends Events } }
 }
   ? events
   : never
@@ -113,7 +113,7 @@ type StreamEventsOfLeaf<leaf> = leaf extends {
 type IdentityOfLeafStream<leaf> = leaf extends {
   [$UseCase]: {
     entry: infer entry extends z.ZodObject
-    stream: { identity: infer identity extends string }
+    stream?: { identity: infer identity extends string }
   }
 }
   ? z.output<entry>[identity & keyof z.output<entry>]
@@ -131,20 +131,34 @@ export interface OverTheNext<next> {
   readonly [$Earlier]: { readonly next: next }
 }
 
+/** How a leaf's path may close it: the types' alone. */
+type ClosesOfLeaf<leaf> = leaf extends { [$UseCase]: { use_case: unknown; closes?: infer closes } }
+  ? closes
+  : never
+
+/** What a command leaf waits for: the types' alone. */
+type WaitsOfLeaf<leaf> = leaf extends { [$UseCase]: { events: unknown; waits?: infer waits } }
+  ? waits
+  : never
+
+/** How a read leaf streams, if it does: the types' alone. */
+type StreamOfLeaf<leaf> = leaf extends { [$UseCase]: { entry: unknown; stream?: infer stream } }
+  ? stream
+  : undefined
+
 /** A command leaf of a past major: its own input and events, the next leaf's use case, closings and waits. */
 export type EarlierCommandLeaf<
-  next,
+  next extends AnyCommandLeaf,
   input extends z.ZodType,
   events extends Events,
-> = next extends {
-  readonly [$UseCase]: {
-    readonly use_case: infer use_case extends CommandUseCase<Commands[string]>
-    readonly closes: infer closes
-    readonly waits: infer waits
-  }
-}
-  ? CommandUseCaseOver<use_case, input, events, closes, waits> & OverTheNext<next>
-  : never
+> = CommandUseCaseOver<
+  next[typeof $UseCase]['use_case'],
+  input,
+  events,
+  ClosesOfLeaf<next>,
+  WaitsOfLeaf<next>
+> &
+  OverTheNext<next>
 
 /**
  * A read leaf of a past major: its own input and entry, the next leaf's use
@@ -153,26 +167,144 @@ export type EarlierCommandLeaf<
  * events of its own.
  */
 export type EarlierReadLeaf<
-  next,
+  next extends AnyReadLeaf,
   input extends z.ZodType,
   entry extends z.ZodObject,
   identity extends string,
   events extends Events,
-> = next extends {
-  readonly [$UseCase]: {
-    readonly use_case: infer use_case extends ReadUseCase<Queries[string]>
-    readonly closes: infer closes
-    readonly stream: infer stream
+> = ReadUseCaseOver<
+  next[typeof $UseCase]['use_case'],
+  input,
+  entry,
+  ClosesOfLeaf<next>,
+  StreamOfLeaf<next> extends LeafStream
+    ? { readonly identity: identity; readonly events: events }
+    : undefined
+> &
+  OverTheNext<next>
+
+// The builder's body (part 3.2). One builder over three forms (A, 16 Nov
+// 2026 (7)): a fact or an effect of a past major, its payload with its step
+// to the next; a command leaf, and a read leaf, over the next major's. Each
+// form is a function of its own, whose type the compiler checks; the builder
+// gives each `next` to its form by what `next` is, a component or a leaf,
+// told apart at runtime (a leaf has a use case, a read leaf an entry): its
+// overloads are the builder's type, which the compiler matches with each
+// form only through that choice.
+
+/** A fact or an effect of a past major: a copy of its payload, with the next major's component and the step to it. */
+const earlier_component =
+  <const next extends Component>(next: next) =>
+  <const payload extends z.ZodObject>(earlier: {
+    readonly payload: payload
+    readonly to_next: (payload: z.output<payload>) => z.input<next>
+  }): Earlier<next, payload> =>
+    Object.assign(
+      earlier.payload.clone(),
+      { [$Earlier]: { next, to_next: earlier.to_next } },
+      marked_as(next),
+    )
+
+/** A command leaf of a past major: its own input and events, over the next major's leaf, with its declaration whole. */
+const earlier_command_leaf =
+  <context>() =>
+  <const next extends AnyCommandLeaf>(next: next) =>
+  <const input extends z.ZodType, const events extends Events>(earlier: {
+    readonly input: input
+    readonly to_next: (
+      context: context,
+    ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+    readonly events: events
+    readonly from_next: (context: context) => FromNextEvents<EventsOfLeaf<next>, events>
+  }): EarlierCommandLeaf<next, input, events> =>
+    Object.assign(
+      {
+        input: earlier.input,
+        [$UseCase]: {
+          use_case: next[$UseCase].use_case,
+          events: earlier.events,
+          declared: earlier,
+        },
+        [$Earlier]: { next },
+      },
+      marked_as(next),
+    )
+
+/** A read leaf of a past major: its own input and entry, over the next major's leaf, with its declaration whole. */
+const earlier_read_leaf =
+  <context>() =>
+  <const next extends AnyReadLeaf>(next: next) =>
+  <
+    const input extends z.ZodType,
+    const entry extends z.ZodObject,
+    const identity extends FieldsHolding<entry, IdentityOfLeafStream<next>> = never,
+    const events extends Events = never,
+  >(
+    earlier: {
+      readonly input: input
+      readonly to_next: (
+        context: context,
+      ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+      readonly entry: entry
+      readonly from_next: (
+        context: context,
+      ) => (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
+    } & EarlierStream<next, identity, events, context>,
+  ): EarlierReadLeaf<next, input, entry, identity, events> =>
+    Object.assign(
+      {
+        input: earlier.input,
+        [$UseCase]: { use_case: next[$UseCase].use_case, entry: earlier.entry, declared: earlier },
+        [$Earlier]: { next },
+      },
+      marked_as(next),
+    )
+
+/** Whether a leaf of the next major is a read leaf: it has an entry, a command leaf events. */
+const is_a_read_leaf = (leaf: AnyCommandLeaf | AnyReadLeaf): leaf is AnyReadLeaf =>
+  'entry' in leaf[$UseCase]
+
+export const earlier_builder = <context>(): EarlierBuilder<context> => {
+  function earlier<const next extends Component>(
+    next: next,
+  ): <const payload extends z.ZodObject>(earlier: {
+    readonly payload: payload
+    readonly to_next: (payload: z.output<payload>) => z.input<next>
+  }) => Earlier<next, payload>
+  function earlier<const next extends AnyCommandLeaf>(
+    next: next,
+  ): <const input extends z.ZodType, const events extends Events>(earlier: {
+    readonly input: input
+    readonly to_next: (
+      context: context,
+    ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+    readonly events: events
+    readonly from_next: (context: context) => FromNextEvents<EventsOfLeaf<next>, events>
+  }) => EarlierCommandLeaf<next, input, events>
+  function earlier<const next extends AnyReadLeaf>(
+    next: next,
+  ): <
+    const input extends z.ZodType,
+    const entry extends z.ZodObject,
+    const identity extends FieldsHolding<entry, IdentityOfLeafStream<next>> = never,
+    const events extends Events = never,
+  >(
+    earlier: {
+      readonly input: input
+      readonly to_next: (
+        context: context,
+      ) => (input: z.output<input>) => z.input<SchemaOf<next['input']>>
+      readonly entry: entry
+      readonly from_next: (
+        context: context,
+      ) => (entry: z.output<EntryOfLeaf<next>>) => z.input<entry>
+    } & EarlierStream<next, identity, events, context>,
+  ) => EarlierReadLeaf<next, input, entry, identity, events>
+  function earlier(next: Component | AnyCommandLeaf | AnyReadLeaf): unknown {
+    if (!($UseCase in next)) return earlier_component(next)
+    return is_a_read_leaf(next)
+      ? earlier_read_leaf<context>()(next)
+      : earlier_command_leaf<context>()(next)
   }
+  return earlier
 }
-  ? ReadUseCaseOver<
-      use_case,
-      input,
-      entry,
-      closes,
-      stream extends LeafStream
-        ? { readonly identity: identity; readonly events: events }
-        : undefined
-    > &
-      OverTheNext<next>
-  : never

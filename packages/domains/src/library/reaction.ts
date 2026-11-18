@@ -1,4 +1,5 @@
 import type * as z from 'zod'
+import { mark } from './kind.ts'
 import type { Component, Path, PathOf, Strays } from './component.ts'
 import type { Commands } from './command.ts'
 import type { CommandUseCase } from './use_case.ts'
@@ -24,13 +25,19 @@ export const nothing: unique symbol = Symbol('nothing')
  * A reaction: the fact it reacts to and the command use case it invokes.
  * Its path is its identity, stable across releases (D89.5): the scope of its
  * operations ("system · reaction R", D91.3) and its delivery unit, with its
- * own position, order and dead letters (D89.6).
+ * own position, order and dead letters (D89.6). At runtime it holds its
+ * declaration whole, its translation with it, for its consumer to run
+ * (`declared`).
  */
 export interface Reaction<
   fact extends Component,
   use_case extends CommandUseCase<Commands[string]>,
 > {
-  readonly [$Reaction]: { readonly when: fact; readonly invokes: use_case }
+  readonly [$Reaction]: {
+    readonly when: fact
+    readonly invokes: use_case
+    readonly declared: object
+  }
 }
 
 /**
@@ -61,3 +68,11 @@ export type ReactionBuilder = <
 export type ReactionPaths<registry> = {
   [path in keyof registry & string]: registry[path] extends { [$Reaction]: unknown } ? path : never
 }[keyof registry & string]
+
+// The builder's body (part 3.2): a reaction is its fact and the use case it
+// invokes, with its declaration whole.
+
+export const reaction_builder: ReactionBuilder = (reaction) => ({
+  [$Reaction]: { when: reaction.when, invokes: reaction.invokes, declared: reaction },
+  ...mark({ kind: 'reaction' }),
+})

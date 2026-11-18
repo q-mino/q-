@@ -1,5 +1,7 @@
 import type { RootContext } from './context.ts'
+import type { ConstructKind } from './kind.ts'
 import type { LookupBuilder } from './lookup.ts'
+import { lookup_builder } from './lookup.ts'
 import type {
   CalculationBuilder,
   Component,
@@ -9,17 +11,36 @@ import type {
   PredicateBuilder,
   SelectionBuilder,
 } from './component.ts'
+import {
+  calculation_builder,
+  effect_builder,
+  fact_builder,
+  id_builder,
+  predicate_builder,
+  selection_builder,
+} from './component.ts'
 import type { AndBuilder, NotBuilder, OrBuilder } from './condition.ts'
+import { and_builder, not_builder, or_builder } from './condition.ts'
 import type { DelegateBuilder, VersionBuilder } from './version.ts'
+import { delegate_builder, version_builder } from './version.ts'
 import type { CommandBuilder } from './command.ts'
+import { command_builder } from './command.ts'
 import type { QueryBuilder } from './query.ts'
+import { query_builder } from './query.ts'
 import type { CursorStepBuilder } from './step.ts'
+import { cursor_step_builder } from './step.ts'
 import type { Accumulated, NodeBuilder, NothingAccumulated } from './node.ts'
+import { node_builder } from './node.ts'
 import type { CommandUseCaseBuilder, ReadUseCaseBuilder } from './use_case.ts'
+import { command_use_case_builder, read_use_case_builder } from './use_case.ts'
 import type { CommandUseCaseOverBuilder } from './command_leaf.ts'
+import { command_use_case_over_builder } from './command_leaf.ts'
 import type { ReactionBuilder } from './reaction.ts'
+import { reaction_builder } from './reaction.ts'
 import type { ReadUseCaseOverBuilder } from './read_leaf.ts'
+import { read_use_case_over_builder } from './read_leaf.ts'
 import type { EarlierBuilder } from './earlier.ts'
+import { earlier_builder } from './earlier.ts'
 
 // Builders at a point of the tree (PER-6, DOM-25): the context of a creator
 // comes from where it sits, not from its annotation.
@@ -74,23 +95,6 @@ export interface Builders<
   readonly delegate: DelegateBuilder
 }
 
-/** The kinds of construct, the segment of a path after its folders (DOM-24, DOM-25). */
-export type ConstructKind =
-  | 'id'
-  | 'value'
-  | 'fact'
-  | 'predicate'
-  | 'selection'
-  | 'calculation'
-  | 'effect'
-  | 'command'
-  | 'query'
-  | 'usecase'
-  | 'lookup'
-  | 'node'
-  | 'reaction'
-  | 'version'
-
 /**
  * What a folder of the tree sees of the others (LIB-1, DOM-25): for the
  * folders under a first segment (`business`), the kinds of construct they see
@@ -102,3 +106,43 @@ export type ConstructKind =
  * does not compile.
  */
 export type Sight = Readonly<Record<string, Readonly<Record<string, readonly ConstructKind[]>>>>
+
+/**
+ * The builders bound to the context of a point of the tree, for its
+ * `_scope.ts`. A folder with a node has two points: the point above, whose
+ * builder of the node the generator writes in `_scope_node.ts`, and the
+ * context the node gives, in `_scope.ts`, from which the scope of the leaves
+ * takes its builders (`_scope_usecase.ts`); so that no import goes round.
+ * Below a node of a business tree the point carries what the nodes above it
+ * add to the commands (`accumulated`, `<node>_accumulated` in `_node.ts`,
+ * SC-31), which its use cases take. The context, what closes and what
+ * accumulates are the types': at runtime every point has the same builders.
+ */
+export const builders_at = <
+  context extends RootContext,
+  closes = never,
+  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+>(): Builders<context, closes, accumulated> => ({
+  id: id_builder,
+  fact: fact_builder,
+  predicate: predicate_builder,
+  selection: selection_builder,
+  calculation: calculation_builder,
+  effect: effect_builder,
+  AND: and_builder,
+  OR: or_builder,
+  NOT: not_builder,
+  command: command_builder<context>(),
+  cursor_step: cursor_step_builder<context>(),
+  query: query_builder<context>(),
+  command_use_case: command_use_case_builder<accumulated>(),
+  read_use_case: read_use_case_builder,
+  command_use_case_over: command_use_case_over_builder<context, closes>(),
+  read_use_case_over: read_use_case_over_builder<context, closes>(),
+  lookup: lookup_builder,
+  reaction: reaction_builder,
+  node: node_builder<context, closes, accumulated>(),
+  version: version_builder,
+  earlier: earlier_builder<context>(),
+  delegate: delegate_builder,
+})

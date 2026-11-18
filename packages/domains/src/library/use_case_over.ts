@@ -40,14 +40,14 @@ export type CommandOfUseCase<use_case> = use_case extends { [$UseCase]: { comman
  * nodes of its path bind and its command's own, flat (D105, SC-31).
  */
 export type InputOfUseCase<use_case> = use_case extends {
-  [$UseCase]: { accumulated: { binds: infer binds } }
+  [$UseCase]: { command: unknown; accumulated?: { binds: infer binds } }
 }
   ? InputOfCommand<CommandOfUseCase<use_case>> & binds
   : never
 
 /** The predicates the nodes of a command use case's path require, which its rejection may name. */
 export type LeavesOfUseCase<use_case> = use_case extends {
-  [$UseCase]: { accumulated: { leaves: infer leaves extends Component } }
+  [$UseCase]: { command: unknown; accumulated?: { leaves: infer leaves extends Component } }
 }
   ? leaves
   : never

@@ -1,9 +1,11 @@
 import type * as z from 'zod'
+import { mark } from './kind.ts'
 import type { cursor } from './format.ts'
 import type { OperationContext } from './context.ts'
 import type { Component, Path, PathOf, Strays } from './component.ts'
 import type { Condition, ConditionInput } from './condition.ts'
-import type { $Command, CommandInput, Commands, InputOf, SchemaOf } from './command.ts'
+import { $Command } from './command.ts'
+import type { CommandInput, Commands, InputOf, SchemaOf } from './command.ts'
 import type { IdentityFields, OneSubject, QueryShape } from './query.ts'
 
 // The step of a process with a cursor (DOM-20, D97, D111, D112): a command for
@@ -77,7 +79,8 @@ export type StepCreator<
 
 /**
  * A step: for whoever invokes it a command whose branches are `advances` and
- * `completes` (`$Command`); for the library its parts (`$Step`).
+ * `completes` (`$Command`, the types' alone); for the library its parts, the
+ * facts it records among them (`$Step`).
  */
 export type CursorStep<
   input extends CommandInput<z.ZodType>,
@@ -91,13 +94,17 @@ export type CursorStep<
 > = StepCreator<SchemaOf<input>, reads, selection, fields, composes, outcomes, context> & {
   readonly input: input
   [$Command]: {
-    input: SchemaOf<input>
-    outcomes: {
+    input?: SchemaOf<input>
+    outcomes?: {
       readonly advances: readonly [condition: never, fact: outcomes['advances']]
       readonly completes: readonly [condition: never, fact: outcomes['completes']]
     }
   }
-  [$Step]: { reads: reads; composes: composes } & QueryShape<fields, identity, selection>
+  [$Step]: { reads: reads; composes: composes; outcomes: outcomes } & QueryShape<
+    fields,
+    identity,
+    selection
+  >
 }
 
 /**
@@ -174,3 +181,28 @@ export type CursorStepBuilder<context> = <
   outcomes,
   context & OperationContext
 >
+
+// The builder's body (part 3.2): a step is its creator, with its input as
+// declared and its parts, the facts it records among them; its branches as
+// a command's are the types' alone.
+
+export const cursor_step_builder =
+  <context>(): CursorStepBuilder<context> =>
+  (step) =>
+    Object.assign(
+      (context: context & OperationContext) => step.creator(context),
+      {
+        input: step.input,
+        [$Command]: {},
+        [$Step]: {
+          reads: step.reads,
+          composes: step.composes,
+          outcomes: step.outcomes,
+          fields: step.fields,
+          identity: step.identity,
+          selection: step.selection,
+          order: step.order,
+        },
+      },
+      mark({ kind: 'command' }),
+    )

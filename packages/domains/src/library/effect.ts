@@ -43,10 +43,10 @@ export type Delivery<effect extends Component, returned> = (entry: {
 /** The input of the return of an effect among a domain's return use cases; `never` if it has none. */
 type ReturnOf<returns, effect> = {
   [name in keyof returns]: returns[name] extends {
-    [$UseCase]: { returns_from: infer from; command: infer command }
+    [$UseCase]: { returns_from?: infer from; command: infer command }
   }
     ? [from] extends [effect]
-      ? command extends { [$Command]: { input: infer input extends z.ZodType } }
+      ? command extends { [$Command]: { input?: infer input extends z.ZodType } }
         ? z.input<input>
         : never
       : never

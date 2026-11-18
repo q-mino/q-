@@ -1,4 +1,5 @@
 import type * as z from 'zod'
+import { mark } from './kind.ts'
 import type { Component, Path, PathOf, Strays } from './component.ts'
 import type { $Command, Commands } from './command.ts'
 import type { Queries } from './query.ts'
@@ -18,7 +19,8 @@ export const $UseCase: unique symbol = Symbol('UseCase')
  * boundary, not boilerplate: its input is the command's; its events are the
  * command's outcome, the first event and a terminal one (D72.3). Parts of its
  * own (an input and a creator, events after the outcome, their terminals)
- * come with the case that composes something.
+ * come with the case that composes something. What the nodes above it add
+ * (`accumulated`) is the types' alone.
  */
 export interface CommandUseCase<
   command extends Commands[string],
@@ -27,8 +29,8 @@ export interface CommandUseCase<
 > {
   readonly [$UseCase]: {
     readonly command: command
-    readonly returns_from: returns_from
-    readonly accumulated: accumulated
+    readonly returns_from?: returns_from
+    readonly accumulated?: accumulated
   }
 }
 
@@ -75,7 +77,7 @@ type NotDeclaredAgain<accumulated extends Accumulated<unknown, Component>, comma
 
 /** The input of a command, as its invoker gives it. */
 export type InputOfCommand<command> = command extends {
-  [$Command]: { input: infer input extends z.ZodType }
+  [$Command]: { input?: infer input extends z.ZodType }
 }
   ? z.input<input>
   : never
@@ -108,11 +110,8 @@ export type CommandsOf<use_cases extends CommandUseCases> = {
  * (LIB-3). A fact it does not name reaches the use cases over it as the
  * entry it leaves. A use case over it names a fact by the name in its path.
  */
-export interface ReadUseCase<
-  query extends Queries[string],
-  facts extends Readonly<Record<string, Component>> = Readonly<Record<string, Component>>,
-> {
-  readonly [$UseCase]: { readonly query: query; readonly facts: facts }
+export interface ReadUseCase<query extends Queries[string], facts extends Component = Component> {
+  readonly [$UseCase]: { readonly query: query; readonly facts: readonly facts[] }
 }
 
 /** The name of a fact, the last part of its path. */
@@ -137,7 +136,7 @@ export type ReadUseCaseBuilder = <
   } & ([Strays<facts, Path<'fact'>>] extends [never]
     ? unknown
     : { readonly 'a read use case names facts (DOM-17)': PathOf<Strays<facts, Path<'fact'>>> }),
-) => ReadUseCase<query, FactsByName<facts>>
+) => ReadUseCase<query, facts>
 
 /** The read use cases of a domain, by name. */
 export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>>
@@ -146,3 +145,23 @@ export type ReadUseCases = Readonly<Record<string, ReadUseCase<Queries[string]>>
 export type QueriesOf<use_cases extends ReadUseCases> = {
   readonly [name in keyof use_cases]: use_cases[name][typeof $UseCase]['query']
 }
+
+// The builders' bodies (part 3.2): a use case is the command or the query it
+// is the port of, with the effect it returns from, the facts it names.
+
+export const command_use_case_builder =
+  <
+    accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
+  >(): CommandUseCaseBuilder<accumulated> =>
+  (use_case) => ({
+    [$UseCase]: {
+      command: use_case.command,
+      ...(use_case.returns_from === undefined ? {} : { returns_from: use_case.returns_from }),
+    },
+    ...mark({ kind: 'usecase' }),
+  })
+
+export const read_use_case_builder: ReadUseCaseBuilder = (use_case) => ({
+  [$UseCase]: { query: use_case.query, facts: use_case.facts ?? [] },
+  ...mark({ kind: 'usecase' }),
+})

@@ -6,34 +6,26 @@
 // moves its declarations into the library, so that its diff shows them leave;
 // at 7.5 Shed imports the library and this file is deleted (`docs/plan.md`).
 
-import type * as z from 'zod'
 import type {
-  Accumulated,
   Applicabilities,
   ApplicabilityFragmentOf,
   ApplicableNames,
-  Builders,
   Clock,
   CommandUseCasePort,
   CommandUseCases,
-  Commands,
   CommandsOf,
   Component,
-  Composition,
   Deliveries,
-  Each,
   EffectExecutor,
   ExecutorState,
   FactLog,
   FactWrites,
   FactsIn,
-  GivenByTheCaller,
   Invoked,
   LookupAdapter,
   LookupPort,
   Lookups,
   Majors,
-  NothingAccumulated,
   Operation,
   Outbox,
   QueriesOf,
@@ -44,148 +36,17 @@ import type {
   ReadUseCasePort,
   ReadUseCases,
   Registry,
-  RootContext,
   StateAdapter,
   StoredVersions,
   Streams,
-  Transitions,
   TreeLeaves,
   TreePorts,
   Versions,
-  date_time,
-  day,
   entry_id,
   position,
-  time_zone,
 } from '../../src/library/index.ts'
 
 export * from '../../src/library/index.ts'
-
-// Part 3.2, the language at runtime: the formats over the zones, the stable
-// identity of an instance, the parts of a branch, the builders at a point.
-
-/**
- * The first instant of a day in a zone, told in its offset that day: when a
- * wait for a day may go (`not_before`). From a day to an instant only with a
- * zone and its rules, so only where the context gives it (a creator, a leaf
- * of a past major), never in a translation of a fact, whose payload has none
- * (DOM-22). A, 17 Nov 2026 (SC-12): a body of the library, over the zones of
- * its runtime.
- */
-export declare const start_of: (zone: time_zone) => (the_day: day) => date_time
-
-/**
- * The last instant of a day in a zone, told in its offset that day: a
- * deadline "by the end of the day" told as an instant (`2026-11-16T23:59:59.999-05:00`).
- * Only where the context gives the zone, as `start_of`.
- */
-export declare const end_of: (zone: time_zone) => (the_day: day) => date_time
-
-/**
- * An instant told in a zone: the same moment, in the offset the zone has at
- * it. The library tells the context's `now` in the context's zone at every
- * port, whatever offset the entry or the clock gave (SC-12).
- */
-export declare const in_zone: (zone: time_zone) => (instant: date_time) => date_time
-
-/**
- * The identity of the instance an operation opens, derived from the
- * operation (D75.8: the domain chooses a resource's id per operation): one
- * operation records one fact (DOM-11), so it opens one instance, and a retry
- * or a redelivery, the duplicate branch, gives back the same. It serves a
- * command whose caller cannot name the instance: a reaction, whose
- * translation reads only the fact (the repair a damaged return opens), and
- * a keeper's client alike (the repair of a drill found broken on the shelf).
- * A stable function of the library, in the stability corpus (LIB-10): the
- * operation's scope and id, in the identity's format. A string format only,
- * until a case asks for another. A, 16 Nov 2026 (4)
- */
-export declare const identity_of: <identity extends z.ZodType<string>>(
-  identity: identity,
-) => (operation: Operation) => z.output<identity>
-
-/**
- * Some members of a namespace, under their own names: the outbox entries of a
- * branch are its effects by name, `pick(effect, 'wait_until_the_due_date')`
- * for `{ wait_until_the_due_date: effect.wait_until_the_due_date }`. A name
- * the namespace does not export does not compile. Not a builder: it builds no
- * component, it names some.
- */
-export declare function pick<
-  const namespace extends object,
-  const names extends readonly (keyof namespace & string)[],
->(namespace: namespace, ...names: names): { readonly [name in names[number]]: namespace[name] }
-
-/**
- * A transition composed on each element of a list (SC-54; A, 18 Nov 2026
- * (6)): `composes({ its_lines_are_loaded: each(add_a_tool_from_a_line) })`,
- * the creator giving a list of inputs under the same name, one per element,
- * in the order of the list. Not a builder: it builds no component, it says
- * that the transition goes over a list.
- *
- * Paolo gives the shed twelve tools on a short sheet, and Luca loads it in
- * one go: one fact, the branch's own part, then one part per line, the
- * branch each line applies (D113.1-2), the tool added or the line left
- * (D95). Each element applies its own branch, the first that holds, with no
- * combination between the elements' branches (D113.1), every element
- * reading the state as it was before the command: so a list names each
- * instance once, which its schema checks (D113, the parts of a list of ids
- * without repeats). The branch applies when its condition holds and a
- * branch of the transition holds on every element: all or nothing (D113.1,
- * D97, the corollary on known ids).
- */
-export declare function each<const transition extends Commands[string]>(
-  transition: transition,
-): Each<transition>
-
-/**
- * The transitions a branch composes, by name, as its outbox entries are by
- * name (`pick`): `composes({ the_reservation_is_taken_up:
- * take_up_a_reservation })`, the creator giving each its input under the same
- * name (A, 17 Nov 2026, SC-10). Not a builder: it builds no component, it
- * names the transitions a branch applies.
- *
- * Gianni takes the drill he booked for Thursday: the branch lends it and
- * composes the taking up of his reservation, one fact in two parts, the
- * branch's own then one per transition, in the order written. The branch
- * applies when its condition and a branch of each transition hold, the
- * first in their order: the conditions of a transition are part of the
- * branch, as in the choice of a step (D112.2); a rejection names the failed
- * predicates of both. The instance comes from the input, never from a read:
- * a creator reads no state, and whoever invokes has read it (Gianni's phone
- * names his reservation, which the transition's condition checks).
- */
-export declare function composes<const transitions extends Transitions>(
-  transitions: transitions,
-): Composition<transitions>
-
-/**
- * A field of a command's input the caller gives later, not known at the
- * read (D51.3): Marta scans, at the desk, the tool she brings back. Explicit,
- * so that a field forgotten does not become not known unannounced. The
- * library carries it through the creators to the leaves, which are not known
- * where it reaches them; a creator binds and does not read it (a choice on
- * the input is a branch's, DOM-5): one that reads it leaves every leaf of
- * the command not known, a limit that reads it its own value (D51.4). [Q, C,
- * 18 Nov 2026 (2)]
- */
-export declare const given_by_the_caller: GivenByTheCaller
-
-/**
- * The builders bound to the context of a point of the tree, for its
- * `_scope.ts`. A folder with a node has two points: the point above, whose
- * builder of the node the generator writes in `_scope_node.ts`, and the
- * context the node gives, in `_scope.ts`, from which the scope of the leaves
- * takes its builders (`_scope_usecase.ts`); so that no import goes round.
- * Below a node of a business tree the point carries what the nodes above it
- * add to the commands (`accumulated`, `<node>_accumulated` in `_node.ts`,
- * SC-31), which its use cases take.
- */
-export declare function builders_at<
-  context extends RootContext,
-  closes = never,
-  accumulated extends Accumulated<unknown, Component> = NothingAccumulated,
->(): Builders<context, closes, accumulated>
 
 // Part 4.1, a command on the oracle.
 

@@ -5,7 +5,9 @@ import type { OutcomesOf, SchemaOf } from './command.ts'
 import type { Queries, QueryEntryOf, QueryInput, QueryParts } from './query.ts'
 import type { InvalidRequest, Refused, SnapshotEvent, VersionNotSupported } from './base_event.ts'
 import type { Applicability, Partly } from './applicability.ts'
-import type { $UseCase, ReadUseCase } from './use_case.ts'
+import { $UseCase } from './use_case.ts'
+import type { FactsByName, ReadUseCase } from './use_case.ts'
+import { mark } from './kind.ts'
 import type { CommandOfUseCase, EventOf, Events, LeavesOfUseCase } from './use_case_over.ts'
 import type { AnyCommandLeaf } from './command_leaf.ts'
 
@@ -32,9 +34,9 @@ export interface LeafStream {
 
 /** The facts a read use case names, by name. */
 type FactsOfUseCase<use_case> = use_case extends {
-  [$UseCase]: { facts: infer facts extends Readonly<Record<string, Component>> }
+  [$UseCase]: { facts: readonly (infer facts extends Component)[] }
 }
-  ? facts
+  ? FactsByName<facts>
   : never
 
 /**
@@ -90,7 +92,9 @@ type StreamEvents<closes> = Events &
  * `<use case>_input`, DOM-25), the schema of its own entries, and how it
  * streams, if it does (`stream`: the field that names an entry and the
  * events of its own), and the command leaves it lists as actions, by name
- * (`actions`, SC-33).
+ * (`actions`, SC-33). How it closes and streams are the types' alone; at
+ * runtime it holds its declaration whole, for the library to run
+ * (`declared`).
  */
 export interface ReadUseCaseOver<
   use_case extends ReadUseCase<Queries[string]>,
@@ -104,9 +108,10 @@ export interface ReadUseCaseOver<
   readonly [$UseCase]: {
     readonly use_case: use_case
     readonly entry: entry
-    readonly closes: closes
-    readonly stream: stream
-    readonly actions: actions
+    readonly declared: object
+    readonly closes?: closes
+    readonly stream?: stream
+    readonly actions?: actions
   }
 }
 
@@ -120,7 +125,7 @@ type CommandLeafInput<leaf> = leaf extends { readonly input: infer input }
 
 /** The applicability a command leaf gives on an entry: its business command's, with its own limits. */
 export type ApplicabilityOfLeaf<leaf> = leaf extends {
-  [$UseCase]: { use_case: infer use_case; limits: infer limits extends string }
+  [$UseCase]: { use_case: infer use_case; events: unknown; limits?: infer limits extends string }
 }
   ? Applicability<OutcomesOf<CommandOfUseCase<use_case>>, LeavesOfUseCase<use_case>, limits>
   : never
@@ -177,7 +182,10 @@ export type FieldsHolding<entry extends z.ZodObject, identity> = {
 
 /** The input of the query a read use case reads, as its creator gives it. */
 type QueryInputOfUseCase<use_case> =
-  QueryParts<QueryOfUseCase<use_case>> extends { input: infer input extends z.ZodType }
+  QueryParts<QueryOfUseCase<use_case>> extends {
+    fields: unknown
+    input?: infer input extends z.ZodType
+  }
     ? z.input<input>
     : never
 
@@ -346,3 +354,23 @@ type NamedFactEvent<entry, identity, events extends Events> = [events] extends [
         readonly payload: z.output<events[name]>
       }
     }[keyof events & string]
+
+// The builder's body (part 3.2): a leaf is its input as declared, the use
+// case it invokes, its entry, the actions it lists if it lists some, and its
+// declaration whole.
+
+export const read_use_case_over_builder =
+  <context, closes>(): ReadUseCaseOverBuilder<context, closes> =>
+  (leaf) =>
+    Object.assign(
+      {
+        input: leaf.input,
+        [$UseCase]: {
+          use_case: leaf.use_case,
+          entry: leaf.entry,
+          declared: leaf,
+          ...(leaf.actions === undefined ? {} : { actions: leaf.actions }),
+        },
+      },
+      mark({ kind: 'usecase' }),
+    )

@@ -1,5 +1,6 @@
 import type * as z from 'zod'
 import type { BrandOf, IsUnion } from './types.ts'
+import { mark } from './kind.ts'
 import type {
   $Calculation,
   CalculationPath,
@@ -196,7 +197,9 @@ export const $Query: unique symbol = Symbol('Query')
 
 /**
  * A query: its creator, its input as declared (`input`), from which the
- * generator writes `<query>_input` (DOM-25), and its parts for the library.
+ * generator writes `<query>_input` (DOM-25), and its parts for the library:
+ * its shape and its calculations, if it has some; the schema of its input
+ * for the types alone, as a command's.
  */
 export type Query<
   input extends QueryInput<z.ZodType>,
@@ -207,7 +210,7 @@ export type Query<
   context,
 > = QueryCreator<SchemaOf<input>, selection, calculations, context> & {
   readonly input: input
-  [$Query]: { input: SchemaOf<input>; calculations: calculations } & QueryShape<
+  [$Query]: { input?: SchemaOf<input>; calculations?: calculations } & QueryShape<
     fields,
     identity,
     selection,
@@ -248,7 +251,7 @@ export type Queries = Readonly<
   Record<
     string,
     {
-      readonly [$Query]: { input: z.ZodType; calculations: Calculations } & QueryShape<
+      readonly [$Query]: { input?: z.ZodType; calculations?: Calculations } & QueryShape<
         z.ZodObject,
         string,
         Condition
@@ -267,19 +270,44 @@ export type FieldsOf<query> =
 export type QueryEntryOf<query> =
   QueryParts<query> extends {
     fields: infer fields extends z.ZodObject
-    calculations: infer calculations extends Calculations
+    calculations?: infer calculations extends Calculations
   }
     ? Entry<fields, calculations>
     : never
 
 /** Every calculation a set of queries gives. */
 export type CalculationsOfQueries<queries extends Queries> = {
-  [name in keyof queries]: QueryParts<queries[name]>['calculations'][keyof QueryParts<
-    queries[name]
-  >['calculations']]
+  [name in keyof queries]: CalculationsOfQuery<queries[name]>
 }[keyof queries]
+
+/** The calculations a query gives, none if it gives none. */
+type CalculationsOfQuery<query> =
+  QueryParts<query> extends { calculations?: infer calculations extends Calculations }
+    ? calculations[keyof calculations]
+    : never
 
 /** Every selection predicate the selections of a set of queries use. */
 export type PredicatesOfQueries<queries extends Queries> = Leaves<
   QueryParts<queries[keyof queries]>['selection']
 >
+
+// The builder's body (part 3.2): a query is its creator, with its input as
+// declared and its parts.
+
+export const query_builder =
+  <context>(): QueryBuilder<context> =>
+  (query) =>
+    Object.assign(
+      (context: context) => query.creator(context),
+      {
+        input: query.input,
+        [$Query]: {
+          fields: query.fields,
+          identity: query.identity,
+          selection: query.selection,
+          order: query.order,
+          ...(query.calculations === undefined ? {} : { calculations: query.calculations }),
+        },
+      },
+      mark({ kind: 'query' }),
+    )

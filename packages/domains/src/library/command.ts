@@ -3,6 +3,7 @@ import type { date_time } from './format.ts'
 import type { OperationContext } from './context.ts'
 import type { Component, Path, PathOf, Strays } from './component.ts'
 import type { Condition, ConditionInput, Leaves } from './condition.ts'
+import { mark } from './kind.ts'
 
 // Commands (DOM-5, DOM-6, DOM-19): a command is data, an ordered record of
 // branches, each a condition, the fact it records, the effects it queues and
@@ -163,7 +164,9 @@ export const $Command: unique symbol = Symbol('Command')
 
 /**
  * A command: its creator, its input as declared (`input`), from which the
- * generator writes `<command>_input` (DOM-25), and its parts for the library.
+ * generator writes `<command>_input` (DOM-25), and its parts for the library:
+ * its branches, and the schema of its input for the types alone (a function
+ * of the context has none until the library builds it, DOM-21).
  */
 export type Command<
   input extends CommandInput<z.ZodType>,
@@ -172,7 +175,7 @@ export type Command<
 > = CommandCreator<SchemaOf<input>, outcomes, context> & {
   readonly input: input
   [$Command]: {
-    input: SchemaOf<input>
+    input?: SchemaOf<input>
     outcomes: outcomes
   }
 }
@@ -215,7 +218,7 @@ export type CommandBuilder<context> = <
 
 /** The input schema of a command. */
 export type InputOf<command> = command extends {
-  [$Command]: { input: infer input extends z.ZodType }
+  [$Command]: { input?: infer input extends z.ZodType }
 }
   ? input
   : never
@@ -254,14 +257,113 @@ export type TransitionsOf<outcomes extends Outcomes> = TransitionsOfOutcome<
 /** Every effect a command can queue. */
 export type EffectsOf<outcomes extends Outcomes> = EffectsOfOutcome<outcomes[keyof outcomes]>
 
-/** The commands of a domain, by name. */
+/**
+ * The commands of a domain, by name; a step's branches are the types' alone
+ * (its parts are the library's, `$Step`).
+ */
 export type Commands = Readonly<
-  Record<string, { readonly [$Command]: { input: z.ZodType; outcomes: Outcomes } }>
+  Record<string, { readonly [$Command]: { input?: z.ZodType; outcomes?: Outcomes } }>
 >
 
 /** The outcomes of a command. */
-export type OutcomesOf<command> = command extends { [$Command]: { outcomes: infer outcomes } }
+export type OutcomesOf<command> = command extends { [$Command]: { outcomes?: infer outcomes } }
   ? outcomes extends Outcomes
     ? outcomes
     : never
   : never
+
+// The builders' bodies (part 3.2): a command is its creator, with its input as
+// declared and its branches; the context is the types', the same function at
+// every point.
+
+export const command_builder =
+  <context>(): CommandBuilder<context> =>
+  (command) =>
+    Object.assign(
+      (context: context & OperationContext) => command.creator(context),
+      { input: command.input, [$Command]: { outcomes: command.outcomes } },
+      mark({ kind: 'command' }),
+    )
+
+/**
+ * Some members of a namespace, under their own names: the outbox entries of a
+ * branch are its effects by name, `pick(effect, 'wait_until_the_due_date')`
+ * for `{ wait_until_the_due_date: effect.wait_until_the_due_date }`. A name
+ * the namespace does not export does not compile. Not a builder: it builds no
+ * component, it names some.
+ */
+export const pick = <
+  const namespace extends object,
+  const names extends readonly (keyof namespace & string)[],
+>(
+  namespace: namespace,
+  ...names: names
+): Picked<namespace, names> => {
+  const picked: Readonly<Record<string, unknown>> = Object.fromEntries(
+    names.map((name) => [name, namespace[name]]),
+  )
+  if (picks(namespace, names)(picked)) return picked
+  throw new Error(`pick: the namespace does not export ${names.join(', ')}`)
+}
+
+/** Some members of a namespace, under their own names. */
+export type Picked<namespace, names extends readonly (keyof namespace)[]> = {
+  readonly [name in names[number]]: namespace[name]
+}
+
+/**
+ * Whether an object holds the members of a namespace under their names, each
+ * the namespace's own: checked member by member, by identity.
+ */
+const picks =
+  <namespace extends object, names extends readonly (keyof namespace & string)[]>(
+    namespace: namespace,
+    names: names,
+  ) =>
+  (
+    picked: Readonly<Record<string, unknown>>,
+  ): picked is Readonly<Record<string, unknown>> & Picked<namespace, names> =>
+    names.every((name) => Object.hasOwn(picked, name) && picked[name] === namespace[name])
+
+/**
+ * The transitions a branch composes, by name, as its outbox entries are by
+ * name (`pick`): `composes({ the_reservation_is_taken_up:
+ * take_up_a_reservation })`, the creator giving each its input under the same
+ * name (A, 17 Nov 2026, SC-10). Not a builder: it builds no component, it
+ * names the transitions a branch applies.
+ *
+ * Gianni takes the drill he booked for Thursday: the branch lends it and
+ * composes the taking up of his reservation, one fact in two parts, the
+ * branch's own then one per transition, in the order written. The branch
+ * applies when its condition and a branch of each transition hold, the
+ * first in their order: the conditions of a transition are part of the
+ * branch, as in the choice of a step (D112.2); a rejection names the failed
+ * predicates of both. The instance comes from the input, never from a read:
+ * a creator reads no state, and whoever invokes has read it (Gianni's phone
+ * names his reservation, which the transition's condition checks).
+ */
+export const composes = <const transitions extends Transitions>(
+  transitions: transitions,
+): Composition<transitions> => ({ [$Composition]: transitions })
+
+/**
+ * A transition composed on each element of a list (SC-54; A, 18 Nov 2026
+ * (6)): `composes({ its_lines_are_loaded: each(add_a_tool_from_a_line) })`,
+ * the creator giving a list of inputs under the same name, one per element,
+ * in the order of the list. Not a builder: it builds no component, it says
+ * that the transition goes over a list.
+ *
+ * Paolo gives the shed twelve tools on a short sheet, and Luca loads it in
+ * one go: one fact, the branch's own part, then one part per line, the
+ * branch each line applies (D113.1-2), the tool added or the line left
+ * (D95). Each element applies its own branch, the first that holds, with no
+ * combination between the elements' branches (D113.1), every element
+ * reading the state as it was before the command: so a list names each
+ * instance once, which its schema checks (D113, the parts of a list of ids
+ * without repeats). The branch applies when its condition holds and a
+ * branch of the transition holds on every element: all or nothing (D113.1,
+ * D97, the corollary on known ids).
+ */
+export const each = <const transition extends Commands[string]>(
+  transition: transition,
+): Each<transition> => ({ [$Each]: transition })

@@ -31,7 +31,7 @@ import type { Streamed } from './use_case_port.ts'
 
 /** The events of a command leaf: its own, how its path may close it, the base events. */
 export type CommandLeafEvent<leaf> = leaf extends {
-  [$UseCase]: { events: infer events extends Events; closes: infer closes; waits: infer waits }
+  [$UseCase]: { events: infer events extends Events; closes?: infer closes; waits?: infer waits }
 }
   ? EventOutOf<events> | closes | waits | InvalidRequest | VersionNotSupported | IdentityAlreadyUsed
   : never
@@ -57,7 +57,9 @@ export type CommandLeafPort<entry, majors, name extends string, leaf> = <
 ) => AsyncIterable<CommandLeafEvent<LeafAt<majors, name, version>>>
 
 /** What the entry gives a command leaf of its operation: the whole, or the scope alone if its input names it (SC-34). */
-type OperationGiven<leaf> = leaf extends { [$UseCase]: { operation: infer identity } }
+type OperationGiven<leaf> = leaf extends {
+  [$UseCase]: { events: unknown; operation?: infer identity }
+}
   ? [identity] extends [never]
     ? OperationContext
     : OperationScopeContext
@@ -70,7 +72,11 @@ type OperationGiven<leaf> = leaf extends { [$UseCase]: { operation: infer identi
  * `identity_already_used`).
  */
 export type ReadLeafEvent<leaf> = leaf extends {
-  [$UseCase]: { entry: infer entry extends z.ZodObject; closes: infer closes; stream: infer stream }
+  [$UseCase]: {
+    entry: infer entry extends z.ZodObject
+    closes?: infer closes
+    stream?: infer stream
+  }
 }
   ? | SnapshotEvent<z.output<entry>>
     | (stream extends {
@@ -176,7 +182,7 @@ export type LeafAt<majors, name extends string, version extends Semver> =
  * union of the majors.
  */
 export type LeafPort<entry, majors, name extends string, leaf> = leaf extends {
-  [$UseCase]: { entry: z.ZodObject; stream: infer stream }
+  [$UseCase]: { entry: z.ZodObject; stream?: infer stream }
 }
   ? ReadLeafPort<entry, majors, name, stream>
   : CommandLeafPort<entry, majors, name, leaf>

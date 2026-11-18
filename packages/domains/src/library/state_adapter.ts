@@ -5,7 +5,6 @@ import type { Component, PathOf } from './component.ts'
 import type { Condition, Leaves } from './condition.ts'
 import type { Envelope, Part, Resource, StoredEnvelope } from './envelope.ts'
 import type {
-  $Command,
   Commands,
   FactsOf,
   InputOf,
@@ -321,13 +320,13 @@ export interface ReadFailure {
  * the identity of the operation was already used (DOM-11).
  */
 export type StepOutcome<step> = step extends {
-  [$Command]: {
+  [$Step]: {
+    composes: infer composes
     outcomes: {
-      advances: readonly [never, infer advances extends Component]
-      completes: readonly [never, infer completes extends Component]
+      advances: infer advances extends Component
+      completes: infer completes extends Component
     }
   }
-  [$Step]: { composes: infer composes }
 }
   ? | {
         readonly outcome: 'applied'

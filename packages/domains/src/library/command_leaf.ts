@@ -4,7 +4,9 @@ import type { OperationContext } from './context.ts'
 import type { Component } from './component.ts'
 import type { CommandInput, Commands, OutcomesOf, SchemaOf } from './command.ts'
 import type { Refused } from './base_event.ts'
-import type { $UseCase, CommandUseCase, FactsByName } from './use_case.ts'
+import { $UseCase } from './use_case.ts'
+import type { CommandUseCase, FactsByName } from './use_case.ts'
+import { mark } from './kind.ts'
 import type {
   CommandOfUseCase,
   EventOf,
@@ -25,6 +27,8 @@ import type {
  * (`closes`), which its port adds to its events, the names of its own
  * limits, which its applicability gives (`limits`, SC-33), and the field of
  * its input that names its operation, if it names one (`operation`, SC-34).
+ * How it closes, waits and is refused are the types' alone; at runtime it
+ * holds its declaration whole, for the library to run (`declared`).
  */
 export interface CommandUseCaseOver<
   use_case extends CommandUseCase<Commands[string]>,
@@ -39,10 +43,11 @@ export interface CommandUseCaseOver<
   readonly [$UseCase]: {
     readonly use_case: use_case
     readonly events: events
-    readonly closes: closes
-    readonly waits: waits
-    readonly limits: limits
-    readonly operation: operation
+    readonly declared: object
+    readonly closes?: closes
+    readonly waits?: waits
+    readonly limits?: limits
+    readonly operation?: operation
   }
 }
 
@@ -180,3 +185,23 @@ export type AnyCommandLeaf = CommandUseCaseOver<
   string,
   string
 >
+
+// The builder's body (part 3.2): a leaf is its input as declared, the use
+// case it invokes, its events, the field that names its operation if it
+// names one, and its declaration whole.
+
+export const command_use_case_over_builder =
+  <context, closes>(): CommandUseCaseOverBuilder<context, closes> =>
+  (leaf) =>
+    Object.assign(
+      {
+        input: leaf.input,
+        [$UseCase]: {
+          use_case: leaf.use_case,
+          events: leaf.events,
+          declared: leaf,
+          ...(leaf.operation === undefined ? {} : { operation: leaf.operation.identity }),
+        },
+      },
+      mark({ kind: 'usecase' }),
+    )

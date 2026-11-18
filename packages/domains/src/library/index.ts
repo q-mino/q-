@@ -1,6 +1,17 @@
 // library: what every domain shares (see docs/architecture.md).
 // It never imports a domain and never names a q- concept.
-export { date_time, day, time_zone, day_of, semver, cursor, position } from './format.ts'
+export {
+  date_time,
+  day,
+  time_zone,
+  day_of,
+  start_of,
+  end_of,
+  in_zone,
+  semver,
+  cursor,
+  position,
+} from './format.ts'
 export type { Semver } from './format.ts'
 export { operation_id, correlation, fingerprint } from './context.ts'
 export type {
@@ -36,6 +47,7 @@ export type {
   Component,
   PathOf,
 } from './component.ts'
+export { $Composed } from './condition.ts'
 export type {
   Composed,
   Condition,
@@ -48,6 +60,7 @@ export type {
   OrBuilder,
   NotBuilder,
   SubjectOf,
+  Operands,
 } from './condition.ts'
 export { $Version, $Earlier, $Delegated } from './version.ts'
 export type { Version, VersionBuilder, Earlier, Delegated, DelegateBuilder } from './version.ts'
@@ -59,7 +72,7 @@ export type {
   PartFields,
   StoredEnvelope,
 } from './envelope.ts'
-export { $Composition, $Each, entry_id, $Command } from './command.ts'
+export { $Composition, $Each, entry_id, $Command, pick, composes, each } from './command.ts'
 export type {
   Entries,
   Each,
@@ -82,6 +95,7 @@ export type {
   EffectsOf,
   Commands,
   OutcomesOf,
+  Picked,
 } from './command.ts'
 export { $Query } from './query.ts'
 export type {
@@ -171,7 +185,7 @@ export type {
   IdentityAlreadyUsed,
   SnapshotEvent,
 } from './base_event.ts'
-export { $GivenByTheCaller } from './applicability.ts'
+export { $GivenByTheCaller, given_by_the_caller } from './applicability.ts'
 export type { Truth, GivenByTheCaller, Partly, Evaluated, Applicability } from './applicability.ts'
 export { $Node } from './node.ts'
 export type {
@@ -249,7 +263,11 @@ export type {
   EarlierCommandLeaf,
   EarlierReadLeaf,
 } from './earlier.ts'
-export type { Builders, ConstructKind, Sight } from './builders.ts'
+export { builders_at } from './builders.ts'
+export type { Builders, Sight } from './builders.ts'
+export { identity_of } from './stable.ts'
+export { kind_of } from './kind.ts'
+export type { ConstructKind, Built } from './kind.ts'
 export type {
   CommandUseCasePort,
   ReadEvent,

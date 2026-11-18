@@ -1,5 +1,6 @@
 import type * as z from 'zod'
 import type { BrandOf } from './types.ts'
+import { mark } from './kind.ts'
 
 // The builders of the components (DOM-25): an export built by a builder of the
 // library is a component, and its builder gives the kind of its construct,
@@ -7,8 +8,10 @@ import type { BrandOf } from './types.ts'
 // (DOM-21); the rest (the functions of `dsl`, helpers) the library ignores. The
 // generator imports the authored files, which are pure, and finds the
 // components by their builder: the files are named and grouped as the author
-// likes. Each returns what it is given, for the generator to brand. None is
-// exported: the authored files reach them through `Builders`, from the scope
+// likes. Each returns a copy of the schema it is given (one object, one path:
+// an identity built over a value is not the value), with its parts and its
+// mark (`kind_of`), for the generator to brand. None is exported from the
+// library: the authored files reach them through `Builders`, from the scope
 // of their kind (`_scope_fact.ts`, `fact`).
 
 /**
@@ -35,21 +38,22 @@ export type FactBuilder = <
 >(fact: {
   readonly payload: payload
   readonly resources?: readonly [fields, ...fields[]]
-}) => [fields] extends [never] ? payload : Resourced<payload, fields>
+}) => Resourced<payload, fields>
 
 export const $Resources: unique symbol = Symbol('Resources')
 
 /**
- * A fact that declares its resources (D94.6, SC-55): its payload, which
- * carries the fields of its resources, for the library to read when it
- * writes them in the envelope.
+ * A fact, which may declare its resources (D94.6, SC-55): its payload, which
+ * carries the fields of its resources if it declares them, for the library to
+ * read when it writes them in the envelope; none, every identity of the
+ * payload (DOM-10).
  */
 export type Resourced<payload extends z.ZodObject, fields extends string> = payload &
   ResourcesOf<fields>
 
-/** The fields of a fact's declared resources (D94.6, SC-55), as its payload carries them. */
+/** The fields of a fact's declared resources (D94.6, SC-55), as its payload carries them: absent, none declared. */
 export interface ResourcesOf<fields extends string> {
-  readonly [$Resources]: readonly fields[]
+  readonly [$Resources]?: readonly fields[]
 }
 
 /** The fields of a payload that hold an identity (DOM-24), at any depth: those that may carry a resource. */
@@ -132,7 +136,7 @@ export type EffectBuilder = <
 >(effect: {
   readonly payload: payload
   readonly order?: order
-}) => [order] extends ['per_resource'] ? payload : Ordered<payload, order>
+}) => Ordered<payload, order>
 
 /**
  * The order a consumer keeps (D64.4, D67.3), an ADT: `per_resource`, the
@@ -144,13 +148,13 @@ export type DeliveryOrder = 'per_resource' | 'any'
 
 export const $Order: unique symbol = Symbol('Order')
 
-/** An effect that declares its order (D67.3, SC-56): its payload, which carries it, for the executor to read. */
+/** An effect, which may declare its order (D67.3, SC-56): its payload, which carries it if declared, for the executor to read. */
 export type Ordered<payload extends z.ZodObject, order extends DeliveryOrder> = payload &
   OrderOf<order>
 
-/** The order an effect declares (D67.3, SC-56), as its payload carries it. */
+/** The order an effect declares (D67.3, SC-56), as its payload carries it: absent, the order per resource. */
 export interface OrderOf<order extends DeliveryOrder> {
-  readonly [$Order]: order
+  readonly [$Order]?: order
 }
 
 /**
@@ -183,3 +187,38 @@ export type Strays<components, path extends string> = components extends unknown
     ? never
     : components
   : never
+
+// The builders' bodies (part 3.2): each copies the schema it is given, so that
+// the component is an object of its own, and marks it with its kind.
+
+export const id_builder: IdBuilder = (id) => Object.assign(id.format.clone(), mark({ kind: 'id' }))
+
+export const fact_builder: FactBuilder = (fact) =>
+  Object.assign(
+    fact.payload.clone(),
+    fact.resources === undefined ? {} : { [$Resources]: fact.resources },
+    mark({ kind: 'fact' }),
+  )
+
+export const predicate_builder: PredicateBuilder = (predicate) =>
+  Object.assign(predicate.parameters.clone(), mark({ kind: 'predicate' }))
+
+export const selection_builder: SelectionBuilder = (selection) =>
+  Object.assign(
+    selection.parameters.clone(),
+    mark({ kind: 'selection', subject: selection.subject }),
+  )
+
+export const calculation_builder: CalculationBuilder = (calculation) =>
+  Object.assign(
+    calculation.parameters.clone(),
+    { [$Calculation]: { value: calculation.value } },
+    mark({ kind: 'calculation', subject: calculation.subject }),
+  )
+
+export const effect_builder: EffectBuilder = (effect) =>
+  Object.assign(
+    effect.payload.clone(),
+    effect.order === undefined ? {} : { [$Order]: effect.order },
+    mark({ kind: 'effect' }),
+  )
