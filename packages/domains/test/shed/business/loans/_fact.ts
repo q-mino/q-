@@ -18,11 +18,11 @@ export type a_tool_has_been_lent = z.output<typeof a_tool_has_been_lent>
 /**
  * Nothing to do (DOM-6): the member's ongoing loan of the tool stands.
  *
- * @see {@link fact.the_member_already_has_the_tool}
+ * @see {@link fact.a_tool_has_been_lent_again}
  */
-export const the_member_already_has_the_tool =
-  fact.the_member_already_has_the_tool.brand<'business/loans/fact/the_member_already_has_the_tool'>()
-export type the_member_already_has_the_tool = z.output<typeof the_member_already_has_the_tool>
+export const a_tool_has_been_lent_again =
+  fact.a_tool_has_been_lent_again.brand<'business/loans/fact/a_tool_has_been_lent_again'>()
+export type a_tool_has_been_lent_again = z.output<typeof a_tool_has_been_lent_again>
 
 /**
  * Carries the change of state (DOM-5, V9): the whole new reservation.
@@ -36,11 +36,11 @@ export type a_tool_has_been_booked = z.output<typeof a_tool_has_been_booked>
 /**
  * Nothing to do (DOM-6): the member's reservation of the tool for the day stands.
  *
- * @see {@link fact.the_member_already_booked_the_tool}
+ * @see {@link fact.a_tool_has_been_booked_again}
  */
-export const the_member_already_booked_the_tool =
-  fact.the_member_already_booked_the_tool.brand<'business/loans/fact/the_member_already_booked_the_tool'>()
-export type the_member_already_booked_the_tool = z.output<typeof the_member_already_booked_the_tool>
+export const a_tool_has_been_booked_again =
+  fact.a_tool_has_been_booked_again.brand<'business/loans/fact/a_tool_has_been_booked_again'>()
+export type a_tool_has_been_booked_again = z.output<typeof a_tool_has_been_booked_again>
 
 /**
  * A partial value: the loan's id, the tool it lent and its new stage,
@@ -57,11 +57,11 @@ export type a_tool_has_been_returned = z.output<typeof a_tool_has_been_returned>
 /**
  * Nothing to do (DOM-6): the first return stands.
  *
- * @see {@link fact.the_loan_was_already_returned}
+ * @see {@link fact.a_tool_has_been_returned_again}
  */
-export const the_loan_was_already_returned =
-  fact.the_loan_was_already_returned.brand<'business/loans/fact/the_loan_was_already_returned'>()
-export type the_loan_was_already_returned = z.output<typeof the_loan_was_already_returned>
+export const a_tool_has_been_returned_again =
+  fact.a_tool_has_been_returned_again.brand<'business/loans/fact/a_tool_has_been_returned_again'>()
+export type a_tool_has_been_returned_again = z.output<typeof a_tool_has_been_returned_again>
 
 /**
  * The desk wrote the wrong tool on the loan's card, and corrects it (SC-13):
@@ -100,12 +100,12 @@ export type the_due_day_was_moved_before_the_reminder = z.output<
 /**
  * Nothing to do (DOM-6): the card already names the tool the member has.
  *
- * @see {@link fact.the_tool_of_the_loan_was_already_corrected}
+ * @see {@link fact.the_tool_of_a_loan_has_been_corrected_again}
  */
-export const the_tool_of_the_loan_was_already_corrected =
-  fact.the_tool_of_the_loan_was_already_corrected.brand<'business/loans/fact/the_tool_of_the_loan_was_already_corrected'>()
-export type the_tool_of_the_loan_was_already_corrected = z.output<
-  typeof the_tool_of_the_loan_was_already_corrected
+export const the_tool_of_a_loan_has_been_corrected_again =
+  fact.the_tool_of_a_loan_has_been_corrected_again.brand<'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again'>()
+export type the_tool_of_a_loan_has_been_corrected_again = z.output<
+  typeof the_tool_of_a_loan_has_been_corrected_again
 >
 
 /**
@@ -185,11 +185,11 @@ export type the_loan_was_returned_before_it_became_overdue = z.output<
  * itself: Marta's drill, due at 10:12 on 16 November, is on time until that
  * day ends (A, 17 Nov 2026).
  *
- * @see {@link fact.the_due_day_was_not_over}
+ * @see {@link fact.the_overdue_check_has_been_put_off}
  */
-export const the_due_day_was_not_over =
-  fact.the_due_day_was_not_over.brand<'business/loans/fact/the_due_day_was_not_over'>()
-export type the_due_day_was_not_over = z.output<typeof the_due_day_was_not_over>
+export const the_overdue_check_has_been_put_off =
+  fact.the_overdue_check_has_been_put_off.brand<'business/loans/fact/the_overdue_check_has_been_put_off'>()
+export type the_overdue_check_has_been_put_off = z.output<typeof the_overdue_check_has_been_put_off>
 
 /**
  * The desk has opened its work sheet for the tool's reservations (D97,
@@ -230,12 +230,12 @@ export type a_reservation_has_been_taken_up = z.output<typeof a_reservation_has_
 /**
  * Nothing to do (DOM-6): the member already took the tool they booked; the loan stands.
  *
- * @see {@link fact.the_reservation_was_already_taken_up}
+ * @see {@link fact.a_reservation_has_been_taken_up_again}
  */
-export const the_reservation_was_already_taken_up =
-  fact.the_reservation_was_already_taken_up.brand<'business/loans/fact/the_reservation_was_already_taken_up'>()
-export type the_reservation_was_already_taken_up = z.output<
-  typeof the_reservation_was_already_taken_up
+export const a_reservation_has_been_taken_up_again =
+  fact.a_reservation_has_been_taken_up_again.brand<'business/loans/fact/a_reservation_has_been_taken_up_again'>()
+export type a_reservation_has_been_taken_up_again = z.output<
+  typeof a_reservation_has_been_taken_up_again
 >
 
 /**
@@ -253,12 +253,12 @@ export type the_cancellation_has_advanced = z.output<typeof the_cancellation_has
 /**
  * No reservation of the tool is left ahead: the desk closes its work sheet (D112.2).
  *
- * @see {@link fact.the_cancellation_of_the_reservations_of_a_tool_is_complete}
+ * @see {@link fact.the_cancellation_of_the_reservations_of_a_tool_has_ended}
  */
-export const the_cancellation_of_the_reservations_of_a_tool_is_complete =
-  fact.the_cancellation_of_the_reservations_of_a_tool_is_complete.brand<'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete'>()
-export type the_cancellation_of_the_reservations_of_a_tool_is_complete = z.output<
-  typeof the_cancellation_of_the_reservations_of_a_tool_is_complete
+export const the_cancellation_of_the_reservations_of_a_tool_has_ended =
+  fact.the_cancellation_of_the_reservations_of_a_tool_has_ended.brand<'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended'>()
+export type the_cancellation_of_the_reservations_of_a_tool_has_ended = z.output<
+  typeof the_cancellation_of_the_reservations_of_a_tool_has_ended
 >
 
 /**
@@ -304,13 +304,11 @@ export type the_repair_notice_round_has_advanced = z.output<
 /**
  * No reservation of the tool is left ahead: the desk closes its round of notices (D112.2).
  *
- * @see {@link fact.the_repair_notice_round_is_complete}
+ * @see {@link fact.the_repair_notice_round_has_ended}
  */
-export const the_repair_notice_round_is_complete =
-  fact.the_repair_notice_round_is_complete.brand<'business/loans/fact/the_repair_notice_round_is_complete'>()
-export type the_repair_notice_round_is_complete = z.output<
-  typeof the_repair_notice_round_is_complete
->
+export const the_repair_notice_round_has_ended =
+  fact.the_repair_notice_round_has_ended.brand<'business/loans/fact/the_repair_notice_round_has_ended'>()
+export type the_repair_notice_round_has_ended = z.output<typeof the_repair_notice_round_has_ended>
 
 /**
  * The desk will send a member the week's summary every Monday.
@@ -324,13 +322,11 @@ export type a_weekly_summary_has_begun = z.output<typeof a_weekly_summary_has_be
 /**
  * The member asked again for the week's summary they already get.
  *
- * @see {@link fact.the_member_already_had_the_weekly_summary}
+ * @see {@link fact.a_weekly_summary_has_begun_again}
  */
-export const the_member_already_had_the_weekly_summary =
-  fact.the_member_already_had_the_weekly_summary.brand<'business/loans/fact/the_member_already_had_the_weekly_summary'>()
-export type the_member_already_had_the_weekly_summary = z.output<
-  typeof the_member_already_had_the_weekly_summary
->
+export const a_weekly_summary_has_begun_again =
+  fact.a_weekly_summary_has_begun_again.brand<'business/loans/fact/a_weekly_summary_has_begun_again'>()
+export type a_weekly_summary_has_begun_again = z.output<typeof a_weekly_summary_has_begun_again>
 
 /**
  * On a Monday the desk sent a member the week's summary.
@@ -344,10 +340,10 @@ export type the_weeks_summary_has_been_sent = z.output<typeof the_weeks_summary_
 /**
  * The Monday's wait came after its week was over.
  *
- * @see {@link fact.the_week_was_over_before_its_summary}
+ * @see {@link fact.a_past_weeks_summary_has_been_skipped}
  */
-export const the_week_was_over_before_its_summary =
-  fact.the_week_was_over_before_its_summary.brand<'business/loans/fact/the_week_was_over_before_its_summary'>()
-export type the_week_was_over_before_its_summary = z.output<
-  typeof the_week_was_over_before_its_summary
+export const a_past_weeks_summary_has_been_skipped =
+  fact.a_past_weeks_summary_has_been_skipped.brand<'business/loans/fact/a_past_weeks_summary_has_been_skipped'>()
+export type a_past_weeks_summary_has_been_skipped = z.output<
+  typeof a_past_weeks_summary_has_been_skipped
 >

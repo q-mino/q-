@@ -435,20 +435,20 @@ export const loans_writes: wlib.FactWrites<
   'business/loans/fact/a_tool_has_been_lent':
     ({ new_loan }) =>
     (state) => ({ ...state, loans: new Map(state.loans).set(new_loan.id, new_loan) }),
-  'business/loans/fact/the_member_already_has_the_tool': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_lent_again': () => (state) => state,
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan }) =>
     with_the_progress(returned_loan),
-  'business/loans/fact/the_loan_was_already_returned': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_returned_again': () => (state) => state,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => (state) => state,
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => (state) => state,
   'business/loans/fact/the_due_date_came_before_the_reminder': () => (state) => state,
   'business/loans/fact/a_loan_has_become_overdue': ({ overdue_loan }) =>
     with_the_progress(overdue_loan),
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => (state) => state,
-  'business/loans/fact/the_due_day_was_not_over': () => (state) => state,
+  'business/loans/fact/the_overdue_check_has_been_put_off': () => (state) => state,
   'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan }) =>
     with_the_tool(corrected_loan),
-  'business/loans/fact/the_tool_of_the_loan_was_already_corrected': () => (state) => state,
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again': () => (state) => state,
   'business/loans/fact/a_loan_has_been_extended': ({ extended_loan }) =>
     with_the_due_day(extended_loan),
   'business/loans/fact/the_due_day_was_moved_before_the_reminder': () => (state) => state,
@@ -459,7 +459,7 @@ export const loans_writes: wlib.FactWrites<
       ...state,
       reservations: new Map(state.reservations).set(new_reservation.id, new_reservation),
     }),
-  'business/loans/fact/the_member_already_booked_the_tool': () => (state) => state,
+  'business/loans/fact/a_tool_has_been_booked_again': () => (state) => state,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     ({ new_cancellation }) =>
     (state) => ({
@@ -468,14 +468,14 @@ export const loans_writes: wlib.FactWrites<
     }),
   'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation }) =>
     with_the_reservation_progress(taken_up_reservation),
-  'business/loans/fact/the_reservation_was_already_taken_up': () => (state) => state,
+  'business/loans/fact/a_reservation_has_been_taken_up_again': () => (state) => state,
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation }) =>
     with_the_reservation_progress(cancelled_reservation),
   'business/loans/fact/the_cancellation_has_advanced':
     ({ tool_id, cursor }) =>
     (state) =>
       with_the_sheet_progress({ tool_id, progress: { stage: 'cancelling', cursor } })(state),
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended': ({
     completed_cancellation,
   }) => with_the_sheet_progress(completed_cancellation),
   'business/loans/fact/a_repair_notice_round_has_begun':
@@ -489,7 +489,7 @@ export const loans_writes: wlib.FactWrites<
     ({ repair_id, cursor }) =>
     (state) =>
       with_the_round_progress({ repair_id, progress: { stage: 'notifying', cursor } })(state),
-  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round }) =>
+  'business/loans/fact/the_repair_notice_round_has_ended': ({ completed_round }) =>
     with_the_round_progress(completed_round),
   'business/loans/fact/a_weekly_summary_has_begun':
     ({ new_summary }) =>
@@ -497,8 +497,8 @@ export const loans_writes: wlib.FactWrites<
       ...state,
       weekly_summaries: new Map(state.weekly_summaries).set(new_summary.member_id, new_summary),
     }),
-  'business/loans/fact/the_member_already_had_the_weekly_summary': () => (state) => state,
+  'business/loans/fact/a_weekly_summary_has_begun_again': () => (state) => state,
   'business/loans/fact/the_weeks_summary_has_been_sent': (sent) => with_the_next_monday(sent),
-  'business/loans/fact/the_week_was_over_before_its_summary': (missed) =>
+  'business/loans/fact/a_past_weeks_summary_has_been_skipped': (missed) =>
     with_the_next_monday(missed),
 }

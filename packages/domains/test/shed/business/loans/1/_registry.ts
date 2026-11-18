@@ -12,11 +12,11 @@ import * as fact from './_fact.ts'
 
 export const registry = {
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
-  'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
+  'business/loans/fact/a_tool_has_been_lent_again': fact.a_tool_has_been_lent_again,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
-  'business/loans/fact/the_member_already_booked_the_tool': fact.the_member_already_booked_the_tool,
+  'business/loans/fact/a_tool_has_been_booked_again': fact.a_tool_has_been_booked_again,
   'business/loans/fact/a_tool_has_been_returned': fact.a_tool_has_been_returned,
-  'business/loans/fact/the_loan_was_already_returned': fact.the_loan_was_already_returned,
+  'business/loans/fact/a_tool_has_been_returned_again': fact.a_tool_has_been_returned_again,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date':
     fact.the_member_has_been_reminded_of_the_due_date,
   'business/loans/fact/the_loan_was_returned_before_the_reminder':
@@ -30,15 +30,14 @@ export const registry = {
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
   'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete':
-    fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended':
+    fact.the_cancellation_of_the_reservations_of_a_tool_has_ended,
   'business/loans/fact/a_repair_notice_round_has_begun': fact.a_repair_notice_round_has_begun,
   'business/loans/fact/a_member_has_been_notified_of_the_repair':
     fact.a_member_has_been_notified_of_the_repair,
   'business/loans/fact/the_repair_notice_round_has_advanced':
     fact.the_repair_notice_round_has_advanced,
-  'business/loans/fact/the_repair_notice_round_is_complete':
-    fact.the_repair_notice_round_is_complete,
+  'business/loans/fact/the_repair_notice_round_has_ended': fact.the_repair_notice_round_has_ended,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,

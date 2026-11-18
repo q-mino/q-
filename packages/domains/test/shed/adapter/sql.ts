@@ -262,11 +262,11 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   'business/tools/fact/a_tool_has_been_retired': ({ retired_tool: t }) => [
     sql`update tools set status = ${t.status}, repair_id = null, repair_since = null, retirement_date = ${t.retirement.date}, retirement_reason = ${t.retirement.reason}, retirement_notes = ${t.retirement.notes ?? null} where id = ${t.id}`,
   ],
-  'business/tools/fact/the_tool_was_already_retired': () => [],
+  'business/tools/fact/a_tool_has_been_retired_again': () => [],
   'business/tools/fact/a_tool_has_been_sent_to_repair': ({ tool_under_repair: t }) => [
     sql`update tools set status = ${t.status}, repair_id = ${t.repair.id}, repair_since = ${t.repair.since} where id = ${t.id}`,
   ],
-  'business/tools/fact/the_tool_was_already_under_repair': () => [],
+  'business/tools/fact/a_tool_has_been_sent_to_repair_again': () => [],
   'business/tools/fact/the_tool_was_retired_before_the_repair': () => [],
   'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool: t }) => [
     sql`update tools set status = ${t.status}, repair_id = null, repair_since = null where id = ${t.id}`,
@@ -284,7 +284,7 @@ const tools_writes: wlib.FactWrites<wlib.FactsIn<typeof tools_fact>, readonly sq
   'business/tools/fact/the_loading_of_the_sheet_has_advanced': (s) => [
     sql`update loading_sheets set cursor = ${s.cursor} where id = ${s.sheet_id}`,
   ],
-  'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue': () => [],
+  'business/tools/fact/a_tool_has_been_added_again': () => [],
   'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet: s }) => [
     sql`update loading_sheets set stage = ${s.progress.stage}, cursor = null, end_date = ${s.progress.end_date} where id = ${s.id}`,
   ],
@@ -297,11 +297,11 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
     sql`insert into loans (id, tool_id, member_id, start_date, due_day, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_day}, ${l.progress.stage}, ${l.progress.term})`,
   ],
-  'business/loans/fact/the_member_already_has_the_tool': () => [],
+  'business/loans/fact/a_tool_has_been_lent_again': () => [],
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [
     sql`update loans set stage = ${l.progress.stage}, term = null, return_date = ${l.progress.return_date}, return_condition = ${l.progress.condition} where id = ${l.id}`,
   ],
-  'business/loans/fact/the_loan_was_already_returned': () => [],
+  'business/loans/fact/a_tool_has_been_returned_again': () => [],
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date': () => [],
   'business/loans/fact/the_loan_was_returned_before_the_reminder': () => [],
   'business/loans/fact/the_due_date_came_before_the_reminder': () => [],
@@ -309,11 +309,11 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
     sql`update loans set term = ${l.progress.term} where id = ${l.id}`,
   ],
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue': () => [],
-  'business/loans/fact/the_due_day_was_not_over': () => [],
+  'business/loans/fact/the_overdue_check_has_been_put_off': () => [],
   'business/loans/fact/a_tool_has_been_booked': ({ new_reservation: r }) => [
     sql`insert into reservations (id, tool_id, member_id, day, booking_date, stage) values (${r.id}, ${r.tool_id}, ${r.member_id}, ${r.day}, ${r.booking_date}, ${r.progress.stage})`,
   ],
-  'business/loans/fact/the_member_already_booked_the_tool': () => [],
+  'business/loans/fact/a_tool_has_been_booked_again': () => [],
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun': ({
     new_cancellation: c,
   }) => [
@@ -322,7 +322,7 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/the_tool_of_a_loan_has_been_corrected': ({ corrected_loan: l }) => [
     sql`update loans set tool_id = ${l.tool_id} where id = ${l.id}`,
   ],
-  'business/loans/fact/the_tool_of_the_loan_was_already_corrected': () => [],
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again': () => [],
   'business/loans/fact/a_loan_has_been_extended': ({ extended_loan: l }) => [
     sql`update loans set due_day = ${l.due_day} where id = ${l.id}`,
   ],
@@ -331,14 +331,14 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/a_reservation_has_been_taken_up': ({ taken_up_reservation: r }) => [
     sql`update reservations set stage = ${r.progress.stage}, loan_id = ${r.progress.loan_id} where id = ${r.id}`,
   ],
-  'business/loans/fact/the_reservation_was_already_taken_up': () => [],
+  'business/loans/fact/a_reservation_has_been_taken_up_again': () => [],
   'business/loans/fact/a_reservation_has_been_cancelled': ({ cancelled_reservation: r }) => [
     sql`update reservations set stage = ${r.progress.stage}, cancellation_date = ${r.progress.cancellation_date} where id = ${r.id}`,
   ],
   'business/loans/fact/the_cancellation_has_advanced': (c) => [
     sql`update cancellations set cursor = ${c.cursor} where tool_id = ${c.tool_id}`,
   ],
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete': ({
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended': ({
     completed_cancellation: c,
   }) => [
     sql`update cancellations set stage = ${c.progress.stage}, cursor = null, end_date = ${c.progress.end_date} where tool_id = ${c.tool_id}`,
@@ -350,17 +350,17 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   'business/loans/fact/the_repair_notice_round_has_advanced': (r) => [
     sql`update repair_notice_rounds set cursor = ${r.cursor} where repair_id = ${r.repair_id}`,
   ],
-  'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round: r }) => [
+  'business/loans/fact/the_repair_notice_round_has_ended': ({ completed_round: r }) => [
     sql`update repair_notice_rounds set stage = ${r.progress.stage}, cursor = null, end_date = ${r.progress.end_date} where repair_id = ${r.repair_id}`,
   ],
   'business/loans/fact/a_weekly_summary_has_begun': ({ new_summary: w }) => [
     sql`insert into weekly_summaries (member_id, next_monday) values (${w.member_id}, ${w.next_monday})`,
   ],
-  'business/loans/fact/the_member_already_had_the_weekly_summary': () => [],
+  'business/loans/fact/a_weekly_summary_has_begun_again': () => [],
   'business/loans/fact/the_weeks_summary_has_been_sent': (w) => [
     sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
   ],
-  'business/loans/fact/the_week_was_over_before_its_summary': (w) => [
+  'business/loans/fact/a_past_weeks_summary_has_been_skipped': (w) => [
     sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
   ],
 }

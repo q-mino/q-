@@ -12,20 +12,20 @@ export const a_tool_has_been_lent =
   fact.a_tool_has_been_lent.brand<'business/loans/fact/a_tool_has_been_lent@1'>()
 export type a_tool_has_been_lent = z.output<typeof a_tool_has_been_lent>
 
-/** @see {@link fact.the_member_already_has_the_tool} */
-export const the_member_already_has_the_tool = fact.the_member_already_has_the_tool
+/** @see {@link fact.a_tool_has_been_lent_again} */
+export const a_tool_has_been_lent_again = fact.a_tool_has_been_lent_again
 
 /** @see {@link fact.a_tool_has_been_booked} */
 export const a_tool_has_been_booked = fact.a_tool_has_been_booked
 
-/** @see {@link fact.the_member_already_booked_the_tool} */
-export const the_member_already_booked_the_tool = fact.the_member_already_booked_the_tool
+/** @see {@link fact.a_tool_has_been_booked_again} */
+export const a_tool_has_been_booked_again = fact.a_tool_has_been_booked_again
 
 /** @see {@link fact.a_tool_has_been_returned} */
 export const a_tool_has_been_returned = fact.a_tool_has_been_returned
 
-/** @see {@link fact.the_loan_was_already_returned} */
-export const the_loan_was_already_returned = fact.the_loan_was_already_returned
+/** @see {@link fact.a_tool_has_been_returned_again} */
+export const a_tool_has_been_returned_again = fact.a_tool_has_been_returned_again
 
 /** @see {@link fact.the_member_has_been_reminded_of_the_due_date} */
 export const the_member_has_been_reminded_of_the_due_date =
@@ -55,9 +55,9 @@ export const a_reservation_has_been_cancelled = fact.a_reservation_has_been_canc
 /** @see {@link fact.the_cancellation_has_advanced} */
 export const the_cancellation_has_advanced = fact.the_cancellation_has_advanced
 
-/** @see {@link fact.the_cancellation_of_the_reservations_of_a_tool_is_complete} */
-export const the_cancellation_of_the_reservations_of_a_tool_is_complete =
-  fact.the_cancellation_of_the_reservations_of_a_tool_is_complete
+/** @see {@link fact.the_cancellation_of_the_reservations_of_a_tool_has_ended} */
+export const the_cancellation_of_the_reservations_of_a_tool_has_ended =
+  fact.the_cancellation_of_the_reservations_of_a_tool_has_ended
 
 /** @see {@link fact.a_repair_notice_round_has_begun} */
 export const a_repair_notice_round_has_begun = fact.a_repair_notice_round_has_begun
@@ -69,5 +69,5 @@ export const a_member_has_been_notified_of_the_repair =
 /** @see {@link fact.the_repair_notice_round_has_advanced} */
 export const the_repair_notice_round_has_advanced = fact.the_repair_notice_round_has_advanced
 
-/** @see {@link fact.the_repair_notice_round_is_complete} */
-export const the_repair_notice_round_is_complete = fact.the_repair_notice_round_is_complete
+/** @see {@link fact.the_repair_notice_round_has_ended} */
+export const the_repair_notice_round_has_ended = fact.the_repair_notice_round_has_ended

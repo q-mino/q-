@@ -67,11 +67,11 @@ export const registry = {
   'business/loans/value/completed_repair_notice_round': value.completed_repair_notice_round,
   'business/loans/value/weekly_summary': value.weekly_summary,
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
-  'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
+  'business/loans/fact/a_tool_has_been_lent_again': fact.a_tool_has_been_lent_again,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
-  'business/loans/fact/the_member_already_booked_the_tool': fact.the_member_already_booked_the_tool,
+  'business/loans/fact/a_tool_has_been_booked_again': fact.a_tool_has_been_booked_again,
   'business/loans/fact/a_tool_has_been_returned': fact.a_tool_has_been_returned,
-  'business/loans/fact/the_loan_was_already_returned': fact.the_loan_was_already_returned,
+  'business/loans/fact/a_tool_has_been_returned_again': fact.a_tool_has_been_returned_again,
   'business/loans/fact/the_member_has_been_reminded_of_the_due_date':
     fact.the_member_has_been_reminded_of_the_due_date,
   'business/loans/fact/the_loan_was_returned_before_the_reminder':
@@ -81,7 +81,7 @@ export const registry = {
   'business/loans/fact/a_loan_has_become_overdue': fact.a_loan_has_become_overdue,
   'business/loans/fact/the_loan_was_returned_before_it_became_overdue':
     fact.the_loan_was_returned_before_it_became_overdue,
-  'business/loans/fact/the_due_day_was_not_over': fact.the_due_day_was_not_over,
+  'business/loans/fact/the_overdue_check_has_been_put_off': fact.the_overdue_check_has_been_put_off,
   'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun':
     fact.the_cancellation_of_the_reservations_of_a_tool_has_begun,
   'business/loans/fact/a_reservation_has_been_cancelled': fact.a_reservation_has_been_cancelled,
@@ -91,28 +91,26 @@ export const registry = {
   'business/loans/fact/a_loan_has_been_extended': fact.a_loan_has_been_extended,
   'business/loans/fact/the_due_day_was_moved_before_the_reminder':
     fact.the_due_day_was_moved_before_the_reminder,
-  'business/loans/fact/the_tool_of_the_loan_was_already_corrected':
-    fact.the_tool_of_the_loan_was_already_corrected,
+  'business/loans/fact/the_tool_of_a_loan_has_been_corrected_again':
+    fact.the_tool_of_a_loan_has_been_corrected_again,
   'business/loans/fact/the_tool_was_corrected_before_the_reminder':
     fact.the_tool_was_corrected_before_the_reminder,
-  'business/loans/fact/the_reservation_was_already_taken_up':
-    fact.the_reservation_was_already_taken_up,
+  'business/loans/fact/a_reservation_has_been_taken_up_again':
+    fact.a_reservation_has_been_taken_up_again,
   'business/loans/fact/the_cancellation_has_advanced': fact.the_cancellation_has_advanced,
-  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_is_complete':
-    fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+  'business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended':
+    fact.the_cancellation_of_the_reservations_of_a_tool_has_ended,
   'business/loans/fact/a_repair_notice_round_has_begun': fact.a_repair_notice_round_has_begun,
   'business/loans/fact/a_member_has_been_notified_of_the_repair':
     fact.a_member_has_been_notified_of_the_repair,
   'business/loans/fact/the_repair_notice_round_has_advanced':
     fact.the_repair_notice_round_has_advanced,
-  'business/loans/fact/the_repair_notice_round_is_complete':
-    fact.the_repair_notice_round_is_complete,
+  'business/loans/fact/the_repair_notice_round_has_ended': fact.the_repair_notice_round_has_ended,
   'business/loans/fact/a_weekly_summary_has_begun': fact.a_weekly_summary_has_begun,
-  'business/loans/fact/the_member_already_had_the_weekly_summary':
-    fact.the_member_already_had_the_weekly_summary,
+  'business/loans/fact/a_weekly_summary_has_begun_again': fact.a_weekly_summary_has_begun_again,
   'business/loans/fact/the_weeks_summary_has_been_sent': fact.the_weeks_summary_has_been_sent,
-  'business/loans/fact/the_week_was_over_before_its_summary':
-    fact.the_week_was_over_before_its_summary,
+  'business/loans/fact/a_past_weeks_summary_has_been_skipped':
+    fact.a_past_weeks_summary_has_been_skipped,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,

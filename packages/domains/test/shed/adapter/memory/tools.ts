@@ -173,10 +173,10 @@ export const tools_writes: wlib.FactWrites<
     (state) => ({ ...state, tools: new Map(state.tools).set(added_tool.id, added_tool) }),
   'business/tools/fact/a_tool_has_been_retired': ({ retired_tool }) =>
     with_the_status(retired_tool.id)((stays) => ({ ...stays, ...retired_tool })),
-  'business/tools/fact/the_tool_was_already_retired': () => (state) => state,
+  'business/tools/fact/a_tool_has_been_retired_again': () => (state) => state,
   'business/tools/fact/a_tool_has_been_sent_to_repair': ({ tool_under_repair }) =>
     with_the_status(tool_under_repair.id)((stays) => ({ ...stays, ...tool_under_repair })),
-  'business/tools/fact/the_tool_was_already_under_repair': () => (state) => state,
+  'business/tools/fact/a_tool_has_been_sent_to_repair_again': () => (state) => state,
   'business/tools/fact/the_tool_was_retired_before_the_repair': () => (state) => state,
   'business/tools/fact/a_tool_has_been_repaired': ({ repaired_tool }) =>
     with_the_status(repaired_tool.id)((stays) => ({ ...stays, ...repaired_tool })),
@@ -206,7 +206,7 @@ export const tools_writes: wlib.FactWrites<
     }),
   'business/tools/fact/the_loading_of_the_sheet_has_advanced': ({ sheet_id, cursor }) =>
     with_the_sheet_progress({ id: sheet_id, progress: { stage: 'loading', cursor } }),
-  'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue': () => (state) => state,
+  'business/tools/fact/a_tool_has_been_added_again': () => (state) => state,
   'business/tools/fact/the_sheet_has_been_loaded': ({ loaded_sheet }) =>
     with_the_sheet_progress(loaded_sheet),
   'business/tools/fact/a_sheet_has_been_loaded_at_once':

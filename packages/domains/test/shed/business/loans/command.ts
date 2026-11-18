@@ -107,7 +107,7 @@ export const borrow_a_tool = command({
     ],
     the_member_already_has_the_tool_so_nothing_changes: [
       predicate.the_tool_is_on_loan_to_this_member,
-      fact.the_member_already_has_the_tool,
+      fact.a_tool_has_been_lent_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -196,7 +196,7 @@ export const lend_a_booked_tool = command({
     ],
     the_member_already_took_the_tool_so_nothing_changes: [
       predicate.the_reservation_of_the_member_has_been_taken_up,
-      fact.the_reservation_was_already_taken_up,
+      fact.a_reservation_has_been_taken_up_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -254,7 +254,7 @@ export const reserve_a_tool = command({
     ],
     the_member_already_booked_the_tool_so_nothing_changes: [
       predicate.the_tool_is_booked_for_the_day_by_this_member,
-      fact.the_member_already_booked_the_tool,
+      fact.a_tool_has_been_booked_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -313,7 +313,7 @@ export const return_a_tool = command({
     the_loan_is_ongoing_so_it_is_closed: [the_loan_can_be_returned, fact.a_tool_has_been_returned],
     the_loan_was_already_returned_so_nothing_changes: [
       the_loan_is_already_returned,
-      fact.the_loan_was_already_returned,
+      fact.a_tool_has_been_returned_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -523,7 +523,7 @@ export const declare_the_loan_overdue = command({
     ],
     the_due_day_is_not_over_so_the_desk_waits_until_the_day_after: [
       the_due_day_of_the_ongoing_loan_is_not_over,
-      fact.the_due_day_was_not_over,
+      fact.the_overdue_check_has_been_put_off,
       pick(effect, 'wait_until_the_due_date'),
     ],
   },
@@ -668,7 +668,7 @@ export const continue_the_cancellation_of_reservations = cursor_step({
   composes: cancel_a_reservation,
   outcomes: {
     advances: fact.the_cancellation_has_advanced,
-    completes: fact.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+    completes: fact.the_cancellation_of_the_reservations_of_a_tool_has_ended,
   },
   creator: (context) => () => (sheet) => ({
     selection: {
@@ -795,7 +795,7 @@ export const continue_the_repair_notice_round = cursor_step({
   composes: notify_a_member_of_the_repair,
   outcomes: {
     advances: fact.the_repair_notice_round_has_advanced,
-    completes: fact.the_repair_notice_round_is_complete,
+    completes: fact.the_repair_notice_round_has_ended,
   },
   creator: (context) => () => (round) => ({
     selection: {
@@ -848,7 +848,7 @@ export const begin_a_weekly_summary = command({
     ],
     a_summary_already_goes_to_the_member_so_nothing_changes: [
       a_weekly_summary_already_goes_to_the_member,
-      fact.the_member_already_had_the_weekly_summary,
+      fact.a_weekly_summary_has_begun_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -922,7 +922,7 @@ export const sum_up_the_week_for_the_member = command({
     ],
     the_week_is_over_so_this_weeks_monday_is_awaited: [
       the_week_of_the_summary_is_over,
-      fact.the_week_was_over_before_its_summary,
+      fact.a_past_weeks_summary_has_been_skipped,
       pick(effect, 'wait_until_monday'),
     ],
   },

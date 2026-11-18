@@ -164,7 +164,7 @@ export const load_tools_from_a_sheet = command_use_case_over({
   follows: {
     facts: [
       tools.fact.a_tool_has_been_added,
-      tools.fact.the_tool_of_the_line_was_already_in_the_catalogue,
+      tools.fact.a_tool_has_been_added_again,
       tools.fact.the_sheet_has_been_loaded,
     ],
     projection: {
@@ -172,7 +172,7 @@ export const load_tools_from_a_sheet = command_use_case_over({
         event: 'the_tool_is_in_the_catalogue',
         payload: { tool_id: fact.added_tool.id },
       }),
-      the_tool_of_the_line_was_already_in_the_catalogue: (fact) => ({
+      a_tool_has_been_added_again: (fact) => ({
         event: 'the_id_of_the_line_is_taken',
         payload: { line: fact.number, tool_id: fact.tool_id },
       }),

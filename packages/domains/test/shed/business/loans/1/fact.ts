@@ -36,15 +36,15 @@ export const a_tool_has_been_lent = earlier(next.a_tool_has_been_lent)({
   }),
 })
 
-export const the_member_already_has_the_tool = delegate(next.the_member_already_has_the_tool)
+export const a_tool_has_been_lent_again = delegate(next.a_tool_has_been_lent_again)
 
 export const a_tool_has_been_booked = delegate(next.a_tool_has_been_booked)
 
-export const the_member_already_booked_the_tool = delegate(next.the_member_already_booked_the_tool)
+export const a_tool_has_been_booked_again = delegate(next.a_tool_has_been_booked_again)
 
 export const a_tool_has_been_returned = delegate(next.a_tool_has_been_returned)
 
-export const the_loan_was_already_returned = delegate(next.the_loan_was_already_returned)
+export const a_tool_has_been_returned_again = delegate(next.a_tool_has_been_returned_again)
 
 export const the_member_has_been_reminded_of_the_due_date = delegate(
   next.the_member_has_been_reminded_of_the_due_date,
@@ -72,8 +72,8 @@ export const a_reservation_has_been_cancelled = delegate(next.a_reservation_has_
 
 export const the_cancellation_has_advanced = delegate(next.the_cancellation_has_advanced)
 
-export const the_cancellation_of_the_reservations_of_a_tool_is_complete = delegate(
-  next.the_cancellation_of_the_reservations_of_a_tool_is_complete,
+export const the_cancellation_of_the_reservations_of_a_tool_has_ended = delegate(
+  next.the_cancellation_of_the_reservations_of_a_tool_has_ended,
 )
 
 export const a_repair_notice_round_has_begun = delegate(next.a_repair_notice_round_has_begun)
@@ -86,6 +86,4 @@ export const the_repair_notice_round_has_advanced = delegate(
   next.the_repair_notice_round_has_advanced,
 )
 
-export const the_repair_notice_round_is_complete = delegate(
-  next.the_repair_notice_round_is_complete,
-)
+export const the_repair_notice_round_has_ended = delegate(next.the_repair_notice_round_has_ended)

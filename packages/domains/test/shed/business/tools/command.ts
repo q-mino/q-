@@ -71,7 +71,7 @@ export const retire_a_tool = command({
     ],
     the_tool_is_already_retired_so_nothing_changes: [
       the_tool_is_already_retired,
-      fact.the_tool_was_already_retired,
+      fact.a_tool_has_been_retired_again,
     ],
   },
   creator: (context) => (input) => ({
@@ -131,7 +131,7 @@ export const send_a_tool_to_repair = command({
     ],
     the_tool_is_already_in_the_workshop_so_nothing_changes: [
       the_tool_is_in_the_workshop,
-      fact.the_tool_was_already_under_repair,
+      fact.a_tool_has_been_sent_to_repair_again,
     ],
     the_tool_is_retired_so_nothing_changes: [
       the_tool_is_already_retired,
@@ -324,7 +324,7 @@ export const add_a_tool_from_a_line = command({
     the_tool_is_new_so_it_is_added: [the_tool_is_new, fact.a_tool_has_been_added],
     the_tool_is_in_the_catalogue_so_the_line_is_left: [
       predicate.a_tool_has_this_id,
-      fact.the_tool_of_the_line_was_already_in_the_catalogue,
+      fact.a_tool_has_been_added_again,
     ],
   },
   creator: (context) => (input) => ({

@@ -201,7 +201,7 @@ export const return_a_tool = command_use_case_over({
   follows: {
     facts: [
       tools.fact.a_tool_has_been_sent_to_repair,
-      tools.fact.the_tool_was_already_under_repair,
+      tools.fact.a_tool_has_been_sent_to_repair_again,
       tools.fact.the_tool_was_retired_before_the_repair,
     ],
     projection: {
@@ -209,7 +209,7 @@ export const return_a_tool = command_use_case_over({
         event: 'the_tool_is_in_the_workshop',
         payload: { tool_id: fact.tool_under_repair.id },
       }),
-      the_tool_was_already_under_repair: (fact) => ({
+      a_tool_has_been_sent_to_repair_again: (fact) => ({
         event: 'the_tool_was_already_in_the_workshop',
         payload: { tool_id: fact.tool_id },
       }),

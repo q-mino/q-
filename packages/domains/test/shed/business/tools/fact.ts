@@ -23,7 +23,7 @@ export const a_tool_has_been_retired = fact({
 })
 
 /** Nothing to do (DOM-6): the first retirement stands, the state does not change. */
-export const the_tool_was_already_retired = fact({
+export const a_tool_has_been_retired_again = fact({
   payload: z.strictObject({
     tool_id: id.tool_id,
   }),
@@ -41,7 +41,7 @@ export const a_tool_has_been_sent_to_repair = fact({
 })
 
 /** Nothing to do (DOM-6, D93): the tool is in the workshop already, its stay in repair stands. */
-export const the_tool_was_already_under_repair = fact({
+export const a_tool_has_been_sent_to_repair_again = fact({
   payload: z.strictObject({
     tool_id: id.tool_id,
   }),
@@ -103,7 +103,7 @@ export const the_loading_of_the_sheet_has_advanced = fact({
  * line is left, and the catalogue does not change: line 37 names `drill-7`,
  * the label of the shed's own drill.
  */
-export const the_tool_of_the_line_was_already_in_the_catalogue = fact({
+export const a_tool_has_been_added_again = fact({
   payload: z.strictObject({
     sheet_id: id.sheet_id,
     line_id: id.line_id,

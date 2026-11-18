@@ -29,11 +29,11 @@ export type a_tool_has_been_retired = z.output<typeof a_tool_has_been_retired>
 /**
  * Nothing to do (DOM-6): the first retirement stands, the state does not change.
  *
- * @see {@link fact.the_tool_was_already_retired}
+ * @see {@link fact.a_tool_has_been_retired_again}
  */
-export const the_tool_was_already_retired =
-  fact.the_tool_was_already_retired.brand<'business/tools/fact/the_tool_was_already_retired'>()
-export type the_tool_was_already_retired = z.output<typeof the_tool_was_already_retired>
+export const a_tool_has_been_retired_again =
+  fact.a_tool_has_been_retired_again.brand<'business/tools/fact/a_tool_has_been_retired_again'>()
+export type a_tool_has_been_retired_again = z.output<typeof a_tool_has_been_retired_again>
 
 /**
  * The tool went to the workshop: a partial value, its id, its new status and
@@ -49,11 +49,13 @@ export type a_tool_has_been_sent_to_repair = z.output<typeof a_tool_has_been_sen
 /**
  * Nothing to do (DOM-6, D93): the tool is in the workshop already, its stay in repair stands.
  *
- * @see {@link fact.the_tool_was_already_under_repair}
+ * @see {@link fact.a_tool_has_been_sent_to_repair_again}
  */
-export const the_tool_was_already_under_repair =
-  fact.the_tool_was_already_under_repair.brand<'business/tools/fact/the_tool_was_already_under_repair'>()
-export type the_tool_was_already_under_repair = z.output<typeof the_tool_was_already_under_repair>
+export const a_tool_has_been_sent_to_repair_again =
+  fact.a_tool_has_been_sent_to_repair_again.brand<'business/tools/fact/a_tool_has_been_sent_to_repair_again'>()
+export type a_tool_has_been_sent_to_repair_again = z.output<
+  typeof a_tool_has_been_sent_to_repair_again
+>
 
 /**
  * Nothing to do (DOM-6, D93): the tool was retired before it could go to the workshop.
@@ -117,13 +119,11 @@ export type the_loading_of_the_sheet_has_advanced = z.output<
  * line is left, and the catalogue does not change: line 37 names `drill-7`,
  * the label of the shed's own drill.
  *
- * @see {@link fact.the_tool_of_the_line_was_already_in_the_catalogue}
+ * @see {@link fact.a_tool_has_been_added_again}
  */
-export const the_tool_of_the_line_was_already_in_the_catalogue =
-  fact.the_tool_of_the_line_was_already_in_the_catalogue.brand<'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue'>()
-export type the_tool_of_the_line_was_already_in_the_catalogue = z.output<
-  typeof the_tool_of_the_line_was_already_in_the_catalogue
->
+export const a_tool_has_been_added_again =
+  fact.a_tool_has_been_added_again.brand<'business/tools/fact/a_tool_has_been_added_again'>()
+export type a_tool_has_been_added_again = z.output<typeof a_tool_has_been_added_again>
 
 /**
  * No line of the sheet is left to go down: the desk closes it (D112.2).

@@ -126,7 +126,7 @@ export const correct_the_tool_of_a_loan = command({
     ],
     the_card_already_names_the_tool_handed_so_nothing_changes: [
       _loans.predicate.the_loan_is_of_this_tool,
-      _loans.fact.the_tool_of_the_loan_was_already_corrected,
+      _loans.fact.the_tool_of_a_loan_has_been_corrected_again,
     ],
   },
   creator: (context) => (input) => ({

@@ -46,9 +46,10 @@ export const registry = {
   'business/tools/value/loaded_sheet': value.loaded_sheet,
   'business/tools/fact/a_tool_has_been_added': fact.a_tool_has_been_added,
   'business/tools/fact/a_tool_has_been_retired': fact.a_tool_has_been_retired,
-  'business/tools/fact/the_tool_was_already_retired': fact.the_tool_was_already_retired,
+  'business/tools/fact/a_tool_has_been_retired_again': fact.a_tool_has_been_retired_again,
   'business/tools/fact/a_tool_has_been_sent_to_repair': fact.a_tool_has_been_sent_to_repair,
-  'business/tools/fact/the_tool_was_already_under_repair': fact.the_tool_was_already_under_repair,
+  'business/tools/fact/a_tool_has_been_sent_to_repair_again':
+    fact.a_tool_has_been_sent_to_repair_again,
   'business/tools/fact/the_tool_was_retired_before_the_repair':
     fact.the_tool_was_retired_before_the_repair,
   'business/tools/fact/a_tool_has_been_repaired': fact.a_tool_has_been_repaired,
@@ -56,8 +57,7 @@ export const registry = {
   'business/tools/fact/the_loading_of_a_sheet_has_begun': fact.the_loading_of_a_sheet_has_begun,
   'business/tools/fact/the_loading_of_the_sheet_has_advanced':
     fact.the_loading_of_the_sheet_has_advanced,
-  'business/tools/fact/the_tool_of_the_line_was_already_in_the_catalogue':
-    fact.the_tool_of_the_line_was_already_in_the_catalogue,
+  'business/tools/fact/a_tool_has_been_added_again': fact.a_tool_has_been_added_again,
   'business/tools/fact/the_sheet_has_been_loaded': fact.the_sheet_has_been_loaded,
   'business/tools/fact/a_sheet_has_been_loaded_at_once': fact.a_sheet_has_been_loaded_at_once,
   'business/tools/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
