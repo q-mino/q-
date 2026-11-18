@@ -229,10 +229,56 @@ export declare const identity_of: <identity extends z.ZodType<string>>(
   identity: identity,
 ) => (operation: Operation) => z.output<identity>
 
-/** A fact (DOM-5): its payload, at least every value its change writes. */
-export type FactBuilder = <const payload extends z.ZodObject>(fact: {
+/**
+ * A fact (DOM-5): its payload, at least every value its change writes. Its
+ * resources are every identity of its payload (DOM-10), unless it declares
+ * narrower ones (`resources`, SC-55): the fields of its payload that carry
+ * the instances it changes and its target (D94.6), each with the identities
+ * it holds, at any depth, checked by type to hold one.
+ */
+export type FactBuilder = <
+  const payload extends z.ZodObject,
+  const fields extends ResourceFields<payload> = never,
+>(fact: {
   readonly payload: payload
-}) => payload
+  readonly resources?: readonly [fields, ...fields[]]
+}) => [fields] extends [never] ? payload : Resourced<payload, fields>
+
+export declare const $Resources: unique symbol
+
+/**
+ * A fact that declares its resources (D94.6, SC-55): its payload, which
+ * carries the fields of its resources, for the library to read when it
+ * writes them in the envelope.
+ */
+export type Resourced<payload extends z.ZodObject, fields extends string> = payload &
+  ResourcesOf<fields>
+
+/** The fields of a fact's declared resources (D94.6, SC-55), as its payload carries them. */
+export interface ResourcesOf<fields extends string> {
+  readonly [$Resources]: readonly fields[]
+}
+
+/** The fields of a payload that hold an identity (DOM-24), at any depth: those that may carry a resource. */
+export type ResourceFields<payload extends z.ZodObject> = {
+  [field in keyof z.output<payload>]-?: true extends HoldsAnIdentity<z.output<payload>[field]>
+    ? field
+    : never
+}[keyof z.output<payload>] &
+  string
+
+/** Whether a value holds an identity (DOM-24): is one, or holds one in a field or an element. */
+type HoldsAnIdentity<value> = [BrandOf<value>] extends [never]
+  ? value extends readonly (infer element)[]
+    ? HoldsAnIdentity<element>
+    : value extends object
+      ? true extends { [field in keyof value]-?: HoldsAnIdentity<value[field]> }[keyof value]
+        ? true
+        : false
+      : false
+  : BrandOf<value> extends Path<'id'>
+    ? true
+    : false
 
 /** A predicate, a word of the conditions (DOM-5): the schema of its parameters. */
 export type PredicateBuilder = <const parameters extends z.ZodObject>(predicate: {
@@ -1426,7 +1472,10 @@ export interface Envelope<parts extends readonly PartFields[]> {
  * value (`business/loans/id/loan_id`, `L7`). The library derives a fact's resources
  * from its schema, finding the identities in the registry; nobody writes
  * them. In the paper they come from the mutation primitives (D107); in q-
- * the fact carries the change (V9), so they come from the fact.
+ * the fact carries the change (V9), so they come from the fact: every
+ * identity of its payload, or those of the fields it declares (`resources`,
+ * D94.6, SC-55). They are written with the part: a fact recorded before a
+ * declaration keeps those it was written with.
  */
 export interface Resource {
   readonly path: string

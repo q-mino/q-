@@ -275,7 +275,9 @@ export type a_repair_notice_round_has_begun = z.output<typeof a_repair_notice_ro
  * The desk notified a member that the tool they booked is in repair: the
  * reservation, which stays, and the stay in repair. Nothing changes in the
  * state (D95): the notice is on its way. Recorded as a part of a step of the
- * round (D111).
+ * round (D111). Its resource is its target alone, the reservation (D94.6,
+ * SC-55): the stay is the round's, and a dead notice holds its member's
+ * reservation, not the round's other notices.
  *
  * @see {@link fact.a_member_has_been_notified_of_the_repair}
  */
