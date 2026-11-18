@@ -4101,20 +4101,32 @@ export declare const reaction_operation: (
 ) => (delivered: { readonly operation: Operation; readonly part: number }) => Operation
 
 /**
- * A dead letter of a reaction (D89.7, D67.3): the fact, at its position, the
- * part it reacted to, and why. Operational, outside the domains, shown, never
- * a business fact; redelivered after a fix with the same operation, the
- * command evaluated again (a refusal leaves no fact, D79.2), or discarded by
- * an operator, with a trace. Its cause, an ADT:
- * - `rejected`: the command refused, its failures (a step's, its read);
- * - `identity_already_used`: the operation came back with another
- *   fingerprint; the first outcome stands.
+ * A part of a fact as a reaction's consumer meets it (D89.6, D113.3): the
+ * fact, at its position, and the part, by its position in the fact. Named by
+ * the fact's operation and the part, as the reaction's operation is
+ * (`reaction_operation`), whatever position an adapter gives it.
  */
-export interface ReactionDeadLetter {
+export interface ReactionPart {
   readonly reaction: string
   readonly position: position
   readonly fact: StoredEnvelope
   readonly part: number
+}
+
+/**
+ * A dead letter of a reaction (D89.7, D67.3): the part it reacted to, and
+ * why. Operational, outside the domains, shown, never a business fact. It
+ * holds its part's resources (D94.7): the later parts of the reaction that
+ * touch one of them wait behind it (`WaitingPart`). An operator redelivers
+ * it after a fix, with the same operation, the command evaluated again (a
+ * refusal leaves no fact, D79.2), or discards it, with a trace
+ * (`ReactionConsumers`). Its cause, an ADT:
+ * - `rejected`: the command refused, its failures (a step's, its read);
+ * - `identity_already_used`: the operation came back with another
+ *   fingerprint; the first outcome stands.
+ */
+export interface ReactionDeadLetter extends ReactionPart {
+  readonly held: 'dead_letter'
   readonly cause:
     | {
         readonly cause: 'rejected'
@@ -4124,13 +4136,48 @@ export interface ReactionDeadLetter {
 }
 
 /**
+ * A part waiting behind a held one (D94.7, D67.3; SC-42): it touches a
+ * resource that a dead letter, or a part waiting before it, holds, so it is
+ * not delivered, and it holds its own resources in turn, so that no later
+ * part of one of them overtakes it (the order per resource, D64.4). Marta's
+ * damaged return of the drill is in a dead letter; Gianni's, two days on,
+ * waits behind it, and holds Gianni too. Shown with the dead letters: the
+ * software informs.
+ */
+export interface WaitingPart extends ReactionPart {
+  readonly held: 'waiting'
+}
+
+/** A part a reaction holds, an ADT: a dead letter, or a part waiting behind one. */
+export type HeldPart = ReactionDeadLetter | WaitingPart
+
+/** The trace of a dead letter discarded (D67.3): the letter, who discarded it, why, and when, by the consumers' clock. */
+export interface Discarded {
+  readonly letter: ReactionDeadLetter
+  readonly by: string
+  readonly reason: string
+  readonly at: date_time
+}
+
+/**
  * Where the consumers of reactions keep their own state, durable (D89.6):
- * a position per reaction (none before its first fact), its dead letters.
+ * a position per reaction (none before its first fact), the parts it holds
+ * (D94.7: its dead letters and the parts waiting behind them), and the
+ * traces of the letters discarded. A held part is named by its fact's
+ * operation and its part (`ReactionPart`): holding one again replaces it,
+ * so that a part met again after a fall is held once, a waiting part
+ * delivered and rejected becomes a dead letter in its place, and a letter
+ * redelivered and rejected again keeps its new failures. SC-42
  */
 export interface ReactionState {
   readonly position: (reaction: string) => Promise<position | undefined>
   readonly advance: (reaction: string) => (to: position) => Promise<void>
-  readonly dead_letter: (letter: ReactionDeadLetter) => Promise<void>
+  /** The parts a reaction holds, in the order of its log (position, then part). */
+  readonly held: (reaction: string) => Promise<readonly HeldPart[]>
+  readonly hold: (part: HeldPart) => Promise<void>
+  /** A held part let go: delivered at last, or its letter discarded. */
+  readonly release: (part: ReactionPart) => Promise<void>
+  readonly discarded: (trace: Discarded) => Promise<void>
 }
 
 /** The paths of the reactions of a registry. */
@@ -4153,9 +4200,37 @@ export type ReactionWirings<registry> = {
   readonly [path in ReactionPaths<registry>]: ReactionWiring<registry[path]>
 }
 
-/** The running consumers of a set of reactions: they stop when asked, after the fact they are delivering. */
+/**
+ * What a dead letter redelivered gives (D67.3), an ADT: `delivered`, its
+ * command applied (or nothing to invoke, D88.2), and the parts waiting
+ * behind it go on; `dead_letter`, refused again, still holding, with what
+ * the command said this time; `not_held`, the letter no longer held
+ * (redelivered or discarded before).
+ */
+export type Redelivered =
+  | { readonly outcome: 'delivered' }
+  | { readonly outcome: 'dead_letter'; readonly letter: ReactionDeadLetter }
+  | { readonly outcome: 'not_held' }
+
+/**
+ * The running consumers of a set of reactions: they stop when asked, after
+ * the fact they are delivering; and an operator resolves their dead letters
+ * through them (D67.3), since a letter's delivery and the parts waiting
+ * behind it are the consumer's, in its own order (SC-42):
+ * - `redeliver`: the letter's part again, with the same operation, after a
+ *   fix; delivered, the consumer releases it and delivers the parts that
+ *   waited behind it, in the order of the log;
+ * - `discard`: the letter let go, with a trace (who, why), its part never
+ *   delivered; the parts behind it go on as after a delivery.
+ * Dead letters are operational: no domain sees them, and correcting a
+ * domain's data stays a command of a persona (D67.3).
+ */
 export interface ReactionConsumers {
   readonly stop: () => Promise<void>
+  readonly redeliver: (letter: ReactionDeadLetter) => Promise<Redelivered>
+  readonly discard: (
+    letter: ReactionDeadLetter,
+  ) => (trace: { readonly by: string; readonly reason: string }) => Promise<void>
 }
 
 /**
@@ -4178,13 +4253,27 @@ export interface ReactionConsumers {
  *   advance, and delivers the fact again from its position (D65.6), the
  *   duplicate branch covering the parts already applied.
  * After the last part it advances.
- * Holding the later facts of a dead-lettered fact's resources (D94.7) comes
- * with its case. The contract is the order per resource, not a total one: a
+ * A dead letter holds its part's resources for its reaction (D94.7, D67.3;
+ * SC-42): a later part of the reaction's path that touches one of them, by
+ * the resources in its envelope (D107), is not delivered; it waits behind
+ * (`WaitingPart`), and holds its own resources in turn, so that no part of
+ * one of them overtakes it. A part translated to `nothing` waits the same:
+ * the hold is by resource, never by what a translation would give. The
+ * position goes on past a held part, and the other resources flow: a dead
+ * letter stops its resources, never its reaction, nor the other reactions
+ * (D89.6). When a letter is delivered at last or discarded
+ * (`ReactionConsumers`), the consumer delivers the parts waiting behind it
+ * that nothing held before them still holds, in the order of the log, each
+ * as a part met for the first time; one refused becomes a dead letter in
+ * its place. It reads what it holds from its state when it starts. A
+ * consumer that tolerates reordering (D67.3) comes with its case.
+ * The contract is the order per resource, not a total one: a
  * consumer may deliver facts of disjoint resources in parallel (partitions
  * by resource, one consumer active per partition at a time, else two
  * instances may swap two facts of one tool), its position then the
  * partition's: the library's and the adapter's, not the domain's (A, 16
- * Nov 2026). Curried as `effect_executor`: the registry of the
+ * Nov 2026); what a reaction holds is the reaction's, whatever its
+ * partitions. Curried as `effect_executor`: the registry of the
  * reactions; their wirings; the state and the clock.
  */
 export declare function reaction_consumers<const registry extends Registry>(reactions: {

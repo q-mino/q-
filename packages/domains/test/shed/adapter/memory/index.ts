@@ -113,7 +113,11 @@ export interface Cell {
   readonly stored_versions: wlib.StoredVersions
   /** The state of the effect executors: positions per effect, dead letters, shown to a test. */
   readonly executor: wlib.ExecutorState
-  /** The state of the consumers of the reactions: positions per reaction, dead letters, shown to a test. */
+  /**
+   * The state of the consumers of the reactions: positions per reaction, the
+   * parts each holds (its dead letters and the parts waiting behind them,
+   * SC-42), the letters discarded; shown to a test.
+   */
   readonly reactions: wlib.ReactionState
 }
 
