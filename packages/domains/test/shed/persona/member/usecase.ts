@@ -230,10 +230,7 @@ export const extend_your_loan = command_use_case_over({
       payload: { loan_id: fact.extended_loan.id, due_day: fact.extended_loan.due_day },
     }),
     rejected: (failures) =>
-      failures.every(
-        (failure) =>
-          failure.predicate === 'business/loans/predicate/the_tool_is_booked_on_a_day_up_to',
-      )
+      dsl.only_a_booking_stands_in_the_way(failures)
         ? { event: 'someone_booked_the_tool', payload: {} }
         : { event: 'the_loan_cannot_be_extended', payload: {} },
   },
@@ -246,11 +243,36 @@ export const extend_your_loan = command_use_case_over({
  * shows its new name (SC-19). When the due date passes she
  * reads "your loan is overdue", with the row. Her card may have expired: she
  * still sees what she must bring back.
+ *
+ * Each row tells which of its buttons is active (SC-33): bring it back,
+ * always, scanning at the desk the tool she brings, which the row cannot
+ * know; keep it longer, from the row as she would send it, unless someone
+ * booked the tool (the ladder, booked by Gianni for Thursday), the loan is
+ * past its due date (the sander), or her card is not valid today. Gianni
+ * books the drill while she reads: its row changes.
  */
 export const my_loans = read_use_case_over({
   use_case: loans.usecase.the_ongoing_loans_of_a_member,
   input: z.strictObject({}),
-  creator: (context) => () => ({ query: { member_id: context.card.id } }),
+  actions: {
+    bring_it_back: return_a_tool,
+    keep_it_longer: extend_your_loan,
+  },
+  creator: (context) => () => ({
+    query: { member_id: context.card.id },
+    actions: {
+      bring_it_back: (loan) => ({
+        loan_id: loan.id,
+        tool_id: wlib.given_by_the_caller,
+        condition: wlib.given_by_the_caller,
+      }),
+      keep_it_longer: (loan) => ({
+        loan_id: loan.id,
+        tool_id: loan.tool_id,
+        due_day: loan.due_day,
+      }),
+    },
+  }),
   entry: z.strictObject({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
@@ -258,6 +280,8 @@ export const my_loans = read_use_case_over({
     start_date: wlib.date_time,
     due_day: wlib.day,
     term: value.loan_term,
+    bring_it_back: value.return_on_the_row,
+    keep_it_longer: value.extension_on_the_row,
   }),
   projection: (entry) => ({
     loan_id: entry.id,
@@ -266,6 +290,8 @@ export const my_loans = read_use_case_over({
     start_date: entry.start_date,
     due_day: entry.due_day,
     term: entry.term,
+    bring_it_back: dsl.the_return_on_the_row(entry.bring_it_back),
+    keep_it_longer: dsl.the_extension_on_the_row(entry.keep_it_longer),
   }),
   stream: {
     identity: 'loan_id',

@@ -309,11 +309,15 @@ const execute_step =
     })
   }
 
-/** A planned query over the candidates of one subject. */
+/**
+ * A planned query over the candidates of one subject; its actions' leaves,
+ * if any, as command fragments (SC-33).
+ */
 type Plan<candidate> = wlib.PlannedQuery<
   Selection<State, candidate>,
   Source<State, candidate>,
-  Field<State, candidate>
+  Field<State, candidate>,
+  Fragment
 >
 
 /** An entry with its identity, read from its identity field. */
@@ -325,7 +329,9 @@ interface Identified {
 /**
  * The entries of a query on a state: the candidates of the source that the
  * selection keeps, in the order (a descending field reverses the value
- * order; the identity closes it), each as the entry of its fields.
+ * order; the identity closes it), each as the entry of its fields and, if
+ * the plan has leaves of actions, their values on the same state, every one,
+ * as one more field (SC-33).
  */
 const entries_on =
   <candidate>(plan: Plan<candidate>) =>
@@ -341,9 +347,16 @@ const entries_on =
       .filter(keeps)
       .toSorted((a, b) => order.reduce((result, by) => (result !== 0 ? result : by(a, b)), 0))
       .map((candidate) => {
-        const entry = Object.fromEntries(
+        const read = Object.fromEntries(
           Object.entries(plan.fields).map(([name, field]) => [name, field(state)(candidate)]),
         )
+        const entry =
+          plan.leaves === undefined
+            ? read
+            : {
+                ...read,
+                [plan.leaves.field]: plan.leaves.of(read).map((condition) => condition(state)),
+              }
         return { identity: entry[plan.identity.field], entry }
       })
   }
@@ -368,7 +381,8 @@ const page =
     plan: wlib.PlannedPage<
       Selection<State, candidate>,
       Source<State, candidate>,
-      Field<State, candidate>
+      Field<State, candidate>,
+      Fragment
     >,
   ) => {
     const state = cell.get()
@@ -616,6 +630,9 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       read: read(cell),
       page: page(cell),
       streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
+      // The member's buttons on the rows of their loans (SC-33): the
+      // commands' own fragments, on the state of the read (ADP-8).
+      applicability: loans_fragments,
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,

@@ -82,6 +82,8 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | albero di casi d'uso                                | use-case tree                                                                              |                                      |
 | nodo · contesto (di un nodo)                        | node · context                                                                             |                                      |
 | bersaglio · condizione del percorso                 | target · condition of the path (`binds`, `requires`: a node of a business tree, SC-31)     | guard (D105)                         |
+| applicabilità · azione                              | applicability (`wlib.Applicability`) · action (`actions` of a read leaf, SC-33)            | precondition check                   |
+| non noto · dato dal chiamante                       | not known (`'not_known'`, D51.4) · given by the caller (`wlib.given_by_the_caller`)        | three-valued logic                   |
 | domanda (di auth, di q-)                            | lookup                                                                                     | key-value lookup                     |
 | porta (di una cartella, per un pubblico, di q-)     | door (`_door_persona.ts`; to the folders below, `_door_below.ts`)                          |                                      |
 | ambito (di una cartella, di un tipo, di q-)         | scope (`_scope.ts`, of the folder; `_scope_command.ts`, one per kind of construct)         |                                      |

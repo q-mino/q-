@@ -1599,14 +1599,16 @@ export type RegistryEntry =
       CommandInput<z.ZodType>,
       Events,
       unknown,
-      unknown
+      unknown,
+      string
     >
   | ReadUseCaseOver<
       ReadUseCase<Queries[string]>,
       QueryInput<z.ZodType>,
       z.ZodObject,
       unknown,
-      LeafStream | undefined
+      LeafStream | undefined,
+      unknown
     >
   | Lookup<z.ZodType, z.ZodType>
   | Node<unknown, RootContext, unknown, Accumulated<unknown, Component>>
@@ -1637,6 +1639,12 @@ export type CalculationsIn<module> = Extract<
 
 /** The facts declared in a generated module (`_fact.ts`), for an adapter's writes. */
 export type FactsIn<module> = ComponentsIn<module, 'fact'>
+
+/** The fragment type of a set of predicate fragments; none with none. */
+export type FragmentOf<fragments> =
+  fragments extends Readonly<Record<string, (parameters: never) => infer fragment>>
+    ? fragment
+    : never
 
 // ---------------------------------------------------------------------------
 // Queries (DOM-18): a query is data. Its selection is a condition in the
@@ -1952,14 +1960,34 @@ export interface QuerySource<fields extends z.ZodObject, source, field> {
  * fragments, the order closed by the identity; the identity by its field's
  * name and its path, for a stream to know which entries a fact touches. A
  * calculation, bound to its parameters, is one more field (SC-21): the
- * adapter's read, its order and its stream meet fields alone.
+ * adapter's read, its order and its stream meet fields alone. So are the
+ * leaves of a read's actions (SC-33), when it has some (`leaves`).
  */
-export interface PlannedQuery<selection, source, field> {
+export interface PlannedQuery<selection, source, field, condition = never> {
   readonly from: source
   readonly fields: Readonly<Record<string, field>>
   readonly identity: { readonly field: string; readonly path: string }
   readonly selection: selection
   readonly order: readonly (readonly [field, Direction])[]
+  readonly leaves?: PlannedLeaves<condition>
+}
+
+/**
+ * The leaves of a read's actions, planned by the library (SC-33, D47.2,
+ * D51.1): for an entry as stored, the conditions of the leaves of its
+ * commands known at the read, as the adapter's command fragments (ADP-8),
+ * which the adapter evaluates in the snapshot of the entry, every one (no
+ * short circuit, D47), and writes, in order, as one more field of the entry
+ * (`field`, the library's name, which no field of the query has). So the
+ * read, its pages and its stream meet fields alone, as with a calculation:
+ * Gianni books the drill while Marta reads her loans, and the row of L7,
+ * which the fact does not touch, changed (SC-19). The adapter never meets a
+ * value not known: the library leaves out the leaves whose parameters the
+ * caller gives, and composes the three values itself (D51.4).
+ */
+export interface PlannedLeaves<condition> {
+  readonly field: string
+  readonly of: (entry: Readonly<Record<string, unknown>>) => readonly condition[]
 }
 
 /**
@@ -1985,8 +2013,8 @@ export type position = z.output<typeof position>
  * The adapter's read, in one consistent snapshot: the entries as stored (the
  * library parses them with the query's fields) and the position read at (D66).
  */
-export type Read<selection, source, field> = (
-  plan: PlannedQuery<selection, source, field>,
+export type Read<selection, source, field, condition = never> = (
+  plan: PlannedQuery<selection, source, field, condition>,
 ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
 
 /**
@@ -1996,10 +2024,11 @@ export type Read<selection, source, field> = (
  * asks one more than the page, to know whether another follows). The query's
  * selection still counts the total.
  */
-export interface PlannedPage<selection, source, field> extends PlannedQuery<
+export interface PlannedPage<selection, source, field, condition = never> extends PlannedQuery<
   selection,
   source,
-  field
+  field,
+  condition
 > {
   readonly page: selection
   readonly limit: number
@@ -2011,8 +2040,8 @@ export interface PlannedPage<selection, source, field> extends PlannedQuery<
  * stored; how many the query's selection keeps there, the total; and the
  * position read at.
  */
-export type ReadPage<selection, source, field> = (
-  plan: PlannedPage<selection, source, field>,
+export type ReadPage<selection, source, field, condition = never> = (
+  plan: PlannedPage<selection, source, field, condition>,
 ) => Promise<{
   readonly entries: readonly unknown[]
   readonly total: number
@@ -2028,15 +2057,17 @@ export type ReadPage<selection, source, field> = (
  * candidate (the in-memory oracle) serves the queries of one subject at a
  * time (DOM-18). Every query reads whole or in pages (SC-22): the algebra
  * compares with a cursor (`after`, a step's), and the adapter reads a page
- * with its total (`page`).
+ * with its total (`page`). An adapter that evaluates the actions of its
+ * reads (SC-33) takes the plan's leaves with its command fragments
+ * (`condition`), which it gives to `read_use_case_ports` (`applicability`).
  */
-export type ReadAdapter<queries extends Queries, selection, source, field> = {
+export type ReadAdapter<queries extends Queries, selection, source, field, condition = never> = {
   readonly algebra: CursorAlgebra<PredicatesOfQueries<queries>, selection, field>
   readonly sources: {
     readonly [name in keyof queries]: QuerySource<FieldsOf<queries[name]>, source, field>
   }
-  readonly read: Read<selection, source, field>
-  readonly page: ReadPage<selection, source, field>
+  readonly read: Read<selection, source, field, condition>
+  readonly page: ReadPage<selection, source, field, condition>
 } & ([CalculationsOfQueries<queries>] extends [never]
   ? { readonly calculations?: never }
   : { readonly calculations: CalculationFragments<CalculationsOfQueries<queries>, field> })
@@ -2122,8 +2153,8 @@ export type StreamEvent<envelope, entry, identity> =
  * the entries and the facts as stored (the library parses them with the
  * query's fields and, by path, the registry).
  */
-export type Stream<selection, source, field> = (
-  plan: PlannedQuery<selection, source, field>,
+export type Stream<selection, source, field, condition = never> = (
+  plan: PlannedQuery<selection, source, field, condition>,
 ) => (from: position) => AsyncIterable<StreamEvent<StoredEnvelope, unknown, unknown>>
 
 /**
@@ -2168,13 +2199,13 @@ export type FactLog = (from: position | undefined) => AsyncIterable<LogEvent>
  * fact's resources with the identities its entries hold (the drill's
  * `tool_id`), and is compared with the oracle (TST-2).
  */
-export type StreamStrategy<selection, source, field> =
-  | { readonly strategy: 'native'; readonly stream: Stream<selection, source, field> }
+export type StreamStrategy<selection, source, field, condition = never> =
+  | { readonly strategy: 'native'; readonly stream: Stream<selection, source, field, condition> }
   | { readonly strategy: 'composed'; readonly log: FactLog }
 
 /** The stream strategies of a set of queries, by name: a query may have none. */
-export type Streams<queries extends Queries, selection, source, field> = {
-  readonly [name in keyof queries]?: StreamStrategy<selection, source, field>
+export type Streams<queries extends Queries, selection, source, field, condition = never> = {
+  readonly [name in keyof queries]?: StreamStrategy<selection, source, field, condition>
 }
 
 // ---------------------------------------------------------------------------
@@ -2326,11 +2357,73 @@ export type Projection<
   ) => EventOf<events>
 }
 
+// ---------------------------------------------------------------------------
+// Applicability (SC-33, D47, D51): whether a command would apply, evaluated
+// at a read, on each entry, by the same pass as the write (D51.1), with the
+// values known at the read; the leaves whose parameters the caller gives
+// later are not known (D51.3). Strong Kleene logic (D51.4); the value not
+// known lives only here (D51.6).
+
+/** A truth of an applicability: true, false, or not known before the caller gives their input (D51.4). */
+export type Truth = boolean | 'not_known'
+
+export declare const $GivenByTheCaller: unique symbol
+
+/** The mark of a field the caller gives later (D51.3): opaque, carried, never read. */
+export interface GivenByTheCaller {
+  readonly [$GivenByTheCaller]: true
+}
+
+/**
+ * A field of a command's input the caller gives later, not known at the
+ * read (D51.3): Marta scans, at the desk, the tool she brings back. Explicit,
+ * so that a field forgotten does not become not known unannounced. The
+ * library carries it through the creators to the leaves, which are not known
+ * where it reaches them; a creator binds and does not read it (a choice on
+ * the input is a branch's, DOM-5): one that reads it leaves every leaf of
+ * the command not known, a limit that reads it its own value (D51.4). [Q, C,
+ * 18 Nov 2026 (2)]
+ */
+export declare const given_by_the_caller: GivenByTheCaller
+
+/** An input whose every field may be one the caller gives later. */
+export type Partly<input> = { readonly [field in keyof input]: input[field] | GivenByTheCaller }
+
+/**
+ * A leaf evaluated at a read: where it stands, as a failure names it
+ * (`Failure`, `PathFailure`), and whether it holds there (a NOT in its
+ * components counted): a failure is a leaf that does not hold, so one
+ * function of the persona reads a rejection and a row.
+ */
+export type Evaluated<failure> = failure & { readonly holds: Truth }
+
+/**
+ * The applicability of a command on an entry (D47.2, D51): its value
+ * composed, the nodes of its path, its branches in OR and, at a leaf, its
+ * limits in AND, outside (D105); the branch it would apply, when its
+ * branches tell it (D51.5: every one before it false, it true), an
+ * "already done" one too, which applies (D95); every leaf, each with its
+ * value, a node's once, with no branch (D105); at a leaf, every limit with
+ * its value. Raw, in the paper's terms: a persona projects it into its own
+ * words, as a rejection (PER-18).
+ */
+export interface Applicability<
+  outcomes extends Outcomes,
+  leaves extends Component = never,
+  limits extends string = never,
+> {
+  readonly value: Truth
+  readonly branch?: Exclude<keyof outcomes, 'rejected'> & string
+  readonly leaves: readonly Evaluated<Failure<outcomes> | PathFailures<leaves>>[]
+  readonly limits: Readonly<Record<limits, Truth>>
+}
+
 /**
  * A command use case over another: the use case it invokes, its own input
  * as declared (`input`, from which the generator writes `<use case>_input`,
- * DOM-25), its events, and how the nodes above it may close a request
- * (`closes`), which its port adds to its events.
+ * DOM-25), its events, how the nodes above it may close a request
+ * (`closes`), which its port adds to its events, and the names of its own
+ * limits, which its applicability gives (`limits`, SC-33).
  */
 export interface CommandUseCaseOver<
   use_case extends CommandUseCase<Commands[string]>,
@@ -2338,6 +2431,7 @@ export interface CommandUseCaseOver<
   events extends Events,
   closes,
   waits = never,
+  limits extends string = never,
 > {
   readonly input: input
   readonly [$UseCase]: {
@@ -2345,6 +2439,7 @@ export interface CommandUseCaseOver<
     readonly events: events
     readonly closes: closes
     readonly waits: waits
+    readonly limits: limits
   }
 }
 
@@ -2440,7 +2535,8 @@ export type CommandUseCaseOverBuilder<context, closes> = <
   input,
   events,
   closes | ([limits] extends [never] ? never : Refused<limits>),
-  [followed] extends [never] ? never : WaitIsOver
+  [followed] extends [never] ? never : WaitIsOver,
+  limits
 >
 
 /** The query a read use case reads. */
@@ -2519,7 +2615,8 @@ type StreamEvents<closes> = Events &
  * its own input as declared (`input`, from which the generator writes
  * `<use case>_input`, DOM-25), the schema of its own entries, and how it
  * streams, if it does (`stream`: the field that names an entry and the
- * events of its own).
+ * events of its own), and the command leaves it lists as actions, by name
+ * (`actions`, SC-33).
  */
 export interface ReadUseCaseOver<
   use_case extends ReadUseCase<Queries[string]>,
@@ -2527,6 +2624,7 @@ export interface ReadUseCaseOver<
   entry extends z.ZodObject,
   closes,
   stream extends LeafStream | undefined = undefined,
+  actions = never,
 > {
   readonly input: input
   readonly [$UseCase]: {
@@ -2534,8 +2632,56 @@ export interface ReadUseCaseOver<
     readonly entry: entry
     readonly closes: closes
     readonly stream: stream
+    readonly actions: actions
   }
 }
+
+/** The command leaves a read leaf lists as its actions, by name (SC-33, D47.4). */
+export type Actions = Readonly<Record<string, AnyCommandLeaf>>
+
+/** The input of a command leaf, as parsed: values read from an entry, already parsed, keep their brands. */
+type CommandLeafInput<leaf> = leaf extends { readonly input: infer input }
+  ? z.output<SchemaOf<input>>
+  : never
+
+/** The applicability a command leaf gives on an entry: its business command's, with its own limits. */
+export type ApplicabilityOfLeaf<leaf> = leaf extends {
+  [$UseCase]: { use_case: infer use_case; limits: infer limits extends string }
+}
+  ? Applicability<OutcomesOf<CommandOfUseCase<use_case>>, LeavesOfUseCase<use_case>, limits>
+  : never
+
+/** The fields that actions add to an entry, under their names: none with none. */
+export type ApplicabilitiesOf<actions> = [actions] extends [never]
+  ? unknown
+  : { readonly [name in keyof actions]: ApplicabilityOfLeaf<actions[name]> }
+
+/**
+ * What a read leaf's creator binds for its actions (SC-33): for each, from
+ * an entry of the query, the input of its leaf, from the entry, the context
+ * or, marked, the caller (`given_by_the_caller`). None with none.
+ */
+export type ActionBinding<entry, actions> = [actions] extends [never]
+  ? { readonly actions?: never }
+  : {
+      readonly actions: {
+        readonly [name in keyof actions]: (entry: entry) => Partly<CommandLeafInput<actions[name]>>
+      }
+    }
+
+/**
+ * The actions of a read that fit its entry are themselves; others ask for a
+ * field no read has, whose name says why and whose type lists the culprits:
+ * a name a field of the entry, read or calculated, already has (SC-33).
+ */
+export type ActionsFit<entry, actions> = [actions] extends [never]
+  ? unknown
+  : [keyof actions & keyof entry] extends [never]
+    ? unknown
+    : {
+        readonly 'an action gives a field of its own, not one the query reads (SC-33)': keyof actions &
+          keyof entry
+      }
 
 /** The identity of a query's entry, as parsed: the value of its `identity` field. */
 type IdentityOfQuery<query> =
@@ -2595,6 +2741,20 @@ export type ReadBinding<input, streams extends boolean> = {
  * (`stream.events`, `stream.facts`, D72.6): the fact goes out as its event,
  * with the entry it leaves and the payload projected from the fact; every
  * other fact as `fact`, the entry alone (A, 14 Nov 2026).
+ *
+ * A read may list, by names of its own, command leaves of its folder as
+ * actions (`actions`, SC-33, D47.4, D51.1; A for the shape, 18 Nov 2026
+ * (2)): the nodes above them are its own, already passed. Its creator binds
+ * each, by part (`actions`), from an entry of the query to the leaf's input,
+ * a field the caller gives marked (`given_by_the_caller`); the library
+ * evaluates, on every entry, in its snapshot, the leaf's limits and, by the
+ * same pass as the write, the nodes and the command of the business below,
+ * and gives the projection, under the action's name, its applicability
+ * (`Applicability`), which the projection writes in the persona's words. An
+ * action's command is of the query's domain, read in the same store; one of
+ * another domain comes with its case. Its port needs an adapter that
+ * evaluates actions (D110): a leaf that lists some over one that does not is
+ * a fault at wiring (CFG-2).
  */
 export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
@@ -2602,22 +2762,31 @@ export type ReadUseCaseOverBuilder<context, closes> = <
   const entry extends z.ZodObject,
   const identity extends FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> = never,
   const events extends StreamEvents<closes> = never,
->(use_case: {
-  readonly use_case: use_case
-  readonly input: input
-  readonly creator: (
-    context: context,
-  ) => (
-    input: z.output<SchemaOf<input>>,
-  ) => ReadBinding<QueryInputOfUseCase<use_case>, [identity] extends [never] ? false : true>
-  readonly entry: entry
-  readonly projection: (entry: QueryEntryOf<QueryOfUseCase<use_case>>) => z.input<entry>
-  readonly stream?: {
-    readonly identity: identity
-    readonly events?: events
-    readonly facts?: FactProjection<FactsOfUseCase<use_case>, events>
-  }
-}) => ReadUseCaseOver<
+  const actions extends Actions = never,
+>(
+  use_case: {
+    readonly use_case: use_case
+    readonly input: input
+    readonly actions?: actions
+  } & {
+    readonly actions?: ActionsFit<QueryEntryOf<QueryOfUseCase<use_case>>, actions>
+    readonly creator: (
+      context: context,
+    ) => (
+      input: z.output<SchemaOf<input>>,
+    ) => ReadBinding<QueryInputOfUseCase<use_case>, [identity] extends [never] ? false : true> &
+      ActionBinding<QueryEntryOf<QueryOfUseCase<use_case>>, NoInfer<actions>>
+    readonly entry: entry
+    readonly projection: (
+      entry: QueryEntryOf<QueryOfUseCase<use_case>> & ApplicabilitiesOf<NoInfer<actions>>,
+    ) => z.input<entry>
+    readonly stream?: {
+      readonly identity: identity
+      readonly events?: events
+      readonly facts?: FactProjection<FactsOfUseCase<use_case>, events>
+    }
+  },
+) => ReadUseCaseOver<
   use_case,
   input,
   entry,
@@ -2627,7 +2796,8 @@ export type ReadUseCaseOverBuilder<context, closes> = <
     : {
         readonly identity: identity
         readonly events: events
-      }
+      },
+  actions
 >
 
 // ---------------------------------------------------------------------------
@@ -2647,7 +2817,8 @@ type AnyCommandLeaf = CommandUseCaseOver<
   CommandInput<z.ZodType>,
   Events,
   unknown,
-  unknown
+  unknown,
+  string
 >
 
 /** Any read leaf, current or of a past major. */
@@ -2656,7 +2827,8 @@ type AnyReadLeaf = ReadUseCaseOver<
   QueryInput<z.ZodType>,
   z.ZodObject,
   unknown,
-  LeafStream | undefined
+  LeafStream | undefined,
+  unknown
 >
 
 /** The events a command leaf declares. */
@@ -3259,14 +3431,16 @@ export type TreeLeaves = Readonly<
         CommandInput<z.ZodType>,
         Events,
         unknown,
-        unknown
+        unknown,
+        string
       >
     | ReadUseCaseOver<
         ReadUseCase<Queries[string]>,
         QueryInput<z.ZodType>,
         z.ZodObject,
         unknown,
-        LeafStream | undefined
+        LeafStream | undefined,
+        unknown
       >
   >
 >
@@ -3333,7 +3507,8 @@ export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>
  * past major at the message's version, the node at the top, which takes
  * what the entry gives, and the current leaves, command and read, one port
  * per name (`LeafPort`). At wiring (CFG-2) it stops on a current
- * leaf that is not the one of its path in the current major. Curried as
+ * leaf that is not the one of its path in the current major, and on a read
+ * leaf that lists actions over a port with no `with_actions` (D110, SC-33). Curried as
  * `command_use_case_ports`: then the ports the tree invokes, and the fact
  * log a leaf that follows reads, by correlation (`Follows`).
  */
@@ -3503,8 +3678,22 @@ export type Pages<input, entry> = (
  * consumer that needs a live view asks for `streamed: true` (`Streamed`).
  * Either way the snapshot is one page, the whole read, and `pages` reads the
  * query in pages (SC-22).
+ *
+ * Over an adapter that evaluates actions (`applicable`, D110), `with_actions`
+ * gives the port again, its entries with the applicability of each action
+ * under its name (SC-33): a command use case of the query's domain and, from
+ * an entry and the context of the read, its input, flat, the fields the
+ * caller gives marked. The library runs, per entry, the same pass as the
+ * write (the nodes of its path, then its command's creator), plans the
+ * leaves known (`PlannedLeaves`) and composes their values.
  */
-export type ReadUseCasePort<query, facts extends Component, streamed extends boolean> =
+export type ReadUseCasePort<
+  query,
+  facts extends Component,
+  streamed extends boolean,
+  applicable extends boolean = false,
+  actions = never,
+> =
   QueryParts<query> extends {
     input: infer input extends z.ZodType
     fields: infer fields extends z.ZodObject
@@ -3518,7 +3707,7 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
           ) => AsyncIterable<
             ReadEvent<
               Envelope<readonly Part<facts>[]>,
-              QueryEntryOf<query>,
+              QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>,
               z.output<fields>[identity & keyof z.output<fields>]
             >
           >) &
@@ -3526,12 +3715,49 @@ export type ReadUseCasePort<query, facts extends Component, streamed extends boo
         : ((
             context: RootContext,
             input: z.input<input>,
-          ) => AsyncIterable<SnapshotEvent<QueryEntryOf<query>>>) & {
+          ) => AsyncIterable<
+            SnapshotEvent<QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>>
+          >) & {
             readonly streamed: false
           }) & {
-        readonly pages: Pages<z.input<input>, QueryEntryOf<query>>
-      }
+        readonly pages: Pages<
+          z.input<input>,
+          QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>
+        >
+      } & (applicable extends true ? WithActions<query, facts, streamed> : unknown)
     : never
+
+/** A read use case port that gives its entries again with actions (SC-33). */
+export interface WithActions<query, facts extends Component, streamed extends boolean> {
+  readonly with_actions: <
+    const actions extends Readonly<Record<string, Action<QueryEntryOf<query>>>>,
+  >(
+    actions: actions & ActionsFit<QueryEntryOf<query>, actions>,
+  ) => ReadUseCasePort<query, facts, streamed, false, actions>
+}
+
+/**
+ * An action of a business read (SC-33): a command use case of the query's
+ * domain and its input for an entry, in the context of the read: the
+ * target the nodes of its path bind and its command's own, flat, a field the
+ * caller gives marked.
+ */
+export interface Action<
+  entry,
+  use_case extends CommandUseCase<Commands[string]> = CommandUseCase<Commands[string]>,
+> {
+  readonly use_case: use_case
+  readonly input: (context: RootContext) => (entry: entry) => Partly<InputOfUseCase<use_case>>
+}
+
+/** The fields that a business read's actions add to an entry: the applicability of each command, no limits. */
+type BusinessApplicabilitiesOf<actions> = [actions] extends [never]
+  ? unknown
+  : {
+      readonly [name in keyof actions]: actions[name] extends { readonly use_case: infer use_case }
+        ? Applicability<OutcomesOf<CommandOfUseCase<use_case>>, LeavesOfUseCase<use_case>>
+        : never
+    }
 
 /** What a consumer of a live view asks of a read use case port. */
 export interface Streamed {
@@ -3543,7 +3769,10 @@ export interface Streamed {
  * strategies it declares, with the registry where the library finds the
  * paths of their selection predicates and of the facts a stream carries (a
  * stream reads the facts of a domain, D64.1). Curried as
- * `command_use_case_ports`.
+ * `command_use_case_ports`. An adapter that evaluates the actions of its
+ * reads (D110, SC-33) gives the fragments of its domain's command
+ * predicates (`applicability`), its commands' own (ADP-8): its ports have
+ * `with_actions`.
  */
 export declare function read_use_case_ports<
   const registry extends Registry,
@@ -3556,16 +3785,32 @@ export declare function read_use_case_ports<
   selection,
   source,
   field,
-  const streams extends Streams<QueriesOf<use_cases>, selection, source, field>,
+  const streams extends Streams<
+    QueriesOf<use_cases>,
+    selection,
+    source,
+    field,
+    FragmentOf<applicability>
+  >,
+  const applicability extends PredicateFragments<PredicatesIn<registry>, unknown> | undefined =
+    undefined,
 >(
-  adapter: ReadAdapter<QueriesOf<use_cases>, selection, source, field> & {
+  adapter: ReadAdapter<
+    QueriesOf<use_cases>,
+    selection,
+    source,
+    field,
+    FragmentOf<applicability>
+  > & {
     readonly streams: streams
+    readonly applicability?: applicability
   },
 ) => {
   readonly [name in keyof use_cases]: ReadUseCasePort<
     QueriesOf<use_cases>[name],
     FactsIn<registry>,
-    name extends keyof streams ? true : false
+    name extends keyof streams ? true : false,
+    applicability extends undefined ? false : true
   >
 }
 

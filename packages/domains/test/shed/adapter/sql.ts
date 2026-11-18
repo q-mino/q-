@@ -388,7 +388,7 @@ const execute =
     })
 
 /** The statement of a planned query: the fields of the candidates the selection keeps, in the order. */
-const select = (plan: wlib.PlannedQuery<sql, sql, sql>): sql =>
+const select = (plan: wlib.PlannedQuery<sql, sql, sql, sql>): sql =>
   sql`select ${join(
     Object.entries(plan.fields).map(([name, field]) => sql`${field} as ${identifier(name)}`),
     ', ',
@@ -399,15 +399,38 @@ const select = (plan: wlib.PlannedQuery<sql, sql, sql>): sql =>
     ', ',
   )}`
 
+/** A row as the driver gives it: its columns by name. */
+const row = z.record(z.string(), z.unknown())
+
+/**
+ * The leaves of a read's actions on its rows (SC-33), in the read's
+ * transaction, so in its snapshot: for each row, its conditions in one
+ * statement, every one, written as one more field. A statement per row: a
+ * member's loans are few.
+ */
+const with_leaves =
+  (tx: Transaction) =>
+  (leaves: wlib.PlannedLeaves<sql> | undefined) =>
+  async (rows: readonly unknown[]): Promise<readonly unknown[]> =>
+    leaves === undefined
+      ? rows
+      : Promise.all(
+          rows.map(async (stored) => {
+            const entry = row.parse(stored)
+            return { ...entry, [leaves.field]: await tx.booleans(leaves.of(entry)) }
+          }),
+        )
+
 /**
  * One statement in one transaction, a snapshot: the fields of the candidates
- * that the selection keeps, in the order, and the position it was read at.
+ * that the selection keeps, in the order, with the leaves of its actions, if
+ * any, and the position it was read at.
  */
 const read =
-  (database: Database): wlib.Read<sql, sql, sql> =>
+  (database: Database): wlib.Read<sql, sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => ({
-      entries: await tx.rows(select(plan)),
+      entries: await with_leaves(tx)(plan.leaves)(await tx.rows(select(plan))),
       position: await tx.position(),
     }))
 
@@ -421,10 +444,12 @@ const the_total = z.tuple([z.strictObject({ total: z.coerce.number().int().min(0
  * is serializable (SC-11), so the two statements read one state.
  */
 const page =
-  (database: Database): wlib.ReadPage<sql, sql, sql> =>
+  (database: Database): wlib.ReadPage<sql, sql, sql, sql> =>
   (plan) =>
     database.transaction(async (tx) => ({
-      entries: await tx.rows(sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`),
+      entries: await with_leaves(tx)(plan.leaves)(
+        await tx.rows(sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`),
+      ),
       total: the_total.parse(
         await tx.rows(sql`select count(*) as total from ${plan.from} where ${plan.selection}`),
       )[0].total,
@@ -741,25 +766,15 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         execute: execute_step(database),
       },
     }),
+    // The member's loans apart: their rows carry the member's buttons
+    // (SC-33), evaluated with the commands' own fragments, in the read's
+    // transaction (ADP-8); the other reads list no actions.
     ...wlib.read_use_case_ports({
       registry: loans_registry,
       versions,
-      use_cases: {
-        the_ongoing_loans_of_a_member,
-        the_reservations_of_a_member,
-        the_reservations_of_a_member_in_the_workshop,
-        the_loans_of_each_tool_this_month,
-      },
+      use_cases: { the_ongoing_loans_of_a_member },
     })({
-      algebra: {
-        ...algebra({
-          ...loan_selection_fragments,
-          ...reservation_selection_fragments,
-          ...loans_tool_selection_fragments,
-        }),
-        after,
-      },
-      calculations: loans_tool_calculation_fragments,
+      algebra: { ...algebra(loan_selection_fragments), after },
       sources: {
         the_ongoing_loans_of_a_member: {
           from: sql`loans as candidate`,
@@ -773,6 +788,33 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
             term: sql`candidate.term`,
           },
         },
+      },
+      read: read(database),
+      page: page(database),
+      // A member's loans are few: a whole read per fact of the node is
+      // cheap, and a fact of `tools` that renames a tool reads again the
+      // name of its rows (SC-19).
+      streams: { the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) } },
+      applicability: loans_fragments,
+    }),
+    ...wlib.read_use_case_ports({
+      registry: loans_registry,
+      versions,
+      use_cases: {
+        the_reservations_of_a_member,
+        the_reservations_of_a_member_in_the_workshop,
+        the_loans_of_each_tool_this_month,
+      },
+    })({
+      algebra: {
+        ...algebra({
+          ...reservation_selection_fragments,
+          ...loans_tool_selection_fragments,
+        }),
+        after,
+      },
+      calculations: loans_tool_calculation_fragments,
+      sources: {
         the_reservations_of_a_member: the_reservation_entry,
         the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
         the_loans_of_each_tool_this_month: {
@@ -785,13 +827,12 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       },
       read: read(database),
       page: page(database),
-      // A member's loans and reservations are few: a whole read per fact of the
-      // node is cheap, and a fact of `tools` that renames a tool reads again
-      // the name of its rows (SC-19). The loans of each tool this month are
-      // only read: the keeper reads them once, and a count over the whole
+      // A member's reservations are few: a whole read per fact of the node
+      // is cheap, and a fact of `tools` that renames a tool reads again the
+      // name of its rows (SC-19). The loans of each tool this month are only
+      // read: the keeper reads them once, and a count over the whole
       // catalogue per fact is not cheap.
       streams: {
-        the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member_in_the_workshop: { strategy: 'composed', log: log(database) },
       },
