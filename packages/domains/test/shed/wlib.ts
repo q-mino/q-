@@ -4048,9 +4048,11 @@ export interface Streamed {
  * paths of their selection predicates and of the facts a stream carries (a
  * stream reads the facts of a domain, D64.1). Curried as
  * `command_use_case_ports`. An adapter that evaluates the actions of its
- * reads (D110, SC-33) gives the fragments of its domain's command
- * predicates (`applicability`), its commands' own (ADP-8): its ports have
- * `with_actions`.
+ * reads (D110, SC-33) declares it query by query, as its streams, since
+ * whether an evaluation per entry is cheap depends on the technology and
+ * the data: for each such query, the fragments of its domain's command
+ * predicates (`applicability`), its commands' own (ADP-8). The port of a
+ * query in it has `with_actions` (A, 18 Nov 2026 (8)).
  */
 export declare function read_use_case_ports<
   const registry extends Registry,
@@ -4068,9 +4070,9 @@ export declare function read_use_case_ports<
     selection,
     source,
     field,
-    FragmentOf<applicability>
+    ApplicabilityFragmentOf<applicability>
   >,
-  const applicability extends PredicateFragments<PredicatesIn<registry>, unknown> | undefined =
+  const applicability extends Applicabilities<QueriesOf<use_cases>, registry> | undefined =
     undefined,
 >(
   adapter: ReadAdapter<
@@ -4078,7 +4080,7 @@ export declare function read_use_case_ports<
     selection,
     source,
     field,
-    FragmentOf<applicability>
+    ApplicabilityFragmentOf<applicability>
   > & {
     readonly streams: streams
     readonly applicability?: applicability
@@ -4088,9 +4090,26 @@ export declare function read_use_case_ports<
     QueriesOf<use_cases>[name],
     FactsIn<registry>,
     name extends keyof streams ? true : false,
-    applicability extends undefined ? false : true
+    name extends ApplicableNames<applicability> ? true : false
   >
 }
+
+/**
+ * The queries whose entries an adapter gives with actions (SC-33), by name,
+ * as its streams: for each, the fragments of its domain's command
+ * predicates. A query may have none.
+ */
+export type Applicabilities<queries extends Queries, registry extends Registry> = {
+  readonly [name in keyof queries]?: PredicateFragments<PredicatesIn<registry>, unknown>
+}
+
+/** The queries an adapter gives with actions, by name; none with none. */
+type ApplicableNames<applicability> = applicability extends undefined ? never : keyof applicability
+
+/** The fragment type of an adapter's applicabilities; none with none. */
+type ApplicabilityFragmentOf<applicability> = applicability extends undefined
+  ? never
+  : FragmentOf<applicability[keyof applicability]>
 
 // ---------------------------------------------------------------------------
 // Effects (DOM-13, DOM-14, DOM-15): a branch queues outbox entries with its

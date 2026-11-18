@@ -694,7 +694,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
       streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
       // The member's buttons on the rows of their loans (SC-33): the
       // commands' own fragments, on the state of the read (ADP-8).
-      applicability: loans_fragments,
+      applicability: { the_ongoing_loans_of_a_member: loans_fragments },
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,

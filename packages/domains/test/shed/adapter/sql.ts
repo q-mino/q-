@@ -909,15 +909,25 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
         execute: execute_step(database),
       },
     }),
-    // The member's loans apart: their rows carry the member's buttons
-    // (SC-33), evaluated with the commands' own fragments, in the read's
-    // transaction (ADP-8); the other reads list no actions.
     ...wlib.read_use_case_ports({
       registry: loans_registry,
       versions,
-      use_cases: { the_ongoing_loans_of_a_member },
+      use_cases: {
+        the_ongoing_loans_of_a_member,
+        the_reservations_of_a_member,
+        the_reservations_of_a_member_in_the_workshop,
+        the_loans_of_each_tool_this_month,
+      },
     })({
-      algebra: { ...algebra(loan_selection_fragments), after },
+      algebra: {
+        ...algebra({
+          ...loan_selection_fragments,
+          ...reservation_selection_fragments,
+          ...loans_tool_selection_fragments,
+        }),
+        after,
+      },
+      calculations: loans_tool_calculation_fragments,
       sources: {
         the_ongoing_loans_of_a_member: {
           from: sql`loans as candidate`,
@@ -931,33 +941,6 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
             term: sql`candidate.term`,
           },
         },
-      },
-      read: read(database),
-      page: page(database),
-      // A member's loans are few: a whole read per fact of the node is
-      // cheap, and a fact of `tools` that renames a tool reads again the
-      // name of its rows (SC-19).
-      streams: { the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) } },
-      applicability: loans_fragments,
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: {
-        the_reservations_of_a_member,
-        the_reservations_of_a_member_in_the_workshop,
-        the_loans_of_each_tool_this_month,
-      },
-    })({
-      algebra: {
-        ...algebra({
-          ...reservation_selection_fragments,
-          ...loans_tool_selection_fragments,
-        }),
-        after,
-      },
-      calculations: loans_tool_calculation_fragments,
-      sources: {
         the_reservations_of_a_member: the_reservation_entry,
         the_reservations_of_a_member_in_the_workshop: the_reservation_entry,
         the_loans_of_each_tool_this_month: {
@@ -970,15 +953,20 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
       },
       read: read(database),
       page: page(database),
-      // A member's reservations are few: a whole read per fact of the node
-      // is cheap, and a fact of `tools` that renames a tool reads again the
-      // name of its rows (SC-19). The loans of each tool this month are only
-      // read: the keeper reads them once, and a count over the whole
-      // catalogue per fact is not cheap.
+      // A member's loans and reservations are few: a whole read per fact of
+      // the node is cheap, and a fact of `tools` that renames a tool reads
+      // again the name of their rows (SC-19). The loans of each tool this
+      // month are only read: the keeper reads them once, and a count over
+      // the whole catalogue per fact is not cheap.
       streams: {
+        the_ongoing_loans_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member: { strategy: 'composed', log: log(database) },
         the_reservations_of_a_member_in_the_workshop: { strategy: 'composed', log: log(database) },
       },
+      // Only the member's loans carry buttons (SC-33): they are few, so
+      // the commands' own fragments run per row in the read's transaction
+      // (ADP-8).
+      applicability: { the_ongoing_loans_of_a_member: loans_fragments },
     }),
   },
 })
