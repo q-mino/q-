@@ -115,3 +115,21 @@ export const notify_the_members_of_a_repair = command_use_case({
 export const continue_the_repair_notice_round = command_use_case({
   command: command.continue_the_repair_notice_round,
 })
+
+/**
+ * A member asks the desk for the week's summary every Monday: Marta, on
+ * Thursday 19 November, gets her first on Monday the 23rd (SC-43).
+ */
+export const begin_a_weekly_summary = command_use_case({
+  command: command.begin_a_weekly_summary,
+})
+
+/**
+ * On a Monday the effect executor comes back (DOM-13): the desk sends the
+ * member the week's summary and waits for the next Monday. The return of
+ * the wait queued by the summary's beginning, and by itself (SC-43).
+ */
+export const sum_up_the_week_for_the_member = command_use_case({
+  command: command.sum_up_the_week_for_the_member,
+  returns_from: effect.wait_until_monday,
+})

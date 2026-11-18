@@ -116,6 +116,37 @@ export const take_the_tool_you_booked = command_use_case_over({
 })
 
 /**
+ * Marta asks the desk for her week every Monday (SC-43): from the next
+ * Monday on, at the start of the shed's day, her phone shows "your week at
+ * the shed", and opens her loans and her reservations, read when she looks.
+ * Asked again, she already gets it.
+ */
+export const send_me_my_week_on_mondays = command_use_case_over({
+  use_case: loans.usecase.begin_a_weekly_summary,
+  input: z.strictObject({}),
+  creator: (context) => () => ({
+    member_id: context.card.id,
+  }),
+  events: {
+    you_will_get_your_week_on_mondays: z.strictObject({ from: wlib.day }),
+    you_already_get_your_week_on_mondays: z.strictObject({}),
+    /** Never in Shed: the desk's two branches cover every member; a leaf still names its rejection. */
+    your_week_cannot_be_sent: z.strictObject({}),
+  },
+  projection: {
+    no_summary_goes_to_the_member_so_one_begins: (fact) => ({
+      event: 'you_will_get_your_week_on_mondays',
+      payload: { from: fact.new_summary.next_monday },
+    }),
+    a_summary_already_goes_to_the_member_so_nothing_changes: () => ({
+      event: 'you_already_get_your_week_on_mondays',
+      payload: {},
+    }),
+    rejected: () => ({ event: 'your_week_cannot_be_sent', payload: {} }),
+  },
+})
+
+/**
  * Marta brings the drill back, and her screen follows what her return sets
  * going (D58.2, A, 16 Nov 2026 (5)): whole, it ends there; damaged, it stays
  * open until the workshop takes the drill in, a fact of `tools` that a

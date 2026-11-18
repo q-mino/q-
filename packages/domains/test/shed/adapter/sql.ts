@@ -162,6 +162,10 @@ const loans_fragments: wlib.PredicateFragments<wlib.PredicatesIn<typeof loans_pr
     sql`exists (select 1 from cancellations where tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) =>
     sql`exists (select 1 from repair_notice_rounds where repair_id = ${p.repair_id})`,
+  'business/loans/predicate/a_weekly_summary_goes_to_the_member': (p) =>
+    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id})`,
+  'business/loans/predicate/the_week_of_the_summary_is_not_over': (p) =>
+    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id} and next_monday + 7 > ${wlib.day_of(p.now)}::date)`,
 }
 
 // The fragments of the selection predicates, grouped by subject (DOM-18): a
@@ -316,6 +320,16 @@ const loans_writes: wlib.FactWrites<wlib.FactsIn<typeof loans_fact>, readonly sq
   ],
   'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round: r }) => [
     sql`update repair_notice_rounds set stage = ${r.progress.stage}, cursor = null, end_date = ${r.progress.end_date} where repair_id = ${r.repair_id}`,
+  ],
+  'business/loans/fact/a_weekly_summary_has_begun': ({ new_summary: w }) => [
+    sql`insert into weekly_summaries (member_id, next_monday) values (${w.member_id}, ${w.next_monday})`,
+  ],
+  'business/loans/fact/the_member_already_had_the_weekly_summary': () => [],
+  'business/loans/fact/the_weeks_summary_has_been_sent': (w) => [
+    sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
+  ],
+  'business/loans/fact/the_week_was_over_before_its_summary': (w) => [
+    sql`update weekly_summaries set next_monday = ${w.next_monday} where member_id = ${w.member_id}`,
   ],
 }
 
@@ -633,7 +647,14 @@ export const stored_versions =
       )
 
 /** The tables the facts write, which a rebuild empties first. */
-const the_tables = ['tools', 'loans', 'reservations', 'cancellations', 'repair_notice_rounds']
+const the_tables = [
+  'tools',
+  'loans',
+  'reservations',
+  'cancellations',
+  'repair_notice_rounds',
+  'weekly_summaries',
+]
 
 /** Statements run one after the other, in a transaction. */
 const run_in_order =

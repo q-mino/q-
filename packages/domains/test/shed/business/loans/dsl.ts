@@ -155,3 +155,26 @@ export const the_wait_for_the_overdue_put_off_on_a_day = (wait: {
   readonly loan_id: id.loan_id
   readonly day: day
 }): string => JSON.stringify([wait.loan_id, wait.day])
+
+/** The Monday of the week of a day, the day itself on a Monday: the desk's week starts on Monday (SC-43). */
+export const the_monday_of_the_week_of = (the_day: day): day =>
+  days_after(the_day, -((new Date(Date.parse(`${the_day}T00:00:00Z`)).getUTCDay() + 6) % 7))
+
+/** The first Monday after a day, never the day itself (SC-43). */
+export const the_monday_after = (the_day: day): day =>
+  days_after(the_monday_of_the_week_of(the_day), 7)
+
+/** The week of a Monday is not over on a day: the day is before the next Monday. */
+export const the_week_is_not_over_on =
+  (the_day: day) =>
+  (monday: day): boolean =>
+    the_day < days_after(monday, 7)
+
+/**
+ * The id of a member's wait or summary of a Monday: one per member and
+ * Monday, unique per effect (DOM-13, D48), encoded with no ambiguity.
+ */
+export const the_summary_of_the_week_of_a_member = (summary: {
+  readonly member_id: id.member_id
+  readonly monday: day
+}): string => JSON.stringify([summary.member_id, summary.monday])

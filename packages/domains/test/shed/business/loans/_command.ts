@@ -402,3 +402,73 @@ export const continue_the_repair_notice_round_input = command.continue_the_repai
 export type continue_the_repair_notice_round_input = z.output<
   typeof continue_the_repair_notice_round_input
 >
+
+/**
+ * The desk sends this member no week's summary yet.
+ *
+ * @see {@link command.no_weekly_summary_goes_to_the_member}
+ */
+export const no_weekly_summary_goes_to_the_member = command.no_weekly_summary_goes_to_the_member
+export type no_weekly_summary_goes_to_the_member = z.output<
+  typeof no_weekly_summary_goes_to_the_member
+>
+
+/**
+ * The desk already sends this member the week's summary.
+ *
+ * @see {@link command.a_weekly_summary_already_goes_to_the_member}
+ */
+export const a_weekly_summary_already_goes_to_the_member =
+  command.a_weekly_summary_already_goes_to_the_member
+export type a_weekly_summary_already_goes_to_the_member = z.output<
+  typeof a_weekly_summary_already_goes_to_the_member
+>
+
+/**
+ * A member asks the desk for the week's summary every Monday.
+ *
+ * @see {@link command.begin_a_weekly_summary}
+ */
+export const begin_a_weekly_summary = command.begin_a_weekly_summary
+
+/**
+ * The input of `begin_a_weekly_summary`, declared inline.
+ *
+ * @see {@link command.begin_a_weekly_summary}
+ */
+export const begin_a_weekly_summary_input = command.begin_a_weekly_summary.input
+export type begin_a_weekly_summary_input = z.output<typeof begin_a_weekly_summary_input>
+
+/**
+ * The week of the Monday the member's summary waits for is not over.
+ *
+ * @see {@link command.the_week_of_the_summary_is_on}
+ */
+export const the_week_of_the_summary_is_on = command.the_week_of_the_summary_is_on
+export type the_week_of_the_summary_is_on = z.output<typeof the_week_of_the_summary_is_on>
+
+/**
+ * The week of the Monday the member's summary waits for is over.
+ *
+ * @see {@link command.the_week_of_the_summary_is_over}
+ */
+export const the_week_of_the_summary_is_over = command.the_week_of_the_summary_is_over
+export type the_week_of_the_summary_is_over = z.output<typeof the_week_of_the_summary_is_over>
+
+/**
+ * On a Monday the desk sums up the week for the member: the summary, and the
+ * wait for the next Monday.
+ *
+ * @see {@link command.sum_up_the_week_for_the_member}
+ */
+export const sum_up_the_week_for_the_member = command.sum_up_the_week_for_the_member
+
+/**
+ * The input of `sum_up_the_week_for_the_member`, declared inline.
+ *
+ * @see {@link command.sum_up_the_week_for_the_member}
+ */
+export const sum_up_the_week_for_the_member_input = command.sum_up_the_week_for_the_member.input
+export type sum_up_the_week_for_the_member_input = z.output<
+  typeof sum_up_the_week_for_the_member_input
+>

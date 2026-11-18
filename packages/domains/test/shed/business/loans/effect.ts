@@ -60,3 +60,29 @@ export const send_the_repair_notice = effect({
     day: wlib.day,
   }),
 })
+
+/**
+ * Wait until a Monday, at the start of the shed's day. No world: the
+ * executor gives the payload back to its return,
+ * `sum_up_the_week_for_the_member`, which sends the week's summary and
+ * queues the wait for the next Monday (SC-43): a wait whose return queues
+ * the next.
+ */
+export const wait_until_monday = effect({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+  }),
+})
+
+/**
+ * Marta reads on her phone "your week at the shed, from Monday 23
+ * November": the phone opens her loans and her reservations, read when she
+ * looks (SC-43). No return: nothing comes back to `loans`.
+ */
+export const send_the_weeks_summary = effect({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+  }),
+})

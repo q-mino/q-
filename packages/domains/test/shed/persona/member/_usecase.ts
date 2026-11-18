@@ -151,3 +151,18 @@ export const the_shelf = usecase.the_shelf
  */
 export const the_shelf_input = usecase.the_shelf.input
 export type the_shelf_input = z.output<typeof the_shelf_input>
+
+/**
+ * Marta asks the desk for her week every Monday.
+ *
+ * @see {@link usecase.send_me_my_week_on_mondays}
+ */
+export const send_me_my_week_on_mondays = usecase.send_me_my_week_on_mondays
+
+/**
+ * The input of `send_me_my_week_on_mondays`, declared inline.
+ *
+ * @see {@link usecase.send_me_my_week_on_mondays}
+ */
+export const send_me_my_week_on_mondays_input = usecase.send_me_my_week_on_mondays.input
+export type send_me_my_week_on_mondays_input = z.output<typeof send_me_my_week_on_mondays_input>

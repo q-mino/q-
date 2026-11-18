@@ -819,3 +819,169 @@ export const continue_the_repair_notice_round = cursor_step({
     },
   }),
 })
+
+/** The desk sends this member no week's summary yet. */
+export const no_weekly_summary_goes_to_the_member = AND({
+  no_summary_goes_to_the_requested_member: NOT(predicate.a_weekly_summary_goes_to_the_member),
+})
+
+/** The desk already sends this member the week's summary. */
+export const a_weekly_summary_already_goes_to_the_member = AND({
+  a_summary_goes_to_the_requested_member: predicate.a_weekly_summary_goes_to_the_member,
+})
+
+/**
+ * A member asks the desk for the week's summary every Monday (SC-43): the
+ * summary begins and waits for the next Monday, at the start of the shed's
+ * day; its id, the member and that Monday, one wait per member and Monday
+ * (D48). Asked again, nothing changes (D95): no second chain of waits.
+ */
+export const begin_a_weekly_summary = command({
+  input: z.strictObject({
+    member_id: id.member_id,
+  }),
+  outcomes: {
+    no_summary_goes_to_the_member_so_one_begins: [
+      no_weekly_summary_goes_to_the_member,
+      fact.a_weekly_summary_has_begun,
+      pick(effect, 'wait_until_monday'),
+    ],
+    a_summary_already_goes_to_the_member_so_nothing_changes: [
+      a_weekly_summary_already_goes_to_the_member,
+      fact.the_member_already_had_the_weekly_summary,
+    ],
+  },
+  creator: (context) => (input) => ({
+    no_summary_goes_to_the_member_so_one_begins: [
+      { no_summary_goes_to_the_requested_member: { member_id: input.member_id } },
+      {
+        new_summary: {
+          member_id: input.member_id,
+          next_monday: dsl.the_monday_after(dsl.today(context.now)),
+        },
+      },
+      {
+        wait_until_monday: {
+          id: dsl.the_summary_of_the_week_of_a_member({
+            member_id: input.member_id,
+            monday: dsl.the_monday_after(dsl.today(context.now)),
+          }),
+          payload: {
+            member_id: input.member_id,
+            monday: dsl.the_monday_after(dsl.today(context.now)),
+          },
+          not_before: wlib.start_of(context.time_zone)(
+            dsl.the_monday_after(dsl.today(context.now)),
+          ),
+        },
+      },
+    ],
+    a_summary_already_goes_to_the_member_so_nothing_changes: [
+      { a_summary_goes_to_the_requested_member: { member_id: input.member_id } },
+      { member_id: input.member_id },
+    ],
+  }),
+})
+
+/** The week of the Monday the member's summary waits for is not over: the summary goes. */
+export const the_week_of_the_summary_is_on = AND({
+  a_summary_goes_to_the_requested_member: predicate.a_weekly_summary_goes_to_the_member,
+  its_week_is_not_over: predicate.the_week_of_the_summary_is_not_over,
+})
+
+/** The week of the Monday the member's summary waits for is over: the wait came late. */
+export const the_week_of_the_summary_is_over = AND({
+  a_summary_goes_to_the_requested_member: predicate.a_weekly_summary_goes_to_the_member,
+  its_week_is_over: NOT(predicate.the_week_of_the_summary_is_not_over),
+})
+
+/**
+ * On a Monday the effect executor comes back (DOM-13), and the desk sums up
+ * the week for the member: it sends the week's summary and waits for the
+ * next Monday, the first after the executor's `now`: a wait whose return
+ * queues the next (SC-43). An entry goes late, never skipped (DOM-13): a
+ * wait that comes after its week is over sends no summary of a past week
+ * (D95), and awaits the Monday of the current week, which is past, so it
+ * goes at once and tells this week; after a downtime of three weeks the
+ * member gets one summary, of the week they are in, never one per week
+ * missed. Each wait's id is the member and its Monday (D48), so a Monday's
+ * return delivered twice is the duplicate branch (DOM-11), never a second
+ * chain. Its input is the payload of the wait, given back by the executor;
+ * its operation is the entry's (DOM-14).
+ */
+export const sum_up_the_week_for_the_member = command({
+  input: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+  }),
+  outcomes: {
+    the_week_is_on_so_the_summary_goes: [
+      the_week_of_the_summary_is_on,
+      fact.the_weeks_summary_has_been_sent,
+      pick(effect, 'send_the_weeks_summary', 'wait_until_monday'),
+    ],
+    the_week_is_over_so_this_weeks_monday_is_awaited: [
+      the_week_of_the_summary_is_over,
+      fact.the_week_was_over_before_its_summary,
+      pick(effect, 'wait_until_monday'),
+    ],
+  },
+  creator: (context) => (input) => ({
+    the_week_is_on_so_the_summary_goes: [
+      {
+        a_summary_goes_to_the_requested_member: { member_id: input.member_id },
+        its_week_is_not_over: { member_id: input.member_id, now: context.now },
+      },
+      {
+        member_id: input.member_id,
+        monday: input.monday,
+        next_monday: dsl.the_monday_after(dsl.today(context.now)),
+      },
+      {
+        send_the_weeks_summary: {
+          id: dsl.the_summary_of_the_week_of_a_member(input),
+          payload: { member_id: input.member_id, monday: input.monday },
+        },
+        wait_until_monday: {
+          id: dsl.the_summary_of_the_week_of_a_member({
+            member_id: input.member_id,
+            monday: dsl.the_monday_after(dsl.today(context.now)),
+          }),
+          payload: {
+            member_id: input.member_id,
+            monday: dsl.the_monday_after(dsl.today(context.now)),
+          },
+          not_before: wlib.start_of(context.time_zone)(
+            dsl.the_monday_after(dsl.today(context.now)),
+          ),
+        },
+      },
+    ],
+    the_week_is_over_so_this_weeks_monday_is_awaited: [
+      {
+        a_summary_goes_to_the_requested_member: { member_id: input.member_id },
+        its_week_is_over: { member_id: input.member_id, now: context.now },
+      },
+      {
+        member_id: input.member_id,
+        monday: input.monday,
+        next_monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+      },
+      {
+        wait_until_monday: {
+          id: dsl.the_summary_of_the_week_of_a_member({
+            member_id: input.member_id,
+            monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+          }),
+          payload: {
+            member_id: input.member_id,
+            monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+          },
+          not_before: wlib.start_of(context.time_zone)(
+            dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+          ),
+        },
+      },
+    ],
+  }),
+})

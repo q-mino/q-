@@ -243,3 +243,14 @@ export const repair_notice_round_under_way = repair_notice_round.extend({
 export const completed_repair_notice_round = repair_notice_round.extend({
   progress: repair_notice_round_complete,
 })
+
+/**
+ * The week's summary the desk sends a member every Monday, which the member
+ * asked for (SC-43): who gets it, and the Monday it waits for, at the start
+ * of the shed's day. One per member; it goes on until the member stops it
+ * (with its case).
+ */
+export const weekly_summary = z.strictObject({
+  member_id: id.member_id,
+  next_monday: day,
+})

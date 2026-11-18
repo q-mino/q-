@@ -196,3 +196,25 @@ export const the_notice_round_of_the_repair_has_begun =
 export type the_notice_round_of_the_repair_has_begun = z.output<
   typeof the_notice_round_of_the_repair_has_begun
 >
+
+/**
+ * The desk sends this member the week's summary every Monday.
+ *
+ * @see {@link predicate.a_weekly_summary_goes_to_the_member}
+ */
+export const a_weekly_summary_goes_to_the_member =
+  predicate.a_weekly_summary_goes_to_the_member.brand<'business/loans/predicate/a_weekly_summary_goes_to_the_member'>()
+export type a_weekly_summary_goes_to_the_member = z.output<
+  typeof a_weekly_summary_goes_to_the_member
+>
+
+/**
+ * The week of the Monday the member's summary waits for is not over.
+ *
+ * @see {@link predicate.the_week_of_the_summary_is_not_over}
+ */
+export const the_week_of_the_summary_is_not_over =
+  predicate.the_week_of_the_summary_is_not_over.brand<'business/loans/predicate/the_week_of_the_summary_is_not_over'>()
+export type the_week_of_the_summary_is_not_over = z.output<
+  typeof the_week_of_the_summary_is_not_over
+>

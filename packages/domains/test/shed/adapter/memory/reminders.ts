@@ -30,8 +30,20 @@ export interface RepairNotice {
   readonly day: wlib.day
 }
 
+/**
+ * The week's summary as a phone receives it: the week, from its Monday; the
+ * phone opens the member's loans and reservations, read when they look
+ * (SC-43).
+ */
+export interface WeeksSummary {
+  readonly message: 'weeks_summary'
+  readonly key: string
+  readonly phone: string
+  readonly monday: wlib.day
+}
+
 /** What a phone receives from the shed. */
-export type Message = Reminder | RepairNotice
+export type Message = Reminder | RepairNotice | WeeksSummary
 
 /** What the network does with the next message, as a test chooses. */
 export type Network = 'delivers' | 'is_down' | 'gives_up'
@@ -104,5 +116,24 @@ export const send_the_repair_notice =
         phone: phone,
         tool_name: get().tools.get(entry.payload.tool_id)?.name ?? '',
         day: entry.payload.day,
+      }),
+    })
+
+/**
+ * Sends Marta "your week at the shed, from Monday 23 November", at least
+ * once: the key, the member and the Monday, lets the network drop a double.
+ * The summary carries the week only; her phone reads the rest when she
+ * opens it, so it is never a week stale (SC-43).
+ */
+export const send_the_weeks_summary =
+  (phones: Phones): wlib.Delivery<typeof loans_effect.send_the_weeks_summary, never> =>
+  (entry) =>
+    send(phones)({
+      member_id: entry.payload.member_id,
+      message: (phone) => ({
+        message: 'weeks_summary',
+        key: `business/loans/effect/send_the_weeks_summary/${entry.id}`,
+        phone: phone,
+        monday: entry.payload.monday,
       }),
     })

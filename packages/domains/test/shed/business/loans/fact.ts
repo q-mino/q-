@@ -271,3 +271,45 @@ export const the_repair_notice_round_is_complete = fact({
     completed_round: value.completed_repair_notice_round.pick({ repair_id: true, progress: true }),
   }),
 })
+
+/**
+ * The desk will send a member the week's summary every Monday, as they
+ * asked: the summary, waiting for the next Monday (SC-43).
+ */
+export const a_weekly_summary_has_begun = fact({
+  payload: z.strictObject({
+    new_summary: value.weekly_summary,
+  }),
+})
+
+/** The member asked again for the week's summary they already get: nothing changes (D95). */
+export const the_member_already_had_the_weekly_summary = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+  }),
+})
+
+/**
+ * On a Monday the desk sent a member the week's summary, and waits for the
+ * next Monday: the Monday sent, and the one now awaited (SC-43).
+ */
+export const the_weeks_summary_has_been_sent = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+    next_monday: wlib.day,
+  }),
+})
+
+/**
+ * The Monday's wait came after its week was over (the executor was down):
+ * no summary of a past week; the desk awaits the Monday of the current
+ * week, which goes at once (SC-43, D95).
+ */
+export const the_week_was_over_before_its_summary = fact({
+  payload: z.strictObject({
+    member_id: id.member_id,
+    monday: wlib.day,
+    next_monday: wlib.day,
+  }),
+})

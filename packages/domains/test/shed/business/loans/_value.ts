@@ -325,3 +325,11 @@ export type repair_notice_round_under_way = z.output<typeof repair_notice_round_
  */
 export const completed_repair_notice_round = value.completed_repair_notice_round
 export type completed_repair_notice_round = z.output<typeof completed_repair_notice_round>
+
+/**
+ * The week's summary the desk sends a member every Monday.
+ *
+ * @see {@link value.weekly_summary}
+ */
+export const weekly_summary = value.weekly_summary
+export type weekly_summary = z.output<typeof weekly_summary>

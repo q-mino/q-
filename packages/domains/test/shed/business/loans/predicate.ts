@@ -168,3 +168,21 @@ export const the_notice_round_of_the_repair_has_begun = predicate({
     repair_id: tools.id.repair_id,
   }),
 })
+
+/** The desk sends this member the week's summary every Monday (SC-43). */
+export const a_weekly_summary_goes_to_the_member = predicate({
+  parameters: z.strictObject({
+    member_id: id.member_id,
+  }),
+})
+
+/**
+ * The week of the Monday the member's summary waits for is not over at this
+ * instant: a summary sent in its week still tells the week (SC-43).
+ */
+export const the_week_of_the_summary_is_not_over = predicate({
+  parameters: z.strictObject({
+    member_id: id.member_id,
+    now: wlib.date_time,
+  }),
+})

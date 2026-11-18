@@ -19,6 +19,7 @@ import { memory_adapter, type Cell } from './adapter/memory/index.ts'
 import {
   send_the_due_date_reminder,
   send_the_repair_notice,
+  send_the_weeks_summary,
   type Phones,
 } from './adapter/memory/reminders.ts'
 import { registry as loans_registry } from './business/loans/_registry.ts'
@@ -27,6 +28,7 @@ import { majors as tools_majors } from './business/tools/_majors.ts'
 import {
   declare_the_loan_overdue,
   remind_the_member_of_the_due_date,
+  sum_up_the_week_for_the_member,
 } from './business/loans/_usecase.ts'
 import { persona } from './persona/_node.ts'
 import { registry as persona_registry } from './persona/_registry.ts'
@@ -39,6 +41,7 @@ import {
   my_reservations,
   my_reservations_in_the_workshop,
   return_a_tool,
+  send_me_my_week_on_mondays,
   take_the_tool_you_booked,
   the_shelf,
 } from './persona/member/_usecase.ts'
@@ -101,6 +104,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         my_reservations,
         my_reservations_in_the_workshop,
         the_shelf,
+        send_me_my_week_on_mondays,
       },
     })({ invoked, log: adapter.log }),
     keeper: wlib.tree_ports({
@@ -136,7 +140,11 @@ export const shed = (cell: Cell) => async (world: World) => {
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
       versions,
-      returns: { remind_the_member_of_the_due_date, declare_the_loan_overdue },
+      returns: {
+        remind_the_member_of_the_due_date,
+        declare_the_loan_overdue,
+        sum_up_the_week_for_the_member,
+      },
     })({
       'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
       'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
@@ -146,6 +154,8 @@ export const shed = (cell: Cell) => async (world: World) => {
       'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(
         world.phones,
       ),
+      'business/loans/effect/wait_until_monday': wlib.returns_the_payload,
+      'business/loans/effect/send_the_weeks_summary': send_the_weeks_summary(world.phones),
     })({
       outbox: cell.outbox,
       returns: adapter.loans,

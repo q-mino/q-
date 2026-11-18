@@ -127,3 +127,18 @@ export const notify_the_members_of_a_repair = usecase.notify_the_members_of_a_re
  * @see {@link usecase.continue_the_repair_notice_round}
  */
 export const continue_the_repair_notice_round = usecase.continue_the_repair_notice_round
+
+/**
+ * A member asks the desk for the week's summary every Monday.
+ *
+ * @see {@link usecase.begin_a_weekly_summary}
+ */
+export const begin_a_weekly_summary = usecase.begin_a_weekly_summary
+
+/**
+ * On a Monday the desk sends the member the week's summary and waits for
+ * the next Monday. The return of the wait.
+ *
+ * @see {@link usecase.sum_up_the_week_for_the_member}
+ */
+export const sum_up_the_week_for_the_member = usecase.sum_up_the_week_for_the_member

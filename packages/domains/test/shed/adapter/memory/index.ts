@@ -33,6 +33,7 @@ import {
   the_catalogue,
 } from '../../business/tools/_usecase.ts'
 import {
+  begin_a_weekly_summary,
   borrow_a_tool,
   lend_a_booked_tool,
   cancel_the_reservations_of_a_tool,
@@ -43,6 +44,7 @@ import {
   remind_the_member_of_the_due_date,
   reserve_a_tool,
   return_a_tool,
+  sum_up_the_week_for_the_member,
   the_ongoing_loans_of_a_member,
   the_reservations_of_a_member,
   the_reservations_of_a_member_in_the_workshop,
@@ -616,6 +618,8 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
         continue_the_cancellation_of_reservations,
         notify_the_members_of_a_repair,
         continue_the_repair_notice_round,
+        begin_a_weekly_summary,
+        sum_up_the_week_for_the_member,
       },
     })({
       algebra: algebra(loans_fragments),

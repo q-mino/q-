@@ -8,7 +8,7 @@
 import type * as wlib from '../../wlib.ts'
 import type * as loans_fact from '../../business/loans/_fact.ts'
 import type * as loans_predicate from '../../business/loans/_predicate.ts'
-import type { loan_id, reservation_id } from '../../business/loans/_id.ts'
+import type { loan_id, member_id, reservation_id } from '../../business/loans/_id.ts'
 import type {
   cancellation_of_reservations,
   cancellation_progress,
@@ -18,6 +18,7 @@ import type {
   repair_notice_round_progress,
   reservation,
   reservation_progress,
+  weekly_summary,
 } from '../../business/loans/_value.ts'
 import type {
   the_ongoing_loans_of_a_member,
@@ -48,13 +49,15 @@ import type { ToolsState } from './tools.ts'
 
 /**
  * The loans and the reservations, by id; the desk's work sheets, by tool;
- * its rounds of the notices of a repair, by stay in repair.
+ * its rounds of the notices of a repair, by stay in repair; the week's
+ * summaries it sends, by member (SC-43).
  */
 export interface LoansState {
   readonly loans: ReadonlyMap<loan_id, loan>
   readonly reservations: ReadonlyMap<reservation_id, reservation>
   readonly cancellations: ReadonlyMap<tool_id, cancellation_of_reservations>
   readonly notice_rounds: ReadonlyMap<repair_id, repair_notice_round>
+  readonly weekly_summaries: ReadonlyMap<member_id, weekly_summary>
 }
 
 /** What the predicates of `loans` read: its state, and the state of `tools` for its view of the tools. */
@@ -129,6 +132,15 @@ export const loans_fragments: wlib.PredicateFragments<
       state.cancellations.has(p.tool_id),
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun': (p) => (state) =>
     state.notice_rounds.has(p.repair_id),
+  'business/loans/predicate/a_weekly_summary_goes_to_the_member': (p) => (state) =>
+    state.weekly_summaries.has(p.member_id),
+  'business/loans/predicate/the_week_of_the_summary_is_not_over': (p) => (state) => {
+    const the_summary = state.weekly_summaries.get(p.member_id)
+    return (
+      the_summary !== undefined &&
+      loans_dsl.the_week_is_not_over_on(loans_dsl.today(p.now))(the_summary.next_monday)
+    )
+  },
 }
 
 /** The name of a tool, read from the catalogue of `tools`: the link of the view of `loans`. */
@@ -386,6 +398,20 @@ const with_the_sheet_progress =
         }
   }
 
+/** A member's summary now waits for its next Monday. */
+const with_the_next_monday =
+  (summary: {
+    readonly member_id: member_id
+    readonly next_monday: weekly_summary['next_monday']
+  }) =>
+  (state: LoansState): LoansState => ({
+    ...state,
+    weekly_summaries: new Map(state.weekly_summaries).set(summary.member_id, {
+      member_id: summary.member_id,
+      next_monday: summary.next_monday,
+    }),
+  })
+
 /** A round's change of stage, by nesting: the stay in repair, the tool and the start date stay. */
 const with_the_round_progress =
   (changed: { readonly repair_id: repair_id; readonly progress: repair_notice_round_progress }) =>
@@ -465,4 +491,14 @@ export const loans_writes: wlib.FactWrites<
       with_the_round_progress({ repair_id, progress: { stage: 'notifying', cursor } })(state),
   'business/loans/fact/the_repair_notice_round_is_complete': ({ completed_round }) =>
     with_the_round_progress(completed_round),
+  'business/loans/fact/a_weekly_summary_has_begun':
+    ({ new_summary }) =>
+    (state) => ({
+      ...state,
+      weekly_summaries: new Map(state.weekly_summaries).set(new_summary.member_id, new_summary),
+    }),
+  'business/loans/fact/the_member_already_had_the_weekly_summary': () => (state) => state,
+  'business/loans/fact/the_weeks_summary_has_been_sent': (sent) => with_the_next_monday(sent),
+  'business/loans/fact/the_week_was_over_before_its_summary': (missed) =>
+    with_the_next_monday(missed),
 }

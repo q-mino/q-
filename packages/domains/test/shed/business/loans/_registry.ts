@@ -65,6 +65,7 @@ export const registry = {
   'business/loans/value/repair_notice_round': value.repair_notice_round,
   'business/loans/value/repair_notice_round_under_way': value.repair_notice_round_under_way,
   'business/loans/value/completed_repair_notice_round': value.completed_repair_notice_round,
+  'business/loans/value/weekly_summary': value.weekly_summary,
   'business/loans/fact/a_tool_has_been_lent': fact.a_tool_has_been_lent,
   'business/loans/fact/the_member_already_has_the_tool': fact.the_member_already_has_the_tool,
   'business/loans/fact/a_tool_has_been_booked': fact.a_tool_has_been_booked,
@@ -106,11 +107,19 @@ export const registry = {
     fact.the_repair_notice_round_has_advanced,
   'business/loans/fact/the_repair_notice_round_is_complete':
     fact.the_repair_notice_round_is_complete,
+  'business/loans/fact/a_weekly_summary_has_begun': fact.a_weekly_summary_has_begun,
+  'business/loans/fact/the_member_already_had_the_weekly_summary':
+    fact.the_member_already_had_the_weekly_summary,
+  'business/loans/fact/the_weeks_summary_has_been_sent': fact.the_weeks_summary_has_been_sent,
+  'business/loans/fact/the_week_was_over_before_its_summary':
+    fact.the_week_was_over_before_its_summary,
   'business/loans/effect/wait_until_the_eve_of_the_due_date':
     effect.wait_until_the_eve_of_the_due_date,
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
   'business/loans/effect/wait_until_the_due_date': effect.wait_until_the_due_date,
   'business/loans/effect/send_the_repair_notice': effect.send_the_repair_notice,
+  'business/loans/effect/wait_until_monday': effect.wait_until_monday,
+  'business/loans/effect/send_the_weeks_summary': effect.send_the_weeks_summary,
   'business/loans/predicate/a_tool_has_this_id': predicate.a_tool_has_this_id,
   'business/loans/predicate/the_tool_is_in_service': predicate.the_tool_is_in_service,
   'business/loans/predicate/a_loan_has_this_id': predicate.a_loan_has_this_id,
@@ -140,6 +149,10 @@ export const registry = {
     predicate.a_cancellation_of_the_reservations_of_the_tool_has_begun,
   'business/loans/predicate/the_notice_round_of_the_repair_has_begun':
     predicate.the_notice_round_of_the_repair_has_begun,
+  'business/loans/predicate/a_weekly_summary_goes_to_the_member':
+    predicate.a_weekly_summary_goes_to_the_member,
+  'business/loans/predicate/the_week_of_the_summary_is_not_over':
+    predicate.the_week_of_the_summary_is_not_over,
   'business/loans/command/the_tool_can_be_lent': command.the_tool_can_be_lent,
   'business/loans/command/borrow_a_tool': command.borrow_a_tool,
   'business/loans/command/borrow_a_tool_input': command.borrow_a_tool_input,
@@ -198,6 +211,17 @@ export const registry = {
     command.continue_the_repair_notice_round,
   'business/loans/command/continue_the_repair_notice_round_input':
     command.continue_the_repair_notice_round_input,
+  'business/loans/command/no_weekly_summary_goes_to_the_member':
+    command.no_weekly_summary_goes_to_the_member,
+  'business/loans/command/a_weekly_summary_already_goes_to_the_member':
+    command.a_weekly_summary_already_goes_to_the_member,
+  'business/loans/command/begin_a_weekly_summary': command.begin_a_weekly_summary,
+  'business/loans/command/begin_a_weekly_summary_input': command.begin_a_weekly_summary_input,
+  'business/loans/command/the_week_of_the_summary_is_on': command.the_week_of_the_summary_is_on,
+  'business/loans/command/the_week_of_the_summary_is_over': command.the_week_of_the_summary_is_over,
+  'business/loans/command/sum_up_the_week_for_the_member': command.sum_up_the_week_for_the_member,
+  'business/loans/command/sum_up_the_week_for_the_member_input':
+    command.sum_up_the_week_for_the_member_input,
   'business/loans/selection/loan/the_loan_is_ongoing': loan_selection.the_loan_is_ongoing,
   'business/loans/selection/loan/the_loan_is_of_this_member':
     loan_selection.the_loan_is_of_this_member,
@@ -248,6 +272,8 @@ export const registry = {
   'business/loans/usecase/notify_the_members_of_a_repair': usecase.notify_the_members_of_a_repair,
   'business/loans/usecase/continue_the_repair_notice_round':
     usecase.continue_the_repair_notice_round,
+  'business/loans/usecase/begin_a_weekly_summary': usecase.begin_a_weekly_summary,
+  'business/loans/usecase/sum_up_the_week_for_the_member': usecase.sum_up_the_week_for_the_member,
   'business/loans/usecase/the_ongoing_loans_of_a_member': usecase.the_ongoing_loans_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member': usecase.the_reservations_of_a_member,
   'business/loans/usecase/the_reservations_of_a_member_in_the_workshop':

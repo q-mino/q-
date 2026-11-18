@@ -309,3 +309,43 @@ export const the_repair_notice_round_is_complete =
 export type the_repair_notice_round_is_complete = z.output<
   typeof the_repair_notice_round_is_complete
 >
+
+/**
+ * The desk will send a member the week's summary every Monday.
+ *
+ * @see {@link fact.a_weekly_summary_has_begun}
+ */
+export const a_weekly_summary_has_begun =
+  fact.a_weekly_summary_has_begun.brand<'business/loans/fact/a_weekly_summary_has_begun'>()
+export type a_weekly_summary_has_begun = z.output<typeof a_weekly_summary_has_begun>
+
+/**
+ * The member asked again for the week's summary they already get.
+ *
+ * @see {@link fact.the_member_already_had_the_weekly_summary}
+ */
+export const the_member_already_had_the_weekly_summary =
+  fact.the_member_already_had_the_weekly_summary.brand<'business/loans/fact/the_member_already_had_the_weekly_summary'>()
+export type the_member_already_had_the_weekly_summary = z.output<
+  typeof the_member_already_had_the_weekly_summary
+>
+
+/**
+ * On a Monday the desk sent a member the week's summary.
+ *
+ * @see {@link fact.the_weeks_summary_has_been_sent}
+ */
+export const the_weeks_summary_has_been_sent =
+  fact.the_weeks_summary_has_been_sent.brand<'business/loans/fact/the_weeks_summary_has_been_sent'>()
+export type the_weeks_summary_has_been_sent = z.output<typeof the_weeks_summary_has_been_sent>
+
+/**
+ * The Monday's wait came after its week was over.
+ *
+ * @see {@link fact.the_week_was_over_before_its_summary}
+ */
+export const the_week_was_over_before_its_summary =
+  fact.the_week_was_over_before_its_summary.brand<'business/loans/fact/the_week_was_over_before_its_summary'>()
+export type the_week_was_over_before_its_summary = z.output<
+  typeof the_week_was_over_before_its_summary
+>
