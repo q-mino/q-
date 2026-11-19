@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 
 // SC-26 (part 6.1): the base events, which no leaf declares (PER-5, D106):
@@ -89,7 +89,7 @@ describe('SC-26, the base events', () => {
       { event: 'invalid_request', reason: 'input_not_in_schema' },
     ])
     expect(
-      await all(shed.visitor.the_catalogue(when, {}, wlib.cursor.parse('bm90IGEgY3Vyc29y'))),
+      await all(shed.visitor.the_catalogue(when, {}, zz.cursor.parse('bm90IGEgY3Vyc29y'))),
     ).toEqual([{ event: 'invalid_request', reason: 'cursor_not_in_schema' }])
   })
 

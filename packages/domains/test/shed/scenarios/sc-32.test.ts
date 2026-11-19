@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { accounts, all, first, followed, oracle, pull, type Who } from './oracle.ts'
 
 // SC-32 (the refusal with part 6.2; the shelf live and a resume refused with
@@ -130,7 +130,7 @@ describe('SC-32, a limit on a read', () => {
         shed.member.the_shelf(
           shed.as(marta, '2.0.0').when('2027-04-01T00:30:00-04:00'),
           {},
-          wlib.position.parse('2'),
+          zz.position.parse('2'),
         ),
       ),
     ).toEqual([{ event: 'refused', reasons: ['the_member_card_is_valid_today'] }])

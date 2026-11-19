@@ -4,7 +4,7 @@
 // the nodes above give here (PER-6), the node `keeper`'s. The authored files
 // take them from the scope of their kind, never from this file.
 
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import type { keeper_closes, keeper_context } from './_node.ts'
 
 export const {
@@ -30,4 +30,4 @@ export const {
   version,
   earlier,
   delegate,
-} = wlib.builders_at<keeper_context, keeper_closes>()
+} = zz.builders_at<keeper_context, keeper_closes>()

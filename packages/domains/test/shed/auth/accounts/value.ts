@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { id } from './_scope_value.ts'
 
 // The values of `accounts`: the hats an account may wear and the values of
@@ -18,5 +18,5 @@ export const hats = z.array(hat).readonly()
 /** A member card: its number and the last day it is valid. */
 export const member_card = z.strictObject({
   id: id.card_id,
-  valid_until: wlib.day,
+  valid_until: zz.day,
 })

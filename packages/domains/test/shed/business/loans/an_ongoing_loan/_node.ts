@@ -4,7 +4,7 @@
 // same objects under the same names, each schema with its output type under the
 // same name, so that one import gives both. Only this module imports `node.ts`.
 
-import type * as wlib from '../../../../../src/library/index.ts'
+import type * as zz from '../../../../../src/library/index.ts'
 import * as node from './node.ts'
 
 /**
@@ -15,10 +15,10 @@ import * as node from './node.ts'
 export const an_ongoing_loan = node.an_ongoing_loan
 
 /** The context the node `an_ongoing_loan` gives to everything below it. */
-export type an_ongoing_loan_context = wlib.ContextOf<typeof an_ongoing_loan>
+export type an_ongoing_loan_context = zz.ContextOf<typeof an_ongoing_loan>
 
 /** How the node `an_ongoing_loan` and the nodes above it may close a request (PER-14), for the leaves below it. */
-export type an_ongoing_loan_closes = wlib.ClosesOf<typeof an_ongoing_loan>
+export type an_ongoing_loan_closes = zz.ClosesOf<typeof an_ongoing_loan>
 
 /** What the node `an_ongoing_loan` and the nodes above it add to the commands below it (D105, SC-31). */
-export type an_ongoing_loan_accumulated = wlib.AccumulatedOf<typeof an_ongoing_loan>
+export type an_ongoing_loan_accumulated = zz.AccumulatedOf<typeof an_ongoing_loan>

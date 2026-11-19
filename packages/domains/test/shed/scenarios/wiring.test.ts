@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { oracle } from './oracle.ts'
 import { persona } from '../persona/_node.ts'
 import { registry as persona_registry } from '../persona/_registry.ts'
@@ -27,7 +27,7 @@ describe("the wiring of a tree's ports", () => {
   test('a leaf given under another name, a leaf of another tree: stopped at once', async () => {
     const shed = await oracle()
     expect(() =>
-      wlib.tree_ports({
+      zz.tree_ports({
         registry: { ...persona_registry, ...keeper_registry },
         versions: shed.versions,
         majors: keeper_majors,
@@ -44,7 +44,7 @@ describe("the wiring of a tree's ports", () => {
 
   test('a port the library did not build, a use case and a lookup no port serves', async () => {
     const shed = await oracle()
-    const tree = wlib.tree_ports({
+    const tree = zz.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions: shed.versions,
       majors: keeper_majors,
@@ -75,7 +75,7 @@ describe("the wiring of a tree's ports", () => {
 
   test('a leaf that follows, with no port to measure its wait: stopped at wiring (part 6.3)', async () => {
     const shed = await oracle()
-    const tree = wlib.tree_ports({
+    const tree = zz.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       versions: shed.versions,
       majors: member_majors,
@@ -101,7 +101,7 @@ describe("the wiring of a tree's ports", () => {
     // registry that holds `1/` finds it at the current path; only the
     // current major's registry, by object identity, tells.
     expect(() =>
-      wlib.tree_ports({
+      zz.tree_ports({
         registry: { ...persona_registry, ...member_registry, ...member_1_registry },
         versions: shed.versions,
         majors: member_majors,
@@ -116,7 +116,7 @@ describe("the wiring of a tree's ports", () => {
   test('majors that declare no version, a past major that leads elsewhere: stopped (part 6.4)', async () => {
     const shed = await oracle()
     expect(() =>
-      wlib.tree_ports({
+      zz.tree_ports({
         registry: { ...persona_registry, ...member_registry },
         versions: shed.versions,
         majors: { 1: member_majors[1] },
@@ -127,7 +127,7 @@ describe("the wiring of a tree's ports", () => {
       "the majors given declare 0 versions: a tree's majors hold one current registry, whose version.ts declares its version (PER-17, CFG-2)",
     )
     expect(() =>
-      wlib.tree_ports({
+      zz.tree_ports({
         registry: { ...persona_registry, ...member_registry },
         versions: shed.versions,
         majors: {
@@ -151,9 +151,9 @@ describe("the wiring of a tree's ports", () => {
 
 describe('the wiring of an effect executor', () => {
   test('effects of a domain the versions do not read, a return that returns from no effect: stopped at once', async () => {
-    const tools_alone = await wlib.versions([tools_majors])({ stored: () => Promise.resolve([]) })
+    const tools_alone = await zz.versions([tools_majors])({ stored: () => Promise.resolve([]) })
     expect(() =>
-      wlib.effect_executor({
+      zz.effect_executor({
         registry: loans_registry,
         versions: tools_alone,
         returns: { remind_the_member_of_the_due_date, borrow_a_tool: loans_borrow_a_tool },
@@ -166,7 +166,7 @@ describe('the wiring of an effect executor', () => {
     )
     const shed = await oracle()
     expect(() =>
-      wlib.effect_executor({
+      zz.effect_executor({
         registry: loans_registry,
         versions: shed.versions,
         returns: { remind_the_member_of_the_due_date, borrow_a_tool: loans_borrow_a_tool },
@@ -179,9 +179,9 @@ describe('the wiring of an effect executor', () => {
 
 describe('the wiring of the consumers of the reactions', () => {
   test('a reaction to a fact of a domain the versions do not read: stopped at once (part 7.3)', async () => {
-    const tools_alone = await wlib.versions([tools_majors])({ stored: () => Promise.resolve([]) })
+    const tools_alone = await zz.versions([tools_majors])({ stored: () => Promise.resolve([]) })
     expect(() =>
-      wlib.reaction_consumers({ registry: damage_registry, versions: tools_alone }),
+      zz.reaction_consumers({ registry: damage_registry, versions: tools_alone }),
     ).toThrow(
       'the consumers of the reactions: reaction/damage/reaction/the_damaged_tool_goes_to_repair reacts to a fact of no domain whose majors the versions were given (DOM-22)',
     )

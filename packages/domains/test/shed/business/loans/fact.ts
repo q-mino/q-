@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { fact, id, value, tools } from './_scope_fact.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */
@@ -28,7 +28,7 @@ export const a_tool_has_been_booked = fact({
 export const a_tool_has_been_booked_again = fact({
   payload: z.strictObject({
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
     member_id: id.member_id,
   }),
 })
@@ -84,7 +84,7 @@ export const a_loan_has_been_extended = fact({
 export const the_due_day_was_moved_before_the_reminder = fact({
   payload: z.strictObject({
     loan_id: id.loan_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
 })
 
@@ -218,7 +218,7 @@ export const a_reservation_has_been_taken_up_again = fact({
 export const the_cancellation_has_advanced = fact({
   payload: z.strictObject({
     tool_id: tools.id.tool_id,
-    cursor: wlib.cursor,
+    cursor: zz.cursor,
   }),
 })
 
@@ -264,7 +264,7 @@ export const a_member_has_been_notified_of_the_repair = fact({
 export const the_repair_notice_round_has_advanced = fact({
   payload: z.strictObject({
     repair_id: tools.id.repair_id,
-    cursor: wlib.cursor,
+    cursor: zz.cursor,
   }),
 })
 
@@ -299,8 +299,8 @@ export const a_weekly_summary_has_begun_again = fact({
 export const the_weeks_summary_has_been_sent = fact({
   payload: z.strictObject({
     member_id: id.member_id,
-    monday: wlib.day,
-    next_monday: wlib.day,
+    monday: zz.day,
+    next_monday: zz.day,
   }),
 })
 
@@ -312,7 +312,7 @@ export const the_weeks_summary_has_been_sent = fact({
 export const a_past_weeks_summary_has_been_skipped = fact({
   payload: z.strictObject({
     member_id: id.member_id,
-    monday: wlib.day,
-    next_monday: wlib.day,
+    monday: zz.day,
+    next_monday: zz.day,
   }),
 })

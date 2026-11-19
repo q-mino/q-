@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { predicate, id, tools } from './_scope_predicate.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the
@@ -61,7 +61,7 @@ export const the_loan_is_of_this_member = predicate({
 export const the_loan_is_due_on_this_day = predicate({
   parameters: z.strictObject({
     loan_id: id.loan_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
 })
 
@@ -73,7 +73,7 @@ export const the_loan_is_due_on_this_day = predicate({
 export const the_due_date_of_the_loan_is_still_ahead = predicate({
   parameters: z.strictObject({
     loan_id: id.loan_id,
-    now: wlib.date_time,
+    now: zz.date_time,
   }),
 })
 
@@ -115,7 +115,7 @@ export const the_reservation_holds_the_tool_for_the_member_on_the_day = predicat
     reservation_id: id.reservation_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    day: wlib.day,
+    day: zz.day,
   }),
 })
 
@@ -131,7 +131,7 @@ export const the_reservation_of_the_member_has_been_taken_up = predicate({
 export const the_tool_is_booked_for_the_day = predicate({
   parameters: z.strictObject({
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
   }),
 })
 
@@ -142,7 +142,7 @@ export const the_tool_is_booked_for_the_day = predicate({
 export const the_tool_is_booked_on_a_day_up_to = predicate({
   parameters: z.strictObject({
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
   }),
 })
 
@@ -150,7 +150,7 @@ export const the_tool_is_booked_on_a_day_up_to = predicate({
 export const the_tool_is_booked_for_the_day_by_this_member = predicate({
   parameters: z.strictObject({
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
     member_id: id.member_id,
   }),
 })
@@ -183,6 +183,6 @@ export const a_weekly_summary_goes_to_the_member = predicate({
 export const the_week_of_the_summary_is_not_over = predicate({
   parameters: z.strictObject({
     member_id: id.member_id,
-    now: wlib.date_time,
+    now: zz.date_time,
   }),
 })

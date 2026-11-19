@@ -5,7 +5,7 @@
 // library, which reads it in reverse, from a component to its path, by object
 // identity.
 
-import type * as wlib from '../../../../src/library/index.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as id from './_id.ts'
 import * as value from './_value.ts'
 import * as fact from './_fact.ts'
@@ -121,4 +121,4 @@ export const registry = {
   'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up':
     reaction.the_next_line_of_the_sheet_is_taken_up,
   'business/tools/version/tools': version.tools,
-} satisfies wlib.Registry
+} satisfies zz.Registry

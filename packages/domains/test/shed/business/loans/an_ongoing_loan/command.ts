@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../../src/library/index.ts'
+import * as zz from '../../../../../src/library/index.ts'
 import { command, AND, NOT, pick, _loans, tools } from './_scope_command.ts'
 
 // The commands on an ongoing loan (D105, SC-31): the loan is the node's,
@@ -36,7 +36,7 @@ export const extend_the_loan = command({
   input: z.strictObject({
     tool_id: tools.id.tool_id,
     member_id: _loans.id.member_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
   outcomes: {
     the_loan_can_be_extended_so_its_due_day_moves_on: [
@@ -75,7 +75,7 @@ export const extend_the_loan = command({
             member_id: input.member_id,
             due_day: _loans.dsl.the_due_day_after_an_extension_of(input.due_day),
           },
-          not_before: wlib.start_of(context.time_zone)(
+          not_before: zz.start_of(context.time_zone)(
             _loans.dsl.the_eve_of(_loans.dsl.the_due_day_after_an_extension_of(input.due_day)),
           ),
         },
@@ -116,7 +116,7 @@ export const correct_the_tool_of_a_loan = command({
     tool_written: tools.id.tool_id,
     tool_handed: tools.id.tool_id,
     member_id: _loans.id.member_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
   outcomes: {
     the_card_named_another_tool_so_it_is_corrected: [
@@ -155,7 +155,7 @@ export const correct_the_tool_of_a_loan = command({
             member_id: input.member_id,
             due_day: input.due_day,
           },
-          not_before: wlib.start_of(context.time_zone)(_loans.dsl.the_eve_of(input.due_day)),
+          not_before: zz.start_of(context.time_zone)(_loans.dsl.the_eve_of(input.due_day)),
         },
       },
     ],

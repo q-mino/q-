@@ -4,7 +4,7 @@
 // the nodes above give here (PER-6), the root's, with no node above. The
 // authored files take them from the scope of their kind, never from this file.
 
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 
 export const {
   id,
@@ -29,4 +29,4 @@ export const {
   version,
   earlier,
   delegate,
-} = wlib.builders_at<wlib.RootContext>()
+} = zz.builders_at<zz.RootContext>()

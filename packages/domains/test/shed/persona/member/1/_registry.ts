@@ -6,7 +6,7 @@
 // or delegated; the same paths as the current's, the version apart. The majors
 // of the domain list it (`../_majors.ts`).
 
-import type * as wlib from '../../../../../src/library/index.ts'
+import type * as zz from '../../../../../src/library/index.ts'
 import * as usecase from './_usecase.ts'
 
 export const registry = {
@@ -18,4 +18,4 @@ export const registry = {
   'persona/member/usecase/my_loans_input': usecase.my_loans_input,
   'persona/member/usecase/my_reservations': usecase.my_reservations,
   'persona/member/usecase/my_reservations_input': usecase.my_reservations_input,
-} satisfies wlib.Registry
+} satisfies zz.Registry

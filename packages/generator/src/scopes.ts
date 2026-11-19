@@ -77,7 +77,7 @@ const context_of = (
   nodes: readonly NodeAbove[],
 ): { readonly imports: readonly string[]; readonly arguments: string } => {
   const node = nodes[0]
-  if (node === undefined) return { imports: [], arguments: 'wlib.RootContext' }
+  if (node === undefined) return { imports: [], arguments: 'zz.RootContext' }
   const accumulated = nodes.some((above) => above.parts.accumulates)
   const closes = accumulated || nodes.some((above) => above.parts.closes)
   const types = [
@@ -94,7 +94,7 @@ const context_of = (
 }
 
 const destructured = (names: readonly string[], context: string): string =>
-  `export const { ${names.join(', ')} } = wlib.builders_at<${context}>()`
+  `export const { ${names.join(', ')} } = zz.builders_at<${context}>()`
 
 /** The point of a folder (`_scope.ts`). */
 const point = (tree: Tree, folder: Folder, past: boolean): GeneratedFile => {
@@ -108,7 +108,7 @@ const point = (tree: Tree, folder: Folder, past: boolean): GeneratedFile => {
         `The point of ${shown(folder)} (DOM-25): ${past ? 'the builders of a past major (DOM-22)' : 'every builder'}, bound to the context the nodes above give here (PER-6), ${node === undefined ? "the root's, with no node above" : `the node \`${node.name}\`'s`}. The authored files take them from the scope of their kind, never from this file.`,
       ),
       [
-        [`import * as wlib from '${library_from(tree, folder.segments)}'`, ...context.imports].join(
+        [`import * as zz from '${library_from(tree, folder.segments)}'`, ...context.imports].join(
           '\n',
         ),
         destructured(past ? past_builders : point_builders, context.arguments),
@@ -216,10 +216,9 @@ const scope = (
       file: {
         path,
         text: file(header, [
-          [
-            `import * as wlib from '${library_from(tree, folder.segments)}'`,
-            ...context.imports,
-          ].join('\n'),
+          [`import * as zz from '${library_from(tree, folder.segments)}'`, ...context.imports].join(
+            '\n',
+          ),
           namespaces.map(exported).join('\n'),
           destructured(builders, context.arguments),
         ]),

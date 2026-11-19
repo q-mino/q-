@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 import { persona } from '../persona/_node.ts'
 import { registry as persona_registry } from '../persona/_registry.ts'
@@ -108,7 +108,7 @@ describe('SC-29: the gate', () => {
     const shed = await the_shed()
     // A major the tree has not: the type gives its leaf no input, so the
     // client is one whose version the type does not know.
-    const newer = wlib.semver.parse('3.0.0')
+    const newer = zz.semver.parse('3.0.0')
     expect(
       await all(
         shed.member.borrow_a_tool(shed.as(marta, newer).at('2026-11-05T10:00:00-05:00'), {
@@ -121,7 +121,7 @@ describe('SC-29: the gate', () => {
 
   test('on 1 March `1/` is deleted: Paolo’s phone at 1.2.0, served the day before, is stopped', async () => {
     const shed = await the_shed()
-    const older = wlib.semver.parse('1.2.0')
+    const older = zz.semver.parse('1.2.0')
     const sent = { loan_id: 'L9', tool_id: 'drill' }
     // Before: the leaf of 1.x answers in its words.
     expect(
@@ -132,7 +132,7 @@ describe('SC-29: the gate', () => {
       { event: 'you_have_the_tool', payload: { due_date: '2026-11-19T23:59:59.999-05:00' } },
     ])
     // After: a release whose `_majors.ts` lists 2.0.0 alone.
-    const released = wlib.tree_ports({
+    const released = zz.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       versions: shed.versions,
       majors: { 2: member_majors[2] },

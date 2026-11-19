@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { repair_id } from '../business/tools/_id.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 
@@ -46,7 +46,7 @@ const the_shed = async () => {
   )
   const tuesday = shed.at('2026-11-17T08:00:00-05:00', { scope: 'keeper/luca' })
   await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
-  return { shed, rp1: wlib.identity_of(repair_id)(tuesday.operation) }
+  return { shed, rp1: zz.identity_of(repair_id)(tuesday.operation) }
 }
 
 describe("SC-34, Rossi's workshop closes a job", () => {
@@ -70,7 +70,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
       ),
     ).toEqual([{ event: 'the_job_is_closed', payload: { tool: 'drill' } }])
     expect(await in_the_workshop('2026-11-20T10:01:00-05:00')).toMatchObject({ entries: [] })
-    const log = shed.log(wlib.position.parse('4'))[Symbol.asyncIterator]()
+    const log = shed.log(zz.position.parse('4'))[Symbol.asyncIterator]()
     expect((await log.next()).value).toMatchObject({
       event: 'fact',
       position: '4',

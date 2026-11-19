@@ -5,7 +5,7 @@
 // `member`'s. The authored files take them from the scope of their kind, never
 // from this file.
 
-import * as wlib from '../../../../../src/library/index.ts'
+import * as zz from '../../../../../src/library/index.ts'
 import type { member_closes, member_context } from '../_node.ts'
 
-export const { earlier, delegate } = wlib.builders_at<member_context, member_closes>()
+export const { earlier, delegate } = zz.builders_at<member_context, member_closes>()

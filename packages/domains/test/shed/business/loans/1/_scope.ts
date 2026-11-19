@@ -5,6 +5,6 @@
 // with no node above. The authored files take them from the scope of their
 // kind, never from this file.
 
-import * as wlib from '../../../../../src/library/index.ts'
+import * as zz from '../../../../../src/library/index.ts'
 
-export const { earlier, delegate } = wlib.builders_at<wlib.RootContext>()
+export const { earlier, delegate } = zz.builders_at<zz.RootContext>()

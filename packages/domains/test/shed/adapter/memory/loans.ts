@@ -5,7 +5,7 @@
 // fragment reuses the `dsl` of `tools`. Its reads are typed by subject
 // (DOM-18): a loan, a reservation, a tool of the shed.
 
-import type * as wlib from '../../../../src/library/index.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import type * as loans_fact from '../../business/loans/_fact.ts'
 import type * as loans_predicate from '../../business/loans/_predicate.ts'
 import type { loan_id, member_id, reservation_id } from '../../business/loans/_id.ts'
@@ -70,8 +70,8 @@ const ongoing = (state: Reads): readonly loan[] =>
 const booked = (state: Reads): readonly reservation[] =>
   [...state.reservations.values()].filter(loans_dsl.the_reservation_is_booked)
 
-export const loans_fragments: wlib.PredicateFragments<
-  wlib.PredicatesIn<typeof loans_predicate>,
+export const loans_fragments: zz.PredicateFragments<
+  zz.PredicatesIn<typeof loans_predicate>,
   (state: Reads) => boolean
 > = {
   // The link: the view of `loans` over the tools, read from `tools`.
@@ -151,8 +151,8 @@ const the_name_of_the_tool =
 
 // The reads of the subject `business/loans/selection/loan`: a loan.
 
-export const loan_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof loan_selections>,
+export const loan_selection: zz.Algebra<
+  zz.SelectionsIn<typeof loan_selections>,
   Selection<Reads, loan>
 > = {
   ...selection_operators<Reads, loan>(),
@@ -166,8 +166,8 @@ export const loan_selection: wlib.Algebra<
 const the_loans: Source<Reads, loan> = (state) => [...state.loans.values()]
 
 export const loan_sources: {
-  readonly the_ongoing_loans_of_a_member: wlib.QuerySource<
-    wlib.FieldsOf<typeof the_ongoing_loans_of_a_member>,
+  readonly the_ongoing_loans_of_a_member: zz.QuerySource<
+    zz.FieldsOf<typeof the_ongoing_loans_of_a_member>,
     Source<Reads, loan>,
     Field<Reads, loan>
   >
@@ -187,8 +187,8 @@ export const loan_sources: {
 
 // The reads of the subject `business/loans/selection/reservation`: a reservation.
 
-export const reservation_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof reservation_selections>,
+export const reservation_selection: zz.Algebra<
+  zz.SelectionsIn<typeof reservation_selections>,
   Selection<Reads, reservation>
 > = {
   ...selection_operators<Reads, reservation>(),
@@ -225,13 +225,13 @@ const the_reservation_entry = {
 }
 
 export const reservation_sources: {
-  readonly the_reservations_of_a_member: wlib.QuerySource<
-    wlib.FieldsOf<typeof the_reservations_of_a_member>,
+  readonly the_reservations_of_a_member: zz.QuerySource<
+    zz.FieldsOf<typeof the_reservations_of_a_member>,
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
-  readonly the_reservations_of_a_member_in_the_workshop: wlib.QuerySource<
-    wlib.FieldsOf<typeof the_reservations_of_a_member_in_the_workshop>,
+  readonly the_reservations_of_a_member_in_the_workshop: zz.QuerySource<
+    zz.FieldsOf<typeof the_reservations_of_a_member_in_the_workshop>,
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
@@ -243,8 +243,8 @@ export const reservation_sources: {
 // The reads of the subject `business/loans/selection/tool`: a tool of the shed
 // as the desk sees it, read from the catalogue of `tools` (GR-3, V11).
 
-export const tool_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof tool_selections>,
+export const tool_selection: zz.Algebra<
+  zz.SelectionsIn<typeof tool_selections>,
   Selection<Reads, tool>
 > = {
   ...selection_operators<Reads, tool>(),
@@ -255,8 +255,8 @@ export const tool_selection: wlib.Algebra<
 }
 
 /** The calculations over a tool of the shed: the desk's register, read in its words (SC-21). */
-export const tool_calculation: wlib.CalculationFragments<
-  wlib.CalculationsIn<typeof tool_calculations>,
+export const tool_calculation: zz.CalculationFragments<
+  zz.CalculationsIn<typeof tool_calculations>,
   Field<Reads, tool>
 > = {
   'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days':
@@ -270,8 +270,8 @@ export const tool_calculation: wlib.CalculationFragments<
 const the_tools: Source<Reads, tool> = (state) => [...state.tools.values()]
 
 export const tool_sources: {
-  readonly the_loans_of_each_tool_this_month: wlib.QuerySource<
-    wlib.FieldsOf<typeof the_loans_of_each_tool_this_month>,
+  readonly the_loans_of_each_tool_this_month: zz.QuerySource<
+    zz.FieldsOf<typeof the_loans_of_each_tool_this_month>,
     Source<Reads, tool>,
     Field<Reads, tool>
   >
@@ -299,13 +299,13 @@ const the_whole_reservation = {
 }
 
 export const reservation_steps: {
-  readonly continue_the_cancellation_of_reservations: wlib.StepSource<
+  readonly continue_the_cancellation_of_reservations: zz.StepSource<
     typeof continue_the_cancellation_of_reservations,
     ProcessRead<Reads>,
     Source<Reads, reservation>,
     Field<Reads, reservation>
   >
-  readonly continue_the_repair_notice_round: wlib.StepSource<
+  readonly continue_the_repair_notice_round: zz.StepSource<
     typeof continue_the_repair_notice_round,
     ProcessRead<Reads>,
     Source<Reads, reservation>,
@@ -355,7 +355,7 @@ const with_the_tool =
 
 /** A loan's new due day (SC-31): the rest of the loan as it is. */
 const with_the_due_day =
-  (changed: { readonly id: loan_id; readonly due_day: wlib.day }) =>
+  (changed: { readonly id: loan_id; readonly due_day: zz.day }) =>
   (state: LoansState): LoansState => {
     const the_loan = state.loans.get(changed.id)
     return the_loan === undefined
@@ -428,8 +428,8 @@ const with_the_round_progress =
         }
   }
 
-export const loans_writes: wlib.FactWrites<
-  wlib.FactsIn<typeof loans_fact>,
+export const loans_writes: zz.FactWrites<
+  zz.FactsIn<typeof loans_fact>,
   (state: LoansState) => LoansState
 > = {
   'business/loans/fact/a_tool_has_been_lent':

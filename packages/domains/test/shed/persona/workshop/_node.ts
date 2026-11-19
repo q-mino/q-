@@ -4,7 +4,7 @@
 // under the same names, each schema with its output type under the same name,
 // so that one import gives both. Only this module imports `node.ts`.
 
-import type * as wlib from '../../../../src/library/index.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as node from './node.ts'
 
 /**
@@ -15,10 +15,10 @@ import * as node from './node.ts'
 export const workshop = node.workshop
 
 /** The context the node `workshop` gives to everything below it. */
-export type workshop_context = wlib.ContextOf<typeof workshop>
+export type workshop_context = zz.ContextOf<typeof workshop>
 
 /** How the node `workshop` and the nodes above it may close a request (PER-14), for the leaves below it. */
-export type workshop_closes = wlib.ClosesOf<typeof workshop>
+export type workshop_closes = zz.ClosesOf<typeof workshop>
 
 /** What the node `workshop` and the nodes above it add to the commands below it (D105, SC-31). */
-export type workshop_accumulated = wlib.AccumulatedOf<typeof workshop>
+export type workshop_accumulated = zz.AccumulatedOf<typeof workshop>

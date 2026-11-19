@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { first, oracle, quiet, type Start } from './oracle.ts'
 import { drill, sander } from './shed.ts'
 
@@ -31,11 +31,11 @@ const thursday = '2026-11-19T10:00:00-05:00'
 const friday = '2026-11-20T09:00:00-05:00'
 
 /** The stay an operation opens, as `tools` names it (SC-7). */
-const the_stay_of = (operation: wlib.Operation): string => wlib.identity_of(z.string())(operation)
+const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
 
 /** The operation of the reaction to a return, derived from it (LIB-10). */
-const reacting_to = (operation: wlib.Operation): wlib.Operation =>
-  wlib.reaction_operation(damage)({ operation, part: 0 })
+const reacting_to = (operation: zz.Operation): zz.Operation =>
+  zz.reaction_operation(damage)({ operation, part: 0 })
 
 /**
  * The drill and the sander in the shed; Marta (M-12) borrows the drill on
@@ -102,14 +102,14 @@ const the_story = async (start: Start = {}, saves_its_position = true) => {
 }
 
 /** The letter a reaction holds first, as an operator picks it from the dead letters shown. */
-const the_letter = (held: readonly wlib.HeldPart[]): wlib.ReactionDeadLetter => {
+const the_letter = (held: readonly zz.HeldPart[]): zz.ReactionDeadLetter => {
   const letter = held.find((each) => each.held === 'dead_letter')
   if (letter?.held !== 'dead_letter') throw new Error('no dead letter is held')
   return letter
 }
 
 /** The parts held, as an operator reads them: which return, how held. */
-const shown = (held: readonly wlib.HeldPart[]) =>
+const shown = (held: readonly zz.HeldPart[]) =>
   held.map((each) => [each.fact.operation.id, each.held, each.part])
 
 describe('SC-42, a dead letter holds its resources', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as fc from 'fast-check'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { first, oracle } from './oracle.ts'
 import { at_once, serially } from './serial.ts'
 
@@ -131,7 +131,7 @@ describe('the routing of commands, as properties (TST-9)', () => {
         for (const sent of requests) {
           const outcome = await send(sent)(shed)
           const key = `${sent.scope} ${sent.operation}`
-          const request = wlib.canonical_json([sent.use, input_of(sent)])
+          const request = zz.canonical_json([sent.use, input_of(sent)])
           const first_time = recorded.get(key)
           const got = read(outcome)
           if (first_time !== undefined) {

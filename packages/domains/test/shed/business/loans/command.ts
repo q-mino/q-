@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import {
   command,
   cursor_step,
@@ -44,7 +44,7 @@ interface LoanRequest {
 
 /** The loan the desk opens now: due on the day the loan period ends, its term running. */
 const the_loan_lent =
-  (context: wlib.RootContext) =>
+  (context: zz.RootContext) =>
   (loan: LoanRequest): z.input<typeof fact.a_tool_has_been_lent> => ({
     new_loan: {
       id: loan.loan_id,
@@ -61,7 +61,7 @@ const the_loan_lent =
  * the shed's zone (SC-12): the eve of its due day, and the day after it. One
  * loan, one wait of each: the loan's id is each entry's.
  */
-const the_waits_of_the_loan = (context: wlib.RootContext) => (loan: LoanRequest) => {
+const the_waits_of_the_loan = (context: zz.RootContext) => (loan: LoanRequest) => {
   const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
   return {
     wait_until_the_eve_of_the_due_date: {
@@ -72,12 +72,12 @@ const the_waits_of_the_loan = (context: wlib.RootContext) => (loan: LoanRequest)
         member_id: loan.member_id,
         due_day: due_day,
       },
-      not_before: wlib.start_of(context.time_zone)(dsl.the_eve_of(due_day)),
+      not_before: zz.start_of(context.time_zone)(dsl.the_eve_of(due_day)),
     },
     wait_until_the_due_date: {
       id: loan.loan_id,
       payload: { loan_id: loan.loan_id },
-      not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(due_day)),
+      not_before: zz.start_of(context.time_zone)(dsl.the_day_after(due_day)),
     },
   }
 }
@@ -144,7 +144,7 @@ export const take_up_a_reservation = command({
     reservation_id: id.reservation_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    day: wlib.day,
+    day: zz.day,
     loan_id: id.loan_id,
   }),
   outcomes: {
@@ -242,7 +242,7 @@ export const reserve_a_tool = command({
         reservation_id: id.reservation_id,
         tool_id: tools.id.tool_id,
         member_id: id.member_id,
-        day: wlib.day,
+        day: zz.day,
       })
       .refine((input) => dsl.the_day_is_within_the_booking_window(input.day, context.now), {
         path: ['day'],
@@ -410,7 +410,7 @@ export const remind_the_member_of_the_due_date = command({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
   outcomes: {
     the_member_still_has_the_tool_before_the_due_date_so_they_are_reminded: [
@@ -562,7 +562,7 @@ export const declare_the_loan_overdue = command({
             day: dsl.today(context.now),
           }),
           payload: { loan_id: input.loan_id },
-          not_before: wlib.start_of(context.time_zone)(dsl.the_day_after(dsl.today(context.now))),
+          not_before: zz.start_of(context.time_zone)(dsl.the_day_after(dsl.today(context.now))),
         },
       },
     ],
@@ -743,7 +743,7 @@ export const notify_a_member_of_the_repair = command({
     repair_id: tools.id.repair_id,
     member_id: id.member_id,
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
   }),
   outcomes: {
     the_reservation_is_booked_so_its_member_is_notified: [
@@ -870,9 +870,7 @@ export const begin_a_weekly_summary = command({
             member_id: input.member_id,
             monday: dsl.the_monday_after(dsl.today(context.now)),
           },
-          not_before: wlib.start_of(context.time_zone)(
-            dsl.the_monday_after(dsl.today(context.now)),
-          ),
+          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context.now))),
         },
       },
     ],
@@ -912,7 +910,7 @@ export const the_week_of_the_summary_is_over = AND({
 export const sum_up_the_week_for_the_member = command({
   input: z.strictObject({
     member_id: id.member_id,
-    monday: wlib.day,
+    monday: zz.day,
   }),
   outcomes: {
     the_week_is_on_so_the_summary_goes: [
@@ -951,9 +949,7 @@ export const sum_up_the_week_for_the_member = command({
             member_id: input.member_id,
             monday: dsl.the_monday_after(dsl.today(context.now)),
           },
-          not_before: wlib.start_of(context.time_zone)(
-            dsl.the_monday_after(dsl.today(context.now)),
-          ),
+          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context.now))),
         },
       },
     ],
@@ -977,7 +973,7 @@ export const sum_up_the_week_for_the_member = command({
             member_id: input.member_id,
             monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
           },
-          not_before: wlib.start_of(context.time_zone)(
+          not_before: zz.start_of(context.time_zone)(
             dsl.the_monday_of_the_week_of(dsl.today(context.now)),
           ),
         },

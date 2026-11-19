@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import {
   accounts,
   first,
@@ -25,7 +25,7 @@ import {
 
 const strategies = ['native', 'composed'] as const
 
-const p = (at: number) => wlib.position.parse(String(at))
+const p = (at: number) => zz.position.parse(String(at))
 
 /**
  * The shed on 2 November: the drill, the ladder and the sander added
@@ -56,7 +56,7 @@ const the_shed = async (start: Start) => {
       }),
     )
   }
-  const my_loans = (from?: wlib.position) =>
+  const my_loans = (from?: zz.position) =>
     shed.loans
       .the_ongoing_loans_of_a_member(
         shed.when('2026-11-02T09:00:00-05:00'),
@@ -256,7 +256,7 @@ describe("SC-15, the persona's side (part 6.3)", () => {
     })
     expect(events[1]).toEqual({ event: 'left', position: '5', identity: 'L7' })
     const resumed = await until_caught_up(
-      shed.member.my_loans(her, {}, wlib.position.parse('4'))[Symbol.asyncIterator](),
+      shed.member.my_loans(her, {}, zz.position.parse('4'))[Symbol.asyncIterator](),
     )
     expect(told(resumed)).toEqual([
       ['fact', '4'],

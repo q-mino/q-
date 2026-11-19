@@ -6,7 +6,7 @@
 // identity. The registries of the folders below it come with it, its subtree
 // (D105).
 
-import type * as wlib from '../../../../src/library/index.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as id from './_id.ts'
 import * as value from './_value.ts'
 import * as fact from './_fact.ts'
@@ -288,4 +288,4 @@ export const registry = {
     reaction.the_next_member_on_the_round_is_notified,
   'business/loans/version/loans': version.loans,
   ...an_ongoing_loan,
-} satisfies wlib.Registry
+} satisfies zz.Registry

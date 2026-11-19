@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { first, oracle, quiet, type Start } from './oracle.ts'
 import { drill, ladder } from './shed.ts'
 
@@ -21,7 +21,7 @@ const monday = '2026-11-16T09:00:00-05:00'
 const tuesday = '2026-11-17T09:00:00-05:00'
 
 /** The stay an operation opens, as `tools` names it (SC-7). */
-const the_stay_of = (operation: wlib.Operation): string => wlib.identity_of(z.string())(operation)
+const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
 
 /**
  * The drill and the ladder in the shed; on Monday 9 November Paolo (M-9)
@@ -63,7 +63,7 @@ const the_shed = async (start: Start = {}) => {
       fact.parts.some((part) => part.path === 'business/tools/fact/a_tool_has_been_sent_to_repair'),
     )
   /** The operation of the reaction to Marta's return, derived from it (LIB-10). */
-  const the_reactions_operation = wlib.reaction_operation(damage)({
+  const the_reactions_operation = zz.reaction_operation(damage)({
     operation: her_return.operation,
     part: 0,
   })

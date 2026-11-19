@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../../src/library/index.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { calculation, value } from './_scope_calculation.ts'
 
 // The calculations over a tool of the shed as the desk sees it, the subject of
@@ -11,8 +11,8 @@ import { calculation, value } from './_scope_calculation.ts'
 export const the_loans_of_the_tool_between_these_days = calculation({
   subject: 'tool',
   parameters: z.strictObject({
-    first_day: wlib.day,
-    last_day: wlib.day,
+    first_day: zz.day,
+    last_day: zz.day,
   }),
   value: value.number_of_loans,
 })

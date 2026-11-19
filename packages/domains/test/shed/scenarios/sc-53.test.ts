@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type * as wlib from '../../../src/library/index.ts'
+import type * as zz from '../../../src/library/index.ts'
 import { first, oracle, quiet, type Start } from './oracle.ts'
 import { drill, ladder } from './shed.ts'
 
@@ -76,7 +76,7 @@ const the_shed = async (start: Start = {}) => {
 }
 
 /** The letter an effect holds first, as an operator picks it from the dead letters shown. */
-const the_letter = (held: readonly wlib.HeldEntry[]): wlib.EffectDeadLetter => {
+const the_letter = (held: readonly zz.HeldEntry[]): zz.EffectDeadLetter => {
   const letter = held.find((each) => each.held === 'dead_letter')
   if (letter?.held !== 'dead_letter') throw new Error('no dead letter is held')
   return letter

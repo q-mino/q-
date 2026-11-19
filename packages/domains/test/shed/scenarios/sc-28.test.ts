@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 
 // SC-28, two versions of a leaf (part 6.4; PER-17, D72.7, D75.6): the
@@ -173,7 +173,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     ).toEqual([{ event: 'not_found' }])
     // A client whose version the type does not know reaches every major's
     // leaf: `extend_your_loan` is the current major's alone (SC-31), not in 1/.
-    const any_version = wlib.semver.parse('1.4.0')
+    const any_version = zz.semver.parse('1.4.0')
     expect(
       await all(
         shed.member.extend_your_loan(shed.as(marta, any_version).at('2026-11-05T10:07:00-05:00'), {

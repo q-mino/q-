@@ -4,7 +4,7 @@
 // in the order of the twins. The configurator gives it to the library, which
 // reads it in reverse, from a component to its path, by object identity.
 
-import type * as wlib from '../../../../src/library/index.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as id from './_id.ts'
 import * as value from './_value.ts'
 import * as lookup from './_lookup.ts'
@@ -20,4 +20,4 @@ export const registry = {
   'auth/accounts/lookup/the_hats_of_an_account': lookup.the_hats_of_an_account,
   'auth/accounts/lookup/the_hats_of_a_key': lookup.the_hats_of_a_key,
   'auth/accounts/lookup/the_member_card_of_an_account': lookup.the_member_card_of_an_account,
-} satisfies wlib.Registry
+} satisfies zz.Registry

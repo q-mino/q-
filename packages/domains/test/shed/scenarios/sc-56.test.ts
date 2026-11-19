@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type * as wlib from '../../../src/library/index.ts'
+import type * as zz from '../../../src/library/index.ts'
 import { first, oracle, quiet, type Message, type Start } from './oracle.ts'
 
 // SC-56: an effect that tolerates reordering (DOM-14, D67.3; Shed's step
@@ -35,7 +35,7 @@ const mondays = (received: readonly Message[]): readonly string[] =>
   received.flatMap((message) => (message.message === 'weeks_summary' ? [message.monday] : []))
 
 /** The letter shown for an effect. */
-const the_letter = (held: readonly wlib.HeldEntry[]): wlib.EffectDeadLetter => {
+const the_letter = (held: readonly zz.HeldEntry[]): zz.EffectDeadLetter => {
   const letter = held.find((each) => each.held === 'dead_letter')
   if (letter?.held !== 'dead_letter') throw new Error('no dead letter is held')
   return letter

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { first, quiet } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'
 
@@ -14,7 +14,7 @@ import { a_shed_with, drill } from './shed.ts'
 // named by Marta's return.
 
 /** The stay an operation opens, as `tools` names it. */
-const the_stay_of = (operation: wlib.Operation): string => wlib.identity_of(z.string())(operation)
+const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
 
 describe('SC-7, the drill goes to the workshop', () => {
   test('its stay is named from the operation that sends it', async () => {
@@ -141,7 +141,7 @@ describe('SC-7, the drill goes to the workshop', () => {
       }),
     )
     await quiet()
-    const reacting = wlib.reaction_operation(
+    const reacting = zz.reaction_operation(
       'reaction/damage/reaction/the_damaged_tool_goes_to_repair',
     )({ operation: her_return.operation, part: 0 })
     expect((await shed.recorded()).at(-1)).toMatchObject({

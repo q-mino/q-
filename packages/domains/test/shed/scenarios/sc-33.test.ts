@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { accounts, first, followed, oracle, pull, type Who } from './oracle.ts'
 import { extend_the_loan } from '../business/loans/an_ongoing_loan/_usecase.ts'
 import { return_a_tool } from '../business/loans/_usecase.ts'
@@ -99,8 +99,8 @@ describe('SC-33, the buttons on the rows of "my loans"', () => {
         use_case: return_a_tool,
         input: () => (loan) => ({
           loan_id: loan.id,
-          tool_id: wlib.given_by_the_caller,
-          condition: wlib.given_by_the_caller,
+          tool_id: zz.given_by_the_caller,
+          condition: zz.given_by_the_caller,
         }),
       },
       keep_it_longer: {

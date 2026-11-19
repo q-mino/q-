@@ -35,7 +35,7 @@
 // loaded line by line.
 
 import type * as z from 'zod'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { shed, type World } from '../configurator.ts'
 import {
   loans_command_adapter,
@@ -67,7 +67,7 @@ import { type Message, type Network } from '../adapter/memory/reminders.ts'
 export type { Message }
 
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
-export const time_zone = wlib.time_zone.parse('America/Toronto')
+export const time_zone = zz.time_zone.parse('America/Toronto')
 
 /** The state of a shed that has nothing yet, but the accounts it is given (`Start.accounts`). */
 const nothing = (accounts: Partial<AccountsState> = {}): State => ({
@@ -85,7 +85,7 @@ const nothing = (accounts: Partial<AccountsState> = {}): State => ({
 })
 
 /** The position of the fact recorded after so many, the first at 1. */
-const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
+const position_at = (count: number): zz.position => zz.position.parse(String(count))
 
 /**
  * A cell for the commands and the reads: its state, the facts it recorded in
@@ -100,23 +100,23 @@ const position_at = (count: number): wlib.position => wlib.position.parse(String
  * redelivers (at least once, DOM-17, DOM-14).
  */
 const command_cell = (
-  kept: readonly wlib.StoredEntry[],
+  kept: readonly zz.StoredEntry[],
   redelivered: boolean,
   initial: State,
 ): CommandCell &
   ReadCell & {
-    readonly entries: () => readonly wlib.StoredEntry[]
-    readonly outbox: wlib.Outbox
-    readonly forget: (before: wlib.position) => void
+    readonly entries: () => readonly zz.StoredEntry[]
+    readonly outbox: zz.Outbox
+    readonly forget: (before: zz.position) => void
   } => {
   let state = initial
   const recorded: Recorded[] = []
-  const entries: wlib.StoredEntry[] = [...kept]
+  const entries: zz.StoredEntry[] = [...kept]
   const waiting: (() => void)[] = []
   let kept_from = 0
   const delivered = (facts: readonly Recorded[]): readonly Recorded[] =>
     redelivered ? facts.flatMap((each) => [each, each]) : facts
-  const after = (position: wlib.position): readonly Recorded[] =>
+  const after = (position: zz.position): readonly Recorded[] =>
     delivered(recorded.filter((each) => Number(each.position) > Number(position)))
   return {
     get: () => state,
@@ -161,8 +161,8 @@ const command_cell = (
     outbox: (effect) => (from) => ({
       [Symbol.asyncIterator]: () => {
         let index = from === undefined ? 0 : Number(from) - 1
-        let again: wlib.QueuedEntry | undefined = undefined
-        const next = async (): Promise<IteratorResult<wlib.QueuedEntry>> => {
+        let again: zz.QueuedEntry | undefined = undefined
+        const next = async (): Promise<IteratorResult<zz.QueuedEntry>> => {
           if (again !== undefined) {
             const value = again
             again = undefined
@@ -198,8 +198,8 @@ const command_cell = (
  * and the outbox entries queued with them.
  */
 export interface Kept {
-  readonly facts?: readonly wlib.StoredEnvelope[]
-  readonly entries?: readonly wlib.StoredEntry[]
+  readonly facts?: readonly zz.StoredEnvelope[]
+  readonly entries?: readonly zz.StoredEntry[]
 }
 
 /**
@@ -211,7 +211,7 @@ export interface Kept {
  */
 export interface Start {
   readonly kept?: Kept
-  readonly majors?: readonly wlib.Majors[]
+  readonly majors?: readonly zz.Majors[]
   readonly time_zone?: string
   readonly streams?: Strategy
   readonly redelivered?: boolean
@@ -270,10 +270,10 @@ export const one_at_a_time = <value>(values: readonly value[]): AsyncIterable<va
 
 /** The log of the facts a store kept, from the first, then the end of what it kept (DOM-17). */
 const log_of =
-  (facts: readonly wlib.StoredEnvelope[]): wlib.FactLog =>
+  (facts: readonly zz.StoredEnvelope[]): zz.FactLog =>
   () =>
-    one_at_a_time<wlib.LogEvent>([
-      ...facts.map((fact, i): wlib.LogEvent => ({
+    one_at_a_time<zz.LogEvent>([
+      ...facts.map((fact, i): zz.LogEvent => ({
         event: 'fact',
         position: position_at(i + 1),
         fact,
@@ -282,7 +282,7 @@ const log_of =
     ])
 
 /** The paths and versions a store keeps, distinct, among its facts' parts and its entries (DOM-22). */
-const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
+const stored_versions = (kept: Kept): readonly zz.StoredVersion[] => {
   const all = [
     ...(kept.facts ?? []).flatMap((fact) =>
       fact.parts.map((part) => ({ path: part.path, version: part.version })),
@@ -303,7 +303,7 @@ const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
  * notices, without the round (SC-53, SC-55; the round's step since part
  * 7.4, SC-41). The harness's entry, not Shed's.
  */
-const notify_alone = wlib.builders_at<wlib.RootContext>().command_use_case({
+const notify_alone = zz.builders_at<zz.RootContext>().command_use_case({
   command: notify_a_member_of_the_repair,
 })
 
@@ -322,14 +322,14 @@ export interface Sent {
  * the operation, the correlation. The fingerprint is the library's, which
  * it computes where the request enters (`fingerprint_of`).
  */
-export type EntryContext = Omit<wlib.CommandRootContext, 'fingerprint'>
+export type EntryContext = Omit<zz.CommandRootContext, 'fingerprint'>
 
 /** A command use case's port, as the library builds it. */
-type Port<input, event> = (context: wlib.CommandRootContext, input: input) => AsyncIterable<event>
+type Port<input, event> = (context: zz.CommandRootContext, input: input) => AsyncIterable<event>
 
 /** The path of every port of a domain's use cases, by the object of its port (DOM-24). */
 const paths_of_ports = (
-  registry: wlib.Registry,
+  registry: zz.Registry,
   use_cases: Readonly<Record<string, unknown>>,
   ports: Readonly<Record<string, unknown>>,
 ): ReadonlyMap<unknown, string> => {
@@ -362,8 +362,8 @@ const folder_of = (reaction: string): string =>
  * first fall reported; an operator's request served by the set that holds
  * the letter's reaction.
  */
-const together = (sets: ReadonlyMap<string, wlib.ReactionConsumers>): wlib.ReactionConsumers => {
-  const of = (letter: wlib.ReactionDeadLetter): wlib.ReactionConsumers => {
+const together = (sets: ReadonlyMap<string, zz.ReactionConsumers>): zz.ReactionConsumers => {
+  const of = (letter: zz.ReactionDeadLetter): zz.ReactionConsumers => {
     const set = sets.get(folder_of(letter.reaction))
     if (set === undefined) throw new Error(`no consumer of ${letter.reaction} was started`)
     return set
@@ -397,19 +397,18 @@ const together = (sets: ReadonlyMap<string, wlib.ReactionConsumers>): wlib.React
  */
 export const oracle = async (start: Start = {}) => {
   const kept = start.kept ?? {}
-  const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
+  const zone = start.time_zone === undefined ? time_zone : zz.time_zone.parse(start.time_zone)
   const initial = nothing(start.accounts)
   const cell = command_cell(kept.entries ?? [], start.redelivered ?? false, initial)
   const majors = start.majors ?? [loans_majors, tools_majors]
-  const stored = (): Promise<readonly wlib.StoredVersion[]> =>
-    Promise.resolve(stored_versions(kept))
+  const stored = (): Promise<readonly zz.StoredVersion[]> => Promise.resolve(stored_versions(kept))
   // The store as a release finds it: its state rebuilt from its log through
   // the library, each fact kept as it was stored (SC-8), with the majors it
   // is given (SC-9), before the shed starts over it; a store that kept no
   // fact has nothing to rebuild.
   const facts = kept.facts ?? []
   if (facts.length > 0) {
-    const versions = await wlib.versions(majors)({ stored })
+    const versions = await zz.versions(majors)({ stored })
     for await (const each of rebuilt(versions)(initial)(log_of(facts))) {
       const fact = facts[Number(each.position) - 1]
       if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
@@ -420,13 +419,13 @@ export const oracle = async (start: Start = {}) => {
   // fall: the executor started again finds its positions and letters; one
   // that saves no position falls, as far as its state knows, before each
   // advance (TST-4).
-  const positions = new Map<string, wlib.position>()
-  let holding: readonly wlib.HeldEntry[] = []
-  const discards: wlib.Discarded<wlib.EffectDeadLetter>[] = []
+  const positions = new Map<string, zz.position>()
+  let holding: readonly zz.HeldEntry[] = []
+  const discards: zz.Discarded<zz.EffectDeadLetter>[] = []
   let saves_its_position = true
-  const same_entry = (a: wlib.QueuedEntry) => (b: wlib.QueuedEntry) =>
+  const same_entry = (a: zz.QueuedEntry) => (b: zz.QueuedEntry) =>
     a.entry.effect === b.entry.effect && a.entry.id === b.entry.id
-  const executor_state: wlib.ExecutorState = {
+  const executor_state: zz.ExecutorState = {
     position: (effect) => Promise.resolve(positions.get(effect)),
     advance: (effect) => (to) => {
       if (saves_its_position) positions.set(effect, to)
@@ -452,16 +451,16 @@ export const oracle = async (start: Start = {}) => {
   }
   // The durable state of the consumers of the reactions (DOM-16), likewise:
   // their positions and the parts each holds.
-  const reaction_positions = new Map<string, wlib.position>()
-  let parts_held: readonly wlib.HeldPart[] = []
-  const parts_discarded: wlib.Discarded[] = []
+  const reaction_positions = new Map<string, zz.position>()
+  let parts_held: readonly zz.HeldPart[] = []
+  const parts_discarded: zz.Discarded[] = []
   let reactions_save_their_positions = true
-  const same_part = (a: wlib.ReactionPart) => (b: wlib.ReactionPart) =>
+  const same_part = (a: zz.ReactionPart) => (b: zz.ReactionPart) =>
     a.reaction === b.reaction &&
     a.part === b.part &&
     a.fact.operation.scope === b.fact.operation.scope &&
     a.fact.operation.id === b.fact.operation.id
-  const reaction_state: wlib.ReactionState = {
+  const reaction_state: zz.ReactionState = {
     position: (reaction) => Promise.resolve(reaction_positions.get(reaction)),
     advance: (reaction) => (to) => {
       if (reactions_save_their_positions) reaction_positions.set(reaction, to)
@@ -487,13 +486,13 @@ export const oracle = async (start: Start = {}) => {
   }
   // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
   // in the order the library hands it.
-  const trace: wlib.Traced<unknown>[] = []
+  const trace: zz.Traced<unknown>[] = []
   // The world: the members' phones, the network's next answers, what each
   // phone received; the clock of the executor and the consumers, which a
   // scenario sets (`pass`); the time that passes (DOM-3, DOM-14, TST-3),
   // every wait asked for, how long, ended when the scenario says (`elapse`,
   // `pass`).
-  let instant = wlib.date_time.parse('2026-11-01T00:00:00-04:00')
+  let instant = zz.date_time.parse('2026-11-01T00:00:00-04:00')
   const waits: (() => void)[] = []
   const asked: number[] = []
   const answers: Network[] = []
@@ -580,7 +579,7 @@ export const oracle = async (start: Start = {}) => {
     ...loans_registry,
     [notify_alone_path]: notify_alone,
   }
-  const alone = wlib.command_use_case_ports({
+  const alone = zz.command_use_case_ports({
     registry: alone_registry,
     identities: tools_registry,
     versions,
@@ -596,22 +595,22 @@ export const oracle = async (start: Start = {}) => {
     (context: EntryContext, input: input): AsyncIterable<event> => {
       const path = paths.get(port)
       if (path === undefined) throw new Error('a port the oracle did not build')
-      return port({ ...context, fingerprint: wlib.fingerprint_of({ path, input }) }, input)
+      return port({ ...context, fingerprint: zz.fingerprint_of({ path, input }) }, input)
     }
   let operations = 0
   const at = (instant: string, sent: Sent = {}): EntryContext => {
     operations += 1
     const id = sent.operation ?? `op-${String(operations)}`
     return {
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
       time_zone: zone,
-      operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
-      correlation: wlib.correlation.parse(sent.correlation ?? `correlation-${id}`),
+      operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
+      correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
     }
   }
   // As a test wires a tree of its own: by folder, the ports unnamed (a type
   // the compiler can still write out for the harness).
-  const as_invoked: wlib.Invoked = the_shed.invoked
+  const as_invoked: zz.Invoked = the_shed.invoked
   /**
    * The executor of `loans` started (DOM-14), its clock at an instant: the
    * members' phones by member, the network answering as told (`network`);
@@ -622,8 +621,8 @@ export const oracle = async (start: Start = {}) => {
     readonly at: string
     readonly phones?: Readonly<Record<string, string>>
     readonly saves_its_position?: boolean
-  }): wlib.EffectExecutor => {
-    instant = wlib.date_time.parse(at.at)
+  }): zz.EffectExecutor => {
+    instant = zz.date_time.parse(at.at)
     saves_its_position = at.saves_its_position ?? true
     number_of.clear()
     for (const [id, phone] of Object.entries(at.phones ?? {})) {
@@ -638,11 +637,8 @@ export const oracle = async (start: Start = {}) => {
    */
   const started =
     (folders: readonly Reactions[]) =>
-    (at: {
-      readonly at: string
-      readonly saves_its_position?: boolean
-    }): wlib.ReactionConsumers => {
-      instant = wlib.date_time.parse(at.at)
+    (at: { readonly at: string; readonly saves_its_position?: boolean }): zz.ReactionConsumers => {
+      instant = zz.date_time.parse(at.at)
       reactions_save_their_positions = at.saves_its_position ?? true
       return together(new Map(folders.map((folder) => [folder, the_shed.reactions[folder]()])))
     }
@@ -654,7 +650,7 @@ export const oracle = async (start: Start = {}) => {
    * command whose input names its operation (SC-34), its scope alone
    * (`named`), the correlation the entry's own.
    */
-  const as = <const version extends wlib.Semver>(who: Who, version: version) => ({
+  const as = <const version extends zz.Semver>(who: Who, version: version) => ({
     at: (instant: string, sent: Sent = {}) => ({
       caller: caller.parse(who),
       version,
@@ -663,7 +659,7 @@ export const oracle = async (start: Start = {}) => {
     when: (instant: string) => ({
       caller: caller.parse(who),
       version,
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
       time_zone: zone,
     }),
     named: (instant: string, sent: Omit<Sent, 'operation'> = {}) => {
@@ -720,7 +716,7 @@ export const oracle = async (start: Start = {}) => {
     /** The fact log of the cell, a port of the adapter (DOM-17): what a fact carries, its correlation (DOM-10). */
     log: the_shed.log,
     /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
-    trace: (traced: wlib.Traced<unknown>) => {
+    trace: (traced: zz.Traced<unknown>) => {
       trace.push(traced)
     },
     /** The ports the trees invoke, by the folder of what they serve: where a test wires a tree of its own (SC-29). */
@@ -732,10 +728,10 @@ export const oracle = async (start: Start = {}) => {
       for (const over of waits.splice(0)) over()
     },
     /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
-    traced: (): readonly wlib.Traced<unknown>[] => [...trace],
+    traced: (): readonly zz.Traced<unknown>[] => [...trace],
     /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
-    when: (instant: string): wlib.RootContext => ({
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+    when: (instant: string): zz.RootContext => ({
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
       time_zone: zone,
     }),
     /**
@@ -744,11 +740,11 @@ export const oracle = async (start: Start = {}) => {
      * (DOM-22), so that a wait queued at 1.x gives its return the input of
      * 2.0.0.
      */
-    queued: (effect: string): readonly wlib.EntryFields[] =>
+    queued: (effect: string): readonly zz.EntryFields[] =>
       cell
         .entries()
         .filter((entry) => entry.effect === effect)
-        .map((entry) => versions[wlib.$Versions].entry(entry)),
+        .map((entry) => versions[zz.$Versions].entry(entry)),
     versions,
     executor,
     /** The network's next answers, in order, then it delivers (DOM-15, TST-4). */
@@ -763,15 +759,15 @@ export const oracle = async (start: Start = {}) => {
      * deliveries run their course (TST-3).
      */
     pass: async (to: string) => {
-      instant = wlib.date_time.parse(to)
+      instant = zz.date_time.parse(to)
       for (const over of waits.splice(0)) over()
       await quiet()
     },
     /** The entries the executor holds for an effect, as its state keeps them (DOM-14): shown, never a business fact. */
-    held: (effect: string): readonly wlib.HeldEntry[] =>
+    held: (effect: string): readonly zz.HeldEntry[] =>
       holding.filter((each) => each.entry.effect === effect),
     /** The letters an operator discarded, with their traces. */
-    discarded: (): readonly wlib.Discarded<wlib.EffectDeadLetter>[] => [...discards],
+    discarded: (): readonly zz.Discarded<zz.EffectDeadLetter>[] => [...discards],
     /** The consumer of `reaction/damage/` started (part 7.3, SC-40, SC-42). */
     reactions: started(['reaction/damage']),
     /**
@@ -788,10 +784,10 @@ export const oracle = async (start: Start = {}) => {
       'business/tools',
     ]),
     /** The parts a reaction holds, as its state keeps them (DOM-16, SC-42): shown, never a business fact. */
-    held_parts: (reaction: string): readonly wlib.HeldPart[] =>
+    held_parts: (reaction: string): readonly zz.HeldPart[] =>
       parts_held.filter((each) => each.reaction === reaction),
     /** The reactions' letters an operator discarded, with their traces. */
-    discarded_parts: (): readonly wlib.Discarded[] => [...parts_discarded],
+    discarded_parts: (): readonly zz.Discarded[] => [...parts_discarded],
     /**
      * The adapter of `tools` released: right, or with a defect that reads
      * every tool as neither in service, in the workshop nor retired (SC-42).
@@ -807,8 +803,8 @@ export const oracle = async (start: Start = {}) => {
       tools_falls_after = after
     },
     /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
-    recorded: async (): Promise<readonly wlib.StoredEnvelope[]> => {
-      const facts = new Map<wlib.position, wlib.StoredEnvelope>()
+    recorded: async (): Promise<readonly zz.StoredEnvelope[]> => {
+      const facts = new Map<zz.position, zz.StoredEnvelope>()
       for await (const event of the_shed.log(undefined)) {
         if (event.event !== 'fact') break
         facts.set(event.position, event.fact)
@@ -885,7 +881,7 @@ export const until_caught_up = async <event extends { readonly event: string }>(
 /** An event of a read, as a consumer of a live view reads it. */
 export interface Seen {
   readonly event: string
-  readonly position?: wlib.position
+  readonly position?: zz.position
   readonly identity?: unknown
   readonly entry?: unknown
   readonly entries?: readonly unknown[]

@@ -43,7 +43,7 @@ export const twin = (tree: Tree, folder: Folder, authored: AuthoredFile): Genera
         [
           ...(typed ? [`import { z } from 'zod'`] : []),
           ...(authored.kind === 'node'
-            ? [`import type * as wlib from '${library_from(tree, folder.segments)}'`]
+            ? [`import type * as zz from '${library_from(tree, folder.segments)}'`]
             : []),
           ...(delegated ? [`import { delegate, next } from './_scope_${authored.kind}.ts'`] : []),
           `import * as ${alias} from './${authored.stem}.ts'`,
@@ -138,15 +138,15 @@ const members_of = (folder: Folder, alias: string, exported: Export): readonly s
         [doc, plain].join('\n'),
         [
           `/** The context the node \`${name}\` gives to everything below it. */`,
-          `export type ${name}_context = wlib.ContextOf<typeof ${name}>`,
+          `export type ${name}_context = zz.ContextOf<typeof ${name}>`,
         ].join('\n'),
         [
           `/** How the node \`${name}\` and the nodes above it may close a request (PER-14), for the leaves below it. */`,
-          `export type ${name}_closes = wlib.ClosesOf<typeof ${name}>`,
+          `export type ${name}_closes = zz.ClosesOf<typeof ${name}>`,
         ].join('\n'),
         [
           `/** What the node \`${name}\` and the nodes above it add to the commands below it (D105, SC-31). */`,
-          `export type ${name}_accumulated = wlib.AccumulatedOf<typeof ${name}>`,
+          `export type ${name}_accumulated = zz.AccumulatedOf<typeof ${name}>`,
         ].join('\n'),
       ]
     case 'lookup':

@@ -20,7 +20,7 @@
 // shed starts; the durable consumers run where the node runs them, in the
 // writer only (DOM-9), so they are given wired, each to start.
 
-import * as wlib from '../../src/library/index.ts'
+import * as zz from '../../src/library/index.ts'
 import { memory_adapter, type Cell, type MemoryRelease } from './adapter/memory/index.ts'
 import {
   send_the_due_date_reminder,
@@ -83,8 +83,8 @@ import { registry as repair_registry } from './reaction/repair/_registry.ts'
  */
 export interface World {
   readonly phones: Phones
-  readonly clock: wlib.Clock
-  readonly elapsed: wlib.Elapsed
+  readonly clock: zz.Clock
+  readonly elapsed: zz.Elapsed
 }
 
 /**
@@ -95,7 +95,7 @@ export interface World {
  * a defect or streaming by composition (`MemoryRelease`).
  */
 export interface Release {
-  readonly majors?: readonly wlib.Majors[]
+  readonly majors?: readonly zz.Majors[]
   readonly adapter?: MemoryRelease
 }
 
@@ -107,7 +107,7 @@ export const shed =
     // (a past major deleted too early stops the start), and given to
     // everything that reads them: the library alone takes what was stored to
     // the current shapes (DOM-22, A, 17 Nov 2026).
-    const versions = await wlib.versions(release.majors ?? [loans_majors, tools_majors])({
+    const versions = await zz.versions(release.majors ?? [loans_majors, tools_majors])({
       stored: cell.stored_versions,
     })
     const adapter = memory_adapter(cell, release.adapter)(versions)
@@ -122,7 +122,7 @@ export const shed =
     // that follows reads (DOM-3), the trace of its rejections (F6, PER-14),
     // the time that passes.
     const wired = { invoked, log: adapter.log, trace: adapter.trace, elapsed: world.elapsed }
-    const member = wlib.tree_ports({
+    const member = zz.tree_ports({
       registry: { ...persona_registry, ...member_registry },
       versions,
       majors: member_majors,
@@ -139,7 +139,7 @@ export const shed =
         send_me_my_week_on_mondays,
       },
     })(wired)
-    const keeper = wlib.tree_ports({
+    const keeper = zz.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions,
       majors: keeper_majors,
@@ -157,21 +157,21 @@ export const shed =
     // verifies the signature of its system's key and gives the `Caller`
     // (PER-4), and the scope of its operations, whose ids its notifications
     // carry (SC-34).
-    const workshop = wlib.tree_ports({
+    const workshop = zz.tree_ports({
       registry: { ...persona_registry, ...workshop_registry },
       versions,
       majors: workshop_majors,
       top: persona,
       use_cases: { close_a_job },
     })(wired)
-    const visitor = wlib.tree_ports({
+    const visitor = zz.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
       versions,
       majors: visitor_majors,
       top: persona,
       use_cases: { the_catalogue },
     })(wired)
-    const loans_effects = wlib.effect_executor({
+    const loans_effects = zz.effect_executor({
       registry: loans_registry,
       versions,
       returns: {
@@ -180,21 +180,21 @@ export const shed =
         sum_up_the_week_for_the_member,
       },
     })({
-      'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
-      'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
+      'business/loans/effect/wait_until_the_eve_of_the_due_date': zz.returns_the_payload,
+      'business/loans/effect/wait_until_the_due_date': zz.returns_the_payload,
       'business/loans/effect/send_the_due_date_reminder': send_the_due_date_reminder(cell.get)(
         world.phones,
       ),
       'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(
         world.phones,
       ),
-      'business/loans/effect/wait_until_monday': wlib.returns_the_payload,
+      'business/loans/effect/wait_until_monday': zz.returns_the_payload,
       'business/loans/effect/send_the_weeks_summary': send_the_weeks_summary(world.phones),
     })
     // The desk's work sheet and its rounds of notices move themselves on: a
     // reaction between two steps of one domain's process lives in that
     // domain (DOM-16).
-    const loans_reactions = wlib.reaction_consumers({ registry: loans_registry, versions })({
+    const loans_reactions = zz.reaction_consumers({ registry: loans_registry, versions })({
       'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {
         log: adapter.log,
         invokes: adapter.loans.continue_the_cancellation_of_reservations,
@@ -213,7 +213,7 @@ export const shed =
       },
     })
     // The desk's loading of a sheet of tools moves itself on (SC-44).
-    const tools_reactions = wlib.reaction_consumers({ registry: tools_registry, versions })({
+    const tools_reactions = zz.reaction_consumers({ registry: tools_registry, versions })({
       'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up': {
         log: adapter.log,
         invokes: adapter.tools.continue_the_loading_of_a_sheet,
@@ -224,19 +224,19 @@ export const shed =
       },
     })
     // The procedures, above the domains (GR-9).
-    const damage = wlib.reaction_consumers({ registry: damage_registry, versions })({
+    const damage = zz.reaction_consumers({ registry: damage_registry, versions })({
       'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
         log: adapter.log,
         invokes: adapter.tools.send_a_tool_to_repair,
       },
     })
-    const repair = wlib.reaction_consumers({ registry: repair_registry, versions })({
+    const repair = zz.reaction_consumers({ registry: repair_registry, versions })({
       'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified': {
         log: adapter.log,
         invokes: adapter.loans.notify_the_members_of_a_repair,
       },
     })
-    const retirement = wlib.reaction_consumers({ registry: retirement_registry, versions })({
+    const retirement = zz.reaction_consumers({ registry: retirement_registry, versions })({
       'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled': {
         log: adapter.log,
         invokes: adapter.loans.cancel_the_reservations_of_a_tool,

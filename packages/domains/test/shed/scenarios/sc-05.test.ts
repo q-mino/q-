@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { repair_id } from '../business/tools/_id.ts'
 import { first } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'
@@ -60,7 +60,7 @@ describe('SC-5, a value with states', () => {
     const shed = await a_shed_with(drill)
     const tuesday = shed.at('2026-11-24T08:00:00-05:00', { scope: 'keeper/luca' })
     const sent = await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
-    const stay = wlib.identity_of(repair_id)(tuesday.operation)
+    const stay = zz.identity_of(repair_id)(tuesday.operation)
     expect(sent).toMatchObject({
       outcome: 'applied',
       branch: 'the_tool_is_in_service_so_it_goes_to_repair',

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../../../src/library/index.ts'
+import * as zz from '../../../src/library/index.ts'
 import { all, first, oracle, type Who } from './oracle.ts'
 
 // SC-14, the business's side (part 5.1): the catalogue of `tools`, a query
@@ -167,7 +167,7 @@ describe("SC-14, the visitor's catalogue (the persona)", () => {
       shed.visitor.the_catalogue(
         when,
         { categories: ['power', 'garden'], page_size: 2 },
-        wlib.cursor.parse(next),
+        zz.cursor.parse(next),
       ),
     )
     expect(resumed).toEqual(pages.slice(1))
