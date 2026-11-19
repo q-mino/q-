@@ -59,10 +59,13 @@ for (const failure of failures) {
     `${failure.path}:${String(failure.line)}  ${failure.rule}  ${failure.sentence}\n`,
   )
 }
+/** A count of files, in the singular for one. */
+const files = (count: number): string => `${String(count)} ${count === 1 ? 'file' : 'files'}`
+
 const held = outcomes.flatMap((outcome) => outcome.held)
 if (held.length > 0) {
   process.stdout.write(
-    `generate: ${String(held.length)} files held as written, neither written nor compared (generator.config.ts, held)\n`,
+    `generate: ${files(held.length)} held as written, neither written nor compared (generator.config.ts, held)\n`,
   )
 }
 if (!check) {
@@ -70,7 +73,7 @@ if (!check) {
   process.stdout.write(
     written.length === 0
       ? 'generate: nothing to write\n'
-      : `generate: ${String(written.length)} files written\n`,
+      : `generate: ${files(written.length)} written\n`,
   )
 }
 process.exitCode = failures.length === 0 ? 0 : 1
