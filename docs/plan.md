@@ -165,7 +165,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **12. The extensions: boundary, manifest, extension points** — J · 250k
 
 - Goal: what an extension is to the kernel and to the library, decided and written before any code of it: its boundary with the kernel (messages: a request in, an outcome out, the calls to its ports); its manifest (what it sees of the kernel and of the other extensions, what it touches, the leaves it adds to which personas, the use cases it offers to other extensions), enforced by the kernel; isolated by default, in process as a declared choice of trust the user accepts informed, whole or in part; its storage, a partition the kernel gives; the extension points (pages, slots, actions; hooks only where a case shows they are needed); activation; the kernel's use case of the extensions in common, offered to `known`; how an extension is built (its package, its domains, its copy of `zen0`, the generator over its tree) and where it sits in the graph; the request, the response and the silence as rules.
-- Decisions with Alessandro, before code (a design session, Alessandro, 19 Nov 2026): every point of the goal; loading an extension from storage (OPFS or IndexedDB) and the catalogue of the trusted host are out of stage 1, their shape only as far as the boundary needs it.
+- Decisions, before code (Alessandro, 19 Nov 2026): Claude designs every point of the goal alone and writes the whole proposal; Alessandro reviews it in one session before any step builds on it; loading an extension from storage (OPFS or IndexedDB) and the catalogue of the trusted host are out of stage 1, their shape only as far as the boundary needs it.
 - Writes: `architecture.md` § 2 (packages and the graph: `conversations` out, the extensions in), § 4 (the domains of q-: the kernel, ping pong), § 5 (the personas: `known` no longer writes in chats; it reaches the extensions' leaves and the kernel's), new rules for the boundary, the manifest, the response and the silence; then the code the step's design asks of the library and the kernel.
 - Checks: decided with the design; at least a test extension wired through the boundary on the oracle.
 - Depends on: 7. Its design session runs before step 10 (the letter and the response follow from it); its code after step 11.
@@ -230,7 +230,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 
 **22. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
 
-- Goal: the rendering of the `ui` model, gestures to activities, Italian texts in `packages/phone/src/texts/`; the extension points rendered as step 12 decides (an isolated extension's page or slot, an action).
+- Goal: the rendering of the `ui` model as a very simple wireframe, usable and interactive (Alessandro, 19 Nov 2026), gestures to activities, Italian texts in `packages/phone/src/texts/`; the extension points rendered as step 12 decides (an isolated extension's page or slot, an action).
 - Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`.
 
 **23. Browser I/O** (`adapters-web`) — L · 160k
