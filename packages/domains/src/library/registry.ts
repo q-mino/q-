@@ -1,5 +1,7 @@
 import type * as z from 'zod'
 import type { Semver } from './format.ts'
+import type { PartFields, StoredPart } from './envelope.ts'
+import type { EntryFields, StoredEntry } from './state_adapter.ts'
 import type { RootContext } from './context.ts'
 import type { Lookup } from './lookup.ts'
 import type { Component, Path, PathOf } from './component.ts'
@@ -47,7 +49,28 @@ export const $Versions: unique symbol = Symbol('Versions')
  * runs the steps of a leaf of a past major. The log is never rewritten.
  */
 export interface Versions {
-  readonly [$Versions]: true
+  readonly [$Versions]: {
+    /**
+     * A part of a fact as stored, at the current shape: its path, its
+     * payload parsed, its resources as written; it stops (throws) on a
+     * version it does not know, and the reader retries.
+     */
+    readonly part: (stored: StoredPart) => PartFields
+    /**
+     * An outbox entry as stored, at the current shape: its effect's path,
+     * its id, its payload parsed, when it may go and its resources as
+     * queued (a translation touches the payload alone, A, 17 Nov 2026); it
+     * stops (throws) on a version it does not know.
+     */
+    readonly entry: (stored: StoredEntry) => EntryFields
+    /**
+     * Whether the store's versions read a path: its domain is among the
+     * majors given. A builder that reads stored data checks at its wiring
+     * every path it may read (CFG-2), and stops on one of a domain absent
+     * (the consumer of `damage` reads a fact of `loans`, A, 17 Nov 2026).
+     */
+    readonly reads: (path: string) => boolean
+  }
 }
 
 /** A path and a version a store keeps, among the parts of its facts and its outbox entries. */

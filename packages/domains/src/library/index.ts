@@ -71,6 +71,7 @@ export type {
   StoredPart,
   PartFields,
   StoredEnvelope,
+  ComposedBranches,
 } from './envelope.ts'
 export { $Composition, $Each, entry_id, $Command, pick, composes, each } from './command.ts'
 export type {
@@ -157,6 +158,7 @@ export type {
   PlannedBranchOverAList,
   PlannedCommandBranch,
   StoredEntry,
+  EntryFields,
   PlannedCommand,
   AlreadyRecorded,
   Execution,
@@ -169,6 +171,8 @@ export type {
   PathFailure,
   PathFailures,
   CommandOutcome,
+  ComposedPart,
+  ComposedParts,
   ReadFailure,
   StepOutcome,
   OutcomeOf,
@@ -212,14 +216,7 @@ export type {
   ReadUseCases,
   QueriesOf,
 } from './use_case.ts'
-export type {
-  Events,
-  EventOf,
-  ComposedPart,
-  ComposedParts,
-  Projection,
-  EventOutOf,
-} from './use_case_over.ts'
+export type { Events, EventOf, Projection, EventOutOf } from './use_case_over.ts'
 export type {
   CommandUseCaseOver,
   WaitIsOver,
@@ -264,8 +261,11 @@ export type {
   EarlierReadLeaf,
 } from './earlier.ts'
 export { builders_at } from './builders.ts'
+export { command_use_case_ports } from './command_port.ts'
+export { versions, replay } from './versions.ts'
+export type { VersionsBuilder } from './versions.ts'
 export type { Builders, Sight } from './builders.ts'
-export { identity_of } from './stable.ts'
+export { identity_of, fingerprint_of, canonical_json, type Retried } from './stable.ts'
 export { kind_of, is_a_schema } from './kind.ts'
 export type { ConstructKind, Built } from './kind.ts'
 export { as_json, json_schema_of } from './json_schema.ts'

@@ -1,5 +1,5 @@
 import type * as z from 'zod'
-import type { Operation } from './context.ts'
+import { fingerprint, type Operation } from './context.ts'
 
 // The stable functions of the library (LIB-10, D100): values derived from
 // others that never change once released, since what they derive is kept and
@@ -171,3 +171,91 @@ export const identity_of =
   <identity extends z.ZodType<string>>(identity: identity) =>
   (operation: Operation): z.output<identity> =>
     identity.parse(digest(['identity_of', operation.scope, operation.id]))
+
+/** Whether a value is an object JSON writes as one: a plain object, no class's instance. */
+const is_a_plain_object = (value: object): value is Readonly<Record<string, unknown>> => {
+  const prototype: unknown = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
+}
+
+/** Names in the order of their UTF-16 code units (RFC 8785, 3.2.3). */
+const by_code_units = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
+
+/**
+ * The canonical text of a value as a message carries it, JSON (RFC 8785,
+ * the JSON Canonicalization Scheme): an object's members in the order of
+ * their names' UTF-16 code units, a field whose value is `undefined` absent,
+ * as JSON leaves it, a number as ECMAScript writes it (one text per value:
+ * `1.0` and `1` are one number, `-0` is `0`), a text as `JSON.stringify`
+ * escapes it. So two values equal as structures have one text, whatever the
+ * order of their fields or the form of their numbers (D100). A value JSON
+ * cannot write as it is (a number not finite, a bigint, a function, a
+ * symbol, `undefined` in a list, an object of a class: a date, a map) stops
+ * it: two different values would meet on one text.
+ */
+export const canonical_json = (value: unknown): string => {
+  switch (typeof value) {
+    case 'string':
+    case 'boolean':
+      return JSON.stringify(value)
+    case 'number':
+      if (!Number.isFinite(value)) throw new Error(`${String(value)} is no JSON number`)
+      return JSON.stringify(value)
+    case 'object': {
+      if (value === null) return 'null'
+      if (Array.isArray(value)) {
+        const elements: readonly unknown[] = value
+        return `[${elements
+          .map((element) => {
+            if (element === undefined) throw new Error('a list holds undefined, which JSON has not')
+            return canonical_json(element)
+          })
+          .join(',')}]`
+      }
+      if (!is_a_plain_object(value)) {
+        throw new Error('an object of a class is no JSON value: send its JSON form')
+      }
+      return `{${Object.keys(value)
+        .toSorted(by_code_units)
+        .flatMap((name) =>
+          value[name] === undefined
+            ? []
+            : [`${JSON.stringify(name)}:${canonical_json(value[name])}`],
+        )
+        .join(',')}}`
+    }
+    case 'undefined':
+    case 'bigint':
+    case 'function':
+    case 'symbol':
+      throw new Error(`a ${typeof value} is no JSON value`)
+  }
+}
+
+/**
+ * A request as the retrier keeps and sends it again (D100, LIB-11): the path
+ * it invokes, the node of the paper (a leaf's, or a use case's when no tree
+ * is above it), and its input as sent, which the schema accepted: strict
+ * (DOM-21), so holding only the fields it declares, and before its defaults.
+ */
+export interface Retried {
+  readonly path: string
+  readonly input: unknown
+}
+
+/**
+ * The fingerprint of an operation (DOM-11, D100, LIB-11): computed by the
+ * library where the request enters, over what the retrier keeps and sends
+ * again, its path and its input as sent; compared by the command port with
+ * the fingerprint of the fact the operation recorded. Two requests equal as
+ * structures have one fingerprint (the canonical JSON of the input); a
+ * retry is the same request, so a duplicate, whatever the release of the
+ * node in between (no default, no contract version, no clock, no value the
+ * node adds). Not the operation: its identity and scope are the key the
+ * fingerprint is compared under (D79.4), so the fingerprint tells two
+ * requests under one operation apart, and nothing more. A stable function,
+ * in the stability corpus (LIB-10): a change is a migration of every fact
+ * kept within a retry's window. C, 19 Nov 2026
+ */
+export const fingerprint_of = (request: Retried): fingerprint =>
+  fingerprint.parse(digest(['fingerprint_of', request.path, canonical_json(request.input)]))

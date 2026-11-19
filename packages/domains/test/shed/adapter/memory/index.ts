@@ -17,6 +17,8 @@ import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../business/tools/_registry.ts'
 import { registry as loans_registry } from '../../business/loans/_registry.ts'
 import { registry as accounts_registry } from '../../auth/accounts/_registry.ts'
+import type * as tools_fact from '../../business/tools/_fact.ts'
+import type * as loans_fact from '../../business/loans/_fact.ts'
 import {
   the_hats_of_an_account,
   the_hats_of_a_key,
@@ -128,6 +130,14 @@ export interface Cell {
   readonly reactions: wlib.ReactionState
 }
 
+/**
+ * What the commands need of the cell: its state, recording a step, its
+ * position, the fact an operation recorded (DOM-11). The harness of the
+ * scenarios gives it alone while the reads, the executors and the consumers
+ * have no body (`scenarios/oracle.ts`).
+ */
+export type CommandCell = Pick<Cell, 'get' | 'record' | 'position' | 'recorded_by'>
+
 /** A recorded fact, at its position, with the state before and after it. */
 export interface Recorded {
   readonly position: wlib.position
@@ -165,19 +175,46 @@ const algebra = <fragments>(predicate: fragments) => ({
       !operand(state),
 })
 
+/** A state after a fact's writes, in the order of its parts (DOM-10). */
+const after_writes =
+  (state: State) =>
+  (writes: readonly Write[]): State =>
+    writes.reduce<State>((before, write) => ({ ...before, ...write(before) }), state)
+
 /** What a branch writes, recorded on a state: its writes in the order of its parts, its fact, its entries. */
 const record =
-  (cell: Cell) =>
+  (cell: CommandCell) =>
   (state: State) =>
-  (written: wlib.PlannedWrite<Write>): void => {
+  (planned: wlib.PlannedWrite<Write>): void => {
     cell.record({
-      fact: written.fact,
-      entries: written.entries,
-      state: written.writes.reduce<State>(
-        (before, write) => ({ ...before, ...write(before) }),
-        state,
-      ),
+      fact: planned.fact,
+      entries: planned.entries,
+      state: after_writes(state)(planned.writes),
     })
+  }
+
+/**
+ * The oracle's state rebuilt from a log (DOM-22, A, 17 Nov 2026; SC-8), as
+ * the SQL adapter rebuilds its tables: from a state with nothing, every fact
+ * the log keeps written again through the writes of the commands, each at
+ * the current shape the library gives (`wlib.replay`), so that a loan lent
+ * at `loans` 1.x, due at an instant, comes back due on that instant's day;
+ * no value is rewritten by hand. It gives the state after each fact, at its
+ * position, for the cell to keep beside the fact as it was stored: the log
+ * is never rewritten.
+ */
+export const rebuilt = (versions: wlib.Versions) => (nothing: State) =>
+  async function* (
+    log: wlib.FactLog,
+  ): AsyncGenerator<{ readonly position: wlib.position; readonly state: State }> {
+    let state = nothing
+    for await (const fact of wlib.replay<
+      wlib.FactsIn<typeof tools_fact> | wlib.FactsIn<typeof loans_fact>,
+      Write
+    >({ versions, writes: { ...tools_writes, ...loans_writes } })(log)) {
+      state = after_writes(state)(fact.writes)
+      yield { position: fact.position, state }
+    }
   }
 
 /** The fact an operation already recorded, as the duplicate branch gives it back (DOM-11). */
@@ -231,7 +268,7 @@ const leaves = (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly Fr
  * awaits inside an execution.
  */
 const execute =
-  (cell: Cell): wlib.Execute<Fragment, Write> =>
+  (cell: CommandCell): wlib.Execute<Fragment, Write> =>
   (plan) => {
     const recorded = cell.recorded_by(plan.operation)
     if (recorded !== undefined) {
@@ -316,7 +353,7 @@ const after =
  * instance: `passing_over` is SQL's, which reads one at a time.
  */
 const execute_step =
-  (cell: Cell) =>
+  (cell: CommandCell) =>
   <candidate>(
     plan: wlib.PlannedStep<
       Fragment,
@@ -611,120 +648,158 @@ const log =
 const native = (cell: Cell) => (registry: wlib.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
-export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => ({
-  log: log(cell),
-  tools: {
-    ...wlib.command_use_case_ports({
-      registry: tools_registry,
-      versions,
-      use_cases: {
-        add_a_tool,
-        retire_a_tool,
-        send_a_tool_to_repair,
-        put_a_repaired_tool_back_in_service,
-        close_a_repair,
-        rename_a_tool,
-        load_the_tools_of_a_sheet,
-        load_the_tools_of_a_short_sheet,
-        continue_the_loading_of_a_sheet,
-      },
-    })({
-      algebra: algebra(tools_fragments),
-      write: tools_writes,
-      execute: execute(cell),
-      // The loading of a sheet of tools walks its lines (SC-44): one
-      // subject, its own selection.
-      steps: {
-        selection: { ...line_selection, after },
-        sources: line_steps,
-        execute: execute_step(cell),
-      },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: tools_registry,
-      versions,
-      use_cases: { the_catalogue },
-    })({
-      algebra: { ...tool_selection, after },
-      sources: tool_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: { the_catalogue: native(cell)(tools_registry) },
-    }),
-  },
-  loans: {
-    ...wlib.command_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: {
-        borrow_a_tool,
-        lend_a_booked_tool,
-        extend_the_loan,
-        correct_the_tool_of_a_loan,
-        reserve_a_tool,
-        return_a_tool,
-        remind_the_member_of_the_due_date,
-        declare_the_loan_overdue,
-        cancel_the_reservations_of_a_tool,
-        continue_the_cancellation_of_reservations,
-        notify_the_members_of_a_repair,
-        continue_the_repair_notice_round,
-        begin_a_weekly_summary,
-        sum_up_the_week_for_the_member,
-      },
-    })({
-      algebra: algebra(loans_fragments),
-      write: loans_writes,
-      execute: execute(cell),
-      steps: {
-        selection: { ...reservation_selection, after },
-        sources: reservation_steps,
-        execute: execute_step(cell),
-      },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: { the_ongoing_loans_of_a_member },
-    })({
-      algebra: { ...loan_selection, after },
-      sources: loan_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
-      // The member's buttons on the rows of their loans (SC-33): the
-      // commands' own fragments, on the state of the read (ADP-8).
-      applicability: { the_ongoing_loans_of_a_member: loans_fragments },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
-    })({
-      algebra: { ...reservation_selection, after },
-      sources: reservation_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: {
-        the_reservations_of_a_member: native(cell)(loans_registry),
-        the_reservations_of_a_member_in_the_workshop: native(cell)(loans_registry),
-      },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: { the_loans_of_each_tool_this_month },
-    })({
-      algebra: { ...loans_tool_selection, after },
-      calculations: loans_tool_calculation,
-      sources: loans_tool_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: { the_loans_of_each_tool_this_month: native(cell)(loans_registry) },
-    }),
-  },
-  accounts: wlib.lookup_ports({
-    registry: accounts_registry,
-    lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
-  })(accounts_lookups(cell.get)),
+/** The command use cases of `tools`, whose ports the oracle builds. */
+export const tools_command_use_cases = {
+  add_a_tool,
+  retire_a_tool,
+  send_a_tool_to_repair,
+  put_a_repaired_tool_back_in_service,
+  close_a_repair,
+  rename_a_tool,
+  load_the_tools_of_a_sheet,
+  load_the_tools_of_a_short_sheet,
+  continue_the_loading_of_a_sheet,
+}
+
+/** The command use cases of `loans`, whose ports the oracle builds. */
+export const loans_command_use_cases = {
+  borrow_a_tool,
+  lend_a_booked_tool,
+  extend_the_loan,
+  correct_the_tool_of_a_loan,
+  reserve_a_tool,
+  return_a_tool,
+  remind_the_member_of_the_due_date,
+  declare_the_loan_overdue,
+  cancel_the_reservations_of_a_tool,
+  continue_the_cancellation_of_reservations,
+  notify_the_members_of_a_repair,
+  continue_the_repair_notice_round,
+  begin_a_weekly_summary,
+  sum_up_the_week_for_the_member,
+}
+
+/**
+ * The oracle's state adapter for the commands of `tools` that run no step
+ * (TST-2): the fragments of its predicates, the writes of its facts, the
+ * execution.
+ */
+export const tools_command_adapter = (cell: CommandCell) => ({
+  algebra: algebra(tools_fragments),
+  write: tools_writes,
+  execute: execute(cell),
 })
+
+/**
+ * The oracle's state adapter for the commands of `loans` that run no step
+ * (TST-2): the fragments of its predicates, over the state of `tools` too
+ * (GR-3), the writes of its facts, the execution.
+ */
+export const loans_command_adapter = (cell: CommandCell) => ({
+  algebra: algebra(loans_fragments),
+  write: loans_writes,
+  execute: execute(cell),
+})
+
+/**
+ * The command ports of `tools` and `loans` over the oracle (TST-2): what
+ * the scenarios of the commands run on (`scenarios/oracle.ts`).
+ */
+export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) => ({
+  tools: wlib.command_use_case_ports({
+    registry: tools_registry,
+    versions,
+    use_cases: tools_command_use_cases,
+  })({
+    ...tools_command_adapter(cell),
+    // The loading of a sheet of tools walks its lines (SC-44): one
+    // subject, its own selection.
+    steps: {
+      selection: { ...line_selection, after },
+      sources: line_steps,
+      execute: execute_step(cell),
+    },
+  }),
+  loans: wlib.command_use_case_ports({
+    // The facts of `loans` hold identities of `tools` (GR-3), whose paths
+    // its registry gives.
+    registry: { ...tools_registry, ...loans_registry },
+    versions,
+    use_cases: loans_command_use_cases,
+  })({
+    ...loans_command_adapter(cell),
+    steps: {
+      selection: { ...reservation_selection, after },
+      sources: reservation_steps,
+      execute: execute_step(cell),
+    },
+  }),
+})
+
+export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => {
+  const commands = memory_commands(cell)(versions)
+  return {
+    log: log(cell),
+    tools: {
+      ...commands.tools,
+      ...wlib.read_use_case_ports({
+        registry: tools_registry,
+        versions,
+        use_cases: { the_catalogue },
+      })({
+        algebra: { ...tool_selection, after },
+        sources: tool_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: { the_catalogue: native(cell)(tools_registry) },
+      }),
+    },
+    loans: {
+      ...commands.loans,
+      ...wlib.read_use_case_ports({
+        registry: loans_registry,
+        versions,
+        use_cases: { the_ongoing_loans_of_a_member },
+      })({
+        algebra: { ...loan_selection, after },
+        sources: loan_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
+        // The member's buttons on the rows of their loans (SC-33): the
+        // commands' own fragments, on the state of the read (ADP-8).
+        applicability: { the_ongoing_loans_of_a_member: loans_fragments },
+      }),
+      ...wlib.read_use_case_ports({
+        registry: loans_registry,
+        versions,
+        use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
+      })({
+        algebra: { ...reservation_selection, after },
+        sources: reservation_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: {
+          the_reservations_of_a_member: native(cell)(loans_registry),
+          the_reservations_of_a_member_in_the_workshop: native(cell)(loans_registry),
+        },
+      }),
+      ...wlib.read_use_case_ports({
+        registry: loans_registry,
+        versions,
+        use_cases: { the_loans_of_each_tool_this_month },
+      })({
+        algebra: { ...loans_tool_selection, after },
+        calculations: loans_tool_calculation,
+        sources: loans_tool_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: { the_loans_of_each_tool_this_month: native(cell)(loans_registry) },
+      }),
+    },
+    accounts: wlib.lookup_ports({
+      registry: accounts_registry,
+      lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
+    })(accounts_lookups(cell.get)),
+  }
+}
