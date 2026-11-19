@@ -619,6 +619,37 @@ const log =
 const native = (cell: Cell) => (registry: wlib.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
+/** The command use cases of `tools`, whose ports the oracle builds. */
+export const tools_command_use_cases = {
+  add_a_tool,
+  retire_a_tool,
+  send_a_tool_to_repair,
+  put_a_repaired_tool_back_in_service,
+  close_a_repair,
+  rename_a_tool,
+  load_the_tools_of_a_sheet,
+  load_the_tools_of_a_short_sheet,
+  continue_the_loading_of_a_sheet,
+}
+
+/** The command use cases of `loans`, whose ports the oracle builds. */
+export const loans_command_use_cases = {
+  borrow_a_tool,
+  lend_a_booked_tool,
+  extend_the_loan,
+  correct_the_tool_of_a_loan,
+  reserve_a_tool,
+  return_a_tool,
+  remind_the_member_of_the_due_date,
+  declare_the_loan_overdue,
+  cancel_the_reservations_of_a_tool,
+  continue_the_cancellation_of_reservations,
+  notify_the_members_of_a_repair,
+  continue_the_repair_notice_round,
+  begin_a_weekly_summary,
+  sum_up_the_week_for_the_member,
+}
+
 /**
  * The command ports of `tools` and `loans` over the oracle (TST-2): what
  * the scenarios of the commands run on (`scenarios/oracle.ts`).
@@ -627,17 +658,7 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
   tools: wlib.command_use_case_ports({
     registry: tools_registry,
     versions,
-    use_cases: {
-      add_a_tool,
-      retire_a_tool,
-      send_a_tool_to_repair,
-      put_a_repaired_tool_back_in_service,
-      close_a_repair,
-      rename_a_tool,
-      load_the_tools_of_a_sheet,
-      load_the_tools_of_a_short_sheet,
-      continue_the_loading_of_a_sheet,
-    },
+    use_cases: tools_command_use_cases,
   })({
     algebra: algebra(tools_fragments),
     write: tools_writes,
@@ -655,22 +676,7 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
     // its registry gives.
     registry: { ...tools_registry, ...loans_registry },
     versions,
-    use_cases: {
-      borrow_a_tool,
-      lend_a_booked_tool,
-      extend_the_loan,
-      correct_the_tool_of_a_loan,
-      reserve_a_tool,
-      return_a_tool,
-      remind_the_member_of_the_due_date,
-      declare_the_loan_overdue,
-      cancel_the_reservations_of_a_tool,
-      continue_the_cancellation_of_reservations,
-      notify_the_members_of_a_repair,
-      continue_the_repair_notice_round,
-      begin_a_weekly_summary,
-      sum_up_the_week_for_the_member,
-    },
+    use_cases: loans_command_use_cases,
   })({
     algebra: algebra(loans_fragments),
     write: loans_writes,
