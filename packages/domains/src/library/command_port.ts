@@ -474,12 +474,15 @@ type Parsed =
 
 /**
  * The ports of a set of command use cases over a state adapter for their
- * commands, with the registry where the library finds the paths of their
- * predicates, facts, effects and identities (another domain's identities
- * too, which a fact may hold: the configurator gives that domain's
- * registry), and the versions of the store, which read the fact that the
- * duplicate branch gives back. Curried, so that the use cases fix the types
- * before the adapter is written. The command ports stay inside the library.
+ * commands, with the registry of their domain, where the library finds the
+ * paths of their predicates, facts, effects and identities; the registries
+ * of the other domains whose identities their facts hold, where the library
+ * finds the paths of those identities, a fact's resources (`identities`:
+ * `loans`' facts hold `tools`' `tool_id`, GR-3, DOM-10), as the read ports
+ * take them (DOM-18); and the versions of the store, which read the fact
+ * that the duplicate branch gives back. Curried, so that the use cases fix
+ * the types before the adapter is written. The command ports stay inside the
+ * library.
  *
  * Its type is the use cases', which the compiler cannot follow into a body
  * over every use case: the body is typed by what it meets at runtime, every
@@ -488,6 +491,7 @@ type Parsed =
  */
 export function command_use_case_ports<const use_cases extends CommandUseCases>(ports: {
   readonly registry: Registry
+  readonly identities?: Registry
   readonly versions: Versions
   readonly use_cases: use_cases
 }): <fragment, write, read, selection, source, field>(
@@ -500,6 +504,7 @@ export function command_use_case_ports(ports: RuntimePorts): unknown {
 /** What the ports are built from, at runtime. */
 interface RuntimePorts {
   readonly registry: Registry
+  readonly identities?: Registry
   readonly versions: Versions
   readonly use_cases: CommandUseCases
 }
@@ -513,12 +518,13 @@ const runtime_ports = (
   const path_of = paths_in(ports.registry)
   const binding = bind(path_of)
   const version_of = version_at(versions_in(ports.registry))
+  const identity_path_of = paths_in({ ...ports.identities, ...ports.registry })
   const identity = (schema: unknown): string | undefined => {
     if (kind_of(schema)?.kind !== 'id') return undefined
-    const path = path_of(schema)
+    const path = identity_path_of(schema)
     if (path === undefined) {
       throw new Error(
-        'a fact holds an identity that no registry given names: give the registry of its domain (DOM-10)',
+        'a fact holds an identity that no registry given names: give the registry of its domain (identities, DOM-10)',
       )
     }
     return path

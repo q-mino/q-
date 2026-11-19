@@ -577,12 +577,12 @@ export const oracle = async (start: Start = {}) => {
   const tools = the_shed.invoked['business/tools']
   const loans = the_shed.invoked['business/loans']
   const alone_registry = {
-    ...tools_registry,
     ...loans_registry,
     [notify_alone_path]: notify_alone,
   }
   const alone = wlib.command_use_case_ports({
     registry: alone_registry,
+    identities: tools_registry,
     versions,
     use_cases: { notify_a_member_of_the_repair: notify_alone },
   })(loans_command_adapter(cell))
