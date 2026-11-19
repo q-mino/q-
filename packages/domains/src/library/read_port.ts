@@ -3,7 +3,7 @@ import type { position } from './format.ts'
 import type { RootContext } from './context.ts'
 import type { CursorNotInSchema, InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import { $Calculation } from './component.ts'
-import { $Query, type Direction, type Queries } from './query.ts'
+import { $Query, closed_order, type Direction, type Queries } from './query.ts'
 import type { PlannedPage, PlannedQuery, ReadAdapter } from './read_adapter.ts'
 import type { OrderKeyValue } from './algebra.ts'
 import { cursor_of, key_of, type OrderKey } from './stable.ts'
@@ -140,23 +140,6 @@ interface RuntimePorts {
   readonly identities?: Registry
   readonly versions: Versions
   readonly use_cases: ReadUseCases
-}
-
-/**
- * The order of a query as written, closed by its identity, ascending (LIB-9,
- * D109), unless the author ordered by it already: so that the order is total.
- */
-const closed_order = (
-  order: Readonly<Record<string, Direction | undefined>>,
-  identity: string,
-): readonly (readonly [string, Direction])[] => {
-  const written = Object.entries(order).flatMap(
-    ([name, direction]): readonly (readonly [string, Direction])[] =>
-      direction === undefined ? [] : [[name, direction]],
-  )
-  return written.some(([name]) => name === identity)
-    ? written
-    : [...written, [identity, 'ascending']]
 }
 
 /**

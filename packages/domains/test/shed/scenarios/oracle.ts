@@ -9,7 +9,9 @@
 // configurator runs whole (7.5). Since part 4.2 the harness enters a request
 // as an entry does (DOM-11): the library computes its fingerprint. Since
 // part 4.3 it enters alone a transition only a step composes in Shed
-// (`alone`, SC-55), until the steps have a body (7.4). Since part 4.4 a
+// (`alone`, SC-55): the steps have a body since 7.4, and the scenarios of
+// the executor's holds keep entering the notice alone, their story the
+// entries', not the round's. Since part 4.4 a
 // shed may start from what its store kept before a release (`kept`: facts
 // and outbox entries of `loans` 1.x), its state rebuilt from that log
 // through the library (`replay`, SC-8), with the majors it is given (SC-9)
@@ -37,7 +39,10 @@
 // consumer of `reaction/damage/` over the cell's log (`reactions`), its
 // clock the executor's, the parts it holds shown (`held_parts`), the
 // adapter of `tools` it invokes released with a defect or falling as a
-// scenario says (`the_adapter_of_tools`).
+// scenario says (`the_adapter_of_tools`). Since part 7.4 the consumers of
+// the reactions that open and move the processes with a cursor
+// (`processes`): the retirement's work sheet, the round of a repair's
+// notices, a sheet of tools loaded line by line; and the steps' own ports.
 
 import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
@@ -57,6 +62,7 @@ import {
   tools_command_adapter,
 } from '../adapter/memory/index.ts'
 import { tools_fragments } from '../adapter/memory/tools.ts'
+import { loans_fragments } from '../adapter/memory/loans.ts'
 import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts.ts'
 import { account_id, key_id } from '../auth/accounts/_id.ts'
 import { hats, member_card } from '../auth/accounts/_value.ts'
@@ -88,6 +94,8 @@ import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
 import { send_a_tool_to_repair } from '../business/tools/_usecase.ts'
 import { registry as damage_registry } from '../reaction/damage/_registry.ts'
+import { registry as retirement_registry } from '../reaction/retirement/_registry.ts'
+import { registry as repair_registry } from '../reaction/repair/_registry.ts'
 import { member_id } from '../business/loans/_id.ts'
 import {
   declare_the_loan_overdue,
@@ -255,6 +263,13 @@ export interface Start {
   readonly streams?: Strategy
   readonly redelivered?: boolean
   readonly accounts?: Partial<AccountsState>
+  /**
+   * The reservations the adapter of `loans`, released with a defect, reads
+   * as not booked when a command's condition asks, while its selections
+   * still keep them: the transition a step composes holds on none of them,
+   * and the step passes over them (SC-39, D112.2).
+   */
+  readonly not_booked_for_its_commands?: readonly string[]
 }
 
 /** Who asks, as the interface verified it (PER-4): an account, a session, a key. */
@@ -331,8 +346,9 @@ const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
  * A transition with no use case of its own, entered alone (SC-55): in Shed
  * only the step of the round of the repair notices composes it, so that no
  * one sends it (DOM-2); the harness declares a use case over it, at a path
- * of its own, so that a scenario reads its fact's envelope before the steps
- * have a body (part 7.4). The harness's entry, not Shed's.
+ * of its own, so that a scenario reads its fact's envelope, or queues its
+ * notices, without the round (SC-53, SC-55; the round's step since part
+ * 7.4, SC-41). The harness's entry, not Shed's.
  */
 const notify_alone = wlib.builders_at<wlib.RootContext>().command_use_case({
   command: notify_a_member_of_the_repair,
@@ -403,7 +419,13 @@ export const oracle = async (start: Start = {}) => {
     if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
     cell.record({ fact, entries: [], state: each.state })
   }
-  const ports = memory_commands(cell)(versions)
+  const not_booked: readonly string[] = start.not_booked_for_its_commands ?? []
+  const booked_as_read = loans_fragments['business/loans/predicate/the_reservation_is_booked']
+  const ports = memory_commands(cell, {
+    ...loans_fragments,
+    'business/loans/predicate/the_reservation_is_booked': (parameters) => (state) =>
+      !not_booked.includes(parameters.reservation_id) && booked_as_read(parameters)(state),
+  })(versions)
   const reads = memory_reads(cell, start.streams)(versions)
   const alone_registry = {
     ...tools_registry,
@@ -482,6 +504,7 @@ export const oracle = async (start: Start = {}) => {
         send_a_tool_to_repair: keeper.send_a_tool_to_repair,
         put_a_repaired_tool_back_in_service: keeper.put_a_repaired_tool_back_in_service,
         the_loans_of_the_month: keeper.the_loans_of_the_month,
+        load_tools_from_a_sheet: keeper.load_tools_from_a_sheet,
       },
     })(wired),
     member: wlib.tree_ports({
@@ -702,6 +725,65 @@ export const oracle = async (start: Start = {}) => {
       clock: { now: () => instant, time_zone: zone },
     })
   }
+  // The consumers of the processes' reactions (part 7.4), as the
+  // configurator wires them: the procedures of a retirement and of a
+  // repair, above the domains (GR-9), and the reactions of `loans` and
+  // `tools` that move their processes on, one step a reaction (DOM-16,
+  // DOM-20), over the cell's log, invoking the ports the library built over
+  // the oracle; their state and clock the reactions' above.
+  const process_consumers = wlib.reaction_consumers({
+    registry: { ...retirement_registry, ...repair_registry, ...loans_registry, ...tools_registry },
+    versions,
+  })({
+    'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled': {
+      log: wired.log,
+      invokes: ports.loans.cancel_the_reservations_of_a_tool,
+    },
+    'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified': {
+      log: wired.log,
+      invokes: ports.loans.notify_the_members_of_a_repair,
+    },
+    'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {
+      log: wired.log,
+      invokes: ports.loans.continue_the_cancellation_of_reservations,
+    },
+    'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up': {
+      log: wired.log,
+      invokes: ports.loans.continue_the_cancellation_of_reservations,
+    },
+    'business/loans/reaction/the_first_member_on_the_round_is_notified': {
+      log: wired.log,
+      invokes: ports.loans.continue_the_repair_notice_round,
+    },
+    'business/loans/reaction/the_next_member_on_the_round_is_notified': {
+      log: wired.log,
+      invokes: ports.loans.continue_the_repair_notice_round,
+    },
+    'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up': {
+      log: wired.log,
+      invokes: ports.tools.continue_the_loading_of_a_sheet,
+    },
+    'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up': {
+      log: wired.log,
+      invokes: ports.tools.continue_the_loading_of_a_sheet,
+    },
+  })
+  /**
+   * The consumers of the processes' reactions started (DOM-16, DOM-20),
+   * their clock at an instant; one that saves no position falls, as far as
+   * its state knows, before each advance (TST-4).
+   */
+  const processes = (world: {
+    readonly at: string
+    readonly saves_its_position?: boolean
+  }): wlib.ReactionConsumers => {
+    instant = wlib.date_time.parse(world.at)
+    reactions_save_their_positions = world.saves_its_position ?? true
+    return process_consumers({
+      state: reaction_state,
+      clock: { now: () => instant, time_zone: zone },
+    })
+  }
   /**
    * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
    * as the interface verified it, the version the client was built at
@@ -824,6 +906,7 @@ export const oracle = async (start: Start = {}) => {
     /** The letters an operator discarded, with their traces. */
     discarded: (): readonly wlib.Discarded<wlib.EffectDeadLetter>[] => [...discards],
     reactions,
+    processes,
     /** The parts a reaction holds, as its state keeps them (DOM-16, SC-42): shown, never a business fact. */
     held_parts: (reaction: string): readonly wlib.HeldPart[] =>
       parts_held.filter((each) => each.reaction === reaction),

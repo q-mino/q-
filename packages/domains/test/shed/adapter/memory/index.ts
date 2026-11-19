@@ -728,46 +728,53 @@ export const tools_command_adapter = (
  * (TST-2): the fragments of its predicates, over the state of `tools` too
  * (GR-3), the writes of its facts, the execution.
  */
-export const loans_command_adapter = (cell: CommandCell) => ({
-  algebra: algebra(loans_fragments),
+export const loans_command_adapter = (
+  cell: CommandCell,
+  fragments: typeof loans_fragments = loans_fragments,
+) => ({
+  algebra: algebra(fragments),
   write: loans_writes,
   execute: execute(cell),
 })
 
 /**
  * The command ports of `tools` and `loans` over the oracle (TST-2): what
- * the scenarios of the commands run on (`scenarios/oracle.ts`).
+ * the scenarios of the commands run on (`scenarios/oracle.ts`); the
+ * selection the steps of `loans` walk the reservations by, which a scenario
+ * may release with a defect (SC-39, an instance passed over).
  */
-export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) => ({
-  tools: wlib.command_use_case_ports({
-    registry: tools_registry,
-    versions,
-    use_cases: tools_command_use_cases,
-  })({
-    ...tools_command_adapter(cell),
-    // The loading of a sheet of tools walks its lines (SC-44): one
-    // subject, its own selection.
-    steps: {
-      selection: { ...line_selection, after },
-      sources: line_steps,
-      execute: execute_step(cell),
-    },
-  }),
-  loans: wlib.command_use_case_ports({
-    // The facts of `loans` hold identities of `tools` (GR-3), whose paths
-    // its registry gives.
-    registry: { ...tools_registry, ...loans_registry },
-    versions,
-    use_cases: loans_command_use_cases,
-  })({
-    ...loans_command_adapter(cell),
-    steps: {
-      selection: { ...reservation_selection, after },
-      sources: reservation_steps,
-      execute: execute_step(cell),
-    },
-  }),
-})
+export const memory_commands =
+  (cell: CommandCell, fragments_of_loans: typeof loans_fragments = loans_fragments) =>
+  (versions: wlib.Versions) => ({
+    tools: wlib.command_use_case_ports({
+      registry: tools_registry,
+      versions,
+      use_cases: tools_command_use_cases,
+    })({
+      ...tools_command_adapter(cell),
+      // The loading of a sheet of tools walks its lines (SC-44): one
+      // subject, its own selection.
+      steps: {
+        selection: { ...line_selection, after },
+        sources: line_steps,
+        execute: execute_step(cell),
+      },
+    }),
+    loans: wlib.command_use_case_ports({
+      // The facts of `loans` hold identities of `tools` (GR-3), whose paths
+      // its registry gives.
+      registry: { ...tools_registry, ...loans_registry },
+      versions,
+      use_cases: loans_command_use_cases,
+    })({
+      ...loans_command_adapter(cell, fragments_of_loans),
+      steps: {
+        selection: { ...reservation_selection, after },
+        sources: reservation_steps,
+        execute: execute_step(cell),
+      },
+    }),
+  })
 
 /**
  * The read ports of `tools` and `loans` over the oracle (TST-2), one subject

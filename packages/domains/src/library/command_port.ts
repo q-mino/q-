@@ -1,18 +1,26 @@
 import * as z from 'zod'
 import { date_time, type Semver } from './format.ts'
 import type { CommandRootContext } from './context.ts'
-import type { ComposedBranches, Envelope, PartFields, Resource, StoredPart } from './envelope.ts'
+import type { ComposedBranches, Envelope, PartFields, StoredPart } from './envelope.ts'
 import {
   $Command,
   $Composition,
   $Each,
   entry_id,
+  is_a_command,
   type Commands,
   type Composition,
   type Outcome,
   type Transitions,
 } from './command.ts'
 import { $Step } from './step.ts'
+import {
+  facts_of_a_step,
+  step_parts,
+  step_port,
+  type RuntimeStepPort,
+  type RuntimeSteps,
+} from './step_port.ts'
 import { $Node } from './node.ts'
 import { $UseCase, type CommandUseCases, type CommandsOf } from './use_case.ts'
 import { $Version } from './version.ts'
@@ -37,6 +45,7 @@ import {
   type BoundLeaf,
 } from './bound_condition.ts'
 import { resources_of } from './resources.ts'
+import { read_fields, written, type PlannedPart } from './plan.ts'
 import { called, folder_of, is_a_record, is_at_or_above, paths_in, serving } from './runtime.ts'
 
 // The ports of the command use cases (DOM-2, LIB-1, LIB-14), which the
@@ -55,7 +64,7 @@ import { called, folder_of, is_a_record, is_at_or_above, paths_in, serving } fro
 // stay inside the library.
 
 /** A predicate's fragment, an operator, a fact's write, as the ports meet them at runtime. */
-interface RuntimeAdapter<fragment, write> {
+interface RuntimeAdapter<fragment, write, read, selection, source, field> {
   readonly algebra: {
     readonly predicate: Readonly<Record<string, (parameters: unknown) => fragment>>
     readonly and: (components: readonly fragment[]) => fragment
@@ -64,6 +73,8 @@ interface RuntimeAdapter<fragment, write> {
   }
   readonly write: Readonly<Record<string, (fact: unknown) => write>>
   readonly execute: (plan: PlannedCommand<fragment, write>) => Promise<Execution>
+  /** What it gives for the steps among its commands (DOM-20), if there are some. */
+  readonly steps?: RuntimeSteps<fragment, write, read, selection, source, field>
 }
 
 /** A failure as an outcome names it: of a branch, or of the path (no branch, D105.4). */
@@ -214,21 +225,6 @@ const resolved_entry = z.strictObject({
   payload: z.unknown(),
   not_before: date_time.optional(),
 })
-
-/**
- * A part of a branch as planned, the branch's own or a composed
- * transition's (DOM-10, D111): the name of the branch, its condition bound
- * by the creator, its part as stored, with its resources and its domain's
- * version, its write, its outbox entries, each with the part's resources
- * (DOM-13, SC-53).
- */
-interface PlannedPart<write> {
-  readonly name: string
-  readonly bound: Bound
-  readonly part: StoredPart
-  readonly write: write
-  readonly entries: readonly Omit<StoredEntry, 'correlation'>[]
-}
 
 /**
  * What a branch composes, planned under the name of its composition
@@ -411,13 +407,6 @@ const composed_parts = (
   return walked.composed
 }
 
-/** A part as an outcome gives it: its version, which never leaves the node (PER-18), left out. */
-const read_fields = (part: StoredPart): PartFields => ({
-  path: part.path,
-  payload: part.payload,
-  resources: part.resources,
-})
-
 /** The values of a plan's leaves cut by condition: the path's, its own, each single transition's, each element's branches'. */
 const segments_of = <write>(
   path: readonly Bound[],
@@ -518,9 +507,9 @@ interface RuntimePorts {
 /** The body of `command_use_case_ports`, typed by what it meets at runtime. */
 const runtime_ports = (
   ports: RuntimePorts,
-): (<fragment, write>(
-  adapter: RuntimeAdapter<fragment, write>,
-) => Readonly<Record<string, RuntimePort>>) => {
+): (<fragment, write, read, selection, source, field>(
+  adapter: RuntimeAdapter<fragment, write, read, selection, source, field>,
+) => Readonly<Record<string, RuntimePort | RuntimeStepPort>>) => {
   const path_of = paths_in(ports.registry)
   const binding = bind(path_of)
   const version_of = version_at(versions_in(ports.registry))
@@ -543,11 +532,39 @@ const runtime_ports = (
     return path
   }
   const nodes_of = nodes_above(ports.registry)
+  // The steps among the use cases' commands (DOM-20), by the use case's
+  // name, with the faults of their declarations (CFG-2): a step below a
+  // business node that binds or requires comes with its case (D105, LIB-3).
+  const step_of = step_parts(path_of)
+  const declared_steps = Object.entries(ports.use_cases).flatMap(([name, use_case]) => {
+    const path = path_of(use_case)
+    if (path === undefined) return []
+    const step = step_of(path, use_case[$UseCase].command)
+    if (step === undefined) return []
+    const guarded = nodes_of(path).some(
+      (node) => node.binds !== undefined || node.requires !== undefined,
+    )
+    const faults = [
+      ...('creator' in step ? [] : step),
+      ...(guarded
+        ? [`${path}: a step below a node that binds or requires comes with its case (DOM-20, D105)`]
+        : []),
+    ]
+    return [{ name, path, step, faults }]
+  })
+  const step_faults = declared_steps.flatMap((each) => each.faults)
+  if (step_faults.length > 0) throw new Error(step_faults.join('\n'))
+  const steps = new Map(
+    declared_steps.flatMap(({ name, step }) => ('creator' in step ? [[name, step] as const] : [])),
+  )
   // At wiring (CFG-2): the facts the ports record, and read back, are of
-  // domains whose majors the store's versions were given (DOM-22). A step's
-  // facts with the steps (part 7.4).
-  const unread = Object.values(ports.use_cases)
-    .flatMap((use_case) => {
+  // domains whose majors the store's versions were given (DOM-22): a
+  // command's and the transitions it composes, a step's own and its
+  // transition's (part 7.4).
+  const unread = Object.entries(ports.use_cases)
+    .flatMap(([name, use_case]) => {
+      const step = steps.get(name)
+      if (step !== undefined) return facts_of_a_step(step)
       const command = command_parts(use_case[$UseCase].command)
       return command === undefined ? [] : facts_recorded(command)
     })
@@ -561,7 +578,9 @@ const runtime_ports = (
     )
   }
 
-  return <fragment, write>(adapter: RuntimeAdapter<fragment, write>) => {
+  return <fragment, write, read, selection, source, field>(
+    adapter: RuntimeAdapter<fragment, write, read, selection, source, field>,
+  ) => {
     const fragment_of = (leaf: BoundLeaf): fragment => {
       const fragment = adapter.algebra.predicate[leaf.path]
       if (fragment === undefined)
@@ -627,6 +646,30 @@ const runtime_ports = (
     }
 
     /** A branch's part planned (DOM-10, DOM-13): its condition bound, its fact in its part, its write, its entries. */
+    /**
+     * A fact's part planned, with no condition (DOM-10): its payload parsed
+     * by the fact, its resources, its domain's version, its write. A
+     * branch's own and a step's (DOM-20).
+     */
+    const fact_part = (
+      fact: z.ZodObject,
+      resolved: unknown,
+    ): { readonly part: StoredPart; readonly write: write } => {
+      const fact_path = named(fact)
+      const payload: unknown = fact.parse(resolved)
+      const write = adapter.write[fact_path]
+      if (write === undefined) throw new Error(`the adapter gives no write of ${fact_path} (ADP-8)`)
+      return {
+        part: {
+          path: fact_path,
+          payload,
+          resources: resources(fact, payload),
+          version: version_of(fact_path),
+        },
+        write: write(payload),
+      }
+    }
+
     const planned_part = (
       name: string,
       declared: Outcome,
@@ -635,11 +678,7 @@ const runtime_ports = (
       if (!Array.isArray(resolved)) throw new Error(`the creator resolves no branch ${name}`)
       const [condition, fact, entries] = declared
       const bound = binding(condition, resolved[0])
-      const fact_path = named(fact)
-      const payload: unknown = fact.parse(resolved[1])
-      const part_resources: readonly Resource[] = resources(fact, payload)
-      const write = adapter.write[fact_path]
-      if (write === undefined) throw new Error(`the adapter gives no write of ${fact_path} (ADP-8)`)
+      const own = fact_part(fact, resolved[1])
       const queued: unknown = resolved[2] ?? {}
       const entry_of = ([entry_name, effect]: readonly [string, z.ZodType]): Omit<
         StoredEntry,
@@ -653,21 +692,10 @@ const runtime_ports = (
           version: version_of(effect_path),
           payload: effect.parse(entry.payload),
           ...(entry.not_before === undefined ? {} : { not_before: entry.not_before }),
-          resources: part_resources,
+          resources: own.part.resources,
         }
       }
-      return {
-        name,
-        bound,
-        part: {
-          path: fact_path,
-          payload,
-          resources: part_resources,
-          version: version_of(fact_path),
-        },
-        write: write(payload),
-        entries: Object.entries(entries ?? {}).map(entry_of),
-      }
+      return { name, bound, ...own, entries: Object.entries(entries ?? {}).map(entry_of) }
     }
 
     /**
@@ -749,24 +777,6 @@ const runtime_ports = (
         )
         return planned.every((each) => each !== undefined) ? planned : undefined
       }
-
-    /** What a plan writes for a choice (DOM-8, DOM-10): its parts' writes in order, its fact in its envelope, its entries. */
-    const written =
-      (context: CommandRootContext, name: string) =>
-      (chosen: Chosen<write>): PlannedWrite<write> => ({
-        writes: chosen.parts.map((part) => part.write),
-        fact: {
-          parts: chosen.parts.map((part) => part.part),
-          operation: context.operation,
-          correlation: context.correlation,
-          branch: name,
-          composed: chosen.composed,
-          fingerprint: context.fingerprint,
-        },
-        entries: chosen.parts.flatMap((part) =>
-          part.entries.map((entry) => ({ ...entry, correlation: context.correlation })),
-        ),
-      })
 
     /**
      * A branch planned, as the adapter meets it: its condition after the
@@ -1006,26 +1016,55 @@ const runtime_ports = (
         yield outcome_of(context, command, parsed.path, planned, execution)
       }
 
-    return Object.fromEntries(
-      Object.entries(ports.use_cases).map(([name, use_case]): readonly [string, RuntimePort] => {
-        const path = path_of(use_case)
-        if (path === undefined) {
-          throw new Error(`the use case ${name} is not in the registry given (DOM-24)`)
-        }
-        const command = command_parts(use_case[$UseCase].command)
-        return [
-          name,
-          serving(
-            command === undefined
-              ? (): AsyncIterable<RuntimeOutcome> => {
-                  // Part 7.4: the plan of a step (DOM-20).
-                  throw new Error(`${path} runs a step (DOM-20): planned from part 7.4`)
+    // The ports of the steps (part 7.4), over what the adapter gives for
+    // them, every fault at wiring in one message (CFG-2).
+    const stepping =
+      adapter.steps === undefined
+        ? undefined
+        : step_port(
+            {
+              path_of,
+              fact_part,
+              transition: (context, above) => (name, transition, input) => {
+                if (!is_a_command(transition)) {
+                  throw new Error(`${name} composes no command of the registry given (DOM-19)`)
                 }
-              : port(path, command),
-            { component: use_case, path },
-          ),
-        ]
-      }),
+                return planned_transition(context, above)(name, transition, input)
+              },
+              folded,
+              fragment_of,
+              read_part,
+            },
+            adapter.steps,
+          )
+    const built = Object.entries(ports.use_cases).map(([name, use_case]) => {
+      const path = path_of(use_case)
+      if (path === undefined) {
+        return { name, fault: `the use case ${name} is not in the registry given (DOM-24)` }
+      }
+      const step = steps.get(name)
+      if (step !== undefined) {
+        const above = nodes_of(path).map((node) => node.path)
+        const stepped =
+          stepping === undefined
+            ? `${path}: the adapter gives nothing for the steps (ADP-8, DOM-20)`
+            : stepping(name, path, step, above)
+        return typeof stepped === 'string'
+          ? { name, fault: stepped }
+          : { name, port: serving(stepped, { component: use_case, path }) }
+      }
+      const command = command_parts(use_case[$UseCase].command)
+      if (command === undefined) {
+        return { name, fault: `${path}: its command declares no branches (DOM-5)` }
+      }
+      return { name, port: serving(port(path, command), { component: use_case, path }) }
+    })
+    const faults = built.flatMap((each) => ('fault' in each ? [each.fault] : []))
+    if (faults.length > 0) throw new Error(faults.join('\n'))
+    return Object.fromEntries(
+      built.flatMap((each): readonly (readonly [string, RuntimePort | RuntimeStepPort])[] =>
+        'port' in each ? [[each.name, each.port]] : [],
+      ),
     )
   }
 }

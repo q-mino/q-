@@ -24,6 +24,24 @@ import type { SchemaOf } from './command.ts'
 export type Direction = 'ascending' | 'descending'
 
 /**
+ * The order of a query as written, closed by its identity, ascending (LIB-9,
+ * D109), unless the author ordered by it already: so that the order is total.
+ * A step's too, over the instances it walks (DOM-20).
+ */
+export const closed_order = (
+  order: Readonly<Record<string, Direction | undefined>>,
+  identity: string,
+): readonly (readonly [string, Direction])[] => {
+  const written = Object.entries(order).flatMap(
+    ([name, direction]): readonly (readonly [string, Direction])[] =>
+      direction === undefined ? [] : [[name, direction]],
+  )
+  return written.some(([name]) => name === identity)
+    ? written
+    : [...written, [identity, 'ascending']]
+}
+
+/**
  * The order of the entries, by their fields, in the order they are written.
  * The library closes it with the entry's identity, ascending, so that it is
  * total (LIB-9, D109).

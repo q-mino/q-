@@ -9,8 +9,8 @@ import { accounts, first, followed, oracle, told, view, type Start, type Who } f
 // over it finds the part named among those that touch the entry. The drill
 // sent to the workshop, a fact of `tools`, changes nothing the entry reads.
 // The round's step records the notice beside its own part, which touches no
-// reservation, with part 7.4; until then the harness enters the notice
-// alone (`alone`, SC-55). Gianni's leaf reads it since part 6.3: his own
+// reservation, since part 7.4 (`by_the_round`); the tests before it enter
+// the notice alone (`alone`, SC-55), its envelope one part. Gianni's leaf reads it since part 6.3: his own
 // event, from the part that touches his row, with the row and no envelope.
 
 const gianni: Who = { identified_by: 'account', id: 'A-GIANNI' }
@@ -60,7 +60,27 @@ const the_shed = async (start: Start) => {
     shed.member
       .my_reservations(shed.as(gianni, '2.0.0').when('2026-11-17T08:00:00-05:00'), {})
       [Symbol.asyncIterator]()
-  return { story, my_reservations, his_leaf }
+  /**
+   * The same story by the desk's round (part 7.4): the drill to the
+   * workshop (3), the round begun (4), its first step, one fact,
+   * [the round advanced (RP), Gianni notified (R8)] (5).
+   */
+  const by_the_round = async () => {
+    const sent = await first(
+      shed.tools.send_a_tool_to_repair(shed.at(tuesday), { tool_id: 'drill' }),
+    )
+    const payload = sent.outcome === 'applied' ? sent.fact.parts[0].payload : undefined
+    const repair_id =
+      payload !== undefined && 'tool_under_repair' in payload
+        ? payload.tool_under_repair.repair.id
+        : undefined
+    if (repair_id === undefined) throw new Error('the drill did not go to the workshop')
+    await first(
+      shed.loans.notify_the_members_of_a_repair(shed.at(tuesday), { repair_id, tool_id: 'drill' }),
+    )
+    await first(shed.loans.continue_the_repair_notice_round(shed.at(tuesday), { repair_id }))
+  }
+  return { story, by_the_round, my_reservations, his_leaf }
 }
 
 describe('SC-17: the notice of the repair reaches Gianni’s R8', () => {
@@ -125,4 +145,48 @@ describe('SC-17: the notice of the repair reaches Gianni’s R8', () => {
       ])
     },
   )
+
+  test.each(strategies)(
+    "%s: by the round's step, the composite fact touches R8 by its second part; Gianni's leaf reads it on R8's row",
+    async (streams) => {
+      const { by_the_round, my_reservations } = await the_shed({
+        streams,
+        accounts: accounts({
+          hats: { 'A-GIANNI': ['member'] },
+          member_cards: { 'A-GIANNI': { id: 'M-7', valid_until: '2027-03-31' } },
+        }),
+      })
+      const business = await followed(my_reservations, by_the_round)
+      expect(told(business.events)).toEqual([
+        ['fact', '5'],
+        ['caught_up', '5'],
+      ])
+      expect(business.events[0]).toMatchObject({
+        identity: 'R8',
+        fact: {
+          parts: [
+            { path: 'business/loans/fact/the_repair_notice_round_has_advanced' },
+            {
+              path: 'business/loans/fact/a_member_has_been_notified_of_the_repair',
+              resources: [{ path: 'business/loans/id/reservation_id', value: 'R8' }],
+            },
+          ],
+        },
+      })
+    },
+  )
+
+  test("by the round's step, Gianni's leaf reads `the_tool_you_booked_is_in_repair` from the part that touches R8", async () => {
+    const { by_the_round, his_leaf } = await the_shed({
+      accounts: accounts({
+        hats: { 'A-GIANNI': ['member'] },
+        member_cards: { 'A-GIANNI': { id: 'M-7', valid_until: '2027-03-31' } },
+      }),
+    })
+    const { events } = await followed(his_leaf, by_the_round)
+    expect(events).toMatchObject([
+      { event: 'the_tool_you_booked_is_in_repair', position: '5', identity: 'R8', payload: {} },
+      { event: 'caught_up', position: '5' },
+    ])
+  })
 })
