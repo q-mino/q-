@@ -8,6 +8,8 @@ Re-planned on 17 Nov 2026, at the close of step 1 (Alessandro): the library, wis
 
 Steps 3–7 planned in parts on 18 Nov 2026 (Claude, at night, Alessandro's go given in advance for the block): the parts below, the state of each in Alessandro's notes (the block's plan).
 
+Re-scoped on 19 Nov 2026 (Alessandro), from step 8: Cumino is a kernel that extensions extend. The kernel holds faces, bonds, letters, relays and the entry of a request; every other feature is an extension. Stage 1 is the kernel with one extension, ping pong; messaging becomes the first extension after it, groups a feature of the kernel in a later stage. The words: [`glossary.md`](glossary.md), § Domain terms.
+
 ## How a step works
 
 - **Order by layer** (Alessandro's principle of development): first the pure domains, from the bottom of the graph, with the library growing by need (LIB-3); then the adapters; then the configurators. A step does not start before the steps it depends on are merged.
@@ -23,9 +25,9 @@ Steps 3–7 planned in parts on 18 Nov 2026 (Claude, at night, Alessandro's go g
 - **Context**: the estimate is the session's total, starting from a base of about 90k (tools, rules, `architecture.md`, this plan). Type: _J_ judgment (design, decisions), _L_ local (each piece checks itself). Thresholds: plan 250k (J) or 450k (L), stop 400k (J) or 600k (L). A step that grows past them is split at its last closed milestone.
 - **End of a step**: the session writes its log entry in Alessandro's notes (see `CLAUDE.local.md`) and the prompt for the next step.
 
-## Stage 1, "they write to each other"
+## Stage 1, the kernel and ping pong
 
-Scope: first face, introduction, relay; handshake by crossed QR and by link; direct chats; groups without separation (found, invite, join, leave and rejoin); news channel; export and import; update with notice. One face per person, with the data model of faces. The assistant is a normal user, built by a separate project that imports `domains` (it can start after step 17).
+Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by crossed QR and by link; keeping one's bonds; requests and responses between bonded faces, a node that stays silent; the extensions: their boundary, manifest, extension points and activation, with the kernel's use case of the extensions in common; ping pong, preinstalled and off until the user activates it, the first conscious act of extension; export and import; update with notice. One face per person, with the data model of faces; a bond's relays a list, of one relay in stage 1 (the preferred relays of a face, overridden per bond, come later). Out of stage 1: groups (the kernel's, a later stage), messaging (an extension), the news channel (kernel or extension, to place), loading an extension from storage. The previous scope ("they write to each other": direct chats, groups, news channel) is the history of this plan; its steps are kept in [§ After stage 1](#after-stage-1).
 
 ### (a) Pure domains
 
@@ -139,63 +141,65 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 **9. `seals`** — J · 200k
 
-- Goal: the secrets and their state: seeds (32 random bytes, declared scheme `slip10-flat`), faces `m/i'` (SLIP-0010 over the HMAC-SHA512 of the primitives port), seal for / open / sign / verify, group keys, R and D of a mailbox. Opaque references outward; indices of a seed never reused.
+- Goal: the secrets and their state: seeds (32 random bytes, declared scheme `slip10-flat`), faces `m/i'` (SLIP-0010 over the HMAC-SHA512 of the primitives port), seal for / open / sign / verify, R and D of a mailbox. Group keys come with groups, after stage 1. Opaque references outward; indices of a seed never reused.
 - Rules: GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of § 4 (Domains of q-).
 - Checks: core tests with a fake primitives port; derivation invisible from outside (only public keys and references leave). The SLIP-0010 vectors run in step 18, with the real HMAC.
 - Depends on: 7.
 
-**10. `post`: the protocol** — J · 200k
+**10. `post`: the protocol, requests and responses** — J · 220k
 
-- Goal: envelope (D, format version, sealed blob), letter (schema version, 16-byte identity, sender's face key, declared time, persona and use case invoked, content), the signature covering D; opening and verifying: a valid signature gives the `Caller`, otherwise `anonymous` with the id of PER-4 and the annotation of PER-2; the mailbox port of `post`.
-- "Deliver M on bond L", executed by `post` with the library's outbox and executor (step 7); from the first plan's step 6.
-- Rules: F2, F3, F4, F5, GR-6, PER-2, PER-4, PER-13, DOM-11 (identity of a letter), DOM-13..15.
-- Checks: a letter re-addressed to another D fails; a removed or broken signature gives `anonymous`; envelope hash stable for the same bytes; injected loss, duplication and abort on the mailbox port; a duplicate deposit is deduplicated by the receiver; an exhausted delivery becomes a dead letter and is shown, never a business fact.
-- Depends on: 9.
+- Goal: envelope (D, format version, sealed blob), letter (schema version, 16-byte identity, sender's face key, declared time, the extension, persona and use case invoked with its version, content), the signature covering D; opening and verifying: a valid signature gives the `Caller`, otherwise `anonymous` with the id of PER-4 and the annotation of PER-2; the mailbox port of `post`.
+- Requests and responses (Alessandro, 19 Nov 2026): "send request Q on bond L", executed by `post` with the library's outbox and executor (step 7); a response is a letter that names the identity of the request it answers and carries the projection of the leaf that served it; a response asks for no response. The bond's relays are a list (one in stage 1): the letter goes to the bond's D on its relay.
+- Rules: F2, F3, F4, F5, GR-6, PER-2, PER-4, PER-13, DOM-11 (identity of a letter), DOM-13..15, and the response's rules of step 12's design.
+- Checks: a letter re-addressed to another D fails; a removed or broken signature gives `anonymous`; envelope hash stable for the same bytes; injected loss, duplication and abort on the mailbox port; a duplicate deposit is deduplicated by the receiver; a request redelivered gives the recorded response, no second fact; an exhausted delivery becomes a dead letter and is shown, never a business fact.
+- Depends on: 9; step 12's design (the response, the letter's invocation of an extension).
 
-**11. `bonds` I: faces, tickets, introduction** — J · 230k
+**11. `bonds`: faces, tickets, introduction** — J · 230k
 
-- Goal: faces as data (name, position in the tree, public key, opaque reference; one face in stage 1, model ready for more); the first face, the ticket (preparing → ready → used or expired, 48 hours) and the introduction as processes of `bonds`, with the steps toward `seals` as reactions; bonds (my face, its key, its relay and D, my mailbox, name, annotations such as "in person").
+- Goal: faces as data (name, position in the tree, public key, opaque reference; one face in stage 1, model ready for more); the first face, the ticket (preparing → ready → used or expired, 48 hours) and the introduction as processes of `bonds`, with the steps toward `seals` as reactions; bonds (my face, its key, its relays and D, my mailbox, name, annotations such as "in person"), kept by the user (the list, a name, annotations). At the introduction each side declares where it can be reached: a list of relays, one in stage 1.
 - Rules: DOM-23, GR-9, PER-11, PER-21, DOM-12, the invariants of § 4.
 - Decisions: the place of the reactions module in the tree (GR-9), at the first step written.
-- Checks: crossed QR = the same flow done by both sides; a ticket used twice or expired is rejected; every bond belongs to exactly one of my faces.
+- Checks: crossed QR = the same flow done by both sides; a ticket used twice or expired is rejected; every bond belongs to exactly one of my faces; a bond's relays are those its peer declared.
 - Depends on: 7, 9.
 
-**12. `bonds` II: groups and channel** — J · 220k
+**12. The extensions: boundary, manifest, extension points** — J · 250k
 
-- Goal: groups (shared, no owner: key, mailbox, members with who introduced them), memberships (a group + one of my faces), found, invite, join, leave, rejoin (7 days of history from the mailbox); the news channel (public key, mailbox).
-- Decisions with Alessandro, before code: the rules of groups (invitation, entry, who accepts a new member) and the form of the news channel, open in the architecture notes.
-- Rules: DOM-19, DOM-20, DOM-23, PER-1.
-- Depends on: 11.
+- Goal: what an extension is to the kernel and to the library, decided and written before any code of it: its boundary with the kernel (messages: a request in, an outcome out, the calls to its ports); its manifest (what it sees of the kernel and of the other extensions, what it touches, the leaves it adds to which personas, the use cases it offers to other extensions), enforced by the kernel; isolated by default, in process as a declared choice of trust the user accepts informed, whole or in part; its storage, a partition the kernel gives; the extension points (pages, slots, actions; hooks only where a case shows they are needed); activation; the kernel's use case of the extensions in common, offered to `known`; how an extension is built (its package, its domains, its copy of `zen0`, the generator over its tree) and where it sits in the graph; the request, the response and the silence as rules.
+- Decisions with Alessandro, before code (a design session, Alessandro, 19 Nov 2026): every point of the goal; loading an extension from storage (OPFS or IndexedDB) and the catalogue of the trusted host are out of stage 1, their shape only as far as the boundary needs it.
+- Writes: `architecture.md` § 2 (packages and the graph: `conversations` out, the extensions in), § 4 (the domains of q-: the kernel, ping pong), § 5 (the personas: `known` no longer writes in chats; it reaches the extensions' leaves and the kernel's), new rules for the boundary, the manifest, the response and the silence; then the code the step's design asks of the library and the kernel.
+- Checks: decided with the design; at least a test extension wired through the boundary on the oracle.
+- Depends on: 7. Its design session runs before step 10 (the letter and the response follow from it); its code after step 11.
+- Risks: the paper has no extensions: a gap of the paper, reported to it; the generator's compile-time map (`sight.ts`) and a manifest enforced at runtime must say the same thing.
 
-**13. `conversations`** — J · 200k
+**13. `auth` and `persona`** — J · 230k
 
-- Goal: chats of a bond or of a group (they are not created); messages ("I wrote M" with "deliver M on bond L"; "I received M from X" with its annotations: valid signature, known bond, arrival mailbox, declared time, relay time); the news channel as a chat that keeps only letters signed by the channel's key.
-- Rules: GR-3, F4, F6, DOM-11, DOM-12, PER-13.
-- Checks: a duplicate letter gives the recorded fact; the identity of the letter is the message id (natural idempotency).
-- Depends on: 12.
+- Goal: auth's read ports in its own language (which faces I have, which bond a key belongs to, which personas a caller may wear, which extensions are active and offered to a bond); the four persona trees (`self`; `known`: the kernel's use cases, such as the extensions in common, and the leaves the active extensions add; `unknown`: introduce itself with a ticket; `anonymous`: empty, reject and annotate); the inbound path from an opened letter to the persona, to the kernel or to an extension; the silence (an extension not installed, or not offered to that bond, look the same from outside); a response accepted only as the return of a request sent to that face, otherwise annotated.
+- Rules: GR-4, GR-7 (with its ESLint rule), PER-1..18, PER-21, F6, and step 12's.
+- Checks: every entry check in order on letters; a known key outside its bond is "not found" to the peer and visible to the user; `anonymous` letters annotated; a request for an extension not active stays silent, the same as one not offered to that bond; a response that answers no request of ours is annotated, never a fact of the extension.
+- Depends on: 11, 12.
 
-**14. `auth` and `persona`** — J · 230k
+**14. Ping pong: the first extension** — J · 180k
 
-- Goal: auth's read ports in its own language (which faces I have, which bond or group a key belongs to, which personas a caller may wear); the four persona trees (`self`; `known`: write in the chats of its bonds and groups; `unknown`: introduce itself with a ticket; `anonymous`: empty, reject and annotate); the inbound path from an opened letter to the persona.
-- Rules: GR-4, GR-7 (with its ESLint rule), PER-1..18, PER-21, F6.
-- Checks: every entry check in order on letters; a known key outside its bond is "not found" to the peer and visible to the user; `anonymous` letters annotated.
-- Depends on: 13.
+- Goal: the extension, through step 12's boundary: its domain (a ping sent to a bond, its pong received, no response after a time), its leaf `ping` on `known`, whose projection is the pong; its manifest; its extension points (an action on a bond, the place where the pong is shown); preinstalled, off until the user activates it.
+- Rules: step 12's, DOM-3 (a leaf's wait, `follows`, `ends`, `zz.Elapsed`).
+- Checks: on the oracle, a ping between two nodes with ping pong active gives its pong; to a node without it, or not offering it to that bond, no response; a ping redelivered gives one pong.
+- Depends on: 10, 13.
 
 **15. `user`** — J · 200k
 
-- Goal: activities (one command at most each) and user concepts: drafts, active face, pending activities and retries (queue policy of the library), "nothing happens in silence": annotations, dead letters and the trace shown; technical outcomes as user concepts.
+- Goal: activities (one command at most each) and user concepts: drafts, active face, the extensions and their activation (what each sees and touches, its trust), pending activities and retries (queue policy of the library), "nothing happens in silence": annotations, dead letters, no response, and the trace shown; technical outcomes as user concepts.
 - Rules: ADP-2, ADP-7, DOM-12, DOM-15, LIB-12, GR-7, F6.
 - Depends on: 14.
 
 **16. `ui`: the screen model** — J · 200k
 
-- Goal: the screens of stage 1, their states and gestures, as a pure domain (presentational state only), from Alessandro's notes on screens and flows.
+- Goal: the screens of stage 1, their states and gestures, as a pure domain (presentational state only), from Alessandro's notes on screens and flows: first face, bonds and their handshake, the extensions with their activation; the extension points the kernel's screens offer (pages, slots, actions).
 - Rules: V2, ADP-7, GR-2.
 - Depends on: 15.
 
 **17. The `memory` stack** — L · 200k
 
-- Goal: two phones and the relay in one process, `mailbox` imported through `desk`; the scenarios of stage 1 end to end: first face, crossed QR, link, chat, group, channel, leave and rejoin.
+- Goal: two phones and the relay in one process, `mailbox` imported through `desk`; the scenarios of stage 1 end to end: first face, crossed QR, link, ping pong activated on both sides, a ping and its pong, a ping to a node that stays silent.
 - Rules: CFG-1, CFG-3, TST-2, PER-19.
 - Checks: the scenarios pass with injected loss and duplication on the mailbox. This stack is the oracle of the adapters.
 - Depends on: 16.
@@ -220,13 +224,13 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 **21. IndexedDB** (`adapters-web`) — J · 240k
 
-- Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain.
+- Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain; an extension's storage, a partition of its own (step 12).
 - Rules: DOM-8, DOM-9, DOM-11, DOM-17, ADP-6, TST-1..6.
 - Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write; the cost of the duplicate branch's lookups measured: a request through a leaf reads its operation twice, at the leaf and at the port, before the step reads it again (DOM-11, "Where the duplicate branch runs", 19 Nov 2026), and A decides on the measure whether to keep the two reads.
 
 **22. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
 
-- Goal: the rendering of the `ui` model, gestures to activities, Italian texts in `packages/phone/src/texts/`.
+- Goal: the rendering of the `ui` model, gestures to activities, Italian texts in `packages/phone/src/texts/`; the extension points rendered as step 12 decides (an isolated extension's page or slot, an action).
 - Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`.
 
 **23. Browser I/O** (`adapters-web`) — L · 160k
@@ -244,7 +248,7 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 **25. `phone`** — L · 220k
 
-- Goal: the PWA's composition root; the composition check before the first request (a library piece, at its trigger); the service worker and the update with notice.
+- Goal: the PWA's composition root, the kernel with the preinstalled extensions (ping pong, off); the composition check before the first request (a library piece, at its trigger), each extension's manifest checked with it; the service worker and the update with notice.
 - Rules: CFG-1, CFG-2, CFG-4, DOM-9.
 
 ### (d) Delivery
@@ -259,10 +263,20 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 
 - Goal: the scenarios on real phones against the deployed relay; fixes; release notes. The tag `v0.1` is Alessandro's.
 
+## After stage 1
+
+Order to decide with Alessandro (19 Nov 2026). The first three keep the steps of the previous scope (12, 13), to be re-planned on the kernel and step 12's extensions.
+
+- **Groups, in the kernel**: shared, no owner (key, mailbox, members with who introduced them), memberships (a group + one of my faces), found, invite, join, leave, rejoin (7 days of history from the mailbox); group keys in `seals`; the founding a process of `bonds`. Decisions with Alessandro before code: the rules of groups (invitation, entry, who accepts a new member). An extension serves a group as it serves a bond.
+- **Messaging, the first extension after ping pong**: chats of a bond or of a group (they are not created); messages ("I wrote M" with its request on bond L; "I received M from X" with its annotations: valid signature, known bond, arrival mailbox, declared time, relay time); the identity of the letter is the message id. A response may serve as its receipt.
+- **The news channel**: kernel or extension, to place (public key, mailbox; a chat that keeps only letters signed by the channel's key).
+- **Extensions from storage**: loaded at runtime (OPFS or IndexedDB) from the trusted host's catalogue; their update with notice, their removal (their data, their pending requests).
+- **The assistant**: a normal user, built by a separate project that imports `domains`, once messaging exists.
+
 ## Stage 2, "more faces" (outline)
 
 Same order by layer. `seals`: more faces and more seeds. `bonds`: the tree of faces as data, filtered views and colours, change face (the signed declaration of X and Y). `user` and `ui`: "as whom?", the active face, states. Adapters and configurators: only what the new screens need.
 
 ## Stage 3, "the rest" (outline)
 
-`seals`: key renewal. `bonds`: separation. `conversations`: receipts (a receipt is a new letter invoking a use case on the sender's node). `post` and the relay: the handshake through the server. Same order by layer.
+`seals`: key renewal. `bonds`: separation. messaging: receipts (a response, or a new letter invoking a use case on the sender's node). `post` and the relay: the handshake through the server. Same order by layer.
