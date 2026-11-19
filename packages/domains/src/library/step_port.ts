@@ -1,12 +1,18 @@
 import * as z from 'zod'
 import { cursor, type position } from './format.ts'
-import type { CommandRootContext } from './context.ts'
+import type {
+  CommandRootContext,
+  FingerprintContext,
+  Operation,
+  OperationContext,
+} from './context.ts'
 import type { Envelope, PartFields, StoredEnvelope, StoredPart } from './envelope.ts'
 import { $Command, type Commands } from './command.ts'
 import { $Step } from './step.ts'
 import { closed_order, type Direction } from './query.ts'
 import type { OrderKeyValue } from './algebra.ts'
 import type {
+  AlreadyRecorded,
   PlannedBranch,
   PlannedStep,
   ReadFailure,
@@ -17,7 +23,7 @@ import type { PlannedQuery } from './read_adapter.ts'
 import { cursor_of, key_of, type OrderKey } from './stable.ts'
 import { bind, fold, leaves_of, type Bound, type BoundLeaf } from './bound_condition.ts'
 import { is_a_schema } from './kind.ts'
-import { called, is_a_record } from './runtime.ts'
+import { $Recorded, called, is_a_record } from './runtime.ts'
 import { read_fields, written, type PartWrite, type PlannedPart } from './plan.ts'
 
 // The port of a step of a process with a cursor (DOM-20, D97, D111, D112),
@@ -73,11 +79,24 @@ export type RuntimeStepOutcome =
   | { readonly outcome: 'identity_already_used' }
   | { readonly outcome: 'invalid_request' }
 
-/** A step use case's port at runtime: one message in, its outcome out (DOM-3). */
-export type RuntimeStepPort = (
+/** What a step's operation recorded, looked up alone (PER-5, `$Recorded`), as a command's. */
+type RuntimeStepRecorded =
+  | Extract<RuntimeStepOutcome, { readonly outcome: 'applied' | 'identity_already_used' }>
+  | { readonly outcome: 'not_recorded' }
+
+/**
+ * A step use case's port at runtime: one message in, its outcome out
+ * (DOM-3); beside it, what an operation recorded, looked up alone (PER-5),
+ * as a command's.
+ */
+export type RuntimeStepPort = ((
   context: CommandRootContext,
   input: unknown,
-) => AsyncIterable<RuntimeStepOutcome>
+) => AsyncIterable<RuntimeStepOutcome>) & {
+  readonly [$Recorded]: (
+    context: OperationContext & FingerprintContext,
+  ) => Promise<RuntimeStepRecorded>
+}
 
 /**
  * What the command ports lend a step's port (part 7.4): a component's
@@ -101,6 +120,44 @@ export interface StepKit<fragment, write> {
   readonly folded: (bound: Bound) => fragment
   readonly fragment_of: (leaf: BoundLeaf) => fragment
   readonly read_part: (stored: StoredPart) => PartFields
+  /** The fact an operation recorded, looked up alone (PER-5), the adapter's (`RecordedBy`). */
+  readonly recorded: (operation: Operation) => Promise<AlreadyRecorded | undefined>
+}
+
+/** An applied outcome of a step (DOM-7): its branch, its position, its fact as a reader sees it. */
+const applied = (
+  branch: 'advances' | 'completes',
+  at: position,
+  fact: StoredEnvelope,
+  read_part: (part: StoredPart) => PartFields,
+): Extract<RuntimeStepOutcome, { readonly outcome: 'applied' }> => ({
+  outcome: 'applied',
+  branch,
+  position: at,
+  fact: {
+    parts: fact.parts.map(read_part),
+    operation: fact.operation,
+    correlation: fact.correlation,
+  },
+})
+
+/**
+ * A step's duplicate branch (DOM-11): the fact its operation recorded, with
+ * the same fingerprint, as the outcome it was; with another, the identity
+ * already used; a fact of no step's branch is the adapter's fault, thrown.
+ */
+const duplicate = (
+  path: string,
+  context: FingerprintContext,
+  recorded: AlreadyRecorded,
+  read_part: (part: StoredPart) => PartFields,
+): Extract<RuntimeStepOutcome, { readonly outcome: 'applied' | 'identity_already_used' }> => {
+  const branch = recorded.fact.branch
+  if (recorded.fact.fingerprint !== context.fingerprint) return { outcome: 'identity_already_used' }
+  if (branch === 'advances' || branch === 'completes') {
+    return applied(branch, recorded.position, recorded.fact, read_part)
+  }
+  throw new Error(`${path}: its operation recorded a fact of no step's branch (DOM-11)`)
 }
 
 /** A step's parts at runtime, as its builder gives them (part 3.2), with where it keeps its cursor. */
@@ -364,7 +421,10 @@ export const step_port =
       return key.map((pair) => (pair.length === 2 ? pair[1] : undefined))
     }
 
-    return async function* (context, input) {
+    const executed = async function* (
+      context: CommandRootContext,
+      input: unknown,
+    ): AsyncIterable<RuntimeStepOutcome> {
       const seen: Readonly<Record<string, unknown>> = Object.fromEntries(
         Object.entries(context).filter(([key]) => key !== 'correlation' && key !== 'fingerprint'),
       )
@@ -461,34 +521,10 @@ export const step_port =
           return { choice: 'walk', ...walk }
         },
       })
-      /** An applied outcome (DOM-7): its branch, its position, its fact as a reader sees it. */
-      const applied = (
-        branch: 'advances' | 'completes',
-        at: position,
-        fact: StoredEnvelope,
-        read_part: (part: StoredPart) => PartFields,
-      ): RuntimeStepOutcome => ({
-        outcome: 'applied',
-        branch,
-        position: at,
-        fact: {
-          parts: fact.parts.map(read_part),
-          operation: fact.operation,
-          correlation: fact.correlation,
-        },
-      })
       switch (execution.outcome) {
-        case 'recorded': {
-          const branch = execution.fact.branch
-          if (execution.fact.fingerprint !== context.fingerprint) {
-            yield { outcome: 'identity_already_used' }
-          } else if (branch === 'advances' || branch === 'completes') {
-            yield applied(branch, execution.position, execution.fact, kit.read_part)
-          } else {
-            throw new Error(`${path}: its operation recorded a fact of no step's branch (DOM-11)`)
-          }
+        case 'recorded':
+          yield duplicate(path, context, execution, kit.read_part)
           return
-        }
         case 'advanced': {
           const branch = chosen.walk?.advances(execution.instance)[execution.branch]
           if (branch === undefined)
@@ -508,4 +544,15 @@ export const step_port =
           return
       }
     }
+    return Object.assign(executed, {
+      // PER-5: what the operation recorded, looked up alone, before the schema.
+      [$Recorded]: async (
+        context: OperationContext & FingerprintContext,
+      ): Promise<RuntimeStepRecorded> => {
+        const recorded = await kit.recorded(context.operation)
+        return recorded === undefined
+          ? { outcome: 'not_recorded' }
+          : duplicate(path, context, recorded, kit.read_part)
+      },
+    })
   }
