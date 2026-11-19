@@ -6,9 +6,11 @@ import { kind_of } from '@q-mino/domains/library'
 import { generate } from '../shell/generate.ts'
 
 // The generator on a tree of authored files alone (DOM-25): it writes the
-// scopes, imports the authored files in the order their imports allow, and
-// writes their twins, with no generated file to start from; run again, it
-// writes nothing; checking a twin changed by hand, it names it.
+// scopes and the doors, imports the authored files in the order their imports
+// allow, writes their twins, then the registries and the majors (DOM-24,
+// DOM-22), with no generated file to start from; run again, it writes
+// nothing; checking a twin changed by hand, or a generated file it no longer
+// writes, it names them.
 
 const repository = fileURLToPath(new URL('../../../', import.meta.url))
 const root = join(repository, 'packages/generator/test/.generated', `tree-${String(process.pid)}`)
@@ -72,6 +74,19 @@ export const add_a_thing = command({
 
 export const add_a_thing = command_use_case({ command: command.add_a_thing })
 `,
+  'business/things/version.ts': `import { version } from './_scope_version.ts'
+
+/** The things since they have a name. */
+export const things = version('2.0.0')
+`,
+  'business/others/fact.ts': `import { z } from 'zod'
+import { fact, things } from './_scope_fact.ts'
+
+/** Another domain names a thing by its identity, through the door of \`things\`. */
+export const a_thing_has_been_lent = fact({
+  payload: z.strictObject({ thing_id: things.id.thing_id }),
+})
+`,
   'business/things/1/fact.ts': `import { z } from 'zod'
 import { earlier, next, id } from './_scope_fact.ts'
 
@@ -91,6 +106,13 @@ const configuration = {
 } as const
 
 const read = (path: string): string => readFileSync(join(root, path), 'utf8')
+
+/** A member of a module or an object, if it is one. */
+const member = (of: unknown, name: string): unknown => {
+  if (typeof of !== 'object' || of === null) return undefined
+  const value: unknown = Reflect.get(of, name)
+  return value
+}
 
 afterAll(() => {
   rmSync(root, { recursive: true, force: true })
@@ -126,9 +148,37 @@ describe('the generator on a tree of authored files alone', () => {
       '1/_scope.ts',
       '1/_scope_fact.ts',
       '1/_fact.ts',
+      '_door_business.ts',
+      '_registry.ts',
+      '_majors.ts',
+      '1/_registry.ts',
+      '../others/_scope_fact.ts',
+      '../others/_fact.ts',
+      '../others/_registry.ts',
     ]) {
       expect(existsSync(join(root, 'business/things', file)), file).toBe(true)
     }
+    // A door to the folders the map opens it to, the identities alone (GR-3); the other domain's scope carries it.
+    expect(read('business/things/_door_business.ts')).toContain("export * as id from './_id.ts'")
+    expect(read('business/others/_scope_fact.ts')).toContain(
+      "export * as things from '../things/_door_business.ts'",
+    )
+    // The registry, its paths with their components; the majors, the current's and the past's (DOM-24, DOM-22).
+    const majors: unknown = await import(
+      pathToFileURL(join(root, 'business/things/_majors.ts')).href
+    )
+    const facts: unknown = await import(pathToFileURL(join(root, 'business/things/_fact.ts')).href)
+    const listed = member(majors, 'majors')
+    expect(typeof listed === 'object' && listed !== null ? Object.keys(listed) : []).toEqual([
+      '1',
+      '2',
+    ])
+    expect(member(member(listed, '2'), 'business/things/fact/a_thing_has_been_added')).toBe(
+      member(facts, 'a_thing_has_been_added'),
+    )
+    expect(read('business/things/_registry.ts')).toContain(
+      "'business/things/command/add_a_thing_input': command.add_a_thing_input,",
+    )
 
     // A component branded with its path; a past major's with its major (DOM-24, DOM-22).
     expect(read('business/things/_fact.ts')).toContain(
@@ -164,6 +214,7 @@ describe('the generator on a tree of authored files alone', () => {
       join(root, 'business/things/_id.ts'),
       read('business/things/_id.ts').replace('A thing', 'Something'),
     )
+    writeFileSync(join(root, 'business/things/_gone.ts'), '// generated\n\nexport {}\n')
     const checked = await generate(repository, configuration, true)
     expect(checked.failures).toEqual([
       {
@@ -172,6 +223,14 @@ describe('the generator on a tree of authored files alone', () => {
         rule: 'DOM-24',
         sentence: 'is not what the generator writes: run pnpm generate',
       },
+      {
+        path: `${configuration.root}/business/things/_gone.ts`,
+        line: 1,
+        rule: 'DOM-24',
+        sentence: 'is no longer written by the generator: run pnpm generate',
+      },
     ])
+    await generate(repository, configuration, false)
+    expect(existsSync(join(root, 'business/things/_gone.ts'))).toBe(false)
   })
 })

@@ -1,8 +1,9 @@
 // generated
 
-// The majors of `keeper` (PER-17, A, 17 Nov 2026): the current's registry, by
-// number, and no past major. The configurator gives it to the tree's ports
-// (`tree_ports`).
+// The majors of `keeper` (DOM-22, PER-17): the current's registry, by number,
+// and no past major. The configurator gives it where a version picks a major:
+// the versions of a store (`wlib.versions`), the ports of a tree
+// (`wlib.tree_ports`).
 
 import type * as wlib from '../../wlib.ts'
 import { registry as major_1 } from './_registry.ts'

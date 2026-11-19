@@ -1,67 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import {
-  next_import,
-  scopes,
-  type AuthoredFile,
-  type FileKind,
-  type Folder,
-  type Tree,
-} from '../src/index.ts'
+import { next_import, scopes } from '../src/index.ts'
+import { namespaces_in, shed, text_in } from './trees.ts'
 
 // The scopes the core writes from a tree as read (DOM-25), on a tree with
 // Shed's map and folders, its files reduced to their kinds.
 
-const file = (stem: string, kind: FileKind, names: readonly string[] = []): AuthoredFile => ({
-  stem,
-  kind,
-  exports: names.map((name) => ({ name, doc: [], input_doc: [] })),
-})
+const text_of = (path: string): string => text_in(scopes(shed).files, path)
 
-const folder = (path: string, files: readonly AuthoredFile[]): Folder => ({
-  segments: path.split('/'),
-  files,
-})
-
-const shed: Tree = {
-  sight: {
-    business: { business: ['id'] },
-    persona: { business: ['usecase', 'id', 'fact'], auth: ['lookup', 'id'] },
-    reaction: { business: ['usecase', 'fact'] },
-    auth: {},
-  },
-  library: 'wlib.ts',
-  folders: [
-    folder('auth/accounts', [file('id', 'id'), file('lookup', 'lookup')]),
-    folder('business/loans', [
-      file('id', 'id'),
-      file('value', 'value'),
-      file('fact', 'fact'),
-      file('command', 'command'),
-      file('usecase', 'usecase'),
-      file('reaction', 'reaction'),
-    ]),
-    folder('business/loans/1', [file('fact', 'fact')]),
-    folder('business/loans/an_ongoing_loan', [
-      file('node', 'node', ['an_ongoing_loan']),
-      file('command', 'command'),
-    ]),
-    folder('business/tools', [file('id', 'id'), file('fact', 'fact'), file('usecase', 'usecase')]),
-    folder('persona', [file('value', 'value'), file('node', 'node', ['persona'])]),
-    folder('persona/member', [file('node', 'node', ['member']), file('usecase', 'usecase')]),
-    folder('reaction/damage', [file('dsl', 'dsl'), file('reaction', 'reaction')]),
-  ],
-}
-
-const text_of = (path: string): string => {
-  const found = scopes(shed).files.find((one) => one.path === path)
-  if (found === undefined) throw new Error(`no ${path}`)
-  return found.text
-}
-
-const namespaces_of = (path: string): readonly string[] =>
-  text_of(path)
-    .split('\n')
-    .flatMap((line) => /^export \* as (\S+) from '(\S+)'$/.exec(line)?.slice(1, 3).join(' ') ?? [])
+const namespaces_of = (path: string): readonly string[] => namespaces_in(scopes(shed).files, path)
 
 describe('SC-45, the map: what a folder sees of the others (DOM-25, GR-1, GR-3, GR-9)', () => {
   it('a persona sees of a business domain the door to the personas, of auth its door', () => {

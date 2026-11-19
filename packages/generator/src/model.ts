@@ -56,6 +56,8 @@ export type Value =
       readonly past: Past
       /** For a node, what its declaration adds to the point's types; none for any other component. */
       readonly node?: NodeParts
+      /** For a version, the major it declares (`version('2.0.0')`: 2); none for any other component. */
+      readonly major?: number
     }
   /** A zod schema with no mark: a value of the domain (DOM-21). */
   | { readonly is: 'value' }

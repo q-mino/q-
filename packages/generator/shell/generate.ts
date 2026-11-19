@@ -1,11 +1,21 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import * as prettier from 'prettier'
-import { $Delegated, $Earlier, $Node, is_a_schema, kind_of } from '@q-mino/domains/library'
 import {
+  $Delegated,
+  $Earlier,
+  $Node,
+  $Version,
+  is_a_schema,
+  kind_of,
+} from '@q-mino/domains/library'
+import {
+  doors,
+  generated,
   layer_order,
   next_import,
+  registries,
   scopes,
   twin,
   type AuthoredFile,
@@ -24,10 +34,12 @@ import {
 import { read_source, runtime_imports, type Source } from './source.ts'
 
 // The generator's shell for one tree (DOM-25): it walks the folders the map
-// names, reads the authored files' sources, writes the scopes, then imports
-// the authored files one by one, each once every authored file its imports
-// reach is imported and its twin written, and writes its twin. Checking, it
-// writes nothing and compares.
+// names, reads the authored files' sources, writes the scopes and the doors,
+// then imports the authored files one by one, each once every authored file
+// its imports reach is imported and its twin written, and writes its twin;
+// then the scopes again, the registries and the majors (DOM-24, DOM-22), and
+// deletes a generated file it no longer writes. Checking, it writes nothing
+// and compares.
 
 /** What generating a tree gave: the files written or differing, and the failures. */
 export interface Outcome {
@@ -85,6 +97,14 @@ const node_parts_of = (value: object): NodeParts | undefined => {
   }
 }
 
+/** The major a version declares (`version('2.0.0')`: 2). */
+const major_of = (value: object): number | undefined => {
+  if (!($Version in value)) return undefined
+  const version: unknown = value[$Version]
+  const major = typeof version === 'string' ? Number(version.split('.')[0]) : Number.NaN
+  return Number.isInteger(major) ? major : undefined
+}
+
 const past_of = (value: object): Past =>
   $Delegated in value
     ? { is: 'delegated', next_input: input_of(value[$Delegated]) }
@@ -101,12 +121,14 @@ const value_of = (value: unknown): Value => {
     value !== null
   ) {
     const node = node_parts_of(value)
+    const major = major_of(value)
     return {
       is: 'component',
       built,
       input: input_of(value),
       past: past_of(value),
       ...(node === undefined ? {} : { node }),
+      ...(major === undefined ? {} : { major }),
     }
   }
   return is_a_schema(value) ? { is: 'value' } : { is: 'other' }
@@ -142,22 +164,21 @@ export const generate = async (
 ): Promise<Outcome> => {
   const root = resolve(repository, configuration.root)
   const shown = (path: string): string => relative(repository, join(root, path))
-  const reads: readonly Read[] = Object.keys(configuration.sight)
-    .flatMap((top) => walk(root, [top]))
-    .flatMap((segments) =>
-      readdirSync(join(root, ...segments))
-        .filter(is_authored)
-        .sort()
-        .map((name) => {
-          const path = join(root, ...segments, name)
-          return {
-            segments,
-            stem: name.slice(0, -3),
-            source: read_source(path, readFileSync(path, 'utf8')),
-            path,
-          }
-        }),
-    )
+  const folders = Object.keys(configuration.sight).flatMap((top) => walk(root, [top]))
+  const reads: readonly Read[] = folders.flatMap((segments) =>
+    readdirSync(join(root, ...segments))
+      .filter(is_authored)
+      .sort()
+      .map((name) => {
+        const path = join(root, ...segments, name)
+        return {
+          segments,
+          stem: name.slice(0, -3),
+          source: read_source(path, readFileSync(path, 'utf8')),
+          path,
+        }
+      }),
+  )
 
   // A file that imports no scope reaches nothing of the tree: imported first, its kind from what it exports.
   const exports = new Map<string, readonly Export[]>()
@@ -214,6 +235,10 @@ export const generate = async (
   }
 
   for (const file of scopes(tree()).files) await put(file, true)
+  // The doors need no runtime: written before any file whose scope imports one is imported.
+  const written_doors = doors(tree())
+  failures.push(...written_doors.failures)
+  for (const file of written_doors.files) await put(file)
 
   // The runtime imports of a module of the tree: the planned text, else the file on disk, else, for a twin not yet written, its authored file.
   const authored = new Set(reads.map((read) => read.path))
@@ -269,5 +294,26 @@ export const generate = async (
   const final_scopes = scopes(tree())
   failures.push(...final_scopes.failures)
   for (const file of final_scopes.files) await put(file)
+  for (const file of registries(tree())) await put(file)
+
+  // A generated file the generator no longer writes (a folder deleted, a kind gone): named, or deleted.
+  for (const segments of folders) {
+    for (const name of readdirSync(join(root, ...segments)).sort()) {
+      const path = join(root, ...segments, name)
+      if (!name.startsWith('_') || !name.endsWith('.ts') || planned.has(path)) continue
+      if (readFileSync(path, 'utf8').split('\n')[0] !== generated) continue
+      written.add(shown(relative(root, path)))
+      if (check) {
+        failures.push({
+          path: shown(relative(root, path)),
+          line: 1,
+          rule: 'DOM-24',
+          sentence: 'is no longer written by the generator: run pnpm generate',
+        })
+      } else {
+        rmSync(path)
+      }
+    }
+  }
   return { written: [...written], failures }
 }

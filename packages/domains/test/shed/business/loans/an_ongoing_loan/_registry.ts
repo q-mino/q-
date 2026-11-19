@@ -1,12 +1,14 @@
 // generated
 
-// The path registry of `an_ongoing_loan` (DOM-24): every path with its
-// component, in the order of the modules. The registry of `loans` carries it:
-// a folder of a domain writes in its store (D105).
+// The path registry of `business/loans/an_ongoing_loan` (DOM-24): every path
+// with its component, in the order of the twins. The configurator gives it to
+// the library, which reads it in reverse, from a component to its path, by
+// object identity. The registry of `business/loans` carries it: a folder of a
+// domain is its subtree (D105).
 
 import type * as wlib from '../../../wlib.ts'
-import * as command from './_command.ts'
 import * as node from './_node.ts'
+import * as command from './_command.ts'
 import * as usecase from './_usecase.ts'
 
 export const registry = {

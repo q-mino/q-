@@ -1,17 +1,21 @@
 // generated
 
-// The path registry of `member` (DOM-24): every path with its component, in
-// the order of the files. The hat is the persona's segment, after its kind's
-// folder (PER-7, DOM-25).
+// The path registry of `persona/member` (DOM-24): every path with its
+// component, in the order of the twins. The configurator gives it to the
+// library, which reads it in reverse, from a component to its path, by object
+// identity.
 
 import type * as wlib from '../../wlib.ts'
+import * as value from './_value.ts'
 import * as node from './_node.ts'
 import * as usecase from './_usecase.ts'
-import * as value from './_value.ts'
 import * as version from './_version.ts'
 
 export const registry = {
-  'persona/member/version/member': version.member,
+  'persona/member/value/tool_name': value.tool_name,
+  'persona/member/value/loan_term': value.loan_term,
+  'persona/member/value/return_on_the_row': value.return_on_the_row,
+  'persona/member/value/extension_on_the_row': value.extension_on_the_row,
   'persona/member/node/member': node.member,
   'persona/member/usecase/borrow_a_tool': usecase.borrow_a_tool,
   'persona/member/usecase/borrow_a_tool_input': usecase.borrow_a_tool_input,
@@ -33,6 +37,5 @@ export const registry = {
     usecase.my_reservations_in_the_workshop_input,
   'persona/member/usecase/the_shelf': usecase.the_shelf,
   'persona/member/usecase/the_shelf_input': usecase.the_shelf_input,
-  'persona/member/value/tool_name': value.tool_name,
-  'persona/member/value/loan_term': value.loan_term,
+  'persona/member/version/member': version.member,
 } satisfies wlib.Registry

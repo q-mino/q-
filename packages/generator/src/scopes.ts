@@ -10,6 +10,7 @@ import {
   seen_of,
   type BuilderName,
 } from './kinds.ts'
+import { has_a_door } from './doors.ts'
 import type { Failure, FileKind, Folder, GeneratedFile, Tree } from './model.ts'
 import { file, wrap } from './text.ts'
 import {
@@ -140,10 +141,12 @@ const twins = (from: Folder, of: Folder, kinds: readonly FileKind[]): readonly N
 
 /** The doors of the folders the map opens to a folder, for a kind. */
 const doors = (tree: Tree, folder: Folder, kind: FileKind): readonly Namespace[] =>
-  doors_of(tree, folder.segments, (kinds) => kinds.some(seen_of(kind))).map((door) => ({
-    name: door.name,
-    module: relative(folder.segments, door.segments, door.file),
-  }))
+  doors_of(tree, folder.segments, (kinds) => kinds.some(seen_of(kind)))
+    .filter((door) => has_a_door(tree, door.segments, folder.segments[0] ?? ''))
+    .map((door) => ({
+      name: door.name,
+      module: relative(folder.segments, door.segments, door.file),
+    }))
 
 /** The doors of a folder's ancestors to the folders below (`_door_below.ts`), each under its name prefixed with `_`. */
 const ancestors = (tree: Tree, folder: Folder): readonly Namespace[] =>

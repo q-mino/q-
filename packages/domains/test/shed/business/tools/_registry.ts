@@ -1,24 +1,24 @@
 // generated
 
-// The path registry of `tools` (DOM-24): every path with its component, in
-// the order of the modules. The configurator gives it to the library, which
-// reads it in reverse, from a component to its path, by object identity.
+// The path registry of `business/tools` (DOM-24): every path with its
+// component, in the order of the twins. The configurator gives it to the
+// library, which reads it in reverse, from a component to its path, by object
+// identity.
 
 import type * as wlib from '../../wlib.ts'
-import * as command from './_command.ts'
-import * as fact from './_fact.ts'
 import * as id from './_id.ts'
-import * as line_selection from './_line_selection.ts'
-import * as predicate from './_predicate.ts'
-import * as query from './_query.ts'
-import * as reaction from './_reaction.ts'
-import * as tool_selection from './_tool_selection.ts'
-import * as usecase from './_usecase.ts'
 import * as value from './_value.ts'
+import * as fact from './_fact.ts'
+import * as predicate from './_predicate.ts'
+import * as line_selection from './_line_selection.ts'
+import * as tool_selection from './_tool_selection.ts'
+import * as command from './_command.ts'
+import * as query from './_query.ts'
+import * as usecase from './_usecase.ts'
+import * as reaction from './_reaction.ts'
 import * as version from './_version.ts'
 
 export const registry = {
-  'business/tools/version/tools': version.tools,
   'business/tools/id/tool_id': id.tool_id,
   'business/tools/id/repair_id': id.repair_id,
   'business/tools/id/sheet_id': id.sheet_id,
@@ -28,8 +28,8 @@ export const registry = {
   'business/tools/value/notes': value.notes,
   'business/tools/value/tool_status': value.tool_status,
   'business/tools/value/retire_reason': value.retire_reason,
-  'business/tools/value/repair': value.repair,
   'business/tools/value/retirement': value.retirement,
+  'business/tools/value/repair': value.repair,
   'business/tools/value/tool_in_service': value.tool_in_service,
   'business/tools/value/tool_under_repair': value.tool_under_repair,
   'business/tools/value/retired_tool': value.retired_tool,
@@ -66,6 +66,10 @@ export const registry = {
   'business/tools/predicate/the_tool_is_under_repair': predicate.the_tool_is_under_repair,
   'business/tools/predicate/the_tool_is_under_this_repair': predicate.the_tool_is_under_this_repair,
   'business/tools/predicate/a_sheet_has_this_id': predicate.a_sheet_has_this_id,
+  'business/tools/selection/line/the_line_is_on_the_sheet': line_selection.the_line_is_on_the_sheet,
+  'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
+  'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
+    tool_selection.the_tool_is_in_one_of_these_categories,
   'business/tools/command/the_tool_is_new': command.the_tool_is_new,
   'business/tools/command/add_a_tool': command.add_a_tool,
   'business/tools/command/add_a_tool_input': command.add_a_tool_input,
@@ -97,10 +101,6 @@ export const registry = {
   'business/tools/command/load_the_tools_of_a_short_sheet': command.load_the_tools_of_a_short_sheet,
   'business/tools/command/load_the_tools_of_a_short_sheet_input':
     command.load_the_tools_of_a_short_sheet_input,
-  'business/tools/selection/tool/the_tool_is_in_service': tool_selection.the_tool_is_in_service,
-  'business/tools/selection/tool/the_tool_is_in_one_of_these_categories':
-    tool_selection.the_tool_is_in_one_of_these_categories,
-  'business/tools/selection/line/the_line_is_on_the_sheet': line_selection.the_line_is_on_the_sheet,
   'business/tools/query/the_tool_is_shown_in_the_catalogue':
     query.the_tool_is_shown_in_the_catalogue,
   'business/tools/query/the_catalogue': query.the_catalogue,
@@ -120,4 +120,5 @@ export const registry = {
     reaction.the_first_line_of_the_sheet_is_taken_up,
   'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up':
     reaction.the_next_line_of_the_sheet_is_taken_up,
+  'business/tools/version/tools': version.tools,
 } satisfies wlib.Registry
