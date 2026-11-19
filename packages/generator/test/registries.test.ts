@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { registries, type Input, type Past, type Tree, type Value } from '../src/index.ts'
-import { exported, file, folder, sight, text_in } from './trees.ts'
+import { registries, type Tree } from '../src/index.ts'
+import { component, exported, file, folder, sight, text_in, value } from './trees.ts'
 
 // The registries and the majors the core writes from a tree as read (DOM-24,
 // DOM-22, PER-17): a persona of Shed with a past major, a business domain
 // with a folder below it.
-
-const component = (
-  built: Extract<Value, { is: 'component' }>['built'],
-  input: Input = 'none',
-  past: Past = { is: 'current' },
-  major?: number,
-): Value => ({
-  is: 'component',
-  built,
-  input,
-  past,
-  ...(major === undefined ? {} : { major }),
-})
 
 const tree: Tree = {
   sight,
@@ -34,7 +21,7 @@ const tree: Tree = {
         exported('borrow_a_tool', component({ kind: 'command' }, 'function')),
       ]),
       file('version', 'version', [
-        exported('loans', component({ kind: 'version' }, 'none', { is: 'current' }, 2)),
+        exported('loans', component({ kind: 'version' }, 'none', { is: 'current' }, { major: 2 })),
       ]),
     ]),
     folder('business/loans/1', [
@@ -45,14 +32,14 @@ const tree: Tree = {
     folder('business/loans/an_ongoing_loan', [
       file('usecase', 'usecase', [exported('extend_the_loan', component({ kind: 'usecase' }))]),
     ]),
-    folder('persona', [file('value', 'value', [exported('caller', { is: 'value' })])]),
+    folder('persona', [file('value', 'value', [exported('caller', value())])]),
     folder('persona/member', [
       file('usecase', 'usecase', [
         exported('borrow_a_tool', component({ kind: 'usecase' }, 'schema')),
         exported('return_a_tool', component({ kind: 'usecase' }, 'schema')),
       ]),
       file('version', 'version', [
-        exported('member', component({ kind: 'version' }, 'none', { is: 'current' }, 2)),
+        exported('member', component({ kind: 'version' }, 'none', { is: 'current' }, { major: 2 })),
       ]),
     ]),
     folder('persona/member/1', [
@@ -67,7 +54,7 @@ const tree: Tree = {
   ],
 }
 
-const written = registries(tree)
+const written = registries(tree).files
 
 const entries_of = (path: string): readonly string[] =>
   text_in(written, path)

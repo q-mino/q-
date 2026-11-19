@@ -17,6 +17,14 @@ export interface TreeConfiguration {
    * design (Shed).
    */
   readonly compared_with_main: boolean
+  /**
+   * Generated files kept as written while a decision on them is pending, by
+   * their path from the tree's root: the generator neither writes nor
+   * compares them, and says so at every run; it fails on one it would write
+   * the same, or does not write at all, so that the list never outlives the
+   * decision (DOM-25, provisional: A to confirm).
+   */
+  readonly held?: readonly string[]
 }
 
 /** The generator's configuration: its trees. */

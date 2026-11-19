@@ -1,6 +1,7 @@
 import type { ConstructKind } from '@q-mino/domains/library'
 import { layer_order, plural_of } from './kinds.ts'
 import type { Failure, Folder, GeneratedFile, Tree } from './model.ts'
+import { given_twice, type Named } from './names.ts'
 import { file, wrap } from './text.ts'
 import { files_of, folder_at, is_a_major, major_of } from './tree.ts'
 
@@ -13,9 +14,8 @@ import { files_of, folder_at, is_a_major, major_of } from './tree.ts'
 // file's name, which the scopes below carry as the ancestor (`_persona`).
 // Neither needs the runtime: the shell writes them before it imports a file.
 
-/** A namespace a door exports: its name and the module it re-exports. */
-interface Namespace {
-  readonly name: string
+/** A namespace a door exports: its name, the module it re-exports, and what it is, in the tree's words. */
+interface Namespace extends Named {
   readonly module: string
 }
 
@@ -64,7 +64,8 @@ interface Door {
  * the folder holds, from its one file of that kind, then the door of every
  * folder below it that exposes something, under its name. Two files of a
  * kind the map opens cannot make one namespace: the generator stops, until a
- * case asks how a door joins them.
+ * case asks how a door joins them; and on two namespaces under one name, a
+ * folder below named as a kind the door opens (DOM-25).
  */
 const door = (
   tree: Tree,
@@ -80,23 +81,44 @@ const door = (
   const below = children_of(tree, folder)
     .filter((child) => door(tree, child, audience, kinds).namespaces.length > 0)
     .map((child) => child.segments.at(-1) ?? '')
+  const namespaces: readonly Namespace[] = [
+    ...own.flatMap(({ kind, files }) =>
+      files.length === 1
+        ? [
+            {
+              name: kind,
+              module: `./_${files[0]?.stem ?? kind}.ts`,
+              what: `its ${plural_of[kind]}`,
+            },
+          ]
+        : [],
+    ),
+    ...below.map((name) => ({
+      name,
+      module: `./${name}/_door_${audience}.ts`,
+      what: `the folder ${[...folder.segments, name].join('/')}`,
+    })),
+  ]
   return {
-    namespaces: [
-      ...own.flatMap(({ kind, files }) =>
-        files.length === 1 ? [{ name: kind, module: `./_${files[0]?.stem ?? kind}.ts` }] : [],
-      ),
-      ...below.map((name) => ({ name, module: `./${name}/_door_${audience}.ts` })),
-    ],
+    namespaces,
     kinds: own.map(({ kind }) => kind),
     below,
-    failures: own
-      .filter(({ files }) => files.length > 1)
-      .map(({ kind, files }) => ({
+    failures: [
+      ...own
+        .filter(({ files }) => files.length > 1)
+        .map(({ kind, files }) => ({
+          path,
+          line: 1,
+          rule: 'DOM-25',
+          sentence: `${folder.segments.join('/')} holds ${String(files.length)} files of ${plural_of[kind]} (${files.map((one) => `${one.stem}.ts`).join(', ')}), which the map opens to ${audience}: a door gives one namespace per kind, from one file`,
+        })),
+      ...given_twice(namespaces).map(([first, again]) => ({
         path,
         line: 1,
         rule: 'DOM-25',
-        sentence: `${folder.segments.join('/')} holds ${String(files.length)} files of ${plural_of[kind]} (${files.map((one) => `${one.stem}.ts`).join(', ')}), which the map opens to ${audience}: a door gives one namespace per kind, from one file`,
+        sentence: `the door of ${folder.segments.join('/')} to ${audience} would expose two namespaces named ${first.name}, ${first.what} and ${again.what}: a door gives each one name`,
       })),
+    ],
   }
 }
 
@@ -163,7 +185,9 @@ const below_door = (tree: Tree, folder: Folder): readonly GeneratedFile[] =>
                     .map((authored) => authored.stem)
                     .sort(),
                 )
-                .map((stem) => exported({ name: stem, module: `./_${stem}.ts` }))
+                .map((stem) =>
+                  exported({ name: stem, module: `./_${stem}.ts`, what: `the file ${stem}.ts` }),
+                )
                 .join('\n'),
             ],
           ),

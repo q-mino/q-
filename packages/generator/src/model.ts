@@ -38,6 +38,8 @@ export interface AuthoredFile {
 /** An export of an authored file. */
 export interface Export {
   readonly name: string
+  /** The line of its declaration in the source, from 1, for the failures (`file:line`). */
+  readonly line: number
   /** The lines of its JSDoc, as written; none if it has none. */
   readonly doc: readonly string[]
   /** The lines of the JSDoc of the input declared inline in its builder, if any. */
@@ -58,11 +60,29 @@ export type Value =
       readonly node?: NodeParts
       /** For a version, the major it declares (`version('2.0.0')`: 2); none for any other component. */
       readonly major?: number
+      /** The object it is, by identity (one object, one path, DOM-24). */
+      readonly identity: Identity
+      /** The input it declares inline, by identity, if it declares one. */
+      readonly input_identity?: Identity
+      /** The components its parts reach, not through another component: each one has a path only if a file exports it (DOM-25). */
+      readonly holds: readonly Held[]
     }
   /** A zod schema with no mark: a value of the domain (DOM-21). */
-  | { readonly is: 'value' }
+  | { readonly is: 'value'; readonly identity: Identity }
   /** Anything else: a function of `dsl`, a helper; the library ignores it. */
   | { readonly is: 'other' }
+
+/**
+ * An object of the runtime, as a number: the same object, the same number,
+ * wherever the tree names it. The shell numbers them; the core compares.
+ */
+export type Identity = number
+
+/** A component another one holds: the object it is, and its builder's mark. */
+export interface Held {
+  readonly identity: Identity
+  readonly built: Built
+}
 
 /**
  * What a node declares that changes the types of the points below it (PER-6,

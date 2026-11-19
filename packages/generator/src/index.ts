@@ -10,6 +10,8 @@ export type {
   FileKind,
   Folder,
   GeneratedFile,
+  Held,
+  Identity,
   Input,
   NodeParts,
   Past,
@@ -21,6 +23,7 @@ export { scopes } from './scopes.ts'
 export { twin } from './twins.ts'
 export { doors } from './doors.ts'
 export { registries } from './registries.ts'
+export { checks, forgotten, type Released } from './checks.ts'
 export { map_rules, type CruiserPaths, type CruiserRule } from './rules.ts'
 export { next_import, type Imports, type Next } from './order.ts'
 export { layer_order, point_builders } from './kinds.ts'

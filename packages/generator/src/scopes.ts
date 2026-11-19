@@ -12,6 +12,7 @@ import {
 } from './kinds.ts'
 import { has_a_door } from './doors.ts'
 import type { Failure, FileKind, Folder, GeneratedFile, Tree } from './model.ts'
+import { given_twice, type Named } from './names.ts'
 import { file, wrap } from './text.ts'
 import {
   ancestors_of,
@@ -54,7 +55,7 @@ const scopes_of = (
   const kinds = layer_order.filter((kind) => files_of(folder, kind).length > 0)
   const past = major_of(folder) !== undefined
   const each = kinds.map((kind) =>
-    past ? past_scope(tree, folder, kind) : { file: scope(tree, folder, kind), failures: [] },
+    past ? past_scope(tree, folder, kind) : scope(tree, folder, kind),
   )
   return {
     files: [point(tree, folder, past), ...each.map((one) => one.file)],
@@ -116,9 +117,8 @@ const point = (tree: Tree, folder: Folder, past: boolean): GeneratedFile => {
   }
 }
 
-/** A namespace a scope exports: its name and the module it re-exports. */
-interface Namespace {
-  readonly name: string
+/** A namespace a scope exports: its name, the module it re-exports, and what it is, in the tree's words. */
+interface Namespace extends Named {
   readonly module: string
 }
 
@@ -136,6 +136,10 @@ const twins = (from: Folder, of: Folder, kinds: readonly FileKind[]): readonly N
         .map((stem) => ({
           name: stem,
           module: relative(from.segments, of.segments, `_${stem}.ts`),
+          what:
+            from.segments.join('/') === of.segments.join('/')
+              ? `the file ${stem}.ts`
+              : `the file ${[...of.segments, stem].join('/')}.ts`,
         })),
     )
 
@@ -146,6 +150,7 @@ const doors = (tree: Tree, folder: Folder, kind: FileKind): readonly Namespace[]
     .map((door) => ({
       name: door.name,
       module: relative(folder.segments, door.segments, door.file),
+      what: `the door of ${door.segments.join('/')}`,
     }))
 
 /** The doors of a folder's ancestors to the folders below (`_door_below.ts`), each under its name prefixed with `_`. */
@@ -153,6 +158,7 @@ const ancestors = (tree: Tree, folder: Folder): readonly Namespace[] =>
   ancestors_of(tree, folder.segments).map((ancestor) => ({
     name: `_${ancestor.at(-1) ?? ''}`,
     module: relative(folder.segments, ancestor, '_door_below.ts'),
+    what: `the ancestor ${ancestor.join('/')}`,
   }))
 
 const builders_sentence = (names: readonly string[]): string =>
@@ -160,8 +166,34 @@ const builders_sentence = (names: readonly string[]): string =>
     ? 'no builder'
     : `the builders ${names.map((name) => `\`${name}\``).join(', ')}`
 
-/** The scope of a kind of a folder of the current version (`_scope_<kind>.ts`). */
-const scope = (tree: Tree, folder: Folder, kind: FileKind): GeneratedFile => {
+/** The members of a scope given twice: a failure each (DOM-25). */
+const twice = (
+  path: string,
+  folder: Folder,
+  kind: FileKind,
+  members: readonly Named[],
+): readonly Failure[] =>
+  given_twice(members).map(([first, again]) => ({
+    path,
+    line: 1,
+    rule: 'DOM-25',
+    sentence: `the scope of the ${plural_of[kind]} of ${folder.segments.join('/')} would give two members named ${first.name}, ${first.what} and ${again.what}: a scope gives each one name`,
+  }))
+
+const builders_named = (
+  builders: readonly string[],
+  functions: readonly string[],
+): readonly Named[] => [
+  ...builders.map((name) => ({ name, what: `the builder ${name}` })),
+  ...functions.map((name) => ({ name, what: `the library's ${name}` })),
+]
+
+/** The scope of a kind of a folder of the current version (`_scope_<kind>.ts`), and the failures met writing it. */
+const scope = (
+  tree: Tree,
+  folder: Folder,
+  kind: FileKind,
+): { readonly file: GeneratedFile; readonly failures: readonly Failure[] } => {
   const builders: readonly BuilderName[] = builders_of[kind]
   const functions = functions_of[kind] ?? []
   const namespaces = [
@@ -172,30 +204,44 @@ const scope = (tree: Tree, folder: Folder, kind: FileKind): GeneratedFile => {
   const header = wrap(
     `The scope of the ${plural_of[kind]} of ${shown(folder)} (DOM-25): ${builders_sentence([...builders, ...functions])}; ${namespaces.length === 0 ? 'nothing it sees' : "the twins of its folder in the layers below, its ancestors' doors to the folders below and the doors the map opens to it"}.`,
   )
+  const path = at(folder, `_scope_${kind}.ts`)
+  const failures = twice(path, folder, kind, [
+    ...builders_named(builders, functions),
+    ...namespaces,
+  ])
   if (kind === 'node') {
     const context = context_of(folder, nodes_above(tree, folder.segments, 'above'))
     return {
-      path: at(folder, '_scope_node.ts'),
-      text: file(header, [
-        [`import * as wlib from '${library_from(tree, folder.segments)}'`, ...context.imports].join(
-          '\n',
-        ),
-        namespaces.map(exported).join('\n'),
-        destructured(builders, context.arguments),
-      ]),
+      failures,
+      file: {
+        path,
+        text: file(header, [
+          [
+            `import * as wlib from '${library_from(tree, folder.segments)}'`,
+            ...context.imports,
+          ].join('\n'),
+          namespaces.map(exported).join('\n'),
+          destructured(builders, context.arguments),
+        ]),
+      },
     }
   }
   return {
-    path: at(folder, `_scope_${kind}.ts`),
-    text: file(header, [
-      [
-        ...(builders.length === 0 ? [] : [`export { ${builders.join(', ')} } from './_scope.ts'`]),
-        ...(functions.length === 0
-          ? []
-          : [`export { ${functions.join(', ')} } from '${library_from(tree, folder.segments)}'`]),
-        ...namespaces.map(exported),
-      ].join('\n'),
-    ]),
+    failures,
+    file: {
+      path,
+      text: file(header, [
+        [
+          ...(builders.length === 0
+            ? []
+            : [`export { ${builders.join(', ')} } from './_scope.ts'`]),
+          ...(functions.length === 0
+            ? []
+            : [`export { ${functions.join(', ')} } from '${library_from(tree, folder.segments)}'`]),
+          ...namespaces.map(exported),
+        ].join('\n'),
+      ]),
+    },
   }
 }
 
@@ -210,7 +256,7 @@ const past_scope = (
   const next = majors === undefined ? undefined : folder_at(tree, majors.next)
   const next_files = next === undefined ? [] : files_of(next, kind)
   const path = at(folder, `_scope_${kind}.ts`)
-  const failures: readonly Failure[] =
+  const misses: readonly Failure[] =
     next_files.length === 1
       ? []
       : [
@@ -234,10 +280,15 @@ const past_scope = (
     ...next_files.map((next_file) => ({
       name: 'next',
       module: relative(folder.segments, next?.segments ?? [], `_${next_file.stem}.ts`),
+      what: `the next major's ${next_file.stem}.ts`,
     })),
     ...own,
     ...of_the_domain,
     ...doors(tree, folder, kind),
+  ]
+  const failures = [
+    ...misses,
+    ...twice(path, folder, kind, [...builders_named(past_builders, []), ...namespaces]),
   ]
   return {
     file: {

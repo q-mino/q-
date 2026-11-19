@@ -1,5 +1,6 @@
 import { layer_order } from './kinds.ts'
-import type { AuthoredFile, Export, Folder, GeneratedFile, Tree } from './model.ts'
+import type { AuthoredFile, Export, Failure, Folder, GeneratedFile, Tree } from './model.ts'
+import { given_twice, type Named } from './names.ts'
 import { file, wrap } from './text.ts'
 import { files_of, library_from, major_of, path_segments } from './tree.ts'
 
@@ -13,10 +14,11 @@ import { files_of, library_from, major_of, path_segments } from './tree.ts'
 // folders (DOM-22, PER-17). Both need the runtime: the shell writes them once
 // every authored file is imported.
 
-/** A path of the registry and the member of a twin it names. */
-interface Entry {
+/** A path of the registry, the member of a twin it names, and whether it is a component's input. */
+export interface Entry {
   readonly path: string
   readonly member: string
+  readonly input: boolean
 }
 
 /**
@@ -27,14 +29,20 @@ interface Entry {
  * condition takes its file's kind; a value is `value`; a function of `dsl` or
  * a helper has no path.
  */
-const entries_of = (folder: Folder, authored: AuthoredFile, exported: Export): readonly Entry[] => {
+export const entries_of = (
+  folder: Folder,
+  authored: AuthoredFile,
+  exported: Export,
+): readonly Entry[] => {
   const value = exported.value
   const name = exported.name
   const member = (of: string): string => `${authored.stem}.${of}`
   const path = (kind: string, subject: readonly string[], of: string): string =>
     [...path_segments(folder.segments), kind, ...subject, of].join('/')
   if (value === undefined || value.is === 'other') return []
-  if (value.is === 'value') return [{ path: path('value', [], name), member: member(name) }]
+  if (value.is === 'value') {
+    return [{ path: path('value', [], name), member: member(name), input: false }]
+  }
   const built = value.built
   const kind = built.kind === 'condition' ? authored.kind : built.kind
   const subject = 'subject' in built ? [built.subject] : []
@@ -43,9 +51,15 @@ const entries_of = (folder: Folder, authored: AuthoredFile, exported: Export): r
       ? kind === 'usecase' && value.past.next_input !== 'none'
       : (kind === 'command' || kind === 'query' || kind === 'usecase') && value.input !== 'none'
   return [
-    { path: path(kind, subject, name), member: member(name) },
+    { path: path(kind, subject, name), member: member(name), input: false },
     ...(input
-      ? [{ path: path(kind, subject, `${name}_input`), member: member(`${name}_input`) }]
+      ? [
+          {
+            path: path(kind, subject, `${name}_input`),
+            member: member(`${name}_input`),
+            input: true,
+          },
+        ]
       : []),
   ]
 }
@@ -94,9 +108,44 @@ const header = (tree: Tree, folder: Folder): readonly string[] => {
   )
 }
 
-/** The registry of a folder (`_registry.ts`), if it has one. */
-const registry = (tree: Tree, folder: Folder): readonly GeneratedFile[] => {
-  if (!has_a_registry(tree, folder)) return []
+/** The paths of a folder's registry: its own, then those of the folders it carries (DOM-24). */
+export const registry_paths = (tree: Tree, folder: Folder): readonly string[] => [
+  ...registered(folder).flatMap((authored) =>
+    authored.exports.flatMap((exported) =>
+      entries_of(folder, authored, exported).map((entry) => entry.path),
+    ),
+  ),
+  ...carried(tree, folder).flatMap((child) => registry_paths(tree, child)),
+]
+
+/** The modules a registry imports, by the name it gives each: two under one name fail (DOM-24). */
+const aliases = (
+  folder: Folder,
+  read: readonly AuthoredFile[],
+  children: readonly string[],
+): readonly Failure[] => {
+  const names: readonly Named[] = [
+    { name: 'wlib', what: 'the library' },
+    ...read.map((authored) => ({ name: authored.stem, what: `the twin _${authored.stem}.ts` })),
+    ...children.map((child) => ({
+      name: child,
+      what: `the registry of ${[...folder.segments, child].join('/')}`,
+    })),
+  ]
+  return given_twice(names).map(([first, again]) => ({
+    path: [...folder.segments, '_registry.ts'].join('/'),
+    line: 1,
+    rule: 'DOM-24',
+    sentence: `the registry of ${folder.segments.join('/')} would import two modules as ${first.name}, ${first.what} and ${again.what}: a registry names each module once`,
+  }))
+}
+
+/** The registry of a folder (`_registry.ts`), if it has one, and the failures met writing it. */
+const registry = (
+  tree: Tree,
+  folder: Folder,
+): { readonly files: readonly GeneratedFile[]; readonly failures: readonly Failure[] } => {
+  if (!has_a_registry(tree, folder)) return { files: [], failures: [] }
   const files = registered(folder)
   const entries = files.flatMap((authored) =>
     authored.exports.flatMap((exported) => entries_of(folder, authored, exported)),
@@ -105,30 +154,33 @@ const registry = (tree: Tree, folder: Folder): readonly GeneratedFile[] => {
     entries.some((entry) => entry.member.startsWith(`${authored.stem}.`)),
   )
   const children = carried(tree, folder).map((child) => child.segments.at(-1) ?? '')
-  return [
-    {
-      path: [...folder.segments, '_registry.ts'].join('/'),
-      text: file(header(tree, folder), [
-        [
-          `import type * as wlib from '${library_from(tree, folder.segments)}'`,
-          ...read.map((authored) => `import * as ${authored.stem} from './_${authored.stem}.ts'`),
-          ...children.map(
-            (child) => `import { registry as ${child} } from './${child}/_registry.ts'`,
-          ),
-        ].join('\n'),
-        [
-          'export const registry = {',
-          ...entries.map((entry) => `  '${entry.path}': ${entry.member},`),
-          ...children.map((child) => `  ...${child},`),
-          '} satisfies wlib.Registry',
-        ].join('\n'),
-      ]),
-    },
-  ]
+  return {
+    failures: aliases(folder, read, children),
+    files: [
+      {
+        path: [...folder.segments, '_registry.ts'].join('/'),
+        text: file(header(tree, folder), [
+          [
+            `import type * as wlib from '${library_from(tree, folder.segments)}'`,
+            ...read.map((authored) => `import * as ${authored.stem} from './_${authored.stem}.ts'`),
+            ...children.map(
+              (child) => `import { registry as ${child} } from './${child}/_registry.ts'`,
+            ),
+          ].join('\n'),
+          [
+            'export const registry = {',
+            ...entries.map((entry) => `  '${entry.path}': ${entry.member},`),
+            ...children.map((child) => `  ...${child},`),
+            '} satisfies wlib.Registry',
+          ].join('\n'),
+        ]),
+      },
+    ],
+  }
 }
 
 /** The current major of a folder: the major of the version it declares, if it declares one. */
-const current_major = (folder: Folder): number | undefined =>
+export const current_major = (folder: Folder): number | undefined =>
   files_of(folder, 'version')
     .flatMap((authored) => authored.exports)
     .flatMap((exported) =>
@@ -170,6 +222,16 @@ const majors = (tree: Tree, folder: Folder): readonly GeneratedFile[] => {
   ]
 }
 
-/** The registries and the majors of every folder of a tree. */
-export const registries = (tree: Tree): readonly GeneratedFile[] =>
-  tree.folders.flatMap((folder) => [...registry(tree, folder), ...majors(tree, folder)])
+/** The registries and the majors of every folder of a tree, and the failures met writing them. */
+export const registries = (
+  tree: Tree,
+): { readonly files: readonly GeneratedFile[]; readonly failures: readonly Failure[] } => {
+  const written = tree.folders.map((folder) => ({
+    registry: registry(tree, folder),
+    majors: majors(tree, folder),
+  }))
+  return {
+    files: written.flatMap((one) => [...one.registry.files, ...one.majors]),
+    failures: written.flatMap((one) => one.registry.failures),
+  }
+}

@@ -12,6 +12,7 @@ export interface Source {
   readonly scope: FileKind | undefined
   readonly exports: readonly {
     readonly name: string
+    readonly line: number
     readonly doc: readonly string[]
     readonly input_doc: readonly string[]
   }[]
@@ -92,6 +93,7 @@ export const read_source = (path: string, text: string): Source => {
           ? [
               {
                 name: declaration.name.text,
+                line: source.getLineAndCharacterOfPosition(declaration.getStart()).line + 1,
                 doc: doc_of(text, statement),
                 input_doc:
                   declaration.initializer === undefined

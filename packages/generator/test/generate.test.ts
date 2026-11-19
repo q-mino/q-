@@ -208,7 +208,7 @@ describe('the generator on a tree of authored files alone', () => {
     ).toEqual({ kind: 'usecase' })
 
     const again = await generate(repository, configuration, false)
-    expect(again).toEqual({ written: [], failures: [] })
+    expect(again).toEqual({ written: [], held: [], failures: [] })
 
     writeFileSync(
       join(root, 'business/things/_id.ts'),
@@ -232,5 +232,62 @@ describe('the generator on a tree of authored files alone', () => {
     ])
     await generate(repository, configuration, false)
     expect(existsSync(join(root, 'business/things/_gone.ts'))).toBe(false)
+  })
+
+  it('holds a file as written, and fails on one it would write the same or does not write', async () => {
+    const changed = read('business/things/_scope_id.ts').replace('(DOM-25)', '(DOM-25, held)')
+    writeFileSync(join(root, 'business/things/_scope_id.ts'), changed)
+    const holding = (held: readonly string[]) => ({ ...configuration, held })
+
+    expect(await generate(repository, holding(['business/things/_scope_id.ts']), true)).toEqual({
+      written: [],
+      held: [`${configuration.root}/business/things/_scope_id.ts`],
+      failures: [],
+    })
+    await generate(repository, holding(['business/things/_scope_id.ts']), false)
+    expect(read('business/things/_scope_id.ts')).toBe(changed)
+
+    const stale = await generate(
+      repository,
+      holding(['business/things/_scope_fact.ts', 'business/things/_scope_nothing.ts']),
+      true,
+    )
+    expect(stale.failures.map((failure) => `${failure.path}  ${failure.sentence}`)).toEqual([
+      `${configuration.root}/business/things/_scope_id.ts  is not what the generator writes: run pnpm generate`,
+      `${configuration.root}/business/things/_scope_fact.ts  is held as written by generator.config.ts, and is what the generator writes: remove it from held`,
+      `${configuration.root}/business/things/_scope_nothing.ts  is held as written by generator.config.ts, and the generator writes no such file: remove it from held`,
+    ])
+    await generate(repository, configuration, false)
+  })
+
+  it('names a component exported twice, and one reachable and not exported, from what the runtime says', async () => {
+    // A file of its own: the runtime keeps a module once imported.
+    writeFileSync(
+      join(root, 'business/things/more_predicates.ts'),
+      `import { z } from 'zod'
+import { predicate, NOT, id } from './_scope_predicate.ts'
+
+export const a_thing_is_listed = predicate({
+  parameters: z.strictObject({ thing_id: id.thing_id }),
+})
+
+const a_thing_is_hidden = predicate({ parameters: z.strictObject({ thing_id: id.thing_id }) })
+
+/** The thing is not hidden. */
+export const the_thing_is_shown = NOT(a_thing_is_hidden)
+
+export const a_thing_is_here = a_thing_is_listed
+`,
+    )
+    const checked = await generate(repository, configuration, false)
+    expect(
+      checked.failures.map(
+        (failure) =>
+          `${failure.path}:${String(failure.line)}  ${failure.rule}  ${failure.sentence}`,
+      ),
+    ).toEqual([
+      `${configuration.root}/business/things/more_predicates.ts:13  DOM-24  business/things/predicate/a_thing_is_listed is exported twice, as a_thing_is_listed and a_thing_is_here: one object, one path`,
+      `${configuration.root}/business/things/more_predicates.ts:11  DOM-25  business/things/predicate/the_thing_is_shown holds a predicate that no file exports: a component it reaches is exported, so that it has a path`,
+    ])
   })
 })

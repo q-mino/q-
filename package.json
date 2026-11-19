@@ -16,7 +16,7 @@
     "graph": "depcruise packages --config .dependency-cruiser.mjs",
     "generate": "node packages/generator/shell/main.ts",
     "generate:check": "node packages/generator/shell/main.ts --check",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
+    "check": "pnpm generate:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
     "build": "pnpm --filter @q-mino/phone build"
   },
   "devDependencies": {

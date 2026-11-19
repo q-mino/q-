@@ -19,6 +19,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Generated files (DOM-24, DOM-25)
+        run: pnpm generate:check
       - name: Type check (domains without DOM or Node)
         run: pnpm typecheck
       - name: Lint

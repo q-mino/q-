@@ -9,8 +9,10 @@ import {
   $Version,
   is_a_schema,
   kind_of,
+  type Built,
 } from '@q-mino/domains/library'
 import {
+  checks,
   doors,
   generated,
   layer_order,
@@ -24,6 +26,8 @@ import {
   type FileKind,
   type Folder,
   type GeneratedFile,
+  type Held,
+  type Identity,
   type Input,
   type NodeParts,
   type Past,
@@ -38,12 +42,15 @@ import { read_source, runtime_imports, type Source } from './source.ts'
 // then imports the authored files one by one, each once every authored file
 // its imports reach is imported and its twin written, and writes its twin;
 // then the scopes again, the registries and the majors (DOM-24, DOM-22), and
-// deletes a generated file it no longer writes. Checking, it writes nothing
-// and compares.
+// deletes a generated file it no longer writes; then the checks of the core
+// (DOM-25), with what the runtime says of the components. Checking, it writes
+// nothing and compares. A file the configuration holds is neither written
+// nor compared.
 
-/** What generating a tree gave: the files written or differing, and the failures. */
+/** What generating a tree gave: the files written or differing, the files held as written, and the failures. */
 export interface Outcome {
   readonly written: readonly string[]
+  readonly held: readonly string[]
   readonly failures: readonly Failure[]
 }
 
@@ -70,11 +77,59 @@ const walk = (root: string, segments: readonly string[]): readonly (readonly str
       ]
     : []
 
+const is_an_object = (value: unknown): value is object =>
+  (typeof value === 'object' || typeof value === 'function') && value !== null
+
+/** The input a component declares inline: a schema, or a function of the context that gives one. */
+const inline_input = (value: unknown): object | undefined => {
+  if (!is_an_object(value) || !('input' in value)) return undefined
+  const input: unknown = value.input
+  return is_a_schema(input) || typeof input === 'function' ? input : undefined
+}
+
 const input_of = (value: unknown): Input => {
-  if ((typeof value !== 'object' && typeof value !== 'function') || value === null) return 'none'
-  if (!('input' in value)) return 'none'
-  const input = value.input
-  return is_a_schema(input) ? 'schema' : typeof input === 'function' ? 'function' : 'none'
+  const input = inline_input(value)
+  return input === undefined ? 'none' : is_a_schema(input) ? 'schema' : 'function'
+}
+
+/** The parts of an object: its own enumerable properties and its symbols, zod's structure among them. */
+const parts_of = (value: object): readonly unknown[] =>
+  [...Object.keys(value), ...Object.getOwnPropertySymbols(value)].map((key): unknown =>
+    Reflect.get(value, key),
+  )
+
+/**
+ * The components a component's parts reach, not through another component
+ * (DOM-25), with their marks. A condition composed with AND, OR, NOT is no
+ * stop: a tree of its operands, named by the keys of its parts or by its
+ * export, whose leaves have paths (LIB-7), so the walk goes through it.
+ */
+const held_by = (
+  component: object,
+): readonly { readonly held: object; readonly built: Built }[] => {
+  const seen = new Set<object>([component])
+  const found: { readonly held: object; readonly built: Built }[] = []
+  const pending: unknown[] = [...parts_of(component)]
+  while (pending.length > 0) {
+    const value = pending.pop()
+    if (!is_an_object(value) || seen.has(value)) continue
+    seen.add(value)
+    const built = kind_of(value)
+    if (built === undefined || built.kind === 'condition') pending.push(...parts_of(value))
+    else found.push({ held: value, built })
+  }
+  return found
+}
+
+/** The objects of a run, numbered: the same object, the same number (DOM-24). */
+const numbering = (): ((value: object) => Identity) => {
+  const numbers = new Map<object, Identity>()
+  return (value) => {
+    const known = numbers.get(value)
+    if (known !== undefined) return known
+    numbers.set(value, numbers.size)
+    return numbers.size - 1
+  }
 }
 
 const declares = (declared: object, part: string): boolean => {
@@ -112,16 +167,13 @@ const past_of = (value: object): Past =>
       ? { is: 'earlier' }
       : { is: 'current' }
 
-/** What the runtime says of an export (DOM-25): the mark its builder left, a value, or anything else. */
-const value_of = (value: unknown): Value => {
+/** What the runtime says of an export (DOM-25): the mark its builder left, a value, or anything else; each object by its number. */
+const value_of = (value: unknown, number: (value: object) => Identity): Value => {
   const built = kind_of(value)
-  if (
-    built !== undefined &&
-    (typeof value === 'object' || typeof value === 'function') &&
-    value !== null
-  ) {
+  if (built !== undefined && is_an_object(value)) {
     const node = node_parts_of(value)
     const major = major_of(value)
+    const input = inline_input(value)
     return {
       is: 'component',
       built,
@@ -129,9 +181,12 @@ const value_of = (value: unknown): Value => {
       past: past_of(value),
       ...(node === undefined ? {} : { node }),
       ...(major === undefined ? {} : { major }),
+      identity: number(value),
+      ...(input === undefined ? {} : { input_identity: number(input) }),
+      holds: held_by(value).map((one): Held => ({ identity: number(one.held), built: one.built })),
     }
   }
-  return is_a_schema(value) ? { is: 'value' } : { is: 'other' }
+  return is_a_schema(value) ? { is: 'value', identity: number(value) } : { is: 'other' }
 }
 
 /** The kind of a file that imports no scope, from what it exports: its components', a value, or `dsl`. */
@@ -144,7 +199,11 @@ const kind_from = (exports: readonly Export[]): FileKind => {
   return values.some((value) => value?.is === 'value') ? 'value' : 'dsl'
 }
 
-const import_exports = async (path: string, source: Source): Promise<readonly Export[]> => {
+const import_exports = async (
+  path: string,
+  source: Source,
+  number: (value: object) => Identity,
+): Promise<readonly Export[]> => {
   const module: unknown = await import(pathToFileURL(path).href)
   return source.exports.map((exported) => ({
     ...exported,
@@ -152,6 +211,7 @@ const import_exports = async (path: string, source: Source): Promise<readonly Ex
       typeof module === 'object' && module !== null
         ? Reflect.get(module, exported.name)
         : undefined,
+      number,
     ),
   }))
 }
@@ -164,6 +224,13 @@ export const generate = async (
 ): Promise<Outcome> => {
   const root = resolve(repository, configuration.root)
   const shown = (path: string): string => relative(repository, join(root, path))
+  const from_the_repository = (failure: Failure): Failure => ({
+    ...failure,
+    path: shown(failure.path),
+  })
+  const number = numbering()
+  const held = new Set((configuration.held ?? []).map((path) => join(root, path)))
+  const kept = new Set<string>()
   const folders = Object.keys(configuration.sight).flatMap((top) => walk(root, [top]))
   const reads: readonly Read[] = folders.flatMap((segments) =>
     readdirSync(join(root, ...segments))
@@ -183,7 +250,7 @@ export const generate = async (
   // A file that imports no scope reaches nothing of the tree: imported first, its kind from what it exports.
   const exports = new Map<string, readonly Export[]>()
   for (const read of reads.filter((one) => one.source.scope === undefined)) {
-    exports.set(read.path, await import_exports(read.path, read.source))
+    exports.set(read.path, await import_exports(read.path, read.source, number))
   }
   const kinds = new Map(
     reads.map((read) => [read.path, read.source.scope ?? kind_from(exports.get(read.path) ?? [])]),
@@ -211,8 +278,23 @@ export const generate = async (
     const path = join(root, file.path)
     const options = (await prettier.resolveConfig(path)) ?? {}
     const text = await prettier.format(file.text, { ...options, filepath: path })
-    planned.set(path, text)
     const on_disk = existsSync(path) ? readFileSync(path, 'utf8') : undefined
+    if (held.has(path)) {
+      // Held as written: what the runtime imports is the file on disk; told once, from the last writing.
+      planned.set(path, on_disk ?? text)
+      if (early) return
+      kept.add(path)
+      if (on_disk === undefined || on_disk === text) {
+        failures.push({
+          path: shown(file.path),
+          line: 1,
+          rule: 'DOM-25',
+          sentence: `is held as written by generator.config.ts, and ${on_disk === undefined ? 'is missing' : 'is what the generator writes'}: remove it from held`,
+        })
+      }
+      return
+    }
+    planned.set(path, text)
     if (on_disk === text) return
     if (early) {
       const stale =
@@ -237,7 +319,7 @@ export const generate = async (
   for (const file of scopes(tree()).files) await put(file, true)
   // The doors need no runtime: written before any file whose scope imports one is imported.
   const written_doors = doors(tree())
-  failures.push(...written_doors.failures)
+  failures.push(...written_doors.failures.map(from_the_repository))
   for (const file of written_doors.files) await put(file)
 
   // The runtime imports of a module of the tree: the planned text, else the file on disk, else, for a twin not yet written, its authored file.
@@ -285,16 +367,18 @@ export const generate = async (
     }
     const read = by_path.get(next.path)
     if (read === undefined) break
-    exports.set(read.path, await import_exports(read.path, read.source))
+    exports.set(read.path, await import_exports(read.path, read.source, number))
     await put_twin(read)
     pending.splice(pending.indexOf(next.path), 1)
   }
 
   // The scopes again, with what the nodes declare: the type arguments of the points.
   const final_scopes = scopes(tree())
-  failures.push(...final_scopes.failures)
+  failures.push(...final_scopes.failures.map(from_the_repository))
   for (const file of final_scopes.files) await put(file)
-  for (const file of registries(tree())) await put(file)
+  const written_registries = registries(tree())
+  failures.push(...written_registries.failures.map(from_the_repository))
+  for (const file of written_registries.files) await put(file)
 
   // A generated file the generator no longer writes (a folder deleted, a kind gone): named, or deleted.
   for (const segments of folders) {
@@ -315,5 +399,21 @@ export const generate = async (
       }
     }
   }
-  return { written: [...written], failures }
+  for (const path of held) {
+    if (!kept.has(path)) {
+      failures.push({
+        path: shown(relative(root, path)),
+        line: 1,
+        rule: 'DOM-25',
+        sentence:
+          'is held as written by generator.config.ts, and the generator writes no such file: remove it from held',
+      })
+    }
+  }
+  failures.push(...checks(tree()).map(from_the_repository))
+  return {
+    written: [...written],
+    held: [...kept].map((path) => shown(relative(root, path))),
+    failures,
+  }
 }

@@ -21,8 +21,12 @@ const is_a_map = (value: unknown): value is TreeConfiguration['sight'] =>
       ),
   )
 
+const is_a_list_of_paths = (value: unknown): boolean =>
+  Array.isArray(value) && value.every((path: unknown) => typeof path === 'string')
+
 const is_a_tree = (value: unknown): value is TreeConfiguration =>
   is_a_record(value) &&
+  (!('held' in value) || is_a_list_of_paths(value.held)) &&
   'root' in value &&
   typeof value.root === 'string' &&
   'library' in value &&
@@ -53,6 +57,12 @@ const failures = outcomes.flatMap((outcome) => outcome.failures)
 for (const failure of failures) {
   process.stderr.write(
     `${failure.path}:${String(failure.line)}  ${failure.rule}  ${failure.sentence}\n`,
+  )
+}
+const held = outcomes.flatMap((outcome) => outcome.held)
+if (held.length > 0) {
+  process.stdout.write(
+    `generate: ${String(held.length)} files held as written, neither written nor compared (generator.config.ts, held)\n`,
   )
 }
 if (!check) {

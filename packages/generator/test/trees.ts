@@ -4,6 +4,10 @@ import type {
   FileKind,
   Folder,
   GeneratedFile,
+  Held,
+  Identity,
+  Input,
+  Past,
   Tree,
   Value,
 } from '../src/index.ts'
@@ -19,8 +23,8 @@ export const file = (
 ): AuthoredFile => ({
   stem,
   kind,
-  exports: names.map((name) =>
-    typeof name === 'string' ? { name, doc: [], input_doc: [] } : name,
+  exports: names.map((name, index) =>
+    typeof name === 'string' ? { name, line: index + 1, doc: [], input_doc: [] } : name,
   ),
 })
 
@@ -31,12 +35,48 @@ export const folder = (path: string, files: readonly AuthoredFile[]): Folder => 
 })
 
 /** An export with what the runtime says of it. */
-export const exported = (name: string, value: Value): Export => ({
+export const exported = (name: string, value: Value, line = 1): Export => ({
   name,
+  line,
   doc: [],
   input_doc: [],
   value,
 })
+
+/** A new object's identity, as the shell numbers them: every call another object. */
+const another: () => Identity = (() => {
+  let last = 0
+  return () => (last += 1)
+})()
+
+/** A component as the runtime gives it: a new object, unless an identity is given, holding nothing unless told. */
+export const component = (
+  built: Extract<Value, { is: 'component' }>['built'],
+  input: Input = 'none',
+  past: Past = { is: 'current' },
+  parts: {
+    readonly major?: number
+    readonly identity?: Identity
+    readonly input_identity?: Identity
+    readonly holds?: readonly Held[]
+  } = {},
+): Value => ({
+  is: 'component',
+  built,
+  input,
+  past,
+  ...(parts.major === undefined ? {} : { major: parts.major }),
+  identity: parts.identity ?? another(),
+  ...(parts.input_identity === undefined
+    ? input === 'none'
+      ? {}
+      : { input_identity: another() }
+    : { input_identity: parts.input_identity }),
+  holds: parts.holds ?? [],
+})
+
+/** A value as the runtime gives it: a new object, unless an identity is given. */
+export const value = (identity: Identity = another()): Value => ({ is: 'value', identity })
 
 /** Shed's map (`sight.ts`). */
 export const sight: Tree['sight'] = {
