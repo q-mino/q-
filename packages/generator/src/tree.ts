@@ -126,7 +126,7 @@ export const relative = (from: readonly string[], to: readonly string[], file: s
   ].join('/')
 }
 
-/** The path of the library's module from a folder (`../../wlib.ts`). */
+/** The path of the library's module from a folder (`../../../../src/library/index.ts`). */
 export const library_from = (tree: Tree, segments: readonly string[]): string =>
   relative(segments, [], tree.library)
 

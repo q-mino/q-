@@ -9,7 +9,7 @@ export interface TreeConfiguration {
   readonly root: string
   /** Its map (`sight.ts`): what the folders under a first segment see of the others. */
   readonly sight: Sight
-  /** The module its generated files import the library from, from its root (`wlib.ts`). */
+  /** The module its generated files import the library from, from its root (Shed's `../../src/library/index.ts`). */
   readonly library: string
   /**
    * Whether CI compares its registries with `main`'s, by direction (DOM-24,

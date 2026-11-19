@@ -14,7 +14,7 @@ export type FileKind = ConstructKind | 'dsl'
 export interface Tree {
   /** The map: what the folders under a first segment see of the others (`sight.ts`). */
   readonly sight: Sight
-  /** The module the generated files import the library from, relative to the root (`wlib.ts`). */
+  /** The module the generated files import the library from, relative to the root (Shed's `../../src/library/index.ts`). */
   readonly library: string
   /** Every folder of the tree holding an authored file, outer folders first. */
   readonly folders: readonly Folder[]

@@ -2,7 +2,7 @@
 
 The catalogue of the scenarios that the library, zen0, must hold: its own use cases, and those typical of applications and systems (Alessandro's goal, 16 Nov 2026). Each scenario is a story of Shed, the test domains in [`packages/domains/test/shed/`](../packages/domains/test/shed/README.md), with the rules it exercises (ids of [`architecture.md`](architecture.md)), its status and the library step of [the plan](plan.md) that runs it.
 
-- **Covered**: Shed holds it, in the step named; the library step runs it as a test on the oracle at its close.
+- **Covered**: Shed holds it, in the step named; the library step runs it as a test on the oracle at its close, named after the scenario (`sc-<nn>.test.ts`); since part 7.5 every one runs through Shed's configurator (`configurator.ts`), the generator's on its fixture trees.
 - **Open, reshapes**: Shed does not hold it yet, and it may change the shape of what the library builds (LIB-3: no rule without its case).
 - **Open, adds**: Shed does not hold it yet; it adds a component or a test without changing a shape.
 - **Out of scope**: not the library's in stage 1, with the reason.
@@ -11,68 +11,68 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 
 ## Commands and facts (step 4)
 
-- **SC-1** (covered, Shed 1) Luca adds the drill to the catalogue: a command, its branch, its fact. DOM-1, DOM-5, DOM-10.
-- **SC-2** (covered, Shed 2) Luca retires the drill, already retired: the branch "nothing to do" records a fact, never a silent no-op; a rejection names every failed predicate. DOM-5, DOM-6, D95.
-- **SC-3** (covered, Shed 2, 6) The same command sent twice: the duplicate branch gives the fact recorded; the same operation with another input is `identity_already_used`. DOM-11, D100, D106.
-- **SC-4** (covered, Shed 3) Marta borrows the drill: `loans` keeps its own view of the tools, keyed by `tools`' identity, and the adapter links them. GR-3, V11, DOM-24.
-- **SC-5** (covered, Shed 3, 9) A value with states: a loan by stages (nesting), a tool under repair (subtraction). DOM-19, § Experiments of Shed.
-- **SC-6** (covered, Shed 4) Gianni books the ladder for a day outside the window: `invalid_request`, a static rule over the input and `now`. DOM-21.
-- **SC-7** (covered, Shed 9) The drill goes to the workshop: its stay named by `tools` from the operation, since nobody outside can name it. DOM-23, D75.8.
-- **SC-54** (covered, Shed 11; a second definition of SC-44, entered step 2 by Alessandro, 18 Nov 2026 (5)) Luca loads a short sheet in one go: a list of named instances, atomic, a branch and a part per line, a line whose id is taken a part of its own (D95). DOM-20, D113, D97.
-- **SC-55** (covered, Shed 11; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) A fact declares resources narrower than every identity of its payload, the instances it changes and its target (D94.6): Gianni's dead notice holds his reservation alone, and the round's other notices flow. DOM-10, D94.6, D108.
-- **SC-8** (covered, Shed 10) Marta's loan of `loans` 1.x read after 2.0.0, by every reader at the current shape; the SQL table rebuilt from the log. DOM-22, V14.
-- **SC-9** (covered, Shed 10) `business/loans/1/` deleted while a fact of 1.x is kept: the release stops at its start. DOM-22, PER-17.
-- **SC-10** (covered, Shed 11) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111.
-- **SC-11** (covered, Shed 11) Marta and Gianni ask for the last drill at the same instant: one loan, the other `the_tool_is_not_available`; concurrency equals some serial order; a retry in flight reads the first's fact. DOM-9, DOM-11, ADP-8.
-- **SC-12** (covered, Shed 11) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22, PER-17.
-- **SC-13** (covered, Shed 11) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101.
+- **SC-1** (covered, Shed 1) Luca adds the drill to the catalogue: a command, its branch, its fact. DOM-1, DOM-5, DOM-10. Test: [`sc-01.test.ts`](../packages/domains/test/shed/scenarios/sc-01.test.ts).
+- **SC-2** (covered, Shed 2) Luca retires the drill, already retired: the branch "nothing to do" records a fact, never a silent no-op; a rejection names every failed predicate. DOM-5, DOM-6, D95. Test: [`sc-02.test.ts`](../packages/domains/test/shed/scenarios/sc-02.test.ts).
+- **SC-3** (covered, Shed 2, 6) The same command sent twice: the duplicate branch gives the fact recorded; the same operation with another input is `identity_already_used`. DOM-11, D100, D106. Test: [`sc-03.test.ts`](../packages/domains/test/shed/scenarios/sc-03.test.ts).
+- **SC-4** (covered, Shed 3) Marta borrows the drill: `loans` keeps its own view of the tools, keyed by `tools`' identity, and the adapter links them. GR-3, V11, DOM-24. Test: [`sc-04.test.ts`](../packages/domains/test/shed/scenarios/sc-04.test.ts).
+- **SC-5** (covered, Shed 3, 9) A value with states: a loan by stages (nesting), a tool under repair (subtraction). DOM-19, § Experiments of Shed. Test: [`sc-05.test.ts`](../packages/domains/test/shed/scenarios/sc-05.test.ts).
+- **SC-6** (covered, Shed 4) Gianni books the ladder for a day outside the window: `invalid_request`, a static rule over the input and `now`. DOM-21. Test: [`sc-06.test.ts`](../packages/domains/test/shed/scenarios/sc-06.test.ts).
+- **SC-7** (covered, Shed 9) The drill goes to the workshop: its stay named by `tools` from the operation, since nobody outside can name it. DOM-23, D75.8. Test: [`sc-07.test.ts`](../packages/domains/test/shed/scenarios/sc-07.test.ts).
+- **SC-54** (covered, Shed 11; a second definition of SC-44, entered step 2 by Alessandro, 18 Nov 2026 (5)) Luca loads a short sheet in one go: a list of named instances, atomic, a branch and a part per line, a line whose id is taken a part of its own (D95). DOM-20, D113, D97. Test: [`sc-54.test.ts`](../packages/domains/test/shed/scenarios/sc-54.test.ts).
+- **SC-55** (covered, Shed 11; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) A fact declares resources narrower than every identity of its payload, the instances it changes and its target (D94.6): Gianni's dead notice holds his reservation alone, and the round's other notices flow. DOM-10, D94.6, D108. Test: [`sc-55.test.ts`](../packages/domains/test/shed/scenarios/sc-55.test.ts).
+- **SC-8** (covered, Shed 10) Marta's loan of `loans` 1.x read after 2.0.0, by every reader at the current shape; the SQL table rebuilt from the log. DOM-22, V14. Test: [`sc-08.test.ts`](../packages/domains/test/shed/scenarios/sc-08.test.ts).
+- **SC-9** (covered, Shed 10) `business/loans/1/` deleted while a fact of 1.x is kept: the release stops at its start. DOM-22, PER-17. Test: [`sc-09.test.ts`](../packages/domains/test/shed/scenarios/sc-09.test.ts).
+- **SC-10** (covered, Shed 11) Gianni takes the drill on the day he booked it: the loan withdraws the reservation, one fact in two parts outside a step (`composes` outside the step). DOM-19, DOM-20, D111. Test: [`sc-10.test.ts`](../packages/domains/test/shed/scenarios/sc-10.test.ts).
+- **SC-11** (covered, Shed 11) Marta and Gianni ask for the last drill at the same instant: one loan, the other `the_tool_is_not_available`; concurrency equals some serial order; a retry in flight reads the first's fact. DOM-9, DOM-11, ADP-8. Test: [`sc-11.test.ts`](../packages/domains/test/shed/scenarios/sc-11.test.ts).
+- **SC-12** (covered, Shed 11) The day of an instant: Marta borrows at 23:30 in her town, which is already the next day in UTC; `day_of` and `end_of` need the shed's time zone. LIB-2, DOM-22, PER-17. Test: [`sc-12.test.ts`](../packages/domains/test/shed/scenarios/sc-12.test.ts).
+- **SC-13** (covered, Shed 11) Luca lent the wrong tool: a compensating command with its fact, never a fact removed. DOM-22, D101. Test: [`sc-13.test.ts`](../packages/domains/test/shed/scenarios/sc-13.test.ts).
 
 ## Reads and streams (step 5)
 
-- **SC-14** (covered, Shed 4, 6) The visitor's catalogue: a query with its selection, order and identity; the snapshot alone, no stream; projected field by field, without the keeper's notes. DOM-18, LIB-9, PER-18.
-- **SC-15** (covered, Shed 4, 6) Marta's live "my loans": the stream from a position, `entered`, `left`, `fact`, `caught_up`, a resume, `position_unavailable`. DOM-17, D64, D72.6.
-- **SC-16** (covered, Shed 7) "Your loan is overdue": a fact by name in a persona's stream; every other fact as the row. PER-18, D72.5.
-- **SC-17** (covered, Shed 9) Gianni's R8 reads "the tool you booked is in repair" from the part of a composite fact that touches it. DOM-17, D111.
-- **SC-18** (covered, Shed 9) A fact of `loans` does not reach the visitor's catalogue: a query's stream sees its domain's facts only. DOM-17, DOM-8.
-- **SC-19** (covered, Shed 11) Luca renames the drill: the row of Marta's "my loans" shows the new name, an entry that reads another domain. DOM-17, GR-3, V11.
-- **SC-20** (covered, Shed 11) Gianni's "my reservations" shows whether the tool is in the workshop: a selection over another domain's state. DOM-18, GR-3.
-- **SC-21** (covered, Shed 11) Luca asks how many loans each tool had this month: a read that counts, not a list of entries; a calculation beside the fields. DOM-18, D50.7.
-- **SC-22** (covered, Shed 11) The catalogue holds 2,000 tools: the snapshot read in pages, a stream of snapshots pulled by the consumer, each with its position, the total and the next page's cursor. DOM-18, D50, D72.8.
+- **SC-14** (covered, Shed 4, 6) The visitor's catalogue: a query with its selection, order and identity; the snapshot alone, no stream; projected field by field, without the keeper's notes. DOM-18, LIB-9, PER-18. Test: [`sc-14.test.ts`](../packages/domains/test/shed/scenarios/sc-14.test.ts).
+- **SC-15** (covered, Shed 4, 6) Marta's live "my loans": the stream from a position, `entered`, `left`, `fact`, `caught_up`, a resume, `position_unavailable`. DOM-17, D64, D72.6. Test: [`sc-15.test.ts`](../packages/domains/test/shed/scenarios/sc-15.test.ts).
+- **SC-16** (covered, Shed 7) "Your loan is overdue": a fact by name in a persona's stream; every other fact as the row. PER-18, D72.5. Test: [`sc-16.test.ts`](../packages/domains/test/shed/scenarios/sc-16.test.ts).
+- **SC-17** (covered, Shed 9) Gianni's R8 reads "the tool you booked is in repair" from the part of a composite fact that touches it. DOM-17, D111. Test: [`sc-17.test.ts`](../packages/domains/test/shed/scenarios/sc-17.test.ts).
+- **SC-18** (covered, Shed 9) A fact of `loans` does not reach the visitor's catalogue: a query's stream sees its domain's facts only. DOM-17, DOM-8. Test: [`sc-18.test.ts`](../packages/domains/test/shed/scenarios/sc-18.test.ts).
+- **SC-19** (covered, Shed 11) Luca renames the drill: the row of Marta's "my loans" shows the new name, an entry that reads another domain. DOM-17, GR-3, V11. Test: [`sc-19.test.ts`](../packages/domains/test/shed/scenarios/sc-19.test.ts).
+- **SC-20** (covered, Shed 11) Gianni's "my reservations" shows whether the tool is in the workshop: a selection over another domain's state. DOM-18, GR-3. Test: [`sc-20.test.ts`](../packages/domains/test/shed/scenarios/sc-20.test.ts).
+- **SC-21** (covered, Shed 11) Luca asks how many loans each tool had this month: a read that counts, not a list of entries; a calculation beside the fields. DOM-18, D50.7. Test: [`sc-21.test.ts`](../packages/domains/test/shed/scenarios/sc-21.test.ts).
+- **SC-22** (covered, Shed 11) The catalogue holds 2,000 tools: the snapshot read in pages, a stream of snapshots pulled by the consumer, each with its position, the total and the next page's cursor. DOM-18, D50, D72.8. Test: [`sc-22.test.ts`](../packages/domains/test/shed/scenarios/sc-22.test.ts).
 
 ## Trees and personas (step 6)
 
-- **SC-23** (covered, Shed 5, 6) Luca retires a tool as keeper: a leaf in the full form, its own input and events, creator, projection of every branch and of the rejection. PER-6, DOM-2, D45.
-- **SC-24** (covered, Shed 6) Marta's node: her card from auth, the hat as a perimeter (`not_found`); an expired card blocks borrowing, not reading her loans (`refused`, a limit of the leaf). PER-7, PER-9, PER-14.
-- **SC-25** (covered, Shed 6) The visitor, worn by anyone, signed in or not. PER-7, V13.
-- **SC-26** (covered, Shed 6) The base events: `invalid_request`, and `identity_already_used` crossing the leaf unprojected. PER-5, D106.
-- **SC-27** (covered, Shed 9) Marta returns the drill damaged and her screen follows it to the workshop, or `the_wait_is_over` after a minute. DOM-3, DOM-10, D58.2.
-- **SC-28** (covered, Shed 10) Marta's old phone at `1.4.0` and Gianni's new one at `2.0.0` borrow by the same path and read the deadline each in its own words. PER-17, D72.7.
-- **SC-29** (covered, Shed 10) The gate: `2.1.0` on a server at 2.0.0, `1.2.0` after `1/` is deleted, `3.0.0` during a release. PER-17.
-- **SC-30** (covered, Shed 10) A past read leaf names its rows by a field it declares, checked by type. PER-17, PER-18.
-- **SC-31** (covered, Shed 11) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"): Marta extends her loan under "an ongoing loan". D105, D51.
-- **SC-32** (covered, Shed 11) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80.
-- **SC-33** (covered, Shed 11) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51.
-- **SC-34** (covered, Shed 11) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12.
+- **SC-23** (covered, Shed 5, 6) Luca retires a tool as keeper: a leaf in the full form, its own input and events, creator, projection of every branch and of the rejection. PER-6, DOM-2, D45. Test: [`sc-23.test.ts`](../packages/domains/test/shed/scenarios/sc-23.test.ts).
+- **SC-24** (covered, Shed 6) Marta's node: her card from auth, the hat as a perimeter (`not_found`); an expired card blocks borrowing, not reading her loans (`refused`, a limit of the leaf). PER-7, PER-9, PER-14. Test: [`sc-24.test.ts`](../packages/domains/test/shed/scenarios/sc-24.test.ts).
+- **SC-25** (covered, Shed 6) The visitor, worn by anyone, signed in or not. PER-7, V13. Test: [`sc-25.test.ts`](../packages/domains/test/shed/scenarios/sc-25.test.ts).
+- **SC-26** (covered, Shed 6) The base events: `invalid_request`, and `identity_already_used` crossing the leaf unprojected. PER-5, D106. Test: [`sc-26.test.ts`](../packages/domains/test/shed/scenarios/sc-26.test.ts).
+- **SC-27** (covered, Shed 9) Marta returns the drill damaged and her screen follows it to the workshop, or `the_wait_is_over` after a minute. DOM-3, DOM-10, D58.2. Test: [`sc-27.test.ts`](../packages/domains/test/shed/scenarios/sc-27.test.ts).
+- **SC-28** (covered, Shed 10) Marta's old phone at `1.4.0` and Gianni's new one at `2.0.0` borrow by the same path and read the deadline each in its own words. PER-17, D72.7. Test: [`sc-28.test.ts`](../packages/domains/test/shed/scenarios/sc-28.test.ts).
+- **SC-29** (covered, Shed 10) The gate: `2.1.0` on a server at 2.0.0, `1.2.0` after `1/` is deleted, `3.0.0` during a release. PER-17. Test: [`sc-29.test.ts`](../packages/domains/test/shed/scenarios/sc-29.test.ts).
+- **SC-30** (covered, Shed 10) A past read leaf names its rows by a field it declares, checked by type. PER-17, PER-18. Test: [`sc-30.test.ts`](../packages/domains/test/shed/scenarios/sc-30.test.ts).
+- **SC-31** (covered, Shed 11) A business domain's own tree: a business use case under a node that adds its conditions to the command ("a pending order"): Marta extends her loan under "an ongoing loan". D105, D51. Test: [`sc-31.test.ts`](../packages/domains/test/shed/scenarios/sc-31.test.ts).
+- **SC-32** (covered, Shed 11) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80. Test: [`sc-32.test.ts`](../packages/domains/test/shed/scenarios/sc-32.test.ts).
+- **SC-33** (covered, Shed 11) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51. Test: [`sc-33.test.ts`](../packages/domains/test/shed/scenarios/sc-33.test.ts).
+- **SC-34** (covered, Shed 11) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12. Test: [`sc-34.test.ts`](../packages/domains/test/shed/scenarios/sc-34.test.ts).
 
 ## Effects, reactions, processes (step 7)
 
-- **SC-35** (covered, Shed 7) The due-date reminder: a wait until the eve, its return reminds Marta only if she still has the tool. DOM-13..15, D68.3.
-- **SC-36** (covered, Shed 7) The deadline as a fact: the overdue wait stamps the loan. D68.3, D92.4.
-- **SC-37** (covered, Shed 7) The executor down past the due date: the eve's reminder comes late and records that the due date came first. D108, D95.
-- **SC-38** (covered, Shed 10) Marta's waits queued at 1.x: the eve with the new shape, the overdue wait put off to the end of her due day. DOM-22.
-- **SC-39** (covered, Shed 8) Luca retires the ladder: a reaction opens the desk's work sheet, whose steps cancel R3 then R5 by a cursor; a redelivery cancels R5 once. DOM-16, DOM-20, D97, D112, TST-4.
-- **SC-40** (covered, Shed 9) A damaged return sends the drill to the workshop, a whole one does nothing; a redelivery opens one stay. DOM-16, D88.2.
-- **SC-41** (covered, Shed 9) The round of repair notices: one notice per repair and reservation, a second round for a second stay. DOM-13, DOM-20.
-- **SC-42** (covered, Shed 11) A fact of the drill goes to a dead letter, and the next fact of the drill waits behind it. D94.7, DOM-16.
-- **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48.
-- **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112.
-- **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108.
-- **SC-56** (covered, Shed 11, for an effect; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: Marta's next week's summary goes past her dead one (C: the repair notices keep their order, SC-53, and pass each other since SC-55). A reaction's comes with its case. DOM-14, DOM-16, D67.3.
+- **SC-35** (covered, Shed 7) The due-date reminder: a wait until the eve, its return reminds Marta only if she still has the tool. DOM-13..15, D68.3. Test: [`sc-35.test.ts`](../packages/domains/test/shed/scenarios/sc-35.test.ts).
+- **SC-36** (covered, Shed 7) The deadline as a fact: the overdue wait stamps the loan. D68.3, D92.4. Test: [`sc-36.test.ts`](../packages/domains/test/shed/scenarios/sc-36.test.ts).
+- **SC-37** (covered, Shed 7) The executor down past the due date: the eve's reminder comes late and records that the due date came first. D108, D95. Test: [`sc-37.test.ts`](../packages/domains/test/shed/scenarios/sc-37.test.ts).
+- **SC-38** (covered, Shed 10) Marta's waits queued at 1.x: the eve with the new shape, the overdue wait put off to the end of her due day. DOM-22. Test: [`sc-38.test.ts`](../packages/domains/test/shed/scenarios/sc-38.test.ts).
+- **SC-39** (covered, Shed 8) Luca retires the ladder: a reaction opens the desk's work sheet, whose steps cancel R3 then R5 by a cursor; a redelivery cancels R5 once. DOM-16, DOM-20, D97, D112, TST-4. Test: [`sc-39.test.ts`](../packages/domains/test/shed/scenarios/sc-39.test.ts).
+- **SC-40** (covered, Shed 9) A damaged return sends the drill to the workshop, a whole one does nothing; a redelivery opens one stay. DOM-16, D88.2. Test: [`sc-40.test.ts`](../packages/domains/test/shed/scenarios/sc-40.test.ts).
+- **SC-41** (covered, Shed 9) The round of repair notices: one notice per repair and reservation, a second round for a second stay. DOM-13, DOM-20. Test: [`sc-41.test.ts`](../packages/domains/test/shed/scenarios/sc-41.test.ts).
+- **SC-42** (covered, Shed 11) A fact of the drill goes to a dead letter, and the next fact of the drill waits behind it. D94.7, DOM-16. Test: [`sc-42.test.ts`](../packages/domains/test/shed/scenarios/sc-42.test.ts).
+- **SC-43** (covered, Shed 11) Every Monday the desk sends the week's summary: a wait whose return queues the next. DOM-13, D48. Test: [`sc-43.test.ts`](../packages/domains/test/shed/scenarios/sc-43.test.ts).
+- **SC-44** (covered, Shed 11) Luca loads 200 tools from a sheet: a bulk operation with a cursor. DOM-20, D112. Test: [`sc-44.test.ts`](../packages/domains/test/shed/scenarios/sc-44.test.ts).
+- **SC-53** (covered, Shed 11; found at SC-42, entered step 2 by Alessandro, 18 Nov 2026 (5)) An entry of the drill's notices in the executor's dead letter, and the next entry of the same effect for the drill waits behind it: an entry's resources. DOM-14, D67.3, D108. Test: [`sc-53.test.ts`](../packages/domains/test/shed/scenarios/sc-53.test.ts).
+- **SC-56** (covered, Shed 11, for an effect; a second definition found at SC-53, entered step 2 by Alessandro, 18 Nov 2026 (5)) An effect, or a reaction, that tolerates reordering declares it, and goes on past a dead letter: Marta's next week's summary goes past her dead one (C: the repair notices keep their order, SC-53, and pass each other since SC-55). A reaction's comes with its case. DOM-14, DOM-16, D67.3. Test: [`sc-56.test.ts`](../packages/domains/test/shed/scenarios/sc-56.test.ts).
 
 ## The generator (step 3)
 
-- **SC-45** (covered, Shed 2-10) The map: a persona sees of a business domain its use cases, identities and facts; a business domain of another only its identities; a reaction above them. DOM-25, GR-1, GR-3, GR-9.
-- **SC-46** (covered as a rule, Shed 10, 11) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. A past major's registry is its whole map, the input of a delegated leaf delegated to the next major's (Shed 11, part 6). DOM-22, DOM-24, PER-17.
+- **SC-45** (covered, Shed 2-10) The map: a persona sees of a business domain its use cases, identities and facts; a business domain of another only its identities; a reaction above them. DOM-25, GR-1, GR-3, GR-9. Tests: [`doors.test.ts`](../packages/generator/test/doors.test.ts), [`scopes.test.ts`](../packages/generator/test/scopes.test.ts), [`rules.test.ts`](../packages/generator/test/rules.test.ts).
+- **SC-46** (covered as a rule, Shed 10, 11) A component declared under two names, a component of a past major forgotten in its folder, a schema changed without a new version, each by direction: the generator or CI stops. A past major's registry is its whole map, the input of a delegated leaf delegated to the next major's (Shed 11, part 6). DOM-22, DOM-24, PER-17. Tests: [`checks.test.ts`](../packages/generator/test/checks.test.ts), [`registries.test.ts`](../packages/generator/test/registries.test.ts), [`snapshots.test.ts`](../packages/generator/test/snapshots.test.ts).
 
 ## Out of scope
 

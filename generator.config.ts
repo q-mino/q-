@@ -6,9 +6,10 @@ import { sight } from './packages/domains/test/shed/sight.ts'
 export default {
   trees: [
     {
-      // Shed, the test domains: its generated files import the wished library
-      // until the library is whole (step 7); its registries are not compared
-      // with main's, since it changes as design, not as releases.
+      // Shed, the test domains: its generated files import the library (since
+      // part 7.5; the wished library, `wlib.ts`, until then); its registries
+      // are not compared with main's, since it changes as design, not as
+      // releases.
       root: 'packages/domains/test/shed',
       sight,
       library: '../../src/library/index.ts',
