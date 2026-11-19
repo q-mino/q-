@@ -471,7 +471,7 @@ const read =
 
 /**
  * A page on one state (SC-22): the entries the page's selection keeps, in the
- * order, at most `limit`; the total, how many the query's selection keeps;
+ * order, at most `limit` (every one with none); the total, how many the query's selection keeps;
  * and the position. One state, so the page and its total are one snapshot.
  */
 const page =

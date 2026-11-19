@@ -8,12 +8,20 @@ import {
   operation_id,
   day,
   day_of,
+  cursor,
   position,
   read_use_case_ports,
   time_zone,
   versions,
 } from '../../src/library/index.ts'
-import type { LogEvent, PlannedQuery, Registry, RootContext } from '../../src/library/index.ts'
+import type {
+  LogEvent,
+  OrderKeyValue,
+  PlannedPage,
+  PlannedQuery,
+  Registry,
+  RootContext,
+} from '../../src/library/index.ts'
 
 // The read ports (part 5.1, DOM-18, LIB-9): the query planned as data for
 // the adapter, its selection folded into the adapter's fragments, a
@@ -21,7 +29,10 @@ import type { LogEvent, PlannedQuery, Registry, RootContext } from '../../src/li
 // parsed; the snapshot at the position read at; an input not in its schema,
 // and the faults of the wiring. Since part 5.2 the stream after the
 // snapshot, composed by the library over the adapter's log (DOM-2, DOM-17);
-// the native and the composed on Shed's oracle, with its scenarios. On a test domain written for the purpose
+// the native and the composed on Shed's oracle, with its scenarios. Since
+// part 5.3 the pages (SC-22): pulled one at a time, the cursor's form (a
+// stable function, LIB-10, its corpus here), a cursor not the query's order
+// key. On a test domain written for the purpose
 // (LIB-2): the things of a workshop, their uses counted since a day.
 
 const { id, fact, selection, calculation, query, read_use_case, AND, NOT } =
@@ -341,7 +352,6 @@ describe('the read ports (part 5.1)', () => {
     expect(await every(ports.owners(context, {}, position.parse('3')))).toEqual([
       { event: 'position_unavailable' },
     ])
-    expect(() => ports.owners.pages(context, {}, {})).toThrow('part 5.3')
   })
 
   test('a port that streams the facts of a domain whose majors the versions were not given stops at wiring', () => {
@@ -387,4 +397,153 @@ const every_of = <value>(values: readonly value[]): AsyncIterable<value> => ({
     const each = values[Symbol.iterator]()
     return { next: () => Promise.resolve(each.next()) }
   },
+})
+
+describe('the read ports in pages (part 5.3, SC-22)', () => {
+  /** Three things at hand as the adapter gives them, in the order: the most used, then by name, then by id. */
+  const hammer_2 = { id: 'hammer-2', name: 'Hammer', uses: 3 }
+  const hammer_1 = { id: 'hammer-1', name: 'Hammer', uses: 3 }
+  const saw = { id: 'saw', name: 'Saw', uses: 1 }
+  /** The cursor after `hammer_1`, as the library writes it: a corpus of the stable function (LIB-10). */
+  const after_hammer_1 = 'W1sidXNlcyIsM10sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCIsImhhbW1lci0xIl1d'
+
+  /** An adapter that gives the pages it is told, one per read, and keeps the plans it is given. */
+  const a_paged_adapter = (
+    pages: readonly { readonly entries: readonly unknown[]; readonly total: number }[],
+  ) => {
+    const { adapter, calculations } = an_adapter([])
+    const plans: PlannedPage<Text, Text, Text>[] = []
+    return {
+      plans,
+      ports: read_use_case_ports({
+        registry,
+        identities: owners_registry,
+        versions: the_versions,
+        use_cases: { things_at_hand },
+      })({
+        ...adapter,
+        algebra: {
+          ...adapter.algebra,
+          after: (key: readonly OrderKeyValue<Text>[]) =>
+            `after(${key.map(({ field, direction, value }) => `${field} ${direction} ${JSON.stringify(value)}`).join(', ')})`,
+        },
+        calculations,
+        page: (plan: PlannedPage<Text, Text, Text>) => {
+          const page = pages[plans.length] ?? { entries: [], total: 0 }
+          plans.push(plan)
+          return Promise.resolve({
+            ...page,
+            position: position.parse(String(plans.length + 6)),
+          })
+        },
+        streams: {},
+      }),
+    }
+  }
+  const input = { kind: 'hand', since: '2026-11-01' }
+  const uses = "(select count(*) from uses where day >= '2026-11-01')"
+  const selection = "(kept and not lost and kind = 'hand')"
+
+  test('a stream of snapshots, each read when the consumer asks for it, at its position, with the total and the next cursor', async () => {
+    const { plans, ports } = a_paged_adapter([
+      // The adapter gives one more than the page: another follows.
+      { entries: [hammer_2, hammer_1, saw], total: 3 },
+      { entries: [saw], total: 3 },
+    ])
+    const pages = ports.things_at_hand.pages(context, input, { size: 2 })[Symbol.asyncIterator]()
+    expect(await pages.next()).toEqual({
+      done: false,
+      value: {
+        event: 'snapshot',
+        entries: [hammer_2, hammer_1],
+        position: '7',
+        total: 3,
+        next: after_hammer_1,
+      },
+    })
+    // Pulled: nothing more is read until the consumer asks.
+    expect(plans).toHaveLength(1)
+    expect(plans[0]).toMatchObject({ page: selection, limit: 3 })
+    expect(await pages.next()).toEqual({
+      done: false,
+      value: { event: 'snapshot', entries: [saw], position: '8', total: 3 },
+    })
+    // The page after the order key of the last entry, its fields then its
+    // identity, by the adapter's comparison (D109).
+    expect(plans[1]).toMatchObject({
+      page: `(${selection} and after(${uses} descending 3, name ascending "Hammer", id ascending "hammer-1"))`,
+      limit: 3,
+    })
+    expect(await pages.next()).toEqual({ done: true, value: undefined })
+  })
+
+  test("from a page's cursor, the pages after it: as pulled, a resume", async () => {
+    const { plans, ports } = a_paged_adapter([{ entries: [saw], total: 3 }])
+    expect(
+      await every(
+        ports.things_at_hand.pages(context, input, {
+          size: 2,
+          after: cursor.parse(after_hammer_1),
+        }),
+      ),
+    ).toEqual([{ event: 'snapshot', entries: [saw], position: '7', total: 3 }])
+    expect(plans[0]?.page).toBe(
+      `(${selection} and after(${uses} descending 3, name ascending "Hammer", id ascending "hammer-1"))`,
+    )
+  })
+
+  test('a page with no size is every entry, one page with no cursor; a page as long as what is left ends the pages', async () => {
+    const whole = a_paged_adapter([{ entries: [hammer_2, hammer_1, saw], total: 3 }])
+    expect(await every(whole.ports.things_at_hand.pages(context, input, {}))).toEqual([
+      { event: 'snapshot', entries: [hammer_2, hammer_1, saw], position: '7', total: 3 },
+    ])
+    expect(whole.plans[0]).not.toHaveProperty('limit')
+    const exact = a_paged_adapter([{ entries: [hammer_2, hammer_1, saw], total: 3 }])
+    expect(await every(exact.ports.things_at_hand.pages(context, input, { size: 3 }))).toEqual([
+      { event: 'snapshot', entries: [hammer_2, hammer_1, saw], position: '7', total: 3 },
+    ])
+  })
+
+  test('a cursor that does not decode to the query order key reads no page; an input not in its schema first', async () => {
+    const { plans, ports } = a_paged_adapter([])
+    const cursor_not_in_schema = { event: 'invalid_request', reason: 'cursor_not_in_schema' }
+    const sent = [
+      // Not base64url.
+      'not a cursor!',
+      // Another order's key.
+      'W1sib3duZXIiLCJPLTEiXV0',
+      // A key as long, its values parsing, its first field named otherwise: `count`.
+      'W1siY291bnQiLDNdLFsibmFtZSIsIkhhbW1lciJdLFsiaWQiLCJoYW1tZXItMSJdXQ',
+      // A value its field does not parse: `three` uses.
+      'W1sidXNlcyIsInRocmVlIl0sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCIsImhhbW1lci0xIl1d',
+      // An identity absent.
+      'W1sidXNlcyIsM10sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCJdXQ',
+      // The key of `hammer_1`, not as the library writes it (a space): one key, one cursor.
+      'W1sidXNlcyIsIDNdLFsibmFtZSIsIkhhbW1lciJdLFsiaWQiLCJoYW1tZXItMSJdXQ',
+    ].map((text) => cursor.parse(text))
+    for (const after of sent) {
+      expect(await every(ports.things_at_hand.pages(context, input, { size: 2, after }))).toEqual([
+        cursor_not_in_schema,
+      ])
+    }
+    expect(
+      await every(
+        ports.things_at_hand.pages(
+          context,
+          { kind: 'hand', since: '2026-11-19' },
+          { size: 2, after: cursor.parse('not a cursor!') },
+        ),
+      ),
+    ).toEqual([{ event: 'invalid_request', reason: 'input_not_in_schema' }])
+    expect(plans).toEqual([])
+  })
+
+  test('a size not a whole number at least 1 is a fault of whoever binds it, which the leaf schema bounds', async () => {
+    const { ports } = a_paged_adapter([])
+    for (const size of [0, 1.5]) {
+      await expect(every(ports.things_at_hand.pages(context, input, { size }))).rejects.toThrow(
+        "business/things/usecase/things_at_hand: a page is its size, a whole number at least 1, which the leaf's schema bounds, and its cursor (SC-22)",
+      )
+    }
+  })
 })

@@ -1,10 +1,12 @@
-import type * as z from 'zod'
+import * as z from 'zod'
 import type { position } from './format.ts'
 import type { RootContext } from './context.ts'
-import type { InputNotInSchema, SnapshotEvent } from './base_event.ts'
+import type { CursorNotInSchema, InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import { $Calculation } from './component.ts'
 import { $Query, type Direction, type Queries } from './query.ts'
-import type { PlannedQuery, ReadAdapter } from './read_adapter.ts'
+import type { PlannedPage, PlannedQuery, ReadAdapter } from './read_adapter.ts'
+import type { OrderKeyValue } from './algebra.ts'
+import { cursor_of, key_of, type OrderKey } from './stable.ts'
 import type { StreamStrategy, Streams } from './stream.ts'
 import type { Envelope, PartFields, StoredEnvelope } from './envelope.ts'
 import { $UseCase, type QueriesOf, type ReadUseCases } from './use_case.ts'
@@ -35,8 +37,9 @@ import {
 // the query's fields and calculations; the snapshot, at the position read
 // at (D66); then, where the adapter streams the query, the events from that
 // position (part 5.2, DOM-2, DOM-17), or, from a position, the stream alone,
-// a resume (`read_stream.ts`). The pages come with part 5.3, the actions with
-// 6.3.
+// a resume (`read_stream.ts`). In pages (part 5.3, SC-22): a stream of
+// snapshots, one per page, each read when the consumer asks for it, after
+// the cursor of the page before it. The actions come with 6.3.
 
 /** The read adapter as the ports meet it at runtime. */
 interface RuntimeAdapter<selection, source, field> {
@@ -45,6 +48,7 @@ interface RuntimeAdapter<selection, source, field> {
     readonly and: (components: readonly selection[]) => selection
     readonly or: (components: readonly selection[]) => selection
     readonly not: (operand: selection) => selection
+    readonly after: (key: readonly OrderKeyValue<field>[]) => selection
   }
   readonly sources: Readonly<
     Record<string, { readonly from: source; readonly fields: Readonly<Record<string, field>> }>
@@ -53,6 +57,11 @@ interface RuntimeAdapter<selection, source, field> {
   readonly read: (
     plan: PlannedQuery<selection, source, field>,
   ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
+  readonly page: (plan: PlannedPage<selection, source, field>) => Promise<{
+    readonly entries: readonly unknown[]
+    readonly total: number
+    readonly position: position
+  }>
   readonly streams: Readonly<Record<string, StreamStrategy<selection, source, field> | undefined>>
   readonly applicability?: Readonly<Record<string, unknown>>
 }
@@ -64,6 +73,9 @@ interface RuntimeAdapter<selection, source, field> {
  */
 type RuntimeEvent = SnapshotEvent<unknown> | RuntimeStreamEvent | InputNotInSchema
 
+/** An event of a read in pages at runtime: a page's snapshot, or an input or a cursor not in its schema. */
+type RuntimePagesEvent = SnapshotEvent<unknown> | InputNotInSchema | CursorNotInSchema
+
 /** A read use case's port at runtime: its snapshot and its stream, whether it streams, its pages, its actions. */
 type RuntimePort = ((
   context: RootContext,
@@ -71,9 +83,25 @@ type RuntimePort = ((
   from?: position,
 ) => AsyncIterable<RuntimeEvent>) & {
   readonly streamed: boolean
-  readonly pages: (context: RootContext, input: unknown, page: unknown) => never
+  readonly pages: (
+    context: RootContext,
+    input: unknown,
+    page: unknown,
+  ) => AsyncIterable<RuntimePagesEvent>
   readonly with_actions?: (actions: unknown) => never
 }
+
+/**
+ * A page as asked (`Page`, SC-22): its size a whole number, at least 1, as
+ * the leaf's schema bounds it, else a fault of whoever binds it, thrown;
+ * its cursor whatever the client sent back, which decodes to the query's
+ * order key or is `cursor_not_in_schema`. Strict, as every signature
+ * (DOM-21).
+ */
+const page_asked = z.strictObject({
+  size: z.number().int().min(1).optional(),
+  after: z.unknown().optional(),
+})
 
 /** A calculation of a query at runtime: the field it gives, its schema of parameters, its path, its value. */
 interface RuntimeCalculation {
@@ -452,11 +480,102 @@ const runtime_ports = (
         if (strategy === undefined) return
         yield* stream_after(wiring_of(plan), strategy, { position: read.position, entries })
       }
+
+      /** The order key of an entry as the adapter gave it: each field of the order, its value (LIB-9). */
+      const key_of_entry = (stored: unknown): OrderKey =>
+        query.order.map(([name]) => {
+          const value = is_a_record(stored) ? stored[name] : undefined
+          return value === undefined ? [name] : [name, value]
+        })
+      /**
+       * The values of the query's order key a cursor encodes, field by field;
+       * none when it encodes no order key, or another order's (its fields by
+       * name, in order), or a value its field does not parse (SC-22).
+       */
+      const decoded = (sent: unknown): readonly unknown[] | undefined => {
+        const key = typeof sent === 'string' ? key_of(sent) : undefined
+        if (key?.length !== query.order.length) return undefined
+        const values = query.order.map(([name], i): { readonly value: unknown } | undefined => {
+          const pair = key[i]
+          if (pair?.[0] !== name) return undefined
+          const value = pair.length === 2 ? pair[1] : undefined
+          const schema: unknown = wiring.entry.shape[name]
+          return is_a_schema(schema) && schema.safeParse(value).success ? { value } : undefined
+        })
+        return values.every((each) => each !== undefined)
+          ? values.map((each) => each.value)
+          : undefined
+      }
+      /** A page's selection: the query's, after the order key's values if there are some (D109). */
+      const selection_after = (
+        plan: PlannedQuery<selection, source, field>,
+        values: readonly unknown[] | undefined,
+      ): selection =>
+        values === undefined
+          ? plan.selection
+          : adapter.algebra.and([
+              plan.selection,
+              adapter.algebra.after(
+                plan.order.map(([field, direction], i) => ({
+                  field,
+                  direction,
+                  value: values[i],
+                })),
+              ),
+            ])
+      // In pages (SC-22): a stream of snapshots, one per page, each read when
+      // the consumer asks for it, at its own position, with its total; the
+      // page's last entry's order key the cursor of the next, if one follows
+      // (the adapter gives one entry more than the page to tell). An input
+      // not in its schema reads nothing, then a cursor that does not decode
+      // to the query's order key.
+      const pages = async function* (
+        context: RootContext,
+        input: unknown,
+        page: unknown,
+      ): AsyncGenerator<RuntimePagesEvent> {
+        const plan = plan_of(context, input)
+        if (plan === undefined) {
+          yield { event: 'invalid_request', reason: 'input_not_in_schema' }
+          return
+        }
+        const asked = page_asked.safeParse(page)
+        if (!asked.success) {
+          throw new Error(
+            `${path}: a page is its size, a whole number at least 1, which the leaf's schema bounds, and its cursor (SC-22): ${asked.error.message}`,
+          )
+        }
+        const { size, after } = asked.data
+        let values = after === undefined ? undefined : decoded(after)
+        if (after !== undefined && values === undefined) {
+          yield { event: 'invalid_request', reason: 'cursor_not_in_schema' }
+          return
+        }
+        for (;;) {
+          const read = await adapter.page({
+            ...plan,
+            page: selection_after(plan, values),
+            ...(size === undefined ? {} : { limit: size + 1 }),
+          })
+          const entries = size === undefined ? read.entries : read.entries.slice(0, size)
+          const last = entries.at(-1)
+          const more = size !== undefined && read.entries.length > size && last !== undefined
+          const key = more ? key_of_entry(last) : undefined
+          yield {
+            event: 'snapshot',
+            entries: entries.map(entry_of),
+            position: read.position,
+            total: read.total,
+            ...(key === undefined ? {} : { next: cursor_of(key) }),
+          }
+          if (key === undefined) return
+          values = key.map((pair) => (pair.length === 2 ? pair[1] : undefined))
+        }
+      }
+
       return Object.assign(invoked, {
         streamed,
-        pages: (): never => {
-          throw new Error(`${path}: a read in pages comes with part 5.3 (SC-22)`)
-        },
+        pages,
         ...(adapter.applicability?.[name] === undefined
           ? {}
           : {

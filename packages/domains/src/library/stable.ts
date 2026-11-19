@@ -1,5 +1,6 @@
 import type * as z from 'zod'
 import { fingerprint, type Operation } from './context.ts'
+import { cursor } from './format.ts'
 
 // The stable functions of the library (LIB-10, D100): values derived from
 // others that never change once released, since what they derive is kept and
@@ -259,3 +260,85 @@ export interface Retried {
  */
 export const fingerprint_of = (request: Retried): fingerprint =>
   fingerprint.parse(digest(['fingerprint_of', request.path, canonical_json(request.input)]))
+
+/**
+ * An order key (LIB-9, D109): each field of a query's order, closed by its
+ * identity, by its name, with its value as the adapter gave it, an absent
+ * one with none (`[name]`).
+ */
+export type OrderKey = readonly (
+  readonly [name: string] | readonly [name: string, value: unknown]
+)[]
+
+/** Bytes from base64url with no padding (RFC 4648, 5); none for a character not of its alphabet. */
+const from_base64url = (text: string): readonly number[] | undefined => {
+  const sextets = Array.from(text, (character) => alphabet.indexOf(character))
+  if (sextets.some((sextet) => sextet === -1)) return undefined
+  return Array.from({ length: Math.ceil(sextets.length / 4) }, (_, i) => {
+    const chunk = sextets.slice(i * 4, i * 4 + 4)
+    const bits =
+      ((chunk[0] ?? 0) << 18) | ((chunk[1] ?? 0) << 12) | ((chunk[2] ?? 0) << 6) | (chunk[3] ?? 0)
+    return [16, 8, 0].slice(0, chunk.length - 1).map((shift) => (bits >> shift) & 0xff)
+  }).flat()
+}
+
+/** A text from its UTF-8 bytes; none when they are not UTF-8 (`decodeURIComponent`, ECMAScript's). */
+const from_utf8 = (bytes: readonly number[]): string | undefined => {
+  try {
+    return decodeURIComponent(
+      bytes.map((byte) => `%${byte.toString(16).padStart(2, '0')}`).join(''),
+    )
+  } catch {
+    return undefined
+  }
+}
+
+/** A JSON value from its text; none when the text is not JSON. */
+const from_json = (text: string): unknown => {
+  try {
+    const value: unknown = JSON.parse(text)
+    return value
+  } catch {
+    return undefined
+  }
+}
+
+/** The text of an order key: the base64url of the UTF-8 of its canonical JSON. */
+const text_of = (key: OrderKey): string => base64url(utf8(canonical_json(key)))
+
+/**
+ * The cursor of an order key (DOM-20, SC-22, D109): the key's fields and
+ * values, in the order's order, in their canonical JSON (a list of pairs,
+ * so that the order of the fields stays), in base64url, a text a client
+ * carries in a message or an address. Opaque to the business, the persona
+ * and the client (D57), not secret: whoever decodes it reads the values of
+ * the order key. A value JSON cannot write stops it, a fault of the query's
+ * order. A stable function (LIB-10): a client carries a page's cursor across
+ * a release, and a process with a cursor keeps its own in its state (part
+ * 7.4); its corpus, through the read port, in `test/library/read_port.test.ts`.
+ * C, 19 Nov 2026
+ */
+export const cursor_of = (key: OrderKey): cursor => cursor.parse(text_of(key))
+
+/**
+ * The order key a cursor encodes; none for a text that is not one, as the
+ * library writes it: not base64url, not UTF-8, not JSON, not a list of
+ * pairs of a name and a value, or not in its one form (`cursor_of` of the
+ * key gives back another text), so that one key has one cursor. Whether the
+ * key is a query's order key is its reader's to check (SC-22).
+ */
+export const key_of = (text: string): OrderKey | undefined => {
+  const bytes = from_base64url(text)
+  const json = bytes === undefined ? undefined : from_utf8(bytes)
+  const value = json === undefined ? undefined : from_json(json)
+  if (!Array.isArray(value)) return undefined
+  const pairs: readonly unknown[] = value
+  const key = pairs.flatMap((pair): OrderKey => {
+    if (!Array.isArray(pair)) return []
+    const parts: readonly unknown[] = pair
+    const [name, ...rest] = parts
+    if (typeof name !== 'string' || rest.length > 1) return []
+    return rest.length === 0 ? [[name]] : [[name, rest[0]]]
+  })
+  return key.length === pairs.length && text_of(key) === text ? key : undefined
+}

@@ -8,7 +8,7 @@ import type { Queries, QueryEntryOf, QueryParts } from './query.ts'
 import type { PredicateFragments } from './algebra.ts'
 import type { StreamEvent } from './stream.ts'
 import type { OutcomeOf } from './state_adapter.ts'
-import type { InputNotInSchema, SnapshotEvent } from './base_event.ts'
+import type { CursorNotInSchema, InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import type { Applicability, Partly } from './applicability.ts'
 import type { $UseCase, CommandUseCase } from './use_case.ts'
 import type { CommandOfUseCase, InputOfUseCase, LeavesOfUseCase } from './use_case_over.ts'
@@ -38,9 +38,10 @@ export type ReadEvent<envelope, entry, identity> =
   SnapshotEvent<entry> | StreamEvent<envelope, entry, identity>
 
 /**
- * A page asked of a read (SC-22): how many entries at most, and the cursor it
- * starts after, the `next` of the snapshot before it. With no size, every
- * entry; with no cursor, from the first.
+ * A page asked of a read (SC-22): how many entries at most, a whole number,
+ * at least 1, which the leaf's schema bounds; and the cursor it starts
+ * after, the `next` of the snapshot before it. With no size, every entry;
+ * with no cursor, from the first.
  */
 export interface Page {
   readonly size?: number
@@ -54,15 +55,16 @@ export interface Page {
  * the cursor is not met going on, one renamed past it comes again. The
  * stream ends after the last page, or when its consumer stops; from the
  * cursor of a page it resumes after it, as a stream from a position (D57).
- * A cursor that does not decode to the query's order key is no page:
- * `invalid_request` at a leaf. An input not in the query's schema reads
- * no page (`InputNotInSchema`, DOM-21).
+ * An input not in the query's schema reads no page (`InputNotInSchema`,
+ * DOM-21); nor does a cursor that does not decode to the query's order key
+ * (`CursorNotInSchema`), checked after the input: either is the first event
+ * and the last, `invalid_request` at a leaf.
  */
 export type Pages<input, entry> = (
   context: RootContext,
   input: input,
   page: Page,
-) => AsyncIterable<SnapshotEvent<entry> | InputNotInSchema>
+) => AsyncIterable<SnapshotEvent<entry> | InputNotInSchema | CursorNotInSchema>
 
 /**
  * A read use case port, typed by what its adapter gives: with a stream, the

@@ -186,6 +186,7 @@ export type {
   NodeEvent,
   InvalidRequest,
   InputNotInSchema,
+  CursorNotInSchema,
   VersionNotSupported,
   IdentityAlreadyUsed,
   SnapshotEvent,
