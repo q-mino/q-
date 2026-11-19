@@ -917,6 +917,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
+      // The entry of a tool of the shed is named by `tools`' id (SC-21).
+      identities: tools_registry,
       versions,
       use_cases: {
         the_ongoing_loans_of_a_member,

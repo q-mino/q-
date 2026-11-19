@@ -14,16 +14,21 @@
 // and outbox entries of `loans` 1.x), its state rebuilt from that log
 // through the library (`replay`, SC-8), with the majors it is given (SC-9)
 // and the zone of its calendar (SC-12); the entries it queues are read as
-// the executor will read them, at the current shape (`queued`).
+// the executor will read them, at the current shape (`queued`). Since part
+// 5.1 the read ports of `tools` and `loans` join the harness, over the same
+// cell: their snapshots, a read sent at an instant (`when`), with no
+// operation.
 
 import * as wlib from '../wlib.ts'
 import {
   loans_command_adapter,
   loans_command_use_cases,
   memory_commands,
+  memory_reads,
   rebuilt,
   tools_command_use_cases,
   type CommandCell,
+  type ReadCell,
   type Recorded,
   type State,
 } from '../adapter/memory/index.ts'
@@ -55,19 +60,25 @@ const nothing: State = {
 const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
 
 /**
- * A cell for the commands: its state, the facts it recorded in order, each
- * at its position, the first at 1; the fact an operation recorded, kept
- * for every operation (DOM-11); the entries queued with the facts, in
- * order, after those it kept.
+ * A cell for the commands and the reads: its state, the facts it recorded in
+ * order, each at its position, the first at 1, with the state before and
+ * after it; the facts from a position on, inclusive, and those after it as
+ * soon as there is one (DOM-17); the fact an operation recorded, kept for
+ * every operation (DOM-11); the entries queued with the facts, in order,
+ * after those it kept.
  */
 const command_cell = (
   kept: readonly wlib.StoredEntry[],
-): CommandCell & {
-  readonly entries: () => readonly wlib.StoredEntry[]
-} => {
+): CommandCell &
+  ReadCell & {
+    readonly entries: () => readonly wlib.StoredEntry[]
+  } => {
   let state = nothing
   const recorded: Recorded[] = []
   const entries: wlib.StoredEntry[] = [...kept]
+  const waiting: (() => void)[] = []
+  const after = (position: wlib.position): readonly Recorded[] =>
+    recorded.filter((each) => Number(each.position) > Number(position))
   return {
     get: () => state,
     record: (step) => {
@@ -79,8 +90,24 @@ const command_cell = (
       })
       entries.push(...step.entries)
       state = step.state
+      for (const wake of waiting.splice(0)) wake()
     },
     position: () => position_at(recorded.length),
+    history: (from) => ({
+      history: 'kept',
+      recorded: recorded.filter(
+        (each) => from === undefined || Number(each.position) >= Number(from),
+      ),
+      position: position_at(recorded.length),
+    }),
+    after: (position) =>
+      after(position).length > 0
+        ? Promise.resolve(after(position))
+        : new Promise((resolve) => {
+            waiting.push(() => {
+              resolve(after(position))
+            })
+          }),
     recorded_by: (operation) =>
       recorded.find(
         (each) =>
@@ -217,6 +244,7 @@ export const oracle = async (start: Start = {}) => {
     cell.record({ fact, entries: [], state: each.state })
   }
   const ports = memory_commands(cell)(versions)
+  const reads = memory_reads(cell)(versions)
   const alone_registry = {
     ...tools_registry,
     ...loans_registry,
@@ -261,6 +289,7 @@ export const oracle = async (start: Start = {}) => {
       load_the_tools_of_a_sheet: entered(ports.tools.load_the_tools_of_a_sheet),
       load_the_tools_of_a_short_sheet: entered(ports.tools.load_the_tools_of_a_short_sheet),
       continue_the_loading_of_a_sheet: entered(ports.tools.continue_the_loading_of_a_sheet),
+      ...reads.tools,
     },
     loans: {
       borrow_a_tool: entered(ports.loans.borrow_a_tool),
@@ -279,11 +308,17 @@ export const oracle = async (start: Start = {}) => {
       continue_the_repair_notice_round: entered(ports.loans.continue_the_repair_notice_round),
       begin_a_weekly_summary: entered(ports.loans.begin_a_weekly_summary),
       sum_up_the_week_for_the_member: entered(ports.loans.sum_up_the_week_for_the_member),
+      ...reads.loans,
     },
     alone: {
       notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
     at,
+    /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
+    when: (instant: string): wlib.RootContext => ({
+      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      time_zone: zone,
+    }),
     /**
      * The entries queued for an effect, in order, as its executor will
      * read them (part 7.1): at the current shape, by the store's versions
@@ -303,4 +338,11 @@ export const oracle = async (start: Start = {}) => {
 export const first = async <event>(events: AsyncIterable<event>): Promise<event> => {
   for await (const event of events) return event
   throw new Error('the port gave no event')
+}
+
+/** Every event of a port's stream, until it ends: a read that does not stream, an input not in its schema. */
+export const all = async <event>(events: AsyncIterable<event>): Promise<readonly event[]> => {
+  const every: event[] = []
+  for await (const event of events) every.push(event)
+  return every
 }

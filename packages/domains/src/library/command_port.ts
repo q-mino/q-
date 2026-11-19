@@ -37,6 +37,7 @@ import {
   type BoundLeaf,
 } from './bound_condition.ts'
 import { resources_of } from './resources.ts'
+import { called, is_a_record, paths_in } from './runtime.ts'
 
 // The ports of the command use cases (DOM-2, LIB-1, LIB-14), which the
 // library builds over a state adapter: for each invocation, the input parsed
@@ -86,31 +87,12 @@ type RuntimeOutcome =
 /** A command use case's port at runtime: one message in, its outcome out (DOM-3). */
 type RuntimePort = (context: CommandRootContext, input: unknown) => AsyncIterable<RuntimeOutcome>
 
-/** Whether a value is a record, to read its fields. */
-const is_a_record = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
-/** A function of the domain called with its one argument (a creator, a schema of the context): its result, unknown until parsed. */
-const called = (callee: unknown, argument: unknown): unknown => {
-  if (typeof callee !== 'function') throw new Error('a creator is not a function')
-  const result: unknown = Reflect.apply(callee, undefined, [argument])
-  return result
-}
-
 /** The folder of a component's path: its segments before the kind and the name. */
 const folder_of = (path: string): string => path.split('/').slice(0, -2).join('/')
 
 /** Whether a folder is the other or holds it. */
 const is_at_or_above = (folder: string, below: string): boolean =>
   below === folder || below.startsWith(`${folder}/`)
-
-/** The registry read in reverse: a component's path, by object identity (DOM-24). */
-const paths_in = (registry: Registry): ((component: unknown) => string | undefined) => {
-  const paths = new Map<unknown, string>(
-    Object.entries(registry).map(([path, entry]) => [entry, path]),
-  )
-  return (component) => paths.get(component)
-}
 
 /** The version of every domain in a registry, by its folder (`version.ts`, DOM-22). */
 const versions_in = (registry: Registry): readonly (readonly [string, Semver])[] =>

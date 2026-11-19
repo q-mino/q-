@@ -8,7 +8,7 @@ import type { Queries, QueryEntryOf, QueryParts } from './query.ts'
 import type { PredicateFragments } from './algebra.ts'
 import type { StreamEvent } from './stream.ts'
 import type { OutcomeOf } from './state_adapter.ts'
-import type { SnapshotEvent } from './base_event.ts'
+import type { InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import type { Applicability, Partly } from './applicability.ts'
 import type { $UseCase, CommandUseCase } from './use_case.ts'
 import type { CommandOfUseCase, InputOfUseCase, LeavesOfUseCase } from './use_case_over.ts'
@@ -55,13 +55,14 @@ export interface Page {
  * stream ends after the last page, or when its consumer stops; from the
  * cursor of a page it resumes after it, as a stream from a position (D57).
  * A cursor that does not decode to the query's order key is no page:
- * `invalid_request` at a leaf.
+ * `invalid_request` at a leaf. An input not in the query's schema reads
+ * no page (`InputNotInSchema`, DOM-21).
  */
 export type Pages<input, entry> = (
   context: RootContext,
   input: input,
   page: Page,
-) => AsyncIterable<SnapshotEvent<entry>>
+) => AsyncIterable<SnapshotEvent<entry> | InputNotInSchema>
 
 /**
  * A read use case port, typed by what its adapter gives: with a stream, the
@@ -72,7 +73,8 @@ export type Pages<input, entry> = (
  * gives the snapshot alone would serve a consumer of every event, so a
  * consumer that needs a live view asks for `streamed: true` (`Streamed`).
  * Either way the snapshot is one page, the whole read, and `pages` reads the
- * query in pages (SC-22).
+ * query in pages (SC-22). An input not in the query's schema is the first
+ * event and the last (`InputNotInSchema`, DOM-21): nothing is read.
  *
  * Over an adapter that evaluates actions (`applicable`, D110), `with_actions`
  * gives the port again, its entries with the applicability of each action
@@ -100,18 +102,20 @@ export type ReadUseCasePort<
             input: z.input<input>,
             from?: position,
           ) => AsyncIterable<
-            ReadEvent<
-              Envelope<readonly Part<facts>[]>,
-              QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>,
-              z.output<fields>[identity & keyof z.output<fields>]
-            >
+            | ReadEvent<
+                Envelope<readonly Part<facts>[]>,
+                QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>,
+                z.output<fields>[identity & keyof z.output<fields>]
+              >
+            | InputNotInSchema
           >) &
             Streamed
         : ((
             context: RootContext,
             input: z.input<input>,
           ) => AsyncIterable<
-            SnapshotEvent<QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>>
+            | SnapshotEvent<QueryEntryOf<query> & BusinessApplicabilitiesOf<actions>>
+            | InputNotInSchema
           >) & {
             readonly streamed: false
           }) & {

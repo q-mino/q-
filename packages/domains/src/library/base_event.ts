@@ -38,6 +38,19 @@ export interface InvalidRequest {
 }
 
 /**
+ * An input not in its query's schema, at a business read port (DOM-21, part
+ * 5.1): the port parses its input, built over the context where the schema
+ * is a function of it; one that does not parse (an undeclared field, a value
+ * its schema refuses, a static rule over the input and `now`) reads nothing,
+ * as a command port's `invalid_request` (`InvalidInput`) plans nothing. The
+ * first event and the last; a leaf gives it as it is, a base event of its
+ * union. Terminal.
+ */
+export interface InputNotInSchema extends InvalidRequest {
+  readonly reason: 'input_not_in_schema'
+}
+
+/**
  * The gate (PER-17, A, 17 Nov 2026), a base event in the union of every
  * leaf: at the entry of the tree, before any node (no lookup runs), the
  * version the message carries is out of the tree's window, which is its

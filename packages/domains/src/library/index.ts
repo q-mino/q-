@@ -185,6 +185,7 @@ export type {
   Refused,
   NodeEvent,
   InvalidRequest,
+  InputNotInSchema,
   VersionNotSupported,
   IdentityAlreadyUsed,
   SnapshotEvent,
@@ -262,6 +263,7 @@ export type {
 } from './earlier.ts'
 export { builders_at } from './builders.ts'
 export { command_use_case_ports } from './command_port.ts'
+export { read_use_case_ports } from './read_port.ts'
 export { versions, replay } from './versions.ts'
 export type { VersionsBuilder } from './versions.ts'
 export type { Builders, Sight } from './builders.ts'
