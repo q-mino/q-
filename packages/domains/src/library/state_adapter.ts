@@ -279,9 +279,11 @@ type ComposedPredicatesOf<outcomes extends Outcomes> = PredicatesOfEach<Transiti
 /**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with
  * its typed fact in its envelope and its position; the rejection, naming
- * every failed predicate (DOM-6); or, from the duplicate branch, the identity
- * of the operation already used with another fingerprint (DOM-11, D79.4),
- * which no projection sees: it crosses a use case over another as it is.
+ * every failed predicate (DOM-6); from the duplicate branch, the identity
+ * of the operation already used with another fingerprint (DOM-11, D79.4);
+ * or an input not in the command's schema, built over the context (DOM-21):
+ * a static rule, not a rejection. No projection sees the last two: they
+ * cross a use case over another as they are, as base events.
  */
 export type CommandOutcome<outcomes extends Outcomes, leaves extends Component = never> =
   | {
@@ -302,6 +304,20 @@ export type CommandOutcome<outcomes extends Outcomes, leaves extends Component =
       readonly failures: readonly (Failure<outcomes> | PathFailures<leaves>)[]
     }
   | { readonly outcome: 'identity_already_used' }
+  | InvalidInput
+
+/**
+ * The input of a command, or of the nodes of its path, not in its schema,
+ * which the library builds over the context before parsing (DOM-21): an
+ * undeclared field, a value its schema refuses, a static rule over the input
+ * and `now` (Gianni books the ladder for a day outside the window, SC-6).
+ * Nothing is planned or executed. A leaf gives it as the base event
+ * `invalid_request` (`input_not_in_schema`); a reaction or the effect
+ * executor, as a dead letter.
+ */
+export interface InvalidInput {
+  readonly outcome: 'invalid_request'
+}
 
 /**
  * A step's rejection (DOM-20): the process is not in the stage the step
@@ -317,7 +333,8 @@ export interface ReadFailure {
  * the step's part, then the part of the composed command's applied branch
  * (DOM-10, D111); it completed, the closing part alone; it was rejected, the
  * process not in the stage the step reads; or, from the duplicate branch,
- * the identity of the operation was already used (DOM-11).
+ * the identity of the operation was already used (DOM-11); or its input was
+ * not in its schema (DOM-21).
  */
 export type StepOutcome<step> = step extends {
   [$Step]: {
@@ -342,6 +359,7 @@ export type StepOutcome<step> = step extends {
       }
     | { readonly outcome: 'rejected'; readonly failures: readonly ReadFailure[] }
     | { readonly outcome: 'identity_already_used' }
+    | InvalidInput
   : never
 
 /**

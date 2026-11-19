@@ -13,7 +13,6 @@ import type {
   Clock,
   CommandUseCasePort,
   CommandUseCases,
-  CommandsOf,
   Component,
   Deliveries,
   EffectExecutor,
@@ -36,8 +35,6 @@ import type {
   ReadUseCasePort,
   ReadUseCases,
   Registry,
-  StateAdapter,
-  StoredVersions,
   Streams,
   TreeLeaves,
   TreePorts,
@@ -48,42 +45,8 @@ import type {
 
 export * from '../../src/library/index.ts'
 
-// Part 4.1, a command on the oracle.
-
-/**
- * The ports of a set of command use cases over a state adapter for their
- * commands, with the registry where the library finds the paths of their
- * predicates and facts, and the versions of the store, which read the fact
- * that the duplicate branch gives back, recorded maybe at a past major
- * (`Versions`). Curried, so that the use cases fix the types before the
- * adapter is written. The command ports stay inside the library.
- */
-export declare function command_use_case_ports<const use_cases extends CommandUseCases>(ports: {
-  readonly registry: Registry
-  readonly versions: Versions
-  readonly use_cases: use_cases
-}): <fragment, write, read, selection, source, field>(
-  adapter: StateAdapter<CommandsOf<use_cases>, fragment, write, read, selection, source, field>,
-) => { readonly [name in keyof use_cases]: CommandUseCasePort<use_cases[name]> }
-
-// Part 4.4, the versions of the facts.
-
-/**
- * The versions of a store, composed once by the configurator from the
- * majors of every domain whose data it keeps (`versions([loans, tools])`),
- * then checked against what the store keeps, and given to every builder
- * that reads stored data. At wiring (CFG-2) the library stops on a path and
- * version the store keeps and no major reads, naming them: a past major's
- * folder deleted while a fact or a wait of it is kept (D101: a folder goes
- * when nothing kept has its major), so that the release does not start,
- * rather than a reader stopping weeks later. It stops too on a builder that
- * reads a domain absent here (the consumer of `damage` reads a fact of
- * `loans`), and on a domain whose current major is not the one of its
- * `version.ts` (A, 17 Nov 2026).
- */
-export declare function versions(
-  majors: readonly Majors[],
-): (store: { readonly stored: StoredVersions }) => Promise<Versions>
+// Part 4.4, the versions of the facts (`versions`, in the library since
+// part 4.1 for the current majors, gets there the past majors and its checks).
 
 /**
  * The facts of a log for an adapter's rebuild of its state (DOM-22: stored

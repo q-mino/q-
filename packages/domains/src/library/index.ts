@@ -264,6 +264,9 @@ export type {
   EarlierReadLeaf,
 } from './earlier.ts'
 export { builders_at } from './builders.ts'
+export { command_use_case_ports } from './command_port.ts'
+export { versions } from './versions.ts'
+export type { VersionsBuilder } from './versions.ts'
 export type { Builders, Sight } from './builders.ts'
 export { identity_of } from './stable.ts'
 export { kind_of, is_a_schema } from './kind.ts'

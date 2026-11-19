@@ -1,5 +1,6 @@
 import type * as z from 'zod'
 import type { Semver } from './format.ts'
+import type { PartFields, StoredPart } from './envelope.ts'
 import type { RootContext } from './context.ts'
 import type { Lookup } from './lookup.ts'
 import type { Component, Path, PathOf } from './component.ts'
@@ -47,7 +48,14 @@ export const $Versions: unique symbol = Symbol('Versions')
  * runs the steps of a leaf of a past major. The log is never rewritten.
  */
 export interface Versions {
-  readonly [$Versions]: true
+  readonly [$Versions]: {
+    /**
+     * A part of a fact as stored, at the current shape: its path, its
+     * payload parsed, its resources as written; it stops (throws) on a
+     * version it does not know, and the reader retries.
+     */
+    readonly part: (stored: StoredPart) => PartFields
+  }
 }
 
 /** A path and a version a store keeps, among the parts of its facts and its outbox entries. */
