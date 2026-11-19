@@ -130,6 +130,8 @@ describe('the generator on a tree of authored files alone', () => {
 
     const first = await generate(repository, configuration, false)
     expect(first.failures).toEqual([])
+    // A scope written before the imports is told as written, as any other file.
+    expect(first.written).toContain(`${configuration.root}/business/things/_scope_fact.ts`)
     for (const file of [
       '_scope.ts',
       '_scope_id.ts',
