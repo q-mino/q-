@@ -2,12 +2,10 @@ import { operation_id, type Clock, type CommandRootContext } from './context.ts'
 import { in_zone } from './format.ts'
 import type { entry_id } from './command.ts'
 import { $Order, type DeliveryOrder } from './component.ts'
-import type { Resource } from './envelope.ts'
 import { kind_of } from './kind.ts'
 import { $Versions, type Registry, type Versions } from './registry.ts'
 import { fingerprint_of } from './stable.ts'
 import type { EntryFields } from './state_adapter.ts'
-import type { TracedFailure } from './trace.ts'
 import type { Elapsed } from './tree.ts'
 import { $UseCase, type CommandUseCases } from './use_case.ts'
 import type { CommandUseCasePort } from './use_case_port.ts'
@@ -23,6 +21,7 @@ import type {
   WaitingEntry,
 } from './effect.ts'
 import { called_with, is_a_record, paths_in, served_by } from './runtime.ts'
+import { freed_in, lanes_of, outcome_of, predicates_of, share, type Lane } from './consumer.ts'
 
 // The effect executor (DOM-14, DOM-15, PER-12; part 7.1): an internal entry,
 // a durable consumer of a domain's outbox, one delivery unit per effect.
@@ -161,34 +160,6 @@ const told_by = (effect: string, answered: unknown): Told => {
   throw new Error(`the delivery of ${effect} answered no outcome (DOM-15)`)
 }
 
-/** The predicates a return's rejection names (DOM-6), by their paths, as the library knows them at runtime. */
-const failures_of = (failures: unknown): readonly TracedFailure[] =>
-  Array.isArray(failures)
-    ? failures.flatMap((failure: unknown): readonly TracedFailure[] => {
-        if (!is_a_record(failure)) return []
-        const { branch, components, predicate } = failure
-        if (typeof predicate !== 'string' || !Array.isArray(components)) return []
-        return [
-          {
-            ...(typeof branch === 'string' ? { branch } : {}),
-            components: components.filter((name: unknown) => typeof name === 'string'),
-            predicate,
-          },
-        ]
-      })
-    : []
-
-/** Whether a value is a stream of events, as a port gives them. */
-const is_a_stream = (value: unknown): value is AsyncIterable<unknown> =>
-  typeof value === 'object' && value !== null && Symbol.asyncIterator in value
-
-/** A return's outcome: the first event of its port's stream (DOM-2). */
-const outcome_of = async (events: unknown): Promise<unknown> => {
-  if (!is_a_stream(events)) throw new Error("a return's port gives no stream of events (DOM-2)")
-  for await (const event of events) return event
-  throw new Error("a return's port gave no outcome (DOM-2)")
-}
-
 /** The entry an effect holds as a letter, named by the key (effect, id) (DOM-13). */
 const is_the_entry = (a: QueuedEntry) => (b: QueuedEntry) =>
   a.entry.effect === b.entry.effect && a.entry.id === b.entry.id
@@ -198,12 +169,6 @@ const order_of = (effect: unknown): DeliveryOrder =>
   typeof effect === 'object' && effect !== null && $Order in effect && effect[$Order] === 'any'
     ? 'any'
     : 'per_resource'
-
-/** Whether two lists of resources share one, by path and value (DOM-10). */
-const share =
-  (some: readonly Resource[]) =>
-  (others: readonly Resource[]): boolean =>
-    some.some((one) => others.some((other) => one.path === other.path && one.value === other.value))
 
 /**
  * Whether the entries an effect holds hold an entry that comes due (SC-53):
@@ -219,51 +184,16 @@ const holds =
     held.some((each) => share(each.entry.resources)(queued.entry.resources))
 
 /**
- * The entries waiting that go on (SC-53): in the order the state keeps them,
- * each one that no dead letter of its effect holds, and that shares no
- * resource with an entry waiting before it, gone on or not, so that the
- * order per resource holds among them too; in an effect that tolerates
- * reordering, every one, since its dead letters hold nothing (SC-56).
+ * The entries waiting that go on (SC-53): those `freed_in` gives, by their
+ * entries' resources; in an effect that tolerates reordering, every one,
+ * since its dead letters hold nothing (SC-56).
  */
-const freed_in =
+const entries_freed_in =
   (order: DeliveryOrder) =>
-  (held: readonly HeldEntry[]): readonly WaitingEntry[] => {
-    const waiting = held.filter((each): each is WaitingEntry => each.held === 'waiting')
-    if (order === 'any') return waiting
-    const letters = held.flatMap((each) =>
-      each.held === 'dead_letter' ? each.entry.resources : [],
-    )
-    return waiting.reduce<{
-      readonly ahead: readonly Resource[]
-      readonly freed: readonly WaitingEntry[]
-    }>(
-      (walked, each) => ({
-        ahead: [...walked.ahead, ...each.entry.resources],
-        freed:
-          share(letters)(each.entry.resources) || share(walked.ahead)(each.entry.resources)
-            ? walked.freed
-            : [...walked.freed, each],
-      }),
-      { ahead: [], freed: [] },
-    ).freed
-  }
-
-/** A request of an operator, served by its effect's unit (SC-53); refused if the unit has stopped. */
-interface Asked {
-  readonly serve: () => Promise<void>
-  readonly refuse: (error: Error) => void
-}
-
-/**
- * An effect's unit as an operator reaches it (SC-53): what is asked of one
- * of its letters, served between two deliveries, so that the effect delivers
- * one entry at a time, in its own order; and why it no longer serves.
- */
-interface Lane {
-  readonly asked: Asked[]
-  wake: () => void
-  closed: Error | undefined
-}
+  (held: readonly HeldEntry[]): readonly WaitingEntry[] =>
+    order === 'any'
+      ? held.filter((each): each is WaitingEntry => each.held === 'waiting')
+      : freed_in((each: HeldEntry) => each.entry.resources)(held)
 
 /** The body of `effect_executor`, typed by what it meets at runtime. */
 const runtime_executor = (executor: RuntimeExecutor) => {
@@ -371,7 +301,11 @@ const runtime_executor = (executor: RuntimeExecutor) => {
           case 'applied':
             return undefined
           case 'rejected':
-            return { cause: 'rejected', returns: said, failures: failures_of(outcome['failures']) }
+            return {
+              cause: 'rejected',
+              returns: said,
+              failures: predicates_of(outcome['failures']),
+            }
           case 'identity_already_used':
             return { cause: 'identity_already_used', returns: said }
           case 'invalid_request':
@@ -432,35 +366,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
         instant === undefined ? 0 : Date.parse(instant) - Date.parse(ports.clock.now())
 
       // Each effect's unit, as an operator reaches it (SC-53).
-      const lanes = new Map<string, Lane>(
-        effects.map((effect) => [effect, { asked: [], wake: () => undefined, closed: undefined }]),
-      )
-
-      /** A lane's next request: woken when an operator asks. */
-      const asked_on = (lane: Lane): Promise<'asked'> =>
-        new Promise((resolve) => {
-          lane.wake = () => {
-            resolve('asked')
-          }
-        })
-
-      /**
-       * What an operator asks of a letter, served by its effect's unit
-       * between two deliveries (SC-53); refused once the unit has stopped or
-       * fallen; `undefined` for an effect the executor does not deliver.
-       */
-      const served = <answer>(
-        effect: string,
-        ask: () => Promise<answer>,
-      ): Promise<answer> | undefined => {
-        const lane = lanes.get(effect)
-        if (lane === undefined) return undefined
-        if (lane.closed !== undefined) return Promise.reject(lane.closed)
-        return new Promise<answer>((resolve, refuse) => {
-          lane.asked.push({ serve: () => ask().then(resolve, refuse), refuse })
-          lane.wake()
-        })
-      }
+      const { lanes, asked_on, served, close } = lanes_of(effects)
 
       /**
        * One effect's delivery, its own unit (D108): from its position, the
@@ -485,7 +391,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
             continue
           }
           const held = await ports.state.held(effect)
-          const going_on = freed_in(order)(held)
+          const going_on = entries_freed_in(order)(held)
           const freed = going_on.find((each) => until(each.entry.not_before) <= 0)
           if (freed !== undefined) {
             const outcome = await delivered(freed)
@@ -551,9 +457,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
             fell.push(new Error(`the delivery of ${effect} fell`, { cause: error }))
           })
           .finally(() => {
-            const closed = fell.at(-1) ?? new Error('the effect executor is stopped')
-            lane.closed = closed
-            for (const ask of lane.asked.splice(0)) ask.refuse(closed)
+            close(lane, fell.at(-1) ?? new Error('the effect executor is stopped'))
           }),
       )
 

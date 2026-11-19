@@ -13,6 +13,7 @@ import { borrow_a_tool, return_a_tool } from '../persona/member/_usecase.ts'
 import { registry as member_1_registry } from '../persona/member/1/_registry.ts'
 import { my_loans as my_loans_of_1 } from '../persona/member/1/_usecase.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
+import { registry as damage_registry } from '../reaction/damage/_registry.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import {
   borrow_a_tool as loans_borrow_a_tool,
@@ -172,6 +173,17 @@ describe('the wiring of an effect executor', () => {
       }),
     ).toThrow(
       'the effect executor: the return borrow_a_tool returns from no effect of the registry given (DOM-13)',
+    )
+  })
+})
+
+describe('the wiring of the consumers of the reactions', () => {
+  test('a reaction to a fact of a domain the versions do not read: stopped at once (part 7.3)', async () => {
+    const tools_alone = await wlib.versions([tools_majors])({ stored: () => Promise.resolve([]) })
+    expect(() =>
+      wlib.reaction_consumers({ registry: damage_registry, versions: tools_alone }),
+    ).toThrow(
+      'the consumers of the reactions: reaction/damage/reaction/the_damaged_tool_goes_to_repair reacts to a fact of no domain whose majors the versions were given (DOM-22)',
     )
   })
 })

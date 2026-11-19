@@ -268,7 +268,13 @@ export { read_use_case_ports } from './read_port.ts'
 export { versions, replay } from './versions.ts'
 export type { VersionsBuilder } from './versions.ts'
 export type { Builders, Sight } from './builders.ts'
-export { identity_of, fingerprint_of, canonical_json, type Retried } from './stable.ts'
+export {
+  identity_of,
+  fingerprint_of,
+  reaction_operation,
+  canonical_json,
+  type Retried,
+} from './stable.ts'
 export { kind_of, is_a_schema } from './kind.ts'
 export type { ConstructKind, Built } from './kind.ts'
 export { as_json, json_schema_of } from './json_schema.ts'
@@ -313,7 +319,9 @@ export type {
   ReactionWirings,
   Redelivered,
   ReactionConsumers,
+  ReactionPorts,
 } from './reaction_consumer.ts'
+export { reaction_consumers } from './reaction_consumer.ts'
 export type {
   EffectsIn,
   Delivered,

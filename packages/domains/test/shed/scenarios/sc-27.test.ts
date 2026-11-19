@@ -1,16 +1,17 @@
 import { describe, expect, test } from 'vitest'
-import { accounts, all, first, oracle, pull, settled, type Who } from './oracle.ts'
+import { accounts, all, first, oracle, pull, quiet, settled, type Who } from './oracle.ts'
 
-// SC-27 (part 6.3, the persona's side; the reaction that records the
-// workshop's fact, with part 7.3): a command leaf may stay open after its
-// outcome until a final event (DOM-3, D58.2). Marta returns the drill
-// damaged; `return_a_tool` keeps her flow open, reads the fact log from her
-// return's fact on, keeps the facts of its chain, by correlation (DOM-10),
-// whose path it follows, of `tools` here, projects them, and stops at the
-// first of its `ends`; at most a minute, then `the_wait_is_over` at her
-// return's position, which records nothing. Whole, her return ends at once.
-// Until the reactions run (7.3), the scenario records the workshop's fact
-// as `reaction/damage/` will, with her return's correlation.
+// SC-27 (part 6.3, the persona's side; since part 7.3 end to end, the
+// workshop's fact recorded by `reaction/damage/`): a command leaf may stay
+// open after its outcome until a final event (DOM-3, D58.2). Marta returns
+// the drill damaged; `return_a_tool` keeps her flow open, reads the fact
+// log from her return's fact on, keeps the facts of its chain, by
+// correlation (DOM-10), whose path it follows, of `tools` here, projects
+// them, and stops at the first of its `ends`; at most a minute, then
+// `the_wait_is_over` at her return's position, which records nothing.
+// Whole, her return ends at once. The consumer of `reaction/damage/` sends
+// the drill to the workshop with her return's correlation, the chain her
+// return began (DOM-16: a reaction invokes with its fact's).
 
 const marta: Who = { identified_by: 'account', id: 'A-MARTA' }
 
@@ -48,14 +49,12 @@ const the_shed = async () => {
       }),
       { loan_id: 'L7', tool_id: 'drill', condition },
     )
-  /** The workshop takes the drill in, recorded with her return's correlation, as `reaction/damage/` will (7.3). */
-  const taken_in = () =>
-    first(
-      shed.tools.send_a_tool_to_repair(
-        shed.at('2026-11-20T10:01:00-05:00', { correlation: 'C-RETURN' }),
-        { tool_id: 'drill' },
-      ),
-    )
+  /** The consumers of the reactions start, a minute after her return: the workshop takes the drill in (`reaction/damage/`). */
+  const taken_in = async () => {
+    const consumers = shed.reactions({ at: '2026-11-20T10:01:00-05:00' })
+    await quiet()
+    return consumers
+  }
   return { shed, her_return, taken_in }
 }
 
@@ -83,17 +82,33 @@ describe('SC-27: Marta’s screen follows her damaged return to the workshop', (
     expect(await pull(flow, 1)).toEqual([
       { event: 'you_returned_the_tool_damaged', payload: { tool_id: 'drill' } },
     ])
-    // Luca sends the sander to the workshop, his own request (5).
+    // Luca sends the sander to the workshop, his own request (5), before
+    // the consumers start.
     await first(shed.tools.send_a_tool_to_repair(shed.at(friday), { tool_id: 'sander' }))
-    await taken_in()
+    const consumers = await taken_in()
     expect(await rest(flow)).toEqual([
       { event: 'the_tool_is_in_the_workshop', payload: { tool_id: 'drill' } },
     ])
     expect(shed.waits()).toEqual([60_000])
     expect(shed.traced()).toEqual([])
+    expect((await shed.recorded()).at(-1)).toMatchObject({
+      operation: { scope: 'reaction/damage/reaction/the_damaged_tool_goes_to_repair' },
+      correlation: 'C-RETURN',
+    })
+    await consumers.stop()
   })
 
-  test('nothing comes within a minute: `the_wait_is_over`, at her return’s position, and the flow closes', async () => {
+  test('the consumers running, her damaged return reaches the workshop, and her flow ends', async () => {
+    const { shed, her_return } = await the_shed()
+    const consumers = shed.reactions({ at: friday })
+    expect(await all(her_return('damaged'))).toEqual([
+      { event: 'you_returned_the_tool_damaged', payload: { tool_id: 'drill' } },
+      { event: 'the_tool_is_in_the_workshop', payload: { tool_id: 'drill' } },
+    ])
+    await consumers.stop()
+  })
+
+  test('the consumers down, nothing comes within a minute: `the_wait_is_over`, at her return’s position, and the flow closes', async () => {
     const { shed, her_return } = await the_shed()
     const flow = her_return('damaged')[Symbol.asyncIterator]()
     await pull(flow, 1)
@@ -111,11 +126,12 @@ describe('SC-27: Marta’s screen follows her damaged return to the workshop', (
     const { her_return, taken_in } = await the_shed()
     const first_try = her_return('damaged')[Symbol.asyncIterator]()
     await pull(first_try, 1)
-    await taken_in()
+    const consumers = await taken_in()
     await rest(first_try)
     expect(await all(her_return('damaged', 'C-RETRY'))).toEqual([
       { event: 'you_returned_the_tool_damaged', payload: { tool_id: 'drill' } },
       { event: 'the_tool_is_in_the_workshop', payload: { tool_id: 'drill' } },
     ])
+    await consumers.stop()
   })
 })

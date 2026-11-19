@@ -33,7 +33,11 @@
 // Since part 7.1 the effect executor of `loans` over the cell's outbox
 // (`executor`), its clock and its waits the scenario's (`pass`), the world
 // of the reminders faked (`network`, `received`), its letters shown
-// (`held`), and the facts the cell recorded (`recorded`).
+// (`held`), and the facts the cell recorded (`recorded`). Since part 7.3 the
+// consumer of `reaction/damage/` over the cell's log (`reactions`), its
+// clock the executor's, the parts it holds shown (`held_parts`), the
+// adapter of `tools` it invokes released with a defect or falling as a
+// scenario says (`the_adapter_of_tools`).
 
 import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
@@ -50,7 +54,9 @@ import {
   type State,
   type Strategy,
   log,
+  tools_command_adapter,
 } from '../adapter/memory/index.ts'
+import { tools_fragments } from '../adapter/memory/tools.ts'
 import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts.ts'
 import { account_id, key_id } from '../auth/accounts/_id.ts'
 import { hats, member_card } from '../auth/accounts/_value.ts'
@@ -80,6 +86,8 @@ import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
+import { send_a_tool_to_repair } from '../business/tools/_usecase.ts'
+import { registry as damage_registry } from '../reaction/damage/_registry.ts'
 import { member_id } from '../business/loans/_id.ts'
 import {
   declare_the_loan_overdue,
@@ -598,6 +606,102 @@ export const oracle = async (start: Start = {}) => {
         }),
     })
   }
+  // The consumers of the reactions (part 7.3), as the configurator wires
+  // them: `reaction/damage/` over the cell's log, its durable state (kept
+  // across a fall: the consumer started again finds its position and the
+  // parts it holds), the clock of the executor, which a scenario sets
+  // (`pass`). The port it invokes is the library's, over an adapter of
+  // `tools` a scenario may release with a defect, which reads every tool as
+  // neither in service, in the workshop nor retired (SC-42), or whose next
+  // execution falls, a technical abort (TST-4).
+  const reaction_positions = new Map<string, wlib.position>()
+  let parts_held: readonly wlib.HeldPart[] = []
+  const parts_discarded: wlib.Discarded[] = []
+  let reactions_save_their_positions = true
+  const same_part = (a: wlib.ReactionPart) => (b: wlib.ReactionPart) =>
+    a.reaction === b.reaction &&
+    a.part === b.part &&
+    a.fact.operation.scope === b.fact.operation.scope &&
+    a.fact.operation.id === b.fact.operation.id
+  const reaction_state: wlib.ReactionState = {
+    position: (reaction) => Promise.resolve(reaction_positions.get(reaction)),
+    advance: (reaction) => (to) => {
+      if (reactions_save_their_positions) reaction_positions.set(reaction, to)
+      return Promise.resolve()
+    },
+    held: (reaction) => Promise.resolve(parts_held.filter((each) => each.reaction === reaction)),
+    hold: (part) => {
+      parts_held = (
+        parts_held.some(same_part(part))
+          ? parts_held.map((each) => (same_part(part)(each) ? part : each))
+          : [...parts_held, part]
+      ).toSorted((a, b) => Number(a.position) - Number(b.position) || a.part - b.part)
+      return Promise.resolve()
+    },
+    release: (part) => {
+      parts_held = parts_held.filter((each) => !same_part(part)(each))
+      return Promise.resolve()
+    },
+    discarded: (trace) => {
+      parts_discarded.push(trace)
+      return Promise.resolve()
+    },
+  }
+  let release_of_tools: 'right' | 'with_a_defect' = 'right'
+  let tools_falls_after: number | undefined = undefined
+  const read_right =
+    <parameters, state>(predicate: (parameters: parameters) => (state: state) => boolean) =>
+    (parameters: parameters) =>
+    (state: state): boolean =>
+      release_of_tools === 'right' && predicate(parameters)(state)
+  const tools_released = tools_command_adapter(cell, {
+    ...tools_fragments,
+    'business/tools/predicate/the_tool_is_in_service': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_in_service'],
+    ),
+    'business/tools/predicate/the_tool_is_under_repair': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_under_repair'],
+    ),
+    'business/tools/predicate/the_tool_is_retired': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_retired'],
+    ),
+  })
+  const execute_released: typeof tools_released.execute = (plan) => {
+    if (tools_falls_after === undefined) return tools_released.execute(plan)
+    if (tools_falls_after > 0) {
+      tools_falls_after -= 1
+      return tools_released.execute(plan)
+    }
+    tools_falls_after = undefined
+    return Promise.reject(new Error('the adapter of tools aborted'))
+  }
+  const tools_for_reactions = wlib.command_use_case_ports({
+    registry: tools_registry,
+    versions,
+    use_cases: { send_a_tool_to_repair },
+  })({ ...tools_released, execute: execute_released })
+  const damage_consumers = wlib.reaction_consumers({ registry: damage_registry, versions })({
+    'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
+      log: wired.log,
+      invokes: tools_for_reactions.send_a_tool_to_repair,
+    },
+  })
+  /**
+   * The consumers of the reactions started (DOM-16), their clock at an
+   * instant; one that saves no position falls, as far as its state knows,
+   * before each advance (TST-4).
+   */
+  const reactions = (world: {
+    readonly at: string
+    readonly saves_its_position?: boolean
+  }): wlib.ReactionConsumers => {
+    instant = wlib.date_time.parse(world.at)
+    reactions_save_their_positions = world.saves_its_position ?? true
+    return damage_consumers({
+      state: reaction_state,
+      clock: { now: () => instant, time_zone: zone },
+    })
+  }
   /**
    * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
    * as the interface verified it, the version the client was built at
@@ -719,6 +823,27 @@ export const oracle = async (start: Start = {}) => {
       holding.filter((each) => each.entry.effect === effect),
     /** The letters an operator discarded, with their traces. */
     discarded: (): readonly wlib.Discarded<wlib.EffectDeadLetter>[] => [...discards],
+    reactions,
+    /** The parts a reaction holds, as its state keeps them (DOM-16, SC-42): shown, never a business fact. */
+    held_parts: (reaction: string): readonly wlib.HeldPart[] =>
+      parts_held.filter((each) => each.reaction === reaction),
+    /** The reactions' letters an operator discarded, with their traces. */
+    discarded_parts: (): readonly wlib.Discarded[] => [...parts_discarded],
+    /**
+     * The adapter of `tools` the reactions invoke, released: right, or with
+     * a defect that reads every tool as neither in service, in the
+     * workshop nor retired (SC-42).
+     */
+    the_adapter_of_tools: (release: 'right' | 'with_a_defect') => {
+      release_of_tools = release
+    },
+    /**
+     * An execution of the adapter of `tools` the reactions invoke falls, a
+     * technical abort (TST-4): the next one, or the one after so many.
+     */
+    the_adapter_of_tools_falls: (after = 0) => {
+      tools_falls_after = after
+    },
     /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
     recorded: async (): Promise<readonly wlib.StoredEnvelope[]> => {
       const facts = new Map<wlib.position, wlib.StoredEnvelope>()

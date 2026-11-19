@@ -1,5 +1,5 @@
 import type * as z from 'zod'
-import { fingerprint, type Operation } from './context.ts'
+import { fingerprint, operation_id, type Operation } from './context.ts'
 import { cursor } from './format.ts'
 
 // The stable functions of the library (LIB-10, D100): values derived from
@@ -260,6 +260,35 @@ export interface Retried {
  */
 export const fingerprint_of = (request: Retried): fingerprint =>
   fingerprint.parse(digest(['fingerprint_of', request.path, canonical_json(request.input)]))
+
+/**
+ * A reaction's operation (DOM-16, D91.3, LIB-10): its scope the reaction's
+ * path ("system · reaction R"), its id the digest of that path, the
+ * operation that recorded the fact (DOM-10: its scope and id, the fact's
+ * identity) and the part the reaction reacts to, by its position in the
+ * fact (D113.3), so that a fact delivered again is the duplicate branch
+ * (DOM-11): Luca retires the ladder, the consumer falls before saving its
+ * position, the fact comes again, one work sheet (TST-4). The operation's
+ * scope enters the digest with its id, so that two facts of two scopes
+ * with one id meet on no operation. A stable function, in the stability
+ * corpus: an operation derived before a change would no longer meet its
+ * fact (the stay Marta's damaged return opened, `identity_of`, would be
+ * another). C, 19 Nov 2026
+ */
+export const reaction_operation =
+  (reaction: string) =>
+  (delivered: { readonly operation: Operation; readonly part: number }): Operation => ({
+    scope: reaction,
+    id: operation_id.parse(
+      digest([
+        'reaction_operation',
+        reaction,
+        delivered.operation.scope,
+        delivered.operation.id,
+        String(delivered.part),
+      ]),
+    ),
+  })
 
 /**
  * An order key (LIB-9, D109): each field of a query's order, closed by its

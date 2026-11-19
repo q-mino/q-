@@ -711,10 +711,14 @@ export const loans_command_use_cases = {
 /**
  * The oracle's state adapter for the commands of `tools` that run no step
  * (TST-2): the fragments of its predicates, the writes of its facts, the
- * execution.
+ * execution. A test may give fragments of its own, a release of the adapter
+ * with a defect (SC-42), over the same cell.
  */
-export const tools_command_adapter = (cell: CommandCell) => ({
-  algebra: algebra(tools_fragments),
+export const tools_command_adapter = (
+  cell: CommandCell,
+  fragments: typeof tools_fragments = tools_fragments,
+) => ({
+  algebra: algebra(fragments),
   write: tools_writes,
   execute: execute(cell),
 })
