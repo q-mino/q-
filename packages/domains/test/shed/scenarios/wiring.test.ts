@@ -9,7 +9,9 @@ import { retire_a_tool, send_a_tool_to_repair } from '../persona/keeper/_usecase
 import { the_catalogue } from '../persona/visitor/_usecase.ts'
 import { registry as member_registry } from '../persona/member/_registry.ts'
 import { majors as member_majors } from '../persona/member/_majors.ts'
-import { return_a_tool } from '../persona/member/_usecase.ts'
+import { borrow_a_tool, return_a_tool } from '../persona/member/_usecase.ts'
+import { registry as member_1_registry } from '../persona/member/1/_registry.ts'
+import { my_loans as my_loans_of_1 } from '../persona/member/1/_usecase.ts'
 
 // The wiring of a tree's ports (part 6.1, CFG-2): the configurator's faults
 // stop the node before the first request, every one named in one message.
@@ -83,6 +85,57 @@ describe("the wiring of a tree's ports", () => {
       }),
     ).toThrow(
       'persona/member/usecase/return_a_tool follows, and no port given measures how long it waits (elapsed, CFG-2)',
+    )
+  })
+
+  test('a leaf of a past major given as the current one, which the types let through: stopped (part 6.4)', async () => {
+    const shed = await oracle()
+    // Leaves are structural: `my_loans` of `1/` has the port's type. A
+    // registry that holds `1/` finds it at the current path; only the
+    // current major's registry, by object identity, tells.
+    expect(() =>
+      wlib.tree_ports({
+        registry: { ...persona_registry, ...member_registry, ...member_1_registry },
+        versions: shed.versions,
+        majors: member_majors,
+        top: persona,
+        use_cases: { my_loans: my_loans_of_1 },
+      }),
+    ).toThrow(
+      "persona/member/usecase/my_loans is given as a leaf that is not the current major's at its path (PER-17, CFG-2)",
+    )
+  })
+
+  test('majors that declare no version, a past major that leads elsewhere: stopped (part 6.4)', async () => {
+    const shed = await oracle()
+    expect(() =>
+      wlib.tree_ports({
+        registry: { ...persona_registry, ...member_registry },
+        versions: shed.versions,
+        majors: { 1: member_majors[1] },
+        top: persona,
+        use_cases: { borrow_a_tool },
+      }),
+    ).toThrow(
+      "the majors given declare 0 versions: a tree's majors hold one current registry, whose version.ts declares its version (PER-17, CFG-2)",
+    )
+    expect(() =>
+      wlib.tree_ports({
+        registry: { ...persona_registry, ...member_registry },
+        versions: shed.versions,
+        majors: {
+          2: member_majors[2],
+          1: {
+            ...member_majors[1],
+            'persona/member/usecase/borrow_a_tool':
+              member_majors[1]['persona/member/usecase/my_loans'],
+          },
+        },
+        top: persona,
+        use_cases: { borrow_a_tool },
+      }),
+    ).toThrow(
+      'persona/member/usecase/borrow_a_tool of major 1 does not lead to the current leaf given (PER-17, CFG-2)',
     )
   })
 })

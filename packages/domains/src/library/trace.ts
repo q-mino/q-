@@ -39,9 +39,15 @@ export interface TracedFailure {
  * Why a request was answered with no fact, by the check of PER-5 that closed
  * it, named as the library knows it:
  *
+ * - `the_gate`: the version the message carries out of the tree's window
+ *   (PER-17, part 6.4), with the version the tree speaks and its oldest
+ *   major, as the caller reads them;
+ * - `not_a_leaf`: the major the version picks has no leaf at the path
+ *   (D106.3, D72.7: a leaf added at a later major);
  * - `the_input`: the leaf's input not in its schema, each field and rule
  *   (D106.3); for a leaf whose input names its operation, one that names
- *   none (SC-34);
+ *   none (SC-34); at a past major, the input of the request's major, or the
+ *   next major's it goes forward to (`to_next`, PER-17);
  * - `a_lookup`: a node's lookups not known, a perimeter (D87.5), each named;
  * - `a_perimeter`: a node's perimeter, the first that fails (PER-14);
  * - `limits`: a node's or the leaf's limits, every failed one, by the path
@@ -51,6 +57,8 @@ export interface TracedFailure {
  *   a cursor it does not take (DOM-21, SC-22).
  */
 export type TraceReason =
+  | { readonly closed_by: 'the_gate'; readonly current: Semver; readonly oldest: number }
+  | { readonly closed_by: 'not_a_leaf'; readonly major: number }
   | { readonly closed_by: 'the_input'; readonly issues: readonly TracedIssue[] }
   | { readonly closed_by: 'a_lookup'; readonly node: string; readonly lookups: readonly NotKnown[] }
   | { readonly closed_by: 'a_perimeter'; readonly node: string; readonly perimeter: string }

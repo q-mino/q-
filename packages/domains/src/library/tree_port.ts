@@ -7,6 +7,7 @@ import type { Elapsed, Invoked, TreeLeaves, TreePorts } from './tree.ts'
 import { $Versions } from './registry.ts'
 import type { NotKnown, Trace, TraceReason, Traced, TracedFailure, TracedIssue } from './trace.ts'
 import { $Node, type EntryOf } from './node.ts'
+import { $Delegated, $Earlier, $Version } from './version.ts'
 import { $UseCase } from './use_case.ts'
 import { is_a_schema } from './kind.ts'
 import { fingerprint_of } from './stable.ts'
@@ -76,7 +77,40 @@ interface TreeNode {
   readonly gives: unknown
 }
 
-/** A leaf as the ports meet it at runtime: its declaration, the port it invokes, the nodes of its path. */
+/**
+ * The window of a tree (PER-17, A, 17 Nov 2026): its majors, the folders
+ * the generator lists (`_majors.ts`), and the version it speaks, its current
+ * major's `version.ts`'s, which the gate tells with the oldest major.
+ */
+interface Window {
+  readonly current: Semver
+  readonly major: number
+  readonly minor: number
+  readonly oldest: number
+  readonly majors: ReadonlySet<number>
+}
+
+/**
+ * A leaf of a past major, one step over the next major's leaf (`earlier`,
+ * PER-17): its input and the step forward, its events (a command leaf's, or
+ * its stream's own, a read leaf's) or its entry and the steps back, each
+ * over the context of the leaf's point first (A, 17 Nov 2026, SC-12). A
+ * delegated leaf is no step: it is the next major's.
+ */
+interface PastStep {
+  readonly major: number
+  readonly input: unknown
+  readonly declared: Context
+  readonly events: Readonly<Record<string, z.ZodType>>
+  readonly entry?: z.ZodObject
+}
+
+/**
+ * A leaf as the ports meet it at runtime: its declaration, the port it
+ * invokes, the nodes of its path; the tree's window, and, by each major of
+ * the window that has a leaf at its path, the steps from that major's leaf
+ * up to it, none for the current major (PER-17).
+ */
 interface TreeLeaf {
   readonly name: string
   readonly path: string
@@ -84,6 +118,8 @@ interface TreeLeaf {
   readonly declared: Context
   readonly port: unknown
   readonly nodes: readonly TreeNode[]
+  readonly window: Window
+  readonly pasts: ReadonlyMap<number, readonly PastStep[]>
 }
 
 /**
@@ -188,15 +224,20 @@ const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
  * that no port given serves; a read leaf that streams over a port that
  * does not, or lists actions over a port with no `with_actions` (D110,
  * SC-33); a leaf that follows a fact of no domain whose versions were given,
- * or with no port to measure its wait (`elapsed`). The check of a current
- * leaf that is not the one of its path in the current major comes with
- * part 6.4.
+ * or with no port to measure its wait (`elapsed`); majors that do not hold
+ * one current registry declaring its version under its major; a leaf given
+ * that is not the current major's at its path (a leaf of `1/` in place of
+ * the current one, which the types let through), or a past major's leaf at
+ * its path that does not lead to it (PER-17, part 6.4).
  *
- * Per request, in the order of PER-5: the version's major picks the leaf
- * (the current major since part 6.1; past majors and the gate with part
- * 6.4); the input in the leaf's schema, built over the context the entry
- * gives (`invalid_request`, `input_not_in_schema`), before any node, so that
- * a caller learns nothing the public contract does not tell (PER-7); the
+ * Per request, in the order of PER-5: the gate (`version_not_supported`,
+ * with the version the tree speaks and its oldest major), for a major the
+ * window has not or the current major at a higher minor, the patch not
+ * counted; the version's major picks the leaf, a path it has not
+ * `not_a_leaf`; the input in the schema of that major's leaf, built over
+ * the context the entry gives (`invalid_request`, `input_not_in_schema`),
+ * before any node, so that a caller learns nothing the public contract does
+ * not tell (PER-7); the
  * nodes, outer first, each in its order: the top's `takes` parsed from the
  * entry (one it does not parse is the entry's fault, thrown), its lookups,
  * a key or a value not known closing with `not_found`, its perimeters
@@ -206,7 +247,12 @@ const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
  * operation); the use case below, given the root's context alone, copied
  * (D105.1). A leaf whose input names its operation (SC-34) is given its
  * scope alone by the entry, and the library reads the id from its input
- * after the schema.
+ * after the schema. At a past major (PER-17) the input goes forward after
+ * the nodes, step by step (`to_next`, over the point's context), each next
+ * major's schema checking it (`invalid_request`); the current leaf's limits,
+ * creator and projection answer, and each event of its own, an entry, an
+ * event of its stream's own, comes back step by step (`from_next`); the
+ * nodes' closings and the base events cross as they are.
  */
 export function tree_ports<
   const top,
@@ -402,22 +448,136 @@ const limits_of = (leaf: TreeLeaf, context: Context, input: unknown): Walked => 
     : { closed: false, context }
 }
 
-/**
- * The major of a request's version (PER-17, D72.7): the current one since
- * part 6.1; a past major, and the gate, with part 6.4. A version that is no
- * semver is a fault of the entry, thrown.
- */
-const at_the_current_major = (leaf: TreeLeaf, majors: Majors, version: unknown): Semver => {
+/** The version a request carries (PER-17, D72.7): one that is no semver is a fault of the entry, thrown. */
+const version_of = (leaf: TreeLeaf, version: unknown): Semver => {
   const parsed = semver.safeParse(version)
   if (!parsed.success) throw new Error(`${leaf.path}: the entry gives no version (PER-17)`)
-  const current = Math.max(...Object.keys(majors).map(Number))
-  const major = Number(parsed.data.split('.')[0])
-  if (major !== current) {
-    throw new Error(
-      `${leaf.path}: a request at ${parsed.data}, not of the current major ${String(current)}: past majors and the gate come with part 6.4`,
-    )
-  }
   return parsed.data
+}
+
+/** The major and the minor of a version. */
+const major_and_minor = (version: Semver): readonly [number, number] => {
+  const [major, minor] = version.split('.').map(Number)
+  return [major ?? Number.NaN, minor ?? Number.NaN]
+}
+
+/**
+ * Where a request's version leads (PER-17, D72.7, A, 17 Nov 2026), at the
+ * entry of the tree, before any node, so that no lookup runs: the gate,
+ * `version_not_supported`, for a major the window has not (a `1.2.0` once
+ * `1/` is deleted, a `3.0.0` on a tree at 2.0.0) or the current major at a
+ * higher minor (a `2.1.0` on 2.0.0), the patch not counted, telling the
+ * version the tree speaks and its oldest major; a major with no leaf at the
+ * path, `not_a_leaf` (D106.3); else the steps from its leaf to the current.
+ */
+const picked = (
+  leaf: TreeLeaf,
+  version: Semver,
+):
+  | { readonly closed: true; readonly event: RuntimeLeafEvent; readonly why: TraceReason }
+  | { readonly closed: false; readonly past: readonly PastStep[] } => {
+  const { window } = leaf
+  const [major, minor] = major_and_minor(version)
+  if (!window.majors.has(major) || (major === window.major && minor > window.minor)) {
+    return {
+      closed: true,
+      event: { event: 'version_not_supported', current: window.current, oldest: window.oldest },
+      why: { closed_by: 'the_gate', current: window.current, oldest: window.oldest },
+    }
+  }
+  const past = leaf.pasts.get(major)
+  return past === undefined
+    ? {
+        closed: true,
+        event: { event: 'invalid_request', reason: 'not_a_leaf' },
+        why: { closed_by: 'not_a_leaf', major },
+      }
+    : { closed: false, past }
+}
+
+/**
+ * The input of a past major's leaf gone forward to the current leaf's
+ * (PER-17): each step's `to_next`, over the context of the leaf's point,
+ * then the next major's schema, built over what the entry gives, as at the
+ * request's major; an input a later major's schema refuses (a static rule
+ * over `now`, DOM-21) is `invalid_request`, each field and rule for the
+ * trace. With no step, the input as it is.
+ */
+const forward = (
+  past: readonly PastStep[],
+  current: unknown,
+  point: Context,
+  given: Context,
+  input: unknown,
+):
+  | { readonly forwarded: true; readonly input: unknown }
+  | { readonly forwarded: false; readonly issues: readonly TracedIssue[] } => {
+  const [step, ...above] = past
+  if (step === undefined) return { forwarded: true, input }
+  const parsed = schema_of(above[0]?.input ?? current, given).safeParse(
+    called(called(step.declared['to_next'], point), input),
+  )
+  return parsed.success
+    ? forward(above, current, point, given, parsed.data)
+    : { forwarded: false, issues: issues_of(parsed.error) }
+}
+
+/**
+ * An event of the current leaf, back in the words of the request's major
+ * (PER-17): its step back at each major, the nearest the current first, each
+ * over the context of the leaf's point, taken once (`from_next`), and parsed
+ * by that major's schema of the event, one not in it the past leaf's fault,
+ * thrown; the nodes' closings and the base events cross as they are.
+ */
+const back_events = (
+  path: string,
+  past: readonly PastStep[],
+  steps_back: (step: PastStep) => unknown,
+  own: ReadonlySet<string>,
+): ((event: RuntimeLeafEvent) => RuntimeLeafEvent) => {
+  const steps = past.toReversed().map((step) => ({ step, from_next: steps_back(step) }))
+  return (event) =>
+    own.has(event.event)
+      ? steps.reduce<RuntimeLeafEvent>((current, { step, from_next }) => {
+          const each = is_a_record(from_next) ? from_next[current.event] : undefined
+          if (typeof each !== 'function') {
+            throw new Error(
+              `${path}: no step back of ${current.event} at major ${String(step.major)} (PER-17)`,
+            )
+          }
+          // A stream's event keeps its position, identity and entry.
+          return {
+            ...current,
+            ...event_of({ path, events: step.events }, called(each, current['payload'])),
+          }
+        }, event)
+      : event
+}
+
+/**
+ * An entry of the current read leaf, back in the words of the request's
+ * major (PER-17, PER-18): its step back at each major, the nearest the
+ * current first, over the context of the leaf's point, taken once, and
+ * parsed by that major's entry, one not in it the past leaf's fault, thrown.
+ */
+const back_entry = (
+  path: string,
+  past: readonly PastStep[],
+  point: Context,
+): ((entry: unknown) => unknown) => {
+  const steps = past
+    .toReversed()
+    .map((step) => ({ step, from_next: called(step.declared['from_next'], point) }))
+  return (entry) =>
+    steps.reduce((current, { step, from_next }) => {
+      const parsed = step.entry?.safeParse(called(from_next, current))
+      if (parsed?.success !== true) {
+        throw new Error(
+          `${path}: its step back at major ${String(step.major)} gives an entry not in its schema (PER-17)`,
+        )
+      }
+      return parsed.data
+    }, entry)
 }
 
 /** The predicates a business rejection names (DOM-6, D105.4), as the trace keeps them. */
@@ -651,15 +811,32 @@ async function* followed(
   }
 }
 
+/** The base event of a request whose input names no operation's id (SC-34), with why, for the trace. */
+const names_no_operation = (entered: Entered): TraceReason => ({
+  closed_by: 'the_input',
+  issues: [
+    {
+      field: entered.by === 'the_input' ? [entered.identity] : [],
+      rule: 'operation_id',
+      message: 'it names no operation (DOM-11)',
+    },
+  ],
+})
+
 /**
  * A command leaf's port (PER-6, D45): its outcome, projected, the first
  * event and a terminal one (D72.3). A request answered with no fact leaves
- * its entry in the tree's trace, with why (F6, PER-14).
+ * its entry in the tree's trace, with why (F6, PER-14). At a past major
+ * (PER-17) the request's input is checked by its major's leaf, before any
+ * node, and goes forward after them (`to_next`, over the point's context);
+ * the current leaf's limits, creator and projection answer, and each event
+ * of its own comes back in the major's words (`from_next`), what it follows
+ * too.
  */
-const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
+const command_leaf_port = (leaf: CommandLeaf, trace: unknown) =>
   async function* (context: unknown, sent: unknown): AsyncIterable<RuntimeLeafEvent> {
     const entry = entry_of(context)
-    const version = at_the_current_major(leaf, majors, entry.version)
+    const version = version_of(leaf, entry.version)
     const entered = operation_entered(leaf, entry.operation)
     const origin = correlation.safeParse(entry.correlation)
     if (!origin.success) throw new Error(`${leaf.path}: the entry gives no correlation (DOM-10)`)
@@ -673,10 +850,17 @@ const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
       operation: entered.by === 'the_entry' ? entered.operation : { scope },
       correlation: origin.data,
     }
-    // PER-5.3: the input in the leaf's schema, before any node, built over
-    // what the entry gives every command leaf: the root's context and the
-    // operation's scope.
-    const input = schema_of(leaf.input, { ...entry.given, operation: { scope } }).safeParse(sent)
+    // PER-5.2: the gate, then the leaf of the version's major, before any node.
+    const at = picked(leaf, version)
+    if (at.closed) {
+      yield traced(tracing, at.event, at.why)
+      return
+    }
+    // PER-5.3: the input in the schema of the major's leaf, before any node,
+    // built over what the entry gives every command leaf: the root's
+    // context and the operation's scope.
+    const given = { ...entry.given, operation: { scope } }
+    const input = schema_of(at.past[0]?.input ?? leaf.input, given).safeParse(sent)
     if (!input.success) {
       yield traced(tracing, input_not_in_schema, {
         closed_by: 'the_input',
@@ -684,32 +868,51 @@ const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
       })
       return
     }
-    // SC-34, D91.2: the id of the operation, where its input names it, after the schema.
-    const operation = operation_of(entered, input.data)
-    if (operation === undefined) {
-      yield traced(tracing, input_not_in_schema, {
+    // SC-34, D91.2: the id of the operation, where its input names it,
+    // after the schema; at a past major, from the current leaf's input,
+    // once it has gone forward.
+    const named = at.past.length === 0 ? operation_of(entered, input.data) : undefined
+    if (at.past.length === 0 && named === undefined) {
+      yield traced(tracing, input_not_in_schema, names_no_operation(entered))
+      return
+    }
+    const tracing_named: Tracing = named === undefined ? tracing : { ...tracing, operation: named }
+    // PER-5.4: the nodes of the path.
+    const walked = await walk(leaf.nodes, entry.given)
+    if (walked.closed) {
+      yield traced(tracing_named, walked.event, walked.why)
+      return
+    }
+    // PER-17: the input forward to the current leaf's, over the point's context.
+    const ahead = forward(at.past, leaf.input, walked.context, given, input.data)
+    if (!ahead.forwarded) {
+      yield traced(tracing_named, input_not_in_schema, {
         closed_by: 'the_input',
-        issues: [
-          {
-            field: entered.by === 'the_input' ? [entered.identity] : [],
-            rule: 'operation_id',
-            message: 'it names no operation (DOM-11)',
-          },
-        ],
+        issues: ahead.issues,
       })
       return
     }
+    const operation = named ?? operation_of(entered, ahead.input)
+    if (operation === undefined) {
+      yield traced(tracing, input_not_in_schema, names_no_operation(entered))
+      return
+    }
     const tracing_operation: Tracing = { ...tracing, operation }
-    // PER-5.4, PER-5.5: the nodes of the path, then the leaf's own limits.
-    const walked = await walk(leaf.nodes, entry.given)
-    const point = walked.closed ? walked : limits_of(leaf, walked.context, input.data)
+    const back = back_events(
+      leaf.path,
+      at.past,
+      (step) => called(step.declared['from_next'], walked.context),
+      new Set(Object.keys(leaf.events)),
+    )
+    // PER-5.5: the leaf's own limits, the current leaf's.
+    const point = limits_of(leaf, walked.context, ahead.input)
     if (point.closed) {
       yield traced(tracing_operation, point.event, point.why)
       return
     }
     const below = called(
       called(leaf.declared['creator'], { ...point.context, operation }),
-      input.data,
+      ahead.input,
     )
     const outcomes = invoked_with(leaf.port, [
       {
@@ -732,24 +935,24 @@ const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
             `${leaf.path}: ${projected.event.event} closes a request with no fact, and is not one of its ends (DOM-3)`,
           )
         }
-        yield traced(tracing_operation, projected.event, projected.why)
+        yield traced(tracing_operation, back(projected.event), projected.why)
         return
       }
-      yield projected.event
+      yield back(projected.event)
       if (!goes_on) return
       // DOM-3, D58.2: the flow stays open on what the leaf follows, from
       // its outcome's fact, by its chain's correlation.
       // The chain is the outcome's fact's (DOM-10): a retry that meets it
       // follows the chain the first request began, whatever it sent.
       const fact = is_a_record(outcome) ? outcome['fact'] : undefined
-      const at = position.safeParse(is_a_record(outcome) ? outcome['position'] : undefined)
+      const from = position.safeParse(is_a_record(outcome) ? outcome['position'] : undefined)
       const chain = correlation.safeParse(is_a_record(fact) ? fact['correlation'] : undefined)
-      if (!at.success || !chain.success) {
+      if (!from.success || !chain.success) {
         throw new Error(
           `${leaf.path}: the port below gives an applied outcome with no position or no correlation`,
         )
       }
-      yield* followed(leaf, following, at.data, chain.data)
+      for await (const event of followed(leaf, following, from.data, chain.data)) yield back(event)
       return
     }
     throw new Error(`${leaf.path}: the port below gives no outcome (DOM-3)`)
@@ -967,19 +1170,30 @@ const with_actions = (
  * page, after a cursor if it resumes; an input or a cursor not in its
  * schema as the base event the port below gives. A request closed before
  * any snapshot leaves its entry in the tree's trace, with why (F6,
- * PER-14); the events of a stream are no rejection, and are not traced.
+ * PER-14); the events of a stream are no rejection, and are not traced. At
+ * a past major (PER-17) the request's input is checked by its major's leaf,
+ * before any node, and goes forward after them (`to_next`); the current
+ * leaf reads, and each entry comes back in the major's words (`from_next`),
+ * each event of its stream's own too, by the identity the current leaf's
+ * stream gives, which the past leaf's field holds (PER-18).
  */
-const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
+const read_leaf_port = (leaf: ReadLeaf, trace: unknown) => {
   async function* read(
     context: unknown,
     sent: unknown,
     resume?: unknown,
   ): AsyncIterable<RuntimeLeafEvent> {
     const entry = entry_of(context)
-    const version = at_the_current_major(leaf, majors, entry.version)
+    const version = version_of(leaf, entry.version)
     const tracing: Tracing = { trace, leaf, given: entry.given, version, sent }
-    // PER-5.3: the input in the leaf's schema, before any node.
-    const input = schema_of(leaf.input, entry.given).safeParse(sent)
+    // PER-5.2: the gate, then the leaf of the version's major, before any node.
+    const at = picked(leaf, version)
+    if (at.closed) {
+      yield traced(tracing, at.event, at.why)
+      return
+    }
+    // PER-5.3: the input in the schema of the major's leaf, before any node.
+    const input = schema_of(at.past[0]?.input ?? leaf.input, entry.given).safeParse(sent)
     if (!input.success) {
       yield traced(tracing, input_not_in_schema, {
         closed_by: 'the_input',
@@ -987,24 +1201,45 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       })
       return
     }
-    // PER-5.4, PER-5.5: the nodes, then the leaf's limits, at every request,
-    // a resume too (SC-32: a stream opened on 31 March, resumed on 1 April).
+    // PER-5.4: the nodes, at every request, a resume too.
     const walked = await walk(leaf.nodes, entry.given)
-    const point = walked.closed ? walked : limits_of(leaf, walked.context, input.data)
+    if (walked.closed) {
+      yield traced(tracing, walked.event, walked.why)
+      return
+    }
+    // PER-17: the input forward to the current leaf's, over the point's context.
+    const ahead = forward(at.past, leaf.input, walked.context, entry.given, input.data)
+    if (!ahead.forwarded) {
+      yield traced(tracing, input_not_in_schema, { closed_by: 'the_input', issues: ahead.issues })
+      return
+    }
+    // PER-5.5: the current leaf's limits, at every request, a resume too
+    // (SC-32: a stream opened on 31 March, resumed on 1 April).
+    const point = limits_of(leaf, walked.context, ahead.input)
     if (point.closed) {
       yield traced(tracing, point.event, point.why)
       return
     }
-    const bound: unknown = called(called(leaf.declared['creator'], point.context), input.data)
+    const bound: unknown = called(called(leaf.declared['creator'], point.context), ahead.input)
     const binding = binding_of(leaf, bound)
     const root = root_of(point.context)
     // SC-33: the port below again, with the actions, past the checks of
     // PER-5, which close a request before any read (SC-32).
     const acting = with_actions(leaf, point.context, is_a_record(bound) ? bound['actions'] : {})
-    const projected = (each: unknown): unknown => entry_in(leaf, acting.entry(each))
+    const in_its_major = back_entry(leaf.path, at.past, point.context)
+    const projected = (each: unknown): unknown => in_its_major(entry_in(leaf, acting.entry(each)))
     if (leaf.streaming !== undefined) {
       // A leaf that streams reads whole (SC-22): the snapshot, then the
       // stream from its position; from a position, the stream alone.
+      const back = back_events(
+        leaf.path,
+        at.past,
+        (step) => {
+          const stream = step.declared['stream']
+          return called(is_a_record(stream) ? stream['from_next'] : undefined, point.context)
+        },
+        new Set(Object.keys(leaf.streaming.events)),
+      )
       const events = invoked_with(
         acting.port,
         resume === undefined ? [root, binding.query] : [root, binding.query, resume],
@@ -1025,7 +1260,7 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
           }
           continue
         }
-        yield stream_event_in(leaf, leaf.streaming, projected, event)
+        yield back(stream_event_in(leaf, leaf.streaming, projected, event))
       }
       return
     }
@@ -1160,10 +1395,137 @@ const actions_of_leaf = (own: unknown): readonly LeafAction[] => {
     : []
 }
 
+/**
+ * The window of a tree from its majors (PER-17, CFG-2): one registry
+ * declares the version (its `version.ts`), under the major that version
+ * names; or why the tree cannot be wired.
+ */
+const window_of = (majors: Majors): Window | string => {
+  const declared = Object.entries(majors).flatMap(([major, registry]) =>
+    Object.values(registry).flatMap((entry) => {
+      if (typeof entry !== 'object' || !($Version in entry)) return []
+      const version = semver.safeParse(entry[$Version])
+      return version.success ? [{ major: Number(major), version: version.data }] : []
+    }),
+  )
+  const [current] = declared
+  if (current === undefined || declared.length > 1) {
+    return `the majors given declare ${String(declared.length)} versions: a tree's majors hold one current registry, whose version.ts declares its version (PER-17, CFG-2)`
+  }
+  const [major, minor] = major_and_minor(current.version)
+  if (major !== current.major) {
+    return `the majors given hold version ${current.version} as major ${String(current.major)}: the current major is the one its version declares (PER-17, CFG-2)`
+  }
+  const numbers = Object.keys(majors).map(Number)
+  return {
+    current: current.version,
+    major,
+    minor,
+    oldest: Math.min(...numbers),
+    majors: new Set(numbers),
+  }
+}
+
+/** A step of a past major's leaf, from what `earlier` built (PER-17): its input, its declaration whole, its events or its entry. */
+const past_step = (major: number, component: object): PastStep => {
+  const own: unknown = Reflect.get(component, $UseCase)
+  const declared = declared_of(component, $UseCase)
+  const entry = is_a_record(own) ? own['entry'] : undefined
+  const stream = declared['stream']
+  const events =
+    entry instanceof z.ZodObject
+      ? is_a_record(stream)
+        ? stream['events']
+        : {}
+      : is_a_record(own)
+        ? own['events']
+        : {}
+  return {
+    major,
+    input: Reflect.get(component, 'input'),
+    declared,
+    events: Object.fromEntries(
+      Object.entries(is_a_record(events) ? events : {}).flatMap(([name, schema]) =>
+        is_a_schema(schema) ? [[name, schema]] : [],
+      ),
+    ),
+    ...(entry instanceof z.ZodObject ? { entry } : {}),
+  }
+}
+
+/**
+ * The steps from a past major's leaf up to the current leaf (PER-17): an
+ * `earlier` is a step over its next major's leaf, a `delegate` the next's
+ * itself; one that leads elsewhere than the current leaf given is a fault,
+ * named at wiring (CFG-2).
+ */
+const steps_up = (
+  major: number,
+  component: unknown,
+  current: unknown,
+  left: number,
+): readonly PastStep[] | undefined => {
+  if (component === current) return []
+  if (left === 0 || typeof component !== 'object' || component === null) return undefined
+  if ($Delegated in component) return steps_up(major, component[$Delegated], current, left - 1)
+  if (!($Earlier in component)) return undefined
+  const over: unknown = component[$Earlier]
+  const above = steps_up(major, is_a_record(over) ? over['next'] : undefined, current, left - 1)
+  return above === undefined ? undefined : [past_step(major, component), ...above]
+}
+
+/**
+ * Each major of the window with a leaf at a path, and the steps from it to
+ * the current leaf, none for the current major (PER-17, D72.7); the faults
+ * at wiring (CFG-2): a leaf given that is not the current major's at its
+ * path (`my_loans` of `1/` given in place of the current one, which the
+ * types let through, leaves being structural: Shed's README, § Left by
+ * Shed), a past major's leaf that does not lead to it.
+ */
+const pasts_of = (
+  path: string,
+  use_case: unknown,
+  majors: Majors,
+  window: Window,
+): {
+  readonly pasts: ReadonlyMap<number, readonly PastStep[]>
+  readonly faults: readonly string[]
+} => {
+  if (majors[window.major]?.[path] !== use_case) {
+    return {
+      pasts: new Map(),
+      faults: [
+        `${path} is given as a leaf that is not the current major's at its path (PER-17, CFG-2)`,
+      ],
+    }
+  }
+  const found = Object.entries(majors).flatMap(([number, registry]) => {
+    const major = Number(number)
+    if (major === window.major || !(path in registry)) return []
+    return [{ major, steps: steps_up(major, registry[path], use_case, window.majors.size) }]
+  })
+  return {
+    pasts: new Map([
+      [window.major, []],
+      ...found.flatMap(({ major, steps }) =>
+        steps === undefined ? [] : [[major, steps] as const],
+      ),
+    ]),
+    faults: found.flatMap(({ major, steps }) =>
+      steps === undefined
+        ? [
+            `${path} of major ${String(major)} does not lead to the current leaf given (PER-17, CFG-2)`,
+          ]
+        : [],
+    ),
+  }
+}
+
 const runtime_tree_ports = (
   ports: RuntimeTreePorts,
 ): ((wired: RuntimeWired) => Readonly<Record<string, unknown>>) => {
   const path_of = paths_in(ports.registry)
+  const window = window_of(ports.majors)
   const top = path_of(ports.top)
   const leaves = Object.entries(ports.use_cases).map(([name, use_case]) => ({
     name,
@@ -1175,8 +1537,16 @@ const runtime_tree_ports = (
       ? [{ path, component, declared: declared_of(component, $Node) }]
       : [],
   )
+  const pasts = new Map(
+    leaves.flatMap(({ name, use_case, path }) =>
+      path === undefined || typeof window === 'string'
+        ? []
+        : [[name, pasts_of(path, use_case, ports.majors, window)] as const],
+    ),
+  )
   const faults = [
     ...(top === undefined ? ['the top is not in the registry given (DOM-24)'] : []),
+    ...(typeof window === 'string' ? [window] : []),
     ...leaves.flatMap(({ name, path }) => {
       if (path === undefined) return [`the leaf ${name} is not in the registry given (DOM-24)`]
       return [
@@ -1184,6 +1554,7 @@ const runtime_tree_ports = (
         ...(top === undefined || is_at_or_above(folder_of(top), folder_of(path))
           ? []
           : [`${path} is not below the top, ${top} (PER-6)`]),
+        ...(pasts.get(name)?.faults ?? []),
       ]
     }),
     ...nodes.flatMap(({ path, component, declared }) => [
@@ -1195,7 +1566,7 @@ const runtime_tree_ports = (
         : []),
     ]),
   ]
-  if (faults.length > 0) throw new Error(faults.join('\n'))
+  if (faults.length > 0 || typeof window === 'string') throw new Error(faults.join('\n'))
 
   return (wired) => {
     const served = new Map<unknown, unknown>()
@@ -1277,6 +1648,8 @@ const runtime_tree_ports = (
         declared: parts,
         port,
         nodes: tree_nodes,
+        window,
+        pasts: pasts.get(name)?.pasts ?? new Map(),
       }
       return {
         leaf,
@@ -1300,7 +1673,6 @@ const runtime_tree_ports = (
             leaf.name,
             read_leaf_port(
               { ...leaf, entry, actions, ...(streaming === undefined ? {} : { streaming }) },
-              ports.majors,
               wired.trace,
             ),
           ]
@@ -1315,7 +1687,6 @@ const runtime_tree_ports = (
           leaf.name,
           command_leaf_port(
             { ...leaf, events: schemas, ...(following === undefined ? {} : { following }) },
-            ports.majors,
             wired.trace,
           ),
         ]

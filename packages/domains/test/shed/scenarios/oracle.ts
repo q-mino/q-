@@ -390,6 +390,9 @@ export const oracle = async (start: Start = {}) => {
       lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
     })(accounts_lookups(cell.get)),
   }
+  // As a test wires a tree of its own: by folder, the ports unnamed (a type
+  // the compiler can still write out for the harness).
+  const as_invoked: wlib.Invoked = invoked
   // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
   // in the order the library hands it.
   const trace: wlib.Traced<unknown>[] = []
@@ -524,6 +527,8 @@ export const oracle = async (start: Start = {}) => {
     log: wired.log,
     /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
     trace: wired.trace,
+    /** The ports the trees invoke, by the folder of what they serve: where a test wires a tree of its own (SC-29). */
+    invoked: as_invoked,
     /** How long each wait a leaf that follows asked for, in milliseconds, in order (DOM-3). */
     waits: (): readonly number[] => [...asked],
     /** The time passes: every wait asked for so far is over (DOM-3, TST-3). */
