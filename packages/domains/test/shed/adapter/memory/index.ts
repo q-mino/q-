@@ -744,9 +744,10 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
     },
   }),
   loans: wlib.command_use_case_ports({
+    registry: loans_registry,
     // The facts of `loans` hold identities of `tools` (GR-3), whose paths
-    // its registry gives.
-    registry: { ...tools_registry, ...loans_registry },
+    // `tools`' registry gives.
+    identities: tools_registry,
     versions,
     use_cases: loans_command_use_cases,
   })({

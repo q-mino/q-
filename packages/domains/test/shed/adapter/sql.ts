@@ -884,6 +884,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
+      // The facts of `loans` hold identities of `tools` (GR-3).
+      identities: tools_registry,
       versions,
       use_cases: {
         borrow_a_tool,

@@ -274,12 +274,12 @@ export const oracle = async (start: Start = {}) => {
   const ports = memory_commands(cell)(versions)
   const reads = memory_reads(cell, start.streams)(versions)
   const alone_registry = {
-    ...tools_registry,
     ...loans_registry,
     [notify_alone_path]: notify_alone,
   }
   const alone = wlib.command_use_case_ports({
     registry: alone_registry,
+    identities: tools_registry,
     versions,
     use_cases: { notify_a_member_of_the_repair: notify_alone },
   })(loans_command_adapter(cell))
