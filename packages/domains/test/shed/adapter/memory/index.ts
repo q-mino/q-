@@ -241,6 +241,18 @@ const already_recorded = (recorded: Recorded): zz.AlreadyRecorded => ({
 })
 
 /**
+ * The fact an operation recorded, looked up alone (PER-5, `RecordedBy`): the
+ * duplicate branch read before anything is parsed, outside a step; a read,
+ * on the operations the cell keeps.
+ */
+const recorded =
+  (cell: CommandCell): zz.RecordedBy =>
+  (operation) => {
+    const found = cell.recorded_by(operation)
+    return Promise.resolve(found === undefined ? undefined : already_recorded(found))
+  }
+
+/**
  * The branch of the transition each element of a list applies, the first
  * whose condition holds on the state, -1 where none does (SC-54): none for a
  * plain branch.
@@ -721,6 +733,7 @@ export const tools_command_adapter = (
   algebra: algebra(fragments),
   write: tools_writes,
   execute: execute(cell),
+  recorded: recorded(cell),
 })
 
 /**
@@ -735,6 +748,7 @@ export const loans_command_adapter = (
   algebra: algebra(fragments),
   write: loans_writes,
   execute: execute(cell),
+  recorded: recorded(cell),
 })
 
 /**

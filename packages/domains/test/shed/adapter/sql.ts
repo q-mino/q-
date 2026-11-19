@@ -399,6 +399,17 @@ const recorded_by =
       : undefined
   }
 
+/**
+ * The fact an operation recorded, looked up alone (PER-5, `RecordedBy`):
+ * the duplicate branch before anything is parsed, a read in a transaction
+ * of its own; the command's transaction looks it up again, first, for two
+ * tries racing (SC-11).
+ */
+const recorded =
+  (database: Database): zz.RecordedBy =>
+  (operation) =>
+    database.transaction((tx) => recorded_by(tx)(operation))
+
 /** Consecutive slices of the values, of the given lengths, in order. */
 const slices =
   (lengths: readonly number[]) =>
@@ -834,6 +845,7 @@ export const sql_adapter = (database: Database) => (versions: zz.Versions) => ({
       algebra: algebra(tools_fragments),
       write: tools_writes,
       execute: execute(database),
+      recorded: recorded(database),
       steps: {
         selection: { ...algebra(line_selection_fragments), after },
         sources: {
@@ -899,6 +911,7 @@ export const sql_adapter = (database: Database) => (versions: zz.Versions) => ({
       algebra: algebra(loans_fragments),
       write: loans_writes,
       execute: execute(database),
+      recorded: recorded(database),
       steps: {
         selection: { ...algebra(reservation_selection_fragments), after },
         sources: {

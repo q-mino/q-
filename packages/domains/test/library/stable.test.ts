@@ -5,6 +5,7 @@ import {
   canonical_json,
   fingerprint_of,
   identity_of,
+  is_a_json_value,
   operation_id,
   reaction_operation,
 } from '../../src/library/index.ts'
@@ -274,7 +275,11 @@ describe('fingerprint_of, what a retry sends again (DOM-11, D100, LIB-11)', () =
     )
   })
 
-  test('a value JSON cannot write as it is stops the fingerprint', () => {
+  test('a value JSON cannot write as it is stops the fingerprint, and is no JSON value (PER-5)', () => {
+    // A leaf looks up nothing for it before its schema: no request so sent
+    // was recorded (PER-5, "A retry after the input's window over `now`
+    // moved").
+    expect(is_a_json_value({ day: '2026-11-20', tools: ['ladder', 1, true, null] })).toBe(true)
     for (const input of [
       Number.NaN,
       Number.POSITIVE_INFINITY,
@@ -287,6 +292,7 @@ describe('fingerprint_of, what a retry sends again (DOM-11, D100, LIB-11)', () =
       undefined,
     ]) {
       expect(() => fingerprint_of({ path: 'p', input })).toThrow()
+      expect(is_a_json_value(input)).toBe(false)
     }
   })
 })

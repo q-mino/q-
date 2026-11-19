@@ -163,6 +163,7 @@ export type {
   AlreadyRecorded,
   Execution,
   Execute,
+  RecordedBy,
   StepChoice,
   PlannedStep,
   StepExecution,
@@ -273,6 +274,7 @@ export {
   fingerprint_of,
   reaction_operation,
   canonical_json,
+  is_a_json_value,
   type Retried,
 } from './stable.ts'
 export { kind_of, is_a_schema } from './kind.ts'

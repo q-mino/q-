@@ -198,6 +198,18 @@ export type Execution =
 export type Execute<fragment, write> = (plan: PlannedCommand<fragment, write>) => Promise<Execution>
 
 /**
+ * The fact an operation recorded, looked up alone, outside a step: the
+ * duplicate branch read before anything is parsed (PER-5, "A retry after
+ * the input's window over `now` moved"), as the step reads it first
+ * (`Execute`); none when the operation recorded nothing. A read: it writes
+ * nothing, and two tries racing still meet in the step. Gianni books the
+ * ladder on Thursday for Friday, the answer is lost, his phone retries on
+ * Friday morning: the leaf finds the booking here before the schema, whose
+ * window ("from tomorrow") has moved past Friday.
+ */
+export type RecordedBy = (operation: Operation) => Promise<AlreadyRecorded | undefined>
+
+/**
  * The choice of a step (D112.2), an ADT: the process not found in the stage
  * the step reads, nothing to write (the library names the read); or the walk
  * over the instances, in the order closed by the identity (D109):
@@ -530,7 +542,8 @@ export interface StepAdapter<
 /**
  * What a state adapter gives for a set of commands, of one or more domains:
  * the predicates and the facts of the commands and of the transitions their
- * steps compose; and, if there are steps among them, what they read.
+ * steps compose; the execution; the fact an operation recorded, looked up
+ * alone (`RecordedBy`); and, if there are steps among them, what they read.
  */
 export type StateAdapter<
   commands extends Commands,
@@ -544,6 +557,7 @@ export type StateAdapter<
   readonly algebra: Algebra<AllPredicates<commands>, fragment>
   readonly write: FactWrites<AllFacts<commands>, write>
   readonly execute: Execute<fragment, write>
+  readonly recorded: RecordedBy
 } & ([keyof StepsAmong<commands>] extends [never]
   ? unknown
   : {

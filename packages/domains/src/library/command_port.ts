@@ -1,6 +1,11 @@
 import * as z from 'zod'
 import { date_time, type Semver } from './format.ts'
-import type { CommandRootContext } from './context.ts'
+import type {
+  CommandRootContext,
+  FingerprintContext,
+  Operation,
+  OperationContext,
+} from './context.ts'
 import type { ComposedBranches, Envelope, PartFields, StoredPart } from './envelope.ts'
 import {
   $Command,
@@ -27,6 +32,7 @@ import { $Version } from './version.ts'
 import { $Versions, type Registry, type Versions } from './registry.ts'
 import type { CommandUseCasePort } from './use_case_port.ts'
 import type {
+  AlreadyRecorded,
   Execution,
   PlannedCommand,
   PlannedCommandBranch,
@@ -46,7 +52,15 @@ import {
 } from './bound_condition.ts'
 import { resources_of } from './resources.ts'
 import { read_fields, written, type PlannedPart } from './plan.ts'
-import { called, folder_of, is_a_record, is_at_or_above, paths_in, serving } from './runtime.ts'
+import {
+  $Recorded,
+  called,
+  folder_of,
+  is_a_record,
+  is_at_or_above,
+  paths_in,
+  serving,
+} from './runtime.ts'
 
 // The ports of the command use cases (DOM-2, LIB-1, LIB-14), which the
 // library builds over a state adapter: for each invocation, the input parsed
@@ -73,6 +87,8 @@ interface RuntimeAdapter<fragment, write, read, selection, source, field> {
   }
   readonly write: Readonly<Record<string, (fact: unknown) => write>>
   readonly execute: (plan: PlannedCommand<fragment, write>) => Promise<Execution>
+  /** The fact an operation recorded, looked up alone (PER-5, `RecordedBy`). */
+  readonly recorded: (operation: Operation) => Promise<AlreadyRecorded | undefined>
   /** What it gives for the steps among its commands (DOM-20), if there are some. */
   readonly steps?: RuntimeSteps<fragment, write, read, selection, source, field>
 }
@@ -95,8 +111,21 @@ type RuntimeOutcome =
   | { readonly outcome: 'identity_already_used' }
   | { readonly outcome: 'invalid_request' }
 
-/** A command use case's port at runtime: one message in, its outcome out (DOM-3). */
-type RuntimePort = (context: CommandRootContext, input: unknown) => AsyncIterable<RuntimeOutcome>
+/** What an operation recorded, looked up alone (PER-5, `$Recorded`): its fact as the outcome it was, the identity already used, or nothing. */
+type RuntimeRecorded =
+  | Extract<RuntimeOutcome, { readonly outcome: 'applied' | 'identity_already_used' }>
+  | { readonly outcome: 'not_recorded' }
+
+/**
+ * A command use case's port at runtime: one message in, its outcome out
+ * (DOM-3); beside it, what an operation recorded, looked up alone (PER-5).
+ */
+type RuntimePort = ((
+  context: CommandRootContext,
+  input: unknown,
+) => AsyncIterable<RuntimeOutcome>) & {
+  readonly [$Recorded]: (context: OperationContext & FingerprintContext) => Promise<RuntimeRecorded>
+}
 
 /** The version of every domain in a registry, by its folder (`version.ts`, DOM-22). */
 const versions_in = (registry: Registry): readonly (readonly [string, Semver])[] =>
@@ -938,7 +967,7 @@ const runtime_ports = (
       position: string,
       fact: Envelope<readonly PartFields[]>,
       composed: ComposedBranches,
-    ): RuntimeOutcome => {
+    ): Extract<RuntimeOutcome, { readonly outcome: 'applied' }> => {
       const declared = command.outcomes[branch]
       const composition = declared?.[3]
       return {
@@ -952,6 +981,32 @@ const runtime_ports = (
       }
     }
 
+    /**
+     * The duplicate branch (DOM-11): the fact the operation recorded, with
+     * the same fingerprint, as the outcome it was, its branch by name; with
+     * another, the identity already used.
+     */
+    const duplicate = (
+      context: FingerprintContext,
+      command: RuntimeCommand,
+      recorded: AlreadyRecorded,
+    ): Extract<RuntimeOutcome, { readonly outcome: 'applied' | 'identity_already_used' }> => {
+      if (recorded.fact.fingerprint !== context.fingerprint) {
+        return { outcome: 'identity_already_used' }
+      }
+      return applied(
+        command,
+        recorded.fact.branch,
+        recorded.position,
+        {
+          parts: recorded.fact.parts.map(read_part),
+          operation: recorded.fact.operation,
+          correlation: recorded.fact.correlation,
+        },
+        recorded.fact.composed,
+      )
+    }
+
     /** The outcome of an execution (DOM-7, DOM-11). */
     const outcome_of = (
       context: CommandRootContext,
@@ -962,19 +1017,7 @@ const runtime_ports = (
     ): RuntimeOutcome => {
       switch (execution.outcome) {
         case 'recorded':
-          return execution.fact.fingerprint === context.fingerprint
-            ? applied(
-                command,
-                execution.fact.branch,
-                execution.position,
-                {
-                  parts: execution.fact.parts.map(read_part),
-                  operation: execution.fact.operation,
-                  correlation: execution.fact.correlation,
-                },
-                execution.fact.composed,
-              )
-            : { outcome: 'identity_already_used' }
+          return duplicate(context, command, execution)
         case 'applied': {
           const plan = planned[execution.branch]
           if (plan === undefined) throw new Error('the adapter applied no planned branch')
@@ -996,8 +1039,22 @@ const runtime_ports = (
       }
     }
 
-    const port = (use_case: string, command: RuntimeCommand): RuntimePort =>
-      async function* (context, input) {
+    /**
+     * What an operation recorded, looked up alone, before anything is
+     * parsed (PER-5, "A retry after the input's window over `now` moved"):
+     * the duplicate branch, outside the step; nothing, `not_recorded`.
+     */
+    const recorded_by =
+      (command: RuntimeCommand) =>
+      async (context: OperationContext & FingerprintContext): Promise<RuntimeRecorded> => {
+        const recorded = await adapter.recorded(context.operation)
+        return recorded === undefined
+          ? { outcome: 'not_recorded' }
+          : duplicate(context, command, recorded)
+      }
+
+    const executed = (use_case: string, command: RuntimeCommand) =>
+      async function* (context: CommandRootContext, input: unknown): AsyncIterable<RuntimeOutcome> {
         const nodes = nodes_of(use_case)
         const parsed = parse(command, nodes, context, input)
         if (parsed.parsed === 'invalid') {
@@ -1022,6 +1079,9 @@ const runtime_ports = (
         yield outcome_of(context, command, parsed.path, planned, execution)
       }
 
+    const port = (use_case: string, command: RuntimeCommand): RuntimePort =>
+      Object.assign(executed(use_case, command), { [$Recorded]: recorded_by(command) })
+
     // The ports of the steps (part 7.4), over what the adapter gives for
     // them, every fault at wiring in one message (CFG-2).
     const stepping =
@@ -1040,6 +1100,7 @@ const runtime_ports = (
               folded,
               fragment_of,
               read_part,
+              recorded: adapter.recorded,
             },
             adapter.steps,
           )

@@ -10,7 +10,7 @@ import { $Node, type EntryOf } from './node.ts'
 import { $Delegated, $Earlier, $Version } from './version.ts'
 import { $UseCase } from './use_case.ts'
 import { is_a_schema } from './kind.ts'
-import { fingerprint_of } from './stable.ts'
+import { fingerprint_of, is_a_json_value } from './stable.ts'
 import { and as kleene_and } from './actions.ts'
 import {
   called,
@@ -19,6 +19,7 @@ import {
   is_a_record,
   is_at_or_above,
   paths_in,
+  recorded_lookup_of,
   served_by,
   type ReadServed,
 } from './runtime.ts'
@@ -234,7 +235,12 @@ const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
  * with the version the tree speaks and its oldest major), for a major the
  * window has not or the current major at a higher minor, the patch not
  * counted; the version's major picks the leaf, a path it has not
- * `not_a_leaf`; the input in the schema of that major's leaf, built over
+ * `not_a_leaf`; for a command leaf, its operation looked up in its scope,
+ * the fingerprint over the input as sent (PER-5, "A retry after the input's
+ * window over `now` moved"): recorded with the same fingerprint, the fact
+ * recorded, projected (at a past major after the nodes, whose point's
+ * context the steps back read), with another `identity_already_used`, none
+ * on; the input in the schema of that major's leaf, built over
  * the context the entry gives (`invalid_request`, `input_not_in_schema`),
  * before any node, so that a caller learns nothing the public contract does
  * not tell (PER-7); the
@@ -811,6 +817,87 @@ async function* followed(
   }
 }
 
+/**
+ * The events of a command leaf for an outcome of the use case below (D45,
+ * DOM-3): projected, in the words of the request's major (`back`); one that
+ * closes with no fact, traced with why (F6, PER-14); one that does not end
+ * the leaf's flow, followed by the facts of its chain (D58.2).
+ */
+async function* answered(
+  leaf: CommandLeaf,
+  outcome: unknown,
+  back: (event: RuntimeLeafEvent) => RuntimeLeafEvent,
+  tracing: Tracing,
+): AsyncIterable<RuntimeLeafEvent> {
+  const projected = projected_outcome(leaf, outcome)
+  const following = leaf.following
+  const goes_on = following !== undefined && !following.ends.has(projected.event.event)
+  if (projected.why !== undefined) {
+    // A rejection records no fact, so no chain follows it (DOM-3).
+    if (goes_on) {
+      throw new Error(
+        `${leaf.path}: ${projected.event.event} closes a request with no fact, and is not one of its ends (DOM-3)`,
+      )
+    }
+    yield traced(tracing, back(projected.event), projected.why)
+    return
+  }
+  yield back(projected.event)
+  if (!goes_on) return
+  // DOM-3, D58.2: the flow stays open on what the leaf follows, from
+  // its outcome's fact, by its chain's correlation.
+  // The chain is the outcome's fact's (DOM-10): a retry that meets it
+  // follows the chain the first request began, whatever it sent.
+  const fact = is_a_record(outcome) ? outcome['fact'] : undefined
+  const from = position.safeParse(is_a_record(outcome) ? outcome['position'] : undefined)
+  const chain = correlation.safeParse(is_a_record(fact) ? fact['correlation'] : undefined)
+  if (!from.success || !chain.success) {
+    throw new Error(
+      `${leaf.path}: the port below gives an applied outcome with no position or no correlation`,
+    )
+  }
+  for await (const event of followed(leaf, following, from.data, chain.data)) yield back(event)
+}
+
+/**
+ * What a command leaf's operation recorded, looked up in its scope before
+ * the leaf's schema (PER-5, "A retry after the input's window over `now`
+ * moved", A, 19 Nov 2026): the operation as the entry gives it, or, where
+ * the input names its id (SC-34), the id its field holds as sent; the
+ * fingerprint over the leaf's path and the input as sent (LIB-11), which
+ * needs no schema; the port below compares it (DOM-11). Its outcome, the
+ * fact recorded or `identity_already_used`; none when nothing was recorded,
+ * or when nothing can be looked up: an input that names no id, or names it
+ * at a past major, where the id is read once the input has gone forward
+ * (with its case); an input that is no JSON value, which no request
+ * recorded.
+ */
+const recorded_before_the_schema = async (
+  leaf: CommandLeaf,
+  entered: Entered,
+  past: readonly PastStep[],
+  sent: unknown,
+): Promise<{ readonly operation: Operation; readonly outcome: unknown } | undefined> => {
+  const operation =
+    entered.by === 'the_entry'
+      ? entered.operation
+      : past.length === 0
+        ? operation_of(entered, sent)
+        : undefined
+  if (operation === undefined || !is_a_json_value(sent)) return undefined
+  const lookup = recorded_lookup_of(leaf.port)
+  if (lookup === undefined) {
+    throw new Error(`${leaf.path}: the port below looks up no operation (PER-5)`)
+  }
+  const outcome = await lookup({
+    operation,
+    fingerprint: fingerprint_of({ path: leaf.path, input: sent }),
+  })
+  return is_a_record(outcome) && outcome['outcome'] === 'not_recorded'
+    ? undefined
+    : { operation, outcome }
+}
+
 /** The base event of a request whose input names no operation's id (SC-34), with why, for the trace. */
 const names_no_operation = (entered: Entered): TraceReason => ({
   closed_by: 'the_input',
@@ -854,6 +941,35 @@ const command_leaf_port = (leaf: CommandLeaf, trace: unknown) =>
     const at = picked(leaf, version)
     if (at.closed) {
       yield traced(tracing, at.event, at.why)
+      return
+    }
+    // PER-5, a retry after the input's window over `now` moved (A, 19 Nov
+    // 2026): the operation looked up in its scope, the hat claimed, before
+    // the schema and the nodes: what it recorded is what the caller already
+    // knows, a hat revoked meanwhile included.
+    const recorded = await recorded_before_the_schema(leaf, entered, at.past, sent)
+    if (recorded !== undefined) {
+      const tracing_recorded: Tracing = { ...tracing, operation: recorded.operation }
+      const outcome = recorded.outcome
+      const applied = is_a_record(outcome) && outcome['outcome'] === 'applied'
+      if (at.past.length === 0 || !applied) {
+        yield* answered(leaf, outcome, (event) => event, tracing_recorded)
+        return
+      }
+      // PER-17: at a past major the steps back read the context of the
+      // leaf's point, so the nodes are walked; one that closes answers.
+      const point = await walk(leaf.nodes, entry.given)
+      if (point.closed) {
+        yield traced(tracing_recorded, point.event, point.why)
+        return
+      }
+      const back = back_events(
+        leaf.path,
+        at.past,
+        (step) => called(step.declared['from_next'], point.context),
+        new Set(Object.keys(leaf.events)),
+      )
+      yield* answered(leaf, outcome, back, tracing_recorded)
       return
     }
     // PER-5.3: the input in the schema of the major's leaf, before any node,
@@ -925,34 +1041,7 @@ const command_leaf_port = (leaf: CommandLeaf, trace: unknown) =>
       below,
     ])
     for await (const outcome of outcomes) {
-      const projected = projected_outcome(leaf, outcome)
-      const following = leaf.following
-      const goes_on = following !== undefined && !following.ends.has(projected.event.event)
-      if (projected.why !== undefined) {
-        // A rejection records no fact, so no chain follows it (DOM-3).
-        if (goes_on) {
-          throw new Error(
-            `${leaf.path}: ${projected.event.event} closes a request with no fact, and is not one of its ends (DOM-3)`,
-          )
-        }
-        yield traced(tracing_operation, back(projected.event), projected.why)
-        return
-      }
-      yield back(projected.event)
-      if (!goes_on) return
-      // DOM-3, D58.2: the flow stays open on what the leaf follows, from
-      // its outcome's fact, by its chain's correlation.
-      // The chain is the outcome's fact's (DOM-10): a retry that meets it
-      // follows the chain the first request began, whatever it sent.
-      const fact = is_a_record(outcome) ? outcome['fact'] : undefined
-      const from = position.safeParse(is_a_record(outcome) ? outcome['position'] : undefined)
-      const chain = correlation.safeParse(is_a_record(fact) ? fact['correlation'] : undefined)
-      if (!from.success || !chain.success) {
-        throw new Error(
-          `${leaf.path}: the port below gives an applied outcome with no position or no correlation`,
-        )
-      }
-      for await (const event of followed(leaf, following, from.data, chain.data)) yield back(event)
+      yield* answered(leaf, outcome, back, tracing_operation)
       return
     }
     throw new Error(`${leaf.path}: the port below gives no outcome (DOM-3)`)

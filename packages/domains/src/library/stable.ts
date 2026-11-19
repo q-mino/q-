@@ -262,6 +262,20 @@ export const fingerprint_of = (request: Retried): fingerprint =>
   fingerprint.parse(digest(['fingerprint_of', request.path, canonical_json(request.input)]))
 
 /**
+ * Whether a value is one JSON writes as it is (`canonical_json`), so one a
+ * fingerprint is computed over (LIB-11): an input sent as a date, a map or a
+ * function is not, and no request so sent was ever recorded (PER-5).
+ */
+export const is_a_json_value = (value: unknown): boolean => {
+  try {
+    canonical_json(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * A reaction's operation (DOM-16, D91.3, LIB-10): its scope the reaction's
  * path ("system · reaction R"), its id the digest of that path, the
  * operation that recorded the fact (DOM-10: its scope and id, the fact's

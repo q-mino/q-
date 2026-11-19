@@ -1,4 +1,5 @@
 import type { Registry } from './registry.ts'
+import type { Operation, fingerprint } from './context.ts'
 
 // What the ports meet at runtime and read the same way (part 5.1): a record's
 // fields, a function of the domain called with its one argument, a
@@ -14,6 +15,33 @@ import type { Registry } from './registry.ts'
  * them and a tree needs no registry of the domains it invokes.
  */
 export const $Serves: unique symbol = Symbol('Serves')
+
+/**
+ * The duplicate branch of a command's port, looked up alone (PER-5, "A
+ * retry after the input's window over `now` moved", A, 19 Nov 2026): what
+ * the operation of a request recorded, before anything is parsed, which a
+ * command leaf asks first; the library's own, so not in the port's type.
+ */
+export const $Recorded: unique symbol = Symbol('Recorded')
+
+/**
+ * What a command's operation recorded, looked up alone, at runtime (PER-5):
+ * with the same fingerprint, the fact recorded, as the outcome it was; with
+ * another, `identity_already_used`; nothing, `not_recorded`.
+ */
+export type RecordedLookup = (context: {
+  readonly operation: Operation
+  readonly fingerprint: fingerprint
+}) => Promise<unknown>
+
+/** The duplicate branch a port looks up alone (`$Recorded`), if the library built it with one. */
+export const recorded_lookup_of = (port: unknown): RecordedLookup | undefined => {
+  if (typeof port !== 'function' || !($Recorded in port)) return undefined
+  const lookup: unknown = port[$Recorded]
+  return typeof lookup === 'function'
+    ? (context) => Promise.resolve<unknown>(Reflect.apply(lookup, undefined, [context]))
+    : undefined
+}
 
 /**
  * What a read use case's port serves beside its use case (part 6.3): the
