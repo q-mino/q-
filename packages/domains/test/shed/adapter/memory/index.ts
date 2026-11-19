@@ -130,6 +130,12 @@ export interface Cell {
    * SC-42), the letters discarded; shown to a test.
    */
   readonly reactions: wlib.ReactionState
+  /**
+   * The trace of the trees (F6, PER-14): every request answered with no
+   * fact, as the library hands it, with why; kept in the order handed,
+   * shown to a test. Eventual: the cell promises nothing more (D54).
+   */
+  readonly trace: wlib.Trace<unknown>
 }
 
 /**
@@ -837,6 +843,7 @@ export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => {
   const reads = memory_reads(cell)(versions)
   return {
     log: log(cell),
+    trace: cell.trace,
     tools: { ...commands.tools, ...reads.tools },
     loans: { ...commands.loans, ...reads.loans },
     accounts: wlib.lookup_ports({

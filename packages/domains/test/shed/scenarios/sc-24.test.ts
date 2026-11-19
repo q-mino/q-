@@ -77,5 +77,50 @@ describe("SC-24, Marta's node", () => {
     // Luca keeps the shed and is no member; Gianni is a member with no card.
     expect(await borrow(luca)).toEqual([{ event: 'not_found' }])
     expect(await borrow(gianni)).toEqual([{ event: 'not_found' }])
+    // The trace keeps what the caller is not told (F6, PER-14, part 6.2).
+    expect(shed.traced().map((each) => each.why)).toEqual([
+      {
+        closed_by: 'a_lookup',
+        node: 'persona/member/node/member',
+        lookups: [{ lookup: 'the_member_card_of_the_caller', not_known: 'value' }],
+      },
+      {
+        closed_by: 'a_lookup',
+        node: 'persona/member/node/member',
+        lookups: [{ lookup: 'the_member_card_of_the_caller', not_known: 'value' }],
+      },
+    ])
+  })
+
+  test('a perimeter hides from the caller, the trace keeps it: a card without the hat', async () => {
+    const shed = await oracle({
+      accounts: accounts({
+        hats: { 'A-GIORGIO': ['keeper'] },
+        member_cards: { 'A-GIORGIO': { id: 'M-3', valid_until: '2027-03-31' } },
+      }),
+    })
+    const giorgio: Who = { identified_by: 'account', id: 'A-GIORGIO' }
+    const at = shed
+      .as(giorgio, '2.0.0')
+      .at('2026-11-19T10:00:00-05:00', { scope: 'member/A-GIORGIO' })
+    expect(await all(shed.member.borrow_a_tool(at, { loan_id: 'L7', tool_id: 'drill' }))).toEqual([
+      { event: 'not_found' },
+    ])
+    expect(shed.traced()).toEqual([
+      {
+        path: 'persona/member/usecase/borrow_a_tool',
+        given: { caller: giorgio, now: at.now, time_zone: at.time_zone },
+        version: '2.0.0',
+        operation: at.operation,
+        correlation: at.correlation,
+        sent: { loan_id: 'L7', tool_id: 'drill' },
+        answered: { event: 'not_found' },
+        why: {
+          closed_by: 'a_perimeter',
+          node: 'persona/member/node/member',
+          perimeter: 'the_caller_wears_the_hat_of_member',
+        },
+      },
+    ])
   })
 })

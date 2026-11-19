@@ -109,7 +109,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         the_shelf,
         send_me_my_week_on_mondays,
       },
-    })({ invoked, log: adapter.log }),
+    })({ invoked, log: adapter.log, trace: adapter.trace }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions,
@@ -123,7 +123,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         load_tools_from_a_sheet,
         load_tools_from_a_short_sheet,
       },
-    })({ invoked, log: adapter.log }),
+    })({ invoked, log: adapter.log, trace: adapter.trace }),
     // Rossi's workshop, an actor from outside (D88.1, D91.1): its interface
     // verifies the signature of its system's key and gives the `Caller`
     // (PER-4), and the scope of its operations, whose ids its notifications
@@ -134,14 +134,14 @@ export const shed = (cell: Cell) => async (world: World) => {
       majors: workshop_majors,
       top: persona,
       use_cases: { close_a_job },
-    })({ invoked, log: adapter.log }),
+    })({ invoked, log: adapter.log, trace: adapter.trace }),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
       versions,
       majors: visitor_majors,
       top: persona,
       use_cases: { the_catalogue },
-    })({ invoked, log: adapter.log }),
+    })({ invoked, log: adapter.log, trace: adapter.trace }),
     loans_effects: wlib.effect_executor({
       registry: loans_registry,
       versions,

@@ -25,7 +25,10 @@
 // `member`, `visitor`) over the same ports and the lookups of `accounts`,
 // entered as an interface would, for who asks (`as`), the accounts the shed
 // is given at its start (`accounts`); and the fact log, a port of the
-// adapter (`log`).
+// adapter (`log`). Since part 6.2 the tree of Rossi's workshop, an actor
+// from outside whose requests name their operation, entered with its scope
+// alone (`as(…).named`, SC-34), and the trace of the trees, every request
+// answered with no fact, with why (`traced`, F6, PER-14).
 
 import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
@@ -64,6 +67,9 @@ import * as member from '../persona/member/_usecase.ts'
 import { registry as visitor_registry } from '../persona/visitor/_registry.ts'
 import { majors as visitor_majors } from '../persona/visitor/_majors.ts'
 import * as visitor from '../persona/visitor/_usecase.ts'
+import { registry as workshop_registry } from '../persona/workshop/_registry.ts'
+import { majors as workshop_majors } from '../persona/workshop/_majors.ts'
+import * as workshop from '../persona/workshop/_usecase.ts'
 import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
@@ -383,7 +389,16 @@ export const oracle = async (start: Start = {}) => {
       lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
     })(accounts_lookups(cell.get)),
   }
-  const wired = { invoked, log: log(cell) }
+  // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
+  // in the order the library hands it.
+  const trace: wlib.Traced<unknown>[] = []
+  const wired = {
+    invoked,
+    log: log(cell),
+    trace: (traced: wlib.Traced<unknown>) => {
+      trace.push(traced)
+    },
+  }
   const trees = {
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
@@ -402,7 +417,12 @@ export const oracle = async (start: Start = {}) => {
       versions,
       majors: member_majors,
       top: persona,
-      use_cases: { borrow_a_tool: member.borrow_a_tool, return_a_tool: member.return_a_tool },
+      use_cases: {
+        borrow_a_tool: member.borrow_a_tool,
+        return_a_tool: member.return_a_tool,
+        extend_your_loan: member.extend_your_loan,
+        the_shelf: member.the_shelf,
+      },
     })(wired),
     visitor: wlib.tree_ports({
       registry: { ...persona_registry, ...visitor_registry },
@@ -411,12 +431,21 @@ export const oracle = async (start: Start = {}) => {
       top: persona,
       use_cases: { the_catalogue: visitor.the_catalogue },
     })(wired),
+    workshop: wlib.tree_ports({
+      registry: { ...persona_registry, ...workshop_registry },
+      versions,
+      majors: workshop_majors,
+      top: persona,
+      use_cases: { close_a_job: workshop.close_a_job },
+    })(wired),
   }
   /**
    * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
    * as the interface verified it, the version the client was built at
    * (D72.7); for a command at an instant the context of `at`, with its
-   * operation and correlation, for a read the context of `when`.
+   * operation and correlation, for a read the context of `when`; for a
+   * command whose input names its operation (SC-34), its scope alone
+   * (`named`), the correlation the entry's own.
    */
   const as = <const version extends wlib.Semver>(who: Who, version: version) => ({
     at: (instant: string, sent: Sent = {}) => ({
@@ -430,6 +459,15 @@ export const oracle = async (start: Start = {}) => {
       now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
       time_zone: zone,
     }),
+    named: (instant: string, sent: Omit<Sent, 'operation'> = {}) => {
+      const { operation, ...entered } = at(instant, sent)
+      return {
+        caller: caller.parse(who),
+        version,
+        ...entered,
+        operation: { scope: operation.scope },
+      }
+    },
   })
   return {
     tools: {
@@ -471,6 +509,10 @@ export const oracle = async (start: Start = {}) => {
     as,
     /** The fact log of the cell, a port of the adapter (DOM-17): what a fact carries, its correlation (DOM-10). */
     log: wired.log,
+    /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
+    trace: wired.trace,
+    /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
+    traced: (): readonly wlib.Traced<unknown>[] => [...trace],
     /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
     when: (instant: string): wlib.RootContext => ({
       now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),

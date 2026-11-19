@@ -45,6 +45,28 @@ describe('SC-26, the base events', () => {
     expect(
       await first(shed.tools.the_catalogue(shed.when('2026-11-19T10:01:00-05:00'), {})),
     ).toMatchObject({ position: '2', total: 2 })
+    // The caller reads a formal reason; the trace keeps which field and which rule (D106.3, part 6.2).
+    expect(shed.traced()).toMatchObject([
+      {
+        path: 'persona/keeper/usecase/retire_a_tool',
+        operation: { scope: 'keeper/luca' },
+        sent,
+        answered: { event: 'invalid_request', reason: 'input_not_in_schema' },
+        why: {
+          closed_by: 'the_input',
+          issues: [{ field: [], rule: 'unrecognized_keys' }],
+        },
+      },
+      {
+        sent: long,
+        why: { closed_by: 'the_input', issues: [{ field: ['notes'], rule: 'too_big' }] },
+      },
+    ])
+    // The field the leaf does not declare, named by the rule's message.
+    const [first_rejected] = shed.traced()
+    expect(
+      first_rejected?.why.closed_by === 'the_input' ? first_rejected.why.issues[0]?.message : '',
+    ).toContain('"by"')
   })
 
   test("before the nodes: Marta, without the keeper's hat, reads invalid_request, not not_found", async () => {

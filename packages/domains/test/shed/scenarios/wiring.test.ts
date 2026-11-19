@@ -48,6 +48,7 @@ describe("the wiring of a tree's ports", () => {
           },
         },
         log: shed.log,
+        trace: shed.trace,
       }),
     ).toThrow(
       [

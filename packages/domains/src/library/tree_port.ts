@@ -1,10 +1,11 @@
 import * as z from 'zod'
-import { semver } from './format.ts'
-import { correlation, operation_id } from './context.ts'
+import { semver, type Semver } from './format.ts'
+import { correlation, operation_id, type Operation } from './context.ts'
 import type { Majors, Registry, Versions } from './registry.ts'
 import type { FactLog } from './stream.ts'
 import type { Invoked, TreeLeaves, TreePorts } from './tree.ts'
-import { $Node } from './node.ts'
+import type { NotKnown, Trace, TraceReason, Traced, TracedFailure, TracedIssue } from './trace.ts'
+import { $Node, type EntryOf } from './node.ts'
 import { $UseCase } from './use_case.ts'
 import { is_a_schema } from './kind.ts'
 import { fingerprint_of } from './stable.ts'
@@ -28,6 +29,9 @@ import {
 // operation, its fingerprint, computed here over the leaf's path and the
 // input as sent (D100), and the correlation from the origin (DOM-10); the
 // outcome, or each page, comes back projected into the leaf's own words.
+// Since part 6.2 a request answered with no fact leaves an entry in the
+// tree's trace, with why (F6, PER-14), and a leaf may name its operation in
+// its input (SC-34).
 
 /** A record of the context, as the ports meet it at runtime. */
 type Context = Readonly<Record<string, unknown>>
@@ -44,10 +48,11 @@ interface RuntimeTreePorts {
   readonly use_cases: Readonly<Record<string, unknown>>
 }
 
-/** What the ports of a tree invoke, at runtime: the ports by folder, the fact log. */
+/** What the ports of a tree invoke, at runtime: the ports by folder, the fact log, the trace. */
 interface RuntimeWired {
   readonly invoked: Readonly<Record<string, Readonly<Record<string, unknown>>>>
   readonly log: FactLog
+  readonly trace: unknown
 }
 
 /** A lookup a node runs, with the port that answers it. */
@@ -87,13 +92,19 @@ interface ReadLeaf extends TreeLeaf {
   readonly entry: z.ZodObject
 }
 
-/** Where a walk down the nodes ends: the context of the leaf's point, or an event that closes the request. */
+/**
+ * Where a walk down the nodes ends: the context of the leaf's point, or an
+ * event that closes the request, with why, for the trace (F6, PER-14).
+ */
 type Walked =
   | { readonly closed: false; readonly context: Context }
-  | { readonly closed: true; readonly event: RuntimeLeafEvent }
+  | { readonly closed: true; readonly event: RuntimeLeafEvent; readonly why: TraceReason }
 
 /** What the entry gives a command's operation (DOM-11): its id and its scope, which the entry composes. */
 const operation_given = z.strictObject({ id: operation_id, scope: z.string() })
+
+/** What the entry gives a leaf whose input names its operation (SC-34): the scope alone. */
+const operation_scope_given = z.strictObject({ scope: z.string() })
 
 /** The base event of a request whose input is not in its leaf's schema (PER-5.3, D106.3). */
 const input_not_in_schema: RuntimeLeafEvent = {
@@ -102,7 +113,15 @@ const input_not_in_schema: RuntimeLeafEvent = {
 }
 
 /** A node's perimeter that fails, or a lookup not known (PER-14, D87.5): no reason. */
-const not_found: Walked = { closed: true, event: { event: 'not_found' } }
+const not_found: RuntimeLeafEvent = { event: 'not_found' }
+
+/** The fields and rules a schema refused in an input (D106.3), for the trace. */
+const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
+  error.issues.map((issue) => ({
+    field: issue.path.map((key) => (typeof key === 'number' ? key : String(key))),
+    rule: issue.code,
+    message: issue.message,
+  }))
 
 /**
  * The ports of the leaves of a tree (PER-6): the registry where the library
@@ -114,8 +133,10 @@ const not_found: Walked = { closed: true, event: { event: 'not_found' } }
  * per name (`LeafPort`). Curried as `command_use_case_ports`: then the ports
  * the tree invokes, by the path of their folder, as the library built them
  * (each knows the use case or the lookup it serves, so that the library
- * finds it by the component a leaf or a node names), and the fact log a
- * leaf that follows reads, by correlation (`Follows`).
+ * finds it by the component a leaf or a node names), the fact log a leaf
+ * that follows reads, by correlation (`Follows`), and the tree's trace,
+ * where every request answered with no fact leaves an entry with why, for
+ * the user of the node (`Trace`, F6, PER-14).
  *
  * At wiring (CFG-2) it stops, naming every fault in one message: a leaf, or
  * the top, not in the registry; a leaf given under another name than its
@@ -140,7 +161,9 @@ const not_found: Walked = { closed: true, event: { event: 'not_found' } }
  * failed one named), what it gives; the leaf's limits, likewise; the
  * creator, over the context of the leaf's point (and, for a command, its
  * operation); the use case below, given the root's context alone, copied
- * (D105.1).
+ * (D105.1). A leaf whose input names its operation (SC-34) is given its
+ * scope alone by the entry, and the library reads the id from its input
+ * after the schema.
  */
 export function tree_ports<
   const top,
@@ -155,6 +178,7 @@ export function tree_ports<
 }): (wired: {
   readonly invoked: Invoked
   readonly log: FactLog
+  readonly trace: Trace<EntryOf<top>>
 }) => TreePorts<top, majors, use_cases>
 
 // The body, typed by what it meets at runtime (DOM-25, "The ports, typed by
@@ -246,39 +270,66 @@ const taken = (node: TreeNode, given: Context): Context => {
 const known = (answer: unknown): { readonly value: unknown } | undefined =>
   is_a_record(answer) && answer['answer'] === 'known' ? { value: answer['value'] } : undefined
 
+/** A lookup answered: what it found, by name, or what was not known. */
+type Answered = { readonly name: string; readonly value: unknown } | NotKnown
+
 /**
  * The lookups of a node (PER-9), each `of` a key from the context, which may
- * be not known: a key or a value not known closes the request with
- * `not_found`, a perimeter (D87.5); else what each found, by name.
+ * be not known: what each found, by name, and every lookup whose key or
+ * value was not known, which closes the request with `not_found`, a
+ * perimeter (D87.5), the trace naming each.
  */
 const looked_up = async (
   lookups: readonly NodeLookupAt[],
   context: Context,
-): Promise<Context | undefined> => {
+): Promise<{ readonly found: Context; readonly not_known: readonly NotKnown[] }> => {
   const answers = await Promise.all(
-    lookups.map(async (lookup): Promise<readonly [string, unknown] | undefined> => {
+    lookups.map(async (lookup): Promise<Answered> => {
       const key = known(called(lookup.of, context))
-      if (key === undefined) return undefined
+      if (key === undefined) return { lookup: lookup.name, not_known: 'key' }
       const value = known(await called(lookup.port, key.value))
-      return value === undefined ? undefined : [lookup.name, value.value]
+      return value === undefined
+        ? { lookup: lookup.name, not_known: 'value' }
+        : { name: lookup.name, value: value.value }
     }),
   )
-  const found = answers.flatMap((answer) => (answer === undefined ? [] : [answer]))
-  return found.length === lookups.length ? Object.fromEntries(found) : undefined
+  return {
+    found: Object.fromEntries(
+      answers.flatMap((answer) => ('name' in answer ? [[answer.name, answer.value]] : [])),
+    ),
+    not_known: answers.flatMap((answer) => ('not_known' in answer ? [answer] : [])),
+  }
 }
 
 /** One node run in its order (PER-5, PER-6): it takes, looks up, is found only if, is refused unless, gives. */
 const run = async (node: TreeNode, given: Context): Promise<Walked> => {
   const context = taken(node, given)
-  const found = await looked_up(node.looks_up, context)
-  if (found === undefined) return not_found
-  if (node.is_found_only_if.some(([, condition]) => !holds(condition, context, found))) {
-    return not_found
+  const { found, not_known } = await looked_up(node.looks_up, context)
+  if (not_known.length > 0) {
+    return {
+      closed: true,
+      event: not_found,
+      why: { closed_by: 'a_lookup', node: node.path, lookups: not_known },
+    }
+  }
+  const outside = node.is_found_only_if.find(([, condition]) => !holds(condition, context, found))
+  if (outside !== undefined) {
+    return {
+      closed: true,
+      event: not_found,
+      why: { closed_by: 'a_perimeter', node: node.path, perimeter: outside[0] },
+    }
   }
   const refused = node.is_refused_unless.flatMap(([name, condition]) =>
     holds(condition, context, found) ? [] : [name],
   )
-  if (refused.length > 0) return { closed: true, event: { event: 'refused', reasons: refused } }
+  if (refused.length > 0) {
+    return {
+      closed: true,
+      event: { event: 'refused', reasons: refused },
+      why: { closed_by: 'limits', at: node.path, reasons: refused },
+    }
+  }
   if (node.gives === undefined) return { closed: false, context }
   const gives = called(called(node.gives, context), found)
   if (!is_a_record(gives)) throw new Error(`${node.path}: it gives no record (PER-6)`)
@@ -299,7 +350,11 @@ const limits_of = (leaf: TreeLeaf, context: Context, input: unknown): Walked => 
     holds(condition, context, input) ? [] : [name],
   )
   return refused.length > 0
-    ? { closed: true, event: { event: 'refused', reasons: refused } }
+    ? {
+        closed: true,
+        event: { event: 'refused', reasons: refused },
+        why: { closed_by: 'limits', at: leaf.path, reasons: refused },
+      }
     : { closed: false, context }
 }
 
@@ -308,7 +363,7 @@ const limits_of = (leaf: TreeLeaf, context: Context, input: unknown): Walked => 
  * part 6.1; a past major, and the gate, with part 6.4. A version that is no
  * semver is a fault of the entry, thrown.
  */
-const at_the_current_major = (leaf: TreeLeaf, majors: Majors, version: unknown): void => {
+const at_the_current_major = (leaf: TreeLeaf, majors: Majors, version: unknown): Semver => {
   const parsed = semver.safeParse(version)
   if (!parsed.success) throw new Error(`${leaf.path}: the entry gives no version (PER-17)`)
   const current = Math.max(...Object.keys(majors).map(Number))
@@ -318,6 +373,59 @@ const at_the_current_major = (leaf: TreeLeaf, majors: Majors, version: unknown):
       `${leaf.path}: a request at ${parsed.data}, not of the current major ${String(current)}: past majors and the gate come with part 6.4`,
     )
   }
+  return parsed.data
+}
+
+/** The predicates a business rejection names (DOM-6, D105.4), as the trace keeps them. */
+const failures_of = (failures: unknown): readonly TracedFailure[] =>
+  Array.isArray(failures)
+    ? failures.flatMap((failure: unknown): readonly TracedFailure[] => {
+        if (!is_a_record(failure)) return []
+        const { branch, components, predicate } = failure
+        if (typeof predicate !== 'string' || !Array.isArray(components)) return []
+        return [
+          {
+            ...(typeof branch === 'string' ? { branch } : {}),
+            components: components.filter((name: unknown) => typeof name === 'string'),
+            predicate,
+          },
+        ]
+      })
+    : []
+
+/** What a leaf's port hands the tree's trace for a request answered with no fact (F6). */
+interface Tracing {
+  readonly trace: unknown
+  readonly leaf: TreeLeaf
+  readonly given: Context
+  readonly version: Semver
+  readonly sent: unknown
+  readonly operation?: Operation | Pick<Operation, 'scope'>
+  readonly correlation?: correlation
+}
+
+/**
+ * The event a request closes with, handed first to the tree's trace with
+ * why (F6, PER-14): the library waits for nothing, so that the answer never
+ * depends on the trace (D54); one that throws is the adapter's fault.
+ */
+const traced = (
+  tracing: Tracing,
+  answered: RuntimeLeafEvent,
+  why: TraceReason,
+): RuntimeLeafEvent => {
+  const entry: Traced<Context> = {
+    path: tracing.leaf.path,
+    given: tracing.given,
+    version: tracing.version,
+    ...(tracing.operation === undefined ? {} : { operation: tracing.operation }),
+    ...(tracing.correlation === undefined ? {} : { correlation: tracing.correlation }),
+    sent: tracing.sent,
+    answered,
+    why,
+  }
+  called(tracing.trace, entry)
+  return answered
 }
 
 /** An event a projection gives, parsed by its leaf's schema of that event; another is the projection's fault, thrown. */
@@ -344,7 +452,10 @@ const event_of = (leaf: CommandLeaf, projected: unknown): RuntimeLeafEvent => {
  * use case below does not take, as the base events, unprojected (DOM-11,
  * DOM-21).
  */
-const projected_outcome = (leaf: CommandLeaf, outcome: unknown): RuntimeLeafEvent => {
+const projected_outcome = (
+  leaf: CommandLeaf,
+  outcome: unknown,
+): { readonly event: RuntimeLeafEvent; readonly why?: TraceReason } => {
   if (!is_a_record(outcome)) throw new Error(`${leaf.path}: the port below gives no outcome`)
   const projection = leaf.declared['projection']
   if (!is_a_record(projection)) throw new Error(`${leaf.path}: it has no projection (D45)`)
@@ -360,17 +471,34 @@ const projected_outcome = (leaf: CommandLeaf, outcome: unknown): RuntimeLeafEven
       if (typeof projection[branch] !== 'function') {
         throw new Error(`${leaf.path}: no projection of the branch ${branch} (D45)`)
       }
-      return event_of(
-        leaf,
-        called_with(projection[branch], [own['payload'], outcome['composed'] ?? {}]),
-      )
+      return {
+        event: event_of(
+          leaf,
+          called_with(projection[branch], [own['payload'], outcome['composed'] ?? {}]),
+        ),
+      }
     }
     case 'rejected':
-      return event_of(leaf, called(projection['rejected'], outcome['failures']))
+      return {
+        event: event_of(leaf, called(projection['rejected'], outcome['failures'])),
+        why: {
+          closed_by: 'the_business',
+          outcome: { outcome: 'rejected', failures: failures_of(outcome['failures']) },
+        },
+      }
     case 'identity_already_used':
-      return { event: 'identity_already_used' }
+      return {
+        event: { event: 'identity_already_used' },
+        why: { closed_by: 'the_business', outcome: { outcome: 'identity_already_used' } },
+      }
     case 'invalid_request':
-      return input_not_in_schema
+      return {
+        event: input_not_in_schema,
+        why: {
+          closed_by: 'the_business',
+          outcome: { outcome: 'invalid_request', reason: 'input_not_in_schema' },
+        },
+      }
     default:
       throw new Error(`${leaf.path}: the port below gives an outcome no command has (DOM-7)`)
   }
@@ -386,43 +514,117 @@ const not_yet = (leaf: TreeLeaf, parts: readonly (readonly [string, string])[]):
   }
 }
 
-/** A command leaf's port (PER-6, D45): its outcome, projected, the first event and a terminal one (D72.3). */
-const command_leaf_port = (leaf: CommandLeaf, majors: Majors) =>
-  async function* (context: unknown, sent: unknown): AsyncIterable<RuntimeLeafEvent> {
-    // The leaf of an actor from outside, and a flow that follows, with their parts.
-    not_yet(leaf, [
-      ['operation', '6.2'],
-      ['follows', '6.3'],
-    ])
-    const entry = entry_of(context)
-    at_the_current_major(leaf, majors, entry.version)
-    const operation = operation_given.safeParse(entry.operation)
+/**
+ * A command's operation as the entry gives it (DOM-11): whole, or its scope
+ * alone for a leaf whose input names the id (SC-34, D91.2), with the field
+ * that names it.
+ */
+type Entered =
+  | { readonly by: 'the_entry'; readonly operation: Operation }
+  | { readonly by: 'the_input'; readonly identity: string; readonly scope: string }
+
+/**
+ * The operation the entry gives a command leaf (DOM-11): whole, or its
+ * scope alone where its input names the id (`operation.identity`, SC-34);
+ * another is the entry's fault, thrown, an id given beside the one the
+ * input names among them.
+ */
+const operation_entered = (leaf: TreeLeaf, given: unknown): Entered => {
+  const named = leaf.declared['operation']
+  if (named === undefined) {
+    const operation = operation_given.safeParse(given)
     if (!operation.success) throw new Error(`${leaf.path}: the entry gives no operation (DOM-11)`)
+    return { by: 'the_entry', operation: operation.data }
+  }
+  if (!is_a_record(named) || typeof named['identity'] !== 'string') {
+    throw new Error(`${leaf.path}: its operation names no field of its input (SC-34)`)
+  }
+  const scope = operation_scope_given.safeParse(given)
+  if (!scope.success) {
+    throw new Error(
+      `${leaf.path}: the entry gives an operation that is not its scope alone: its input names its id (SC-34)`,
+    )
+  }
+  return { by: 'the_input', identity: named['identity'], scope: scope.data.scope }
+}
+
+/**
+ * The operation of a request (DOM-11): the entry's, or its scope with the
+ * id its input names, read after the schema (SC-34, PER-5.3); none when
+ * the input's field holds no operation's id (an empty text).
+ */
+const operation_of = (entered: Entered, input: unknown): Operation | undefined => {
+  if (entered.by === 'the_entry') return entered.operation
+  const id = operation_id.safeParse(is_a_record(input) ? input[entered.identity] : undefined)
+  return id.success ? { id: id.data, scope: entered.scope } : undefined
+}
+
+/**
+ * A command leaf's port (PER-6, D45): its outcome, projected, the first
+ * event and a terminal one (D72.3). A request answered with no fact leaves
+ * its entry in the tree's trace, with why (F6, PER-14).
+ */
+const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
+  async function* (context: unknown, sent: unknown): AsyncIterable<RuntimeLeafEvent> {
+    // A flow that follows, with its part.
+    not_yet(leaf, [['follows', '6.3']])
+    const entry = entry_of(context)
+    const version = at_the_current_major(leaf, majors, entry.version)
+    const entered = operation_entered(leaf, entry.operation)
     const origin = correlation.safeParse(entry.correlation)
     if (!origin.success) throw new Error(`${leaf.path}: the entry gives no correlation (DOM-10)`)
-    // PER-5.3: the input in the leaf's schema, before any node.
-    const input = schema_of(leaf.input, { ...entry.given, operation: operation.data }).safeParse(
+    const scope = entered.by === 'the_entry' ? entered.operation.scope : entered.scope
+    const tracing: Tracing = {
+      trace,
+      leaf,
+      given: entry.given,
+      version,
       sent,
-    )
+      operation: entered.by === 'the_entry' ? entered.operation : { scope },
+      correlation: origin.data,
+    }
+    // PER-5.3: the input in the leaf's schema, before any node, built over
+    // what the entry gives every command leaf: the root's context and the
+    // operation's scope.
+    const input = schema_of(leaf.input, { ...entry.given, operation: { scope } }).safeParse(sent)
     if (!input.success) {
-      yield input_not_in_schema
+      yield traced(tracing, input_not_in_schema, {
+        closed_by: 'the_input',
+        issues: issues_of(input.error),
+      })
       return
     }
+    // SC-34, D91.2: the id of the operation, where its input names it, after the schema.
+    const operation = operation_of(entered, input.data)
+    if (operation === undefined) {
+      yield traced(tracing, input_not_in_schema, {
+        closed_by: 'the_input',
+        issues: [
+          {
+            field: entered.by === 'the_input' ? [entered.identity] : [],
+            rule: 'operation_id',
+            message: 'it names no operation (DOM-11)',
+          },
+        ],
+      })
+      return
+    }
+    const tracing_operation: Tracing = { ...tracing, operation }
     // PER-5.4, PER-5.5: the nodes of the path, then the leaf's own limits.
     const walked = await walk(leaf.nodes, entry.given)
     const point = walked.closed ? walked : limits_of(leaf, walked.context, input.data)
     if (point.closed) {
-      yield point.event
+      yield traced(tracing_operation, point.event, point.why)
       return
     }
     const below = called(
-      called(leaf.declared['creator'], { ...point.context, operation: operation.data }),
+      called(leaf.declared['creator'], { ...point.context, operation }),
       input.data,
     )
     const outcomes = invoked_with(leaf.port, [
       {
         ...root_of(point.context),
-        operation: operation.data,
+        operation,
         correlation: origin.data,
         // D100, LIB-11: over the leaf's path and its input as sent, after the schema.
         fingerprint: fingerprint_of({ path: leaf.path, input: sent }),
@@ -430,7 +632,10 @@ const command_leaf_port = (leaf: CommandLeaf, majors: Majors) =>
       below,
     ])
     for await (const outcome of outcomes) {
-      yield projected_outcome(leaf, outcome)
+      const projected = projected_outcome(leaf, outcome)
+      yield projected.why === undefined
+        ? projected.event
+        : traced(tracing_operation, projected.event, projected.why)
       return
     }
     throw new Error(`${leaf.path}: the port below gives no outcome (DOM-3)`)
@@ -462,36 +667,51 @@ const pages_of = (leaf: ReadLeaf): unknown => {
   return port.pages
 }
 
+/** The reason the port below gives for an input or a cursor it does not take (DOM-21, SC-22). */
+const not_taken = (
+  leaf: ReadLeaf,
+  reason: unknown,
+): 'input_not_in_schema' | 'cursor_not_in_schema' => {
+  if (reason === 'input_not_in_schema' || reason === 'cursor_not_in_schema') return reason
+  throw new Error(`${leaf.path}: the port below gives an invalid request with no reason (D106.3)`)
+}
+
 /**
  * A read leaf's port (PER-18, SC-22): the snapshot alone, one per page, each
  * entry projected; an input or a cursor not in its schema as the base event
- * the port below gives.
+ * the port below gives. A request closed before any snapshot leaves its
+ * entry in the tree's trace, with why (F6, PER-14).
  */
-const read_leaf_port = (leaf: ReadLeaf, majors: Majors) => {
+const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
   async function* read(
     context: unknown,
     sent: unknown,
     after?: unknown,
   ): AsyncIterable<RuntimeLeafEvent> {
-    // A stream and the actions of a read, with part 6.3.
-    not_yet(leaf, [
-      ['stream', '6.3'],
-      ['actions', '6.3'],
-    ])
     const entry = entry_of(context)
-    at_the_current_major(leaf, majors, entry.version)
+    const version = at_the_current_major(leaf, majors, entry.version)
+    const tracing: Tracing = { trace, leaf, given: entry.given, version, sent }
     // PER-5.3: the input in the leaf's schema, before any node.
     const input = schema_of(leaf.input, entry.given).safeParse(sent)
     if (!input.success) {
-      yield input_not_in_schema
+      yield traced(tracing, input_not_in_schema, {
+        closed_by: 'the_input',
+        issues: issues_of(input.error),
+      })
       return
     }
     const walked = await walk(leaf.nodes, entry.given)
     const point = walked.closed ? walked : limits_of(leaf, walked.context, input.data)
     if (point.closed) {
-      yield point.event
+      yield traced(tracing, point.event, point.why)
       return
     }
+    // A stream and the actions of a read, with part 6.3: past the checks
+    // of PER-5, which close a request before any read (SC-32).
+    not_yet(leaf, [
+      ['stream', '6.3'],
+      ['actions', '6.3'],
+    ])
     const binding = binding_of(
       leaf,
       called(called(leaf.declared['creator'], point.context), input.data),
@@ -505,7 +725,12 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors) => {
       if (!is_a_record(event)) throw new Error(`${leaf.path}: the port below gives no event`)
       if (event['event'] === 'invalid_request') {
         // An input the query does not take, or a cursor not of its order key (SC-22).
-        yield { event: 'invalid_request', reason: event['reason'] }
+        const reason = not_taken(leaf, event['reason'])
+        yield traced(
+          tracing,
+          { event: 'invalid_request', reason },
+          { closed_by: 'the_business', outcome: { outcome: 'invalid_request', reason } },
+        )
         return
       }
       const entries = event['entries']
@@ -643,7 +868,7 @@ const runtime_tree_ports = (
         const entry = is_a_record(own) ? own['entry'] : undefined
         const events = is_a_record(own) ? own['events'] : undefined
         if (entry instanceof z.ZodObject) {
-          return [leaf.name, read_leaf_port({ ...leaf, entry }, ports.majors)]
+          return [leaf.name, read_leaf_port({ ...leaf, entry }, ports.majors, wired.trace)]
         }
         if (!is_a_record(events)) throw new Error(`${leaf.path} declares no events (DOM-3)`)
         const schemas = Object.fromEntries(
@@ -651,7 +876,10 @@ const runtime_tree_ports = (
             is_a_schema(schema) ? [[name, schema]] : [],
           ),
         )
-        return [leaf.name, command_leaf_port({ ...leaf, events: schemas }, ports.majors)]
+        return [
+          leaf.name,
+          command_leaf_port({ ...leaf, events: schemas }, ports.majors, wired.trace),
+        ]
       }),
     )
   }

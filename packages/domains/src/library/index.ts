@@ -299,6 +299,7 @@ export type {
   TreePorts,
 } from './tree.ts'
 export { tree_ports } from './tree_port.ts'
+export type { Trace, Traced, TraceReason, TracedIssue, TracedFailure, NotKnown } from './trace.ts'
 export { lookup_ports } from './lookup_port.ts'
 export type {
   ReactionPart,
