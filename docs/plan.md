@@ -10,6 +10,8 @@ Steps 3–7 planned in parts on 18 Nov 2026 (Claude, at night, Alessandro's go g
 
 Re-scoped on 19 Nov 2026 (Alessandro), from step 8: Cumino is a kernel that extensions extend. The kernel holds faces, bonds, letters, relays and the entry of a request; every other feature is an extension. Stage 1 is the kernel with one extension, ping pong; messaging becomes the first extension after it, groups a feature of the kernel in a later stage. The words: [`glossary.md`](glossary.md), § Domain terms.
 
+Steps 8–23 and 25 planned as a block on 19 Nov 2026 (Claude; a proposal, which Alessandro approves by merging it): the parts below, the state of each in Alessandro's notes (the block's plan).
+
 ## How a step works
 
 - **Order by layer** (Alessandro's principle of development): first the pure domains, from the bottom of the graph, with the library growing by need (LIB-3); then the adapters; then the configurators. A step does not start before the steps it depends on are merged.
@@ -21,6 +23,12 @@ Re-scoped on 19 Nov 2026 (Alessandro), from step 8: Cumino is a kernel that exte
 - **Parts** (the library's block, 18 Nov 2026): a step is split into parts, each one session that closes it, with a stable id (`3.1`, `3.2`…), committed and pushed on the step's branch; the step's last part opens its pull request, which lists the rules it implements by id, the differences decided and the "Choices for A".
 - **Stacked branches** (Alessandro, 18 Nov 2026): a library step starts on the previous step's branch before its merge (`step/04-commands-and-facts` from `step/03-generator`), its pull request toward that branch, or `main` once it is merged; a fix made below is carried up.
 - **Autonomy in the block** (Alessandro, 18 Nov 2026): Claude decides architecture, contracts, the generator and its commands, and the developer experience when Alessandro's tendency in his notes decides, noted for the pull request; otherwise Claude's proposal is adopted as provisional (`[Q, C, provisional: A to confirm]` in `architecture.md`), listed in the pull request. A line of work stops when it would reopen a decision of Alessandro's or leave this plan; what does not depend on it goes on. Never a push to `main`, a merge or a tag.
+- **The prototype's block** (steps 8–23 and 25; Alessandro's agreement of 19 Nov 2026, the plan proposed by Claude): Claude carries stage 1 to the end of the prototype alone, and the choices it takes are reviewed at the end. Its rules replace, for these steps, the ones above they differ from:
+  - **Parts**: a step of the domains has its parts of writing (`.1`, and `.2` where the step has two halves; J): the map, the names, the components read as sentences, the stories to prove, in the domain's README; and its last part, of proof (L): each story a test on the oracle, the fixes, the step's pull request. The adapters and the configurators are parts L, but 21.1.
+  - **Order**: the design of step 12 first (12.1, 12.2: documents only, its own pull request toward `main`), then what does not depend on it (8, 9, 11, 18, 19, 23); **the gate**, Alessandro's review of the design in one session; then 10, the code of step 12 (12.3, 12.4), 13–17, 20–22, 25. Nothing is built on the design of step 12 before the gate.
+  - **One stack**, in the order of execution: `step/12-extensions-design` from `main`, then `08-mailbox-desk`, `09-seals`, `11-bonds`, `18-libsodium`, `19-relay-adapters`, `23-browser-io`, `10-post`, `12-extensions`, `13-auth-persona`, `14-ping-pong`, `15-user`, `16-ui`, `17-memory-stack`, `20-relay-client`, `21-indexeddb`, `22-solid`, `25-phone`; each pull request toward the branch before it. A fix made below is carried up by merge, and after each merge the new text is looked for on every branch.
+  - **Reading**: never `architecture.md`, the library or Shed whole: § 1–3, "The domains of q-", the rules the step cites by id, § 5 for steps 12–14; one domain of Shed as the model; the library's types of the builders the part uses.
+  - **Autonomy**: Claude decides the business of q-'s domains and of the kernel within stage 1's scope, the names, the rules of architecture, the adapters' contracts (`[Q, C]`, the discarded alternatives in the pull request). Adopted as provisional (`[Q, C, provisional: A to confirm]`, in "Choices for A"): a new key on a builder that exists, two shapes Alessandro's tendency does not decide between, a word the user reads, a dependency this document does not name, what the wireframe shows. A line of work stops, and what does not depend on it goes on: a choice that would reopen a decision of Alessandro's; a new builder of the library, but those of step 12's design once reviewed; anything built on step 12's design before the gate; a way out of stage 1's scope or of this plan; `pnpm check` red with no fix that respects `CLAUDE.md`. Alessandro's alone: a merge, a push to `main`, a tag; secrets, the deploy, accounts; steps 24, 26, 27.
 - **Decisions in a step**: some steps carry a decision to take with Alessandro before writing code; they are listed under the step.
 - **Context**: the estimate is the session's total, starting from a base of about 90k (tools, rules, `architecture.md`, this plan). Type: _J_ judgment (design, decisions), _L_ local (each piece checks itself). Thresholds: plan 250k (J) or 450k (L), stop 400k (J) or 600k (L). A step that grows past them is split at its last closed milestone.
 - **End of a step**: the session writes its log entry in Alessandro's notes (see `CLAUDE.local.md`) and the prompt for the next step.
@@ -132,21 +140,21 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 - Risks: the consumers' positions over the oracle's single log of every domain (DOM-10); the partitions by resource kept serial in the oracle, so the tests check order, not parallelism.
 - Stops: none of its own; 7.5 needs every other part done.
 
-**8. `mailbox` and `desk`** — J · 170k
+**8. `mailbox` and `desk`** — 8.1 J · 230k, 8.2 L · 280k · `step/08-mailbox-desk`
 
 - Goal: the first real domain, the smallest one, to prove the nucleus. `mailbox`: deposit on D, collect from a position, 7 days of retention, no deletion on collect. `desk`: the relay's personas (whoever deposits; whoever collects with R, `Caller` id = D = hash(R), the hash behind a port).
 - Rules: PER-19, DOM-17, F5, V5, GR-8.
 - Checks: domain tests on the in-memory ports; collect as a stream read, positions compared only by order; deposits on D reachable only with R.
 - Depends on: 7. Feeds back into the library what Shed missed.
 
-**9. `seals`** — J · 200k
+**9. `seals`** — 9.1 J · 240k, 9.2 L · 280k · `step/09-seals`
 
 - Goal: the secrets and their state: seeds (32 random bytes, declared scheme `slip10-flat`), faces `m/i'` (SLIP-0010 over the HMAC-SHA512 of the primitives port), seal for / open / sign / verify, R and D of a mailbox. Group keys come with groups, after stage 1. Opaque references outward; indices of a seed never reused.
 - Rules: GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of § 4 (Domains of q-).
 - Checks: core tests with a fake primitives port; derivation invisible from outside (only public keys and references leave). The SLIP-0010 vectors run in step 18, with the real HMAC.
 - Depends on: 7.
 
-**10. `post`: the protocol, requests and responses** — J · 220k
+**10. `post`: the protocol, requests and responses** — 10.1 J · 250k, 10.2 L · 320k · `step/10-post`
 
 - Goal: envelope (D, format version, sealed blob), letter (schema version, 16-byte identity, sender's face key, declared time, the extension, persona and use case invoked with its version, content), the signature covering D; opening and verifying: a valid signature gives the `Caller`, otherwise `anonymous` with the id of PER-4 and the annotation of PER-2; the mailbox port of `post`.
 - Requests and responses (Alessandro, 19 Nov 2026): "send request Q on bond L", executed by `post` with the library's outbox and executor (step 7); a response is a letter that names the identity of the request it answers and carries the projection of the leaf that served it; a response asks for no response. The bond's relays are a list (one in stage 1): the letter goes to the bond's D on its relay.
@@ -154,7 +162,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 - Checks: a letter re-addressed to another D fails; a removed or broken signature gives `anonymous`; envelope hash stable for the same bytes; injected loss, duplication and abort on the mailbox port; a duplicate deposit is deduplicated by the receiver; a request redelivered gives the recorded response, no second fact; an exhausted delivery becomes a dead letter and is shown, never a business fact.
 - Depends on: 9; step 12's design (the response, the letter's invocation of an extension).
 
-**11. `bonds`: faces, tickets, introduction** — J · 230k
+**11. `bonds`: faces, tickets, introduction** — 11.1 J · 240k (faces and bonds), 11.2 J · 250k (ticket and introduction), 11.3 L · 350k · `step/11-bonds`
 
 - Goal: faces as data (name, position in the tree, public key, opaque reference; one face in stage 1, model ready for more); the first face, the ticket (preparing → ready → used or expired, 48 hours) and the introduction as processes of `bonds`, with the steps toward `seals` as reactions; bonds (my face, its key, its relays and D, my mailbox, name, annotations such as "in person"), kept by the user (the list, a name, annotations). At the introduction each side declares where it can be reached: a list of relays, one in stage 1.
 - Rules: DOM-23, GR-9, PER-11, PER-21, DOM-12, the invariants of § 4.
@@ -162,42 +170,42 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 - Checks: crossed QR = the same flow done by both sides; a ticket used twice or expired is rejected; every bond belongs to exactly one of my faces; a bond's relays are those its peer declared.
 - Depends on: 7, 9.
 
-**12. The extensions: boundary, manifest, extension points** — J · 250k
+**12. The extensions: boundary, manifest, extension points** — design: 12.1 J · 250k (the boundary and the protocol), 12.2 J · 250k (how an extension is built and loaded) · `step/12-extensions-design`; code, after the gate: 12.3 L · 350k (library and generator), 12.4 L · 320k (the kernel's side, a test extension) · `step/12-extensions`
 
 - Goal: what an extension is to the kernel and to the library, decided and written before any code of it: its boundary with the kernel (messages: a request in, an outcome out, the calls to its ports); its manifest (what it sees of the kernel and of the other extensions, what it touches, the leaves it adds to which personas, the use cases it offers to other extensions), enforced by the kernel; isolated by default, in process as a declared choice of trust the user accepts informed, whole or in part; its storage, a partition the kernel gives; the extension points (pages, slots, actions; hooks only where a case shows they are needed); activation; the kernel's use case of the extensions in common, offered to `known`; how an extension is built (its package, its domains, its copy of `zen0`, the generator over its tree) and where it sits in the graph; the request, the response and the silence as rules.
 - Decisions, before code (Alessandro, 19 Nov 2026): Claude designs every point of the goal alone and writes the whole proposal; Alessandro reviews it in one session before any step builds on it; loading an extension from storage (OPFS or IndexedDB) and the catalogue of the trusted host are out of stage 1, their shape only as far as the boundary needs it.
 - Writes: `architecture.md` § 2 (packages and the graph: `conversations` out, the extensions in), § 4 (the domains of q-: the kernel, ping pong), § 5 (the personas: `known` no longer writes in chats; it reaches the extensions' leaves and the kernel's), new rules for the boundary, the manifest, the response and the silence; then the code the step's design asks of the library and the kernel.
 - Checks: decided with the design; at least a test extension wired through the boundary on the oracle.
-- Depends on: 7. Its design session runs before step 10 (the letter and the response follow from it); its code after step 11.
+- Depends on: 7. Its design runs first in the block (the letter and the response of step 10 follow from it, and Alessandro's review of it is the gate); its code after step 11 and the gate.
 - Risks: the paper has no extensions: a gap of the paper, reported to it; the generator's compile-time map (`sight.ts`) and a manifest enforced at runtime must say the same thing.
 
-**13. `auth` and `persona`** — J · 230k
+**13. `auth` and `persona`** — 13.1 J · 250k (auth's ports, the four trees), 13.2 J · 240k (the inbound path, the silence, the response), 13.3 L · 350k · `step/13-auth-persona`
 
 - Goal: auth's read ports in its own language (which faces I have, which bond a key belongs to, which personas a caller may wear, which extensions are active and offered to a bond); the four persona trees (`self`; `known`: the kernel's use cases, such as the extensions in common, and the leaves the active extensions add; `unknown`: introduce itself with a ticket; `anonymous`: empty, reject and annotate); the inbound path from an opened letter to the persona, to the kernel or to an extension; the silence (an extension not installed, or not offered to that bond, look the same from outside); a response accepted only as the return of a request sent to that face, otherwise annotated.
 - Rules: GR-4, GR-7 (with its ESLint rule), PER-1..18, PER-21, F6, and step 12's.
 - Checks: every entry check in order on letters; a known key outside its bond is "not found" to the peer and visible to the user; `anonymous` letters annotated; a request for an extension not active stays silent, the same as one not offered to that bond; a response that answers no request of ours is annotated, never a fact of the extension.
 - Depends on: 11, 12.
 
-**14. Ping pong: the first extension** — J · 180k
+**14. Ping pong: the first extension** — 14.1 J · 220k, 14.2 L · 280k · `step/14-ping-pong`
 
 - Goal: the extension, through step 12's boundary: its domain (a ping sent to a bond, its pong received, no response after a time), its leaf `ping` on `known`, whose projection is the pong; its manifest; its extension points (an action on a bond, the place where the pong is shown); preinstalled, off until the user activates it.
 - Rules: step 12's, DOM-3 (a leaf's wait, `follows`, `ends`, `zz.Elapsed`).
 - Checks: on the oracle, a ping between two nodes with ping pong active gives its pong; to a node without it, or not offering it to that bond, no response; a ping redelivered gives one pong.
 - Depends on: 10, 13.
 
-**15. `user`** — J · 200k
+**15. `user`** — 15.1 J · 240k, 15.2 L · 280k · `step/15-user`
 
 - Goal: activities (one command at most each) and user concepts: drafts, active face, the extensions and their activation (what each sees and touches, its trust), pending activities and retries (queue policy of the library), "nothing happens in silence": annotations, dead letters, no response, and the trace shown; technical outcomes as user concepts.
 - Rules: ADP-2, ADP-7, DOM-12, DOM-15, LIB-12, GR-7, F6.
 - Depends on: 14.
 
-**16. `ui`: the screen model** — J · 200k
+**16. `ui`: the screen model** — 16.1 J · 240k, 16.2 L · 260k · `step/16-ui`
 
 - Goal: the screens of stage 1, their states and gestures, as a pure domain (presentational state only), from Alessandro's notes on screens and flows: first face, bonds and their handshake, the extensions with their activation; the extension points the kernel's screens offer (pages, slots, actions).
 - Rules: V2, ADP-7, GR-2.
 - Depends on: 15.
 
-**17. The `memory` stack** — L · 200k
+**17. The `memory` stack** — L · 350k · `step/17-memory-stack`
 
 - Goal: two phones and the relay in one process, `mailbox` imported through `desk`; the scenarios of stage 1 end to end: first face, crossed QR, link, ping pong activated on both sides, a ping and its pong, a ping to a node that stays silent.
 - Rules: CFG-1, CFG-3, TST-2, PER-19.
@@ -206,34 +214,34 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 
 ### (b) Adapters
 
-**18. libsodium** (`adapters-common`) — L · 160k
+**18. libsodium** (`adapters-common`) — L · 250k · `step/18-libsodium`
 
 - Goal: the primitives port of `seals`; the SLIP-0010 test vectors; the `seals` suite run against it.
 - Rules: TST-1, TST-6, ADP-1.
 
-**19. The relay's adapters** (`adapters-node`) — L · 180k
+**19. The relay's adapters** (`adapters-node`) — L · 280k · `step/19-relay-adapters`
 
 - Goal: `mailbox` storage on SQLite (`node:sqlite`), compared with the in-memory oracle; the Hono HTTP interface through `desk`; no access logs.
 - Rules: ADP-4..6, TST-2..5, PER-19, CFG-3.
 
-**20. The relay's HTTP client** (`adapters-web`) — L · 150k
+**20. The relay's HTTP client** (`adapters-web`) — L · 240k · `step/20-relay-client`
 
 - Goal: the transport for the mailbox port of `post`; injected loss, duplication and abort.
 - Rules: ADP-4, ADP-5, TST-4.
 - Depends on: 19 (tested against the real relay adapter in Node).
 
-**21. IndexedDB** (`adapters-web`) — J · 240k
+**21. IndexedDB** (`adapters-web`) — 21.1 J · 240k (the stores, the single writer, an extension's partition: the rules and the skeleton), 21.2 L · 350k · `step/21-indexeddb`
 
 - Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain; an extension's storage, a partition of its own (step 12).
 - Rules: DOM-8, DOM-9, DOM-11, DOM-17, ADP-6, TST-1..6.
 - Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write; the cost of the duplicate branch's lookups measured: a request through a leaf reads its operation twice, at the leaf and at the port, before the step reads it again (DOM-11, "Where the duplicate branch runs", 19 Nov 2026), and A decides on the measure whether to keep the two reads.
 
-**22. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
+**22. Solid rendering** (`adapters-web`, texts in `phone`) — 22.1 L · 300k (the kernel's screens), 22.2 L · 300k (the extension points, ping pong) · `step/22-solid`
 
 - Goal: the rendering of the `ui` model as a very simple wireframe, usable and interactive (Alessandro, 19 Nov 2026), gestures to activities, Italian texts in `packages/phone/src/texts/`; the extension points rendered as step 12 decides (an isolated extension's page or slot, an action).
 - Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`.
 
-**23. Browser I/O** (`adapters-web`) — L · 160k
+**23. Browser I/O** (`adapters-web`) — L · 260k · `step/23-browser-io` (before the gate: it does not depend on step 12)
 
 - Goal: QR drawn and scanned with the camera; the ticket link (after `#`); files for export and import; clock and randomness as injected sources.
 - Rules: ADP-1, ADP-4.
@@ -246,7 +254,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 - Rules: CFG-1..4, PER-19.
 - Decisions: Alessandro runs the deploy; no server secret in GitHub.
 
-**25. `phone`** — L · 220k
+**25. `phone`** — L · 320k · `step/25-phone`
 
 - Goal: the PWA's composition root, the kernel with the preinstalled extensions (ping pong, off); the composition check before the first request (a library piece, at its trigger), each extension's manifest checked with it; the service worker and the update with notice.
 - Rules: CFG-1, CFG-2, CFG-4, DOM-9.
