@@ -1053,8 +1053,21 @@ const runtime_ports = (
           : duplicate(context, command, recorded)
       }
 
+    /**
+     * An invocation (DOM-3): the duplicate branch first (DOM-11), looked up
+     * before the input is parsed, so that a caller that is not a leaf, a
+     * reaction delivered again or the executor returning, reads its fact
+     * after the input's window over `now` moved (PER-5); then the input
+     * parsed, planned, and the adapter's step, whose own duplicate branch
+     * answers two tries racing (SC-11).
+     */
     const executed = (use_case: string, command: RuntimeCommand) =>
       async function* (context: CommandRootContext, input: unknown): AsyncIterable<RuntimeOutcome> {
+        const recorded = await recorded_by(command)(context)
+        if (recorded.outcome !== 'not_recorded') {
+          yield recorded
+          return
+        }
         const nodes = nodes_of(use_case)
         const parsed = parse(command, nodes, context, input)
         if (parsed.parsed === 'invalid') {

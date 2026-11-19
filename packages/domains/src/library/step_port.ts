@@ -421,10 +421,31 @@ export const step_port =
       return key.map((pair) => (pair.length === 2 ? pair[1] : undefined))
     }
 
+    /** What the operation recorded, looked up alone, before the schema (PER-5), as a command's. */
+    const recorded_by = async (
+      context: OperationContext & FingerprintContext,
+    ): Promise<RuntimeStepRecorded> => {
+      const recorded = await kit.recorded(context.operation)
+      return recorded === undefined
+        ? { outcome: 'not_recorded' }
+        : duplicate(path, context, recorded, kit.read_part)
+    }
+
+    /**
+     * An invocation (DOM-3): the duplicate branch first (DOM-11), before the
+     * input is parsed, as a command's (PER-5); then the input parsed, and the
+     * adapter's step, whose own duplicate branch answers two tries racing
+     * (SC-11).
+     */
     const executed = async function* (
       context: CommandRootContext,
       input: unknown,
     ): AsyncIterable<RuntimeStepOutcome> {
+      const recorded = await recorded_by(context)
+      if (recorded.outcome !== 'not_recorded') {
+        yield recorded
+        return
+      }
       const seen: Readonly<Record<string, unknown>> = Object.fromEntries(
         Object.entries(context).filter(([key]) => key !== 'correlation' && key !== 'fingerprint'),
       )
@@ -544,15 +565,5 @@ export const step_port =
           return
       }
     }
-    return Object.assign(executed, {
-      // PER-5: what the operation recorded, looked up alone, before the schema.
-      [$Recorded]: async (
-        context: OperationContext & FingerprintContext,
-      ): Promise<RuntimeStepRecorded> => {
-        const recorded = await kit.recorded(context.operation)
-        return recorded === undefined
-          ? { outcome: 'not_recorded' }
-          : duplicate(path, context, recorded, kit.read_part)
-      },
-    })
+    return Object.assign(executed, { [$Recorded]: recorded_by })
   }
