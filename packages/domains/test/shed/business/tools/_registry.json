@@ -1,0 +1,1593 @@
+{
+  "domain": "business/tools",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "business/tools/id/tool_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/tools/id/repair_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/tools/id/sheet_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/tools/id/line_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/tools/value/tool_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "business/tools/value/category": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+        }
+      }
+    },
+    "business/tools/value/notes": {
+      "kind": "value",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "maxLength": 500 } }
+      }
+    },
+    "business/tools/value/tool_status": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["inService", "underRepair", "retired"] }
+        }
+      }
+    },
+    "business/tools/value/retire_reason": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["broken", "lost", "worn_out", "given_away"] }
+        }
+      }
+    },
+    "business/tools/value/retirement": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "reason": { "type": "string", "enum": ["broken", "lost", "worn_out", "given_away"] },
+              "notes": { "type": "string", "maxLength": 500 }
+            },
+            "required": ["date", "reason"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/repair": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "since": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["id", "since"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/tool_in_service": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 },
+              "addDate": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "status": { "type": "string", "const": "inService" },
+              "repair": { "not": {} },
+              "retirement": { "not": {} }
+            },
+            "required": ["id", "name", "category", "addDate", "status"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/tool_under_repair": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 },
+              "addDate": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "status": { "type": "string", "const": "underRepair" },
+              "repair": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "since": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["id", "since"],
+                "additionalProperties": false
+              },
+              "retirement": { "not": {} }
+            },
+            "required": ["id", "name", "category", "addDate", "status", "repair"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/retired_tool": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 },
+              "addDate": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "status": { "type": "string", "const": "retired" },
+              "repair": { "not": {} },
+              "retirement": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": ["broken", "lost", "worn_out", "given_away"]
+                  },
+                  "notes": { "type": "string", "maxLength": 500 }
+                },
+                "required": ["date", "reason"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["id", "name", "category", "addDate", "status", "retirement"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/tool": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                  "notes": { "type": "string", "maxLength": 500 },
+                  "addDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "status": { "type": "string", "const": "inService" },
+                  "repair": { "not": {} },
+                  "retirement": { "not": {} }
+                },
+                "required": ["id", "name", "category", "addDate", "status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                  "notes": { "type": "string", "maxLength": 500 },
+                  "addDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "status": { "type": "string", "const": "underRepair" },
+                  "repair": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["id", "since"],
+                    "additionalProperties": false
+                  },
+                  "retirement": { "not": {} }
+                },
+                "required": ["id", "name", "category", "addDate", "status", "repair"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                  "notes": { "type": "string", "maxLength": 500 },
+                  "addDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "status": { "type": "string", "const": "retired" },
+                  "repair": { "not": {} },
+                  "retirement": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "reason": {
+                        "type": "string",
+                        "enum": ["broken", "lost", "worn_out", "given_away"]
+                      },
+                      "notes": { "type": "string", "maxLength": 500 }
+                    },
+                    "required": ["date", "reason"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "name", "category", "addDate", "status", "retirement"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/tools/value/catalogue_entry": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 }
+            },
+            "required": ["id", "name", "category"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/tool_on_a_line": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 }
+            },
+            "required": ["id", "name", "category"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/sheet_line": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "sheet_id": { "type": "string", "minLength": 1 },
+              "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "tool": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                  "notes": { "type": "string", "maxLength": 500 }
+                },
+                "required": ["id", "name", "category"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["id", "sheet_id", "number", "tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/loading_stage": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["loading", "complete"] }
+        }
+      }
+    },
+    "business/tools/value/loading_under_way": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stage": { "type": "string", "const": "loading" },
+              "cursor": { "type": "string", "minLength": 1 }
+            },
+            "required": ["stage"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/loading_complete": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stage": { "type": "string", "const": "complete" },
+              "end_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["stage", "end_date"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/loading_progress": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "loading" },
+                  "cursor": { "type": "string", "minLength": 1 }
+                },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "complete" },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["stage", "end_date"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/tools/value/loading_sheet": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "start_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "progress": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "loading" },
+                      "cursor": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "complete" },
+                      "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "end_date"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "start_date", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/sheet_being_loaded": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "start_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "progress": {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "loading" },
+                  "cursor": { "type": "string", "minLength": 1 }
+                },
+                "required": ["stage"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["id", "start_date", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/value/loaded_sheet": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "start_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "progress": {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "complete" },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["stage", "end_date"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["id", "start_date", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_added": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "added_tool": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                      "category": {
+                        "type": "string",
+                        "enum": ["garden", "power", "hand", "ladder"]
+                      },
+                      "notes": { "type": "string", "maxLength": 500 },
+                      "addDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "status": { "type": "string", "const": "inService" },
+                      "repair": { "not": {} },
+                      "retirement": { "not": {} }
+                    },
+                    "required": ["id", "name", "category", "addDate", "status"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                      "category": {
+                        "type": "string",
+                        "enum": ["garden", "power", "hand", "ladder"]
+                      },
+                      "notes": { "type": "string", "maxLength": 500 },
+                      "addDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "status": { "type": "string", "const": "underRepair" },
+                      "repair": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "minLength": 1 },
+                          "since": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["id", "since"],
+                        "additionalProperties": false
+                      },
+                      "retirement": { "not": {} }
+                    },
+                    "required": ["id", "name", "category", "addDate", "status", "repair"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                      "category": {
+                        "type": "string",
+                        "enum": ["garden", "power", "hand", "ladder"]
+                      },
+                      "notes": { "type": "string", "maxLength": 500 },
+                      "addDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "status": { "type": "string", "const": "retired" },
+                      "repair": { "not": {} },
+                      "retirement": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": ["broken", "lost", "worn_out", "given_away"]
+                          },
+                          "notes": { "type": "string", "maxLength": 500 }
+                        },
+                        "required": ["date", "reason"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["id", "name", "category", "addDate", "status", "retirement"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["added_tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_retired": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "retired_tool": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "retired" },
+                  "retirement": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "reason": {
+                        "type": "string",
+                        "enum": ["broken", "lost", "worn_out", "given_away"]
+                      },
+                      "notes": { "type": "string", "maxLength": 500 }
+                    },
+                    "required": ["date", "reason"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "status", "retirement"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["retired_tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_retired_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_sent_to_repair": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_under_repair": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "underRepair" },
+                  "repair": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["id", "since"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "status", "repair"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["tool_under_repair"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_sent_to_repair_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/the_tool_was_retired_before_the_repair": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_repaired": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repaired_tool": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "inService" }
+                },
+                "required": ["id", "status"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["repaired_tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_renamed": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "renamed_tool": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["id", "name"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["renamed_tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/the_loading_of_a_sheet_has_begun": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_sheet": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "loading" },
+                      "cursor": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "start_date", "progress"],
+                "additionalProperties": false
+              },
+              "lines": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "sheet_id": { "type": "string", "minLength": 1 },
+                    "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                    "tool": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "minLength": 1 },
+                        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                        "category": {
+                          "type": "string",
+                          "enum": ["garden", "power", "hand", "ladder"]
+                        },
+                        "notes": { "type": "string", "maxLength": 500 }
+                      },
+                      "required": ["id", "name", "category"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["id", "sheet_id", "number", "tool"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["new_sheet", "lines"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/the_loading_of_the_sheet_has_advanced": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "sheet_id": { "type": "string", "minLength": 1 },
+              "cursor": { "type": "string", "minLength": 1 }
+            },
+            "required": ["sheet_id", "cursor"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_tool_has_been_added_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "sheet_id": { "type": "string", "minLength": 1 },
+              "line_id": { "type": "string", "minLength": 1 },
+              "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "tool_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["sheet_id", "line_id", "number", "tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/the_sheet_has_been_loaded": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loaded_sheet": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "complete" },
+                      "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "end_date"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["loaded_sheet"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/fact/a_sheet_has_been_loaded_at_once": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loaded_sheet": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "complete" },
+                      "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "end_date"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "start_date", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["loaded_sheet"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/a_tool_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/the_tool_is_in_service": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/the_tool_is_retired": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/the_tool_is_under_repair": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/the_tool_is_under_this_repair": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "repair_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["tool_id", "repair_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/predicate/a_sheet_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "sheet_id": { "type": "string", "minLength": 1 } },
+            "required": ["sheet_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/selection/line/the_line_is_on_the_sheet": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "sheet_id": { "type": "string", "minLength": 1 } },
+            "required": ["sheet_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/selection/tool/the_tool_is_in_service": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "business/tools/selection/tool/the_tool_is_in_one_of_these_categories": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "categories": {
+                "minItems": 1,
+                "type": "array",
+                "items": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+              }
+            },
+            "required": ["categories"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_tool_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/add_a_tool": { "kind": "command" },
+    "business/tools/command/add_a_tool_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+              "notes": { "type": "string", "maxLength": 500 }
+            },
+            "required": ["id", "name", "category"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_tool_can_be_retired": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "a_tool_has_the_requested_id": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              },
+              "the_requested_tool_is_in_service": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["a_tool_has_the_requested_id", "the_requested_tool_is_in_service"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_tool_is_in_the_workshop": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "a_tool_has_the_requested_id": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              },
+              "the_requested_tool_is_under_repair": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["a_tool_has_the_requested_id", "the_requested_tool_is_under_repair"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_tool_is_already_retired": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "a_tool_has_the_requested_id": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              },
+              "the_requested_tool_is_retired": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["a_tool_has_the_requested_id", "the_requested_tool_is_retired"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/retire_a_tool": { "kind": "command" },
+    "business/tools/command/retire_a_tool_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "enum": ["broken", "lost", "worn_out", "given_away"] },
+              "notes": { "type": "string", "maxLength": 500 }
+            },
+            "required": ["id", "reason"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/send_a_tool_to_repair": { "kind": "command" },
+    "business/tools/command/send_a_tool_to_repair_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/put_a_repaired_tool_back_in_service": { "kind": "command" },
+    "business/tools/command/put_a_repaired_tool_back_in_service_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_tool_is_in_the_workshop_for_this_repair": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "a_tool_has_the_requested_id": {
+                "type": "object",
+                "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+                "required": ["tool_id"],
+                "additionalProperties": false
+              },
+              "the_requested_tool_is_under_the_requested_repair": {
+                "type": "object",
+                "properties": {
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "repair_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["tool_id", "repair_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "a_tool_has_the_requested_id",
+              "the_requested_tool_is_under_the_requested_repair"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/close_a_repair": { "kind": "command" },
+    "business/tools/command/close_a_repair_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "repair_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["tool_id", "repair_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/rename_a_tool": { "kind": "command" },
+    "business/tools/command/rename_a_tool_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["tool_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/the_sheet_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "sheet_id": { "type": "string", "minLength": 1 } },
+            "required": ["sheet_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/load_the_tools_of_a_sheet": { "kind": "command" },
+    "business/tools/command/load_the_tools_of_a_sheet_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "lines": {
+                "minItems": 1,
+                "maxItems": 5000,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                    "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                    "notes": { "type": "string", "maxLength": 500 }
+                  },
+                  "required": ["id", "name", "category"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["lines"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/add_a_tool_from_a_line": { "kind": "command" },
+    "business/tools/command/add_a_tool_from_a_line_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "sheet_id": { "type": "string", "minLength": 1 },
+              "line_id": { "type": "string", "minLength": 1 },
+              "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "tool": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                  "notes": { "type": "string", "maxLength": 500 }
+                },
+                "required": ["id", "name", "category"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["sheet_id", "line_id", "number", "tool"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/continue_the_loading_of_a_sheet": { "kind": "command" },
+    "business/tools/command/continue_the_loading_of_a_sheet_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "sheet_id": { "type": "string", "minLength": 1 } },
+            "required": ["sheet_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/command/load_the_tools_of_a_short_sheet": { "kind": "command" },
+    "business/tools/command/load_the_tools_of_a_short_sheet_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "lines": {
+                "minItems": 1,
+                "maxItems": 50,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                    "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] },
+                    "notes": { "type": "string", "maxLength": 500 }
+                  },
+                  "required": ["id", "name", "category"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["lines"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/query/the_tool_is_shown_in_the_catalogue": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_tool_is_in_service": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "the_tool_is_in_a_chosen_category": {
+                "type": "object",
+                "properties": {
+                  "categories": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+                  }
+                },
+                "required": ["categories"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_tool_is_in_service", "the_tool_is_in_a_chosen_category"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/query/the_catalogue": { "kind": "query" },
+    "business/tools/query/the_catalogue_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "categories": {
+                "default": ["garden", "power", "hand", "ladder"],
+                "minItems": 1,
+                "type": "array",
+                "items": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/tools/usecase/add_a_tool": { "kind": "usecase" },
+    "business/tools/usecase/retire_a_tool": { "kind": "usecase" },
+    "business/tools/usecase/send_a_tool_to_repair": { "kind": "usecase" },
+    "business/tools/usecase/put_a_repaired_tool_back_in_service": { "kind": "usecase" },
+    "business/tools/usecase/close_a_repair": { "kind": "usecase" },
+    "business/tools/usecase/rename_a_tool": { "kind": "usecase" },
+    "business/tools/usecase/load_the_tools_of_a_sheet": { "kind": "usecase" },
+    "business/tools/usecase/load_the_tools_of_a_short_sheet": { "kind": "usecase" },
+    "business/tools/usecase/continue_the_loading_of_a_sheet": { "kind": "usecase" },
+    "business/tools/usecase/the_catalogue": { "kind": "usecase" },
+    "business/tools/reaction/the_first_line_of_the_sheet_is_taken_up": { "kind": "reaction" },
+    "business/tools/reaction/the_next_line_of_the_sheet_is_taken_up": { "kind": "reaction" },
+    "business/tools/version/tools": { "kind": "version" }
+  }
+}

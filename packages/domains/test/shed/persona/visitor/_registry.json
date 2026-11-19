@@ -1,0 +1,86 @@
+{
+  "domain": "persona/visitor",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/visitor/value/category": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+        }
+      }
+    },
+    "persona/visitor/value/categories": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "minItems": 1,
+            "type": "array",
+            "items": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+          }
+        }
+      }
+    },
+    "persona/visitor/value/tool_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "persona/visitor/value/page_size": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 100 }
+        }
+      }
+    },
+    "persona/visitor/usecase/the_catalogue": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "category": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+            },
+            "required": ["tool_id", "name", "category"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/visitor/usecase/the_catalogue_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "categories": {
+                "minItems": 1,
+                "type": "array",
+                "items": { "type": "string", "enum": ["garden", "power", "hand", "ladder"] }
+              },
+              "page_size": { "default": 50, "type": "integer", "minimum": 1, "maximum": 100 }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/visitor/version/visitor": { "kind": "version" }
+  }
+}

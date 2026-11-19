@@ -1,3 +1,4 @@
+import type { Json } from '@q-mino/domains/library'
 import type {
   AuthoredFile,
   Export,
@@ -8,6 +9,7 @@ import type {
   Identity,
   Input,
   Past,
+  Shapes,
   Tree,
   Value,
 } from '../src/index.ts'
@@ -56,6 +58,8 @@ export const component = (
   past: Past = { is: 'current' },
   parts: {
     readonly major?: number
+    readonly version?: string
+    readonly shapes?: Shapes
     readonly identity?: Identity
     readonly input_identity?: Identity
     readonly holds?: readonly Held[]
@@ -66,6 +70,8 @@ export const component = (
   input,
   past,
   ...(parts.major === undefined ? {} : { major: parts.major }),
+  ...(parts.version === undefined ? {} : { version: parts.version }),
+  shapes: parts.shapes ?? {},
   identity: parts.identity ?? another(),
   ...(parts.input_identity === undefined
     ? input === 'none'
@@ -75,8 +81,12 @@ export const component = (
   holds: parts.holds ?? [],
 })
 
-/** A value as the runtime gives it: a new object, unless an identity is given. */
-export const value = (identity: Identity = another()): Value => ({ is: 'value', identity })
+/** A value as the runtime gives it: a new object, unless an identity is given; any shape, unless one is given. */
+export const value = (identity: Identity = another(), shape: Json = {}): Value => ({
+  is: 'value',
+  identity,
+  shape,
+})
 
 /** Shed's map (`sight.ts`). */
 export const sight: Tree['sight'] = {

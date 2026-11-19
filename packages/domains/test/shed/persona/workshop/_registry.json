@@ -1,0 +1,58 @@
+{
+  "domain": "persona/workshop",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/workshop/value/notification_id": {
+      "kind": "value",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "persona/workshop/node/workshop": { "kind": "node" },
+    "persona/workshop/usecase/close_a_job": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_job_is_closed": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool": { "type": "string", "minLength": 1 } },
+            "required": ["tool"],
+            "additionalProperties": false
+          }
+        },
+        "event/there_is_no_such_open_job": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/workshop/usecase/close_a_job_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "notification_id": { "type": "string", "minLength": 1 },
+              "job": {
+                "type": "object",
+                "properties": {
+                  "tool": { "type": "string", "minLength": 1 },
+                  "reference": { "type": "string", "minLength": 1 }
+                },
+                "required": ["tool", "reference"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["notification_id", "job"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/workshop/version/workshop": { "kind": "version" }
+  }
+}

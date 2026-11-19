@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -6,19 +7,25 @@ import {
   $Delegated,
   $Earlier,
   $Node,
+  $UseCase,
   $Version,
   is_a_schema,
+  json_schema_of,
   kind_of,
   type Built,
+  type Json,
 } from '@q-mino/domains/library'
 import {
   checks,
+  compared,
   doors,
+  is_a_major_registry,
   generated,
   layer_order,
   next_import,
   registries,
   scopes,
+  snapshots,
   twin,
   type AuthoredFile,
   type Export,
@@ -29,8 +36,10 @@ import {
   type Held,
   type Identity,
   type Input,
+  type MajorRegistry,
   type NodeParts,
   type Past,
+  type Shapes,
   type Tree,
   type TreeConfiguration,
   type Value,
@@ -41,11 +50,13 @@ import { read_source, runtime_imports, type Source } from './source.ts'
 // names, reads the authored files' sources, writes the scopes and the doors,
 // then imports the authored files one by one, each once every authored file
 // its imports reach is imported and its twin written, and writes its twin;
-// then the scopes again, the registries and the majors (DOM-24, DOM-22), and
-// deletes a generated file it no longer writes; then the checks of the core
-// (DOM-25), with what the runtime says of the components. Checking, it writes
-// nothing and compares. A file the configuration holds is neither written
-// nor compared.
+// then the scopes again, the registries, the majors and the registries by
+// major as JSON Schema (DOM-24, DOM-22, TST-7), and deletes a generated file
+// it no longer writes; then the checks of the core (DOM-25), with what the
+// runtime says of the components, and, for a tree compared with main, the
+// comparison of its registries by major with main's (DOM-24, PER-17).
+// Checking, it writes nothing and compares. A file the configuration holds is
+// neither written nor compared.
 
 /** What generating a tree gave: the files written or differing, the files held as written, and the failures. */
 export interface Outcome {
@@ -152,12 +163,88 @@ const node_parts_of = (value: object): NodeParts | undefined => {
   }
 }
 
-/** The major a version declares (`version('2.0.0')`: 2). */
-const major_of = (value: object): number | undefined => {
+/** The version a version component declares (`version('2.0.0')`). */
+const version_of = (value: object): string | undefined => {
   if (!($Version in value)) return undefined
   const version: unknown = value[$Version]
-  const major = typeof version === 'string' ? Number(version.split('.')[0]) : Number.NaN
+  return typeof version === 'string' ? version : undefined
+}
+
+/** The major a version declares (`version('2.0.0')`: 2). */
+const major_of = (value: object): number | undefined => {
+  const major = Number(version_of(value)?.split('.')[0])
   return Number.isInteger(major) ? major : undefined
+}
+
+/**
+ * A context no input may read while it is built: an input declared as a
+ * function of the context reads it in its refinements, when it parses
+ * (DOM-21), so its shape is built without one; one that reads it at once
+ * has a shape the export cannot tell.
+ */
+const unread_context: object = new Proxy(
+  {},
+  {
+    get: (): never => {
+      throw new Error('an input read the context while it was built')
+    },
+  },
+)
+
+/** The shape of an input declared as a function of the context: the schema it builds, or a mark. */
+const shape_of_a_function = (input: object): Json => {
+  try {
+    const built: unknown =
+      typeof input === 'function' ? Reflect.apply(input, undefined, [unread_context]) : undefined
+    return is_a_schema(built)
+      ? json_schema_of(built)
+      : { 'x-unrepresentable': 'function of the context' }
+  } catch {
+    return { 'x-unrepresentable': 'function of the context' }
+  }
+}
+
+/** The schemas of a record of them (`events`), by name. */
+const schemas_in = (record: unknown): readonly (readonly [string, Json])[] =>
+  is_an_object(record)
+    ? Object.entries(record).flatMap(([name, schema]: [string, unknown]) =>
+        is_a_schema(schema) ? [[name, json_schema_of(schema)] as const] : [],
+      )
+    : []
+
+/**
+ * The shapes of a component as JSON Schema, by part (TST-7): a schema's
+ * own, its input, a leaf's events, entry and stream's events; a component of
+ * a past major delegated to the next major's has the next one's.
+ */
+const shapes_of = (value: object): Shapes => {
+  if ($Delegated in value) {
+    const next: unknown = value[$Delegated]
+    return is_an_object(next) ? shapes_of(next) : {}
+  }
+  const input = inline_input(value)
+  const use_case: unknown = $UseCase in value ? value[$UseCase] : undefined
+  const declared: unknown = is_an_object(use_case) ? Reflect.get(use_case, 'declared') : undefined
+  const stream: unknown = is_an_object(declared) ? Reflect.get(declared, 'stream') : undefined
+  const entry: unknown = is_an_object(use_case) ? Reflect.get(use_case, 'entry') : undefined
+  return Object.fromEntries([
+    ...(is_a_schema(value) ? [['schema', json_schema_of(value)] as const] : []),
+    ...(input === undefined
+      ? []
+      : [
+          [
+            'input',
+            is_a_schema(input) ? json_schema_of(input) : shape_of_a_function(input),
+          ] as const,
+        ]),
+    ...schemas_in(is_an_object(use_case) ? Reflect.get(use_case, 'events') : undefined).map(
+      ([name, schema]) => [`event/${name}`, schema] as const,
+    ),
+    ...(is_a_schema(entry) ? [['entry', json_schema_of(entry)] as const] : []),
+    ...schemas_in(is_an_object(stream) ? Reflect.get(stream, 'events') : undefined).map(
+      ([name, schema]) => [`stream/${name}`, schema] as const,
+    ),
+  ])
 }
 
 const past_of = (value: object): Past =>
@@ -173,6 +260,7 @@ const value_of = (value: unknown, number: (value: object) => Identity): Value =>
   if (built !== undefined && is_an_object(value)) {
     const node = node_parts_of(value)
     const major = major_of(value)
+    const version = version_of(value)
     const input = inline_input(value)
     return {
       is: 'component',
@@ -181,12 +269,16 @@ const value_of = (value: unknown, number: (value: object) => Identity): Value =>
       past: past_of(value),
       ...(node === undefined ? {} : { node }),
       ...(major === undefined ? {} : { major }),
+      ...(version === undefined ? {} : { version }),
+      shapes: shapes_of(value),
       identity: number(value),
       ...(input === undefined ? {} : { input_identity: number(input) }),
       holds: held_by(value).map((one): Held => ({ identity: number(one.held), built: one.built })),
     }
   }
-  return is_a_schema(value) ? { is: 'value', identity: number(value) } : { is: 'other' }
+  return is_a_schema(value)
+    ? { is: 'value', identity: number(value), shape: json_schema_of(value) }
+    : { is: 'other' }
 }
 
 /** The kind of a file that imports no scope, from what it exports: its components', a value, or `dsl`. */
@@ -216,11 +308,50 @@ const import_exports = async (
   }))
 }
 
-/** Generate a tree: write its scopes and twins, or check them (`check`). */
+/** The registries by major a release left, or why they cannot be read. */
+export type Released =
+  | { readonly is: 'read'; readonly registries: readonly MajorRegistry[] }
+  | { readonly is: 'unread'; readonly why: string }
+
+const git = (repository: string, args: readonly string[]): string =>
+  execFileSync('git', ['-C', repository, ...args], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+
+/**
+ * The registries by major `main` holds under a tree's root (its
+ * `_registry.json`, DOM-24): from `origin/main`, else `main`. In CI the
+ * checkout must fetch it.
+ */
+export const from_main = (repository: string, root: string): Released => {
+  const ref = ['origin/main', 'main'].find((one) => {
+    try {
+      git(repository, ['rev-parse', '--verify', '--quiet', `${one}^{commit}`])
+      return true
+    } catch {
+      return false
+    }
+  })
+  if (ref === undefined) return { is: 'unread', why: 'git knows no main nor origin/main' }
+  const paths = git(repository, ['ls-tree', '-r', '--name-only', ref, '--', root])
+    .split('\n')
+    .filter((path) => path.endsWith('/_registry.json'))
+  const registries: MajorRegistry[] = []
+  for (const path of paths) {
+    const read: unknown = JSON.parse(git(repository, ['show', `${ref}:${path}`]))
+    if (!is_a_major_registry(read)) return { is: 'unread', why: `${ref}:${path} is no registry` }
+    registries.push(read)
+  }
+  return { is: 'read', registries }
+}
+
+/** Generate a tree: write its scopes and twins, or check them (`check`); a tree compared with main is compared with what `released` gives. */
 export const generate = async (
   repository: string,
   configuration: TreeConfiguration,
   check: boolean,
+  released: (repository: string, root: string) => Released = from_main,
 ): Promise<Outcome> => {
   const root = resolve(repository, configuration.root)
   const shown = (path: string): string => relative(repository, join(root, path))
@@ -379,13 +510,16 @@ export const generate = async (
   const written_registries = registries(tree())
   failures.push(...written_registries.failures.map(from_the_repository))
   for (const file of written_registries.files) await put(file)
+  for (const file of snapshots(tree())) await put(file)
 
   // A generated file the generator no longer writes (a folder deleted, a kind gone): named, or deleted.
   for (const segments of folders) {
     for (const name of readdirSync(join(root, ...segments)).sort()) {
       const path = join(root, ...segments, name)
-      if (!name.startsWith('_') || !name.endsWith('.ts') || planned.has(path)) continue
-      if (readFileSync(path, 'utf8').split('\n')[0] !== generated) continue
+      if (!name.startsWith('_') || planned.has(path)) continue
+      const snapshot = name === '_registry.json'
+      if (!snapshot && !name.endsWith('.ts')) continue
+      if (!snapshot && readFileSync(path, 'utf8').split('\n')[0] !== generated) continue
       written.add(shown(relative(root, path)))
       if (check) {
         failures.push({
@@ -411,6 +545,19 @@ export const generate = async (
     }
   }
   failures.push(...checks(tree()).map(from_the_repository))
+  if (configuration.compared_with_main) {
+    const before = released(repository, configuration.root)
+    if (before.is === 'read') {
+      failures.push(...compared(tree(), before.registries).map(from_the_repository))
+    } else {
+      failures.push({
+        path: 'generator.config.ts',
+        line: 1,
+        rule: 'DOM-24',
+        sentence: `${configuration.root} is compared with main, and its registries cannot be read: ${before.why}`,
+      })
+    }
+  }
   return {
     written: [...written],
     held: [...kept].map((path) => shown(relative(root, path))),

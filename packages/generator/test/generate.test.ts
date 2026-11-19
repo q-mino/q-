@@ -3,14 +3,16 @@ import { dirname, join, relative } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { afterAll, describe, expect, it } from 'vitest'
 import { kind_of } from '@q-mino/domains/library'
-import { generate } from '../shell/generate.ts'
+import { generate, type Released } from '../shell/generate.ts'
+import { as_schema, is_a_major_registry, type MajorRegistry } from '../src/index.ts'
 
 // The generator on a tree of authored files alone (DOM-25): it writes the
 // scopes and the doors, imports the authored files in the order their imports
 // allow, writes their twins, then the registries and the majors (DOM-24,
 // DOM-22), with no generated file to start from; run again, it writes
 // nothing; checking a twin changed by hand, or a generated file it no longer
-// writes, it names them.
+// writes, it names them. Compared with main, it reads the registries by
+// major a release left and names a shape changed in the wrong direction.
 
 const repository = fileURLToPath(new URL('../../../', import.meta.url))
 const root = join(repository, 'packages/generator/test/.generated', `tree-${String(process.pid)}`)
@@ -289,5 +291,101 @@ export const a_thing_is_here = a_thing_is_listed
       `${configuration.root}/business/things/more_predicates.ts:13  DOM-24  business/things/predicate/a_thing_is_listed is exported twice, as a_thing_is_listed and a_thing_is_here: one object, one path`,
       `${configuration.root}/business/things/more_predicates.ts:11  DOM-25  business/things/predicate/the_thing_is_shown holds a predicate that no file exports: a component it reaches is exported, so that it has a path`,
     ])
+  })
+
+  it('writes the registries by major as JSON Schema, and compares them with those a release left (DOM-24, TST-7)', async () => {
+    rmSync(join(root, 'business/things/more_predicates.ts'))
+    await generate(repository, configuration, false)
+    const on_disk = (path: string): MajorRegistry => {
+      const parsed: unknown = JSON.parse(read(path))
+      if (!is_a_major_registry(parsed)) throw new Error(`${path} is no registry`)
+      return parsed
+    }
+    const current = on_disk('business/things/_registry.json')
+    const past = on_disk('business/things/1/_registry.json')
+    expect([current.version, past.major, past.version]).toEqual(['2.0.0', 1, undefined])
+    expect(existsSync(join(root, 'business/others/_registry.json'))).toBe(false)
+    const compared = { ...configuration, compared_with_main: true }
+    const from = (released: Released) => () => released
+
+    // As released: nothing to say.
+    expect(
+      (
+        await generate(
+          repository,
+          compared,
+          true,
+          from({ is: 'read', registries: [current, past] }),
+        )
+      ).failures,
+    ).toEqual([])
+
+    // Released with an optional note in the fact's payload, which the tree no longer reads: a major.
+    const path = 'business/things/fact/a_thing_has_been_added'
+    const shape = current.paths[path]?.shapes?.['schema']
+    const schema = as_schema(shape?.schema)
+    if (typeof schema !== 'object') throw new Error('no schema')
+    const properties = as_schema(schema['properties'])
+    const with_a_note: MajorRegistry = {
+      ...current,
+      paths: {
+        ...current.paths,
+        [path]: {
+          kind: 'fact',
+          shapes: {
+            schema: {
+              direction: 'read',
+              schema: {
+                ...schema,
+                properties: {
+                  ...(typeof properties === 'object' ? properties : {}),
+                  note: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }
+    const checked = await generate(
+      repository,
+      compared,
+      true,
+      from({ is: 'read', registries: [with_a_note, past] }),
+    )
+    expect(
+      checked.failures.map(
+        (failure) =>
+          `${failure.path}:${String(failure.line)}  ${failure.rule}  ${failure.sentence}`,
+      ),
+    ).toEqual([
+      `${configuration.root}/business/things/fact.ts:5  DOM-24  ${path} changes its shape against the direction it is read in, since things 2.0.0: what the tree reads only widens, every shape it left still parsing; this is a major`,
+    ])
+
+    // Main not readable: said, never passed in silence.
+    expect(
+      (await generate(repository, compared, true, from({ is: 'unread', why: 'git knows no main' })))
+        .failures,
+    ).toEqual([
+      {
+        path: 'generator.config.ts',
+        line: 1,
+        rule: 'DOM-24',
+        sentence: `${configuration.root} is compared with main, and its registries cannot be read: git knows no main`,
+      },
+    ])
+
+    // A registry by major the generator no longer writes is named, then deleted.
+    writeFileSync(join(root, 'business/others/_registry.json'), '{}\n')
+    expect((await generate(repository, configuration, true)).failures).toEqual([
+      {
+        path: `${configuration.root}/business/others/_registry.json`,
+        line: 1,
+        rule: 'DOM-24',
+        sentence: 'is no longer written by the generator: run pnpm generate',
+      },
+    ])
+    await generate(repository, configuration, false)
+    expect(existsSync(join(root, 'business/others/_registry.json'))).toBe(false)
   })
 })

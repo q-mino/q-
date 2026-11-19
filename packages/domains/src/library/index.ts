@@ -268,6 +268,8 @@ export type { Builders, Sight } from './builders.ts'
 export { identity_of } from './stable.ts'
 export { kind_of, is_a_schema } from './kind.ts'
 export type { ConstructKind, Built } from './kind.ts'
+export { as_json, json_schema_of } from './json_schema.ts'
+export type { Json, JsonObject } from './json_schema.ts'
 export type {
   CommandUseCasePort,
   ReadEvent,

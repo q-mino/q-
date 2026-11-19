@@ -70,7 +70,7 @@ const registered = (folder: Folder): readonly AuthoredFile[] =>
     .filter((kind) => kind !== 'dsl')
     .flatMap((kind) => [...files_of(folder, kind)].sort((a, b) => a.stem.localeCompare(b.stem)))
 
-const below = (tree: Tree, folder: Folder, past: boolean): readonly Folder[] =>
+export const below = (tree: Tree, folder: Folder, past: boolean): readonly Folder[] =>
   tree.folders
     .filter(
       (other) =>
@@ -108,15 +108,32 @@ const header = (tree: Tree, folder: Folder): readonly string[] => {
   )
 }
 
-/** The paths of a folder's registry: its own, then those of the folders it carries (DOM-24). */
-export const registry_paths = (tree: Tree, folder: Folder): readonly string[] => [
+/** A path of a registry with where it is declared: its folder, its authored file, its export. */
+export interface Located {
+  readonly entry: Entry
+  readonly folder: Folder
+  readonly authored: AuthoredFile
+  readonly exported: Export
+}
+
+/** The entries of a folder's registry with where each is declared: its own, then those of the folders it carries (DOM-24). */
+export const registry_entries = (tree: Tree, folder: Folder): readonly Located[] => [
   ...registered(folder).flatMap((authored) =>
     authored.exports.flatMap((exported) =>
-      entries_of(folder, authored, exported).map((entry) => entry.path),
+      entries_of(folder, authored, exported).map((entry) => ({
+        entry,
+        folder,
+        authored,
+        exported,
+      })),
     ),
   ),
-  ...carried(tree, folder).flatMap((child) => registry_paths(tree, child)),
+  ...carried(tree, folder).flatMap((child) => registry_entries(tree, child)),
 ]
+
+/** The paths of a folder's registry: its own, then those of the folders it carries (DOM-24). */
+export const registry_paths = (tree: Tree, folder: Folder): readonly string[] =>
+  registry_entries(tree, folder).map((located) => located.entry.path)
 
 /** The modules a registry imports, by the name it gives each: two under one name fail (DOM-24). */
 const aliases = (

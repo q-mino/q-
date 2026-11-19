@@ -1,4 +1,4 @@
-import type { Built, ConstructKind, Sight } from '@q-mino/domains/library'
+import type { Built, ConstructKind, Json, Sight } from '@q-mino/domains/library'
 
 // A tree as the shell reads it (DOM-25), the core's input: its folders, the
 // authored files in them, what their source says (the scope each imports, the
@@ -60,6 +60,10 @@ export type Value =
       readonly node?: NodeParts
       /** For a version, the major it declares (`version('2.0.0')`: 2); none for any other component. */
       readonly major?: number
+      /** For a version, the version it declares (`'2.0.0'`); none for any other component. */
+      readonly version?: string
+      /** Its shapes as JSON Schema, by part (TST-7), a past major's delegated component the next one's. */
+      readonly shapes: Shapes
       /** The object it is, by identity (one object, one path, DOM-24). */
       readonly identity: Identity
       /** The input it declares inline, by identity, if it declares one. */
@@ -68,7 +72,12 @@ export type Value =
       readonly holds: readonly Held[]
     }
   /** A zod schema with no mark: a value of the domain (DOM-21). */
-  | { readonly is: 'value'; readonly identity: Identity }
+  | {
+      readonly is: 'value'
+      readonly identity: Identity
+      /** Its shape as JSON Schema (TST-7). */
+      readonly shape: Json
+    }
   /** Anything else: a function of `dsl`, a helper; the library ignores it. */
   | { readonly is: 'other' }
 
@@ -77,6 +86,15 @@ export type Value =
  * wherever the tree names it. The shell numbers them; the core compares.
  */
 export type Identity = number
+
+/**
+ * The shapes of a component as JSON Schema (DOM-21, TST-7), by part:
+ * `schema` for a component that is a schema (an identity, a fact, a
+ * predicate…), `input` for the input it declares, `event/<name>` for an
+ * event of a leaf's, `entry` for a read leaf's entry, `stream/<name>` for an
+ * event of its stream. A component with no shape of its own has none.
+ */
+export type Shapes = Readonly<Record<string, Json>>
 
 /** A component another one holds: the object it is, and its builder's mark. */
 export interface Held {
