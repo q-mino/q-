@@ -1,7 +1,8 @@
 // generated
 
-// The value schemas of `tools` under their names, with their output types under
-// the same names: one import gives both.
+// The values of `business/tools` from `value.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `value.ts`.
 
 import { z } from 'zod'
 import * as value from './value.ts'
@@ -39,6 +40,14 @@ export const retire_reason = value.retire_reason
 export type retire_reason = z.output<typeof retire_reason>
 
 /**
+ * Why and when a tool left service.
+ *
+ * @see {@link value.retirement}
+ */
+export const retirement = value.retirement
+export type retirement = z.output<typeof retirement>
+
+/**
  * A stay in repair: which one, and since when. Why it went (a damaged
  * return, a tool found broken) is not the workshop's: the facts that sent
  * it there say it.
@@ -47,14 +56,6 @@ export type retire_reason = z.output<typeof retire_reason>
  */
 export const repair = value.repair
 export type repair = z.output<typeof repair>
-
-/**
- * Why and when a tool left service.
- *
- * @see {@link value.retirement}
- */
-export const retirement = value.retirement
-export type retirement = z.output<typeof retirement>
 
 /**
  * A tool that can be lent.

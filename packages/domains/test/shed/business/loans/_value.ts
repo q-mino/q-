@@ -1,7 +1,8 @@
 // generated
 
-// The value schemas of `loans` under their names, with their output types under
-// the same names: one import gives both.
+// The values of `business/loans` from `value.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `value.ts`.
 
 import { z } from 'zod'
 import * as value from './value.ts'
@@ -97,8 +98,6 @@ export const returned_loan = value.returned_loan
 export type returned_loan = z.output<typeof returned_loan>
 
 /**
- * Grows with the steps: `cancelled` (step 8).
- *
  * @see {@link value.reservation_stage}
  */
 export const reservation_stage = value.reservation_stage
@@ -155,14 +154,6 @@ export const booked_reservation = value.booked_reservation
 export type booked_reservation = z.output<typeof booked_reservation>
 
 /**
- * A reservation the desk cancelled.
- *
- * @see {@link value.cancelled_reservation}
- */
-export const cancelled_reservation = value.cancelled_reservation
-export type cancelled_reservation = z.output<typeof cancelled_reservation>
-
-/**
  * A reservation the member took up, taking the tool on its day.
  *
  * @see {@link value.taken_up_reservation}
@@ -171,20 +162,20 @@ export const taken_up_reservation = value.taken_up_reservation
 export type taken_up_reservation = z.output<typeof taken_up_reservation>
 
 /**
+ * A reservation the desk cancelled.
+ *
+ * @see {@link value.cancelled_reservation}
+ */
+export const cancelled_reservation = value.cancelled_reservation
+export type cancelled_reservation = z.output<typeof cancelled_reservation>
+
+/**
  * What a member sees of an ongoing loan: the tool, with its name, the dates, and whether its due date has passed.
  *
  * @see {@link value.ongoing_loan_entry}
  */
 export const ongoing_loan_entry = value.ongoing_loan_entry
 export type ongoing_loan_entry = z.output<typeof ongoing_loan_entry>
-
-/**
- * What a member sees of a reservation: the tool, with its name, and the day.
- *
- * @see {@link value.reservation_entry}
- */
-export const reservation_entry = value.reservation_entry
-export type reservation_entry = z.output<typeof reservation_entry>
 
 /**
  * How many loans: a count of the desk's register (SC-21).
@@ -201,6 +192,14 @@ export type number_of_loans = z.output<typeof number_of_loans>
  */
 export const tool_of_the_shed_entry = value.tool_of_the_shed_entry
 export type tool_of_the_shed_entry = z.output<typeof tool_of_the_shed_entry>
+
+/**
+ * What a member sees of a reservation: the tool, with its name, and the day.
+ *
+ * @see {@link value.reservation_entry}
+ */
+export const reservation_entry = value.reservation_entry
+export type reservation_entry = z.output<typeof reservation_entry>
 
 /**
  * @see {@link value.cancellation_stage}
@@ -327,7 +326,10 @@ export const completed_repair_notice_round = value.completed_repair_notice_round
 export type completed_repair_notice_round = z.output<typeof completed_repair_notice_round>
 
 /**
- * The week's summary the desk sends a member every Monday.
+ * The week's summary the desk sends a member every Monday, which the member
+ * asked for (SC-43): who gets it, and the Monday it waits for, at the start
+ * of the shed's day. One per member; it goes on until the member stops it
+ * (with its case).
  *
  * @see {@link value.weekly_summary}
  */

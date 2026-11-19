@@ -1,10 +1,10 @@
 // generated
 
-// The scope of the reactions of `retirement` (DOM-25): the builder of a
-// reaction; nothing below in its folder, it takes the facts and use cases from
-// the doors. The folders it sees (`sight.ts`): `tools` (usecase, fact), `loans`
-// (usecase, fact).
+// The scope of the reactions of `reaction/retirement` (DOM-25): the builders
+// `reaction`, `nothing`; the twins of its folder in the layers below, its
+// ancestors' doors to the folders below and the doors the map opens to it.
 
 export { reaction } from './_scope.ts'
-export * as tools from '../../business/tools/_door_reaction.ts'
+export { nothing } from '../../wlib.ts'
 export * as loans from '../../business/loans/_door_reaction.ts'
+export * as tools from '../../business/tools/_door_reaction.ts'

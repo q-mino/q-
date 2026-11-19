@@ -266,7 +266,7 @@ export type {
 export { builders_at } from './builders.ts'
 export type { Builders, Sight } from './builders.ts'
 export { identity_of } from './stable.ts'
-export { kind_of } from './kind.ts'
+export { kind_of, is_a_schema } from './kind.ts'
 export type { ConstructKind, Built } from './kind.ts'
 export type {
   CommandUseCasePort,

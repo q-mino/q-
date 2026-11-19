@@ -1,8 +1,9 @@
 // generated
 
-// The predicates of `loans`, branded with their path (DOM-24): the same
-// objects as in `predicate.ts`, nominal in the types. Only this module imports
-// `predicate.ts`.
+// The predicates of `business/loans` from `predicate.ts` (DOM-25): the same
+// objects under the same names, branded with their path (DOM-24), each schema
+// with its output type under the same name, so that one import gives both. Only
+// this module imports `predicate.ts`.
 
 import { z } from 'zod'
 import * as predicate from './predicate.ts'
@@ -156,7 +157,8 @@ export const the_tool_is_booked_for_the_day =
 export type the_tool_is_booked_for_the_day = z.output<typeof the_tool_is_booked_for_the_day>
 
 /**
- * The tool is booked for a day from today up to this one, by whoever (SC-31).
+ * The tool is booked for a day from today up to this one, by whoever: a loan
+ * that would keep it out until then takes a booked day from someone (SC-31).
  *
  * @see {@link predicate.the_tool_is_booked_on_a_day_up_to}
  */
@@ -198,7 +200,7 @@ export type the_notice_round_of_the_repair_has_begun = z.output<
 >
 
 /**
- * The desk sends this member the week's summary every Monday.
+ * The desk sends this member the week's summary every Monday (SC-43).
  *
  * @see {@link predicate.a_weekly_summary_goes_to_the_member}
  */
@@ -209,7 +211,8 @@ export type a_weekly_summary_goes_to_the_member = z.output<
 >
 
 /**
- * The week of the Monday the member's summary waits for is not over.
+ * The week of the Monday the member's summary waits for is not over at this
+ * instant: a summary sent in its week still tells the week (SC-43).
  *
  * @see {@link predicate.the_week_of_the_summary_is_not_over}
  */

@@ -1,6 +1,8 @@
 // generated
 
-// The lookups of `accounts` under their names (PER-9).
+// The lookups of `auth/accounts` from `lookup.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `lookup.ts`.
 
 import * as lookup from './lookup.ts'
 

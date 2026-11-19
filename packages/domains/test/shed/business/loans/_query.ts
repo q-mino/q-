@@ -1,7 +1,8 @@
 // generated
 
-// The queries of `loans` under their names, each schema with its output type
-// under the same name: one import gives both.
+// The queries of `business/loans` from `query.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `query.ts`.
 
 import { z } from 'zod'
 import * as query from './query.ts'

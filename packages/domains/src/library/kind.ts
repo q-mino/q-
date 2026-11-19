@@ -74,3 +74,11 @@ export const kind_of = (value: unknown): Built | undefined =>
   (typeof value === 'object' || typeof value === 'function') && value !== null && $Built in value
     ? built.parse(value[$Built])
     : undefined
+
+/**
+ * Whether a value is a zod schema: an exported one with no mark is a value of
+ * its domain (DOM-21), and an input declared inline is a schema or a function
+ * of the context that gives one (DOM-21). For the generator, which reads what
+ * the authored files export.
+ */
+export const is_a_schema = (value: unknown): value is z.ZodType => value instanceof z.ZodType

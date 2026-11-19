@@ -1,8 +1,8 @@
 // generated
 
-// The scope of the values of `tools` (DOM-25): no builder, an exported zod
-// schema is a value; the identities below. The folders it sees (`sight.ts`):
-// `loans` (id).
+// The scope of the values of `business/tools` (DOM-25): no builder; the twins
+// of its folder in the layers below, its ancestors' doors to the folders below
+// and the doors the map opens to it.
 
 export * as id from './_id.ts'
 export * as loans from '../loans/_door_business.ts'

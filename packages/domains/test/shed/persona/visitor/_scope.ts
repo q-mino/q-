@@ -1,9 +1,8 @@
 // generated
 
-// The scope of `visitor` (DOM-25): every builder, bound to the context of its
-// point in the tree (PER-6), the context the node of the persona base gives
-// (`visitor` has no node). The authored files take them from the scope of their
-// kind (`_scope_usecase.ts`), never from this file.
+// The point of `persona/visitor` (DOM-25): every builder, bound to the context
+// the nodes above give here (PER-6), the node `persona`'s. The authored files
+// take them from the scope of their kind, never from this file.
 
 import * as wlib from '../../wlib.ts'
 import type { persona_context } from '../_node.ts'

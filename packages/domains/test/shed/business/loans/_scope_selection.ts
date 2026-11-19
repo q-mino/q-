@@ -1,8 +1,9 @@
 // generated
 
-// The scope of the selections of `loans` (DOM-25): the builders of a selection
-// predicate and of their composition; the identities, values and dsl below. The
-// folders it sees (`sight.ts`): `tools` (id).
+// The scope of the selection predicates of `business/loans` (DOM-25): the
+// builders `selection`, `AND`, `OR`, `NOT`; the twins of its folder in the
+// layers below, its ancestors' doors to the folders below and the doors the map
+// opens to it.
 
 export { selection, AND, OR, NOT } from './_scope.ts'
 export * as id from './_id.ts'

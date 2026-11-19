@@ -1,9 +1,9 @@
 // generated
 
-// The scope of `an_ongoing_loan` (DOM-25): every builder, bound to the context
-// of its point in the tree, the context the node `an_ongoing_loan` gives, and
-// to what it adds to the commands below (D105). The authored files take them
-// from the scope of their kind (`_scope_command.ts`), never from this file.
+// The point of `business/loans/an_ongoing_loan` (DOM-25): every builder, bound
+// to the context the nodes above give here (PER-6), the node
+// `an_ongoing_loan`'s. The authored files take them from the scope of their
+// kind, never from this file.
 
 import * as wlib from '../../../wlib.ts'
 import type {

@@ -189,6 +189,40 @@ export default {
       },
     },
     {
+      name: 'generator-imports-the-library-only',
+      comment:
+        'The generator imports of the domains the library only (§ 2, DOM-25): it finds the components of a tree by the marks the library\'s builders leave, and imports the authored files at runtime, which no arrow shows.',
+      severity: 'error',
+      from: { path: '^packages/generator/(src|shell)/' },
+      to: { path: '^packages/domains/', pathNot: '^packages/domains/src/library/' },
+    },
+    {
+      name: 'generator-core-no-node',
+      comment:
+        "The generator's core compiles without Node, as the domains (§ 2, DOM-25): from a tree as read to the files to write and the failures; the shell reads, imports and writes.",
+      severity: 'error',
+      from: { path: '^packages/generator/src/' },
+      to: {
+        dependencyTypes: [
+          'core',
+          'npm',
+          'npm-dev',
+          'npm-optional',
+          'npm-peer',
+          'npm-no-pkg',
+          'npm-unknown',
+        ],
+      },
+    },
+    {
+      name: 'nothing-imports-the-generator',
+      comment:
+        'No package imports the generator (§ 2): a tool of the author, run by pnpm generate, never by a node; only the repository\'s configuration does.',
+      severity: 'error',
+      from: { path: '^packages/', pathNot: '^packages/generator/' },
+      to: { path: '^packages/generator/' },
+    },
+    {
       name: 'adapters-do-not-import-configurators',
       severity: 'error',
       from: { path: '^packages/adapters-' },
@@ -203,7 +237,7 @@ export default {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|\\.tsbuild|node_modules)/' },
+    exclude: { path: '(^|/)(dist|\\.tsbuild|node_modules|\\.generated)/' },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ['exports'],

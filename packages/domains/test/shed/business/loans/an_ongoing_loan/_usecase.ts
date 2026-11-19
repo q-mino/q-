@@ -1,6 +1,9 @@
 // generated
 
-// The use cases of `an_ongoing_loan` under their names (DOM-2).
+// The use cases of `business/loans/an_ongoing_loan` from `usecase.ts` (DOM-25):
+// the same objects under the same names, each schema with its output type under
+// the same name, so that one import gives both. Only this module imports
+// `usecase.ts`.
 
 import * as usecase from './usecase.ts'
 

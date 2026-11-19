@@ -1,8 +1,8 @@
 // generated
 
-// The scope of the queries of `loans` (DOM-25): the builders of a query and of
-// the composition of its selection; the components below. The folders it sees
-// (`sight.ts`): `tools` (id).
+// The scope of the queries of `business/loans` (DOM-25): the builders `query`,
+// `AND`, `OR`, `NOT`; the twins of its folder in the layers below, its
+// ancestors' doors to the folders below and the doors the map opens to it.
 
 export { query, AND, OR, NOT } from './_scope.ts'
 export * as id from './_id.ts'

@@ -1,7 +1,9 @@
 // generated
 
-// The facts of `tools`, branded with their path (DOM-24): the same objects as
-// in `fact.ts`, nominal in the types. Only this module imports `fact.ts`.
+// The facts of `business/tools` from `fact.ts` (DOM-25): the same objects under
+// the same names, branded with their path (DOM-24), each schema with its output
+// type under the same name, so that one import gives both. Only this module
+// imports `fact.ts`.
 
 import { z } from 'zod'
 import * as fact from './fact.ts'

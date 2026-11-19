@@ -1,9 +1,9 @@
 // generated
 
-// The scope of the node of `an_ongoing_loan` (DOM-25): the builders of the
-// node and of its condition, bound to the context of the point above it, the
-// one of `loans`. Above it: `_loans`, through the door to the folders below.
-// The folders it sees (`sight.ts`): `tools` (id).
+// The scope of the node of `business/loans/an_ongoing_loan` (DOM-25): the
+// builders `node`, `AND`, `OR`, `NOT`; the twins of its folder in the layers
+// below, its ancestors' doors to the folders below and the doors the map opens
+// to it.
 
 import * as wlib from '../../../wlib.ts'
 

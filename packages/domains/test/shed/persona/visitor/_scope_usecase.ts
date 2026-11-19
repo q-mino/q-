@@ -1,14 +1,18 @@
 // generated
 
-// The scope of the leaves of `visitor` (DOM-25): the builders of a use case over
-// another, bound to the context of this point (`_scope.ts`); the components
-// below. Above it: `_persona`, through the door to the folders below. The
-// folders it sees (`sight.ts`): `tools` (usecase, id, fact), `loans` (usecase,
-// id, fact), `accounts` (lookup, id).
+// The scope of the use cases of `persona/visitor` (DOM-25): the builders
+// `command_use_case`, `read_use_case`, `command_use_case_over`,
+// `read_use_case_over`; the twins of its folder in the layers below, its
+// ancestors' doors to the folders below and the doors the map opens to it.
 
-export { command_use_case_over, read_use_case_over } from './_scope.ts'
+export {
+  command_use_case,
+  read_use_case,
+  command_use_case_over,
+  read_use_case_over,
+} from './_scope.ts'
 export * as value from './_value.ts'
 export * as _persona from '../_door_below.ts'
-export * as tools from '../../business/tools/_door_persona.ts'
 export * as loans from '../../business/loans/_door_persona.ts'
+export * as tools from '../../business/tools/_door_persona.ts'
 export * as accounts from '../../auth/accounts/_door_persona.ts'
