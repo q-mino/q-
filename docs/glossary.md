@@ -115,6 +115,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | risorse dichiarate (di un fatto)                    | declared resources: the fields of a fact's payload that carry the instances it changes and its target, in place of every identity (SC-55) | D94.6                                 |
 | registro (delle regole dell'interprete)             | registry                                                                                                                                  |                                       |
 | registro dei percorsi (di q-)                       | path registry (`registry.ts`)                                                                                                             |                                       |
+| registro per major · verso (di una forma)           | registry by major (`_registry.json`) · direction of a shape: read by the tree, given to its clients, carried by others (DOM-24)           | PER-17                                |
 | guasto di composizione                              | composition fault                                                                                                                         |                                       |
 
 Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.
