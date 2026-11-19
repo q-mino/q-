@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { fact, id, value } from './_scope_fact.ts'
 
 /**
@@ -93,7 +93,7 @@ export const the_loading_of_a_sheet_has_begun = fact({
 export const the_loading_of_the_sheet_has_advanced = fact({
   payload: z.strictObject({
     sheet_id: id.sheet_id,
-    cursor: wlib.cursor,
+    cursor: zz.cursor,
   }),
 })
 

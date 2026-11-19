@@ -2,7 +2,7 @@
 // predicates as functions of its state, its writes. The meaning comes from the
 // domain's `dsl`.
 
-import type * as wlib from '../../wlib.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import type * as tools_fact from '../../business/tools/_fact.ts'
 import type * as tools_predicate from '../../business/tools/_predicate.ts'
 import type * as tool_selections from '../../business/tools/_tool_selection.ts'
@@ -41,8 +41,8 @@ export interface ToolsState {
   readonly sheet_lines: ReadonlyMap<line_id, sheet_line>
 }
 
-export const tools_fragments: wlib.PredicateFragments<
-  wlib.PredicatesIn<typeof tools_predicate>,
+export const tools_fragments: zz.PredicateFragments<
+  zz.PredicatesIn<typeof tools_predicate>,
   (state: ToolsState) => boolean
 > = {
   'business/tools/predicate/a_tool_has_this_id': (p) => (state) =>
@@ -60,8 +60,8 @@ export const tools_fragments: wlib.PredicateFragments<
 
 // The reads of the subject `business/tools/selection/tool`: a tool of the catalogue.
 
-export const tool_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof tool_selections>,
+export const tool_selection: zz.Algebra<
+  zz.SelectionsIn<typeof tool_selections>,
   Selection<ToolsState, tool>
 > = {
   ...selection_operators<ToolsState, tool>(),
@@ -77,8 +77,8 @@ export const tool_selection: wlib.Algebra<
 const the_tools: Source<ToolsState, tool> = (state) => [...state.tools.values()]
 
 export const tool_sources: {
-  readonly the_catalogue: wlib.QuerySource<
-    wlib.FieldsOf<typeof the_catalogue>,
+  readonly the_catalogue: zz.QuerySource<
+    zz.FieldsOf<typeof the_catalogue>,
     Source<ToolsState, tool>,
     Field<ToolsState, tool>
   >
@@ -97,8 +97,8 @@ export const tool_sources: {
 // The reads of the step of `tools` (DOM-20): the sheet by its id; the lines
 // it walks, of the subject `business/tools/selection/line`.
 
-export const line_selection: wlib.Algebra<
-  wlib.SelectionsIn<typeof line_selections>,
+export const line_selection: zz.Algebra<
+  zz.SelectionsIn<typeof line_selections>,
   Selection<ToolsState, sheet_line>
 > = {
   ...selection_operators<ToolsState, sheet_line>(),
@@ -109,7 +109,7 @@ export const line_selection: wlib.Algebra<
 }
 
 export const line_steps: {
-  readonly continue_the_loading_of_a_sheet: wlib.StepSource<
+  readonly continue_the_loading_of_a_sheet: zz.StepSource<
     typeof continue_the_loading_of_a_sheet,
     ProcessRead<ToolsState>,
     Source<ToolsState, sheet_line>,
@@ -164,8 +164,8 @@ const with_the_sheet_progress =
         }
   }
 
-export const tools_writes: wlib.FactWrites<
-  wlib.FactsIn<typeof tools_fact>,
+export const tools_writes: zz.FactWrites<
+  zz.FactsIn<typeof tools_fact>,
   (state: ToolsState) => ToolsState
 > = {
   'business/tools/fact/a_tool_has_been_added':

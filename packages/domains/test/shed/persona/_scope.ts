@@ -4,7 +4,7 @@
 // nodes above give here (PER-6), the node `persona`'s. The authored files take
 // them from the scope of their kind, never from this file.
 
-import * as wlib from '../wlib.ts'
+import * as zz from '../../../src/library/index.ts'
 import type { persona_context } from './_node.ts'
 
 export const {
@@ -30,4 +30,4 @@ export const {
   version,
   earlier,
   delegate,
-} = wlib.builders_at<persona_context>()
+} = zz.builders_at<persona_context>()

@@ -1,6 +1,6 @@
 // The pure functions of `member` over its values, added at need. DOM-5
 
-import { day_of, type date_time, type day, type Truth } from '../../wlib.ts'
+import { day_of, type date_time, type day, type Truth } from '../../../../src/library/index.ts'
 import type { loans, value } from './_scope_dsl.ts'
 
 /** A card is valid up to its last day, included, on the calendar day of the instant, the shed's (SC-12). */

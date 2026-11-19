@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time, end_of } from '../../../wlib.ts'
+import { date_time, end_of } from '../../../../../src/library/index.ts'
 import { earlier, delegate, next, value, tools, loans } from './_scope_usecase.ts'
 
 // The leaves of `member` 1.x, a past major (PER-17, D75.6, A, 16 Nov 2026

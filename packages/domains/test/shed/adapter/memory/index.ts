@@ -15,7 +15,7 @@
 // Streams (DOM-17): the oracle keeps every fact with the state before and
 // after it, and its stream defines what the events of a fact are.
 
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { registry as tools_registry } from '../../business/tools/_registry.ts'
 import { registry as loans_registry } from '../../business/loans/_registry.ts'
 import { registry as accounts_registry } from '../../auth/accounts/_registry.ts'
@@ -96,8 +96,8 @@ type Write = (state: State) => Partial<State>
 
 /** A recorded fact with its outbox entries and the state it left. */
 export interface Step {
-  readonly fact: wlib.StoredEnvelope
-  readonly entries: readonly wlib.StoredEntry[]
+  readonly fact: zz.StoredEnvelope
+  readonly entries: readonly zz.StoredEntry[]
   readonly state: State
 }
 
@@ -108,28 +108,34 @@ export interface Step {
 export interface Cell {
   readonly get: () => State
   readonly record: (step: Step) => void
-  readonly position: () => wlib.position
+  readonly position: () => zz.position
   /** The facts recorded from a position on, inclusive (DOM-17); from the first, with none. */
-  readonly history: (from: wlib.position | undefined) => History
+  readonly history: (from: zz.position | undefined) => History
   /** The facts recorded after a position, as soon as there is one. */
-  readonly after: (position: wlib.position) => Promise<readonly Recorded[]>
+  readonly after: (position: zz.position) => Promise<readonly Recorded[]>
   /**
    * The fact an operation recorded, at its position: kept as long as the
    * operations are (DOM-11), whatever the history keeps (SC-11).
    */
-  readonly recorded_by: (operation: wlib.Operation) => Recorded | undefined
+  readonly recorded_by: (operation: zz.Operation) => Recorded | undefined
   /** The entries recorded with the facts, effect by effect (DOM-14). */
-  readonly outbox: wlib.Outbox
+  readonly outbox: zz.Outbox
   /** The paths and versions of the facts and the entries it keeps, distinct (DOM-22). */
-  readonly stored_versions: wlib.StoredVersions
+  readonly stored_versions: zz.StoredVersions
   /** The state of the effect executors: positions per effect, the entries each holds (SC-53), shown to a test. */
-  readonly executor: wlib.ExecutorState
+  readonly executor: zz.ExecutorState
   /**
    * The state of the consumers of the reactions: positions per reaction, the
    * parts each holds (its dead letters and the parts waiting behind them,
    * SC-42), the letters discarded; shown to a test.
    */
-  readonly reactions: wlib.ReactionState
+  readonly reactions: zz.ReactionState
+  /**
+   * The trace of the trees (F6, PER-14): every request answered with no
+   * fact, as the library hands it, with why; kept in the order handed,
+   * shown to a test. Eventual: the cell promises nothing more (D54).
+   */
+  readonly trace: zz.Trace<unknown>
 }
 
 /**
@@ -150,8 +156,8 @@ export type ReadCell = Pick<Cell, 'get' | 'position' | 'history' | 'after'>
 
 /** A recorded fact, at its position, with the state before and after it. */
 export interface Recorded {
-  readonly position: wlib.position
-  readonly fact: wlib.StoredEnvelope
+  readonly position: zz.position
+  readonly fact: zz.StoredEnvelope
   readonly before: State
   readonly after: State
 }
@@ -165,7 +171,7 @@ export type History =
   | {
       readonly history: 'kept'
       readonly recorded: readonly Recorded[]
-      readonly position: wlib.position
+      readonly position: zz.position
     }
   | { readonly history: 'forgotten' }
 
@@ -195,7 +201,7 @@ const after_writes =
 const record =
   (cell: CommandCell) =>
   (state: State) =>
-  (planned: wlib.PlannedWrite<Write>): void => {
+  (planned: zz.PlannedWrite<Write>): void => {
     cell.record({
       fact: planned.fact,
       entries: planned.entries,
@@ -207,19 +213,19 @@ const record =
  * The oracle's state rebuilt from a log (DOM-22, A, 17 Nov 2026; SC-8), as
  * the SQL adapter rebuilds its tables: from a state with nothing, every fact
  * the log keeps written again through the writes of the commands, each at
- * the current shape the library gives (`wlib.replay`), so that a loan lent
+ * the current shape the library gives (`zz.replay`), so that a loan lent
  * at `loans` 1.x, due at an instant, comes back due on that instant's day;
  * no value is rewritten by hand. It gives the state after each fact, at its
  * position, for the cell to keep beside the fact as it was stored: the log
  * is never rewritten.
  */
-export const rebuilt = (versions: wlib.Versions) => (nothing: State) =>
+export const rebuilt = (versions: zz.Versions) => (nothing: State) =>
   async function* (
-    log: wlib.FactLog,
-  ): AsyncGenerator<{ readonly position: wlib.position; readonly state: State }> {
+    log: zz.FactLog,
+  ): AsyncGenerator<{ readonly position: zz.position; readonly state: State }> {
     let state = nothing
-    for await (const fact of wlib.replay<
-      wlib.FactsIn<typeof tools_fact> | wlib.FactsIn<typeof loans_fact>,
+    for await (const fact of zz.replay<
+      zz.FactsIn<typeof tools_fact> | zz.FactsIn<typeof loans_fact>,
       Write
     >({ versions, writes: { ...tools_writes, ...loans_writes } })(log)) {
       state = after_writes(state)(fact.writes)
@@ -228,7 +234,7 @@ export const rebuilt = (versions: wlib.Versions) => (nothing: State) =>
   }
 
 /** The fact an operation already recorded, as the duplicate branch gives it back (DOM-11). */
-const already_recorded = (recorded: Recorded): wlib.AlreadyRecorded => ({
+const already_recorded = (recorded: Recorded): zz.AlreadyRecorded => ({
   outcome: 'recorded',
   position: recorded.position,
   fact: recorded.fact,
@@ -241,7 +247,7 @@ const already_recorded = (recorded: Recorded): wlib.AlreadyRecorded => ({
  */
 const chosen =
   (state: State) =>
-  (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly number[] =>
+  (branch: zz.PlannedCommandBranch<Fragment, Write>): readonly number[] =>
     'elements' in branch
       ? branch.elements.map((element) => element.findIndex((each) => each.condition(state)))
       : []
@@ -249,17 +255,17 @@ const chosen =
 /** A branch holds: its condition, and, over a list, a branch of the transition on every element (SC-54). */
 const holds =
   (state: State) =>
-  (branch: wlib.PlannedCommandBranch<Fragment, Write>): boolean =>
+  (branch: zz.PlannedCommandBranch<Fragment, Write>): boolean =>
     branch.condition(state) && chosen(state)(branch).every((index) => index !== -1)
 
 /** What a branch writes: a plain branch its own, a branch over a list the library's from the choice (SC-54). */
 const written = (
-  branch: wlib.PlannedCommandBranch<Fragment, Write>,
+  branch: zz.PlannedCommandBranch<Fragment, Write>,
   elements: readonly number[],
-): wlib.PlannedWrite<Write> => ('elements' in branch ? branch.applies(elements) : branch)
+): zz.PlannedWrite<Write> => ('elements' in branch ? branch.applies(elements) : branch)
 
 /** Every leaf of a branch: its own, then, over a list, each element's branches' (SC-54). */
-const leaves = (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly Fragment[] => [
+const leaves = (branch: zz.PlannedCommandBranch<Fragment, Write>): readonly Fragment[] => [
   ...branch.leaves,
   ...('elements' in branch
     ? branch.elements.flatMap((element) => element.flatMap((each) => each.leaves))
@@ -278,24 +284,24 @@ const leaves = (branch: wlib.PlannedCommandBranch<Fragment, Write>): readonly Fr
  * awaits inside an execution.
  */
 const execute =
-  (cell: CommandCell): wlib.Execute<Fragment, Write> =>
+  (cell: CommandCell): zz.Execute<Fragment, Write> =>
   (plan) => {
     const recorded = cell.recorded_by(plan.operation)
     if (recorded !== undefined) {
-      return Promise.resolve<wlib.Execution>(already_recorded(recorded))
+      return Promise.resolve<zz.Execution>(already_recorded(recorded))
     }
     const state = cell.get()
     const applied = plan.branches.findIndex(holds(state))
     const branch = plan.branches[applied]
     if (branch === undefined) {
-      return Promise.resolve<wlib.Execution>({
+      return Promise.resolve<zz.Execution>({
         outcome: 'rejected',
         leaves: plan.branches.map((planned) => leaves(planned).map((leaf) => leaf(state))),
       })
     }
     const elements = chosen(state)(branch)
     record(cell)(state)(written(branch, elements))
-    return Promise.resolve<wlib.Execution>({
+    return Promise.resolve<zz.Execution>({
       outcome: 'applied',
       branch: applied,
       elements,
@@ -346,7 +352,7 @@ export const compare_values = (a: unknown, b: unknown): number =>
  */
 const after =
   <state, candidate>(
-    key: readonly wlib.OrderKeyValue<Field<state, candidate>>[],
+    key: readonly zz.OrderKeyValue<Field<state, candidate>>[],
   ): Selection<state, candidate> =>
   (state) =>
   (candidate) =>
@@ -368,7 +374,7 @@ const after =
 const execute_step =
   (cell: CommandCell) =>
   <candidate>(
-    plan: wlib.PlannedStep<
+    plan: zz.PlannedStep<
       Fragment,
       Write,
       ProcessRead<State>,
@@ -376,15 +382,15 @@ const execute_step =
       Source<State, candidate>,
       Field<State, candidate>
     >,
-  ): Promise<wlib.StepExecution> => {
+  ): Promise<zz.StepExecution> => {
     const recorded = cell.recorded_by(plan.operation)
     if (recorded !== undefined) {
-      return Promise.resolve<wlib.StepExecution>(already_recorded(recorded))
+      return Promise.resolve<zz.StepExecution>(already_recorded(recorded))
     }
     const state = cell.get()
     const choice = plan.choose(plan.read(state))
     if (choice.choice === 'not_found') {
-      return Promise.resolve<wlib.StepExecution>({ outcome: 'not_found' })
+      return Promise.resolve<zz.StepExecution>({ outcome: 'not_found' })
     }
     const advancing = entries_on(choice.instances)(state).flatMap(({ entry }) => {
       const branches = choice.advances(entry)
@@ -394,13 +400,13 @@ const execute_step =
     })[0]
     if (advancing === undefined) {
       record(cell)(state)(choice.completes)
-      return Promise.resolve<wlib.StepExecution>({
+      return Promise.resolve<zz.StepExecution>({
         outcome: 'completed',
         position: cell.position(),
       })
     }
     record(cell)(state)(advancing.branch)
-    return Promise.resolve<wlib.StepExecution>({
+    return Promise.resolve<zz.StepExecution>({
       outcome: 'advanced',
       instance: advancing.instance,
       branch: advancing.applied,
@@ -412,7 +418,7 @@ const execute_step =
  * A planned query over the candidates of one subject; its actions' leaves,
  * if any, as command fragments (SC-33).
  */
-type Plan<candidate> = wlib.PlannedQuery<
+type Plan<candidate> = zz.PlannedQuery<
   Selection<State, candidate>,
   Source<State, candidate>,
   Field<State, candidate>,
@@ -477,7 +483,7 @@ const read =
 const page =
   (cell: ReadCell) =>
   <candidate>(
-    plan: wlib.PlannedPage<
+    plan: zz.PlannedPage<
       Selection<State, candidate>,
       Source<State, candidate>,
       Field<State, candidate>,
@@ -494,7 +500,7 @@ const page =
     })
   }
 
-type Event = wlib.StreamEvent<wlib.StoredEnvelope, unknown, unknown>
+type Event = zz.StreamEvent<zz.StoredEnvelope, unknown, unknown>
 
 /**
  * Whether two values are the same, field by field and deeply: how an entry
@@ -528,7 +534,7 @@ const same_value = (a: unknown, b: unknown): boolean => {
  * that left, in their order before it.
  */
 const events_of =
-  (registry: wlib.Registry) =>
+  (registry: zz.Registry) =>
   <candidate>(plan: Plan<candidate>) =>
   (recorded: Recorded): readonly Event[] => {
     const before = entries_on(plan)(recorded.before)
@@ -582,7 +588,7 @@ const events_of =
  * domain (DOM-8), so any of its parts tells.
  */
 const is_of_the_domain =
-  (registry: wlib.Registry) =>
+  (registry: zz.Registry) =>
   (recorded: Recorded): boolean =>
     recorded.fact.parts.some((part) => part.path in registry)
 
@@ -598,11 +604,11 @@ const is_of_the_domain =
  */
 const stream =
   (cell: ReadCell) =>
-  (registry: wlib.Registry) =>
+  (registry: zz.Registry) =>
   <candidate>(plan: Plan<candidate>) =>
-  (from: wlib.position): AsyncIterable<Event> => {
+  (from: zz.position): AsyncIterable<Event> => {
     const events = events_of(registry)(plan)
-    async function* live(position: wlib.position): AsyncGenerator<Event> {
+    async function* live(position: zz.position): AsyncGenerator<Event> {
       const recorded = await cell.after(position)
       yield* recorded.flatMap(events)
       yield* live(recorded.at(-1)?.position ?? position)
@@ -625,25 +631,25 @@ const stream =
  * oracle keeps them in one value; a consumer skips the paths it does not
  * read. The facts kept from a position, then "caught up", then each new one.
  */
-const log =
-  (cell: ReadCell): wlib.FactLog =>
+export const log =
+  (cell: ReadCell): zz.FactLog =>
   (from) => {
-    async function* live(position: wlib.position): AsyncGenerator<wlib.LogEvent> {
+    async function* live(position: zz.position): AsyncGenerator<zz.LogEvent> {
       const recorded = await cell.after(position)
-      yield* recorded.map((fact): wlib.LogEvent => ({
+      yield* recorded.map((fact): zz.LogEvent => ({
         event: 'fact',
         position: fact.position,
         fact: fact.fact,
       }))
       yield* live(recorded.at(-1)?.position ?? position)
     }
-    async function* from_history(): AsyncGenerator<wlib.LogEvent> {
+    async function* from_history(): AsyncGenerator<zz.LogEvent> {
       const history = cell.history(from)
       if (history.history === 'forgotten') {
         yield { event: 'position_unavailable' }
         return
       }
-      yield* history.recorded.map((fact): wlib.LogEvent => ({
+      yield* history.recorded.map((fact): zz.LogEvent => ({
         event: 'fact',
         position: fact.position,
         fact: fact.fact,
@@ -658,7 +664,7 @@ const log =
  * The oracle streams every query natively: its stream is exact, state before
  * and after each fact of the cell.
  */
-const native = (cell: ReadCell) => (registry: wlib.Registry) =>
+const native = (cell: ReadCell) => (registry: zz.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
 /**
@@ -705,10 +711,14 @@ export const loans_command_use_cases = {
 /**
  * The oracle's state adapter for the commands of `tools` that run no step
  * (TST-2): the fragments of its predicates, the writes of its facts, the
- * execution.
+ * execution. A test may give fragments of its own, a release of the adapter
+ * with a defect (SC-42), over the same cell.
  */
-export const tools_command_adapter = (cell: CommandCell) => ({
-  algebra: algebra(tools_fragments),
+export const tools_command_adapter = (
+  cell: CommandCell,
+  fragments: typeof tools_fragments = tools_fragments,
+) => ({
+  algebra: algebra(fragments),
   write: tools_writes,
   execute: execute(cell),
 })
@@ -718,47 +728,67 @@ export const tools_command_adapter = (cell: CommandCell) => ({
  * (TST-2): the fragments of its predicates, over the state of `tools` too
  * (GR-3), the writes of its facts, the execution.
  */
-export const loans_command_adapter = (cell: CommandCell) => ({
-  algebra: algebra(loans_fragments),
+export const loans_command_adapter = (
+  cell: CommandCell,
+  fragments: typeof loans_fragments = loans_fragments,
+) => ({
+  algebra: algebra(fragments),
   write: loans_writes,
   execute: execute(cell),
 })
 
 /**
- * The command ports of `tools` and `loans` over the oracle (TST-2): what
- * the scenarios of the commands run on (`scenarios/oracle.ts`).
+ * A release of the oracle's adapter, as the configurator picks it (CFG-1):
+ * the oracle as it is, by default, or what a scenario releases in its place
+ * (TST-4): the fragments of `loans`' predicates with a defect (SC-39, an
+ * instance passed over), the adapter of `tools`' commands with a defect or
+ * falling at an execution (SC-40, SC-42), its queries streamed natively or
+ * composed by the library over its log (DOM-2, D69.3).
  */
-export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) => ({
-  tools: wlib.command_use_case_ports({
-    registry: tools_registry,
-    versions,
-    use_cases: tools_command_use_cases,
-  })({
-    ...tools_command_adapter(cell),
-    // The loading of a sheet of tools walks its lines (SC-44): one
-    // subject, its own selection.
-    steps: {
-      selection: { ...line_selection, after },
-      sources: line_steps,
-      execute: execute_step(cell),
-    },
-  }),
-  loans: wlib.command_use_case_ports({
-    registry: loans_registry,
-    // The facts of `loans` hold identities of `tools` (GR-3), whose paths
-    // `tools`' registry gives.
-    identities: tools_registry,
-    versions,
-    use_cases: loans_command_use_cases,
-  })({
-    ...loans_command_adapter(cell),
-    steps: {
-      selection: { ...reservation_selection, after },
-      sources: reservation_steps,
-      execute: execute_step(cell),
-    },
-  }),
-})
+export interface MemoryRelease {
+  readonly loans?: typeof loans_fragments
+  readonly tools?: ReturnType<typeof tools_command_adapter>
+  readonly streams?: Strategy
+}
+
+/**
+ * The command ports of `tools` and `loans` over the oracle (TST-2), in the
+ * release given (`MemoryRelease`); the selection the steps of `loans` walk
+ * the reservations by.
+ */
+export const memory_commands =
+  (cell: CommandCell, release: Pick<MemoryRelease, 'loans' | 'tools'> = {}) =>
+  (versions: zz.Versions) => ({
+    tools: zz.command_use_case_ports({
+      registry: tools_registry,
+      versions,
+      use_cases: tools_command_use_cases,
+    })({
+      ...(release.tools ?? tools_command_adapter(cell)),
+      // The loading of a sheet of tools walks its lines (SC-44): one
+      // subject, its own selection.
+      steps: {
+        selection: { ...line_selection, after },
+        sources: line_steps,
+        execute: execute_step(cell),
+      },
+    }),
+    loans: zz.command_use_case_ports({
+      registry: loans_registry,
+      // The facts of `loans` hold identities of `tools` (GR-3), whose paths
+      // `tools`' registry gives.
+      identities: tools_registry,
+      versions,
+      use_cases: loans_command_use_cases,
+    })({
+      ...loans_command_adapter(cell, release.loans),
+      steps: {
+        selection: { ...reservation_selection, after },
+        sources: reservation_steps,
+        execute: execute_step(cell),
+      },
+    }),
+  })
 
 /**
  * The read ports of `tools` and `loans` over the oracle (TST-2), one subject
@@ -771,11 +801,11 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
  */
 export const memory_reads =
   (cell: ReadCell, by: Strategy = 'native') =>
-  (versions: wlib.Versions) => {
-    const streamed = (registry: wlib.Registry) =>
+  (versions: zz.Versions) => {
+    const streamed = (registry: zz.Registry) =>
       by === 'native' ? native(cell)(registry) : composed(cell)
     return {
-      tools: wlib.read_use_case_ports({
+      tools: zz.read_use_case_ports({
         registry: tools_registry,
         versions,
         use_cases: { the_catalogue },
@@ -787,7 +817,7 @@ export const memory_reads =
         streams: { the_catalogue: streamed(tools_registry) },
       }),
       loans: {
-        ...wlib.read_use_case_ports({
+        ...zz.read_use_case_ports({
           registry: loans_registry,
           versions,
           use_cases: { the_ongoing_loans_of_a_member },
@@ -801,7 +831,7 @@ export const memory_reads =
           // commands' own fragments, on the state of the read (ADP-8).
           applicability: { the_ongoing_loans_of_a_member: loans_fragments },
         }),
-        ...wlib.read_use_case_ports({
+        ...zz.read_use_case_ports({
           registry: loans_registry,
           versions,
           use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
@@ -815,7 +845,7 @@ export const memory_reads =
             the_reservations_of_a_member_in_the_workshop: streamed(loans_registry),
           },
         }),
-        ...wlib.read_use_case_ports({
+        ...zz.read_use_case_ports({
           registry: loans_registry,
           // The entry of a tool of the shed is named by `tools`' id (SC-21).
           identities: tools_registry,
@@ -833,16 +863,24 @@ export const memory_reads =
     }
   }
 
-export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => {
-  const commands = memory_commands(cell)(versions)
-  const reads = memory_reads(cell)(versions)
-  return {
-    log: log(cell),
-    tools: { ...commands.tools, ...reads.tools },
-    loans: { ...commands.loans, ...reads.loans },
-    accounts: wlib.lookup_ports({
-      registry: accounts_registry,
-      lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
-    })(accounts_lookups(cell.get)),
+/**
+ * The oracle's adapter (TST-2), what the configurator wires (`configurator.ts`):
+ * the command and read ports of `tools` and `loans`, in the release given, the
+ * lookups of `accounts`, the fact log and the trees' trace of the cell.
+ */
+export const memory_adapter =
+  (cell: Cell, release: MemoryRelease = {}) =>
+  (versions: zz.Versions) => {
+    const commands = memory_commands(cell, release)(versions)
+    const reads = memory_reads(cell, release.streams)(versions)
+    return {
+      log: log(cell),
+      trace: cell.trace,
+      tools: { ...commands.tools, ...reads.tools },
+      loans: { ...commands.loans, ...reads.loans },
+      accounts: zz.lookup_ports({
+        registry: accounts_registry,
+        lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
+      })(accounts_lookups(cell.get)),
+    }
   }
-}

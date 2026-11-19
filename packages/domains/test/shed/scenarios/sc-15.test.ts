@@ -1,6 +1,17 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
-import { first, oracle, pull, until_caught_up, view, type Start } from './oracle.ts'
+import * as zz from '../../../src/library/index.ts'
+import {
+  accounts,
+  first,
+  followed,
+  oracle,
+  pull,
+  told,
+  until_caught_up,
+  view,
+  type Start,
+  type Who,
+} from './oracle.ts'
 
 // SC-15, the business's side (part 5.2): Marta's live "my loans", the read
 // use case as a stream (DOM-2, DOM-17): the snapshot at P, then the events
@@ -14,7 +25,7 @@ import { first, oracle, pull, until_caught_up, view, type Start } from './oracle
 
 const strategies = ['native', 'composed'] as const
 
-const p = (at: number) => wlib.position.parse(String(at))
+const p = (at: number) => zz.position.parse(String(at))
 
 /**
  * The shed on 2 November: the drill, the ladder and the sander added
@@ -45,7 +56,7 @@ const the_shed = async (start: Start) => {
       }),
     )
   }
-  const my_loans = (from?: wlib.position) =>
+  const my_loans = (from?: zz.position) =>
     shed.loans
       .the_ongoing_loans_of_a_member(
         shed.when('2026-11-02T09:00:00-05:00'),
@@ -176,5 +187,84 @@ describe('SC-15: Marta follows her loans live', () => {
         { event: 'invalid_request', reason: 'input_not_in_schema' },
       ])
     }
+  })
+})
+
+/** Marta (M-12) and Gianni (M-7), members; the drill and the ladder in the shed; Marta borrows the drill on 2 November (L7, due the 16th). */
+const the_members_shed = async (valid_until = '2027-03-31') => {
+  const shed = await oracle({
+    accounts: accounts({
+      hats: { 'A-MARTA': ['member'], 'A-GIANNI': ['member'] },
+      member_cards: {
+        'A-MARTA': { id: 'M-12', valid_until },
+        'A-GIANNI': { id: 'M-7', valid_until: '2027-03-31' },
+      },
+    }),
+  })
+  for (const [id, name, category] of [
+    ['drill', 'Cordless drill', 'power'],
+    ['ladder', 'Ladder', 'ladder'],
+  ] as const) {
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+  }
+  await first(
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+      loan_id: 'L7',
+      tool_id: 'drill',
+      member_id: 'M-12',
+    }),
+  )
+  return shed
+}
+
+const marta_s: Who = { identified_by: 'account', id: 'A-MARTA' }
+
+describe("SC-15, the persona's side (part 6.3)", () => {
+  test('Marta\'s "my loans" live: a loan appears as `fact`, a return takes one away as `left`; a resume is the stream alone, inclusive', async () => {
+    const shed = await the_members_shed()
+    const her = shed.as(marta_s, '2.0.0').when('2026-11-03T09:00:00-05:00')
+    const { snapshot, events } = await followed(
+      () => shed.member.my_loans(her, {})[Symbol.asyncIterator](),
+      async () => {
+        await first(
+          shed.loans.borrow_a_tool(shed.at('2026-11-03T10:00:00-05:00'), {
+            loan_id: 'L8',
+            tool_id: 'ladder',
+            member_id: 'M-12',
+          }),
+        )
+        await first(
+          shed.loans.return_a_tool(shed.at('2026-11-03T11:00:00-05:00'), {
+            loan_id: 'L7',
+            tool_id: 'drill',
+            condition: 'good',
+          }),
+        )
+      },
+    )
+    expect(snapshot).toMatchObject([
+      { event: 'snapshot', position: '3', entries: [{ loan_id: 'L7' }] },
+    ])
+    expect(told(events)).toEqual([
+      ['fact', '4'],
+      ['left', '5'],
+      ['caught_up', '5'],
+    ])
+    expect(events[0]).toMatchObject({
+      identity: 'L8',
+      entry: { loan_id: 'L8', tool_name: 'Ladder' },
+    })
+    expect(events[1]).toEqual({ event: 'left', position: '5', identity: 'L7' })
+    const resumed = await until_caught_up(
+      shed.member.my_loans(her, {}, zz.position.parse('4'))[Symbol.asyncIterator](),
+    )
+    expect(told(resumed)).toEqual([
+      ['fact', '4'],
+      ['left', '5'],
+      ['caught_up', '5'],
+    ])
+    expect(view('loan_id')([...snapshot, ...events])).toEqual(
+      view('loan_id')(await pull(shed.member.my_loans(her, {})[Symbol.asyncIterator](), 1)),
+    )
   })
 })

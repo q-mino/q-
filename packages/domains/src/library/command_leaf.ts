@@ -1,6 +1,6 @@
 import type * as z from 'zod'
 import type { position } from './format.ts'
-import type { OperationContext } from './context.ts'
+import type { OperationContext, OperationScopeContext, RootContext } from './context.ts'
 import type { Component } from './component.ts'
 import type { CommandInput, Commands, OutcomesOf, SchemaOf } from './command.ts'
 import type { Refused } from './base_event.ts'
@@ -139,10 +139,15 @@ export type LeafFlow<events extends Events, followed extends Component> =
  * current leaf's input, after `to_next`), and the entry gives the scope
  * alone (`OperationScopeContext`). The fingerprint covers it, as the whole
  * input: N-88 with another body is `identity_already_used`.
+ *
+ * An input declared as a function of the context reads what the entry gives
+ * every command leaf (PER-5.3, before any node): the root's context and the
+ * operation's scope, never its id, which a leaf like the workshop's reads
+ * from the input itself (C, 19 Nov 2026, part 6.2).
  */
 export type CommandUseCaseOverBuilder<context, closes> = <
   const use_case extends CommandUseCase<Commands[string]>,
-  const input extends CommandInput<z.ZodType, context & OperationContext>,
+  const input extends CommandInput<z.ZodType, RootContext & OperationScopeContext>,
   const events extends Events,
   const limits extends string = never,
   const followed extends Component = never,

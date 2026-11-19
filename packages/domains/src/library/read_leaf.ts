@@ -1,5 +1,6 @@
 import type * as z from 'zod'
 import type { position } from './format.ts'
+import type { RootContext } from './context.ts'
 import type { Component } from './component.ts'
 import type { OutcomesOf, SchemaOf } from './command.ts'
 import type { Queries, QueryEntryOf, QueryInput, QueryParts } from './query.ts'
@@ -252,7 +253,7 @@ export type ReadBinding<input, streams extends boolean> = {
  */
 export type ReadUseCaseOverBuilder<context, closes> = <
   const use_case extends ReadUseCase<Queries[string]>,
-  const input extends QueryInput<z.ZodType, context>,
+  const input extends QueryInput<z.ZodType, RootContext>,
   const entry extends z.ZodObject,
   const identity extends FieldsHolding<entry, IdentityOfQuery<QueryOfUseCase<use_case>>> = never,
   const events extends StreamEvents<closes | ([limits] extends [never] ? never : Refused<limits>)> =

@@ -1,34 +1,45 @@
 // The harness of the scenarios (TST-2, TST-3): one cell of the oracle, the
-// in-memory state adapter of the shed, and the ports the library builds over
-// it; the clock and the ids injected, so that a scenario says when each
+// in-memory state adapter of the shed, and the shed its configurator wires
+// over it (`configurator.ts`, since part 7.5: every scenario runs through
+// it); the clock and the ids injected, so that a scenario says when each
 // request is sent and under which operation. A scenario observes only what
 // the ports give (TST-3), never the cell's state.
 //
-// Part 4.1 gives the command ports of `tools` and `loans`; the reads, the
-// trees, the executors and the consumers join it with their parts, until the
-// configurator runs whole (7.5). Since part 4.2 the harness enters a request
-// as an entry does (DOM-11): the library computes its fingerprint. Since
-// part 4.3 it enters alone a transition only a step composes in Shed
-// (`alone`, SC-55), until the steps have a body (7.4). Since part 4.4 a
-// shed may start from what its store kept before a release (`kept`: facts
-// and outbox entries of `loans` 1.x), its state rebuilt from that log
-// through the library (`replay`, SC-8), with the majors it is given (SC-9)
-// and the zone of its calendar (SC-12); the entries it queues are read as
-// the executor will read them, at the current shape (`queued`). Since part
-// 5.1 the read ports of `tools` and `loans` join the harness, over the same
-// cell: their snapshots, a read sent at an instant (`when`), with no
-// operation. Since part 5.2 their streams too, native (the oracle's own, the
+// The business's use cases are entered as an entry would (DOM-11), where no
+// tree is above them: the library computes the fingerprint (part 4.2). A
+// transition only a step composes in Shed is entered alone (`alone`, SC-55,
+// part 4.3), the harness's own use case, never Shed's: the scenarios of the
+// executor's holds keep entering the notice alone, their story the
+// entries', not the round's. A shed may start from what its store kept
+// before a release (`kept`: facts and outbox entries of `loans` 1.x), its
+// state rebuilt from that log through the library (`replay`, SC-8), with
+// the majors it is given (SC-9) and the zone of its calendar (SC-12); the
+// entries it queues are read as the executor will read them, at the current
+// shape (`queued`). Its read ports stream natively (the oracle's own, the
 // reference) or composed by the library over the cell's log (`streams`),
 // with the deviations a stream must bear injected (TST-4): a position the
 // cell keeps no longer (`forget`), every fact delivered twice
-// (`redelivered`).
+// (`redelivered`). The trees of the personas (`keeper`, `member`,
+// `visitor`, `workshop`) are entered as an interface would, for who asks
+// (`as`), with the accounts the shed is given at its start (`accounts`);
+// their trace, every request answered with no fact, with why (`traced`, F6,
+// PER-14). The effect executor of `loans` (`executor`), its clock and the
+// time that passes the scenario's (`pass`, `elapse`), the world of the
+// reminders faked (`network`, `received`), its letters shown (`held`), the
+// facts the cell recorded (`recorded`). The consumers of the reactions,
+// started by the folders a scenario runs: `reaction/damage/` (`reactions`),
+// the parts they hold shown (`held_parts`), the adapter of `tools` released
+// with a defect or falling as a scenario says (`the_adapter_of_tools`); and
+// those that open and move the processes with a cursor (`processes`): the
+// retirement's work sheet, the round of a repair's notices, a sheet of tools
+// loaded line by line.
 
-import * as wlib from '../wlib.ts'
+import type * as z from 'zod'
+import * as zz from '../../../src/library/index.ts'
+import { shed, type World } from '../configurator.ts'
 import {
   loans_command_adapter,
   loans_command_use_cases,
-  memory_commands,
-  memory_reads,
   rebuilt,
   tools_command_use_cases,
   type CommandCell,
@@ -36,18 +47,30 @@ import {
   type Recorded,
   type State,
   type Strategy,
+  tools_command_adapter,
 } from '../adapter/memory/index.ts'
+import { tools_fragments } from '../adapter/memory/tools.ts'
+import { loans_fragments } from '../adapter/memory/loans.ts'
+import { type AccountsState } from '../adapter/memory/accounts.ts'
+import { account_id, key_id } from '../auth/accounts/_id.ts'
+import { hats, member_card } from '../auth/accounts/_value.ts'
+import { caller } from '../persona/_value.ts'
 import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
+import { member_id } from '../business/loans/_id.ts'
+import { type Message, type Network } from '../adapter/memory/reminders.ts'
+
+/** What a member's phone receives from the shed, as the scenarios read it (`received`). */
+export type { Message }
 
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
-export const time_zone = wlib.time_zone.parse('America/Toronto')
+export const time_zone = zz.time_zone.parse('America/Toronto')
 
-/** The state of a shed that has nothing yet. */
-const nothing: State = {
+/** The state of a shed that has nothing yet, but the accounts it is given (`Start.accounts`). */
+const nothing = (accounts: Partial<AccountsState> = {}): State => ({
   tools: new Map(),
   sheets: new Map(),
   sheet_lines: new Map(),
@@ -56,13 +79,13 @@ const nothing: State = {
   cancellations: new Map(),
   notice_rounds: new Map(),
   weekly_summaries: new Map(),
-  hats: new Map(),
-  member_cards: new Map(),
-  key_hats: new Map(),
-}
+  hats: accounts.hats ?? new Map(),
+  member_cards: accounts.member_cards ?? new Map(),
+  key_hats: accounts.key_hats ?? new Map(),
+})
 
 /** The position of the fact recorded after so many, the first at 1. */
-const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
+const position_at = (count: number): zz.position => zz.position.parse(String(count))
 
 /**
  * A cell for the commands and the reads: its state, the facts it recorded in
@@ -70,26 +93,30 @@ const position_at = (count: number): wlib.position => wlib.position.parse(String
  * after it; the facts from a position on, inclusive, and those after it as
  * soon as there is one (DOM-17); the fact an operation recorded, kept for
  * every operation (DOM-11); the entries queued with the facts, in order,
- * after those it kept. Injected (TST-4): the positions before one it keeps
- * no longer, once forgotten (`forget`); every fact it gives a stream or a
- * log twice, if it redelivers (at least once, DOM-17).
+ * after those it kept, and each effect's from a position on, inclusive, the
+ * position counting every entry (DOM-14). Injected (TST-4): the positions
+ * before one it keeps no longer, once forgotten (`forget`); every fact it
+ * gives a stream or a log twice, and every entry its outbox gives, if it
+ * redelivers (at least once, DOM-17, DOM-14).
  */
 const command_cell = (
-  kept: readonly wlib.StoredEntry[],
+  kept: readonly zz.StoredEntry[],
   redelivered: boolean,
+  initial: State,
 ): CommandCell &
   ReadCell & {
-    readonly entries: () => readonly wlib.StoredEntry[]
-    readonly forget: (before: wlib.position) => void
+    readonly entries: () => readonly zz.StoredEntry[]
+    readonly outbox: zz.Outbox
+    readonly forget: (before: zz.position) => void
   } => {
-  let state = nothing
+  let state = initial
   const recorded: Recorded[] = []
-  const entries: wlib.StoredEntry[] = [...kept]
+  const entries: zz.StoredEntry[] = [...kept]
   const waiting: (() => void)[] = []
   let kept_from = 0
   const delivered = (facts: readonly Recorded[]): readonly Recorded[] =>
     redelivered ? facts.flatMap((each) => [each, each]) : facts
-  const after = (position: wlib.position): readonly Recorded[] =>
+  const after = (position: zz.position): readonly Recorded[] =>
     delivered(recorded.filter((each) => Number(each.position) > Number(position)))
   return {
     get: () => state,
@@ -131,6 +158,34 @@ const command_cell = (
           each.fact.operation.id === operation.id && each.fact.operation.scope === operation.scope,
       ),
     entries: () => entries,
+    outbox: (effect) => (from) => ({
+      [Symbol.asyncIterator]: () => {
+        let index = from === undefined ? 0 : Number(from) - 1
+        let again: zz.QueuedEntry | undefined = undefined
+        const next = async (): Promise<IteratorResult<zz.QueuedEntry>> => {
+          if (again !== undefined) {
+            const value = again
+            again = undefined
+            return { done: false, value }
+          }
+          for (;;) {
+            const entry = entries[index]
+            if (entry === undefined) {
+              await new Promise<void>((wake) => {
+                waiting.push(wake)
+              })
+              continue
+            }
+            index += 1
+            if (entry.effect !== effect) continue
+            const value = { position: position_at(index), entry }
+            if (redelivered) again = value
+            return { done: false, value }
+          }
+        }
+        return { next }
+      },
+    }),
     forget: (before) => {
       kept_from = Number(before)
     },
@@ -143,8 +198,8 @@ const command_cell = (
  * and the outbox entries queued with them.
  */
 export interface Kept {
-  readonly facts?: readonly wlib.StoredEnvelope[]
-  readonly entries?: readonly wlib.StoredEntry[]
+  readonly facts?: readonly zz.StoredEnvelope[]
+  readonly entries?: readonly zz.StoredEntry[]
 }
 
 /**
@@ -156,11 +211,54 @@ export interface Kept {
  */
 export interface Start {
   readonly kept?: Kept
-  readonly majors?: readonly wlib.Majors[]
+  readonly majors?: readonly zz.Majors[]
   readonly time_zone?: string
   readonly streams?: Strategy
   readonly redelivered?: boolean
+  readonly accounts?: Partial<AccountsState>
+  /**
+   * The reservations the adapter of `loans`, released with a defect, reads
+   * as not booked when a command's condition asks, while its selections
+   * still keep them: the transition a step composes holds on none of them,
+   * and the step passes over them (SC-39, D112.2).
+   */
+  readonly not_booked_for_its_commands?: readonly string[]
 }
+
+/** Who asks, as the interface verified it (PER-4): an account, a session, a key. */
+export type Who = z.input<typeof caller>
+
+/**
+ * The accounts a shed starts with (`Start.accounts`), as a test writes
+ * them: the hats and the member cards of each account, the hats of each key,
+ * parsed by the values of `accounts`.
+ */
+export const accounts = (written: {
+  readonly hats?: Readonly<Record<string, readonly string[]>>
+  readonly member_cards?: Readonly<
+    Record<string, { readonly id: string; readonly valid_until: string }>
+  >
+  readonly key_hats?: Readonly<Record<string, readonly string[]>>
+}): Partial<AccountsState> => ({
+  hats: new Map(
+    Object.entries(written.hats ?? {}).map(([id, each]) => [
+      account_id.parse(id),
+      hats.parse(each),
+    ]),
+  ),
+  member_cards: new Map(
+    Object.entries(written.member_cards ?? {}).map(([id, card]) => [
+      account_id.parse(id),
+      member_card.parse(card),
+    ]),
+  ),
+  key_hats: new Map(
+    Object.entries(written.key_hats ?? {}).map(([id, each]) => [
+      key_id.parse(id),
+      hats.parse(each),
+    ]),
+  ),
+})
 
 /** Values given one at a time, each when asked. */
 export const one_at_a_time = <value>(values: readonly value[]): AsyncIterable<value> => ({
@@ -172,10 +270,10 @@ export const one_at_a_time = <value>(values: readonly value[]): AsyncIterable<va
 
 /** The log of the facts a store kept, from the first, then the end of what it kept (DOM-17). */
 const log_of =
-  (facts: readonly wlib.StoredEnvelope[]): wlib.FactLog =>
+  (facts: readonly zz.StoredEnvelope[]): zz.FactLog =>
   () =>
-    one_at_a_time<wlib.LogEvent>([
-      ...facts.map((fact, i): wlib.LogEvent => ({
+    one_at_a_time<zz.LogEvent>([
+      ...facts.map((fact, i): zz.LogEvent => ({
         event: 'fact',
         position: position_at(i + 1),
         fact,
@@ -184,7 +282,7 @@ const log_of =
     ])
 
 /** The paths and versions a store keeps, distinct, among its facts' parts and its entries (DOM-22). */
-const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
+const stored_versions = (kept: Kept): readonly zz.StoredVersion[] => {
   const all = [
     ...(kept.facts ?? []).flatMap((fact) =>
       fact.parts.map((part) => ({ path: part.path, version: part.version })),
@@ -201,10 +299,11 @@ const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
  * A transition with no use case of its own, entered alone (SC-55): in Shed
  * only the step of the round of the repair notices composes it, so that no
  * one sends it (DOM-2); the harness declares a use case over it, at a path
- * of its own, so that a scenario reads its fact's envelope before the steps
- * have a body (part 7.4). The harness's entry, not Shed's.
+ * of its own, so that a scenario reads its fact's envelope, or queues its
+ * notices, without the round (SC-53, SC-55; the round's step since part
+ * 7.4, SC-41). The harness's entry, not Shed's.
  */
-const notify_alone = wlib.builders_at<wlib.RootContext>().command_use_case({
+const notify_alone = zz.builders_at<zz.RootContext>().command_use_case({
   command: notify_a_member_of_the_repair,
 })
 
@@ -215,6 +314,7 @@ const notify_alone_path = 'business/loans/usecase/notify_a_member_of_the_repair'
 export interface Sent {
   readonly operation?: string
   readonly scope?: string
+  readonly correlation?: string
 }
 
 /**
@@ -222,14 +322,14 @@ export interface Sent {
  * the operation, the correlation. The fingerprint is the library's, which
  * it computes where the request enters (`fingerprint_of`).
  */
-export type EntryContext = Omit<wlib.CommandRootContext, 'fingerprint'>
+export type EntryContext = Omit<zz.CommandRootContext, 'fingerprint'>
 
 /** A command use case's port, as the library builds it. */
-type Port<input, event> = (context: wlib.CommandRootContext, input: input) => AsyncIterable<event>
+type Port<input, event> = (context: zz.CommandRootContext, input: input) => AsyncIterable<event>
 
-/** The path of every port of a domain, by the object of its port (DOM-24). */
+/** The path of every port of a domain's use cases, by the object of its port (DOM-24). */
 const paths_of_ports = (
-  registry: wlib.Registry,
+  registry: zz.Registry,
   use_cases: Readonly<Record<string, unknown>>,
   ports: Readonly<Record<string, unknown>>,
 ): ReadonlyMap<unknown, string> => {
@@ -237,55 +337,257 @@ const paths_of_ports = (
     Object.entries(registry).map(([path, entry]) => [entry, path]),
   )
   return new Map(
-    Object.entries(ports).map(([name, port]) => {
-      const path = paths.get(use_cases[name])
+    Object.entries(use_cases).map(([name, use_case]) => {
+      const path = paths.get(use_case)
       if (path === undefined) throw new Error(`${name} is not in the registry given`)
-      return [port, path]
+      return [ports[name], path]
     }),
   )
 }
 
+/** A set of reaction consumers by the folder that holds its reactions (`configurator.ts`). */
+type Reactions =
+  | 'business/loans'
+  | 'business/tools'
+  | 'reaction/damage'
+  | 'reaction/repair'
+  | 'reaction/retirement'
+
+/** The folder that holds a reaction, from its path (`reaction/damage/reaction/…`). */
+const folder_of = (reaction: string): string =>
+  reaction.slice(0, reaction.lastIndexOf('/reaction/'))
+
 /**
- * The oracle of the scenarios: the command ports of `tools` and `loans`,
- * each entered as an entry would (DOM-11): the fingerprint computed by the
- * library over the use case's path and its input as sent (LIB-11), here
- * where no leaf is above it; and the context of a request sent at an
- * instant. Each request is a new operation unless the scenario names one;
- * its correlation is its own (the origin, DOM-10).
+ * Sets of consumers started together, as one (DOM-16): stopped together, the
+ * first fall reported; an operator's request served by the set that holds
+ * the letter's reaction.
+ */
+const together = (sets: ReadonlyMap<string, zz.ReactionConsumers>): zz.ReactionConsumers => {
+  const of = (letter: zz.ReactionDeadLetter): zz.ReactionConsumers => {
+    const set = sets.get(folder_of(letter.reaction))
+    if (set === undefined) throw new Error(`no consumer of ${letter.reaction} was started`)
+    return set
+  }
+  return {
+    stop: async () => {
+      const stopped = await Promise.allSettled([...sets.values()].map((set) => set.stop()))
+      for (const each of stopped) {
+        if (each.status === 'rejected') {
+          const reason: unknown = each.reason
+          throw reason
+        }
+      }
+    },
+    redeliver: (letter) => of(letter).redeliver(letter),
+    discard: (letter) => of(letter).discard(letter),
+  }
+}
+
+/**
+ * The oracle of the scenarios: the shed as its configurator wires it
+ * (`configurator.ts`, part 7.5), over one cell, in the release a scenario
+ * gives (its majors, the oracle's adapter released with a defect or
+ * streaming by composition); its world faked (the phones, the network, the
+ * clock and the time that passes, which the scenario sets). The command
+ * ports of `tools` and `loans` are entered as an entry would (DOM-11): the
+ * fingerprint computed by the library over the use case's path and its
+ * input as sent (LIB-11), here where no leaf is above it; and the context of
+ * a request sent at an instant. Each request is a new operation unless the
+ * scenario names one; its correlation is its own (the origin, DOM-10).
  */
 export const oracle = async (start: Start = {}) => {
   const kept = start.kept ?? {}
-  const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
-  const cell = command_cell(kept.entries ?? [], start.redelivered ?? false)
-  // The versions of the store, checked against what it kept (SC-9); its
-  // state rebuilt from its log, each fact kept as it was stored (SC-8): a
-  // store that kept no fact has nothing to rebuild.
-  const versions = await wlib.versions(start.majors ?? [loans_majors, tools_majors])({
-    stored: () => Promise.resolve(stored_versions(kept)),
-  })
+  const zone = start.time_zone === undefined ? time_zone : zz.time_zone.parse(start.time_zone)
+  const initial = nothing(start.accounts)
+  const cell = command_cell(kept.entries ?? [], start.redelivered ?? false, initial)
+  const majors = start.majors ?? [loans_majors, tools_majors]
+  const stored = (): Promise<readonly zz.StoredVersion[]> => Promise.resolve(stored_versions(kept))
+  // The store as a release finds it: its state rebuilt from its log through
+  // the library, each fact kept as it was stored (SC-8), with the majors it
+  // is given (SC-9), before the shed starts over it; a store that kept no
+  // fact has nothing to rebuild.
   const facts = kept.facts ?? []
-  const rebuilding =
-    facts.length === 0 ? one_at_a_time([]) : rebuilt(versions)(nothing)(log_of(facts))
-  for await (const each of rebuilding) {
-    const fact = facts[Number(each.position) - 1]
-    if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
-    cell.record({ fact, entries: [], state: each.state })
+  if (facts.length > 0) {
+    const versions = await zz.versions(majors)({ stored })
+    for await (const each of rebuilt(versions)(initial)(log_of(facts))) {
+      const fact = facts[Number(each.position) - 1]
+      if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
+      cell.record({ fact, entries: [], state: each.state })
+    }
   }
-  const ports = memory_commands(cell)(versions)
-  const reads = memory_reads(cell, start.streams)(versions)
+  // The durable state of the executor of `loans` (DOM-14), kept across a
+  // fall: the executor started again finds its positions and letters; one
+  // that saves no position falls, as far as its state knows, before each
+  // advance (TST-4).
+  const positions = new Map<string, zz.position>()
+  let holding: readonly zz.HeldEntry[] = []
+  const discards: zz.Discarded<zz.EffectDeadLetter>[] = []
+  let saves_its_position = true
+  const same_entry = (a: zz.QueuedEntry) => (b: zz.QueuedEntry) =>
+    a.entry.effect === b.entry.effect && a.entry.id === b.entry.id
+  const executor_state: zz.ExecutorState = {
+    position: (effect) => Promise.resolve(positions.get(effect)),
+    advance: (effect) => (to) => {
+      if (saves_its_position) positions.set(effect, to)
+      return Promise.resolve()
+    },
+    held: (effect) => Promise.resolve(holding.filter((each) => each.entry.effect === effect)),
+    hold: (entry) => {
+      holding = (
+        holding.some(same_entry(entry))
+          ? holding.map((each) => (same_entry(entry)(each) ? entry : each))
+          : [...holding, entry]
+      ).toSorted((a, b) => Number(a.position) - Number(b.position))
+      return Promise.resolve()
+    },
+    release: (entry) => {
+      holding = holding.filter((each) => !same_entry(entry)(each))
+      return Promise.resolve()
+    },
+    discarded: (trace) => {
+      discards.push(trace)
+      return Promise.resolve()
+    },
+  }
+  // The durable state of the consumers of the reactions (DOM-16), likewise:
+  // their positions and the parts each holds.
+  const reaction_positions = new Map<string, zz.position>()
+  let parts_held: readonly zz.HeldPart[] = []
+  const parts_discarded: zz.Discarded[] = []
+  let reactions_save_their_positions = true
+  const same_part = (a: zz.ReactionPart) => (b: zz.ReactionPart) =>
+    a.reaction === b.reaction &&
+    a.part === b.part &&
+    a.fact.operation.scope === b.fact.operation.scope &&
+    a.fact.operation.id === b.fact.operation.id
+  const reaction_state: zz.ReactionState = {
+    position: (reaction) => Promise.resolve(reaction_positions.get(reaction)),
+    advance: (reaction) => (to) => {
+      if (reactions_save_their_positions) reaction_positions.set(reaction, to)
+      return Promise.resolve()
+    },
+    held: (reaction) => Promise.resolve(parts_held.filter((each) => each.reaction === reaction)),
+    hold: (part) => {
+      parts_held = (
+        parts_held.some(same_part(part))
+          ? parts_held.map((each) => (same_part(part)(each) ? part : each))
+          : [...parts_held, part]
+      ).toSorted((a, b) => Number(a.position) - Number(b.position) || a.part - b.part)
+      return Promise.resolve()
+    },
+    release: (part) => {
+      parts_held = parts_held.filter((each) => !same_part(part)(each))
+      return Promise.resolve()
+    },
+    discarded: (trace) => {
+      parts_discarded.push(trace)
+      return Promise.resolve()
+    },
+  }
+  // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
+  // in the order the library hands it.
+  const trace: zz.Traced<unknown>[] = []
+  // The world: the members' phones, the network's next answers, what each
+  // phone received; the clock of the executor and the consumers, which a
+  // scenario sets (`pass`); the time that passes (DOM-3, DOM-14, TST-3),
+  // every wait asked for, how long, ended when the scenario says (`elapse`,
+  // `pass`).
+  let instant = zz.date_time.parse('2026-11-01T00:00:00-04:00')
+  const waits: (() => void)[] = []
+  const asked: number[] = []
+  const answers: Network[] = []
+  const received: Message[] = []
+  const number_of = new Map<member_id, string>()
+  const world: World = {
+    phones: {
+      number_of,
+      network: (): Network => answers.shift() ?? 'delivers',
+      receive: (message: Message) => {
+        received.push(message)
+      },
+    },
+    clock: { now: () => instant, time_zone: zone },
+    elapsed: (milliseconds: number) =>
+      new Promise<void>((over) => {
+        asked.push(milliseconds)
+        waits.push(over)
+      }),
+  }
+  // The release of the oracle's adapter the scenario gives. `loans`, with a
+  // defect that reads the reservations listed as not booked when a command's
+  // condition asks, while its selections still keep them (SC-39). `tools`,
+  // right, or with a defect that reads every tool as neither in service, in
+  // the workshop nor retired (SC-42), or whose next execution falls, a
+  // technical abort (TST-4).
+  const not_booked: readonly string[] = start.not_booked_for_its_commands ?? []
+  const booked_as_read = loans_fragments['business/loans/predicate/the_reservation_is_booked']
+  let release_of_tools: 'right' | 'with_a_defect' = 'right'
+  let tools_falls_after: number | undefined = undefined
+  const read_right =
+    <parameters, state>(predicate: (parameters: parameters) => (state: state) => boolean) =>
+    (parameters: parameters) =>
+    (state: state): boolean =>
+      release_of_tools === 'right' && predicate(parameters)(state)
+  const tools_released = tools_command_adapter(cell, {
+    ...tools_fragments,
+    'business/tools/predicate/the_tool_is_in_service': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_in_service'],
+    ),
+    'business/tools/predicate/the_tool_is_under_repair': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_under_repair'],
+    ),
+    'business/tools/predicate/the_tool_is_retired': read_right(
+      tools_fragments['business/tools/predicate/the_tool_is_retired'],
+    ),
+  })
+  const execute_released: typeof tools_released.execute = (plan) => {
+    if (tools_falls_after === undefined) return tools_released.execute(plan)
+    if (tools_falls_after > 0) {
+      tools_falls_after -= 1
+      return tools_released.execute(plan)
+    }
+    tools_falls_after = undefined
+    return Promise.reject(new Error('the adapter of tools aborted'))
+  }
+  const the_shed = await shed(
+    {
+      ...cell,
+      stored_versions: stored,
+      executor: executor_state,
+      reactions: reaction_state,
+      trace: (traced) => {
+        trace.push(traced)
+      },
+    },
+    {
+      majors,
+      adapter: {
+        loans: {
+          ...loans_fragments,
+          'business/loans/predicate/the_reservation_is_booked': (parameters) => (state) =>
+            !not_booked.includes(parameters.reservation_id) && booked_as_read(parameters)(state),
+        },
+        tools: { ...tools_released, execute: execute_released },
+        streams: start.streams ?? 'native',
+      },
+    },
+  )(world)
+  const versions = the_shed.versions
+  const tools = the_shed.invoked['business/tools']
+  const loans = the_shed.invoked['business/loans']
   const alone_registry = {
     ...loans_registry,
     [notify_alone_path]: notify_alone,
   }
-  const alone = wlib.command_use_case_ports({
+  const alone = zz.command_use_case_ports({
     registry: alone_registry,
     identities: tools_registry,
     versions,
     use_cases: { notify_a_member_of_the_repair: notify_alone },
   })(loans_command_adapter(cell))
   const paths = new Map([
-    ...paths_of_ports(tools_registry, tools_command_use_cases, ports.tools),
-    ...paths_of_ports(loans_registry, loans_command_use_cases, ports.loans),
+    ...paths_of_ports(tools_registry, tools_command_use_cases, tools),
+    ...paths_of_ports(loans_registry, loans_command_use_cases, loans),
     ...paths_of_ports(alone_registry, { notify_a_member_of_the_repair: notify_alone }, alone),
   ])
   const entered =
@@ -293,58 +595,143 @@ export const oracle = async (start: Start = {}) => {
     (context: EntryContext, input: input): AsyncIterable<event> => {
       const path = paths.get(port)
       if (path === undefined) throw new Error('a port the oracle did not build')
-      return port({ ...context, fingerprint: wlib.fingerprint_of({ path, input }) }, input)
+      return port({ ...context, fingerprint: zz.fingerprint_of({ path, input }) }, input)
     }
   let operations = 0
   const at = (instant: string, sent: Sent = {}): EntryContext => {
     operations += 1
     const id = sent.operation ?? `op-${String(operations)}`
     return {
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
       time_zone: zone,
-      operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
-      correlation: wlib.correlation.parse(`correlation-${id}`),
+      operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
+      correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
     }
   }
+  // As a test wires a tree of its own: by folder, the ports unnamed (a type
+  // the compiler can still write out for the harness).
+  const as_invoked: zz.Invoked = the_shed.invoked
+  /**
+   * The executor of `loans` started (DOM-14), its clock at an instant: the
+   * members' phones by member, the network answering as told (`network`);
+   * one that saves no position falls, as far as its state knows, before
+   * each advance (TST-4).
+   */
+  const executor = (at: {
+    readonly at: string
+    readonly phones?: Readonly<Record<string, string>>
+    readonly saves_its_position?: boolean
+  }): zz.EffectExecutor => {
+    instant = zz.date_time.parse(at.at)
+    saves_its_position = at.saves_its_position ?? true
+    number_of.clear()
+    for (const [id, phone] of Object.entries(at.phones ?? {})) {
+      number_of.set(member_id.parse(id), phone)
+    }
+    return the_shed.loans_effects()
+  }
+  /**
+   * The consumers of the reactions of some folders started (DOM-16), their
+   * clock at an instant; one that saves no position falls, as far as its
+   * state knows, before each advance (TST-4).
+   */
+  const started =
+    (folders: readonly Reactions[]) =>
+    (at: { readonly at: string; readonly saves_its_position?: boolean }): zz.ReactionConsumers => {
+      instant = zz.date_time.parse(at.at)
+      reactions_save_their_positions = at.saves_its_position ?? true
+      return together(new Map(folders.map((folder) => [folder, the_shed.reactions[folder]()])))
+    }
+  /**
+   * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
+   * as the interface verified it, the version the client was built at
+   * (D72.7); for a command at an instant the context of `at`, with its
+   * operation and correlation, for a read the context of `when`; for a
+   * command whose input names its operation (SC-34), its scope alone
+   * (`named`), the correlation the entry's own.
+   */
+  const as = <const version extends zz.Semver>(who: Who, version: version) => ({
+    at: (instant: string, sent: Sent = {}) => ({
+      caller: caller.parse(who),
+      version,
+      ...at(instant, sent),
+    }),
+    when: (instant: string) => ({
+      caller: caller.parse(who),
+      version,
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
+      time_zone: zone,
+    }),
+    named: (instant: string, sent: Omit<Sent, 'operation'> = {}) => {
+      const { operation, ...entered } = at(instant, sent)
+      return {
+        caller: caller.parse(who),
+        version,
+        ...entered,
+        operation: { scope: operation.scope },
+      }
+    },
+  })
   return {
     tools: {
-      add_a_tool: entered(ports.tools.add_a_tool),
-      retire_a_tool: entered(ports.tools.retire_a_tool),
-      send_a_tool_to_repair: entered(ports.tools.send_a_tool_to_repair),
-      put_a_repaired_tool_back_in_service: entered(ports.tools.put_a_repaired_tool_back_in_service),
-      close_a_repair: entered(ports.tools.close_a_repair),
-      rename_a_tool: entered(ports.tools.rename_a_tool),
-      load_the_tools_of_a_sheet: entered(ports.tools.load_the_tools_of_a_sheet),
-      load_the_tools_of_a_short_sheet: entered(ports.tools.load_the_tools_of_a_short_sheet),
-      continue_the_loading_of_a_sheet: entered(ports.tools.continue_the_loading_of_a_sheet),
-      ...reads.tools,
+      ...tools,
+      add_a_tool: entered(tools.add_a_tool),
+      retire_a_tool: entered(tools.retire_a_tool),
+      send_a_tool_to_repair: entered(tools.send_a_tool_to_repair),
+      put_a_repaired_tool_back_in_service: entered(tools.put_a_repaired_tool_back_in_service),
+      close_a_repair: entered(tools.close_a_repair),
+      rename_a_tool: entered(tools.rename_a_tool),
+      load_the_tools_of_a_sheet: entered(tools.load_the_tools_of_a_sheet),
+      load_the_tools_of_a_short_sheet: entered(tools.load_the_tools_of_a_short_sheet),
+      continue_the_loading_of_a_sheet: entered(tools.continue_the_loading_of_a_sheet),
     },
     loans: {
-      borrow_a_tool: entered(ports.loans.borrow_a_tool),
-      lend_a_booked_tool: entered(ports.loans.lend_a_booked_tool),
-      extend_the_loan: entered(ports.loans.extend_the_loan),
-      correct_the_tool_of_a_loan: entered(ports.loans.correct_the_tool_of_a_loan),
-      reserve_a_tool: entered(ports.loans.reserve_a_tool),
-      return_a_tool: entered(ports.loans.return_a_tool),
-      remind_the_member_of_the_due_date: entered(ports.loans.remind_the_member_of_the_due_date),
-      declare_the_loan_overdue: entered(ports.loans.declare_the_loan_overdue),
-      cancel_the_reservations_of_a_tool: entered(ports.loans.cancel_the_reservations_of_a_tool),
+      ...loans,
+      borrow_a_tool: entered(loans.borrow_a_tool),
+      lend_a_booked_tool: entered(loans.lend_a_booked_tool),
+      extend_the_loan: entered(loans.extend_the_loan),
+      correct_the_tool_of_a_loan: entered(loans.correct_the_tool_of_a_loan),
+      reserve_a_tool: entered(loans.reserve_a_tool),
+      return_a_tool: entered(loans.return_a_tool),
+      remind_the_member_of_the_due_date: entered(loans.remind_the_member_of_the_due_date),
+      declare_the_loan_overdue: entered(loans.declare_the_loan_overdue),
+      cancel_the_reservations_of_a_tool: entered(loans.cancel_the_reservations_of_a_tool),
       continue_the_cancellation_of_reservations: entered(
-        ports.loans.continue_the_cancellation_of_reservations,
+        loans.continue_the_cancellation_of_reservations,
       ),
-      notify_the_members_of_a_repair: entered(ports.loans.notify_the_members_of_a_repair),
-      continue_the_repair_notice_round: entered(ports.loans.continue_the_repair_notice_round),
-      begin_a_weekly_summary: entered(ports.loans.begin_a_weekly_summary),
-      sum_up_the_week_for_the_member: entered(ports.loans.sum_up_the_week_for_the_member),
-      ...reads.loans,
+      notify_the_members_of_a_repair: entered(loans.notify_the_members_of_a_repair),
+      continue_the_repair_notice_round: entered(loans.continue_the_repair_notice_round),
+      begin_a_weekly_summary: entered(loans.begin_a_weekly_summary),
+      sum_up_the_week_for_the_member: entered(loans.sum_up_the_week_for_the_member),
     },
     alone: {
       notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
+    keeper: the_shed.keeper,
+    member: the_shed.member,
+    visitor: the_shed.visitor,
+    workshop: the_shed.workshop,
     at,
+    as,
+    /** The fact log of the cell, a port of the adapter (DOM-17): what a fact carries, its correlation (DOM-10). */
+    log: the_shed.log,
+    /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
+    trace: (traced: zz.Traced<unknown>) => {
+      trace.push(traced)
+    },
+    /** The ports the trees invoke, by the folder of what they serve: where a test wires a tree of its own (SC-29). */
+    invoked: as_invoked,
+    /** How long each wait asked for lasts, in milliseconds, in order (DOM-3, DOM-14). */
+    waits: (): readonly number[] => [...asked],
+    /** The time passes: every wait asked for so far is over (DOM-3, TST-3). */
+    elapse: () => {
+      for (const over of waits.splice(0)) over()
+    },
+    /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
+    traced: (): readonly zz.Traced<unknown>[] => [...trace],
     /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
-    when: (instant: string): wlib.RootContext => ({
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+    when: (instant: string): zz.RootContext => ({
+      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
       time_zone: zone,
     }),
     /**
@@ -353,15 +740,101 @@ export const oracle = async (start: Start = {}) => {
      * (DOM-22), so that a wait queued at 1.x gives its return the input of
      * 2.0.0.
      */
-    queued: (effect: string): readonly wlib.EntryFields[] =>
+    queued: (effect: string): readonly zz.EntryFields[] =>
       cell
         .entries()
         .filter((entry) => entry.effect === effect)
-        .map((entry) => versions[wlib.$Versions].entry(entry)),
+        .map((entry) => versions[zz.$Versions].entry(entry)),
     versions,
+    executor,
+    /** The network's next answers, in order, then it delivers (DOM-15, TST-4). */
+    network: (...next: readonly Network[]) => {
+      answers.push(...next)
+    },
+    /** What the members' phones received, in order. */
+    received: (): readonly Message[] => [...received],
+    /**
+     * Time passes up to an instant: the clock reads it, and every wait asked
+     * for is over, so that the executor delivers what has come; then its
+     * deliveries run their course (TST-3).
+     */
+    pass: async (to: string) => {
+      instant = zz.date_time.parse(to)
+      for (const over of waits.splice(0)) over()
+      await quiet()
+    },
+    /** The entries the executor holds for an effect, as its state keeps them (DOM-14): shown, never a business fact. */
+    held: (effect: string): readonly zz.HeldEntry[] =>
+      holding.filter((each) => each.entry.effect === effect),
+    /** The letters an operator discarded, with their traces. */
+    discarded: (): readonly zz.Discarded<zz.EffectDeadLetter>[] => [...discards],
+    /** The consumer of `reaction/damage/` started (part 7.3, SC-40, SC-42). */
+    reactions: started(['reaction/damage']),
+    /**
+     * The consumers of the reactions that open and move the processes with a
+     * cursor started (part 7.4): the procedures of a retirement and of a
+     * repair, above the domains (GR-9), and the reactions of `loans` and
+     * `tools` that move their processes on, one step a reaction (DOM-16,
+     * DOM-20).
+     */
+    processes: started([
+      'reaction/retirement',
+      'reaction/repair',
+      'business/loans',
+      'business/tools',
+    ]),
+    /** The parts a reaction holds, as its state keeps them (DOM-16, SC-42): shown, never a business fact. */
+    held_parts: (reaction: string): readonly zz.HeldPart[] =>
+      parts_held.filter((each) => each.reaction === reaction),
+    /** The reactions' letters an operator discarded, with their traces. */
+    discarded_parts: (): readonly zz.Discarded[] => [...parts_discarded],
+    /**
+     * The adapter of `tools` released: right, or with a defect that reads
+     * every tool as neither in service, in the workshop nor retired (SC-42).
+     */
+    the_adapter_of_tools: (release: 'right' | 'with_a_defect') => {
+      release_of_tools = release
+    },
+    /**
+     * An execution of the adapter of `tools` falls, a technical abort
+     * (TST-4): the next one, or the one after so many.
+     */
+    the_adapter_of_tools_falls: (after = 0) => {
+      tools_falls_after = after
+    },
+    /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
+    recorded: async (): Promise<readonly zz.StoredEnvelope[]> => {
+      const facts = new Map<zz.position, zz.StoredEnvelope>()
+      for await (const event of the_shed.log(undefined)) {
+        if (event.event !== 'fact') break
+        facts.set(event.position, event.fact)
+      }
+      return [...facts.values()]
+    },
     /** The positions before this one, which the cell keeps no longer (TST-4): a stream from one of them is `position_unavailable`. */
     forget: cell.forget,
   }
+}
+
+/** The shed of a scenario, as the oracle starts it. */
+export type Shed = Awaited<ReturnType<typeof oracle>>
+
+/**
+ * Everything already set going has run its course, up to its next wait: the
+ * oracle and the harness wait on nothing but promises, so a turn of the
+ * runtime's timers comes after them all.
+ */
+export const quiet = async (): Promise<void> => {
+  for (let turn = 0; turn < 3; turn += 1) {
+    await new Promise<void>((done) => {
+      setTimeout(done, 0)
+    })
+  }
+}
+
+/** The promises already settled have run their course: what a port does before its next wait. */
+export const settled = async (): Promise<void> => {
+  for (let turn = 0; turn < 50; turn += 1) await Promise.resolve()
 }
 
 /** The first event of a port's stream: a command's outcome, the first event and a terminal one (DOM-2). */
@@ -408,7 +881,7 @@ export const until_caught_up = async <event extends { readonly event: string }>(
 /** An event of a read, as a consumer of a live view reads it. */
 export interface Seen {
   readonly event: string
-  readonly position?: wlib.position
+  readonly position?: zz.position
   readonly identity?: unknown
   readonly entry?: unknown
   readonly entries?: readonly unknown[]

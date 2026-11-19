@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { command_use_case_over, read_use_case_over, value, tools, loans } from './_scope_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the
@@ -17,7 +17,7 @@ export const retire_a_tool = command_use_case_over({
   }),
   creator: () => (input) => ({ id: input.tool_id, reason: input.reason, notes: input.notes }),
   events: {
-    the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id, date: wlib.date_time }),
+    the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id, date: zz.date_time }),
     the_tool_was_already_retired: z.strictObject({ tool_id: tools.id.tool_id }),
     /** The keeper knows which tool they asked for: no need to say it back. */
     there_is_no_such_tool: z.strictObject({}),
@@ -49,7 +49,7 @@ export const send_a_tool_to_repair = command_use_case_over({
   events: {
     the_tool_is_in_the_workshop: z.strictObject({
       tool_id: tools.id.tool_id,
-      since: wlib.date_time,
+      since: zz.date_time,
     }),
     the_tool_was_already_in_the_workshop: z.strictObject({ tool_id: tools.id.tool_id }),
     the_tool_is_retired: z.strictObject({ tool_id: tools.id.tool_id }),

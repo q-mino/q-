@@ -56,10 +56,8 @@ describe('the scopes of a folder (DOM-25)', () => {
     expect(text_of('persona/member/_scope.ts')).toContain(
       "import type { member_context } from './_node.ts'",
     )
-    expect(text_of('persona/member/_scope_node.ts')).toContain(
-      'wlib.builders_at<persona_context>()',
-    )
-    expect(text_of('business/loans/_scope.ts')).toContain('wlib.builders_at<wlib.RootContext>()')
+    expect(text_of('persona/member/_scope_node.ts')).toContain('zz.builders_at<persona_context>()')
+    expect(text_of('business/loans/_scope.ts')).toContain('zz.builders_at<zz.RootContext>()')
   })
 
   it("a past major's scope gives earlier, delegate and the next major, never the domain's dsl (DOM-22)", () => {

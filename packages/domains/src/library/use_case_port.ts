@@ -128,13 +128,25 @@ export type ReadUseCasePort<
       } & (applicable extends true ? WithActions<query, facts, streamed> : unknown)
     : never
 
-/** A read use case port that gives its entries again with actions (SC-33). */
+/**
+ * A read use case port that gives its entries again with actions (SC-33):
+ * each action's use case inferred by name, so that its input is typed by
+ * its own command (part 6.3).
+ */
 export interface WithActions<query, facts extends Component, streamed extends boolean> {
   readonly with_actions: <
-    const actions extends Readonly<Record<string, Action<QueryEntryOf<query>>>>,
+    const use_cases extends Readonly<Record<string, CommandUseCase<Commands[string]>>>,
   >(
-    actions: actions & ActionsFit<QueryEntryOf<query>, actions>,
-  ) => ReadUseCasePort<query, facts, streamed, false, actions>
+    actions: {
+      readonly [name in keyof use_cases]: Action<QueryEntryOf<query>, use_cases[name]>
+    } & ActionsFit<QueryEntryOf<query>, use_cases>,
+  ) => ReadUseCasePort<
+    query,
+    facts,
+    streamed,
+    false,
+    { readonly [name in keyof use_cases]: Action<QueryEntryOf<query>, use_cases[name]> }
+  >
 }
 
 /**

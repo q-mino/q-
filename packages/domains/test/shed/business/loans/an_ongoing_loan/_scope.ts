@@ -5,7 +5,7 @@
 // `an_ongoing_loan`'s. The authored files take them from the scope of their
 // kind, never from this file.
 
-import * as wlib from '../../../wlib.ts'
+import * as zz from '../../../../../src/library/index.ts'
 import type {
   an_ongoing_loan_accumulated,
   an_ongoing_loan_closes,
@@ -35,4 +35,4 @@ export const {
   version,
   earlier,
   delegate,
-} = wlib.builders_at<an_ongoing_loan_context, an_ongoing_loan_closes, an_ongoing_loan_accumulated>()
+} = zz.builders_at<an_ongoing_loan_context, an_ongoing_loan_closes, an_ongoing_loan_accumulated>()

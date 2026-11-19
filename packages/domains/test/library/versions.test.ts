@@ -156,7 +156,7 @@ describe('a stored part at the current shape', () => {
 })
 
 describe('a stored entry at the current shape', () => {
-  test('its payload translated, its id, when it may go and its resources as queued, no version', async () => {
+  test('its payload translated, its id, when it may go, its resources and its correlation as queued, no version', async () => {
     const read = (await versions([things])(nothing_kept))[$Versions]
     expect(
       read.entry({
@@ -166,6 +166,7 @@ describe('a stored entry at the current shape', () => {
         payload: { id: 'T1', size: '12' },
         not_before: date_time.parse('2026-11-15T10:12:00-05:00'),
         resources: [{ path: 'business/things/id/thing_id', value: 'T1' }],
+        correlation: correlation.parse('C1'),
       }),
     ).toEqual({
       effect: 'business/things/effect/make_a_thing',
@@ -173,6 +174,7 @@ describe('a stored entry at the current shape', () => {
       payload: { id: 'T1', size: 12 },
       not_before: '2026-11-15T10:12:00-05:00',
       resources: [{ path: 'business/things/id/thing_id', value: 'T1' }],
+      correlation: 'C1',
     })
   })
 })

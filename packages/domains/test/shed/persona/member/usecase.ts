@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import {
   command_use_case_over,
   read_use_case_over,
@@ -35,7 +35,7 @@ export const borrow_a_tool = command_use_case_over({
     you_have_the_tool: z.strictObject({
       loan_id: loans.id.loan_id,
       tool_id: tools.id.tool_id,
-      due_day: wlib.day,
+      due_day: zz.day,
     }),
     you_already_have_the_tool: z.strictObject({ tool_id: tools.id.tool_id }),
     /**
@@ -89,7 +89,7 @@ export const take_the_tool_you_booked = command_use_case_over({
     you_have_the_tool: z.strictObject({
       loan_id: loans.id.loan_id,
       tool_id: tools.id.tool_id,
-      due_day: wlib.day,
+      due_day: zz.day,
     }),
     you_already_took_the_tool: z.strictObject({ reservation_id: loans.id.reservation_id }),
     /**
@@ -128,7 +128,7 @@ export const send_me_my_week_on_mondays = command_use_case_over({
     member_id: context.card.id,
   }),
   events: {
-    you_will_get_your_week_on_mondays: z.strictObject({ from: wlib.day }),
+    you_will_get_your_week_on_mondays: z.strictObject({ from: zz.day }),
     you_already_get_your_week_on_mondays: z.strictObject({}),
     /** Never in Shed: the desk's two branches cover every member; a leaf still names its rejection. */
     your_week_cannot_be_sent: z.strictObject({}),
@@ -236,7 +236,7 @@ export const extend_your_loan = command_use_case_over({
   input: z.strictObject({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
   is_refused_unless: {
     the_member_card_is_valid_today: (context) => () =>
@@ -249,7 +249,7 @@ export const extend_your_loan = command_use_case_over({
     member_id: context.card.id,
   }),
   events: {
-    your_loan_is_extended: z.strictObject({ loan_id: loans.id.loan_id, due_day: wlib.day }),
+    your_loan_is_extended: z.strictObject({ loan_id: loans.id.loan_id, due_day: zz.day }),
     /** Gianni booked the drill for Thursday: Marta brings it back on its due day. */
     someone_booked_the_tool: z.strictObject({}),
     /** Not hers, not of that tool, not due on that day, past its due date, or back in the shed. */
@@ -294,8 +294,8 @@ export const my_loans = read_use_case_over({
     actions: {
       bring_it_back: (loan) => ({
         loan_id: loan.id,
-        tool_id: wlib.given_by_the_caller,
-        condition: wlib.given_by_the_caller,
+        tool_id: zz.given_by_the_caller,
+        condition: zz.given_by_the_caller,
       }),
       keep_it_longer: (loan) => ({
         loan_id: loan.id,
@@ -308,8 +308,8 @@ export const my_loans = read_use_case_over({
     loan_id: loans.id.loan_id,
     tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
-    start_date: wlib.date_time,
-    due_day: wlib.day,
+    start_date: zz.date_time,
+    due_day: zz.day,
     term: value.loan_term,
     bring_it_back: value.return_on_the_row,
     keep_it_longer: value.extension_on_the_row,
@@ -352,7 +352,7 @@ export const my_reservations = read_use_case_over({
     reservation_id: loans.id.reservation_id,
     tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
-    day: wlib.day,
+    day: zz.day,
   }),
   projection: (entry) => ({
     reservation_id: entry.id,
@@ -390,7 +390,7 @@ export const my_reservations_in_the_workshop = read_use_case_over({
     reservation_id: loans.id.reservation_id,
     tool_id: tools.id.tool_id,
     tool_name: value.tool_name,
-    day: wlib.day,
+    day: zz.day,
   }),
   projection: (entry) => ({
     reservation_id: entry.id,

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { selection, id, tools } from './_scope_selection.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).
@@ -27,7 +27,7 @@ export const the_reservation_is_of_this_tool = selection({
 export const the_reservation_is_from_this_day_on = selection({
   subject: 'reservation',
   parameters: z.strictObject({
-    day: wlib.day,
+    day: zz.day,
   }),
 })
 

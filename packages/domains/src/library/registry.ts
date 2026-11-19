@@ -70,6 +70,12 @@ export interface Versions {
      * (the consumer of `damage` reads a fact of `loans`, A, 17 Nov 2026).
      */
     readonly reads: (path: string) => boolean
+    /**
+     * The path of a component of a domain given, in its current registry,
+     * by object identity (DOM-24): a leaf that follows finds by it the facts
+     * it waits for among the parts of its chain (part 6.3).
+     */
+    readonly path: (component: unknown) => string | undefined
   }
 }
 

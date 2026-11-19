@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as zz from '../../../src/library/index.ts'
 import { sheet_id } from '../business/tools/_id.ts'
 import { first, oracle } from './oracle.ts'
 import type { Tool } from './shed.ts'
@@ -70,7 +70,7 @@ describe('SC-54, Luca loads a short sheet in one go', () => {
   test('one fact: the sheet filed complete, then a part per line in its order, line 4 left', async () => {
     const shed = await the_shed()
     const at = shed.at(thursday)
-    const sheet = wlib.identity_of(sheet_id)(at.operation)
+    const sheet = zz.identity_of(sheet_id)(at.operation)
     const lines = pauls_sheet.map((tool, i) => the_line(sheet, tool, i + 1))
     expect(
       await first(shed.tools.load_the_tools_of_a_short_sheet(at, { lines: pauls_sheet })),

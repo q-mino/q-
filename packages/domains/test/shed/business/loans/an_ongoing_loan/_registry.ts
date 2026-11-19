@@ -6,7 +6,7 @@
 // object identity. The registry of `business/loans` carries it: a folder of a
 // domain is its subtree (D105).
 
-import type * as wlib from '../../../wlib.ts'
+import type * as zz from '../../../../../src/library/index.ts'
 import * as node from './_node.ts'
 import * as command from './_command.ts'
 import * as usecase from './_usecase.ts'
@@ -26,4 +26,4 @@ export const registry = {
   'business/loans/an_ongoing_loan/usecase/extend_the_loan': usecase.extend_the_loan,
   'business/loans/an_ongoing_loan/usecase/correct_the_tool_of_a_loan':
     usecase.correct_the_tool_of_a_loan,
-} satisfies wlib.Registry
+} satisfies zz.Registry

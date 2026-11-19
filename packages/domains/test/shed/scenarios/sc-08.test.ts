@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as zz from '../../../src/library/index.ts'
 import type * as loans_fact from '../business/loans/_fact.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'
 import { first, one_at_a_time, oracle } from './oracle.ts'
@@ -100,6 +100,7 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
           { path: 'business/tools/id/tool_id', value: 'drill' },
           { path: 'business/loans/id/member_id', value: 'M-12' },
         ],
+        correlation: 'correlation-L1',
       },
     ])
     expect(shed.queued('business/loans/effect/wait_until_the_due_date')).toMatchObject([
@@ -113,19 +114,19 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
       lent: '2026-11-02T10:12:00-05:00',
       due: '2026-11-16T10:12:00-05:00',
     })
-    const after: wlib.StoredEnvelope = {
+    const after: zz.StoredEnvelope = {
       ...the_drill_added,
-      operation: { id: wlib.operation_id.parse('T2'), scope: 'keeper/luca' },
+      operation: { id: zz.operation_id.parse('T2'), scope: 'keeper/luca' },
     }
-    const log: wlib.FactLog = () =>
-      one_at_a_time<wlib.LogEvent>([
-        { event: 'fact', position: wlib.position.parse('1'), fact: the_drill_added },
-        { event: 'fact', position: wlib.position.parse('2'), fact: lent },
-        { event: 'caught_up', position: wlib.position.parse('2') },
-        { event: 'fact', position: wlib.position.parse('3'), fact: after },
+    const log: zz.FactLog = () =>
+      one_at_a_time<zz.LogEvent>([
+        { event: 'fact', position: zz.position.parse('1'), fact: the_drill_added },
+        { event: 'fact', position: zz.position.parse('2'), fact: lent },
+        { event: 'caught_up', position: zz.position.parse('2') },
+        { event: 'fact', position: zz.position.parse('3'), fact: after },
       ])
     const replayed: unknown[] = []
-    for await (const fact of wlib.replay<
+    for await (const fact of zz.replay<
       typeof loans_fact.a_tool_has_been_lent | typeof tools_fact.a_tool_has_been_added,
       unknown
     >({

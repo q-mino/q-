@@ -6,6 +6,7 @@ import {
   fingerprint_of,
   identity_of,
   operation_id,
+  reaction_operation,
 } from '../../src/library/index.ts'
 
 // The stable functions (LIB-10, TST-7; part 3.2): re-read against their
@@ -55,6 +56,69 @@ describe('identity_of, the identity of the instance an operation opens (DOM-12)'
     expect(an_id.safeParse(identity_of(an_id)(operation('a', 'b'))).success).toBe(true)
     const short = z.string().max(8)
     expect(() => identity_of(short)(operation('a', 'b'))).toThrow()
+  })
+})
+
+describe('reaction_operation, the operation of a reaction to a part of a fact (DOM-16, LIB-10)', () => {
+  const operation = (scope: string, id: string) => ({ scope, id: operation_id.parse(id) })
+  const damage = 'reaction/damage/reaction/the_damaged_tool_goes_to_repair'
+
+  // The corpus: the reaction, the fact's operation (its scope and id), the
+  // part, and the id of the reaction's operation, whose scope is the reaction.
+  test.each([
+    [damage, 'member/A-MARTA', 'R-1', 0, 'lF64yMTVJ517v_1vnxN7tBskXc0BM9PYbDAuxnmeaOc'],
+    [damage, 'member/A-MARTA', 'R-1', 1, '5Fu-VthZkUwnYpRAiMm-CEDGZoiJVh742uS7oJSrNrU'],
+    [
+      'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled',
+      'keeper/luca',
+      '2b9c0e4e-1f8a-4c5d-9a71-0e3f6c2d8b14',
+      0,
+      'THXrq-fE07l5uWCncAlIYk8utf7yCLI8Jk9l78hVqTA',
+    ],
+    [
+      'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up',
+      'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled',
+      'Lp9Sfe2Cw3q3O6DCfyBU9G9Gv7uBJEUOpUOgZxMD7cw',
+      1,
+      'Udd_CFqyTWvUW76VbTuileSGO9QLUbcSYpRDPaWkVp8',
+    ],
+    ['r', 'Città 🛠', 'x', 12, 'mHHgo39OpiEos_ezGUQfEH1Fx8a_Jgd7EKn780r_O6c'],
+  ])('%s · %s · %s · %i', (reaction, scope, id, part, derived) => {
+    expect(reaction_operation(reaction)({ operation: operation(scope, id), part })).toEqual({
+      scope: reaction,
+      id: derived,
+    })
+  })
+
+  test('the fact delivered again is the same operation; another part, fact or reaction, another', () => {
+    const first = reaction_operation(damage)({
+      operation: operation('member/A-MARTA', 'R-1'),
+      part: 0,
+    })
+    expect(
+      reaction_operation(damage)({ operation: operation('member/A-MARTA', 'R-1'), part: 0 }),
+    ).toEqual(first)
+    expect(
+      reaction_operation(damage)({ operation: operation('member/A-MARTA', 'R-1'), part: 1 }).id,
+    ).not.toBe(first.id)
+    expect(
+      reaction_operation(damage)({ operation: operation('member/A-MARTA', 'R-2'), part: 0 }).id,
+    ).not.toBe(first.id)
+    expect(
+      reaction_operation(damage)({ operation: operation('member/A-PAOLO', 'R-1'), part: 0 }).id,
+    ).not.toBe(first.id)
+    expect(
+      reaction_operation('reaction/repair/reaction/r')({
+        operation: operation('member/A-MARTA', 'R-1'),
+        part: 0,
+      }).id,
+    ).not.toBe(first.id)
+  })
+
+  test("the fact's scope and id are told apart, so no two operations meet by concatenation", () => {
+    expect(reaction_operation(damage)({ operation: operation('a/b', 'c'), part: 0 }).id).not.toBe(
+      reaction_operation(damage)({ operation: operation('a', 'b/c'), part: 0 }).id,
+    )
   })
 })
 

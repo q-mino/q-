@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as zz from '../../../src/library/index.ts'
 import { all, first, oracle } from './oracle.ts'
 
 // SC-22, the business's side (part 5.3): the catalogue of 2,000 tools read
@@ -184,7 +184,7 @@ describe('SC-22, the catalogue in pages (the business)', () => {
         shed.tools.the_catalogue.pages(
           shed.when(tuesday),
           { categories: ['garden'] },
-          { size: 50, after: wlib.cursor.parse(after) },
+          { size: 50, after: zz.cursor.parse(after) },
         ),
       )
     const not_in_schema = [{ event: 'invalid_request', reason: 'cursor_not_in_schema' }]

@@ -1,4 +1,4 @@
-import * as wlib from '../wlib.ts'
+import * as zz from '../../../src/library/index.ts'
 import { drill } from './shed.ts'
 
 // What the shed's store kept before `loans` 2.0.0 (4 November 2026), as it
@@ -12,7 +12,7 @@ import { drill } from './shed.ts'
 const loans_1 = '1.4.0'
 
 /** The drill, as Luca added it on Sunday 1 November at `tools` 1.0.0. */
-export const the_drill_added: wlib.StoredEnvelope = {
+export const the_drill_added: zz.StoredEnvelope = {
   parts: [
     {
       path: 'business/tools/fact/a_tool_has_been_added',
@@ -29,11 +29,11 @@ export const the_drill_added: wlib.StoredEnvelope = {
       resources: [{ path: 'business/tools/id/tool_id', value: drill.id }],
     },
   ],
-  operation: { id: wlib.operation_id.parse('T1'), scope: 'keeper/luca' },
-  correlation: wlib.correlation.parse('correlation-T1'),
+  operation: { id: zz.operation_id.parse('T1'), scope: 'keeper/luca' },
+  correlation: zz.correlation.parse('correlation-T1'),
   branch: 'the_tool_is_new_so_it_is_added',
   composed: {},
-  fingerprint: wlib.fingerprint_of({ path: 'business/tools/usecase/add_a_tool', input: drill }),
+  fingerprint: zz.fingerprint_of({ path: 'business/tools/usecase/add_a_tool', input: drill }),
 }
 
 /** What Marta's phone sent to borrow the drill, under the operation L1: her retry sends it again. */
@@ -43,7 +43,7 @@ export const marta_borrows_the_drill = { loan_id: 'L1', tool_id: drill.id, membe
 export const marta_s_operation = { operation: 'L1', scope: 'member/M-12' }
 
 /** The resources of the loan's part, every identity of its payload (DOM-10). */
-const the_loan_s_resources: readonly wlib.Resource[] = [
+const the_loan_s_resources: readonly zz.Resource[] = [
   { path: 'business/loans/id/loan_id', value: 'L1' },
   { path: 'business/tools/id/tool_id', value: drill.id },
   { path: 'business/loans/id/member_id', value: 'M-12' },
@@ -56,7 +56,7 @@ const the_loan_s_resources: readonly wlib.Resource[] = [
 export const marta_s_loan_at_1 = (loan: {
   readonly lent: string
   readonly due: string
-}): wlib.StoredEnvelope => ({
+}): zz.StoredEnvelope => ({
   parts: [
     {
       path: 'business/loans/fact/a_tool_has_been_lent',
@@ -75,13 +75,13 @@ export const marta_s_loan_at_1 = (loan: {
     },
   ],
   operation: {
-    id: wlib.operation_id.parse(marta_s_operation.operation),
+    id: zz.operation_id.parse(marta_s_operation.operation),
     scope: marta_s_operation.scope,
   },
-  correlation: wlib.correlation.parse('correlation-L1'),
+  correlation: zz.correlation.parse('correlation-L1'),
   branch: 'the_tool_is_available_so_it_is_lent',
   composed: {},
-  fingerprint: wlib.fingerprint_of({
+  fingerprint: zz.fingerprint_of({
     path: 'business/loans/usecase/borrow_a_tool',
     input: marta_borrows_the_drill,
   }),
@@ -96,22 +96,24 @@ export const marta_s_loan_at_1 = (loan: {
 export const marta_s_waits_at_1 = (loan: {
   readonly eve: string
   readonly due: string
-}): readonly wlib.StoredEntry[] => [
+}): readonly zz.StoredEntry[] => [
   {
     effect: 'business/loans/effect/wait_until_the_eve_of_the_due_date',
-    id: wlib.entry_id.parse('L1'),
+    id: zz.entry_id.parse('L1'),
     version: loans_1,
     payload: { loan_id: 'L1', tool_id: drill.id, member_id: 'M-12', due_date: loan.due },
-    not_before: wlib.date_time.parse(loan.eve),
+    not_before: zz.date_time.parse(loan.eve),
     resources: the_loan_s_resources,
+    correlation: zz.correlation.parse('correlation-L1'),
   },
   {
     effect: 'business/loans/effect/wait_until_the_due_date',
-    id: wlib.entry_id.parse('L1'),
+    id: zz.entry_id.parse('L1'),
     version: loans_1,
     payload: { loan_id: 'L1' },
-    not_before: wlib.date_time.parse(loan.due),
+    not_before: zz.date_time.parse(loan.due),
     resources: the_loan_s_resources,
+    correlation: zz.correlation.parse('correlation-L1'),
   },
 ]
 

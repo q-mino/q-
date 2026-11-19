@@ -1,4 +1,4 @@
-import type * as wlib from './wlib.ts'
+import type * as zz from '../../src/library/index.ts'
 
 // What each folder of Shed's tree sees of the others (LIB-1, DOM-25): the
 // architecture's rules, as data for the generator, which writes into the
@@ -17,4 +17,4 @@ export const sight = {
   reaction: { business: ['usecase', 'fact'] },
   /** Auth sees no other domain: its data is its adapters' (D43, PER-10). */
   auth: {},
-} as const satisfies wlib.Sight
+} as const satisfies zz.Sight

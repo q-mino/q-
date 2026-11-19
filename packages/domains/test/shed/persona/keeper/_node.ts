@@ -4,7 +4,7 @@
 // the same names, each schema with its output type under the same name, so that
 // one import gives both. Only this module imports `node.ts`.
 
-import type * as wlib from '../../wlib.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as node from './node.ts'
 
 /**
@@ -15,10 +15,10 @@ import * as node from './node.ts'
 export const keeper = node.keeper
 
 /** The context the node `keeper` gives to everything below it. */
-export type keeper_context = wlib.ContextOf<typeof keeper>
+export type keeper_context = zz.ContextOf<typeof keeper>
 
 /** How the node `keeper` and the nodes above it may close a request (PER-14), for the leaves below it. */
-export type keeper_closes = wlib.ClosesOf<typeof keeper>
+export type keeper_closes = zz.ClosesOf<typeof keeper>
 
 /** What the node `keeper` and the nodes above it add to the commands below it (D105, SC-31). */
-export type keeper_accumulated = wlib.AccumulatedOf<typeof keeper>
+export type keeper_accumulated = zz.AccumulatedOf<typeof keeper>

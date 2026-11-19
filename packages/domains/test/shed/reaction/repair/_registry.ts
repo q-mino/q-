@@ -5,10 +5,10 @@
 // library, which reads it in reverse, from a component to its path, by object
 // identity.
 
-import type * as wlib from '../../wlib.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as reaction from './_reaction.ts'
 
 export const registry = {
   'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified':
     reaction.the_members_who_booked_the_tool_are_notified,
-} satisfies wlib.Registry
+} satisfies zz.Registry

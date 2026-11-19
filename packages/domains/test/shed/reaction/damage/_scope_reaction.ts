@@ -5,7 +5,7 @@
 // ancestors' doors to the folders below and the doors the map opens to it.
 
 export { reaction } from './_scope.ts'
-export { nothing } from '../../wlib.ts'
+export { nothing } from '../../../../src/library/index.ts'
 export * as dsl from './_dsl.ts'
 export * as loans from '../../business/loans/_door_reaction.ts'
 export * as tools from '../../business/tools/_door_reaction.ts'

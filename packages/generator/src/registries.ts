@@ -142,7 +142,7 @@ const aliases = (
   children: readonly string[],
 ): readonly Failure[] => {
   const names: readonly Named[] = [
-    { name: 'wlib', what: 'the library' },
+    { name: 'zz', what: 'the library (zen0)' },
     ...read.map((authored) => ({ name: authored.stem, what: `the twin _${authored.stem}.ts` })),
     ...children.map((child) => ({
       name: child,
@@ -178,7 +178,7 @@ const registry = (
         path: [...folder.segments, '_registry.ts'].join('/'),
         text: file(header(tree, folder), [
           [
-            `import type * as wlib from '${library_from(tree, folder.segments)}'`,
+            `import type * as zz from '${library_from(tree, folder.segments)}'`,
             ...read.map((authored) => `import * as ${authored.stem} from './_${authored.stem}.ts'`),
             ...children.map(
               (child) => `import { registry as ${child} } from './${child}/_registry.ts'`,
@@ -188,7 +188,7 @@ const registry = (
             'export const registry = {',
             ...entries.map((entry) => `  '${entry.path}': ${entry.member},`),
             ...children.map((child) => `  ...${child},`),
-            '} satisfies wlib.Registry',
+            '} satisfies zz.Registry',
           ].join('\n'),
         ]),
       },
@@ -223,16 +223,16 @@ const majors = (tree: Tree, folder: Folder): readonly GeneratedFile[] => {
       path: [...folder.segments, '_majors.ts'].join('/'),
       text: file(
         wrap(
-          `The majors of \`${name}\` (DOM-22, PER-17): the current's registry${past.length === 0 ? ', by number, and no past major' : " and each past major's, by number, from the folders. The only file of the current version that names a past major: the generator rewrites it when a folder is deleted"}. The configurator gives it where a version picks a major: the versions of a store (\`wlib.versions\`), the ports of a tree (\`wlib.tree_ports\`).`,
+          `The majors of \`${name}\` (DOM-22, PER-17): the current's registry${past.length === 0 ? ', by number, and no past major' : " and each past major's, by number, from the folders. The only file of the current version that names a past major: the generator rewrites it when a folder is deleted"}. The configurator gives it where a version picks a major: the versions of a store (\`zz.versions\`), the ports of a tree (\`zz.tree_ports\`).`,
         ),
         [
           [
-            `import type * as wlib from '${library_from(tree, folder.segments)}'`,
+            `import type * as zz from '${library_from(tree, folder.segments)}'`,
             ...all.map(
               (one) => `import { registry as major_${String(one.major)} } from '${one.module}'`,
             ),
           ].join('\n'),
-          `export const majors = { ${all.map((one) => `${String(one.major)}: major_${String(one.major)}`).join(', ')} } satisfies wlib.Majors`,
+          `export const majors = { ${all.map((one) => `${String(one.major)}: major_${String(one.major)}`).join(', ')} } satisfies zz.Majors`,
         ],
       ),
     },

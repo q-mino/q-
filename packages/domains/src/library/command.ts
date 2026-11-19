@@ -265,6 +265,17 @@ export type Commands = Readonly<
   Record<string, { readonly [$Command]: { input?: z.ZodType; outcomes?: Outcomes } }>
 >
 
+/**
+ * Whether a value is a command, a builder's (`$Command`), as a port meets
+ * one at runtime: a step's transition (DOM-20); a type guard over exactly
+ * what it checks, its mark and the record under it.
+ */
+export const is_a_command = (value: unknown): value is Commands[string] => {
+  if ((typeof value !== 'function' && typeof value !== 'object') || value === null) return false
+  const declared: unknown = $Command in value ? value[$Command] : undefined
+  return typeof declared === 'object' && declared !== null && !Array.isArray(declared)
+}
+
 /** The outcomes of a command. */
 export type OutcomesOf<command> = command extends { [$Command]: { outcomes?: infer outcomes } }
   ? outcomes extends Outcomes

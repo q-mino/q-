@@ -1,4 +1,4 @@
-import { first, oracle } from './oracle.ts'
+import { first, oracle, type Shed } from './oracle.ts'
 
 // What the scenarios of the commands share: the shed's tools, added by Luca
 // before a scenario begins.
@@ -15,7 +15,7 @@ export const sander: Tool = { id: 'sander', name: 'Orbital sander', category: 'p
 export const ladder: Tool = { id: 'ladder', name: 'Ladder', category: 'ladder' }
 
 /** The oracle with the tools added on Monday 16 November, in the morning. */
-export const a_shed_with = async (...tools: readonly Tool[]) => {
+export const a_shed_with = async (...tools: readonly Tool[]): Promise<Shed> => {
   const shed = await oracle()
   for (const tool of tools) {
     await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), tool))

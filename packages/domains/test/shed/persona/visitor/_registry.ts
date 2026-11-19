@@ -5,7 +5,7 @@
 // library, which reads it in reverse, from a component to its path, by object
 // identity.
 
-import type * as wlib from '../../wlib.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import * as value from './_value.ts'
 import * as usecase from './_usecase.ts'
 import * as version from './_version.ts'
@@ -18,4 +18,4 @@ export const registry = {
   'persona/visitor/usecase/the_catalogue': usecase.the_catalogue,
   'persona/visitor/usecase/the_catalogue_input': usecase.the_catalogue_input,
   'persona/visitor/version/visitor': version.visitor,
-} satisfies wlib.Registry
+} satisfies zz.Registry

@@ -5,9 +5,10 @@
 // effect fails (DOM-15): the network down is transient, a member with no
 // phone or a network that gives up exhausts the entry, a dead letter an
 // operator sees; a definitive outcome with a meaning would need a return,
-// which neither a reminder nor a notice has.
+// which neither a reminder nor a notice has. A network that falls throws: a
+// technical abort, which the executor does not take for an answer (TST-4).
 
-import type * as wlib from '../../wlib.ts'
+import type * as zz from '../../../../src/library/index.ts'
 import type * as loans_effect from '../../business/loans/_effect.ts'
 import type { member_id } from '../../business/loans/_id.ts'
 import type { ToolsState } from './tools.ts'
@@ -18,7 +19,7 @@ export interface Reminder {
   readonly key: string
   readonly phone: string
   readonly tool_name: string
-  readonly due_day: wlib.day
+  readonly due_day: zz.day
 }
 
 /** A notice of a repair as a phone receives it: the tool booked, and the day it was booked for. */
@@ -27,7 +28,7 @@ export interface RepairNotice {
   readonly key: string
   readonly phone: string
   readonly tool_name: string
-  readonly day: wlib.day
+  readonly day: zz.day
 }
 
 /**
@@ -39,14 +40,14 @@ export interface WeeksSummary {
   readonly message: 'weeks_summary'
   readonly key: string
   readonly phone: string
-  readonly monday: wlib.day
+  readonly monday: zz.day
 }
 
 /** What a phone receives from the shed. */
 export type Message = Reminder | RepairNotice | WeeksSummary
 
 /** What the network does with the next message, as a test chooses. */
-export type Network = 'delivers' | 'is_down' | 'gives_up'
+export type Network = 'delivers' | 'is_down' | 'gives_up' | 'falls'
 
 /** The members' phones, the network, and what each phone received, for a test to look at. */
 export interface Phones {
@@ -65,28 +66,31 @@ const send =
     const phone = phones.number_of.get(to.member_id)
     const network = phones.network()
     if (phone === undefined) {
-      return Promise.resolve<wlib.Delivered<never>>({
+      return Promise.resolve<zz.Delivered<never>>({
         outcome: 'exhausted',
         reason: 'the member has no phone',
       })
     }
+    if (network === 'falls') {
+      return Promise.reject(new Error('the network fell'))
+    }
     if (network === 'is_down') {
-      return Promise.resolve<wlib.Delivered<never>>({ outcome: 'transient' })
+      return Promise.resolve<zz.Delivered<never>>({ outcome: 'transient' })
     }
     if (network === 'gives_up') {
-      return Promise.resolve<wlib.Delivered<never>>({
+      return Promise.resolve<zz.Delivered<never>>({
         outcome: 'exhausted',
         reason: 'the network gave up',
       })
     }
     phones.receive(to.message(phone))
-    return Promise.resolve<wlib.Delivered<never>>({ outcome: 'delivered' })
+    return Promise.resolve<zz.Delivered<never>>({ outcome: 'delivered' })
   }
 
 /** Sends Marta "bring the drill back tomorrow", at least once: the key lets the network drop a double. */
 export const send_the_due_date_reminder =
   (get: () => ToolsState) =>
-  (phones: Phones): wlib.Delivery<typeof loans_effect.send_the_due_date_reminder, never> =>
+  (phones: Phones): zz.Delivery<typeof loans_effect.send_the_due_date_reminder, never> =>
   (entry) =>
     send(phones)({
       member_id: entry.payload.member_id,
@@ -106,7 +110,7 @@ export const send_the_due_date_reminder =
  */
 export const send_the_repair_notice =
   (get: () => ToolsState) =>
-  (phones: Phones): wlib.Delivery<typeof loans_effect.send_the_repair_notice, never> =>
+  (phones: Phones): zz.Delivery<typeof loans_effect.send_the_repair_notice, never> =>
   (entry) =>
     send(phones)({
       member_id: entry.payload.member_id,
@@ -126,7 +130,7 @@ export const send_the_repair_notice =
  * opens it, so it is never a week stale (SC-43).
  */
 export const send_the_weeks_summary =
-  (phones: Phones): wlib.Delivery<typeof loans_effect.send_the_weeks_summary, never> =>
+  (phones: Phones): zz.Delivery<typeof loans_effect.send_the_weeks_summary, never> =>
   (entry) =>
     send(phones)({
       member_id: entry.payload.member_id,

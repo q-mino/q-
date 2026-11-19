@@ -1,7 +1,7 @@
 // The domain's pure functions over its values, added at need: usable by the
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
-import { date_time, day, day_of } from '../../wlib.ts'
+import { date_time, day, day_of } from '../../../../src/library/index.ts'
 import { id, tools, value } from './_scope_dsl.ts'
 
 const loan_period_in_days = 14

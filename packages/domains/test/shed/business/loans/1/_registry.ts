@@ -6,7 +6,7 @@
 // or delegated; the same paths as the current's, the version apart. The majors
 // of the domain list it (`../_majors.ts`).
 
-import type * as wlib from '../../../wlib.ts'
+import type * as zz from '../../../../../src/library/index.ts'
 import * as fact from './_fact.ts'
 import * as effect from './_effect.ts'
 
@@ -43,4 +43,4 @@ export const registry = {
   'business/loans/effect/send_the_due_date_reminder': effect.send_the_due_date_reminder,
   'business/loans/effect/wait_until_the_due_date': effect.wait_until_the_due_date,
   'business/loans/effect/send_the_repair_notice': effect.send_the_repair_notice,
-} satisfies wlib.Registry
+} satisfies zz.Registry

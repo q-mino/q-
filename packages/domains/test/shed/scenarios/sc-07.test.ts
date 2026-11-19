@@ -1,19 +1,20 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
-import * as wlib from '../wlib.ts'
-import { first } from './oracle.ts'
+import * as zz from '../../../src/library/index.ts'
+import { first, quiet } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'
 
 // SC-7: the drill goes to the workshop, its stay named by `tools` from the
 // operation, since nobody outside can name it (DOM-12, DOM-23, D75.8): the
 // library's stable function `identity_of` (LIB-10). One operation records one
 // fact, so it opens one stay, and a retry or a redelivery is the duplicate
-// branch, the same stay. The reaction of a damaged return sends it the same
-// way, its operation derived from the fact (7.3); here Luca finds the drill
-// broken on the shelf.
+// branch, the same stay. Luca finds the drill broken on the shelf; or the
+// reaction of a damaged return sends it the same way, its operation derived
+// from the fact (`reaction_operation`, since part 7.3), so that the stay is
+// named by Marta's return.
 
 /** The stay an operation opens, as `tools` names it. */
-const the_stay_of = (operation: wlib.Operation): string => wlib.identity_of(z.string())(operation)
+const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
 
 describe('SC-7, the drill goes to the workshop', () => {
   test('its stay is named from the operation that sends it', async () => {
@@ -116,5 +117,42 @@ describe('SC-7, the drill goes to the workshop', () => {
       },
     })
     expect(the_stay_of(saturday.operation)).not.toBe(the_stay_of(tuesday.operation))
+  })
+
+  test('sent by the reaction of a damaged return: the stay named by the reaction’s operation, derived from Marta’s return', async () => {
+    const shed = await a_shed_with(drill)
+    await first(
+      shed.loans.borrow_a_tool(shed.at('2026-11-16T10:00:00-05:00', { scope: 'member/M-12' }), {
+        loan_id: 'L7',
+        tool_id: 'drill',
+        member_id: 'M-12',
+      }),
+    )
+    const consumers = shed.reactions({ at: '2026-11-17T09:00:00-05:00' })
+    const her_return = shed.at('2026-11-17T09:00:00-05:00', {
+      operation: 'R-1',
+      scope: 'member/M-12',
+    })
+    await first(
+      shed.loans.return_a_tool(her_return, {
+        loan_id: 'L7',
+        tool_id: 'drill',
+        condition: 'damaged',
+      }),
+    )
+    await quiet()
+    const reacting = zz.reaction_operation(
+      'reaction/damage/reaction/the_damaged_tool_goes_to_repair',
+    )({ operation: her_return.operation, part: 0 })
+    expect((await shed.recorded()).at(-1)).toMatchObject({
+      operation: reacting,
+      parts: [
+        {
+          path: 'business/tools/fact/a_tool_has_been_sent_to_repair',
+          payload: { tool_under_repair: { repair: { id: the_stay_of(reacting) } } },
+        },
+      ],
+    })
+    await consumers.stop()
   })
 })

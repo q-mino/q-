@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cursor, date_time, day } from '../../wlib.ts'
+import { cursor, date_time, day } from '../../../../src/library/index.ts'
 import { id, tools } from './_scope_value.ts'
 
 // The tools, as `loans` sees them: the shed's tools it lends. `loans` keeps its

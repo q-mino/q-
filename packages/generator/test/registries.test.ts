@@ -97,7 +97,7 @@ describe('SC-46, the registries (DOM-24, DOM-22, PER-17)', () => {
       "import { registry as major_2 } from './_registry.ts'\nimport { registry as major_1 } from './1/_registry.ts'",
     )
     expect(text_in(written, 'persona/member/_majors.ts')).toContain(
-      'export const majors = { 2: major_2, 1: major_1 } satisfies wlib.Majors',
+      'export const majors = { 2: major_2, 1: major_1 } satisfies zz.Majors',
     )
     expect(written.map((one) => one.path).filter((path) => path.endsWith('_majors.ts'))).toEqual([
       'business/loans/_majors.ts',

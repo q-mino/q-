@@ -3,7 +3,7 @@ import type { position } from './format.ts'
 import type { RootContext } from './context.ts'
 import type { CursorNotInSchema, InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import { $Calculation } from './component.ts'
-import { $Query, type Direction, type Queries } from './query.ts'
+import { $Query, closed_order, type Direction, type Queries } from './query.ts'
 import type { PlannedPage, PlannedQuery, ReadAdapter } from './read_adapter.ts'
 import type { OrderKeyValue } from './algebra.ts'
 import { cursor_of, key_of, type OrderKey } from './stable.ts'
@@ -19,7 +19,8 @@ import type {
 } from './use_case_port.ts'
 import { is_a_schema, kind_of } from './kind.ts'
 import { bind, fold, type BoundLeaf } from './bound_condition.ts'
-import { called, is_a_record, paths_in } from './runtime.ts'
+import { called, is_a_record, paths_in, serving, type Served } from './runtime.ts'
+import { actions_of, planned_actions, type PlannedActions } from './actions.ts'
 import {
   stream_after,
   stream_from,
@@ -39,7 +40,9 @@ import {
 // position (part 5.2, DOM-2, DOM-17), or, from a position, the stream alone,
 // a resume (`read_stream.ts`). In pages (part 5.3, SC-22): a stream of
 // snapshots, one per page, each read when the consumer asks for it, after
-// the cursor of the page before it. The actions come with 6.3.
+// the cursor of the page before it. With actions (part 6.3, SC-33), where the
+// adapter evaluates them: each entry with the applicability of each
+// (`with_actions`, `actions.ts`).
 
 /** The read adapter as the ports meet it at runtime. */
 interface RuntimeAdapter<selection, source, field> {
@@ -55,14 +58,16 @@ interface RuntimeAdapter<selection, source, field> {
   >
   readonly calculations?: Readonly<Record<string, (parameters: unknown) => field>>
   readonly read: (
-    plan: PlannedQuery<selection, source, field>,
+    plan: PlannedQuery<selection, source, field, unknown>,
   ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
-  readonly page: (plan: PlannedPage<selection, source, field>) => Promise<{
+  readonly page: (plan: PlannedPage<selection, source, field, unknown>) => Promise<{
     readonly entries: readonly unknown[]
     readonly total: number
     readonly position: position
   }>
-  readonly streams: Readonly<Record<string, StreamStrategy<selection, source, field> | undefined>>
+  readonly streams: Readonly<
+    Record<string, StreamStrategy<selection, source, field, unknown> | undefined>
+  >
   readonly applicability?: Readonly<Record<string, unknown>>
 }
 
@@ -88,7 +93,7 @@ type RuntimePort = ((
     input: unknown,
     page: unknown,
   ) => AsyncIterable<RuntimePagesEvent>
-  readonly with_actions?: (actions: unknown) => never
+  readonly with_actions?: (actions: unknown) => RuntimePort
 }
 
 /**
@@ -102,6 +107,13 @@ const page_asked = z.strictObject({
   size: z.number().int().min(1).optional(),
   after: z.unknown().optional(),
 })
+
+/**
+ * The field under which the adapter writes the values of the actions' leaves
+ * on an entry (`PlannedLeaves.field`, SC-33): the library's name, which no
+ * field of a query can have (DOM-25: a name is snake_case).
+ */
+const action_leaves = '@leaves'
 
 /** A calculation of a query at runtime: the field it gives, its schema of parameters, its path, its value. */
 interface RuntimeCalculation {
@@ -128,23 +140,6 @@ interface RuntimePorts {
   readonly identities?: Registry
   readonly versions: Versions
   readonly use_cases: ReadUseCases
-}
-
-/**
- * The order of a query as written, closed by its identity, ascending (LIB-9,
- * D109), unless the author ordered by it already: so that the order is total.
- */
-const closed_order = (
-  order: Readonly<Record<string, Direction | undefined>>,
-  identity: string,
-): readonly (readonly [string, Direction])[] => {
-  const written = Object.entries(order).flatMap(
-    ([name, direction]): readonly (readonly [string, Direction])[] =>
-      direction === undefined ? [] : [[name, direction]],
-  )
-  return written.some(([name]) => name === identity)
-    ? written
-    : [...written, [identity, 'ascending']]
 }
 
 /**
@@ -251,6 +246,7 @@ const runtime_ports = (
   const identity_path_of = paths_in({ ...ports.identities, ...ports.registry })
   const binding = bind(path_of)
   const parts_of = query_parts(path_of)
+  const actions_in = actions_of(ports.registry, path_of)
 
   // At wiring (CFG-2), every fault in one message: a use case not in the
   // registry; a calculation not in it; an entry's identity that no registry
@@ -370,13 +366,25 @@ const runtime_ports = (
       query: RuntimeQuery,
       identity: string,
       wiring: ReturnType<typeof wired>,
+      served: Served,
+      actions?: PlannedActions,
     ): RuntimePort => {
       const strategy = adapter.streams[name]
       const streamed = strategy !== undefined
+      /** An entry the adapter read, parsed by its fields: the read ones, those it calculated. */
+      const parsed_entry = (stored: unknown): unknown => {
+        const parsed = wiring.entry.safeParse(stored)
+        if (!parsed.success) {
+          throw new Error(
+            `${path}: the adapter gives an entry its fields do not parse (ADP-8): ${parsed.error.message}`,
+          )
+        }
+        return parsed.data
+      }
       const plan_of = (
         context: RootContext,
         input: unknown,
-      ): PlannedQuery<selection, source, field> | undefined => {
+      ): PlannedQuery<selection, source, field, unknown> | undefined => {
         const source = wiring.source
         if (source === undefined) throw new Error(`${path}: the adapter gives no source (ADP-8)`)
         const schema = is_a_schema(query.input) ? query.input : called(query.input, context)
@@ -409,6 +417,17 @@ const runtime_ports = (
           from: source.from,
           fields,
           identity: { field: query.identity, path: identity },
+          // The leaves of its actions known on each entry, as one more field
+          // the adapter evaluates in the snapshot (SC-33, `PlannedLeaves`).
+          ...(actions === undefined
+            ? {}
+            : {
+                leaves: {
+                  field: action_leaves,
+                  of: (entry: Readonly<Record<string, unknown>>) =>
+                    actions.conditions(context, parsed_entry(entry)),
+                },
+              }),
           selection: folded(binding(query.selection, bound['selection'])),
           order: query.order.map(([field, direction]): readonly [field, Direction] => {
             const fragment = fields[field]
@@ -419,23 +438,34 @@ const runtime_ports = (
           }),
         }
       }
-      const entry_of = (stored: unknown): unknown => {
-        const parsed = wiring.entry.safeParse(stored)
-        if (!parsed.success) {
-          throw new Error(
-            `${path}: the adapter gives an entry its fields do not parse (ADP-8): ${parsed.error.message}`,
-          )
+      /**
+       * An entry as a reader meets it: parsed by its fields; with actions,
+       * the values of its leaves taken out and the applicability of each
+       * action added under its name (SC-33).
+       */
+      const entry_of =
+        (context: RootContext) =>
+        (stored: unknown): unknown => {
+          if (actions === undefined) return parsed_entry(stored)
+          if (!is_a_record(stored)) return parsed_entry(stored)
+          const { [action_leaves]: values, ...read } = stored
+          if (!Array.isArray(values)) {
+            throw new Error(`${path}: the adapter gives no values of its actions' leaves (SC-33)`)
+          }
+          const entry = parsed_entry(read)
+          return is_a_record(entry)
+            ? { ...entry, ...actions.applicabilities(context, entry, values) }
+            : entry
         }
-        return parsed.data
-      }
       const identity_schema: unknown = query.fields.shape[query.identity]
       const wiring_of = (
-        plan: PlannedQuery<selection, source, field>,
+        context: RootContext,
+        plan: PlannedQuery<selection, source, field, unknown>,
       ): StreamWiring<selection, source, field> => ({
         path,
         plan,
         read: adapter.read,
-        entry_of,
+        entry_of: entry_of(context),
         identity_of: (stored) => {
           if (!is_a_schema(identity_schema))
             throw new Error(`${path}: its identity ${query.identity} is no field (LIB-9)`)
@@ -471,14 +501,17 @@ const runtime_ports = (
               `${path}: the adapter does not stream it, so it reads from no position (DOM-2, LIB-8)`,
             )
           }
-          yield* stream_from(wiring_of(plan), strategy, from)
+          yield* stream_from(wiring_of(context, plan), strategy, from)
           return
         }
         const read = await adapter.read(plan)
-        const entries = read.entries.map(entry_of)
+        const entries = read.entries.map(entry_of(context))
         yield { event: 'snapshot', entries, position: read.position, total: entries.length }
         if (strategy === undefined) return
-        yield* stream_after(wiring_of(plan), strategy, { position: read.position, entries })
+        yield* stream_after(wiring_of(context, plan), strategy, {
+          position: read.position,
+          entries,
+        })
       }
 
       /** The order key of an entry as the adapter gave it: each field of the order, its value (LIB-9). */
@@ -508,7 +541,7 @@ const runtime_ports = (
       }
       /** A page's selection: the query's, after the order key's values if there are some (D109). */
       const selection_after = (
-        plan: PlannedQuery<selection, source, field>,
+        plan: PlannedQuery<selection, source, field, unknown>,
         values: readonly unknown[] | undefined,
       ): selection =>
         values === undefined
@@ -563,7 +596,7 @@ const runtime_ports = (
           const key = more ? key_of_entry(last) : undefined
           yield {
             event: 'snapshot',
-            entries: entries.map(entry_of),
+            entries: entries.map(entry_of(context)),
             position: read.position,
             total: read.total,
             ...(key === undefined ? {} : { next: cursor_of(key) }),
@@ -573,17 +606,30 @@ const runtime_ports = (
         }
       }
 
-      return Object.assign(invoked, {
-        streamed,
-        pages,
-        ...(adapter.applicability?.[name] === undefined
-          ? {}
-          : {
-              with_actions: (): never => {
-                throw new Error(`${path}: the actions of a read come with part 6.3 (SC-33)`)
-              },
-            }),
-      })
+      const fragments = adapter.applicability?.[name]
+      return serving(
+        Object.assign(invoked, {
+          streamed,
+          pages,
+          // The port again, its entries with the applicability of each action
+          // (SC-33), where the adapter evaluates them (D110); not on itself.
+          ...(fragments === undefined || !is_a_record(fragments) || actions !== undefined
+            ? {}
+            : {
+                with_actions: (given: unknown): RuntimePort =>
+                  port(
+                    name,
+                    path,
+                    query,
+                    identity,
+                    wiring,
+                    served,
+                    planned_actions(path_of, actions_in(given, path), fragments),
+                  ),
+              }),
+        }),
+        served,
+      )
     }
 
     const built = queries.flatMap((each) =>
@@ -608,7 +654,19 @@ const runtime_ports = (
     return Object.fromEntries(
       built.map((each): readonly [string, RuntimePort] => [
         each.name,
-        port(each.name, each.path, each.query, each.identity, each.wiring),
+        port(each.name, each.path, each.query, each.identity, each.wiring, {
+          component: ports.use_cases[each.name],
+          path: each.path,
+          // What a leaf over it needs to find the part of a fact that touches
+          // an entry (DOM-17, part 6.3): the identity's path, the facts it names.
+          read: {
+            identity: each.identity,
+            facts: (ports.use_cases[each.name]?.[$UseCase].facts ?? []).flatMap((fact) => {
+              const fact_path = path_of(fact)
+              return fact_path === undefined ? [] : [fact_path]
+            }),
+          },
+        }),
       ]),
     )
   }

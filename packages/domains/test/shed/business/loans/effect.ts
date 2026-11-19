@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as zz from '../../../../src/library/index.ts'
 import { effect, id, tools } from './_scope_effect.ts'
 
 // The effects of `loans` (DOM-13): what it asks of the world, queued by a
@@ -19,7 +19,7 @@ export const wait_until_the_eve_of_the_due_date = effect({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
 })
 
@@ -29,7 +29,7 @@ export const send_the_due_date_reminder = effect({
     loan_id: id.loan_id,
     tool_id: tools.id.tool_id,
     member_id: id.member_id,
-    due_day: wlib.day,
+    due_day: zz.day,
   }),
 })
 
@@ -57,7 +57,7 @@ export const send_the_repair_notice = effect({
     reservation_id: id.reservation_id,
     member_id: id.member_id,
     tool_id: tools.id.tool_id,
-    day: wlib.day,
+    day: zz.day,
   }),
 })
 
@@ -71,7 +71,7 @@ export const send_the_repair_notice = effect({
 export const wait_until_monday = effect({
   payload: z.strictObject({
     member_id: id.member_id,
-    monday: wlib.day,
+    monday: zz.day,
   }),
 })
 
@@ -86,7 +86,7 @@ export const wait_until_monday = effect({
 export const send_the_weeks_summary = effect({
   payload: z.strictObject({
     member_id: id.member_id,
-    monday: wlib.day,
+    monday: zz.day,
   }),
   order: 'any',
 })
