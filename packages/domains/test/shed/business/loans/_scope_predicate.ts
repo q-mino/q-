@@ -1,8 +1,8 @@
 // generated
 
-// The scope of the predicates of `loans` (DOM-25): the builders of a predicate
-// and of their composition; the identities, values and dsl below. The folders
-// it sees (`sight.ts`): `tools` (id).
+// The scope of the predicates of `business/loans` (DOM-25): the builders
+// `predicate`, `AND`, `OR`, `NOT`; the twins of its folder in the layers below,
+// its ancestors' doors to the folders below and the doors the map opens to it.
 
 export { predicate, AND, OR, NOT } from './_scope.ts'
 export * as id from './_id.ts'

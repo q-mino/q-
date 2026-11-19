@@ -1,10 +1,10 @@
 // generated
 
-// The scope of the dsl of `persona` (DOM-25): no builder, its functions are no
-// components; the values below. The folders it sees (`sight.ts`): `tools`
-// (usecase, id, fact), `loans` (usecase, id, fact), `accounts` (lookup, id).
+// The scope of the functions of `persona` (DOM-25): no builder; the twins of
+// its folder in the layers below, its ancestors' doors to the folders below and
+// the doors the map opens to it.
 
 export * as value from './_value.ts'
-export * as tools from '../business/tools/_door_persona.ts'
 export * as loans from '../business/loans/_door_persona.ts'
+export * as tools from '../business/tools/_door_persona.ts'
 export * as accounts from '../auth/accounts/_door_persona.ts'

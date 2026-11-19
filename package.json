@@ -14,10 +14,13 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "graph": "depcruise packages --config .dependency-cruiser.mjs",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
+    "generate": "node packages/generator/shell/main.ts",
+    "generate:check": "node packages/generator/shell/main.ts --check",
+    "check": "pnpm generate:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
     "build": "pnpm --filter @q-mino/phone build"
   },
   "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "dependency-cruiser": "^18.7.2",

@@ -1,8 +1,9 @@
 // generated
 
-// The calculations of the subject `business/loans/calculation/tool`, branded
-// with their path (DOM-24): the same objects as in `tool_calculation.ts`,
-// nominal in the types. Only this module imports it.
+// The calculations of `business/loans` from `tool_calculation.ts` (DOM-25): the
+// same objects under the same names, branded with their path (DOM-24), each
+// schema with its output type under the same name, so that one import gives
+// both. Only this module imports `tool_calculation.ts`.
 
 import { z } from 'zod'
 import * as calculation from './tool_calculation.ts'

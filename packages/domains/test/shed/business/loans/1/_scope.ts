@@ -1,8 +1,9 @@
 // generated
 
-// The scope of `loans` 1.x (DOM-25, A, 16 Nov 2026 (7)): a past major of the
-// domain, in the tree and outside the path; every builder, at the root's
-// context. Its authored files build with `earlier` and `delegate` only.
+// The point of `business/loans/1` (DOM-25): the builders of a past major
+// (DOM-22), bound to the context the nodes above give here (PER-6), the root's,
+// with no node above. The authored files take them from the scope of their
+// kind, never from this file.
 
 import * as wlib from '../../../wlib.ts'
 

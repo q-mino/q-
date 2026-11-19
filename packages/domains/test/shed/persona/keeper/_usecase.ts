@@ -1,6 +1,8 @@
 // generated
 
-// The use cases of `keeper` under their names (DOM-2), the leaves of its tree.
+// The use cases of `persona/keeper` from `usecase.ts` (DOM-25): the same
+// objects under the same names, each schema with its output type under the same
+// name, so that one import gives both. Only this module imports `usecase.ts`.
 
 import { z } from 'zod'
 import * as usecase from './usecase.ts'
@@ -95,7 +97,10 @@ export type load_tools_from_a_sheet_input = z.output<typeof load_tools_from_a_sh
  * Luca loads a short sheet in one go (SC-54): Paolo gives the shed the
  * twelve tools of his garage, on a sheet his screen sends as it is, and
  * reads at once what went in and what was left, from the parts of the one
- * fact (D113).
+ * fact (D113): every line its own, the tool added, or the line left because
+ * its id is taken (D95). A sheet with two lines of one tool is refused
+ * before the desk reads anything, and he corrects it; a longer sheet goes
+ * line by line (`load_tools_from_a_sheet`).
  *
  * @see {@link usecase.load_tools_from_a_short_sheet}
  */

@@ -1,7 +1,9 @@
 // generated
 
-// The identities of `tools`, branded with their path (DOM-24): the only
-// module another domain may import (GR-3).
+// The identities of `business/tools` from `id.ts` (DOM-25): the same objects
+// under the same names, branded with their path (DOM-24), each schema with its
+// output type under the same name, so that one import gives both. Only this
+// module imports `id.ts`.
 
 import { z } from 'zod'
 import * as id from './id.ts'

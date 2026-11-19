@@ -1,9 +1,8 @@
 // generated
 
-// The scope of `workshop` (DOM-25): every builder, bound to the context of its
-// point in the tree (PER-6), the context the node `workshop` gives. The
-// authored files take them from the scope of their kind (`_scope_usecase.ts`),
-// never from this file.
+// The point of `persona/workshop` (DOM-25): every builder, bound to the context
+// the nodes above give here (PER-6), the node `workshop`'s. The authored files
+// take them from the scope of their kind, never from this file.
 
 import * as wlib from '../../wlib.ts'
 import type { workshop_closes, workshop_context } from './_node.ts'

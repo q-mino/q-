@@ -1,7 +1,9 @@
 // generated
 
-// The facts of `loans`, branded with their path (DOM-24): the same objects as
-// in `fact.ts`, nominal in the types. Only this module imports `fact.ts`.
+// The facts of `business/loans` from `fact.ts` (DOM-25): the same objects under
+// the same names, branded with their path (DOM-24), each schema with its output
+// type under the same name, so that one import gives both. Only this module
+// imports `fact.ts`.
 
 import { z } from 'zod'
 import * as fact from './fact.ts'
@@ -65,8 +67,10 @@ export type a_tool_has_been_returned_again = z.output<typeof a_tool_has_been_ret
 
 /**
  * The desk wrote the wrong tool on the loan's card, and corrects it (SC-13):
- * the loan's id and the tool the member has; and the tool the card named.
- * The fact of the loan stays as recorded (DOM-22, D101).
+ * a partial value, the loan's id and the tool the member has, which the
+ * state takes; and the tool the card named, for the record. The fact of the
+ * loan stays as it was recorded: a mistake is corrected by a fact, never by
+ * one removed (DOM-22, D101).
  *
  * @see {@link fact.the_tool_of_a_loan_has_been_corrected}
  */
@@ -77,7 +81,8 @@ export type the_tool_of_a_loan_has_been_corrected = z.output<
 >
 
 /**
- * The member keeps the tool longer (SC-31): the loan's new due day.
+ * The member keeps the tool longer (SC-31): a partial value, the loan's id
+ * and its new due day, which the state takes. The term stays running.
  *
  * @see {@link fact.a_loan_has_been_extended}
  */
@@ -87,7 +92,8 @@ export type a_loan_has_been_extended = z.output<typeof a_loan_has_been_extended>
 
 /**
  * Nothing to do (DOM-6, D95): the eve came for a due day the loan no longer
- * has (SC-31).
+ * has, since it was extended; the extension queued the eve of its new due
+ * day (SC-31).
  *
  * @see {@link fact.the_due_day_was_moved_before_the_reminder}
  */
@@ -110,7 +116,8 @@ export type the_tool_of_a_loan_has_been_corrected_again = z.output<
 
 /**
  * Nothing to do (DOM-6, D95): the eve came for the tool the card named
- * before a correction (SC-13).
+ * before a correction, and no reminder goes for it; the correction queued
+ * the eve of the tool the member has (SC-13).
  *
  * @see {@link fact.the_tool_was_corrected_before_the_reminder}
  */
@@ -311,7 +318,8 @@ export const the_repair_notice_round_has_ended =
 export type the_repair_notice_round_has_ended = z.output<typeof the_repair_notice_round_has_ended>
 
 /**
- * The desk will send a member the week's summary every Monday.
+ * The desk will send a member the week's summary every Monday, as they
+ * asked: the summary, waiting for the next Monday (SC-43).
  *
  * @see {@link fact.a_weekly_summary_has_begun}
  */
@@ -320,7 +328,7 @@ export const a_weekly_summary_has_begun =
 export type a_weekly_summary_has_begun = z.output<typeof a_weekly_summary_has_begun>
 
 /**
- * The member asked again for the week's summary they already get.
+ * The member asked again for the week's summary they already get: nothing changes (D95).
  *
  * @see {@link fact.a_weekly_summary_has_begun_again}
  */
@@ -329,7 +337,8 @@ export const a_weekly_summary_has_begun_again =
 export type a_weekly_summary_has_begun_again = z.output<typeof a_weekly_summary_has_begun_again>
 
 /**
- * On a Monday the desk sent a member the week's summary.
+ * On a Monday the desk sent a member the week's summary, and waits for the
+ * next Monday: the Monday sent, and the one now awaited (SC-43).
  *
  * @see {@link fact.the_weeks_summary_has_been_sent}
  */
@@ -338,7 +347,9 @@ export const the_weeks_summary_has_been_sent =
 export type the_weeks_summary_has_been_sent = z.output<typeof the_weeks_summary_has_been_sent>
 
 /**
- * The Monday's wait came after its week was over.
+ * The Monday's wait came after its week was over (the executor was down):
+ * no summary of a past week; the desk awaits the Monday of the current
+ * week, which goes at once (SC-43, D95).
  *
  * @see {@link fact.a_past_weeks_summary_has_been_skipped}
  */

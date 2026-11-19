@@ -3,3 +3,4 @@ dist/
 .tsbuild/
 coverage/
 LICENSE
+packages/generator/test/.generated/

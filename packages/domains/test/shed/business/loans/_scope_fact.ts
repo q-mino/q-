@@ -1,8 +1,8 @@
 // generated
 
-// The scope of the facts of `loans` (DOM-25): the builder of a fact; the
-// identities, values and dsl below. The folders it sees (`sight.ts`): `tools`
-// (id).
+// The scope of the facts of `business/loans` (DOM-25): the builders `fact`; the
+// twins of its folder in the layers below, its ancestors' doors to the folders
+// below and the doors the map opens to it.
 
 export { fact } from './_scope.ts'
 export * as id from './_id.ts'

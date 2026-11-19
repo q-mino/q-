@@ -1,7 +1,9 @@
 // generated
 
-// The effects of `loans`, branded with their path (DOM-24): the same objects
-// as in `effect.ts`, nominal in the types. Only this module imports `effect.ts`.
+// The effects of `business/loans` from `effect.ts` (DOM-25): the same objects
+// under the same names, branded with their path (DOM-24), each schema with its
+// output type under the same name, so that one import gives both. Only this
+// module imports `effect.ts`.
 
 import { z } from 'zod'
 import * as effect from './effect.ts'
@@ -53,7 +55,11 @@ export const send_the_repair_notice =
 export type send_the_repair_notice = z.output<typeof send_the_repair_notice>
 
 /**
- * Wait until a Monday, at the start of the shed's day.
+ * Wait until a Monday, at the start of the shed's day. No world: the
+ * executor gives the payload back to its return,
+ * `sum_up_the_week_for_the_member`, which sends the week's summary and
+ * queues the wait for the next Monday (SC-43): a wait whose return queues
+ * the next.
  *
  * @see {@link effect.wait_until_monday}
  */
@@ -62,8 +68,12 @@ export const wait_until_monday =
 export type wait_until_monday = z.output<typeof wait_until_monday>
 
 /**
- * Marta reads on her phone "your week at the shed". It tolerates reordering
- * (D67.3, SC-56).
+ * Marta reads on her phone "your week at the shed, from Monday 23
+ * November": the phone opens her loans and her reservations, read when she
+ * looks (SC-43). No return: nothing comes back to `loans`. It tolerates
+ * reordering (D67.3, SC-56): each summary names its Monday and the phone
+ * reads the rest live, so one in a dead letter holds back none of the
+ * member's next ones.
  *
  * @see {@link effect.send_the_weeks_summary}
  */

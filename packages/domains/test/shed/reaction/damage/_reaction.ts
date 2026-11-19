@@ -1,6 +1,8 @@
 // generated
 
-// The reactions of the procedure `damage` under their names (DOM-16).
+// The reactions of `reaction/damage` from `reaction.ts` (DOM-25): the same
+// objects under the same names, each schema with its output type under the same
+// name, so that one import gives both. Only this module imports `reaction.ts`.
 
 import * as reaction from './reaction.ts'
 

@@ -1,6 +1,8 @@
 // generated
 
-// The use cases of `workshop` under their names (DOM-2), the leaves of its tree.
+// The use cases of `persona/workshop` from `usecase.ts` (DOM-25): the same
+// objects under the same names, each schema with its output type under the same
+// name, so that one import gives both. Only this module imports `usecase.ts`.
 
 import { z } from 'zod'
 import * as usecase from './usecase.ts'

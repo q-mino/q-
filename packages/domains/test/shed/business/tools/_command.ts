@@ -1,7 +1,8 @@
 // generated
 
-// The commands of `tools` under their names, each schema with its output type
-// under the same name: one import gives both.
+// The commands of `business/tools` from `command.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `command.ts`.
 
 import { z } from 'zod'
 import * as command from './command.ts'
@@ -65,8 +66,13 @@ export const retire_a_tool_input = command.retire_a_tool.input
 export type retire_a_tool_input = z.output<typeof retire_a_tool_input>
 
 /**
- * The tool goes to the workshop, from a damaged return or the shelf; its
- * stay in repair named by the operation (D75.8).
+ * The tool goes to the workshop: Marta returned the drill damaged, and a
+ * standing order brings the news (`reaction/damage`); or Luca found it broken
+ * on the shelf. Neither can name the stay in repair, so `tools` derives its
+ * id from the operation (D75.8): a redelivery is the duplicate branch, the
+ * same stay. Invoked by a reaction, it rejects no expected occurrence (D93):
+ * a tool already in the workshop, or retired, records a fact and changes
+ * nothing.
  *
  * @see {@link command.send_a_tool_to_repair}
  */
@@ -230,7 +236,14 @@ export type continue_the_loading_of_a_sheet_input = z.output<
  * reads at once what went in and what was left. The second definition of a
  * list of named instances (DOM-20): atomic, one fact, a part per line (D113),
  * beside the sheet walked line by line (`load_the_tools_of_a_sheet`), the
- * author's choice.
+ * author's choice. Each line applies its own branch of
+ * `add_a_tool_from_a_line`, on the catalogue as it was before the sheet: a
+ * line whose id is taken is left (D95), and never stops the others. So no
+ * two lines may name one tool, which the schema refuses (`invalid_request`,
+ * DOM-21) before the desk reads anything: on Luca's sheet line 9 repeats the
+ * id of line 3, and he corrects it. A short sheet, so that one transaction
+ * and one fact hold it, and the catalogue is held for a moment only: fifty
+ * lines at most; a longer one goes line by line.
  *
  * @see {@link command.load_the_tools_of_a_short_sheet}
  */

@@ -1,0 +1,217 @@
+{
+  "domain": "persona/member",
+  "major": 1,
+  "paths": {
+    "persona/member/usecase/borrow_a_tool": {
+      "kind": "usecase",
+      "shapes": {
+        "event/you_have_the_tool": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "due_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["loan_id", "tool_id", "due_date"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_already_have_the_tool": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_tool_is_not_available": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/member/usecase/borrow_a_tool_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["loan_id", "tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/member/usecase/return_a_tool": {
+      "kind": "usecase",
+      "shapes": {
+        "event/you_returned_the_tool": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_returned_the_tool_damaged": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_had_already_returned_it": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_return_is_not_possible": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/the_tool_is_in_the_workshop": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_tool_was_already_in_the_workshop": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_tool_had_been_retired": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "tool_id": { "type": "string", "minLength": 1 } },
+            "required": ["tool_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/member/usecase/return_a_tool_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "condition": { "type": "string", "enum": ["good", "damaged"] }
+            },
+            "required": ["loan_id", "tool_id", "condition"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/member/usecase/my_loans": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "tool_name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "start_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "due_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "term": { "type": "string", "enum": ["running", "overdue"] }
+            },
+            "required": ["loan_id", "tool_id", "tool_name", "start_date", "due_date", "term"],
+            "additionalProperties": false
+          }
+        },
+        "stream/your_loan_is_overdue": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/member/usecase/my_loans_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/member/usecase/my_reservations": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "reservation_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "tool_name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              }
+            },
+            "required": ["reservation_id", "tool_id", "tool_name", "day"],
+            "additionalProperties": false
+          }
+        },
+        "stream/the_tool_you_booked_is_in_repair": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/member/usecase/my_reservations_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    }
+  }
+}

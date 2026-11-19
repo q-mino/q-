@@ -1,0 +1,587 @@
+{
+  "domain": "business/loans",
+  "major": 1,
+  "paths": {
+    "business/loans/fact/a_tool_has_been_lent": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_loan": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "member_id": { "type": "string", "minLength": 1 },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "ongoing" },
+                      "term": { "type": "string", "enum": ["running", "overdue"] }
+                    },
+                    "required": ["stage", "term"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "tool_id", "member_id", "start_date", "due_date", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_loan"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_tool_has_been_lent_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "member_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["tool_id", "member_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_tool_has_been_booked": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_reservation": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "member_id": { "type": "string", "minLength": 1 },
+                  "day": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "booking_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": { "stage": { "type": "string", "const": "booked" } },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "tool_id", "member_id", "day", "booking_date", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_reservation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_tool_has_been_booked_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              "member_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["tool_id", "day", "member_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_tool_has_been_returned": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "returned_loan": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "returned" },
+                      "return_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "condition": { "type": "string", "enum": ["good", "damaged"] }
+                    },
+                    "required": ["stage", "return_date", "condition"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "tool_id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["returned_loan"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_tool_has_been_returned_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_member_has_been_reminded_of_the_due_date": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_loan_was_returned_before_the_reminder": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_due_date_came_before_the_reminder": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_loan_has_become_overdue": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "overdue_loan": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "ongoing" },
+                      "term": { "type": "string", "const": "overdue" }
+                    },
+                    "required": ["stage", "term"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["overdue_loan"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_loan_was_returned_before_it_became_overdue": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_begun": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_cancellation": {
+                "type": "object",
+                "properties": {
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "cancelling" },
+                      "cursor": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["tool_id", "start_date", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_cancellation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_reservation_has_been_cancelled": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "cancelled_reservation": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "cancelled" },
+                      "cancellation_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "cancellation_date"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["cancelled_reservation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_cancellation_has_advanced": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "tool_id": { "type": "string", "minLength": 1 },
+              "cursor": { "type": "string", "minLength": 1 }
+            },
+            "required": ["tool_id", "cursor"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_cancellation_of_the_reservations_of_a_tool_has_ended": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "completed_cancellation": {
+                "type": "object",
+                "properties": {
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "complete" },
+                      "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "end_date"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["tool_id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["completed_cancellation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_repair_notice_round_has_begun": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_round": {
+                "type": "object",
+                "properties": {
+                  "repair_id": { "type": "string", "minLength": 1 },
+                  "tool_id": { "type": "string", "minLength": 1 },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "notifying" },
+                      "cursor": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["repair_id", "tool_id", "start_date", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_round"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/a_member_has_been_notified_of_the_repair": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "reservation_id": { "type": "string", "minLength": 1 },
+              "repair_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["reservation_id", "repair_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_repair_notice_round_has_advanced": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repair_id": { "type": "string", "minLength": 1 },
+              "cursor": { "type": "string", "minLength": 1 }
+            },
+            "required": ["repair_id", "cursor"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/fact/the_repair_notice_round_has_ended": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "completed_round": {
+                "type": "object",
+                "properties": {
+                  "repair_id": { "type": "string", "minLength": 1 },
+                  "progress": {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "complete" },
+                      "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["stage", "end_date"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["repair_id", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["completed_round"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/effect/wait_until_the_eve_of_the_due_date": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "member_id": { "type": "string", "minLength": 1 },
+              "due_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["loan_id", "tool_id", "member_id", "due_date"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/effect/send_the_due_date_reminder": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "loan_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "member_id": { "type": "string", "minLength": 1 },
+              "due_date": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["loan_id", "tool_id", "member_id", "due_date"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/effect/wait_until_the_due_date": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "loan_id": { "type": "string", "minLength": 1 } },
+            "required": ["loan_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/loans/effect/send_the_repair_notice": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "reservation_id": { "type": "string", "minLength": 1 },
+              "member_id": { "type": "string", "minLength": 1 },
+              "tool_id": { "type": "string", "minLength": 1 },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              }
+            },
+            "required": ["reservation_id", "member_id", "tool_id", "day"],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,8 @@
 // generated
 
-// The node of `workshop` (PER-6), with the context it gives.
+// The node of `persona/workshop` from `node.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `node.ts`.
 
 import type * as wlib from '../../wlib.ts'
 import * as node from './node.ts'
@@ -17,3 +19,6 @@ export type workshop_context = wlib.ContextOf<typeof workshop>
 
 /** How the node `workshop` and the nodes above it may close a request (PER-14), for the leaves below it. */
 export type workshop_closes = wlib.ClosesOf<typeof workshop>
+
+/** What the node `workshop` and the nodes above it add to the commands below it (D105, SC-31). */
+export type workshop_accumulated = wlib.AccumulatedOf<typeof workshop>

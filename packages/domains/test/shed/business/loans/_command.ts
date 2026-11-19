@@ -1,7 +1,8 @@
 // generated
 
-// The commands of `loans` under their names, each schema with its output type
-// under the same name: one import gives both.
+// The commands of `business/loans` from `command.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `command.ts`.
 
 import { z } from 'zod'
 import * as command from './command.ts'
@@ -13,6 +14,18 @@ import * as command from './command.ts'
  */
 export const the_tool_can_be_lent = command.the_tool_can_be_lent
 export type the_tool_can_be_lent = z.output<typeof the_tool_can_be_lent>
+
+/**
+ * The tool can be lent today to whoever asks: on its day a reservation holds
+ * the tool for its member, who takes it up (`lend_a_booked_tool`); to anyone
+ * else it is not available (SC-10).
+ *
+ * @see {@link command.the_tool_can_be_lent_to_anyone_today}
+ */
+export const the_tool_can_be_lent_to_anyone_today = command.the_tool_can_be_lent_to_anyone_today
+export type the_tool_can_be_lent_to_anyone_today = z.output<
+  typeof the_tool_can_be_lent_to_anyone_today
+>
 
 /**
  * The tool is lent, its term running, and two dates are awaited (DOM-13):
@@ -38,18 +51,8 @@ export const borrow_a_tool_input = command.borrow_a_tool.input
 export type borrow_a_tool_input = z.output<typeof borrow_a_tool_input>
 
 /**
- * The tool can be lent today to whoever asks: on its day a reservation holds
- * the tool for its member (SC-10).
- *
- * @see {@link command.the_tool_can_be_lent_to_anyone_today}
- */
-export const the_tool_can_be_lent_to_anyone_today = command.the_tool_can_be_lent_to_anyone_today
-export type the_tool_can_be_lent_to_anyone_today = z.output<
-  typeof the_tool_can_be_lent_to_anyone_today
->
-
-/**
- * The member takes up their reservation on its day: a transition with no
+ * The member takes up their reservation on its day, the tool lent to them
+ * by a loan: a transition of the reservation's life cycle (DOM-19) with no
  * use case of its own, which the loan composes (D111, SC-10).
  *
  * @see {@link command.take_up_a_reservation}
@@ -65,8 +68,13 @@ export const take_up_a_reservation_input = command.take_up_a_reservation.input
 export type take_up_a_reservation_input = z.output<typeof take_up_a_reservation_input>
 
 /**
- * The member takes the tool they booked, on its day: one fact in two parts,
- * the loan's then the reservation's (D111, SC-10).
+ * The member takes the tool they booked, on its day: Gianni, from the row of
+ * his reservation of the drill for Thursday (R8). The desk lends it, as any
+ * loan, with its waits, and takes the reservation up: one fact in two parts,
+ * the loan's then the reservation's (D111, SC-10). His phone names the
+ * reservation, a claim the transition's condition checks against its card:
+ * a creator reads no state. A second tap, after the drill went out, records
+ * that the reservation was already taken up.
  *
  * @see {@link command.lend_a_booked_tool}
  */
@@ -94,8 +102,9 @@ export type the_tool_can_be_booked = z.output<typeof the_tool_can_be_booked>
 export const reserve_a_tool = command.reserve_a_tool
 
 /**
- * The input of `reserve_a_tool`, declared inline. The day is validated
- * against the clock: the schema needs `now`, nothing else.
+ * The input of `reserve_a_tool`, declared inline.
+ *
+ * The day is validated against the clock: the schema needs `now`, nothing else.
  *
  * @see {@link command.reserve_a_tool}
  */
@@ -138,7 +147,9 @@ export const return_a_tool_input = command.return_a_tool.input
 export type return_a_tool_input = z.output<typeof return_a_tool_input>
 
 /**
- * The member still has the tool and its due date is still ahead: the eve is not late.
+ * The member still has the tool the eve reminds of, due on the day it
+ * reminds of, and its due date is still ahead: the eve is not late, and
+ * the card was neither corrected nor extended since.
  *
  * @see {@link command.the_member_can_still_be_reminded}
  */
@@ -196,8 +207,13 @@ export type the_due_day_of_the_ongoing_loan_is_not_over = z.output<
  * come late (the executor was down): no order holds between two effects
  * (D108), so the due date may even have stamped the loan first; the guard
  * reads the due date at the executor's `now`, and a late eve reminds no one
- * (A, 15 Nov 2026). Its input is the payload of the wait, given back by the
- * executor; its operation is the entry's (DOM-14).
+ * (A, 15 Nov 2026). The eve names the tool it was queued for: if the desk
+ * corrected the tool on the card since, it reminds of nothing, and the
+ * correction queued the eve of the right tool (SC-13); if the loan was
+ * extended since, it reminds of nothing either, and the extension queued
+ * the eve of the new due day (SC-31). Its input is the
+ * payload of the wait, given back by the executor; its operation is the
+ * entry's (DOM-14).
  *
  * @see {@link command.remind_the_member_of_the_due_date}
  */
@@ -216,10 +232,16 @@ export type remind_the_member_of_the_due_date_input = z.output<
 
 /**
  * The return of the due date (D68.3), guarded as the reminder: if the member
- * still has the tool, the loan is stamped overdue and stays ongoing; if the
- * tool is back, nothing changes (D95). Its input is the payload of the wait;
- * its operation is the entry's (DOM-14), so a second delivery of the wait is
- * a duplicate, not a second stamp.
+ * still has the tool after the due day, the loan is stamped overdue and stays
+ * ongoing; if the tool is back, nothing changes (D95); if the due day is not
+ * over, the desk waits again, until the start of the day after today. The
+ * guard reads the day at the executor's `now`: a wait queued when a loan was
+ * due at an instant (1.x) goes on the due day itself, and the translation of
+ * the entry touches its payload, never when it goes (DOM-22). Marta's drill,
+ * due at 10:12 on 16 November, becomes overdue on the 17th, as Gianni's
+ * ladder after its due day (A, 17 Nov 2026). Its input is the payload of the
+ * wait; its operation is the entry's (DOM-14), so a second delivery of the
+ * wait is a duplicate, not a second stamp.
  *
  * @see {@link command.declare_the_loan_overdue}
  */
@@ -287,7 +309,9 @@ export const cancel_a_reservation_input = command.cancel_a_reservation.input
 export type cancel_a_reservation_input = z.output<typeof cancel_a_reservation_input>
 
 /**
- * The reservations the work sheet goes through: booked, of the tool, from the day on.
+ * The reservations still ahead for a tool: booked, of the tool, from the day
+ * on. The desk goes through them on both its sheets: the cancellation of a
+ * retired tool's reservations, and the round of the notices of a repair.
  *
  * @see {@link command.the_reservation_is_still_ahead_for_the_tool}
  */
@@ -425,7 +449,10 @@ export type a_weekly_summary_already_goes_to_the_member = z.output<
 >
 
 /**
- * A member asks the desk for the week's summary every Monday.
+ * A member asks the desk for the week's summary every Monday (SC-43): the
+ * summary begins and waits for the next Monday, at the start of the shed's
+ * day; its id, the member and that Monday, one wait per member and Monday
+ * (D48). Asked again, nothing changes (D95): no second chain of waits.
  *
  * @see {@link command.begin_a_weekly_summary}
  */
@@ -440,7 +467,7 @@ export const begin_a_weekly_summary_input = command.begin_a_weekly_summary.input
 export type begin_a_weekly_summary_input = z.output<typeof begin_a_weekly_summary_input>
 
 /**
- * The week of the Monday the member's summary waits for is not over.
+ * The week of the Monday the member's summary waits for is not over: the summary goes.
  *
  * @see {@link command.the_week_of_the_summary_is_on}
  */
@@ -448,7 +475,7 @@ export const the_week_of_the_summary_is_on = command.the_week_of_the_summary_is_
 export type the_week_of_the_summary_is_on = z.output<typeof the_week_of_the_summary_is_on>
 
 /**
- * The week of the Monday the member's summary waits for is over.
+ * The week of the Monday the member's summary waits for is over: the wait came late.
  *
  * @see {@link command.the_week_of_the_summary_is_over}
  */
@@ -456,8 +483,18 @@ export const the_week_of_the_summary_is_over = command.the_week_of_the_summary_i
 export type the_week_of_the_summary_is_over = z.output<typeof the_week_of_the_summary_is_over>
 
 /**
- * On a Monday the desk sums up the week for the member: the summary, and the
- * wait for the next Monday.
+ * On a Monday the effect executor comes back (DOM-13), and the desk sums up
+ * the week for the member: it sends the week's summary and waits for the
+ * next Monday, the first after the executor's `now`: a wait whose return
+ * queues the next (SC-43). An entry goes late, never skipped (DOM-13): a
+ * wait that comes after its week is over sends no summary of a past week
+ * (D95), and awaits the Monday of the current week, which is past, so it
+ * goes at once and tells this week; after a downtime of three weeks the
+ * member gets one summary, of the week they are in, never one per week
+ * missed. Each wait's id is the member and its Monday (D48), so a Monday's
+ * return delivered twice is the duplicate branch (DOM-11), never a second
+ * chain. Its input is the payload of the wait, given back by the executor;
+ * its operation is the entry's (DOM-14).
  *
  * @see {@link command.sum_up_the_week_for_the_member}
  */

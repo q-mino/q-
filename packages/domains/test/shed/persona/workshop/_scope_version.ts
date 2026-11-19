@@ -1,6 +1,6 @@
 // generated
 
-// The scope of the version of `workshop` (DOM-25): the builder of a version;
-// nothing below, nothing seen.
+// The scope of the version of `persona/workshop` (DOM-25): the builders
+// `version`; nothing it sees.
 
 export { version } from './_scope.ts'

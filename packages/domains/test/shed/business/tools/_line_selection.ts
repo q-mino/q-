@@ -1,8 +1,9 @@
 // generated
 
-// The selection predicates of the subject `business/tools/selection/line`, branded with
-// their path (DOM-24): the same objects as in `line_selection.ts`, nominal in
-// the types. Only this module imports it.
+// The selection predicates of `business/tools` from `line_selection.ts`
+// (DOM-25): the same objects under the same names, branded with their path
+// (DOM-24), each schema with its output type under the same name, so that one
+// import gives both. Only this module imports `line_selection.ts`.
 
 import { z } from 'zod'
 import * as selection from './line_selection.ts'

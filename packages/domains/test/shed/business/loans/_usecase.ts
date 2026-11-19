@@ -1,6 +1,8 @@
 // generated
 
-// The use cases of `loans` under their names (DOM-2).
+// The use cases of `business/loans` from `usecase.ts` (DOM-25): the same
+// objects under the same names, each schema with its output type under the same
+// name, so that one import gives both. Only this module imports `usecase.ts`.
 
 import * as usecase from './usecase.ts'
 
@@ -129,15 +131,17 @@ export const notify_the_members_of_a_repair = usecase.notify_the_members_of_a_re
 export const continue_the_repair_notice_round = usecase.continue_the_repair_notice_round
 
 /**
- * A member asks the desk for the week's summary every Monday.
+ * A member asks the desk for the week's summary every Monday: Marta, on
+ * Thursday 19 November, gets her first on Monday the 23rd (SC-43).
  *
  * @see {@link usecase.begin_a_weekly_summary}
  */
 export const begin_a_weekly_summary = usecase.begin_a_weekly_summary
 
 /**
- * On a Monday the desk sends the member the week's summary and waits for
- * the next Monday. The return of the wait.
+ * On a Monday the effect executor comes back (DOM-13): the desk sends the
+ * member the week's summary and waits for the next Monday. The return of
+ * the wait queued by the summary's beginning, and by itself (SC-43).
  *
  * @see {@link usecase.sum_up_the_week_for_the_member}
  */

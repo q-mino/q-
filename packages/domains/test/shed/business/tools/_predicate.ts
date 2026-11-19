@@ -1,8 +1,9 @@
 // generated
 
-// The predicates of `tools`, branded with their path (DOM-24): the same
-// objects as in `predicate.ts`, nominal in the types. Only this module imports
-// `predicate.ts`.
+// The predicates of `business/tools` from `predicate.ts` (DOM-25): the same
+// objects under the same names, branded with their path (DOM-24), each schema
+// with its output type under the same name, so that one import gives both. Only
+// this module imports `predicate.ts`.
 
 import { z } from 'zod'
 import * as predicate from './predicate.ts'

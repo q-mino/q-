@@ -1,7 +1,8 @@
 // generated
 
-// The value schemas of `member` under their names, with their output types
-// under the same names: one import gives both.
+// The values of `persona/member` from `value.ts` (DOM-25): the same objects
+// under the same names, each schema with its output type under the same name,
+// so that one import gives both. Only this module imports `value.ts`.
 
 import { z } from 'zod'
 import * as value from './value.ts'
