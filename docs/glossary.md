@@ -41,8 +41,27 @@ Lowercase, as written; read with a capital.
 | annotazione · di persona                                          | annotation · in person                               |
 | esportazione · trasloco d'origine                                 | export · origin relocation                           |
 | a riposo · ammutolito                                             | resting · muted                                      |
+| nucleo (di Cumino) · estensione · manifest                        | kernel · extension · manifest                        |
+| punto di aggancio: hook · pagina · slot · azione                  | extension point: hook · page · slot · action         |
+| preinstallata · attiva l'estensione                               | preinstalled · activate the extension                |
+| isolata · nello stesso processo                                   | isolated · in process                                |
+| estensioni in comune                                              | extensions in common                                 |
+| richiesta · risposta · nessuna risposta                           | request · response · no response                     |
+| tace (un nodo)                                                    | stays silent                                         |
+| relay preferiti                                                   | preferred relays                                     |
+| ping · pong                                                       | ping · pong                                          |
 
-Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code).
+Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026).
+
+What the words of the kernel mean (Alessandro, 19 Nov 2026; their rules come with the extensions' step of [`plan.md`](plan.md)):
+
+- The **kernel** is what every node of Cumino has: faces, bonds, letters, relays, and the entry of a request (auth and the personas). Every other feature is an **extension**, which brings its domains and adds leaves to the personas' trees; two nodes speak through an extension when one has the side that asks and the other the side that serves.
+- An extension's **manifest** declares what it sees of the kernel and of the other extensions, what it touches, the leaves it adds to which personas and the use cases it offers to other extensions; the kernel enforces it. An extension is **isolated** by default (it speaks to the kernel by messages only, its storage a partition the kernel gives it); one **in process** is a declared choice of trust, which the user accepts informed of its risks, whole or in part.
+- An **extension point** is where the kernel lets an extension in: a page, a slot, an action; a hook, a programmatic one, only where a case shows it is needed.
+- A **request** is a letter that invokes a use case of a face bonded to the sender. A **response** is the remote form of the leaf's projection: a letter back that names the request it answers, received as the return of that request; a response asks for no response. Whether a feature answers by a response or by a request of its own is the feature's choice.
+- A node **stays silent** when it has not the extension invoked, or does not offer it to that bond, and the two cases look the same from outside; the node that asked waits for a time, then says **no response**.
+- The **extensions in common** of two known faces are read through a use case of the kernel, offered to the persona `known`.
+- **Ping pong** is the first extension, **preinstalled** and off until the user activates it: a ping is a request, the pong its response.
 
 ## Architecture terms
 
@@ -121,7 +140,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | cancello · finestra (di una superficie)             | gate (`version_not_supported`: a version out of the window, before any node) · window (a tree's majors, its folders, and the version it speaks; PER-17)                      | version negotiation                   |
 | guasto di composizione                              | composition fault                                                                                                                                                            |                                       |
 
-Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain.
+Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain; Cumino's _nucleo_ is the **kernel**.
 
 The paper's _soggetto_ has two senses: what a query speaks of (D50.1, D64.1), and on whose behalf one acts (D87.1). q- keeps only the first: **subject** is always a query's, a view named by the business, where the paper's is an aggregate (V12). A **candidate** is an instance of the subject that a selection looks at; an **entry** is what the query returns of a candidate it keeps (its fields). Both are q-'s words, not the paper's.
 
