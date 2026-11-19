@@ -1,4 +1,4 @@
-import type * as wlib from './wlib.ts'
+import type * as wlib from '../../src/library/index.ts'
 
 // What each folder of Shed's tree sees of the others (LIB-1, DOM-25): the
 // architecture's rules, as data for the generator, which writes into the

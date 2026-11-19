@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { accounts, first, followed, oracle, pull, type Who } from './oracle.ts'
 import { extend_the_loan } from '../business/loans/an_ongoing_loan/_usecase.ts'
 import { return_a_tool } from '../business/loans/_usecase.ts'

@@ -6,7 +6,7 @@
 // doors to the folders below and the doors the map opens to it.
 
 export { command, cursor_step, AND, OR, NOT } from './_scope.ts'
-export { pick, composes, each, identity_of } from '../../wlib.ts'
+export { pick, composes, each, identity_of } from '../../../../src/library/index.ts'
 export * as id from './_id.ts'
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'

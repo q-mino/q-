@@ -4,7 +4,7 @@
 // under the same names, each schema with its output type under the same name,
 // so that one import gives both. Only this module imports `node.ts`.
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import * as node from './node.ts'
 
 /**

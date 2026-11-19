@@ -4,7 +4,7 @@
 // (D71). Nothing runs: the database is a port, the library is wished.
 
 import { z } from 'zod'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import type * as tools_fact from '../business/tools/_fact.ts'

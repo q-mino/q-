@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { id } from './_scope_value.ts'
 
 // The values of `accounts`: the hats an account may wear and the values of

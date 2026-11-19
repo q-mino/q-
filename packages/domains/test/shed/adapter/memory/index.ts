@@ -15,7 +15,7 @@
 // Streams (DOM-17): the oracle keeps every fact with the state before and
 // after it, and its stream defines what the events of a fact are.
 
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { registry as tools_registry } from '../../business/tools/_registry.ts'
 import { registry as loans_registry } from '../../business/loans/_registry.ts'
 import { registry as accounts_registry } from '../../auth/accounts/_registry.ts'
@@ -738,20 +738,33 @@ export const loans_command_adapter = (
 })
 
 /**
- * The command ports of `tools` and `loans` over the oracle (TST-2): what
- * the scenarios of the commands run on (`scenarios/oracle.ts`); the
- * selection the steps of `loans` walk the reservations by, which a scenario
- * may release with a defect (SC-39, an instance passed over).
+ * A release of the oracle's adapter, as the configurator picks it (CFG-1):
+ * the oracle as it is, by default, or what a scenario releases in its place
+ * (TST-4): the fragments of `loans`' predicates with a defect (SC-39, an
+ * instance passed over), the adapter of `tools`' commands with a defect or
+ * falling at an execution (SC-40, SC-42), its queries streamed natively or
+ * composed by the library over its log (DOM-2, D69.3).
+ */
+export interface MemoryRelease {
+  readonly loans?: typeof loans_fragments
+  readonly tools?: ReturnType<typeof tools_command_adapter>
+  readonly streams?: Strategy
+}
+
+/**
+ * The command ports of `tools` and `loans` over the oracle (TST-2), in the
+ * release given (`MemoryRelease`); the selection the steps of `loans` walk
+ * the reservations by.
  */
 export const memory_commands =
-  (cell: CommandCell, fragments_of_loans: typeof loans_fragments = loans_fragments) =>
+  (cell: CommandCell, release: Pick<MemoryRelease, 'loans' | 'tools'> = {}) =>
   (versions: wlib.Versions) => ({
     tools: wlib.command_use_case_ports({
       registry: tools_registry,
       versions,
       use_cases: tools_command_use_cases,
     })({
-      ...tools_command_adapter(cell),
+      ...(release.tools ?? tools_command_adapter(cell)),
       // The loading of a sheet of tools walks its lines (SC-44): one
       // subject, its own selection.
       steps: {
@@ -767,7 +780,7 @@ export const memory_commands =
       versions,
       use_cases: loans_command_use_cases,
     })({
-      ...loans_command_adapter(cell, fragments_of_loans),
+      ...loans_command_adapter(cell, release.loans),
       steps: {
         selection: { ...reservation_selection, after },
         sources: reservation_steps,
@@ -849,17 +862,24 @@ export const memory_reads =
     }
   }
 
-export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => {
-  const commands = memory_commands(cell)(versions)
-  const reads = memory_reads(cell)(versions)
-  return {
-    log: log(cell),
-    trace: cell.trace,
-    tools: { ...commands.tools, ...reads.tools },
-    loans: { ...commands.loans, ...reads.loans },
-    accounts: wlib.lookup_ports({
-      registry: accounts_registry,
-      lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
-    })(accounts_lookups(cell.get)),
+/**
+ * The oracle's adapter (TST-2), what the configurator wires (`configurator.ts`):
+ * the command and read ports of `tools` and `loans`, in the release given, the
+ * lookups of `accounts`, the fact log and the trees' trace of the cell.
+ */
+export const memory_adapter =
+  (cell: Cell, release: MemoryRelease = {}) =>
+  (versions: wlib.Versions) => {
+    const commands = memory_commands(cell, release)(versions)
+    const reads = memory_reads(cell, release.streams)(versions)
+    return {
+      log: log(cell),
+      trace: cell.trace,
+      tools: { ...commands.tools, ...reads.tools },
+      loans: { ...commands.loans, ...reads.loans },
+      accounts: wlib.lookup_ports({
+        registry: accounts_registry,
+        lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
+      })(accounts_lookups(cell.get)),
+    }
   }
-}

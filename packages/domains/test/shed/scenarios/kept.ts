@@ -1,4 +1,4 @@
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { drill } from './shed.ts'
 
 // What the shed's store kept before `loans` 2.0.0 (4 November 2026), as it

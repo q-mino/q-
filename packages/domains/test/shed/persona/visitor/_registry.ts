@@ -5,7 +5,7 @@
 // library, which reads it in reverse, from a component to its path, by object
 // identity.
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import * as value from './_value.ts'
 import * as usecase from './_usecase.ts'
 import * as version from './_version.ts'

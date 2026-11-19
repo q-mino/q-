@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { predicate, id, tools } from './_scope_predicate.ts'
 
 // The vocabulary of the conditions of `loans`, over its own view of the

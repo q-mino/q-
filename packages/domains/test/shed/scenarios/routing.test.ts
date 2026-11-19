@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as fc from 'fast-check'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { first, oracle } from './oracle.ts'
 import { at_once, serially } from './serial.ts'
 

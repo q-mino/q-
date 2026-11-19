@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../../wlib.ts'
+import * as wlib from '../../../../../src/library/index.ts'
 import { command, AND, NOT, pick, _loans, tools } from './_scope_command.ts'
 
 // The commands on an ongoing loan (D105, SC-31): the loan is the node's,

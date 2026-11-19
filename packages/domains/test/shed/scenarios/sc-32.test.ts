@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { accounts, all, first, followed, oracle, pull, type Who } from './oracle.ts'
 
 // SC-32 (the refusal with part 6.2; the shelf live and a resume refused with

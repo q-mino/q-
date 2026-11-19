@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, test } from 'vitest'
-import type * as wlib from '../wlib.ts'
+import type * as wlib from '../../../src/library/index.ts'
 import { accounts, first, followed, oracle, type Who } from './oracle.ts'
 import type { majors as member_majors } from '../persona/member/_majors.ts'
 import type { loan_id } from '../business/loans/_id.ts'

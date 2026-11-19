@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { calculation, value } from './_scope_calculation.ts'
 
 // The calculations over a tool of the shed as the desk sees it, the subject of

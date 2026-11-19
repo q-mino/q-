@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 
 // SC-28, two versions of a leaf (part 6.4; PER-17, D72.7, D75.6): the

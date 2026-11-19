@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { accounts, all, first, oracle, type Who } from './oracle.ts'
 
 // SC-26 (part 6.1): the base events, which no leaf declares (PER-5, D106):

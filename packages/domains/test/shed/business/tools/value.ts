@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cursor, date_time } from '../../wlib.ts'
+import { cursor, date_time } from '../../../../src/library/index.ts'
 import { id } from './_scope_value.ts'
 
 export const tool_name = z.string().min(1).max(80)

@@ -4,7 +4,7 @@
 // the nodes above give here (PER-6), the node `keeper`'s. The authored files
 // take them from the scope of their kind, never from this file.
 
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import type { keeper_closes, keeper_context } from './_node.ts'
 
 export const {

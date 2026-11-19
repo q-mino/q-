@@ -2,7 +2,7 @@
 // predicates as functions of its state, its writes. The meaning comes from the
 // domain's `dsl`.
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import type * as tools_fact from '../../business/tools/_fact.ts'
 import type * as tools_predicate from '../../business/tools/_predicate.ts'
 import type * as tool_selections from '../../business/tools/_tool_selection.ts'

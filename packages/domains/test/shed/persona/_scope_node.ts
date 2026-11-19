@@ -4,7 +4,7 @@
 // `OR`, `NOT`; the twins of its folder in the layers below, its ancestors'
 // doors to the folders below and the doors the map opens to it.
 
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'

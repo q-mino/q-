@@ -6,7 +6,7 @@
 // identity. The registries of the folders below it come with it, its subtree
 // (D105).
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import * as id from './_id.ts'
 import * as value from './_value.ts'
 import * as fact from './_fact.ts'

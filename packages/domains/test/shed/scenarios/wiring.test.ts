@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { oracle } from './oracle.ts'
 import { persona } from '../persona/_node.ts'
 import { registry as persona_registry } from '../persona/_registry.ts'

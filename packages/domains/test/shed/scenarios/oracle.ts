@@ -1,56 +1,45 @@
 // The harness of the scenarios (TST-2, TST-3): one cell of the oracle, the
-// in-memory state adapter of the shed, and the ports the library builds over
-// it; the clock and the ids injected, so that a scenario says when each
+// in-memory state adapter of the shed, and the shed its configurator wires
+// over it (`configurator.ts`, since part 7.5: every scenario runs through
+// it); the clock and the ids injected, so that a scenario says when each
 // request is sent and under which operation. A scenario observes only what
 // the ports give (TST-3), never the cell's state.
 //
-// Part 4.1 gives the command ports of `tools` and `loans`; the reads, the
-// trees, the executors and the consumers join it with their parts, until the
-// configurator runs whole (7.5). Since part 4.2 the harness enters a request
-// as an entry does (DOM-11): the library computes its fingerprint. Since
-// part 4.3 it enters alone a transition only a step composes in Shed
-// (`alone`, SC-55): the steps have a body since 7.4, and the scenarios of
-// the executor's holds keep entering the notice alone, their story the
-// entries', not the round's. Since part 4.4 a
-// shed may start from what its store kept before a release (`kept`: facts
-// and outbox entries of `loans` 1.x), its state rebuilt from that log
-// through the library (`replay`, SC-8), with the majors it is given (SC-9)
-// and the zone of its calendar (SC-12); the entries it queues are read as
-// the executor will read them, at the current shape (`queued`). Since part
-// 5.1 the read ports of `tools` and `loans` join the harness, over the same
-// cell: their snapshots, a read sent at an instant (`when`), with no
-// operation. Since part 5.2 their streams too, native (the oracle's own, the
+// The business's use cases are entered as an entry would (DOM-11), where no
+// tree is above them: the library computes the fingerprint (part 4.2). A
+// transition only a step composes in Shed is entered alone (`alone`, SC-55,
+// part 4.3), the harness's own use case, never Shed's: the scenarios of the
+// executor's holds keep entering the notice alone, their story the
+// entries', not the round's. A shed may start from what its store kept
+// before a release (`kept`: facts and outbox entries of `loans` 1.x), its
+// state rebuilt from that log through the library (`replay`, SC-8), with
+// the majors it is given (SC-9) and the zone of its calendar (SC-12); the
+// entries it queues are read as the executor will read them, at the current
+// shape (`queued`). Its read ports stream natively (the oracle's own, the
 // reference) or composed by the library over the cell's log (`streams`),
 // with the deviations a stream must bear injected (TST-4): a position the
 // cell keeps no longer (`forget`), every fact delivered twice
-// (`redelivered`). Since part 6.1 the trees of the personas (`keeper`,
-// `member`, `visitor`) over the same ports and the lookups of `accounts`,
-// entered as an interface would, for who asks (`as`), the accounts the shed
-// is given at its start (`accounts`); and the fact log, a port of the
-// adapter (`log`). Since part 6.2 the tree of Rossi's workshop, an actor
-// from outside whose requests name their operation, entered with its scope
-// alone (`as(…).named`, SC-34), and the trace of the trees, every request
-// answered with no fact, with why (`traced`, F6, PER-14). Since part 6.3
-// the member's live reads: "my loans", "my reservations", "in the workshop".
-// Since part 7.1 the effect executor of `loans` over the cell's outbox
-// (`executor`), its clock and its waits the scenario's (`pass`), the world
-// of the reminders faked (`network`, `received`), its letters shown
-// (`held`), and the facts the cell recorded (`recorded`). Since part 7.3 the
-// consumer of `reaction/damage/` over the cell's log (`reactions`), its
-// clock the executor's, the parts it holds shown (`held_parts`), the
-// adapter of `tools` it invokes released with a defect or falling as a
-// scenario says (`the_adapter_of_tools`). Since part 7.4 the consumers of
-// the reactions that open and move the processes with a cursor
-// (`processes`): the retirement's work sheet, the round of a repair's
-// notices, a sheet of tools loaded line by line; and the steps' own ports.
+// (`redelivered`). The trees of the personas (`keeper`, `member`,
+// `visitor`, `workshop`) are entered as an interface would, for who asks
+// (`as`), with the accounts the shed is given at its start (`accounts`);
+// their trace, every request answered with no fact, with why (`traced`, F6,
+// PER-14). The effect executor of `loans` (`executor`), its clock and the
+// time that passes the scenario's (`pass`, `elapse`), the world of the
+// reminders faked (`network`, `received`), its letters shown (`held`), the
+// facts the cell recorded (`recorded`). The consumers of the reactions,
+// started by the folders a scenario runs: `reaction/damage/` (`reactions`),
+// the parts they hold shown (`held_parts`), the adapter of `tools` released
+// with a defect or falling as a scenario says (`the_adapter_of_tools`); and
+// those that open and move the processes with a cursor (`processes`): the
+// retirement's work sheet, the round of a repair's notices, a sheet of tools
+// loaded line by line.
 
 import type * as z from 'zod'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
+import { shed, type World } from '../configurator.ts'
 import {
   loans_command_adapter,
   loans_command_use_cases,
-  memory_commands,
-  memory_reads,
   rebuilt,
   tools_command_use_cases,
   type CommandCell,
@@ -58,57 +47,21 @@ import {
   type Recorded,
   type State,
   type Strategy,
-  log,
   tools_command_adapter,
 } from '../adapter/memory/index.ts'
 import { tools_fragments } from '../adapter/memory/tools.ts'
 import { loans_fragments } from '../adapter/memory/loans.ts'
-import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts.ts'
+import { type AccountsState } from '../adapter/memory/accounts.ts'
 import { account_id, key_id } from '../auth/accounts/_id.ts'
 import { hats, member_card } from '../auth/accounts/_value.ts'
-import { registry as accounts_registry } from '../auth/accounts/_registry.ts'
-import {
-  the_hats_of_a_key,
-  the_hats_of_an_account,
-  the_member_card_of_an_account,
-} from '../auth/accounts/_lookup.ts'
-import { persona } from '../persona/_node.ts'
 import { caller } from '../persona/_value.ts'
-import { registry as persona_registry } from '../persona/_registry.ts'
-import { registry as keeper_registry } from '../persona/keeper/_registry.ts'
-import { majors as keeper_majors } from '../persona/keeper/_majors.ts'
-import * as keeper from '../persona/keeper/_usecase.ts'
-import { registry as member_registry } from '../persona/member/_registry.ts'
-import { majors as member_majors } from '../persona/member/_majors.ts'
-import * as member from '../persona/member/_usecase.ts'
-import { registry as visitor_registry } from '../persona/visitor/_registry.ts'
-import { majors as visitor_majors } from '../persona/visitor/_majors.ts'
-import * as visitor from '../persona/visitor/_usecase.ts'
-import { registry as workshop_registry } from '../persona/workshop/_registry.ts'
-import { majors as workshop_majors } from '../persona/workshop/_majors.ts'
-import * as workshop from '../persona/workshop/_usecase.ts'
 import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
-import { send_a_tool_to_repair } from '../business/tools/_usecase.ts'
-import { registry as damage_registry } from '../reaction/damage/_registry.ts'
-import { registry as retirement_registry } from '../reaction/retirement/_registry.ts'
-import { registry as repair_registry } from '../reaction/repair/_registry.ts'
 import { member_id } from '../business/loans/_id.ts'
-import {
-  declare_the_loan_overdue,
-  remind_the_member_of_the_due_date,
-  sum_up_the_week_for_the_member,
-} from '../business/loans/_usecase.ts'
-import {
-  send_the_due_date_reminder,
-  send_the_repair_notice,
-  send_the_weeks_summary,
-  type Message,
-  type Network,
-} from '../adapter/memory/reminders.ts'
+import { type Message, type Network } from '../adapter/memory/reminders.ts'
 
 /** What a member's phone receives from the shed, as the scenarios read it (`received`). */
 export type { Message }
@@ -374,7 +327,7 @@ export type EntryContext = Omit<wlib.CommandRootContext, 'fingerprint'>
 /** A command use case's port, as the library builds it. */
 type Port<input, event> = (context: wlib.CommandRootContext, input: input) => AsyncIterable<event>
 
-/** The path of every port of a domain, by the object of its port (DOM-24). */
+/** The path of every port of a domain's use cases, by the object of its port (DOM-24). */
 const paths_of_ports = (
   registry: wlib.Registry,
   use_cases: Readonly<Record<string, unknown>>,
@@ -384,166 +337,89 @@ const paths_of_ports = (
     Object.entries(registry).map(([path, entry]) => [entry, path]),
   )
   return new Map(
-    Object.entries(ports).map(([name, port]) => {
-      const path = paths.get(use_cases[name])
+    Object.entries(use_cases).map(([name, use_case]) => {
+      const path = paths.get(use_case)
       if (path === undefined) throw new Error(`${name} is not in the registry given`)
-      return [port, path]
+      return [ports[name], path]
     }),
   )
 }
 
+/** A set of reaction consumers by the folder that holds its reactions (`configurator.ts`). */
+type Reactions =
+  | 'business/loans'
+  | 'business/tools'
+  | 'reaction/damage'
+  | 'reaction/repair'
+  | 'reaction/retirement'
+
+/** The folder that holds a reaction, from its path (`reaction/damage/reaction/…`). */
+const folder_of = (reaction: string): string =>
+  reaction.slice(0, reaction.lastIndexOf('/reaction/'))
+
 /**
- * The oracle of the scenarios: the command ports of `tools` and `loans`,
- * each entered as an entry would (DOM-11): the fingerprint computed by the
- * library over the use case's path and its input as sent (LIB-11), here
- * where no leaf is above it; and the context of a request sent at an
- * instant. Each request is a new operation unless the scenario names one;
- * its correlation is its own (the origin, DOM-10).
+ * Sets of consumers started together, as one (DOM-16): stopped together, the
+ * first fall reported; an operator's request served by the set that holds
+ * the letter's reaction.
+ */
+const together = (sets: ReadonlyMap<string, wlib.ReactionConsumers>): wlib.ReactionConsumers => {
+  const of = (letter: wlib.ReactionDeadLetter): wlib.ReactionConsumers => {
+    const set = sets.get(folder_of(letter.reaction))
+    if (set === undefined) throw new Error(`no consumer of ${letter.reaction} was started`)
+    return set
+  }
+  return {
+    stop: async () => {
+      const stopped = await Promise.allSettled([...sets.values()].map((set) => set.stop()))
+      for (const each of stopped) {
+        if (each.status === 'rejected') {
+          const reason: unknown = each.reason
+          throw reason
+        }
+      }
+    },
+    redeliver: (letter) => of(letter).redeliver(letter),
+    discard: (letter) => of(letter).discard(letter),
+  }
+}
+
+/**
+ * The oracle of the scenarios: the shed as its configurator wires it
+ * (`configurator.ts`, part 7.5), over one cell, in the release a scenario
+ * gives (its majors, the oracle's adapter released with a defect or
+ * streaming by composition); its world faked (the phones, the network, the
+ * clock and the time that passes, which the scenario sets). The command
+ * ports of `tools` and `loans` are entered as an entry would (DOM-11): the
+ * fingerprint computed by the library over the use case's path and its
+ * input as sent (LIB-11), here where no leaf is above it; and the context of
+ * a request sent at an instant. Each request is a new operation unless the
+ * scenario names one; its correlation is its own (the origin, DOM-10).
  */
 export const oracle = async (start: Start = {}) => {
   const kept = start.kept ?? {}
   const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
   const initial = nothing(start.accounts)
   const cell = command_cell(kept.entries ?? [], start.redelivered ?? false, initial)
-  // The versions of the store, checked against what it kept (SC-9); its
-  // state rebuilt from its log, each fact kept as it was stored (SC-8): a
-  // store that kept no fact has nothing to rebuild.
-  const versions = await wlib.versions(start.majors ?? [loans_majors, tools_majors])({
-    stored: () => Promise.resolve(stored_versions(kept)),
-  })
+  const majors = start.majors ?? [loans_majors, tools_majors]
+  const stored = (): Promise<readonly wlib.StoredVersion[]> =>
+    Promise.resolve(stored_versions(kept))
+  // The store as a release finds it: its state rebuilt from its log through
+  // the library, each fact kept as it was stored (SC-8), with the majors it
+  // is given (SC-9), before the shed starts over it; a store that kept no
+  // fact has nothing to rebuild.
   const facts = kept.facts ?? []
-  const rebuilding =
-    facts.length === 0 ? one_at_a_time([]) : rebuilt(versions)(initial)(log_of(facts))
-  for await (const each of rebuilding) {
-    const fact = facts[Number(each.position) - 1]
-    if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
-    cell.record({ fact, entries: [], state: each.state })
-  }
-  const not_booked: readonly string[] = start.not_booked_for_its_commands ?? []
-  const booked_as_read = loans_fragments['business/loans/predicate/the_reservation_is_booked']
-  const ports = memory_commands(cell, {
-    ...loans_fragments,
-    'business/loans/predicate/the_reservation_is_booked': (parameters) => (state) =>
-      !not_booked.includes(parameters.reservation_id) && booked_as_read(parameters)(state),
-  })(versions)
-  const reads = memory_reads(cell, start.streams)(versions)
-  const alone_registry = {
-    ...tools_registry,
-    ...loans_registry,
-    [notify_alone_path]: notify_alone,
-  }
-  const alone = wlib.command_use_case_ports({
-    registry: alone_registry,
-    versions,
-    use_cases: { notify_a_member_of_the_repair: notify_alone },
-  })(loans_command_adapter(cell))
-  const paths = new Map([
-    ...paths_of_ports(tools_registry, tools_command_use_cases, ports.tools),
-    ...paths_of_ports(loans_registry, loans_command_use_cases, ports.loans),
-    ...paths_of_ports(alone_registry, { notify_a_member_of_the_repair: notify_alone }, alone),
-  ])
-  const entered =
-    <input, event>(port: Port<input, event>) =>
-    (context: EntryContext, input: input): AsyncIterable<event> => {
-      const path = paths.get(port)
-      if (path === undefined) throw new Error('a port the oracle did not build')
-      return port({ ...context, fingerprint: wlib.fingerprint_of({ path, input }) }, input)
-    }
-  let operations = 0
-  const at = (instant: string, sent: Sent = {}): EntryContext => {
-    operations += 1
-    const id = sent.operation ?? `op-${String(operations)}`
-    return {
-      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
-      time_zone: zone,
-      operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
-      correlation: wlib.correlation.parse(sent.correlation ?? `correlation-${id}`),
+  if (facts.length > 0) {
+    const versions = await wlib.versions(majors)({ stored })
+    for await (const each of rebuilt(versions)(initial)(log_of(facts))) {
+      const fact = facts[Number(each.position) - 1]
+      if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
+      cell.record({ fact, entries: [], state: each.state })
     }
   }
-  // The trees of the personas (part 6.1), as the configurator wires them:
-  // over the ports the library built, by the folder of what they serve, and
-  // the lookups of `accounts` over the accounts the shed is given.
-  const invoked = {
-    'business/tools': { ...ports.tools, ...reads.tools },
-    'business/loans': { ...ports.loans, ...reads.loans },
-    'auth/accounts': wlib.lookup_ports({
-      registry: accounts_registry,
-      lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
-    })(accounts_lookups(cell.get)),
-  }
-  // As a test wires a tree of its own: by folder, the ports unnamed (a type
-  // the compiler can still write out for the harness).
-  const as_invoked: wlib.Invoked = invoked
-  // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
-  // in the order the library hands it.
-  const trace: wlib.Traced<unknown>[] = []
-  // The time that passes (DOM-3, TST-3): every wait a leaf that follows
-  // asks for, how long, ended when the scenario says (`elapse`).
-  const waits: { readonly milliseconds: number; readonly over: () => void }[] = []
-  const asked: number[] = []
-  const wired = {
-    invoked,
-    log: log(cell),
-    trace: (traced: wlib.Traced<unknown>) => {
-      trace.push(traced)
-    },
-    elapsed: (milliseconds: number) =>
-      new Promise<void>((over) => {
-        asked.push(milliseconds)
-        waits.push({ milliseconds, over })
-      }),
-  }
-  const trees = {
-    keeper: wlib.tree_ports({
-      registry: { ...persona_registry, ...keeper_registry },
-      versions,
-      majors: keeper_majors,
-      top: persona,
-      use_cases: {
-        retire_a_tool: keeper.retire_a_tool,
-        send_a_tool_to_repair: keeper.send_a_tool_to_repair,
-        put_a_repaired_tool_back_in_service: keeper.put_a_repaired_tool_back_in_service,
-        the_loans_of_the_month: keeper.the_loans_of_the_month,
-        load_tools_from_a_sheet: keeper.load_tools_from_a_sheet,
-      },
-    })(wired),
-    member: wlib.tree_ports({
-      registry: { ...persona_registry, ...member_registry },
-      versions,
-      majors: member_majors,
-      top: persona,
-      use_cases: {
-        borrow_a_tool: member.borrow_a_tool,
-        return_a_tool: member.return_a_tool,
-        extend_your_loan: member.extend_your_loan,
-        the_shelf: member.the_shelf,
-        my_loans: member.my_loans,
-        my_reservations: member.my_reservations,
-        my_reservations_in_the_workshop: member.my_reservations_in_the_workshop,
-      },
-    })(wired),
-    visitor: wlib.tree_ports({
-      registry: { ...persona_registry, ...visitor_registry },
-      versions,
-      majors: visitor_majors,
-      top: persona,
-      use_cases: { the_catalogue: visitor.the_catalogue },
-    })(wired),
-    workshop: wlib.tree_ports({
-      registry: { ...persona_registry, ...workshop_registry },
-      versions,
-      majors: workshop_majors,
-      top: persona,
-      use_cases: { close_a_job: workshop.close_a_job },
-    })(wired),
-  }
-  // The effect executor of `loans` (part 7.1), as the configurator wires
-  // it: over the cell's outbox, the return ports the library built, its
-  // durable state (kept across a fall: the executor started again finds its
-  // positions and letters), the executor's clock, which a scenario sets
-  // (`pass`), and the time that passes, its own waits ended when the
-  // scenario says, apart from the trees'. The world of the reminders: the
-  // members' phones, the network's next answers, what each phone received.
+  // The durable state of the executor of `loans` (DOM-14), kept across a
+  // fall: the executor started again finds its positions and letters; one
+  // that saves no position falls, as far as its state knows, before each
+  // advance (TST-4).
   const positions = new Map<string, wlib.position>()
   let holding: readonly wlib.HeldEntry[] = []
   const discards: wlib.Discarded<wlib.EffectDeadLetter>[] = []
@@ -574,69 +450,8 @@ export const oracle = async (start: Start = {}) => {
       return Promise.resolve()
     },
   }
-  let instant = wlib.date_time.parse('2026-11-01T00:00:00-04:00')
-  const executor_waits: (() => void)[] = []
-  const answers: Network[] = []
-  const received: Message[] = []
-  const loans_executor = wlib.effect_executor({
-    registry: loans_registry,
-    versions,
-    returns: {
-      remind_the_member_of_the_due_date,
-      declare_the_loan_overdue,
-      sum_up_the_week_for_the_member,
-    },
-  })
-  /**
-   * The executor of `loans` started (DOM-14), its clock at an instant: the
-   * members' phones by member, the network answering as told (`network`);
-   * one that saves no position falls, as far as its state knows, before
-   * each advance (TST-4).
-   */
-  const executor = (world: {
-    readonly at: string
-    readonly phones?: Readonly<Record<string, string>>
-    readonly saves_its_position?: boolean
-  }): wlib.EffectExecutor => {
-    instant = wlib.date_time.parse(world.at)
-    saves_its_position = world.saves_its_position ?? true
-    const phones = {
-      number_of: new Map(
-        Object.entries(world.phones ?? {}).map(([id, phone]) => [member_id.parse(id), phone]),
-      ),
-      network: (): Network => answers.shift() ?? 'delivers',
-      receive: (message: Message) => {
-        received.push(message)
-      },
-    }
-    return loans_executor({
-      'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
-      'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
-      'business/loans/effect/send_the_due_date_reminder': send_the_due_date_reminder(cell.get)(
-        phones,
-      ),
-      'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(phones),
-      'business/loans/effect/wait_until_monday': wlib.returns_the_payload,
-      'business/loans/effect/send_the_weeks_summary': send_the_weeks_summary(phones),
-    })({
-      outbox: cell.outbox,
-      returns: ports.loans,
-      state: executor_state,
-      clock: { now: () => instant, time_zone: zone },
-      elapsed: () =>
-        new Promise<void>((over) => {
-          executor_waits.push(over)
-        }),
-    })
-  }
-  // The consumers of the reactions (part 7.3), as the configurator wires
-  // them: `reaction/damage/` over the cell's log, its durable state (kept
-  // across a fall: the consumer started again finds its position and the
-  // parts it holds), the clock of the executor, which a scenario sets
-  // (`pass`). The port it invokes is the library's, over an adapter of
-  // `tools` a scenario may release with a defect, which reads every tool as
-  // neither in service, in the workshop nor retired (SC-42), or whose next
-  // execution falls, a technical abort (TST-4).
+  // The durable state of the consumers of the reactions (DOM-16), likewise:
+  // their positions and the parts each holds.
   const reaction_positions = new Map<string, wlib.position>()
   let parts_held: readonly wlib.HeldPart[] = []
   const parts_discarded: wlib.Discarded[] = []
@@ -670,6 +485,43 @@ export const oracle = async (start: Start = {}) => {
       return Promise.resolve()
     },
   }
+  // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
+  // in the order the library hands it.
+  const trace: wlib.Traced<unknown>[] = []
+  // The world: the members' phones, the network's next answers, what each
+  // phone received; the clock of the executor and the consumers, which a
+  // scenario sets (`pass`); the time that passes (DOM-3, DOM-14, TST-3),
+  // every wait asked for, how long, ended when the scenario says (`elapse`,
+  // `pass`).
+  let instant = wlib.date_time.parse('2026-11-01T00:00:00-04:00')
+  const waits: (() => void)[] = []
+  const asked: number[] = []
+  const answers: Network[] = []
+  const received: Message[] = []
+  const number_of = new Map<member_id, string>()
+  const world: World = {
+    phones: {
+      number_of,
+      network: (): Network => answers.shift() ?? 'delivers',
+      receive: (message: Message) => {
+        received.push(message)
+      },
+    },
+    clock: { now: () => instant, time_zone: zone },
+    elapsed: (milliseconds: number) =>
+      new Promise<void>((over) => {
+        asked.push(milliseconds)
+        waits.push(over)
+      }),
+  }
+  // The release of the oracle's adapter the scenario gives. `loans`, with a
+  // defect that reads the reservations listed as not booked when a command's
+  // condition asks, while its selections still keep them (SC-39). `tools`,
+  // right, or with a defect that reads every tool as neither in service, in
+  // the workshop nor retired (SC-42), or whose next execution falls, a
+  // technical abort (TST-4).
+  const not_booked: readonly string[] = start.not_booked_for_its_commands ?? []
+  const booked_as_read = loans_fragments['business/loans/predicate/the_reservation_is_booked']
   let release_of_tools: 'right' | 'with_a_defect' = 'right'
   let tools_falls_after: number | undefined = undefined
   const read_right =
@@ -698,92 +550,102 @@ export const oracle = async (start: Start = {}) => {
     tools_falls_after = undefined
     return Promise.reject(new Error('the adapter of tools aborted'))
   }
-  const tools_for_reactions = wlib.command_use_case_ports({
-    registry: tools_registry,
-    versions,
-    use_cases: { send_a_tool_to_repair },
-  })({ ...tools_released, execute: execute_released })
-  const damage_consumers = wlib.reaction_consumers({ registry: damage_registry, versions })({
-    'reaction/damage/reaction/the_damaged_tool_goes_to_repair': {
-      log: wired.log,
-      invokes: tools_for_reactions.send_a_tool_to_repair,
+  const the_shed = await shed(
+    {
+      ...cell,
+      stored_versions: stored,
+      executor: executor_state,
+      reactions: reaction_state,
+      trace: (traced) => {
+        trace.push(traced)
+      },
     },
-  })
-  /**
-   * The consumers of the reactions started (DOM-16), their clock at an
-   * instant; one that saves no position falls, as far as its state knows,
-   * before each advance (TST-4).
-   */
-  const reactions = (world: {
-    readonly at: string
-    readonly saves_its_position?: boolean
-  }): wlib.ReactionConsumers => {
-    instant = wlib.date_time.parse(world.at)
-    reactions_save_their_positions = world.saves_its_position ?? true
-    return damage_consumers({
-      state: reaction_state,
-      clock: { now: () => instant, time_zone: zone },
-    })
+    {
+      majors,
+      adapter: {
+        loans: {
+          ...loans_fragments,
+          'business/loans/predicate/the_reservation_is_booked': (parameters) => (state) =>
+            !not_booked.includes(parameters.reservation_id) && booked_as_read(parameters)(state),
+        },
+        tools: { ...tools_released, execute: execute_released },
+        streams: start.streams ?? 'native',
+      },
+    },
+  )(world)
+  const versions = the_shed.versions
+  const tools = the_shed.invoked['business/tools']
+  const loans = the_shed.invoked['business/loans']
+  const alone_registry = {
+    ...tools_registry,
+    ...loans_registry,
+    [notify_alone_path]: notify_alone,
   }
-  // The consumers of the processes' reactions (part 7.4), as the
-  // configurator wires them: the procedures of a retirement and of a
-  // repair, above the domains (GR-9), and the reactions of `loans` and
-  // `tools` that move their processes on, one step a reaction (DOM-16,
-  // DOM-20), over the cell's log, invoking the ports the library built over
-  // the oracle; their state and clock the reactions' above.
-  const process_consumers = wlib.reaction_consumers({
-    registry: { ...retirement_registry, ...repair_registry, ...loans_registry, ...tools_registry },
+  const alone = wlib.command_use_case_ports({
+    registry: alone_registry,
     versions,
-  })({
-    'reaction/retirement/reaction/the_reservations_of_the_tool_are_cancelled': {
-      log: wired.log,
-      invokes: ports.loans.cancel_the_reservations_of_a_tool,
-    },
-    'reaction/repair/reaction/the_members_who_booked_the_tool_are_notified': {
-      log: wired.log,
-      invokes: ports.loans.notify_the_members_of_a_repair,
-    },
-    'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {
-      log: wired.log,
-      invokes: ports.loans.continue_the_cancellation_of_reservations,
-    },
-    'business/loans/reaction/the_next_reservation_on_the_sheet_is_taken_up': {
-      log: wired.log,
-      invokes: ports.loans.continue_the_cancellation_of_reservations,
-    },
-    'business/loans/reaction/the_first_member_on_the_round_is_notified': {
-      log: wired.log,
-      invokes: ports.loans.continue_the_repair_notice_round,
-    },
-    'business/loans/reaction/the_next_member_on_the_round_is_notified': {
-      log: wired.log,
-      invokes: ports.loans.continue_the_repair_notice_round,
-    },
-    'business/tools/reaction/the_first_line_of_the_sheet_is_taken_up': {
-      log: wired.log,
-      invokes: ports.tools.continue_the_loading_of_a_sheet,
-    },
-    'business/tools/reaction/the_next_line_of_the_sheet_is_taken_up': {
-      log: wired.log,
-      invokes: ports.tools.continue_the_loading_of_a_sheet,
-    },
-  })
-  /**
-   * The consumers of the processes' reactions started (DOM-16, DOM-20),
-   * their clock at an instant; one that saves no position falls, as far as
-   * its state knows, before each advance (TST-4).
-   */
-  const processes = (world: {
-    readonly at: string
-    readonly saves_its_position?: boolean
-  }): wlib.ReactionConsumers => {
-    instant = wlib.date_time.parse(world.at)
-    reactions_save_their_positions = world.saves_its_position ?? true
-    return process_consumers({
-      state: reaction_state,
-      clock: { now: () => instant, time_zone: zone },
-    })
+    use_cases: { notify_a_member_of_the_repair: notify_alone },
+  })(loans_command_adapter(cell))
+  const paths = new Map([
+    ...paths_of_ports(tools_registry, tools_command_use_cases, tools),
+    ...paths_of_ports(loans_registry, loans_command_use_cases, loans),
+    ...paths_of_ports(alone_registry, { notify_a_member_of_the_repair: notify_alone }, alone),
+  ])
+  const entered =
+    <input, event>(port: Port<input, event>) =>
+    (context: EntryContext, input: input): AsyncIterable<event> => {
+      const path = paths.get(port)
+      if (path === undefined) throw new Error('a port the oracle did not build')
+      return port({ ...context, fingerprint: wlib.fingerprint_of({ path, input }) }, input)
+    }
+  let operations = 0
+  const at = (instant: string, sent: Sent = {}): EntryContext => {
+    operations += 1
+    const id = sent.operation ?? `op-${String(operations)}`
+    return {
+      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      time_zone: zone,
+      operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
+      correlation: wlib.correlation.parse(sent.correlation ?? `correlation-${id}`),
+    }
   }
+  // As a test wires a tree of its own: by folder, the ports unnamed (a type
+  // the compiler can still write out for the harness).
+  const as_invoked: wlib.Invoked = the_shed.invoked
+  /**
+   * The executor of `loans` started (DOM-14), its clock at an instant: the
+   * members' phones by member, the network answering as told (`network`);
+   * one that saves no position falls, as far as its state knows, before
+   * each advance (TST-4).
+   */
+  const executor = (at: {
+    readonly at: string
+    readonly phones?: Readonly<Record<string, string>>
+    readonly saves_its_position?: boolean
+  }): wlib.EffectExecutor => {
+    instant = wlib.date_time.parse(at.at)
+    saves_its_position = at.saves_its_position ?? true
+    number_of.clear()
+    for (const [id, phone] of Object.entries(at.phones ?? {})) {
+      number_of.set(member_id.parse(id), phone)
+    }
+    return the_shed.loans_effects()
+  }
+  /**
+   * The consumers of the reactions of some folders started (DOM-16), their
+   * clock at an instant; one that saves no position falls, as far as its
+   * state knows, before each advance (TST-4).
+   */
+  const started =
+    (folders: readonly Reactions[]) =>
+    (at: {
+      readonly at: string
+      readonly saves_its_position?: boolean
+    }): wlib.ReactionConsumers => {
+      instant = wlib.date_time.parse(at.at)
+      reactions_save_their_positions = at.saves_its_position ?? true
+      return together(new Map(folders.map((folder) => [folder, the_shed.reactions[folder]()])))
+    }
   /**
    * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
    * as the interface verified it, the version the client was built at
@@ -816,53 +678,58 @@ export const oracle = async (start: Start = {}) => {
   })
   return {
     tools: {
-      add_a_tool: entered(ports.tools.add_a_tool),
-      retire_a_tool: entered(ports.tools.retire_a_tool),
-      send_a_tool_to_repair: entered(ports.tools.send_a_tool_to_repair),
-      put_a_repaired_tool_back_in_service: entered(ports.tools.put_a_repaired_tool_back_in_service),
-      close_a_repair: entered(ports.tools.close_a_repair),
-      rename_a_tool: entered(ports.tools.rename_a_tool),
-      load_the_tools_of_a_sheet: entered(ports.tools.load_the_tools_of_a_sheet),
-      load_the_tools_of_a_short_sheet: entered(ports.tools.load_the_tools_of_a_short_sheet),
-      continue_the_loading_of_a_sheet: entered(ports.tools.continue_the_loading_of_a_sheet),
-      ...reads.tools,
+      ...tools,
+      add_a_tool: entered(tools.add_a_tool),
+      retire_a_tool: entered(tools.retire_a_tool),
+      send_a_tool_to_repair: entered(tools.send_a_tool_to_repair),
+      put_a_repaired_tool_back_in_service: entered(tools.put_a_repaired_tool_back_in_service),
+      close_a_repair: entered(tools.close_a_repair),
+      rename_a_tool: entered(tools.rename_a_tool),
+      load_the_tools_of_a_sheet: entered(tools.load_the_tools_of_a_sheet),
+      load_the_tools_of_a_short_sheet: entered(tools.load_the_tools_of_a_short_sheet),
+      continue_the_loading_of_a_sheet: entered(tools.continue_the_loading_of_a_sheet),
     },
     loans: {
-      borrow_a_tool: entered(ports.loans.borrow_a_tool),
-      lend_a_booked_tool: entered(ports.loans.lend_a_booked_tool),
-      extend_the_loan: entered(ports.loans.extend_the_loan),
-      correct_the_tool_of_a_loan: entered(ports.loans.correct_the_tool_of_a_loan),
-      reserve_a_tool: entered(ports.loans.reserve_a_tool),
-      return_a_tool: entered(ports.loans.return_a_tool),
-      remind_the_member_of_the_due_date: entered(ports.loans.remind_the_member_of_the_due_date),
-      declare_the_loan_overdue: entered(ports.loans.declare_the_loan_overdue),
-      cancel_the_reservations_of_a_tool: entered(ports.loans.cancel_the_reservations_of_a_tool),
+      ...loans,
+      borrow_a_tool: entered(loans.borrow_a_tool),
+      lend_a_booked_tool: entered(loans.lend_a_booked_tool),
+      extend_the_loan: entered(loans.extend_the_loan),
+      correct_the_tool_of_a_loan: entered(loans.correct_the_tool_of_a_loan),
+      reserve_a_tool: entered(loans.reserve_a_tool),
+      return_a_tool: entered(loans.return_a_tool),
+      remind_the_member_of_the_due_date: entered(loans.remind_the_member_of_the_due_date),
+      declare_the_loan_overdue: entered(loans.declare_the_loan_overdue),
+      cancel_the_reservations_of_a_tool: entered(loans.cancel_the_reservations_of_a_tool),
       continue_the_cancellation_of_reservations: entered(
-        ports.loans.continue_the_cancellation_of_reservations,
+        loans.continue_the_cancellation_of_reservations,
       ),
-      notify_the_members_of_a_repair: entered(ports.loans.notify_the_members_of_a_repair),
-      continue_the_repair_notice_round: entered(ports.loans.continue_the_repair_notice_round),
-      begin_a_weekly_summary: entered(ports.loans.begin_a_weekly_summary),
-      sum_up_the_week_for_the_member: entered(ports.loans.sum_up_the_week_for_the_member),
-      ...reads.loans,
+      notify_the_members_of_a_repair: entered(loans.notify_the_members_of_a_repair),
+      continue_the_repair_notice_round: entered(loans.continue_the_repair_notice_round),
+      begin_a_weekly_summary: entered(loans.begin_a_weekly_summary),
+      sum_up_the_week_for_the_member: entered(loans.sum_up_the_week_for_the_member),
     },
     alone: {
       notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
-    ...trees,
+    keeper: the_shed.keeper,
+    member: the_shed.member,
+    visitor: the_shed.visitor,
+    workshop: the_shed.workshop,
     at,
     as,
     /** The fact log of the cell, a port of the adapter (DOM-17): what a fact carries, its correlation (DOM-10). */
-    log: wired.log,
+    log: the_shed.log,
     /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
-    trace: wired.trace,
+    trace: (traced: wlib.Traced<unknown>) => {
+      trace.push(traced)
+    },
     /** The ports the trees invoke, by the folder of what they serve: where a test wires a tree of its own (SC-29). */
     invoked: as_invoked,
-    /** How long each wait a leaf that follows asked for, in milliseconds, in order (DOM-3). */
+    /** How long each wait asked for lasts, in milliseconds, in order (DOM-3, DOM-14). */
     waits: (): readonly number[] => [...asked],
     /** The time passes: every wait asked for so far is over (DOM-3, TST-3). */
     elapse: () => {
-      for (const wait of waits.splice(0)) wait.over()
+      for (const over of waits.splice(0)) over()
     },
     /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
     traced: (): readonly wlib.Traced<unknown>[] => [...trace],
@@ -891,13 +758,13 @@ export const oracle = async (start: Start = {}) => {
     /** What the members' phones received, in order. */
     received: (): readonly Message[] => [...received],
     /**
-     * Time passes up to an instant: the executor's clock reads it, and every
-     * wait it asked for is over, so that it delivers what has come; then
-     * its deliveries run their course (TST-3).
+     * Time passes up to an instant: the clock reads it, and every wait asked
+     * for is over, so that the executor delivers what has come; then its
+     * deliveries run their course (TST-3).
      */
     pass: async (to: string) => {
       instant = wlib.date_time.parse(to)
-      for (const over of executor_waits.splice(0)) over()
+      for (const over of waits.splice(0)) over()
       await quiet()
     },
     /** The entries the executor holds for an effect, as its state keeps them (DOM-14): shown, never a business fact. */
@@ -905,24 +772,36 @@ export const oracle = async (start: Start = {}) => {
       holding.filter((each) => each.entry.effect === effect),
     /** The letters an operator discarded, with their traces. */
     discarded: (): readonly wlib.Discarded<wlib.EffectDeadLetter>[] => [...discards],
-    reactions,
-    processes,
+    /** The consumer of `reaction/damage/` started (part 7.3, SC-40, SC-42). */
+    reactions: started(['reaction/damage']),
+    /**
+     * The consumers of the reactions that open and move the processes with a
+     * cursor started (part 7.4): the procedures of a retirement and of a
+     * repair, above the domains (GR-9), and the reactions of `loans` and
+     * `tools` that move their processes on, one step a reaction (DOM-16,
+     * DOM-20).
+     */
+    processes: started([
+      'reaction/retirement',
+      'reaction/repair',
+      'business/loans',
+      'business/tools',
+    ]),
     /** The parts a reaction holds, as its state keeps them (DOM-16, SC-42): shown, never a business fact. */
     held_parts: (reaction: string): readonly wlib.HeldPart[] =>
       parts_held.filter((each) => each.reaction === reaction),
     /** The reactions' letters an operator discarded, with their traces. */
     discarded_parts: (): readonly wlib.Discarded[] => [...parts_discarded],
     /**
-     * The adapter of `tools` the reactions invoke, released: right, or with
-     * a defect that reads every tool as neither in service, in the
-     * workshop nor retired (SC-42).
+     * The adapter of `tools` released: right, or with a defect that reads
+     * every tool as neither in service, in the workshop nor retired (SC-42).
      */
     the_adapter_of_tools: (release: 'right' | 'with_a_defect') => {
       release_of_tools = release
     },
     /**
-     * An execution of the adapter of `tools` the reactions invoke falls, a
-     * technical abort (TST-4): the next one, or the one after so many.
+     * An execution of the adapter of `tools` falls, a technical abort
+     * (TST-4): the next one, or the one after so many.
      */
     the_adapter_of_tools_falls: (after = 0) => {
       tools_falls_after = after
@@ -930,7 +809,7 @@ export const oracle = async (start: Start = {}) => {
     /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
     recorded: async (): Promise<readonly wlib.StoredEnvelope[]> => {
       const facts = new Map<wlib.position, wlib.StoredEnvelope>()
-      for await (const event of wired.log(undefined)) {
+      for await (const event of the_shed.log(undefined)) {
         if (event.event !== 'fact') break
         facts.set(event.position, event.fact)
       }
@@ -940,6 +819,9 @@ export const oracle = async (start: Start = {}) => {
     forget: cell.forget,
   }
 }
+
+/** The shed of a scenario, as the oracle starts it. */
+export type Shed = Awaited<ReturnType<typeof oracle>>
 
 /**
  * Everything already set going has run its course, up to its next wait: the

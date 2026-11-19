@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { command_use_case_over, read_use_case_over, value, tools, loans } from './_scope_usecase.ts'
 
 // The use cases of `keeper`, the leaves of its tree (PER-6): who keeps the

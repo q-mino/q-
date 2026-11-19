@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time, day_of } from '../../../wlib.ts'
+import { date_time, day_of } from '../../../../../src/library/index.ts'
 import { earlier, delegate, next, id, tools } from './_scope_effect.ts'
 
 // The effects of `loans` 1.x, a past major (A, 16 Nov 2026 (7)): a wait or a

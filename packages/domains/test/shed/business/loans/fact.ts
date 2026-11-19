@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { fact, id, value, tools } from './_scope_fact.ts'
 
 /** Carries the change of state (DOM-5, V9): the whole new loan. */

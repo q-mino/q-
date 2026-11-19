@@ -6,7 +6,7 @@
 // or delegated; the same paths as the current's, the version apart. The majors
 // of the domain list it (`../_majors.ts`).
 
-import type * as wlib from '../../../wlib.ts'
+import type * as wlib from '../../../../../src/library/index.ts'
 import * as fact from './_fact.ts'
 import * as effect from './_effect.ts'
 

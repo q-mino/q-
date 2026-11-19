@@ -6,7 +6,7 @@
 // The configurator gives it where a version picks a major: the versions of a
 // store (`wlib.versions`), the ports of a tree (`wlib.tree_ports`).
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import { registry as major_2 } from './_registry.ts'
 import { registry as major_1 } from './1/_registry.ts'
 

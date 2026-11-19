@@ -5,7 +5,7 @@
 // the versions of a store (`wlib.versions`), the ports of a tree
 // (`wlib.tree_ports`).
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import { registry as major_1 } from './_registry.ts'
 
 export const majors = { 1: major_1 } satisfies wlib.Majors

@@ -8,7 +8,7 @@
 // which neither a reminder nor a notice has. A network that falls throws: a
 // technical abort, which the executor does not take for an answer (TST-4).
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import type * as loans_effect from '../../business/loans/_effect.ts'
 import type { member_id } from '../../business/loans/_id.ts'
 import type { ToolsState } from './tools.ts'

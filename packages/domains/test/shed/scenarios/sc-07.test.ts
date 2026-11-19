@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { first, quiet } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'
 

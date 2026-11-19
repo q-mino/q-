@@ -6,7 +6,7 @@
 // object identity. The registry of `business/loans` carries it: a folder of a
 // domain is its subtree (D105).
 
-import type * as wlib from '../../../wlib.ts'
+import type * as wlib from '../../../../../src/library/index.ts'
 import * as node from './_node.ts'
 import * as command from './_command.ts'
 import * as usecase from './_usecase.ts'

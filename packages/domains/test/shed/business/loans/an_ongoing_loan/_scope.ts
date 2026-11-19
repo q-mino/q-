@@ -5,7 +5,7 @@
 // `an_ongoing_loan`'s. The authored files take them from the scope of their
 // kind, never from this file.
 
-import * as wlib from '../../../wlib.ts'
+import * as wlib from '../../../../../src/library/index.ts'
 import type {
   an_ongoing_loan_accumulated,
   an_ongoing_loan_closes,

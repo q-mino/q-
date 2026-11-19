@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { repair_id } from '../business/tools/_id.ts'
 import { first } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'

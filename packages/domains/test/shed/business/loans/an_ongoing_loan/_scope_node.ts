@@ -5,7 +5,7 @@
 // below, its ancestors' doors to the folders below and the doors the map opens
 // to it.
 
-import * as wlib from '../../../wlib.ts'
+import * as wlib from '../../../../../src/library/index.ts'
 
 export * as _loans from '../_door_below.ts'
 export * as tools from '../../tools/_door_business.ts'

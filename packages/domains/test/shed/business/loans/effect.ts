@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { effect, id, tools } from './_scope_effect.ts'
 
 // The effects of `loans` (DOM-13): what it asks of the world, queued by a

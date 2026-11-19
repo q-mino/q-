@@ -11,7 +11,7 @@ export default {
       // with main's, since it changes as design, not as releases.
       root: 'packages/domains/test/shed',
       sight,
-      library: 'wlib.ts',
+      library: '../../src/library/index.ts',
       compared_with_main: false,
       // Held for A (DOM-25, "Held for A"): what a reaction's scope and a past
       // major's scope see, kept as written until A decides; the generator

@@ -5,7 +5,7 @@
 // fragment reuses the `dsl` of `tools`. Its reads are typed by subject
 // (DOM-18): a loan, a reservation, a tool of the shed.
 
-import type * as wlib from '../../wlib.ts'
+import type * as wlib from '../../../../src/library/index.ts'
 import type * as loans_fact from '../../business/loans/_fact.ts'
 import type * as loans_predicate from '../../business/loans/_predicate.ts'
 import type { loan_id, member_id, reservation_id } from '../../business/loans/_id.ts'

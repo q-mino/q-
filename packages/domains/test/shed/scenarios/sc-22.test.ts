@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import * as wlib from '../wlib.ts'
+import * as wlib from '../../../src/library/index.ts'
 import { all, first, oracle } from './oracle.ts'
 
 // SC-22, the business's side (part 5.3): the catalogue of 2,000 tools read

@@ -1,6 +1,6 @@
 // The pure functions of the persona base over its values, added at need. DOM-5
 
-import type * as wlib from '../wlib.ts'
+import type * as wlib from '../../../src/library/index.ts'
 import { value, accounts } from './_scope_dsl.ts'
 
 /** The account of who asks, if they signed in: an anonymous session has none (D30). */

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import * as wlib from '../../wlib.ts'
+import * as wlib from '../../../../src/library/index.ts'
 import { selection, id, tools } from './_scope_selection.ts'
 
 // The selections over a reservation, the subject of this file (DOM-18).

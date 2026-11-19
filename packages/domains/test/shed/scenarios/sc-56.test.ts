@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type * as wlib from '../wlib.ts'
+import type * as wlib from '../../../src/library/index.ts'
 import { first, oracle, quiet, type Message, type Start } from './oracle.ts'
 
 // SC-56: an effect that tolerates reordering (DOM-14, D67.3; Shed's step
