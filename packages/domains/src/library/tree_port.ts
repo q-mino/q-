@@ -10,6 +10,7 @@ import { $Node, type EntryOf } from './node.ts'
 import { $UseCase } from './use_case.ts'
 import { is_a_schema } from './kind.ts'
 import { fingerprint_of } from './stable.ts'
+import { and as kleene_and } from './actions.ts'
 import {
   called,
   called_with,
@@ -118,10 +119,18 @@ interface LeafStreaming {
   readonly served: ReadServed
 }
 
-/** A read leaf: the schema of its own entry; how it streams, if it does. */
+/** An action of a read leaf (SC-33): a command leaf of its folder, by its name, and the use case it invokes. */
+interface LeafAction {
+  readonly name: string
+  readonly use_case: unknown
+  readonly declared: Context
+}
+
+/** A read leaf: the schema of its own entry; how it streams, if it does; its actions, if it lists some. */
 interface ReadLeaf extends TreeLeaf {
   readonly entry: z.ZodObject
   readonly streaming?: LeafStreaming
+  readonly actions: readonly LeafAction[]
 }
 
 /**
@@ -540,16 +549,6 @@ const projected_outcome = (
   }
 }
 
-/** What waits for a later part of the plan, named, at the request. */
-const not_yet = (leaf: TreeLeaf, parts: readonly (readonly [string, string])[]): void => {
-  const waiting = parts.filter(([part]) => leaf.declared[part] !== undefined)
-  if (waiting.length > 0) {
-    throw new Error(
-      `${leaf.path} declares ${waiting.map(([part, plan]) => `${part} (part ${plan})`).join(', ')}`,
-    )
-  }
-}
-
 /**
  * A command's operation as the entry gives it (DOM-11): whole, or its scope
  * alone for a leaf whose input names the id (SC-34, D91.2), with the field
@@ -772,8 +771,7 @@ const binding_of = (leaf: ReadLeaf, bound: unknown): { query: unknown; size: unk
 }
 
 /** The pages of the read use case a leaf invokes, as its port gives them. */
-const pages_of = (leaf: ReadLeaf): unknown => {
-  const port = leaf.port
+const pages_of = (leaf: ReadLeaf, port: unknown): unknown => {
   if (typeof port !== 'function' || !('pages' in port)) {
     throw new Error(`${leaf.path}: the port below reads no pages (SC-22)`)
   }
@@ -852,12 +850,13 @@ const named_part = (
 const stream_event_in = (
   leaf: ReadLeaf,
   streaming: LeafStreaming,
+  projected: (entry: unknown) => unknown,
   event: Context,
 ): RuntimeLeafEvent => {
   const { position, identity } = event
   switch (event['event']) {
     case 'fact': {
-      const entry = entry_in(leaf, event['entry'])
+      const entry = projected(event['entry'])
       const named = named_part(streaming, event['fact'], identity)
       if (named === undefined) return { event: 'fact', position, identity, entry }
       const own = event_of(
@@ -867,9 +866,9 @@ const stream_event_in = (
       return { event: own.event, position, identity, entry, payload: own.payload }
     }
     case 'changed':
-      return { event: 'fact', position, identity, entry: entry_in(leaf, event['entry']) }
+      return { event: 'fact', position, identity, entry: projected(event['entry']) }
     case 'entered':
-      return { event: 'entered', position, identity, entry: entry_in(leaf, event['entry']) }
+      return { event: 'entered', position, identity, entry: projected(event['entry']) }
     case 'left':
       return { event: 'left', position, identity }
     case 'caught_up':
@@ -878,6 +877,84 @@ const stream_event_in = (
       return { event: 'position_unavailable' }
     default:
       throw new Error(`${leaf.path}: the port below gives an event no stream has (DOM-17)`)
+  }
+}
+
+/**
+ * The port below of a read leaf that lists actions (SC-33, D47.4, D51.1):
+ * the same port again, its entries with the applicability of each, by the
+ * use case its command leaf invokes and, from an entry, the input the
+ * leaf's creator gives it from the input the read's creator binds, over the
+ * context of the read's point, which the command leaves of its folder share
+ * (their nodes above are its own, already passed); no operation, which the
+ * caller mints later (DOM-12). Each entry then takes the leaf's own limits,
+ * over that context and the input from the entry, each its own value (a
+ * limit that reads a field the caller gives reads the mark, D51.4), in AND
+ * outside the business's value (D105), which the projection writes in the
+ * persona's words. A leaf that lists none reads the port as it is.
+ */
+const with_actions = (
+  leaf: ReadLeaf,
+  context: Context,
+  bound: unknown,
+): { readonly port: unknown; readonly entry: (entry: unknown) => unknown } => {
+  if (leaf.actions.length === 0) return { port: leaf.port, entry: (entry) => entry }
+  const from_the_entry = (name: string): unknown => {
+    const each = is_a_record(bound) ? bound[name] : undefined
+    if (typeof each !== 'function') {
+      throw new Error(`${leaf.path}: its creator binds no input of the action ${name} (SC-33)`)
+    }
+    return each
+  }
+  const input_of = (action: LeafAction, entry: unknown): unknown =>
+    called(called(action.declared['creator'], context), called(from_the_entry(action.name), entry))
+  const port = leaf.port
+  const acting =
+    typeof port === 'function' && 'with_actions' in port
+      ? called(
+          port.with_actions,
+          Object.fromEntries(
+            leaf.actions.map((action) => [
+              action.name,
+              {
+                use_case: action.use_case,
+                input: () => (entry: unknown) => input_of(action, entry),
+              },
+            ]),
+          ),
+        )
+      : undefined
+  if (acting === undefined) throw new Error(`${leaf.path}: its port below evaluates no actions`)
+  return {
+    port: acting,
+    entry: (entry) => {
+      if (!is_a_record(entry)) return entry
+      const limited = leaf.actions.map((action): readonly [string, unknown] => {
+        const business = entry[action.name]
+        if (!is_a_record(business)) {
+          throw new Error(`${leaf.path}: the port below gives no applicability of ${action.name}`)
+        }
+        const value = business['value']
+        const input = called(from_the_entry(action.name), entry)
+        const limits = Object.fromEntries(
+          conditions_of(action.declared['is_refused_unless']).map(
+            ([name, condition]) => [name, holds(condition, context, input)] as const,
+          ),
+        )
+        return [
+          action.name,
+          {
+            ...business,
+            value: kleene_and([
+              ...Object.values(limits),
+              value === true || value === false ? value : 'not_known',
+            ]),
+            limits,
+          },
+        ]
+      })
+      return { ...entry, ...Object.fromEntries(limited) }
+    },
   }
 }
 
@@ -916,19 +993,18 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       yield traced(tracing, point.event, point.why)
       return
     }
-    // The actions of a read, with their block of part 6.3: past the checks
-    // of PER-5, which close a request before any read (SC-32).
-    not_yet(leaf, [['actions', '6.3']])
-    const binding = binding_of(
-      leaf,
-      called(called(leaf.declared['creator'], point.context), input.data),
-    )
+    const bound: unknown = called(called(leaf.declared['creator'], point.context), input.data)
+    const binding = binding_of(leaf, bound)
     const root = root_of(point.context)
+    // SC-33: the port below again, with the actions, past the checks of
+    // PER-5, which close a request before any read (SC-32).
+    const acting = with_actions(leaf, point.context, is_a_record(bound) ? bound['actions'] : {})
+    const projected = (each: unknown): unknown => entry_in(leaf, acting.entry(each))
     if (leaf.streaming !== undefined) {
       // A leaf that streams reads whole (SC-22): the snapshot, then the
       // stream from its position; from a position, the stream alone.
       const events = invoked_with(
-        leaf.port,
+        acting.port,
         resume === undefined ? [root, binding.query] : [root, binding.query, resume],
       )
       for await (const event of events) {
@@ -941,13 +1017,13 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
         if (event['event'] === 'snapshot' && Array.isArray(entries)) {
           yield {
             event: 'snapshot',
-            entries: entries.map((each: unknown) => entry_in(leaf, each)),
+            entries: entries.map(projected),
             position: event['position'],
             total: event['total'],
           }
           continue
         }
-        yield stream_event_in(leaf, leaf.streaming, event)
+        yield stream_event_in(leaf, leaf.streaming, projected, event)
       }
       return
     }
@@ -955,7 +1031,7 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       ...(binding.size === undefined ? {} : { size: binding.size }),
       ...(resume === undefined ? {} : { after: resume }),
     }
-    const pages = invoked_with(pages_of(leaf), [root, binding.query, page])
+    const pages = invoked_with(pages_of(leaf, acting.port), [root, binding.query, page])
     for await (const event of pages) {
       if (!is_a_record(event)) throw new Error(`${leaf.path}: the port below gives no event`)
       if (event['event'] === 'invalid_request') {
@@ -969,7 +1045,7 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       }
       yield {
         event: 'snapshot',
-        entries: entries.map((each: unknown) => entry_in(leaf, each)),
+        entries: entries.map(projected),
         position: event['position'],
         total: event['total'],
         ...(event['next'] === undefined ? {} : { next: event['next'] }),
@@ -1066,6 +1142,22 @@ const following_of = (
   }
 }
 
+/** The command leaves a read leaf lists as its actions, by name (SC-33), as it holds them. */
+const actions_of_leaf = (own: unknown): readonly LeafAction[] => {
+  const actions = is_a_record(own) ? own['actions'] : undefined
+  return is_a_record(actions)
+    ? Object.entries(actions).map(([name, action]): LeafAction => {
+        const parts: unknown =
+          typeof action === 'object' && action !== null ? Reflect.get(action, $UseCase) : undefined
+        return {
+          name,
+          use_case: is_a_record(parts) ? parts['use_case'] : undefined,
+          declared: declared_of(action, $UseCase),
+        }
+      })
+    : []
+}
+
 const runtime_tree_ports = (
   ports: RuntimeTreePorts,
 ): ((wired: RuntimeWired) => Readonly<Record<string, unknown>>) => {
@@ -1154,6 +1246,9 @@ const runtime_tree_ports = (
       })
       const port = served.get(invokes)
       const streaming = port === undefined ? undefined : streaming_of(path, parts, port)
+      const actions = actions_of_leaf(own)
+      const evaluates =
+        typeof port === 'function' && 'with_actions' in port && port.with_actions !== undefined
       const following = following_of(path, parts, ports.versions, wired)
       const missing = [
         ...tree_nodes.flatMap((node) =>
@@ -1165,6 +1260,9 @@ const runtime_tree_ports = (
         ),
         ...(port === undefined ? [`${path} invokes a use case no port given serves (CFG-2)`] : []),
         ...(typeof streaming === 'string' ? [streaming] : []),
+        ...(actions.length > 0 && port !== undefined && !evaluates
+          ? [`${path} lists actions over a port that evaluates none (D110, SC-33, CFG-2)`]
+          : []),
         ...(following !== undefined && 'faults' in following ? following.faults : []),
       ]
       const leaf: TreeLeaf = {
@@ -1181,6 +1279,7 @@ const runtime_tree_ports = (
       return {
         leaf,
         own,
+        actions,
         missing,
         streaming: typeof streaming === 'string' ? undefined : streaming,
         following:
@@ -1191,14 +1290,14 @@ const runtime_tree_ports = (
     const wiring = [...new Set([...unserved, ...built.flatMap((each) => each.missing)])]
     if (wiring.length > 0) throw new Error(wiring.join('\n'))
     return Object.fromEntries(
-      built.map(({ leaf, own, streaming, following }): readonly [string, unknown] => {
+      built.map(({ leaf, own, actions, streaming, following }): readonly [string, unknown] => {
         const entry = is_a_record(own) ? own['entry'] : undefined
         const events = is_a_record(own) ? own['events'] : undefined
         if (entry instanceof z.ZodObject) {
           return [
             leaf.name,
             read_leaf_port(
-              { ...leaf, entry, ...(streaming === undefined ? {} : { streaming }) },
+              { ...leaf, entry, actions, ...(streaming === undefined ? {} : { streaming }) },
               ports.majors,
               wired.trace,
             ),

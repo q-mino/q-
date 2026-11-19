@@ -41,7 +41,7 @@ const is_a_record = (value: unknown): value is Readonly<Record<string, unknown>>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
 /** How a condition is composed, read at runtime: AND, OR with their named components, NOT with its operand. */
-type Composition =
+export type Composition =
   | {
       readonly operator: 'and' | 'or'
       readonly components: readonly (readonly [string, z.ZodType])[]
@@ -59,7 +59,7 @@ const schemas_in = (components: Readonly<Record<string, unknown>>) =>
  * How a condition is composed (DOM-5): its operands under its operator
  * (`$Composed`), NOT's value telling its own alone; none for a leaf.
  */
-const composition_of = (condition: z.ZodType): Composition | undefined => {
+export const composition_of = (condition: z.ZodType): Composition | undefined => {
   const operands: unknown = $Composed in condition ? condition[$Composed] : undefined
   if (!is_a_record(operands)) return undefined
   const not = operands['not']

@@ -26,9 +26,9 @@ interface Identified {
 export interface StreamWiring<selection, source, field> {
   /** The use case's path, which a fault names. */
   readonly path: string
-  readonly plan: PlannedQuery<selection, source, field>
+  readonly plan: PlannedQuery<selection, source, field, unknown>
   readonly read: (
-    plan: PlannedQuery<selection, source, field>,
+    plan: PlannedQuery<selection, source, field, unknown>,
   ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
   /** An entry as stored, parsed by the fields read and calculated; one they do not parse is the adapter's fault. */
   readonly entry_of: (stored: unknown) => unknown
@@ -150,7 +150,10 @@ const of_the_fact_at = (at: position | undefined) => (event: RuntimeStreamEvent)
  */
 async function* native<selection, source, field>(
   wiring: StreamWiring<selection, source, field>,
-  stream: Extract<StreamStrategy<selection, source, field>, { strategy: 'native' }>['stream'],
+  stream: Extract<
+    StreamStrategy<selection, source, field, unknown>,
+    { strategy: 'native' }
+  >['stream'],
   from: position,
   after_a_snapshot: boolean,
 ): AsyncGenerator<RuntimeStreamEvent> {
@@ -219,7 +222,7 @@ async function* composed<selection, source, field>(
  */
 export const stream_after = <selection, source, field>(
   wiring: StreamWiring<selection, source, field>,
-  strategy: StreamStrategy<selection, source, field>,
+  strategy: StreamStrategy<selection, source, field, unknown>,
   snapshot: { readonly position: position; readonly entries: readonly unknown[] },
 ): AsyncIterable<RuntimeStreamEvent> =>
   strategy.strategy === 'native'
@@ -238,7 +241,7 @@ export const stream_after = <selection, source, field>(
  */
 export const stream_from = <selection, source, field>(
   wiring: StreamWiring<selection, source, field>,
-  strategy: StreamStrategy<selection, source, field>,
+  strategy: StreamStrategy<selection, source, field, unknown>,
   from: position,
 ): AsyncIterable<RuntimeStreamEvent> =>
   strategy.strategy === 'native'

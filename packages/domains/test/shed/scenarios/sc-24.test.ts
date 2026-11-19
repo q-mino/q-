@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accounts, all, first, oracle, type Who } from './oracle.ts'
+import { accounts, all, first, oracle, pull, type Who } from './oracle.ts'
 
 // SC-24, the borrowing half (part 6.1; reading her loans, a leaf that
 // streams, with part 6.3): Marta's node (PER-6, PER-7, PER-9, PER-14) looks
@@ -122,5 +122,55 @@ describe("SC-24, Marta's node", () => {
         },
       },
     ])
+  })
+})
+
+/** Marta (M-12) and Gianni (M-7), members; the drill and the ladder in the shed; Marta borrows the drill on 2 November (L7, due the 16th). */
+const the_members_shed = async (valid_until = '2027-03-31') => {
+  const shed = await oracle({
+    accounts: accounts({
+      hats: { 'A-MARTA': ['member'], 'A-GIANNI': ['member'] },
+      member_cards: {
+        'A-MARTA': { id: 'M-12', valid_until },
+        'A-GIANNI': { id: 'M-7', valid_until: '2027-03-31' },
+      },
+    }),
+  })
+  for (const [id, name, category] of [
+    ['drill', 'Cordless drill', 'power'],
+    ['ladder', 'Ladder', 'ladder'],
+  ] as const) {
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+  }
+  await first(
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+      loan_id: 'L7',
+      tool_id: 'drill',
+      member_id: 'M-12',
+    }),
+  )
+  return shed
+}
+
+describe('SC-24, the reading half (part 6.3)', () => {
+  test("Marta reads her loans through her card, given down by her node; Gianni's are not hers", async () => {
+    const shed = await the_members_shed('2026-11-12')
+    await first(
+      shed.loans.borrow_a_tool(shed.at('2026-11-02T11:00:00-05:00'), {
+        loan_id: 'L9',
+        tool_id: 'ladder',
+        member_id: 'M-7',
+      }),
+    )
+    // Her card expired on the 12th: reading what she must bring back is no
+    // borrowing, and has no limit of the card (A, 13 Nov 2026 (2)).
+    const [snapshot] = await pull(
+      shed.member
+        .my_loans(shed.as(marta, '2.0.0').when('2026-11-13T09:00:00-05:00'), {})
+        [Symbol.asyncIterator](),
+      1,
+    )
+    expect(snapshot).toMatchObject({ event: 'snapshot', total: 1, entries: [{ loan_id: 'L7' }] })
+    expect(shed.traced()).toEqual([])
   })
 })

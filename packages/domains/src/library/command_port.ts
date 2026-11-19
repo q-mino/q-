@@ -111,7 +111,7 @@ const version_at =
   }
 
 /** A node of a use case's path in a business tree (D105, SC-31): what it binds, what it requires, its creator. */
-interface PathNode {
+export interface PathNode {
   readonly path: string
   readonly binds: z.ZodObject | undefined
   readonly requires: z.ZodType | undefined
@@ -124,7 +124,7 @@ interface PathNode {
  * declares (`binds`, `requires`); what a persona's node declares runs at
  * its tree's leaf (PER-6).
  */
-const nodes_above =
+export const nodes_above =
   (registry: Registry) =>
   (use_case: string): readonly PathNode[] =>
     Object.entries(registry)
@@ -161,7 +161,7 @@ const nodes_above =
  * names, parsed by it; nothing for a node that binds none; none at all
  * when they are not in its schema.
  */
-const bound_by = (
+export const bound_by = (
   node: PathNode,
   input: unknown,
 ): Readonly<Record<string, unknown>> | undefined => {
@@ -176,14 +176,14 @@ const bound_by = (
 }
 
 /** A command's parts at runtime: its creator, its input as declared, its branches. */
-interface RuntimeCommand {
+export interface RuntimeCommand {
   readonly creator: unknown
   readonly input: unknown
   readonly outcomes: Readonly<Record<string, Outcome>>
 }
 
 /** A command's parts, or none for a step (DOM-20), whose port comes with its plan. */
-const command_parts = (command: Commands[string]): RuntimeCommand | undefined => {
+export const command_parts = (command: Commands[string]): RuntimeCommand | undefined => {
   if ($Step in command) return undefined
   const outcomes = command[$Command].outcomes
   if (outcomes === undefined) return undefined
