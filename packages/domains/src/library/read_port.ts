@@ -611,6 +611,15 @@ const runtime_ports = (
         serving(port(each.name, each.path, each.query, each.identity, each.wiring), {
           component: ports.use_cases[each.name],
           path: each.path,
+          // What a leaf over it needs to find the part of a fact that touches
+          // an entry (DOM-17, part 6.3): the identity's path, the facts it names.
+          read: {
+            identity: each.identity,
+            facts: (ports.use_cases[each.name]?.[$UseCase].facts ?? []).flatMap((fact) => {
+              const fact_path = path_of(fact)
+              return fact_path === undefined ? [] : [fact_path]
+            }),
+          },
         }),
       ]),
     )

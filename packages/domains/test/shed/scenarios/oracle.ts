@@ -28,7 +28,8 @@
 // adapter (`log`). Since part 6.2 the tree of Rossi's workshop, an actor
 // from outside whose requests name their operation, entered with its scope
 // alone (`as(…).named`, SC-34), and the trace of the trees, every request
-// answered with no fact, with why (`traced`, F6, PER-14).
+// answered with no fact, with why (`traced`, F6, PER-14). Since part 6.3
+// the member's live reads: "my loans", "my reservations", "in the workshop".
 
 import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
@@ -422,6 +423,9 @@ export const oracle = async (start: Start = {}) => {
         return_a_tool: member.return_a_tool,
         extend_your_loan: member.extend_your_loan,
         the_shelf: member.the_shelf,
+        my_loans: member.my_loans,
+        my_reservations: member.my_reservations,
+        my_reservations_in_the_workshop: member.my_reservations_in_the_workshop,
       },
     })(wired),
     visitor: wlib.tree_ports({

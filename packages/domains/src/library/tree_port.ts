@@ -17,6 +17,7 @@ import {
   is_at_or_above,
   paths_in,
   served_by,
+  type ReadServed,
 } from './runtime.ts'
 
 // The ports of a tree (PER-5, PER-6, DOM-11, D106), which the library builds
@@ -87,9 +88,21 @@ interface CommandLeaf extends TreeLeaf {
   readonly events: Readonly<Record<string, z.ZodType>>
 }
 
-/** A read leaf: the schema of its own entry. */
+/**
+ * How a read leaf streams, at runtime (PER-18): the events of its own, by
+ * name, with their schemas, and the projection of the facts it names; what
+ * the port below serves, its entries' identity and the facts it names.
+ */
+interface LeafStreaming {
+  readonly events: Readonly<Record<string, z.ZodType>>
+  readonly facts: Context
+  readonly served: ReadServed
+}
+
+/** A read leaf: the schema of its own entry; how it streams, if it does. */
 interface ReadLeaf extends TreeLeaf {
   readonly entry: z.ZodObject
+  readonly streaming?: LeafStreaming
 }
 
 /**
@@ -429,7 +442,10 @@ const traced = (
 }
 
 /** An event a projection gives, parsed by its leaf's schema of that event; another is the projection's fault, thrown. */
-const event_of = (leaf: CommandLeaf, projected: unknown): RuntimeLeafEvent => {
+const event_of = (
+  leaf: Pick<CommandLeaf, 'path' | 'events'>,
+  projected: unknown,
+): { readonly event: string; readonly payload: unknown } => {
   if (!is_a_record(projected) || typeof projected['event'] !== 'string') {
     throw new Error(`${leaf.path}: a projection gives no event (D45)`)
   }
@@ -676,17 +692,112 @@ const not_taken = (
   throw new Error(`${leaf.path}: the port below gives an invalid request with no reason (D106.3)`)
 }
 
+/** An input or a cursor the port below does not take (DOM-21, SC-22): the base event, traced. */
+const not_taken_by = (leaf: ReadLeaf, tracing: Tracing, reason: unknown): RuntimeLeafEvent => {
+  const why = not_taken(leaf, reason)
+  return traced(
+    tracing,
+    { event: 'invalid_request', reason: why },
+    { closed_by: 'the_business', outcome: { outcome: 'invalid_request', reason: why } },
+  )
+}
+
+/** A projection of a named fact, with the payload of the part it projects. */
+interface NamedPart {
+  readonly projection: unknown
+  readonly payload: unknown
+}
+
 /**
- * A read leaf's port (PER-18, SC-22): the snapshot alone, one per page, each
- * entry projected; an input or a cursor not in its schema as the base event
- * the port below gives. A request closed before any snapshot leaves its
- * entry in the tree's trace, with why (F6, PER-14).
+ * The part of a fact the leaf names that touches an entry (DOM-17, PER-18,
+ * A, 16 Nov 2026 (6)): among the parts whose path is a fact the read use
+ * case names and whose name the leaf projects (`stream.facts`), the first,
+ * in the order of the parts, whose resources hold the entry's identity, by
+ * the path of the query's identity: the notice of the round touches
+ * Gianni's R8, the step's own part does not. Two such parts touching one
+ * entry come with their case.
+ */
+const named_part = (
+  streaming: LeafStreaming,
+  fact: unknown,
+  identity: unknown,
+): NamedPart | undefined => {
+  const parts: unknown = is_a_record(fact) ? fact['parts'] : undefined
+  if (!Array.isArray(parts)) return undefined
+  return parts.flatMap((part: unknown): readonly NamedPart[] => {
+    if (!is_a_record(part) || typeof part['path'] !== 'string') return []
+    if (!streaming.served.facts.includes(part['path'])) return []
+    const projection = streaming.facts[part['path'].split('/').at(-1) ?? '']
+    const resources = part['resources']
+    const touches =
+      Array.isArray(resources) &&
+      resources.some(
+        (resource: unknown) =>
+          is_a_record(resource) &&
+          resource['path'] === streaming.served.identity &&
+          resource['value'] === identity,
+      )
+    return typeof projection === 'function' && touches
+      ? [{ projection, payload: part['payload'] }]
+      : []
+  })[0]
+}
+
+/**
+ * An event of the stream of the read use case below, in the leaf's words
+ * (PER-18, D72.5, D72.6): every entry projected as in the snapshot; a fact
+ * the leaf names, by the part that touches the entry, its own event, with the
+ * entry and the payload projected from the part; any other fact, and an
+ * entry `changed` by a fact that did not touch it (SC-19), `fact`, the entry
+ * alone, never the envelope (PER-18); `entered`, `left` by its identity, as
+ * it is; `caught_up` and `position_unavailable`, the position opaque.
+ */
+const stream_event_in = (
+  leaf: ReadLeaf,
+  streaming: LeafStreaming,
+  event: Context,
+): RuntimeLeafEvent => {
+  const { position, identity } = event
+  switch (event['event']) {
+    case 'fact': {
+      const entry = entry_in(leaf, event['entry'])
+      const named = named_part(streaming, event['fact'], identity)
+      if (named === undefined) return { event: 'fact', position, identity, entry }
+      const own = event_of(
+        { path: leaf.path, events: streaming.events },
+        called(named.projection, named.payload),
+      )
+      return { event: own.event, position, identity, entry, payload: own.payload }
+    }
+    case 'changed':
+      return { event: 'fact', position, identity, entry: entry_in(leaf, event['entry']) }
+    case 'entered':
+      return { event: 'entered', position, identity, entry: entry_in(leaf, event['entry']) }
+    case 'left':
+      return { event: 'left', position, identity }
+    case 'caught_up':
+      return { event: 'caught_up', position }
+    case 'position_unavailable':
+      return { event: 'position_unavailable' }
+    default:
+      throw new Error(`${leaf.path}: the port below gives an event no stream has (DOM-17)`)
+  }
+}
+
+/**
+ * A read leaf's port (PER-18, SC-22): the snapshot, each entry projected;
+ * where it streams, then its stream's events, or from a position its
+ * stream alone, a resume (DOM-2); where it does not, one snapshot per
+ * page, after a cursor if it resumes; an input or a cursor not in its
+ * schema as the base event the port below gives. A request closed before
+ * any snapshot leaves its entry in the tree's trace, with why (F6,
+ * PER-14); the events of a stream are no rejection, and are not traced.
  */
 const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
   async function* read(
     context: unknown,
     sent: unknown,
-    after?: unknown,
+    resume?: unknown,
   ): AsyncIterable<RuntimeLeafEvent> {
     const entry = entry_of(context)
     const version = at_the_current_major(leaf, majors, entry.version)
@@ -700,37 +811,59 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       })
       return
     }
+    // PER-5.4, PER-5.5: the nodes, then the leaf's limits, at every request,
+    // a resume too (SC-32: a stream opened on 31 March, resumed on 1 April).
     const walked = await walk(leaf.nodes, entry.given)
     const point = walked.closed ? walked : limits_of(leaf, walked.context, input.data)
     if (point.closed) {
       yield traced(tracing, point.event, point.why)
       return
     }
-    // A stream and the actions of a read, with part 6.3: past the checks
+    // The actions of a read, with their block of part 6.3: past the checks
     // of PER-5, which close a request before any read (SC-32).
-    not_yet(leaf, [
-      ['stream', '6.3'],
-      ['actions', '6.3'],
-    ])
+    not_yet(leaf, [['actions', '6.3']])
     const binding = binding_of(
       leaf,
       called(called(leaf.declared['creator'], point.context), input.data),
     )
+    const root = root_of(point.context)
+    if (leaf.streaming !== undefined) {
+      // A leaf that streams reads whole (SC-22): the snapshot, then the
+      // stream from its position; from a position, the stream alone.
+      const events = invoked_with(
+        leaf.port,
+        resume === undefined ? [root, binding.query] : [root, binding.query, resume],
+      )
+      for await (const event of events) {
+        if (!is_a_record(event)) throw new Error(`${leaf.path}: the port below gives no event`)
+        if (event['event'] === 'invalid_request') {
+          yield not_taken_by(leaf, tracing, event['reason'])
+          return
+        }
+        const entries = event['entries']
+        if (event['event'] === 'snapshot' && Array.isArray(entries)) {
+          yield {
+            event: 'snapshot',
+            entries: entries.map((each: unknown) => entry_in(leaf, each)),
+            position: event['position'],
+            total: event['total'],
+          }
+          continue
+        }
+        yield stream_event_in(leaf, leaf.streaming, event)
+      }
+      return
+    }
     const page = {
       ...(binding.size === undefined ? {} : { size: binding.size }),
-      ...(after === undefined ? {} : { after }),
+      ...(resume === undefined ? {} : { after: resume }),
     }
-    const pages = invoked_with(pages_of(leaf), [root_of(point.context), binding.query, page])
+    const pages = invoked_with(pages_of(leaf), [root, binding.query, page])
     for await (const event of pages) {
       if (!is_a_record(event)) throw new Error(`${leaf.path}: the port below gives no event`)
       if (event['event'] === 'invalid_request') {
         // An input the query does not take, or a cursor not of its order key (SC-22).
-        const reason = not_taken(leaf, event['reason'])
-        yield traced(
-          tracing,
-          { event: 'invalid_request', reason },
-          { closed_by: 'the_business', outcome: { outcome: 'invalid_request', reason } },
-        )
+        yield not_taken_by(leaf, tracing, event['reason'])
         return
       }
       const entries = event['entries']
@@ -746,8 +879,42 @@ const read_leaf_port = (leaf: ReadLeaf, majors: Majors, trace: unknown) => {
       }
     }
   }
-  // A stream, with part 6.3: its port is `Streamed` when the leaf declares one.
-  return Object.assign(read, { streamed: leaf.declared['stream'] !== undefined })
+  // `Streamed` when the leaf declares how it streams (PER-18).
+  return Object.assign(read, { streamed: leaf.streaming !== undefined })
+}
+
+/**
+ * How a read leaf streams, as the port below serves it (PER-18, CFG-2): its
+ * events and its facts' projection, from its declaration; the identity's
+ * path and the facts the read use case names, from its port. A stream over
+ * a port that does not stream is a composition fault, named at wiring.
+ */
+const streaming_of = (
+  path: string,
+  declared: Context,
+  port: unknown,
+): LeafStreaming | string | undefined => {
+  const stream = declared['stream']
+  if (stream === undefined) return undefined
+  const served = served_by(port)?.read
+  const streamed =
+    (typeof port === 'function' || (typeof port === 'object' && port !== null)) &&
+    'streamed' in port &&
+    port.streamed === true
+  if (!streamed || served === undefined) {
+    return `${path} streams over a port that does not stream (CFG-2, PER-18)`
+  }
+  const declared_events = is_a_record(stream) ? stream['events'] : undefined
+  const facts = is_a_record(stream) ? stream['facts'] : undefined
+  return {
+    events: Object.fromEntries(
+      Object.entries(is_a_record(declared_events) ? declared_events : {}).flatMap(
+        ([name, schema]) => (is_a_schema(schema) ? [[name, schema]] : []),
+      ),
+    ),
+    facts: is_a_record(facts) ? facts : {},
+    served,
+  }
 }
 
 const runtime_tree_ports = (
@@ -837,6 +1004,7 @@ const runtime_tree_ports = (
         }
       })
       const port = served.get(invokes)
+      const streaming = port === undefined ? undefined : streaming_of(path, parts, port)
       const missing = [
         ...tree_nodes.flatMap((node) =>
           node.looks_up.flatMap((lookup) =>
@@ -846,6 +1014,7 @@ const runtime_tree_ports = (
           ),
         ),
         ...(port === undefined ? [`${path} invokes a use case no port given serves (CFG-2)`] : []),
+        ...(typeof streaming === 'string' ? [streaming] : []),
       ]
       const leaf: TreeLeaf = {
         name,
@@ -858,17 +1027,29 @@ const runtime_tree_ports = (
         port,
         nodes: tree_nodes,
       }
-      return { leaf, own, missing }
+      return {
+        leaf,
+        own,
+        missing,
+        streaming: typeof streaming === 'string' ? undefined : streaming,
+      }
     })
     // A node above two leaves is named once.
     const wiring = [...new Set([...unserved, ...built.flatMap((each) => each.missing)])]
     if (wiring.length > 0) throw new Error(wiring.join('\n'))
     return Object.fromEntries(
-      built.map(({ leaf, own }): readonly [string, unknown] => {
+      built.map(({ leaf, own, streaming }): readonly [string, unknown] => {
         const entry = is_a_record(own) ? own['entry'] : undefined
         const events = is_a_record(own) ? own['events'] : undefined
         if (entry instanceof z.ZodObject) {
-          return [leaf.name, read_leaf_port({ ...leaf, entry }, ports.majors, wired.trace)]
+          return [
+            leaf.name,
+            read_leaf_port(
+              { ...leaf, entry, ...(streaming === undefined ? {} : { streaming }) },
+              ports.majors,
+              wired.trace,
+            ),
+          ]
         }
         if (!is_a_record(events)) throw new Error(`${leaf.path} declares no events (DOM-3)`)
         const schemas = Object.fromEntries(

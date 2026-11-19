@@ -15,10 +15,22 @@ import type { Registry } from './registry.ts'
  */
 export const $Serves: unique symbol = Symbol('Serves')
 
-/** What a port the library builds serves: a component, by its path. */
+/**
+ * What a read use case's port serves beside its use case (part 6.3): the
+ * path of its entries' identity and the paths of the facts it names, so that
+ * a leaf over it finds the part of a fact that touches an entry (DOM-17),
+ * with no registry of the business.
+ */
+export interface ReadServed {
+  readonly identity: string
+  readonly facts: readonly string[]
+}
+
+/** What a port the library builds serves: a component, by its path; a read's entries too. */
 export interface Served {
   readonly component: unknown
   readonly path: string
+  readonly read?: ReadServed
 }
 
 /** A port, freshly built, marked with what it serves. */
@@ -33,7 +45,17 @@ export const served_by = (port: unknown): Served | undefined => {
   if (!($Serves in port)) return undefined
   const served: unknown = port[$Serves]
   if (!is_a_record(served) || typeof served['path'] !== 'string') return undefined
-  return { component: served['component'], path: served['path'] }
+  const read = served['read']
+  return {
+    component: served['component'],
+    path: served['path'],
+    ...(is_a_record(read) &&
+    typeof read['identity'] === 'string' &&
+    Array.isArray(read['facts']) &&
+    read['facts'].every((fact: unknown) => typeof fact === 'string')
+      ? { read: { identity: read['identity'], facts: read['facts'] } }
+      : {}),
+  }
 }
 
 /** The folder of a component's path: its segments before the kind and the name. */
