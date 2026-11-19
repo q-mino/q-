@@ -1,11 +1,12 @@
 // generated
 
-// The scope of the effects of `loans` 1.x (DOM-25, A, 16 Nov 2026 (7)): the
-// builders of a past major; the effects of the next major (`next`, the current
-// `loans`), which every one of 1.x becomes or delegates to; the identities of
-// `loans`. The folders it sees (`sight.ts`): `tools` (id).
+// The scope of the effects of `business/loans/1`, a past major (DOM-22): the
+// builders `earlier` and `delegate`; the next major's as `next`; what the
+// domain's scope gives, but its functions of `dsl` and its ancestors, which may
+// change under a folder once released.
 
 export { earlier, delegate } from './_scope.ts'
 export * as next from '../_effect.ts'
 export * as id from '../_id.ts'
+export * as value from '../_value.ts'
 export * as tools from '../../tools/_door_business.ts'
