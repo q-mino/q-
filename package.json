@@ -20,6 +20,7 @@
     "build": "pnpm --filter @q-mino/phone build"
   },
   "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "dependency-cruiser": "^18.7.2",

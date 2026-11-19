@@ -1,3 +1,4 @@
+import comments from '@eslint-community/eslint-plugin-eslint-comments/configs'
 import js from '@eslint/js'
 import prettier from 'eslint-config-prettier'
 import solid from 'eslint-plugin-solid/configs/typescript'
@@ -10,6 +11,18 @@ export default defineConfig(
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
+  comments.recommended,
+  {
+    // A derogation says why on its line, for one rule and the next line only, and fails once it is no longer needed (CLAUDE.md).
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
+    rules: {
+      '@eslint-community/eslint-comments/require-description': 'error',
+      '@eslint-community/eslint-comments/no-use': [
+        'error',
+        { allow: ['eslint-disable-next-line'] },
+      ],
+    },
+  },
   {
     languageOptions: {
       parserOptions: {
@@ -63,6 +76,10 @@ export default defineConfig(
             'A file imports one scope, the one of its kind (DOM-25): it gives the builders of the kind and what it sees.',
         },
       ],
+      // No derogation in a domains' tree (CLAUDE.md): no cast but `as const`, no directive.
+      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      '@eslint-community/eslint-comments/no-use': ['error', { allow: [] }],
+      '@typescript-eslint/ban-ts-comment': ['error', { 'ts-expect-error': true }],
     },
   },
   prettier,
