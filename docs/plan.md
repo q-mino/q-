@@ -221,8 +221,8 @@ Scope: first face, introduction, relay; handshake by crossed QR and by link; dir
 **21. IndexedDB** (`adapters-web`) — J · 240k
 
 - Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain.
-- Rules: DOM-8, DOM-9, DOM-17, ADP-6, TST-1..6.
-- Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write.
+- Rules: DOM-8, DOM-9, DOM-11, DOM-17, ADP-6, TST-1..6.
+- Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write; the cost of the duplicate branch's lookups measured: a request through a leaf reads its operation twice, at the leaf and at the port, before the step reads it again (DOM-11, "Where the duplicate branch runs", 19 Nov 2026), and A decides on the measure whether to keep the two reads.
 
 **22. Solid rendering** (`adapters-web`, texts in `phone`) — L · 2 sessions × 200k
 
