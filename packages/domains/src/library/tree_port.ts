@@ -185,10 +185,12 @@ const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
  * entry, or one that binds or requires, which its business's command port
  * runs (D105); a port given that the library did not build, or in another
  * folder than its own; a use case a leaf invokes, or a lookup a node runs,
- * that no port given serves. The checks of a current leaf that is not the
- * one of its path in the current major, and of a read leaf that lists
- * actions over a port with no `with_actions` (D110, SC-33), come with their
- * parts (6.4, 6.3).
+ * that no port given serves; a read leaf that streams over a port that
+ * does not, or lists actions over a port with no `with_actions` (D110,
+ * SC-33); a leaf that follows a fact of no domain whose versions were given,
+ * or with no port to measure its wait (`elapsed`). The check of a current
+ * leaf that is not the one of its path in the current major comes with
+ * part 6.4.
  *
  * Per request, in the order of PER-5: the version's major picks the leaf
  * (the current major since part 6.1; past majors and the gate with part

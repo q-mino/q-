@@ -40,7 +40,9 @@ import {
 // position (part 5.2, DOM-2, DOM-17), or, from a position, the stream alone,
 // a resume (`read_stream.ts`). In pages (part 5.3, SC-22): a stream of
 // snapshots, one per page, each read when the consumer asks for it, after
-// the cursor of the page before it. The actions come with 6.3.
+// the cursor of the page before it. With actions (part 6.3, SC-33), where the
+// adapter evaluates them: each entry with the applicability of each
+// (`with_actions`, `actions.ts`).
 
 /** The read adapter as the ports meet it at runtime. */
 interface RuntimeAdapter<selection, source, field> {
