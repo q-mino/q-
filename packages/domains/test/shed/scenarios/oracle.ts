@@ -17,7 +17,11 @@
 // the executor will read them, at the current shape (`queued`). Since part
 // 5.1 the read ports of `tools` and `loans` join the harness, over the same
 // cell: their snapshots, a read sent at an instant (`when`), with no
-// operation.
+// operation. Since part 5.2 their streams too, native (the oracle's own, the
+// reference) or composed by the library over the cell's log (`streams`),
+// with the deviations a stream must bear injected (TST-4): a position the
+// cell keeps no longer (`forget`), every fact delivered twice
+// (`redelivered`).
 
 import * as wlib from '../wlib.ts'
 import {
@@ -31,6 +35,7 @@ import {
   type ReadCell,
   type Recorded,
   type State,
+  type Strategy,
 } from '../adapter/memory/index.ts'
 import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
@@ -65,20 +70,27 @@ const position_at = (count: number): wlib.position => wlib.position.parse(String
  * after it; the facts from a position on, inclusive, and those after it as
  * soon as there is one (DOM-17); the fact an operation recorded, kept for
  * every operation (DOM-11); the entries queued with the facts, in order,
- * after those it kept.
+ * after those it kept. Injected (TST-4): the positions before one it keeps
+ * no longer, once forgotten (`forget`); every fact it gives a stream or a
+ * log twice, if it redelivers (at least once, DOM-17).
  */
 const command_cell = (
   kept: readonly wlib.StoredEntry[],
+  redelivered: boolean,
 ): CommandCell &
   ReadCell & {
     readonly entries: () => readonly wlib.StoredEntry[]
+    readonly forget: (before: wlib.position) => void
   } => {
   let state = nothing
   const recorded: Recorded[] = []
   const entries: wlib.StoredEntry[] = [...kept]
   const waiting: (() => void)[] = []
+  let kept_from = 0
+  const delivered = (facts: readonly Recorded[]): readonly Recorded[] =>
+    redelivered ? facts.flatMap((each) => [each, each]) : facts
   const after = (position: wlib.position): readonly Recorded[] =>
-    recorded.filter((each) => Number(each.position) > Number(position))
+    delivered(recorded.filter((each) => Number(each.position) > Number(position)))
   return {
     get: () => state,
     record: (step) => {
@@ -93,13 +105,18 @@ const command_cell = (
       for (const wake of waiting.splice(0)) wake()
     },
     position: () => position_at(recorded.length),
-    history: (from) => ({
-      history: 'kept',
-      recorded: recorded.filter(
-        (each) => from === undefined || Number(each.position) >= Number(from),
-      ),
-      position: position_at(recorded.length),
-    }),
+    history: (from) =>
+      (from === undefined ? 1 : Number(from)) < kept_from
+        ? { history: 'forgotten' }
+        : {
+            history: 'kept',
+            recorded: delivered(
+              recorded.filter(
+                (each) => from === undefined || Number(each.position) >= Number(from),
+              ),
+            ),
+            position: position_at(recorded.length),
+          },
     after: (position) =>
       after(position).length > 0
         ? Promise.resolve(after(position))
@@ -114,6 +131,9 @@ const command_cell = (
           each.fact.operation.id === operation.id && each.fact.operation.scope === operation.scope,
       ),
     entries: () => entries,
+    forget: (before) => {
+      kept_from = Number(before)
+    },
   }
 }
 
@@ -127,11 +147,19 @@ export interface Kept {
   readonly entries?: readonly wlib.StoredEntry[]
 }
 
-/** How a shed starts: what its store kept, the majors its configurator gives, the zone of its calendar. */
+/**
+ * How a shed starts: what its store kept, the majors its configurator gives,
+ * the zone of its calendar; how its read ports stream, natively (the
+ * oracle's, the default) or composed by the library over the cell's log
+ * (DOM-2, D69.3); whether its cell delivers every fact twice to the streams
+ * and the log (TST-4).
+ */
 export interface Start {
   readonly kept?: Kept
   readonly majors?: readonly wlib.Majors[]
   readonly time_zone?: string
+  readonly streams?: Strategy
+  readonly redelivered?: boolean
 }
 
 /** Values given one at a time, each when asked. */
@@ -228,7 +256,7 @@ const paths_of_ports = (
 export const oracle = async (start: Start = {}) => {
   const kept = start.kept ?? {}
   const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
-  const cell = command_cell(kept.entries ?? [])
+  const cell = command_cell(kept.entries ?? [], start.redelivered ?? false)
   // The versions of the store, checked against what it kept (SC-9); its
   // state rebuilt from its log, each fact kept as it was stored (SC-8): a
   // store that kept no fact has nothing to rebuild.
@@ -244,7 +272,7 @@ export const oracle = async (start: Start = {}) => {
     cell.record({ fact, entries: [], state: each.state })
   }
   const ports = memory_commands(cell)(versions)
-  const reads = memory_reads(cell)(versions)
+  const reads = memory_reads(cell, start.streams)(versions)
   const alone_registry = {
     ...tools_registry,
     ...loans_registry,
@@ -331,6 +359,8 @@ export const oracle = async (start: Start = {}) => {
         .filter((entry) => entry.effect === effect)
         .map((entry) => versions[wlib.$Versions].entry(entry)),
     versions,
+    /** The positions before this one, which the cell keeps no longer (TST-4): a stream from one of them is `position_unavailable`. */
+    forget: cell.forget,
   }
 }
 
@@ -346,3 +376,103 @@ export const all = async <event>(events: AsyncIterable<event>): Promise<readonly
   for await (const event of events) every.push(event)
   return every
 }
+
+/** The next events of a stream that stays open, so many, as the consumer pulls them. */
+export const pull = async <event>(
+  stream: AsyncIterator<event>,
+  count: number,
+): Promise<readonly event[]> => {
+  const pulled: event[] = []
+  while (pulled.length < count) {
+    const next = await stream.next()
+    if (next.done === true) throw new Error('the stream ended')
+    pulled.push(next.value)
+  }
+  return pulled
+}
+
+/** The events of a stream that stays open, up to `caught_up` or a terminal event, included. */
+export const until_caught_up = async <event extends { readonly event: string }>(
+  stream: AsyncIterator<event>,
+): Promise<readonly event[]> => {
+  const pulled: event[] = []
+  for (;;) {
+    const next = await stream.next()
+    if (next.done === true) return pulled
+    pulled.push(next.value)
+    if (next.value.event === 'caught_up' || next.value.event === 'position_unavailable')
+      return pulled
+  }
+}
+
+/** An event of a read, as a consumer of a live view reads it. */
+export interface Seen {
+  readonly event: string
+  readonly position?: wlib.position
+  readonly identity?: unknown
+  readonly entry?: unknown
+  readonly entries?: readonly unknown[]
+}
+
+/**
+ * What a consumer of a live view holds after a read's events (DOM-17): the
+ * snapshot's entries by identity, then each event applied, an entry set by
+ * `fact`, `entered` or `changed`, removed by `left`; an event already met,
+ * by position and identity, left out, so that a resume, inclusive, and a
+ * fact delivered twice change nothing (D72). The state the snapshot at P
+ * and the events from P rebuild, compared with the snapshot at the end
+ * (D69.3).
+ */
+export const view =
+  (identity: string) =>
+  (events: readonly Seen[]): ReadonlyMap<unknown, unknown> => {
+    const held = new Map<unknown, unknown>()
+    const met = new Set<string>()
+    for (const event of events) {
+      if (event.event === 'snapshot') {
+        held.clear()
+        for (const entry of event.entries ?? []) {
+          if (typeof entry === 'object' && entry !== null && identity in entry)
+            held.set(Reflect.get(entry, identity), entry)
+        }
+        continue
+      }
+      if (event.position === undefined || !('identity' in event)) continue
+      const key = `${event.position} ${JSON.stringify(event.identity)}`
+      if (met.has(key)) continue
+      met.add(key)
+      if (event.event === 'left') held.delete(event.identity)
+      else held.set(event.identity, event.entry)
+    }
+    return held
+  }
+
+/**
+ * A read followed from its snapshot while a story runs, up to `caught_up`,
+ * and read again at the end: what the test of D69.3 compares, the snapshot
+ * at P with the events from P against the snapshot at the end. An event of
+ * the fact at P, which the snapshot holds, is a double (D72): it throws.
+ */
+export const followed = async <event extends Seen>(
+  open: () => AsyncIterator<event>,
+  story: () => Promise<void>,
+): Promise<{
+  readonly snapshot: readonly event[]
+  readonly events: readonly event[]
+  readonly at_the_end: readonly event[]
+}> => {
+  const live = open()
+  const snapshot = await pull(live, 1)
+  await story()
+  const events = await until_caught_up(live)
+  // No double (D72): the fact at the snapshot's position is in the snapshot.
+  const at = snapshot[0]?.position
+  if (events.some((event) => event.event !== 'caught_up' && event.position === at)) {
+    throw new Error(`a stream gave again the fact at its snapshot's position, ${String(at)}`)
+  }
+  return { snapshot, events, at_the_end: await pull(open(), 1) }
+}
+
+/** The events of a stream as their kind and position, the shape a scenario reads first. */
+export const told = (events: readonly Seen[]): readonly (readonly [string, unknown])[] =>
+  events.map((event) => [event.event, event.position])

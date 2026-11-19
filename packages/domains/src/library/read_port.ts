@@ -5,18 +5,25 @@ import type { InputNotInSchema, SnapshotEvent } from './base_event.ts'
 import { $Calculation } from './component.ts'
 import { $Query, type Direction, type Queries } from './query.ts'
 import type { PlannedQuery, ReadAdapter } from './read_adapter.ts'
-import type { Streams } from './stream.ts'
+import type { StreamStrategy, Streams } from './stream.ts'
+import type { Envelope, PartFields, StoredEnvelope } from './envelope.ts'
 import { $UseCase, type QueriesOf, type ReadUseCases } from './use_case.ts'
-import type { FactsIn, Registry, Versions } from './registry.ts'
+import { $Versions, type FactsIn, type Registry, type Versions } from './registry.ts'
 import type {
   Applicabilities,
   ApplicabilityFragmentOf,
   ApplicableNames,
   ReadUseCasePort,
 } from './use_case_port.ts'
-import { is_a_schema } from './kind.ts'
+import { is_a_schema, kind_of } from './kind.ts'
 import { bind, fold, type BoundLeaf } from './bound_condition.ts'
 import { called, is_a_record, paths_in } from './runtime.ts'
+import {
+  stream_after,
+  stream_from,
+  type RuntimeStreamEvent,
+  type StreamWiring,
+} from './read_stream.ts'
 
 // The ports of the read use cases (DOM-2, DOM-18, LIB-14), which the library
 // builds over a read adapter: for each invocation, the input parsed by its
@@ -26,8 +33,10 @@ import { called, is_a_record, paths_in } from './runtime.ts'
 // field; the order as written, closed by the entry's identity, ascending
 // (LIB-9, D109); the adapter's read, in one snapshot; the entries parsed by
 // the query's fields and calculations; the snapshot, at the position read
-// at (D66). Part 5.1 gives the snapshot; the stream from its position comes
-// with part 5.2, the pages with 5.3, the actions with 6.3.
+// at (D66); then, where the adapter streams the query, the events from that
+// position (part 5.2, DOM-2, DOM-17), or, from a position, the stream alone,
+// a resume (`read_stream.ts`). The pages come with part 5.3, the actions with
+// 6.3.
 
 /** The read adapter as the ports meet it at runtime. */
 interface RuntimeAdapter<selection, source, field> {
@@ -44,14 +53,18 @@ interface RuntimeAdapter<selection, source, field> {
   readonly read: (
     plan: PlannedQuery<selection, source, field>,
   ) => Promise<{ readonly entries: readonly unknown[]; readonly position: position }>
-  readonly streams: Readonly<Record<string, unknown>>
+  readonly streams: Readonly<Record<string, StreamStrategy<selection, source, field> | undefined>>
   readonly applicability?: Readonly<Record<string, unknown>>
 }
 
-/** An event of a read port at runtime: the snapshot, its entries parsed, or an input not in its schema. */
-type RuntimeEvent = SnapshotEvent<unknown> | InputNotInSchema
+/**
+ * An event of a read port at runtime: the snapshot, its entries parsed; the
+ * events of its stream, the facts' parts parsed; or an input not in its
+ * schema.
+ */
+type RuntimeEvent = SnapshotEvent<unknown> | RuntimeStreamEvent | InputNotInSchema
 
-/** A read use case's port at runtime: its snapshot, whether it streams, its pages, its actions. */
+/** A read use case's port at runtime: its snapshot and its stream, whether it streams, its pages, its actions. */
 type RuntimePort = ((
   context: RootContext,
   input: unknown,
@@ -213,7 +226,9 @@ const runtime_ports = (
 
   // At wiring (CFG-2), every fault in one message: a use case not in the
   // registry; a calculation not in it; an entry's identity that no registry
-  // given names, which a stream's touch reads by its path (DOM-17).
+  // given names, which a stream's touch reads by its path (DOM-17); a fact
+  // the use case names that is not its domain's, which its stream would not
+  // carry (DOM-17).
   const queries = Object.entries(ports.use_cases).map(([name, use_case]) => {
     const path = path_of(use_case)
     if (path === undefined)
@@ -225,6 +240,12 @@ const runtime_ports = (
       return {
         name,
         fault: `${path}: its identity ${query.identity} is an identity that no registry given names: give the registry of its domain (identities, DOM-24)`,
+      }
+    }
+    if (use_case[$UseCase].facts.some((fact) => path_of(fact) === undefined)) {
+      return {
+        name,
+        fault: `${path}: it names a fact that is not its domain's, which its stream does not carry (DOM-17)`,
       }
     }
     return { name, path, query, identity }
@@ -244,6 +265,33 @@ const runtime_ports = (
       and: adapter.algebra.and,
       or: adapter.algebra.or,
       not: adapter.algebra.not,
+    })
+
+    /**
+     * Whether a fact as stored is of the ports' domain (DOM-8, D64.3): a fact
+     * is of one domain, so any of its parts tells, by its path in the
+     * domain's registry, the same in every major (DOM-24).
+     */
+    const of_the_domain = (fact: StoredEnvelope): boolean =>
+      fact.parts.some((part) => part.path in ports.registry)
+    /**
+     * A fact of the domain as stored, as a stream carries it (DOM-17): its
+     * parts at the current shape, each by its path and version, at the one
+     * place (DOM-22), which stops on a version it does not know; its
+     * operation and correlation. What the duplicate branch reads (the branch,
+     * the fingerprint) stays in the store (PER-18).
+     */
+    const envelope_of = (fact: StoredEnvelope): Envelope<readonly PartFields[]> => ({
+      parts: fact.parts.map((part) => {
+        if (!(part.path in ports.registry)) {
+          throw new Error(
+            `a fact of the domain holds a part of another, ${part.path}: one fact, one domain (DOM-8)`,
+          )
+        }
+        return ports.versions[$Versions].part(part)
+      }),
+      operation: fact.operation,
+      correlation: fact.correlation,
     })
 
     /**
@@ -295,7 +343,8 @@ const runtime_ports = (
       identity: string,
       wiring: ReturnType<typeof wired>,
     ): RuntimePort => {
-      const streamed = adapter.streams[name] !== undefined
+      const strategy = adapter.streams[name]
+      const streamed = strategy !== undefined
       const plan_of = (
         context: RootContext,
         input: unknown,
@@ -351,29 +400,59 @@ const runtime_ports = (
         }
         return parsed.data
       }
-      const snapshot = async function* (
+      const identity_schema: unknown = query.fields.shape[query.identity]
+      const wiring_of = (
+        plan: PlannedQuery<selection, source, field>,
+      ): StreamWiring<selection, source, field> => ({
+        path,
+        plan,
+        read: adapter.read,
+        entry_of,
+        identity_of: (stored) => {
+          if (!is_a_schema(identity_schema))
+            throw new Error(`${path}: its identity ${query.identity} is no field (LIB-9)`)
+          const parsed = identity_schema.safeParse(stored)
+          if (!parsed.success) {
+            throw new Error(
+              `${path}: the adapter's stream gives an identity its field does not parse (ADP-8): ${parsed.error.message}`,
+            )
+          }
+          return parsed.data
+        },
+        identity_in: (entry) => (is_a_record(entry) ? entry[query.identity] : undefined),
+        of_the_domain,
+        envelope_of,
+      })
+      // The snapshot, then, where the adapter streams the query, the events
+      // from its position (DOM-2); from a position, the stream alone, a
+      // resume. An input not in its schema reads nothing, whatever the
+      // position (DOM-21).
+      const invoked = async function* (
         context: RootContext,
         input: unknown,
         from?: position,
       ): AsyncGenerator<RuntimeEvent> {
-        if (from !== undefined) {
-          throw new Error(`${path}: a stream from a position comes with part 5.2 (DOM-17)`)
-        }
         const plan = plan_of(context, input)
         if (plan === undefined) {
           yield { event: 'invalid_request', reason: 'input_not_in_schema' }
           return
         }
+        if (from !== undefined) {
+          if (strategy === undefined) {
+            throw new Error(
+              `${path}: the adapter does not stream it, so it reads from no position (DOM-2, LIB-8)`,
+            )
+          }
+          yield* stream_from(wiring_of(plan), strategy, from)
+          return
+        }
         const read = await adapter.read(plan)
         const entries = read.entries.map(entry_of)
         yield { event: 'snapshot', entries, position: read.position, total: entries.length }
-        if (streamed) {
-          throw new Error(
-            `${path}: the stream from the snapshot's position comes with part 5.2 (DOM-17)`,
-          )
-        }
+        if (strategy === undefined) return
+        yield* stream_after(wiring_of(plan), strategy, { position: read.position, entries })
       }
-      return Object.assign(snapshot, {
+      return Object.assign(invoked, {
         streamed,
         pages: (): never => {
           throw new Error(`${path}: a read in pages comes with part 5.3 (SC-22)`)
@@ -391,7 +470,21 @@ const runtime_ports = (
     const built = queries.flatMap((each) =>
       'fault' in each ? [] : [{ ...each, wiring: wired(each.name, each.path, each.query) }],
     )
-    const wiring_faults = built.flatMap((each) => each.wiring.faults)
+    // A stream carries the facts of its domain (DOM-17), which the store's
+    // versions read (DOM-22, CFG-2): where the adapter streams a query, every
+    // fact of the registry is of a domain whose majors they were given.
+    const streaming = built.filter((each) => adapter.streams[each.name] !== undefined)
+    const unread = Object.entries(ports.registry).flatMap(([path, component]) =>
+      kind_of(component)?.kind === 'fact' && !ports.versions[$Versions].reads(path) ? [path] : [],
+    )
+    const wiring_faults = [
+      ...built.flatMap((each) => each.wiring.faults),
+      ...(streaming.length > 0 && unread.length > 0
+        ? [
+            `the streams of ${streaming.map((each) => each.path).join(', ')} carry ${unread.join(', ')}, of no domain whose majors the versions were given (DOM-22, CFG-2)`,
+          ]
+        : []),
+    ]
     if (wiring_faults.length > 0) throw new Error(wiring_faults.join('\n'))
     return Object.fromEntries(
       built.map((each): readonly [string, RuntimePort] => [

@@ -2,7 +2,10 @@ import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
 import {
   builders_at,
+  correlation,
   date_time,
+  fingerprint,
+  operation_id,
   day,
   day_of,
   position,
@@ -10,16 +13,19 @@ import {
   time_zone,
   versions,
 } from '../../src/library/index.ts'
-import type { PlannedQuery, Registry, RootContext } from '../../src/library/index.ts'
+import type { LogEvent, PlannedQuery, Registry, RootContext } from '../../src/library/index.ts'
 
 // The read ports (part 5.1, DOM-18, LIB-9): the query planned as data for
 // the adapter, its selection folded into the adapter's fragments, a
 // calculation one more field, the order closed by the identity; the entries
 // parsed; the snapshot at the position read at; an input not in its schema,
-// and the faults of the wiring. On a test domain written for the purpose
+// and the faults of the wiring. Since part 5.2 the stream after the
+// snapshot, composed by the library over the adapter's log (DOM-2, DOM-17);
+// the native and the composed on Shed's oracle, with its scenarios. On a test domain written for the purpose
 // (LIB-2): the things of a workshop, their uses counted since a day.
 
-const { id, selection, calculation, query, read_use_case, AND, NOT } = builders_at<RootContext>()
+const { id, fact, selection, calculation, query, read_use_case, AND, NOT } =
+  builders_at<RootContext>()
 
 // Branded with their paths, as the generator brands a tree's (DOM-24).
 const thing_id = id({ format: z.string().min(1) }).brand<'business/things/id/thing_id'>()
@@ -260,20 +266,105 @@ describe('the read ports (part 5.1)', () => {
     )
   })
 
-  test('a port that streams gives its snapshot; the stream after it, the pages and a resume come with their parts', async () => {
+  test('a port that streams gives its snapshot, then its stream; a composed one does not resume', async () => {
+    // The things of `owners` change on facts of another domain only: the
+    // composed stream reads again after each, an entry entered, changed,
+    // left (DOM-17, SC-19); a fact of another domain touches no entry.
+    const reads = [
+      [{ owner: 'O-1', name: 'drill' }],
+      [
+        { owner: 'O-2', name: 'saw' },
+        { owner: 'O-1', name: 'cordless drill' },
+      ],
+      [{ owner: 'O-2', name: 'saw' }],
+    ]
+    let read = 0
     const { adapter } = an_adapter([])
-    const log = () => every_of([])
+    const of_another_domain = (at: string): LogEvent => ({
+      event: 'fact',
+      position: position.parse(at),
+      fact: {
+        parts: [
+          {
+            path: 'business/owners/fact/an_owner_has_moved',
+            payload: {},
+            resources: [],
+            version: '1.0.0',
+          },
+        ],
+        operation: { id: operation_id.parse('op'), scope: 'test' },
+        correlation: correlation.parse('c'),
+        branch: 'b',
+        composed: {},
+        fingerprint: fingerprint.parse('f'),
+      },
+    })
+    const log = (from: position | undefined) =>
+      every_of<LogEvent>([
+        ...(from === position.parse('1') ? [of_another_domain('1')] : []),
+        of_another_domain('2'),
+        of_another_domain('3'),
+        { event: 'caught_up', position: position.parse('3') },
+      ])
     const ports = read_use_case_ports({
       registry,
       identities: owners_registry,
       versions: the_versions,
       use_cases: { owners },
-    })({ ...adapter, streams: { owners: { strategy: 'composed', log } } })
+    })({
+      ...adapter,
+      read: () => {
+        const entries = reads[Math.min(read, reads.length - 1)] ?? []
+        read += 1
+        return Promise.resolve({ entries, position: position.parse(String(read)) })
+      },
+      streams: { owners: { strategy: 'composed', log } },
+    })
     expect(ports.owners.streamed).toBe(true)
-    expect(await first(ports.owners(context, {}))).toMatchObject({ event: 'snapshot' })
-    await expect(every(ports.owners(context, {}))).rejects.toThrow('part 5.2')
-    await expect(every(ports.owners(context, {}, position.parse('3')))).rejects.toThrow('part 5.2')
+    expect(await every(ports.owners(context, {}))).toEqual([
+      {
+        event: 'snapshot',
+        entries: [{ owner: 'O-1', name: 'drill' }],
+        position: '1',
+        total: 1,
+      },
+      { event: 'entered', position: '2', identity: 'O-2', entry: { owner: 'O-2', name: 'saw' } },
+      {
+        event: 'changed',
+        position: '2',
+        identity: 'O-1',
+        entry: { owner: 'O-1', name: 'cordless drill' },
+      },
+      { event: 'left', position: '3', identity: 'O-1' },
+      { event: 'caught_up', position: '3' },
+    ])
+    expect(await every(ports.owners(context, {}, position.parse('3')))).toEqual([
+      { event: 'position_unavailable' },
+    ])
     expect(() => ports.owners.pages(context, {}, {})).toThrow('part 5.3')
+  })
+
+  test('a port that streams the facts of a domain whose majors the versions were not given stops at wiring', () => {
+    const { adapter } = an_adapter([])
+    const a_thing_has_been_kept = fact({
+      payload: z.strictObject({ thing_id }),
+    }).brand<'business/things/fact/a_thing_has_been_kept'>()
+    const wiring = (streams: {
+      readonly owners?: { strategy: 'composed'; log: () => AsyncIterable<never> }
+    }) =>
+      read_use_case_ports({
+        registry: {
+          ...registry,
+          'business/things/fact/a_thing_has_been_kept': a_thing_has_been_kept,
+        },
+        identities: owners_registry,
+        versions: the_versions,
+        use_cases: { owners },
+      })({ ...adapter, streams })
+    expect(() => wiring({ owners: { strategy: 'composed', log: () => every_of([]) } })).toThrow(
+      'the streams of business/things/usecase/owners carry business/things/fact/a_thing_has_been_kept, of no domain whose majors the versions were given (DOM-22, CFG-2)',
+    )
+    expect(() => wiring({})).not.toThrow()
   })
 })
 

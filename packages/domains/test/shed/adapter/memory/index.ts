@@ -4,7 +4,8 @@
 // at a time. The links between domains are typed in the modules (`loans.ts`
 // imports `tools.ts`), and their imports are the graph of who reads whom.
 // It runs over the library as the library's parts give it bodies: the
-// commands since part 4.1, the snapshots of the reads since 5.1.
+// commands since part 4.1, the snapshots of the reads since 5.1, their
+// streams since 5.2.
 //
 // Reads are typed by subject (DOM-18): each domain module gives, for each
 // subject, its selection fragments over a typed candidate and the sources of
@@ -660,6 +661,16 @@ const log =
 const native = (cell: ReadCell) => (registry: wlib.Registry) =>
   ({ strategy: 'native', stream: stream(cell)(registry) }) as const
 
+/**
+ * A query streamed by the library over the oracle's reads and its fact log
+ * (`composed`, DOM-2): what an adapter that has no stream of its own
+ * declares, compared here with the oracle's native stream (D69.3, TST-2).
+ */
+const composed = (cell: ReadCell) => ({ strategy: 'composed', log: log(cell) }) as const
+
+/** How the oracle's read ports stream: natively, the reference, or composed by the library over its log. */
+export type Strategy = 'native' | 'composed'
+
 /** The command use cases of `tools`, whose ports the oracle builds. */
 export const tools_command_use_cases = {
   add_a_tool,
@@ -751,68 +762,75 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
 /**
  * The read ports of `tools` and `loans` over the oracle (TST-2), one subject
  * at a time (DOM-18): what the scenarios of the reads run on
- * (`scenarios/oracle.ts`). Every query streams natively; `loans` reads its
+ * (`scenarios/oracle.ts`). Every query streams, natively, or composed by the
+ * library over the cell's log (`by`, part 5.2); `loans` reads its
  * entries' identities of `tools` (`tool_id`), whose paths `tools`' registry
  * gives (`identities`, GR-3), its own registry the domain's, whose facts its
  * streams carry (DOM-17).
  */
-export const memory_reads = (cell: ReadCell) => (versions: wlib.Versions) => ({
-  tools: wlib.read_use_case_ports({
-    registry: tools_registry,
-    versions,
-    use_cases: { the_catalogue },
-  })({
-    algebra: { ...tool_selection, after },
-    sources: tool_sources,
-    read: read(cell),
-    page: page(cell),
-    streams: { the_catalogue: native(cell)(tools_registry) },
-  }),
-  loans: {
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: { the_ongoing_loans_of_a_member },
-    })({
-      algebra: { ...loan_selection, after },
-      sources: loan_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: { the_ongoing_loans_of_a_member: native(cell)(loans_registry) },
-      // The member's buttons on the rows of their loans (SC-33): the
-      // commands' own fragments, on the state of the read (ADP-8).
-      applicability: { the_ongoing_loans_of_a_member: loans_fragments },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      versions,
-      use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
-    })({
-      algebra: { ...reservation_selection, after },
-      sources: reservation_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: {
-        the_reservations_of_a_member: native(cell)(loans_registry),
-        the_reservations_of_a_member_in_the_workshop: native(cell)(loans_registry),
+export const memory_reads =
+  (cell: ReadCell, by: Strategy = 'native') =>
+  (versions: wlib.Versions) => {
+    const streamed = (registry: wlib.Registry) =>
+      by === 'native' ? native(cell)(registry) : composed(cell)
+    return {
+      tools: wlib.read_use_case_ports({
+        registry: tools_registry,
+        versions,
+        use_cases: { the_catalogue },
+      })({
+        algebra: { ...tool_selection, after },
+        sources: tool_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: { the_catalogue: streamed(tools_registry) },
+      }),
+      loans: {
+        ...wlib.read_use_case_ports({
+          registry: loans_registry,
+          versions,
+          use_cases: { the_ongoing_loans_of_a_member },
+        })({
+          algebra: { ...loan_selection, after },
+          sources: loan_sources,
+          read: read(cell),
+          page: page(cell),
+          streams: { the_ongoing_loans_of_a_member: streamed(loans_registry) },
+          // The member's buttons on the rows of their loans (SC-33): the
+          // commands' own fragments, on the state of the read (ADP-8).
+          applicability: { the_ongoing_loans_of_a_member: loans_fragments },
+        }),
+        ...wlib.read_use_case_ports({
+          registry: loans_registry,
+          versions,
+          use_cases: { the_reservations_of_a_member, the_reservations_of_a_member_in_the_workshop },
+        })({
+          algebra: { ...reservation_selection, after },
+          sources: reservation_sources,
+          read: read(cell),
+          page: page(cell),
+          streams: {
+            the_reservations_of_a_member: streamed(loans_registry),
+            the_reservations_of_a_member_in_the_workshop: streamed(loans_registry),
+          },
+        }),
+        ...wlib.read_use_case_ports({
+          registry: loans_registry,
+          // The entry of a tool of the shed is named by `tools`' id (SC-21).
+          identities: tools_registry,
+          versions,
+          use_cases: { the_loans_of_each_tool_this_month },
+        })({
+          algebra: { ...loans_tool_selection, after },
+          calculations: loans_tool_calculation,
+          sources: loans_tool_sources,
+          read: read(cell),
+          page: page(cell),
+          streams: { the_loans_of_each_tool_this_month: streamed(loans_registry) },
+        }),
       },
-    }),
-    ...wlib.read_use_case_ports({
-      registry: loans_registry,
-      // The entry of a tool of the shed is named by `tools`' id (SC-21).
-      identities: tools_registry,
-      versions,
-      use_cases: { the_loans_of_each_tool_this_month },
-    })({
-      algebra: { ...loans_tool_selection, after },
-      calculations: loans_tool_calculation,
-      sources: loans_tool_sources,
-      read: read(cell),
-      page: page(cell),
-      streams: { the_loans_of_each_tool_this_month: native(cell)(loans_registry) },
-    }),
-  },
-})
+    }
+  }
 
 export const memory_adapter = (cell: Cell) => (versions: wlib.Versions) => {
   const commands = memory_commands(cell)(versions)
