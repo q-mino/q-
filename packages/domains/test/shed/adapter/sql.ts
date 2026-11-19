@@ -548,7 +548,8 @@ const the_total = z.tuple([z.strictObject({ total: z.coerce.number().int().min(0
 
 /**
  * A page in one transaction, a snapshot (SC-22, D72.8): the fields of the
- * candidates that the page's selection keeps, in the order, `limit` at most;
+ * candidates that the page's selection keeps, in the order, `limit` at most
+ * (every one for a page with no size);
  * how many the query's selection keeps; and the position. The transaction
  * is serializable (SC-11), so the two statements read one state.
  */
@@ -557,7 +558,11 @@ const page =
   (plan) =>
     database.transaction(async (tx) => ({
       entries: await with_leaves(tx)(plan.leaves)(
-        await tx.rows(sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`),
+        await tx.rows(
+          plan.limit === undefined
+            ? select({ ...plan, selection: plan.page })
+            : sql`${select({ ...plan, selection: plan.page })} limit ${plan.limit}`,
+        ),
       ),
       total: the_total.parse(
         await tx.rows(sql`select count(*) as total from ${plan.from} where ${plan.selection}`),
@@ -879,6 +884,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
   loans: {
     ...wlib.command_use_case_ports({
       registry: loans_registry,
+      // The facts of `loans` hold identities of `tools` (GR-3).
+      identities: tools_registry,
       versions,
       use_cases: {
         borrow_a_tool,
@@ -917,6 +924,8 @@ export const sql_adapter = (database: Database) => (versions: wlib.Versions) => 
     }),
     ...wlib.read_use_case_ports({
       registry: loans_registry,
+      // The entry of a tool of the shed is named by `tools`' id (SC-21).
+      identities: tools_registry,
       versions,
       use_cases: {
         the_ongoing_loans_of_a_member,

@@ -104,7 +104,9 @@ export type FactLog = (from: position | undefined) => AsyncIterable<LogEvent>
  *   touches and that stays is the fact, an untouched one that stays and is
  *   no longer the same changed, a new untouched one entered, a missing one
  *   left. A whole read per fact of the node: the adapter's author chooses it
- *   for the queries where that is cheap.
+ *   for the queries where that is cheap. It does not resume: from a
+ *   position it gives `position_unavailable`, and the consumer reads again,
+ *   since the state before a position it did not read at is gone (DOM-17).
  * A query with no strategy is only read. Either way a query's stream carries
  * only the facts of its domain (`fact`), as if each had a log of its own
  * (DOM-8, D64.3), so that a fact of `loans` holding the drill's id touches

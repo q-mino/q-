@@ -1,0 +1,549 @@
+import { describe, expect, test } from 'vitest'
+import * as z from 'zod'
+import {
+  builders_at,
+  correlation,
+  date_time,
+  fingerprint,
+  operation_id,
+  day,
+  day_of,
+  cursor,
+  position,
+  read_use_case_ports,
+  time_zone,
+  versions,
+} from '../../src/library/index.ts'
+import type {
+  LogEvent,
+  OrderKeyValue,
+  PlannedPage,
+  PlannedQuery,
+  Registry,
+  RootContext,
+} from '../../src/library/index.ts'
+
+// The read ports (part 5.1, DOM-18, LIB-9): the query planned as data for
+// the adapter, its selection folded into the adapter's fragments, a
+// calculation one more field, the order closed by the identity; the entries
+// parsed; the snapshot at the position read at; an input not in its schema,
+// and the faults of the wiring. Since part 5.2 the stream after the
+// snapshot, composed by the library over the adapter's log (DOM-2, DOM-17);
+// the native and the composed on Shed's oracle, with its scenarios. Since
+// part 5.3 the pages (SC-22): pulled one at a time, the cursor's form (a
+// stable function, LIB-10, its corpus here), a cursor not the query's order
+// key. On a test domain written for the purpose
+// (LIB-2): the things of a workshop, their uses counted since a day.
+
+const { id, fact, selection, calculation, query, read_use_case, AND, NOT } =
+  builders_at<RootContext>()
+
+// Branded with their paths, as the generator brands a tree's (DOM-24).
+const thing_id = id({ format: z.string().min(1) }).brand<'business/things/id/thing_id'>()
+const owner_id = id({ format: z.string().min(1) }).brand<'business/owners/id/owner_id'>()
+const the_thing_is_kept = selection({
+  subject: 'thing',
+  parameters: z.strictObject({}),
+}).brand<'business/things/selection/thing/the_thing_is_kept'>()
+const the_thing_is_lost = selection({
+  subject: 'thing',
+  parameters: z.strictObject({}),
+}).brand<'business/things/selection/thing/the_thing_is_lost'>()
+const the_thing_is_of_this_kind = selection({
+  subject: 'thing',
+  parameters: z.strictObject({ kind: z.string() }),
+}).brand<'business/things/selection/thing/the_thing_is_of_this_kind'>()
+const the_uses_of_the_thing_since = calculation({
+  subject: 'thing',
+  parameters: z.strictObject({ since: day }),
+  value: z.number().int().nonnegative(),
+}).brand<'business/things/calculation/thing/the_uses_of_the_thing_since'>()
+
+const the_thing_is_at_hand = AND({
+  the_thing_is_kept,
+  the_thing_is_not_lost: NOT(the_thing_is_lost),
+  the_thing_is_of_the_kind: the_thing_is_of_this_kind,
+})
+
+/** The things at hand of a kind, the most used since a day first, then by name. */
+const the_things_at_hand = query({
+  input: (context: RootContext) =>
+    z.strictObject({
+      kind: z.string(),
+      // A static rule over the input and `now` (DOM-21): a day before today.
+      since: day.refine((since) => since < day_of(context.now)),
+    }),
+  fields: z.strictObject({ id: thing_id, name: z.string(), owner: owner_id.optional() }),
+  calculations: { uses: the_uses_of_the_thing_since },
+  identity: 'id',
+  selection: the_thing_is_at_hand,
+  order: { uses: 'descending', name: 'ascending' },
+  creator: () => (input) => ({
+    selection: {
+      the_thing_is_kept: {},
+      the_thing_is_not_lost: {},
+      the_thing_is_of_the_kind: { kind: input.kind },
+    },
+    calculations: { uses: { since: input.since } },
+  }),
+})
+
+/** The things of an owner, named by the owner's identity, of another domain. */
+const the_owners_of_things = query({
+  input: z.strictObject({}),
+  fields: z.strictObject({ owner: owner_id, name: z.string() }),
+  identity: 'owner',
+  selection: the_thing_is_kept,
+  order: { owner: 'descending' },
+  creator: () => () => ({ selection: {} }),
+})
+
+const things_at_hand = read_use_case({ query: the_things_at_hand })
+const owners = read_use_case({ query: the_owners_of_things })
+
+const registry = {
+  'business/things/id/thing_id': thing_id,
+  'business/things/selection/thing/the_thing_is_kept': the_thing_is_kept,
+  'business/things/selection/thing/the_thing_is_lost': the_thing_is_lost,
+  'business/things/selection/thing/the_thing_is_of_this_kind': the_thing_is_of_this_kind,
+  'business/things/calculation/thing/the_uses_of_the_thing_since': the_uses_of_the_thing_since,
+  'business/things/query/the_things_at_hand': the_things_at_hand,
+  'business/things/query/the_owners_of_things': the_owners_of_things,
+  'business/things/usecase/things_at_hand': things_at_hand,
+  'business/things/usecase/owners': owners,
+} satisfies Registry
+
+const owners_registry = { 'business/owners/id/owner_id': owner_id } satisfies Registry
+
+const the_versions = await versions([])({ stored: () => Promise.resolve([]) })
+
+const context: RootContext = {
+  now: date_time.parse('2026-11-19T10:00:00-05:00'),
+  time_zone: time_zone.parse('America/Toronto'),
+}
+
+/** A fragment of the test adapter: a text, as SQL would write it. */
+type Text = string
+
+/** An adapter that writes its fragments as text, keeps the plans it is given, and reads the entries it is told. */
+const an_adapter = (stored: readonly unknown[]) => {
+  const plans: PlannedQuery<Text, Text, Text>[] = []
+  return {
+    plans,
+    calculations: {
+      'business/things/calculation/thing/the_uses_of_the_thing_since': (parameters: {
+        readonly since: string
+      }) => `(select count(*) from uses where day >= '${parameters.since}')`,
+    },
+    adapter: {
+      algebra: {
+        predicate: {
+          'business/things/selection/thing/the_thing_is_kept': () => 'kept',
+          'business/things/selection/thing/the_thing_is_lost': () => 'lost',
+          'business/things/selection/thing/the_thing_is_of_this_kind': (parameters: {
+            readonly kind: string
+          }) => `kind = '${parameters.kind}'`,
+        },
+        and: (components: readonly Text[]) => `(${components.join(' and ')})`,
+        or: (components: readonly Text[]) => `(${components.join(' or ')})`,
+        not: (operand: Text) => `not ${operand}`,
+        after: () => 'after',
+      },
+      sources: {
+        things_at_hand: { from: 'things', fields: { id: 'id', name: 'name', owner: 'owner' } },
+        owners: { from: 'things', fields: { owner: 'owner', name: 'name' } },
+      },
+      read: (plan: PlannedQuery<Text, Text, Text>) => {
+        plans.push(plan)
+        return Promise.resolve({ entries: stored, position: position.parse('7') })
+      },
+      page: () => Promise.reject(new Error('no page in this test')),
+    },
+  }
+}
+
+describe('the read ports (part 5.1)', () => {
+  test('a query planned as data: the selection folded, a calculation one more field, the order closed by the identity', async () => {
+    const { plans, adapter, calculations } = an_adapter([
+      { id: 'hammer-2', name: 'Hammer', owner: undefined, uses: 3 },
+      { id: 'hammer-1', name: 'Hammer', uses: 3 },
+    ])
+    const ports = read_use_case_ports({
+      registry,
+      identities: owners_registry,
+      versions: the_versions,
+      use_cases: { things_at_hand, owners },
+    })({ ...adapter, calculations, streams: {} })
+    const events = []
+    for await (const event of ports.things_at_hand(context, {
+      kind: 'hand',
+      since: '2026-11-01',
+    })) {
+      events.push(event)
+    }
+    expect(plans).toEqual([
+      {
+        from: 'things',
+        fields: {
+          id: 'id',
+          name: 'name',
+          owner: 'owner',
+          uses: "(select count(*) from uses where day >= '2026-11-01')",
+        },
+        identity: { field: 'id', path: 'business/things/id/thing_id' },
+        selection: "(kept and not lost and kind = 'hand')",
+        order: [
+          ["(select count(*) from uses where day >= '2026-11-01')", 'descending'],
+          ['name', 'ascending'],
+          ['id', 'ascending'],
+        ],
+      },
+    ])
+    expect(events).toEqual([
+      {
+        event: 'snapshot',
+        entries: [
+          { id: 'hammer-2', name: 'Hammer', owner: undefined, uses: 3 },
+          { id: 'hammer-1', name: 'Hammer', uses: 3 },
+        ],
+        position: '7',
+        total: 2,
+      },
+    ])
+    expect(ports.things_at_hand.streamed).toBe(false)
+  })
+
+  test("an order that names the identity already is total as written; an identity of another domain, by the registry of its domain's identities", async () => {
+    const { plans, adapter } = an_adapter([])
+    const ports = read_use_case_ports({
+      registry,
+      identities: owners_registry,
+      versions: the_versions,
+      use_cases: { owners },
+    })({ ...adapter, streams: {} })
+    expect(await first(ports.owners(context, {}))).toMatchObject({ entries: [], total: 0 })
+    expect(plans[0]?.order).toEqual([['owner', 'descending']])
+    expect(plans[0]?.identity).toEqual({ field: 'owner', path: 'business/owners/id/owner_id' })
+  })
+
+  test('an input not in its schema, built over the context, reads nothing', async () => {
+    const { plans, adapter, calculations } = an_adapter([])
+    const ports = read_use_case_ports({
+      registry,
+      identities: owners_registry,
+      versions: the_versions,
+      use_cases: { things_at_hand },
+    })({ ...adapter, calculations, streams: {} })
+    const invalid = { event: 'invalid_request', reason: 'input_not_in_schema' }
+    // Today, 19 November, is not before today.
+    expect(
+      await every(ports.things_at_hand(context, { kind: 'hand', since: '2026-11-19' })),
+    ).toEqual([invalid])
+    expect(plans).toEqual([])
+  })
+
+  test('an entry its fields do not parse is a fault of the adapter', async () => {
+    const { adapter, calculations } = an_adapter([{ id: '', name: 'Hammer', uses: 3 }])
+    const ports = read_use_case_ports({
+      registry,
+      identities: owners_registry,
+      versions: the_versions,
+      use_cases: { things_at_hand },
+    })({ ...adapter, calculations, streams: {} })
+    await expect(
+      first(ports.things_at_hand(context, { kind: 'hand', since: '2026-11-01' })),
+    ).rejects.toThrow(
+      'business/things/usecase/things_at_hand: the adapter gives an entry its fields do not parse (ADP-8)',
+    )
+  })
+
+  test('at wiring, every fault in one message: a use case not in the registry, an identity no registry given names', () => {
+    const without_the_use_case: Registry = Object.fromEntries(
+      Object.entries(registry).filter(
+        ([path]) => path !== 'business/things/usecase/things_at_hand',
+      ),
+    )
+    expect(() =>
+      read_use_case_ports({
+        registry: without_the_use_case,
+        versions: the_versions,
+        use_cases: { things_at_hand, owners },
+      }),
+    ).toThrow(
+      [
+        'the use case things_at_hand is not in the registry given (DOM-24)',
+        'business/things/usecase/owners: its identity owner is an identity that no registry given names: give the registry of its domain (identities, DOM-24)',
+      ].join('\n'),
+    )
+  })
+
+  test('a port that streams gives its snapshot, then its stream; a composed one does not resume', async () => {
+    // The things of `owners` change on facts of another domain only: the
+    // composed stream reads again after each, an entry entered, changed,
+    // left (DOM-17, SC-19); a fact of another domain touches no entry.
+    const reads = [
+      [{ owner: 'O-1', name: 'drill' }],
+      [
+        { owner: 'O-2', name: 'saw' },
+        { owner: 'O-1', name: 'cordless drill' },
+      ],
+      [{ owner: 'O-2', name: 'saw' }],
+    ]
+    let read = 0
+    const { adapter } = an_adapter([])
+    const of_another_domain = (at: string): LogEvent => ({
+      event: 'fact',
+      position: position.parse(at),
+      fact: {
+        parts: [
+          {
+            path: 'business/owners/fact/an_owner_has_moved',
+            payload: {},
+            resources: [],
+            version: '1.0.0',
+          },
+        ],
+        operation: { id: operation_id.parse('op'), scope: 'test' },
+        correlation: correlation.parse('c'),
+        branch: 'b',
+        composed: {},
+        fingerprint: fingerprint.parse('f'),
+      },
+    })
+    const log = (from: position | undefined) =>
+      every_of<LogEvent>([
+        ...(from === position.parse('1') ? [of_another_domain('1')] : []),
+        of_another_domain('2'),
+        of_another_domain('3'),
+        { event: 'caught_up', position: position.parse('3') },
+      ])
+    const ports = read_use_case_ports({
+      registry,
+      identities: owners_registry,
+      versions: the_versions,
+      use_cases: { owners },
+    })({
+      ...adapter,
+      read: () => {
+        const entries = reads[Math.min(read, reads.length - 1)] ?? []
+        read += 1
+        return Promise.resolve({ entries, position: position.parse(String(read)) })
+      },
+      streams: { owners: { strategy: 'composed', log } },
+    })
+    expect(ports.owners.streamed).toBe(true)
+    expect(await every(ports.owners(context, {}))).toEqual([
+      {
+        event: 'snapshot',
+        entries: [{ owner: 'O-1', name: 'drill' }],
+        position: '1',
+        total: 1,
+      },
+      { event: 'entered', position: '2', identity: 'O-2', entry: { owner: 'O-2', name: 'saw' } },
+      {
+        event: 'changed',
+        position: '2',
+        identity: 'O-1',
+        entry: { owner: 'O-1', name: 'cordless drill' },
+      },
+      { event: 'left', position: '3', identity: 'O-1' },
+      { event: 'caught_up', position: '3' },
+    ])
+    expect(await every(ports.owners(context, {}, position.parse('3')))).toEqual([
+      { event: 'position_unavailable' },
+    ])
+  })
+
+  test('a port that streams the facts of a domain whose majors the versions were not given stops at wiring', () => {
+    const { adapter } = an_adapter([])
+    const a_thing_has_been_kept = fact({
+      payload: z.strictObject({ thing_id }),
+    }).brand<'business/things/fact/a_thing_has_been_kept'>()
+    const wiring = (streams: {
+      readonly owners?: { strategy: 'composed'; log: () => AsyncIterable<never> }
+    }) =>
+      read_use_case_ports({
+        registry: {
+          ...registry,
+          'business/things/fact/a_thing_has_been_kept': a_thing_has_been_kept,
+        },
+        identities: owners_registry,
+        versions: the_versions,
+        use_cases: { owners },
+      })({ ...adapter, streams })
+    expect(() => wiring({ owners: { strategy: 'composed', log: () => every_of([]) } })).toThrow(
+      'the streams of business/things/usecase/owners carry business/things/fact/a_thing_has_been_kept, of no domain whose majors the versions were given (DOM-22, CFG-2)',
+    )
+    expect(() => wiring({})).not.toThrow()
+  })
+})
+
+/** The first event of a stream. */
+const first = async <event>(events: AsyncIterable<event>): Promise<event> => {
+  for await (const event of events) return event
+  throw new Error('no event')
+}
+
+/** Every event of a stream, until it ends. */
+const every = async <event>(events: AsyncIterable<event>): Promise<readonly event[]> => {
+  const all: event[] = []
+  for await (const event of events) all.push(event)
+  return all
+}
+
+/** The values given, one at a time. */
+const every_of = <value>(values: readonly value[]): AsyncIterable<value> => ({
+  [Symbol.asyncIterator]: () => {
+    const each = values[Symbol.iterator]()
+    return { next: () => Promise.resolve(each.next()) }
+  },
+})
+
+describe('the read ports in pages (part 5.3, SC-22)', () => {
+  /** Three things at hand as the adapter gives them, in the order: the most used, then by name, then by id. */
+  const hammer_2 = { id: 'hammer-2', name: 'Hammer', uses: 3 }
+  const hammer_1 = { id: 'hammer-1', name: 'Hammer', uses: 3 }
+  const saw = { id: 'saw', name: 'Saw', uses: 1 }
+  /** The cursor after `hammer_1`, as the library writes it: a corpus of the stable function (LIB-10). */
+  const after_hammer_1 = 'W1sidXNlcyIsM10sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCIsImhhbW1lci0xIl1d'
+
+  /** An adapter that gives the pages it is told, one per read, and keeps the plans it is given. */
+  const a_paged_adapter = (
+    pages: readonly { readonly entries: readonly unknown[]; readonly total: number }[],
+  ) => {
+    const { adapter, calculations } = an_adapter([])
+    const plans: PlannedPage<Text, Text, Text>[] = []
+    return {
+      plans,
+      ports: read_use_case_ports({
+        registry,
+        identities: owners_registry,
+        versions: the_versions,
+        use_cases: { things_at_hand },
+      })({
+        ...adapter,
+        algebra: {
+          ...adapter.algebra,
+          after: (key: readonly OrderKeyValue<Text>[]) =>
+            `after(${key.map(({ field, direction, value }) => `${field} ${direction} ${JSON.stringify(value)}`).join(', ')})`,
+        },
+        calculations,
+        page: (plan: PlannedPage<Text, Text, Text>) => {
+          const page = pages[plans.length] ?? { entries: [], total: 0 }
+          plans.push(plan)
+          return Promise.resolve({
+            ...page,
+            position: position.parse(String(plans.length + 6)),
+          })
+        },
+        streams: {},
+      }),
+    }
+  }
+  const input = { kind: 'hand', since: '2026-11-01' }
+  const uses = "(select count(*) from uses where day >= '2026-11-01')"
+  const selection = "(kept and not lost and kind = 'hand')"
+
+  test('a stream of snapshots, each read when the consumer asks for it, at its position, with the total and the next cursor', async () => {
+    const { plans, ports } = a_paged_adapter([
+      // The adapter gives one more than the page: another follows.
+      { entries: [hammer_2, hammer_1, saw], total: 3 },
+      { entries: [saw], total: 3 },
+    ])
+    const pages = ports.things_at_hand.pages(context, input, { size: 2 })[Symbol.asyncIterator]()
+    expect(await pages.next()).toEqual({
+      done: false,
+      value: {
+        event: 'snapshot',
+        entries: [hammer_2, hammer_1],
+        position: '7',
+        total: 3,
+        next: after_hammer_1,
+      },
+    })
+    // Pulled: nothing more is read until the consumer asks.
+    expect(plans).toHaveLength(1)
+    expect(plans[0]).toMatchObject({ page: selection, limit: 3 })
+    expect(await pages.next()).toEqual({
+      done: false,
+      value: { event: 'snapshot', entries: [saw], position: '8', total: 3 },
+    })
+    // The page after the order key of the last entry, its fields then its
+    // identity, by the adapter's comparison (D109).
+    expect(plans[1]).toMatchObject({
+      page: `(${selection} and after(${uses} descending 3, name ascending "Hammer", id ascending "hammer-1"))`,
+      limit: 3,
+    })
+    expect(await pages.next()).toEqual({ done: true, value: undefined })
+  })
+
+  test("from a page's cursor, the pages after it: as pulled, a resume", async () => {
+    const { plans, ports } = a_paged_adapter([{ entries: [saw], total: 3 }])
+    expect(
+      await every(
+        ports.things_at_hand.pages(context, input, {
+          size: 2,
+          after: cursor.parse(after_hammer_1),
+        }),
+      ),
+    ).toEqual([{ event: 'snapshot', entries: [saw], position: '7', total: 3 }])
+    expect(plans[0]?.page).toBe(
+      `(${selection} and after(${uses} descending 3, name ascending "Hammer", id ascending "hammer-1"))`,
+    )
+  })
+
+  test('a page with no size is every entry, one page with no cursor; a page as long as what is left ends the pages', async () => {
+    const whole = a_paged_adapter([{ entries: [hammer_2, hammer_1, saw], total: 3 }])
+    expect(await every(whole.ports.things_at_hand.pages(context, input, {}))).toEqual([
+      { event: 'snapshot', entries: [hammer_2, hammer_1, saw], position: '7', total: 3 },
+    ])
+    expect(whole.plans[0]).not.toHaveProperty('limit')
+    const exact = a_paged_adapter([{ entries: [hammer_2, hammer_1, saw], total: 3 }])
+    expect(await every(exact.ports.things_at_hand.pages(context, input, { size: 3 }))).toEqual([
+      { event: 'snapshot', entries: [hammer_2, hammer_1, saw], position: '7', total: 3 },
+    ])
+  })
+
+  test('a cursor that does not decode to the query order key reads no page; an input not in its schema first', async () => {
+    const { plans, ports } = a_paged_adapter([])
+    const cursor_not_in_schema = { event: 'invalid_request', reason: 'cursor_not_in_schema' }
+    const sent = [
+      // Not base64url.
+      'not a cursor!',
+      // Another order's key.
+      'W1sib3duZXIiLCJPLTEiXV0',
+      // A key as long, its values parsing, its first field named otherwise: `count`.
+      'W1siY291bnQiLDNdLFsibmFtZSIsIkhhbW1lciJdLFsiaWQiLCJoYW1tZXItMSJdXQ',
+      // A value its field does not parse: `three` uses.
+      'W1sidXNlcyIsInRocmVlIl0sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCIsImhhbW1lci0xIl1d',
+      // An identity absent.
+      'W1sidXNlcyIsM10sWyJuYW1lIiwiSGFtbWVyIl0sWyJpZCJdXQ',
+      // The key of `hammer_1`, not as the library writes it (a space): one key, one cursor.
+      'W1sidXNlcyIsIDNdLFsibmFtZSIsIkhhbW1lciJdLFsiaWQiLCJoYW1tZXItMSJdXQ',
+    ].map((text) => cursor.parse(text))
+    for (const after of sent) {
+      expect(await every(ports.things_at_hand.pages(context, input, { size: 2, after }))).toEqual([
+        cursor_not_in_schema,
+      ])
+    }
+    expect(
+      await every(
+        ports.things_at_hand.pages(
+          context,
+          { kind: 'hand', since: '2026-11-19' },
+          { size: 2, after: cursor.parse('not a cursor!') },
+        ),
+      ),
+    ).toEqual([{ event: 'invalid_request', reason: 'input_not_in_schema' }])
+    expect(plans).toEqual([])
+  })
+
+  test('a size not a whole number at least 1 is a fault of whoever binds it, which the leaf schema bounds', async () => {
+    const { ports } = a_paged_adapter([])
+    for (const size of [0, 1.5]) {
+      await expect(every(ports.things_at_hand.pages(context, input, { size }))).rejects.toThrow(
+        "business/things/usecase/things_at_hand: a page is its size, a whole number at least 1, which the leaf's schema bounds, and its cursor (SC-22)",
+      )
+    }
+  })
+})

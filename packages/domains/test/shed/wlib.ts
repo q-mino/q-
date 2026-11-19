@@ -7,9 +7,6 @@
 // at 7.5 Shed imports the library and this file is deleted (`docs/plan.md`).
 
 import type {
-  Applicabilities,
-  ApplicabilityFragmentOf,
-  ApplicableNames,
   Clock,
   CommandUseCasePort,
   CommandUseCases,
@@ -17,7 +14,6 @@ import type {
   EffectExecutor,
   ExecutorState,
   FactLog,
-  FactsIn,
   Invoked,
   LookupAdapter,
   LookupPort,
@@ -25,15 +21,10 @@ import type {
   Majors,
   Operation,
   Outbox,
-  QueriesOf,
   ReactionConsumers,
   ReactionState,
   ReactionWirings,
-  ReadAdapter,
-  ReadUseCasePort,
-  ReadUseCases,
   Registry,
-  Streams,
   TreeLeaves,
   TreePorts,
   Versions,
@@ -41,60 +32,6 @@ import type {
 } from '../../src/library/index.ts'
 
 export * from '../../src/library/index.ts'
-
-// Part 5.1, a query and its snapshot.
-
-/**
- * The ports of a set of read use cases over a read adapter and the stream
- * strategies it declares, with the registry where the library finds the
- * paths of their selection predicates and of the facts a stream carries (a
- * stream reads the facts of a domain, D64.1). Curried as
- * `command_use_case_ports`. An adapter that evaluates the actions of its
- * reads (D110, SC-33) declares it query by query, as its streams, since
- * whether an evaluation per entry is cheap depends on the technology and
- * the data: for each such query, the fragments of its domain's command
- * predicates (`applicability`), its commands' own (ADP-8). The port of a
- * query in it has `with_actions` (A, 18 Nov 2026 (8)).
- */
-export declare function read_use_case_ports<
-  const registry extends Registry,
-  const use_cases extends ReadUseCases,
->(ports: {
-  readonly registry: registry
-  readonly versions: Versions
-  readonly use_cases: use_cases
-}): <
-  selection,
-  source,
-  field,
-  const streams extends Streams<
-    QueriesOf<use_cases>,
-    selection,
-    source,
-    field,
-    ApplicabilityFragmentOf<applicability>
-  >,
-  const applicability extends Applicabilities<QueriesOf<use_cases>, registry> | undefined =
-    undefined,
->(
-  adapter: ReadAdapter<
-    QueriesOf<use_cases>,
-    selection,
-    source,
-    field,
-    ApplicabilityFragmentOf<applicability>
-  > & {
-    readonly streams: streams
-    readonly applicability?: applicability
-  },
-) => {
-  readonly [name in keyof use_cases]: ReadUseCasePort<
-    QueriesOf<use_cases>[name],
-    FactsIn<registry>,
-    name extends keyof streams ? true : false,
-    name extends ApplicableNames<applicability> ? true : false
-  >
-}
 
 // Part 6.1, the leaves and ports of a tree.
 

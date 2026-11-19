@@ -70,8 +70,9 @@ export type Read<selection, source, field, condition = never> = (
  * A page of a planned query (SC-22): the selection of the page, the query's
  * after the cursor, composed by the library with the adapter's `after` (the
  * query's alone on the first page); how many entries at most (the library
- * asks one more than the page, to know whether another follows). The query's
- * selection still counts the total.
+ * asks one more than the page, to know whether another follows), none for
+ * a page with no size, every entry. The query's selection still counts the
+ * total.
  */
 export interface PlannedPage<selection, source, field, condition = never> extends PlannedQuery<
   selection,
@@ -80,13 +81,13 @@ export interface PlannedPage<selection, source, field, condition = never> extend
   condition
 > {
   readonly page: selection
-  readonly limit: number
+  readonly limit?: number
 }
 
 /**
  * The adapter's read of a page, in one consistent snapshot (D72.8): the
- * entries the page's selection keeps, in the order, at most `limit`, as
- * stored; how many the query's selection keeps there, the total; and the
+ * entries the page's selection keeps, in the order, at most `limit` (every
+ * one with none), as stored; how many the query's selection keeps there, the total; and the
  * position read at.
  */
 export type ReadPage<selection, source, field, condition = never> = (
