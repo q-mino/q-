@@ -721,6 +721,13 @@ export const oracle = async (start: Start = {}) => {
     },
     /** The ports the trees invoke, by the folder of what they serve: where a test wires a tree of its own (SC-29). */
     invoked: as_invoked,
+    /**
+     * Ports of `loans` as the library builds them, not entered, typed: where
+     * a test wires a reaction of its own over one (DOM-16, `retry.test.ts`).
+     * Only those a test wires, so that the harness's type stays one the
+     * compiler writes out.
+     */
+    wired_by_a_test: { reserve_a_tool: loans.reserve_a_tool },
     /** How long each wait asked for lasts, in milliseconds, in order (DOM-3, DOM-14). */
     waits: (): readonly number[] => [...asked],
     /** The time passes: every wait asked for so far is over (DOM-3, TST-3). */

@@ -1,7 +1,17 @@
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
 import * as zz from '../../../src/library/index.ts'
-import { accounts, all, first, oracle, until_caught_up, type Who } from './oracle.ts'
+import {
+  accounts,
+  all,
+  first,
+  oracle,
+  quiet,
+  time_zone,
+  until_caught_up,
+  type Shed,
+  type Who,
+} from './oracle.ts'
 import { persona } from '../persona/_node.ts'
 import { registry as persona_registry } from '../persona/_registry.ts'
 import { registry as member_registry } from '../persona/member/_registry.ts'
@@ -11,6 +21,7 @@ import { command_use_case_over } from '../persona/member/_scope.ts'
 import { the_card_is_valid_on } from '../persona/member/_dsl.ts'
 import { reserve_a_tool } from '../business/loans/_usecase.ts'
 import { reservation_id } from '../business/loans/_id.ts'
+import { a_tool_has_been_booked } from '../business/loans/_fact.ts'
 import { the_day_is_within_the_booking_window } from '../business/loans/_dsl.ts'
 import { tool_id } from '../business/tools/_id.ts'
 import { registry as accounts_registry } from '../auth/accounts/_registry.ts'
@@ -32,6 +43,11 @@ import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts
 // test wires a tree of its own (SC-29), with a leaf over `reserve_a_tool`
 // whose input keeps the business's window, and the lookups of `accounts`
 // over a state it changes: a card that expires, a hat revoked meanwhile.
+// The business's port, and a step's, look the operation up too, before
+// their schema (DOM-11, A, 19 Nov 2026): a caller that is not a leaf, the
+// harness's entry or a reaction delivered again after the window moved,
+// reads its fact. No reaction of Shed books, so the test wires one of its
+// own over `reserve_a_tool` (`the_drill_goes_with_the_ladder`).
 
 const thursday = '2026-11-19T10:00:00-05:00'
 const friday = '2026-11-20T08:00:00-05:00'
@@ -285,20 +301,167 @@ describe('PER-5, a retry after the input’s window over `now` moved', () => {
     ).toEqual([{ event: 'you_have_the_tool', payload: { ...the_drill, due_day: '2026-12-03' } }])
   })
 
-  test('the business’s port, invoked directly, still parses first: the window refuses the retry (open, PER-5)', async () => {
-    const { shed, member } = await the_shed(gianni_with(['member'], '2027-03-31'))
-    await all(
-      member.book_a_tool(shed.as(gianni, '2.0.0').at(thursday, booking), the_ladder_on_friday),
+  test('a caller that is not a leaf: the business’s port looks the operation up before its schema (DOM-11)', async () => {
+    const { shed, member, facts } = await the_shed(gianni_with(['member'], '2027-03-31'))
+    // Thursday, through the harness's entry, a caller that is not a leaf:
+    // the desk books the ladder for Gianni, for Friday.
+    const for_gianni = { ...the_ladder_on_friday, member_id: 'M-7' }
+    const desk = { operation: 'D-1', scope: 'keeper/luca' }
+    const booked = await first(shed.loans.reserve_a_tool(shed.at(thursday, desk), for_gianni))
+    expect(booked).toMatchObject({
+      outcome: 'applied',
+      branch: 'the_tool_is_free_that_day_so_it_is_booked',
+    })
+    const recorded = await facts()
+    // Friday morning: the same operation, the same input, the booking as it
+    // was, at its position; no second fact.
+    expect(await first(shed.loans.reserve_a_tool(shed.at(friday, desk), for_gianni))).toEqual(
+      booked,
     )
-    // A caller that is not a leaf (a reaction, the executor, this harness)
-    // meets the business's schema before its duplicate branch.
+    expect(await facts()).toEqual(recorded)
+    // Another input under the operation, an undeclared field included:
+    // `identity_already_used`, before the schema.
+    for (const another of [
+      { ...for_gianni, day: '2026-11-21' },
+      { ...for_gianni, priority: 'high' },
+    ]) {
+      expect(await first(shed.loans.reserve_a_tool(shed.at(friday, desk), another))).toEqual({
+        outcome: 'identity_already_used',
+      })
+    }
+    // The same request under a new operation meets the window that moved.
+    expect(
+      await first(
+        shed.loans.reserve_a_tool(shed.at(friday, { ...desk, operation: 'D-2' }), for_gianni),
+      ),
+    ).toEqual({ outcome: 'invalid_request' })
+    // A leaf's operation met at the business's port is another request: its
+    // fingerprint is over the leaf's path and input (LIB-11).
+    await all(
+      member.book_a_tool(shed.as(gianni, '2.0.0').at(thursday, booking), {
+        ...the_ladder_on_friday,
+        reservation_id: 'R9',
+        tool_id: 'drill',
+      }),
+    )
     expect(
       await first(
         shed.loans.reserve_a_tool(shed.at(friday, booking), {
-          ...the_ladder_on_friday,
-          member_id: 'M-7',
+          ...for_gianni,
+          reservation_id: 'R9',
+          tool_id: 'drill',
         }),
       ),
-    ).toEqual({ outcome: 'invalid_request' })
+    ).toEqual({ outcome: 'identity_already_used' })
+  })
+
+  test('a step’s port looks its operation up before its schema too (DOM-11, DOM-20)', async () => {
+    const { shed } = await the_shed(gianni_with(['member'], '2027-03-31'))
+    await first(
+      shed.loans.reserve_a_tool(shed.at(thursday), { ...the_ladder_on_friday, member_id: 'M-7' }),
+    )
+    await first(
+      shed.loans.cancel_the_reservations_of_a_tool(shed.at(thursday), { tool_id: 'ladder' }),
+    )
+    const step = (instant: string, input: { readonly tool_id: string }) =>
+      first(
+        shed.loans.continue_the_cancellation_of_reservations(
+          shed.at(instant, { operation: 'S-1' }),
+          input,
+        ),
+      )
+    const one = await step(thursday, { tool_id: 'ladder' })
+    expect(one).toMatchObject({ outcome: 'applied', branch: 'advances' })
+    // Friday, the same step under its operation: its fact; with a field its
+    // schema does not take, `identity_already_used`, before the schema.
+    expect(await step(friday, { tool_id: 'ladder' })).toEqual(one)
+    const with_a_priority = { tool_id: 'ladder', priority: 'high' }
+    expect(await step(friday, with_a_priority)).toEqual({
+      outcome: 'identity_already_used',
+    })
+  })
+
+  test('a reaction delivered again after the window moved reads its fact, not a dead letter (DOM-16)', async () => {
+    const { shed, member, facts } = await the_shed(gianni_with(['member'], '2027-03-31'))
+    const consumers = companion_consumers(shed)
+    // Thursday: Gianni books the ladder for Friday; the standing order books
+    // the drill for him too; the consumer falls before saving its position.
+    const thursdays = consumers.started(thursday)
+    await all(
+      member.book_a_tool(shed.as(gianni, '2.0.0').at(thursday, booking), the_ladder_on_friday),
+    )
+    await quiet()
+    await thursdays.stop()
+    const recorded = await facts()
+    expect(recorded.slice(-2)).toEqual([
+      ['business/loans/fact/a_tool_has_been_booked'],
+      ['business/loans/fact/a_tool_has_been_booked'],
+    ])
+    // Friday morning the consumer starts again: the ladder's booking comes
+    // again, the drill's under the same operation, the same input, which
+    // the window no longer takes; it reads the drill's booking.
+    const fridays = consumers.started(friday)
+    await quiet()
+    await fridays.stop()
+    expect(consumers.held()).toEqual([])
+    expect(await facts()).toEqual(recorded)
   })
 })
+
+/** The path of the harness's standing order (`the_drill_goes_with_the_ladder`): of the test, never Shed's. */
+const companion_path = 'reaction/companion/reaction/the_drill_goes_with_the_ladder'
+
+/**
+ * A standing order of the test's (Shed has none that books, SC-29): who books
+ * the ladder gets the drill for its anchors, the same day. Its reaction
+ * invokes `reserve_a_tool`, whose input keeps the business's window over
+ * `now`, so a delivery that comes again after the window moved meets it.
+ */
+const the_drill_goes_with_the_ladder = zz.builders_at<zz.RootContext>().reaction({
+  when: a_tool_has_been_booked,
+  invokes: reserve_a_tool,
+  translation: (fact) =>
+    fact.new_reservation.tool_id === 'ladder'
+      ? {
+          reservation_id: `${fact.new_reservation.id}-drill`,
+          tool_id: 'drill',
+          member_id: fact.new_reservation.member_id,
+          day: fact.new_reservation.day,
+        }
+      : zz.nothing,
+})
+
+/**
+ * The consumer of the standing order, over the shed's log and the port of
+ * `reserve_a_tool`, with a durable state of its own that saves no position
+ * (it falls before each advance, TST-4), started at an instant.
+ */
+const companion_consumers = (shed: Shed) => {
+  const held: zz.HeldPart[] = []
+  const state: zz.ReactionState = {
+    position: () => Promise.resolve(undefined),
+    advance: () => () => Promise.resolve(),
+    held: () => Promise.resolve([...held]),
+    hold: (part) => {
+      held.push(part)
+      return Promise.resolve()
+    },
+    release: () => Promise.resolve(),
+    discarded: () => Promise.resolve(),
+  }
+  const wired = zz.reaction_consumers({
+    registry: { [companion_path]: the_drill_goes_with_the_ladder },
+    versions: shed.versions,
+  })({
+    [companion_path]: { log: shed.log, invokes: shed.wired_by_a_test.reserve_a_tool },
+  })
+  return {
+    started: (instant: string) =>
+      wired({
+        state,
+        clock: { now: () => zz.in_zone(time_zone)(zz.date_time.parse(instant)), time_zone },
+      }),
+    /** The parts it holds, by why. */
+    held: () => held.map((part) => (part.held === 'dead_letter' ? part.cause : part.held)),
+  }
+}
