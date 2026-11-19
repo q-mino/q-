@@ -94,6 +94,9 @@ import {
   type Network,
 } from '../adapter/memory/reminders.ts'
 
+/** What a member's phone receives from the shed, as the scenarios read it (`received`). */
+export type { Message }
+
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
 export const time_zone = wlib.time_zone.parse('America/Toronto')
 

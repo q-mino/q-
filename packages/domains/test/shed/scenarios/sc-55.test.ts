@@ -1,14 +1,15 @@
 import { describe, expect, test } from 'vitest'
-import { first } from './oracle.ts'
+import { first, quiet } from './oracle.ts'
 import { a_shed_with, drill } from './shed.ts'
 
 // SC-55: a fact declares resources narrower than every identity of its
 // payload, the instances it changes and its target (D94.6): the notice of
 // a repair holds its reservation alone, not the stay in repair, which is
-// the round's (DOM-10). Its envelope here; the hold it gives a dead letter
-// with the executor (part 7.2). In Shed only the step of the round of the
-// notices records it: the harness enters the notice alone (`alone`) until
-// the steps have a body (part 7.4).
+// the round's (DOM-10). Its envelope, and since part 7.2 the hold it gives
+// a dead letter of the executor: Gianni's dead notice holds R8 alone, and
+// Paolo's notice of the same stay goes (SC-53). In Shed only the step of
+// the round of the notices records it: the harness enters the notice alone
+// (`alone`) until the steps have a body (part 7.4).
 
 /** The shed with the drill, which Gianni (M-7) booked on Monday for Thursday (R8). */
 const the_drill_booked_for_thursday = async () => {
@@ -77,5 +78,38 @@ describe("SC-55, a fact's narrower resources", () => {
         ],
       },
     })
+  })
+  test("Gianni's notice exhausted holds R8 alone: Paolo's notice of the same stay goes", async () => {
+    const shed = await the_drill_booked_for_thursday()
+    await first(
+      shed.loans.reserve_a_tool(shed.at('2026-11-16T12:30:00-05:00', { scope: 'member/M-9' }), {
+        reservation_id: 'R9',
+        tool_id: 'drill',
+        member_id: 'M-9',
+        day: '2026-12-10',
+      }),
+    )
+    // Gianni has no phone the executor knows: his notice is exhausted.
+    shed.executor({ at: '2026-11-17T09:00:00-05:00', phones: { 'M-9': '+1 416 555 0109' } })
+    for (const [reservation_id, member_id, day] of [
+      ['R8', 'M-7', '2026-11-19'],
+      ['R9', 'M-9', '2026-12-10'],
+    ] as const) {
+      await first(
+        shed.alone.notify_a_member_of_the_repair(
+          shed.at('2026-11-17T09:00:00-05:00', { scope: 'reaction/repair' }),
+          { reservation_id, repair_id: 'RP1', member_id, tool_id: 'drill', day },
+        ),
+      )
+    }
+    await quiet()
+    expect(shed.held('business/loans/effect/send_the_repair_notice')).toMatchObject([
+      {
+        held: 'dead_letter',
+        cause: { cause: 'exhausted', reason: 'the member has no phone' },
+        entry: { resources: [{ path: 'business/loans/id/reservation_id', value: 'R8' }] },
+      },
+    ])
+    expect(shed.received()).toMatchObject([{ message: 'repair_notice', day: '2026-12-10' }])
   })
 })

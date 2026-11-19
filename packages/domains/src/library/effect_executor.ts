@@ -1,6 +1,8 @@
 import { operation_id, type Clock, type CommandRootContext } from './context.ts'
 import { in_zone } from './format.ts'
 import type { entry_id } from './command.ts'
+import { $Order, type DeliveryOrder } from './component.ts'
+import type { Resource } from './envelope.ts'
 import { kind_of } from './kind.ts'
 import { $Versions, type Registry, type Versions } from './registry.ts'
 import { fingerprint_of } from './stable.ts'
@@ -15,14 +17,18 @@ import type {
   EffectDeadLetter,
   EffectExecutor,
   ExecutorState,
+  HeldEntry,
   Outbox,
   QueuedEntry,
+  WaitingEntry,
 } from './effect.ts'
 import { called_with, is_a_record, paths_in, served_by } from './runtime.ts'
 
 // The effect executor (DOM-14, DOM-15, PER-12; part 7.1): an internal entry,
 // a durable consumer of a domain's outbox, one delivery unit per effect.
-// Its holds per resource (SC-53, SC-56) are part 7.2's.
+// Since part 7.2 its holds per resource (SC-53, SC-55, SC-56): a dead letter
+// holds its entry's resources for its effect, the entries behind it wait,
+// and an operator resolves it through the running executor.
 
 /**
  * The library's delivery of an effect with no world (a wait: the eve of a
@@ -71,12 +77,22 @@ export interface ExecutorPorts<returns extends CommandUseCases> {
  * queued it (DOM-10); the context is the clock's, `now` told in its zone. A
  * transient delivery is tried again after a pause, its effect's later
  * entries behind it; an exhausted one, and a return that refuses what the
- * world said, become a dead letter (DOM-15). The position is the last entry
- * up to which every entry is handled, delivered or held: a later entry
- * delivered before an earlier one comes due is delivered again after a
- * fall, at least once. A technical abort (a delivery or a return's port that
- * throws) stops its effect where it is, unadvanced, and `stop` reports it:
- * its entry comes again when the executor starts again. Curried as
+ * world said, become a dead letter (DOM-15). A dead letter holds its
+ * entry's resources for its effect (SC-53): an entry of the effect that
+ * comes due touching one of them, while it is held, is not delivered and
+ * waits behind it (`WaitingEntry`), holding its own in turn; another effect
+ * is never held, and an effect that tolerates reordering (`order: 'any'`,
+ * SC-56) holds nothing. An operator resolves a letter through the running
+ * executor (`redeliver`, `discard`), served by its effect's unit between two
+ * deliveries; then each entry that waited behind it and that nothing held
+ * before it still holds goes on, in the order the state keeps them, as met
+ * for the first time. The position is the last entry up to which every
+ * entry is handled, delivered or held: a later entry delivered before an
+ * earlier one comes due is delivered again after a fall, at least once, and
+ * an entry met again that the state holds is held once. A technical abort
+ * (a delivery or a return's port that throws) stops its effect where it is,
+ * unadvanced, and `stop` reports it: its entry comes again when the
+ * executor starts again. Curried as
  * `command_use_case_ports`: the registry and the domain's return use cases,
  * where it finds each effect's return; then the deliveries; then its ports.
  */
@@ -176,6 +192,78 @@ const outcome_of = async (events: unknown): Promise<unknown> => {
 /** The entry an effect holds as a letter, named by the key (effect, id) (DOM-13). */
 const is_the_entry = (a: QueuedEntry) => (b: QueuedEntry) =>
   a.entry.effect === b.entry.effect && a.entry.id === b.entry.id
+
+/** The order an effect declares (D67.3, SC-56), as its component carries it: the order per resource unless it says `any`. */
+const order_of = (effect: unknown): DeliveryOrder =>
+  typeof effect === 'object' && effect !== null && $Order in effect && effect[$Order] === 'any'
+    ? 'any'
+    : 'per_resource'
+
+/** Whether two lists of resources share one, by path and value (DOM-10). */
+const share =
+  (some: readonly Resource[]) =>
+  (others: readonly Resource[]): boolean =>
+    some.some((one) => others.some((other) => one.path === other.path && one.value === other.value))
+
+/**
+ * Whether the entries an effect holds hold an entry that comes due (SC-53):
+ * in the order per resource, one of them, a dead letter or an entry waiting,
+ * shares a resource with it; an effect that tolerates reordering holds
+ * nothing (SC-56).
+ */
+const holds =
+  (order: DeliveryOrder) =>
+  (held: readonly HeldEntry[]) =>
+  (queued: QueuedEntry): boolean =>
+    order === 'per_resource' &&
+    held.some((each) => share(each.entry.resources)(queued.entry.resources))
+
+/**
+ * The entries waiting that go on (SC-53): in the order the state keeps them,
+ * each one that no dead letter of its effect holds, and that shares no
+ * resource with an entry waiting before it, gone on or not, so that the
+ * order per resource holds among them too; in an effect that tolerates
+ * reordering, every one, since its dead letters hold nothing (SC-56).
+ */
+const freed_in =
+  (order: DeliveryOrder) =>
+  (held: readonly HeldEntry[]): readonly WaitingEntry[] => {
+    const waiting = held.filter((each): each is WaitingEntry => each.held === 'waiting')
+    if (order === 'any') return waiting
+    const letters = held.flatMap((each) =>
+      each.held === 'dead_letter' ? each.entry.resources : [],
+    )
+    return waiting.reduce<{
+      readonly ahead: readonly Resource[]
+      readonly freed: readonly WaitingEntry[]
+    }>(
+      (walked, each) => ({
+        ahead: [...walked.ahead, ...each.entry.resources],
+        freed:
+          share(letters)(each.entry.resources) || share(walked.ahead)(each.entry.resources)
+            ? walked.freed
+            : [...walked.freed, each],
+      }),
+      { ahead: [], freed: [] },
+    ).freed
+  }
+
+/** A request of an operator, served by its effect's unit (SC-53); refused if the unit has stopped. */
+interface Asked {
+  readonly serve: () => Promise<void>
+  readonly refuse: (error: Error) => void
+}
+
+/**
+ * An effect's unit as an operator reaches it (SC-53): what is asked of one
+ * of its letters, served between two deliveries, so that the effect delivers
+ * one entry at a time, in its own order; and why it no longer serves.
+ */
+interface Lane {
+  readonly asked: Asked[]
+  wake: () => void
+  closed: Error | undefined
+}
 
 /** The body of `effect_executor`, typed by what it meets at runtime. */
 const runtime_executor = (executor: RuntimeExecutor) => {
@@ -306,6 +394,12 @@ const runtime_executor = (executor: RuntimeExecutor) => {
         const effect = queued.entry.effect
         const fields = executor.versions[$Versions].entry(queued.entry)
         const returning = returns_by_effect.get(effect)
+        const letter = (cause: EffectDeadLetter['cause']): EffectDeadLetter => ({
+          position: queued.position,
+          entry: queued.entry,
+          held: 'dead_letter',
+          cause,
+        })
         for (;;) {
           const told = told_by(
             effect,
@@ -322,20 +416,14 @@ const runtime_executor = (executor: RuntimeExecutor) => {
             continue
           }
           if (told.outcome === 'exhausted') {
-            return {
-              ...queued,
-              held: 'dead_letter',
-              cause: { cause: 'exhausted', reason: told.reason },
-            }
+            return letter({ cause: 'exhausted', reason: told.reason })
           }
           if (returning === undefined) return 'handled'
           if (told.said === undefined) {
             throw new Error(`the delivery of ${effect} said nothing for its return (DOM-15)`)
           }
           const refused = await returned(effect, returning, fields, told.said.returns)
-          return refused === undefined
-            ? 'handled'
-            : { ...queued, held: 'dead_letter', cause: refused }
+          return refused === undefined ? 'handled' : letter(refused)
         }
       }
 
@@ -343,23 +431,85 @@ const runtime_executor = (executor: RuntimeExecutor) => {
       const until = (instant: string | undefined): number =>
         instant === undefined ? 0 : Date.parse(instant) - Date.parse(ports.clock.now())
 
+      // Each effect's unit, as an operator reaches it (SC-53).
+      const lanes = new Map<string, Lane>(
+        effects.map((effect) => [effect, { asked: [], wake: () => undefined, closed: undefined }]),
+      )
+
+      /** A lane's next request: woken when an operator asks. */
+      const asked_on = (lane: Lane): Promise<'asked'> =>
+        new Promise((resolve) => {
+          lane.wake = () => {
+            resolve('asked')
+          }
+        })
+
+      /**
+       * What an operator asks of a letter, served by its effect's unit
+       * between two deliveries (SC-53); refused once the unit has stopped or
+       * fallen; `undefined` for an effect the executor does not deliver.
+       */
+      const served = <answer>(
+        effect: string,
+        ask: () => Promise<answer>,
+      ): Promise<answer> | undefined => {
+        const lane = lanes.get(effect)
+        if (lane === undefined) return undefined
+        if (lane.closed !== undefined) return Promise.reject(lane.closed)
+        return new Promise<answer>((resolve, refuse) => {
+          lane.asked.push({ serve: () => ask().then(resolve, refuse), refuse })
+          lane.wake()
+        })
+      }
+
       /**
        * One effect's delivery, its own unit (D108): from its position, the
        * entries of the outbox, each delivered when due, the due ones in the
-       * order of the outbox; the position advanced past every entry handled
-       * before the first one not yet handled.
+       * order of the outbox; one that comes due touching a resource the
+       * effect holds held behind it (SC-53); the position advanced past
+       * every entry handled, delivered or held, before the first one not
+       * yet handled. Between two deliveries it serves what an operator asks
+       * of its letters, then delivers the entries waiting that go on, before
+       * those it meets.
        */
-      const run = async (effect: string): Promise<void> => {
+      const run = async (effect: string, lane: Lane): Promise<void> => {
+        const order = order_of(executor.registry[effect])
         const from = await ports.state.position(effect)
         const outbox = ports.outbox(effect)(from)[Symbol.asyncIterator]()
         let next: Promise<IteratorResult<QueuedEntry>> | undefined = outbox.next()
         let met: readonly { readonly queued: QueuedEntry; readonly handled: boolean }[] = []
         while (!stopping) {
+          const ask = lane.asked.shift()
+          if (ask !== undefined) {
+            await ask.serve()
+            continue
+          }
+          const held = await ports.state.held(effect)
+          const going_on = freed_in(order)(held)
+          const freed = going_on.find((each) => until(each.entry.not_before) <= 0)
+          if (freed !== undefined) {
+            const outcome = await delivered(freed)
+            if (outcome === 'stopped') return
+            await (outcome === 'handled' ? ports.state.release(freed) : ports.state.hold(outcome))
+            continue
+          }
           const due = met.find((each) => !each.handled && until(each.queued.entry.not_before) <= 0)
           if (due !== undefined) {
-            const outcome = await delivered(due.queued)
-            if (outcome === 'stopped') return
-            if (outcome !== 'handled') await ports.state.hold(outcome)
+            const queued = due.queued
+            // Met again after a fall, an entry the state holds is held once.
+            if (!held.some(is_the_entry(queued))) {
+              if (holds(order)(held)(queued)) {
+                await ports.state.hold({
+                  position: queued.position,
+                  entry: queued.entry,
+                  held: 'waiting',
+                })
+              } else {
+                const outcome = await delivered(queued)
+                if (outcome === 'stopped') return
+                if (outcome !== 'handled') await ports.state.hold(outcome)
+              }
+            }
             met = met.map((each) => (each === due ? { ...each, handled: true } : each))
             const open = met.findIndex((each) => !each.handled)
             const passed = open === -1 ? met.length : open
@@ -368,18 +518,23 @@ const runtime_executor = (executor: RuntimeExecutor) => {
             if (last !== undefined) await ports.state.advance(effect)(last.queued.position)
             continue
           }
-          const waits = met.map((each) => until(each.queued.entry.not_before))
+          const waits = [
+            ...met.flatMap((each) => (each.handled ? [] : [each.queued.entry.not_before])),
+            ...going_on.map((each) => each.entry.not_before),
+          ].map(until)
+          // An operator who asked while the unit read its state is served first.
+          if (lane.asked.length > 0) continue
           const woke = await Promise.race([
             stopped,
+            asked_on(lane),
             ...(waits.length === 0
               ? []
               : [ports.elapsed(Math.min(...waits)).then(() => 'woken' as const)]),
             ...(next === undefined ? [] : [next.then((arrived) => ({ arrived }))]),
           ])
-          if (woke === 'stopped' || woke === 'woken') continue
+          if (woke === 'stopped' || woke === 'woken' || woke === 'asked') continue
           if (woke.arrived.done === true) {
             next = undefined
-            if (met.length === 0) return
             continue
           }
           next = outbox.next()
@@ -390,15 +545,25 @@ const runtime_executor = (executor: RuntimeExecutor) => {
         }
       }
 
-      const runs = effects.map((effect) =>
-        run(effect).catch((error: unknown) => {
-          fell.push(new Error(`the delivery of ${effect} fell`, { cause: error }))
-        }),
+      const runs = [...lanes].map(([effect, lane]) =>
+        run(effect, lane)
+          .catch((error: unknown) => {
+            fell.push(new Error(`the delivery of ${effect} fell`, { cause: error }))
+          })
+          .finally(() => {
+            const closed = fell.at(-1) ?? new Error('the effect executor is stopped')
+            lane.closed = closed
+            for (const ask of lane.asked.splice(0)) ask.refuse(closed)
+          }),
       )
 
-      /** A letter the executor holds still, by its key, as its state keeps it. */
-      const held = async (letter: EffectDeadLetter): Promise<boolean> =>
-        (await ports.state.held(letter.entry.effect)).some(is_the_entry(letter))
+      /** The letter an effect holds by the key of one, as its state keeps it now: none if it is no longer a letter. */
+      const letter_held = async (
+        letter: EffectDeadLetter,
+      ): Promise<EffectDeadLetter | undefined> => {
+        const held = (await ports.state.held(letter.entry.effect)).find(is_the_entry(letter))
+        return held?.held === 'dead_letter' ? held : undefined
+      }
 
       return {
         stop: async () => {
@@ -408,44 +573,49 @@ const runtime_executor = (executor: RuntimeExecutor) => {
           const first = fell[0]
           if (first !== undefined) throw first
         },
-        // An operator's redelivery of a letter (D67.3, D108.4): exhausted,
-        // the effect again; refused, the return again with what the world
-        // said, never the effect. The entries waiting behind it come with
-        // the holds (part 7.2).
-        redeliver: async (letter): Promise<Redelivered<EffectDeadLetter>> => {
-          if (!(await held(letter))) return { outcome: 'not_held' }
-          const returning = returns_by_effect.get(letter.entry.effect)
-          const outcome =
-            letter.cause.cause === 'exhausted' || returning === undefined
-              ? await delivered(letter)
-              : await returned(
-                  letter.entry.effect,
-                  returning,
-                  executor.versions[$Versions].entry(letter.entry),
-                  letter.cause.returns,
-                ).then((refused) =>
-                  refused === undefined
-                    ? ('handled' as const)
-                    : { ...letter, held: 'dead_letter' as const, cause: refused },
-                )
-          if (outcome === 'stopped') return { outcome: 'dead_letter', letter }
-          if (outcome === 'handled') {
-            await ports.state.release(letter)
-            return { outcome: 'delivered' }
-          }
-          await ports.state.hold(outcome)
-          return { outcome: 'dead_letter', letter: outcome }
-        },
-        discard: (letter) => async (trace) => {
-          if (!(await held(letter))) return
-          await ports.state.release(letter)
-          await ports.state.discarded({
-            letter,
-            by: trace.by,
-            reason: trace.reason,
-            at: in_zone(ports.clock.time_zone)(ports.clock.now()),
-          })
-        },
+        // An operator's redelivery of a letter (D67.3, D108.4), by its
+        // effect's unit: exhausted, the effect again; refused, the return
+        // again with what the world said, never the effect. Delivered, the
+        // letter is released and the entries behind it go on; refused
+        // again, it holds still, with what was said this time.
+        redeliver: (letter) =>
+          served(letter.entry.effect, async (): Promise<Redelivered<EffectDeadLetter>> => {
+            const held = await letter_held(letter)
+            if (held === undefined) return { outcome: 'not_held' }
+            const returning = returns_by_effect.get(held.entry.effect)
+            const outcome =
+              held.cause.cause === 'exhausted' || returning === undefined
+                ? await delivered(held)
+                : await returned(
+                    held.entry.effect,
+                    returning,
+                    executor.versions[$Versions].entry(held.entry),
+                    held.cause.returns,
+                  ).then((refused): EffectDeadLetter | 'handled' =>
+                    refused === undefined ? 'handled' : { ...held, cause: refused },
+                  )
+            if (outcome === 'stopped') return { outcome: 'dead_letter', letter: held }
+            if (outcome === 'handled') {
+              await ports.state.release(held)
+              return { outcome: 'delivered' }
+            }
+            await ports.state.hold(outcome)
+            return { outcome: 'dead_letter', letter: outcome }
+          }) ?? Promise.resolve({ outcome: 'not_held' }),
+        // An operator lets a letter go, with a trace (D67.3): its entry never
+        // delivered, the entries behind it go on as after a delivery.
+        discard: (letter) => (trace) =>
+          served(letter.entry.effect, async () => {
+            const held = await letter_held(letter)
+            if (held === undefined) return
+            await ports.state.release(held)
+            await ports.state.discarded({
+              letter: held,
+              by: trace.by,
+              reason: trace.reason,
+              at: in_zone(ports.clock.time_zone)(ports.clock.now()),
+            })
+          }) ?? Promise.resolve(),
       }
     }
   }
