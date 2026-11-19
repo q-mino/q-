@@ -106,10 +106,20 @@ export type PlannedCommandBranch<fragment, write> =
  * stays as it was queued, and a new rule of the business that moves it is
  * the return's guard (D68.3; A, 17 Nov 2026).
  */
-export interface StoredEntry {
+export interface StoredEntry extends EntryFields {
+  readonly version: Semver
+}
+
+/**
+ * An outbox entry at the current shape (DOM-13, DOM-22): the path of its
+ * effect, its id, its payload parsed, the instant it may go at the earliest
+ * and its resources, as the library gives it to the effect executor from
+ * the entry as stored (`StoredEntry`, `Versions`), with no version: a reader
+ * sees the current shape only (D101, PER-18).
+ */
+export interface EntryFields {
   readonly effect: string
   readonly id: entry_id
-  readonly version: Semver
   readonly payload: unknown
   readonly not_before?: date_time
   /**

@@ -17,6 +17,8 @@ import * as wlib from '../../wlib.ts'
 import { registry as tools_registry } from '../../business/tools/_registry.ts'
 import { registry as loans_registry } from '../../business/loans/_registry.ts'
 import { registry as accounts_registry } from '../../auth/accounts/_registry.ts'
+import type * as tools_fact from '../../business/tools/_fact.ts'
+import type * as loans_fact from '../../business/loans/_fact.ts'
 import {
   the_hats_of_an_account,
   the_hats_of_a_key,
@@ -173,19 +175,46 @@ const algebra = <fragments>(predicate: fragments) => ({
       !operand(state),
 })
 
+/** A state after a fact's writes, in the order of its parts (DOM-10). */
+const after_writes =
+  (state: State) =>
+  (writes: readonly Write[]): State =>
+    writes.reduce<State>((before, write) => ({ ...before, ...write(before) }), state)
+
 /** What a branch writes, recorded on a state: its writes in the order of its parts, its fact, its entries. */
 const record =
   (cell: CommandCell) =>
   (state: State) =>
-  (written: wlib.PlannedWrite<Write>): void => {
+  (planned: wlib.PlannedWrite<Write>): void => {
     cell.record({
-      fact: written.fact,
-      entries: written.entries,
-      state: written.writes.reduce<State>(
-        (before, write) => ({ ...before, ...write(before) }),
-        state,
-      ),
+      fact: planned.fact,
+      entries: planned.entries,
+      state: after_writes(state)(planned.writes),
     })
+  }
+
+/**
+ * The oracle's state rebuilt from a log (DOM-22, A, 17 Nov 2026; SC-8), as
+ * the SQL adapter rebuilds its tables: from a state with nothing, every fact
+ * the log keeps written again through the writes of the commands, each at
+ * the current shape the library gives (`wlib.replay`), so that a loan lent
+ * at `loans` 1.x, due at an instant, comes back due on that instant's day;
+ * no value is rewritten by hand. It gives the state after each fact, at its
+ * position, for the cell to keep beside the fact as it was stored: the log
+ * is never rewritten.
+ */
+export const rebuilt = (versions: wlib.Versions) => (nothing: State) =>
+  async function* (
+    log: wlib.FactLog,
+  ): AsyncGenerator<{ readonly position: wlib.position; readonly state: State }> {
+    let state = nothing
+    for await (const fact of wlib.replay<
+      wlib.FactsIn<typeof tools_fact> | wlib.FactsIn<typeof loans_fact>,
+      Write
+    >({ versions, writes: { ...tools_writes, ...loans_writes } })(log)) {
+      state = after_writes(state)(fact.writes)
+      yield { position: fact.position, state }
+    }
   }
 
 /** The fact an operation already recorded, as the duplicate branch gives it back (DOM-11). */

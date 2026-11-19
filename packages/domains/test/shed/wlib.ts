@@ -13,12 +13,10 @@ import type {
   Clock,
   CommandUseCasePort,
   CommandUseCases,
-  Component,
   Deliveries,
   EffectExecutor,
   ExecutorState,
   FactLog,
-  FactWrites,
   FactsIn,
   Invoked,
   LookupAdapter,
@@ -40,29 +38,9 @@ import type {
   TreePorts,
   Versions,
   entry_id,
-  position,
 } from '../../src/library/index.ts'
 
 export * from '../../src/library/index.ts'
-
-// Part 4.4, the versions of the facts (`versions`, in the library since
-// part 4.1 for the current majors, gets there the past majors and its checks).
-
-/**
- * The facts of a log for an adapter's rebuild of its state (DOM-22: stored
- * state is migrated only through the translation, A, 17 Nov 2026): from the
- * first fact the log keeps to the end of what it had recorded when the
- * rebuild began, in order, each part at the current shape through the
- * adapter's writes, which know that shape alone. When (a release that
- * changes its tables: `loans` from `due_date` to `due_day`) and how it
- * writes are the adapter's; no adapter rewrites a value by hand.
- */
-export declare function replay<const facts extends Component, write>(replay: {
-  readonly versions: Versions
-  readonly writes: FactWrites<facts, write>
-}): (
-  log: FactLog,
-) => AsyncIterable<{ readonly position: position; readonly writes: readonly write[] }>
 
 // Part 5.1, a query and its snapshot.
 

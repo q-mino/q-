@@ -9,13 +9,19 @@
 // configurator runs whole (7.5). Since part 4.2 the harness enters a request
 // as an entry does (DOM-11): the library computes its fingerprint. Since
 // part 4.3 it enters alone a transition only a step composes in Shed
-// (`alone`, SC-55), until the steps have a body (7.4).
+// (`alone`, SC-55), until the steps have a body (7.4). Since part 4.4 a
+// shed may start from what its store kept before a release (`kept`: facts
+// and outbox entries of `loans` 1.x), its state rebuilt from that log
+// through the library (`replay`, SC-8), with the majors it is given (SC-9)
+// and the zone of its calendar (SC-12); the entries it queues are read as
+// the executor will read them, at the current shape (`queued`).
 
 import * as wlib from '../wlib.ts'
 import {
   loans_command_adapter,
   loans_command_use_cases,
   memory_commands,
+  rebuilt,
   tools_command_use_cases,
   type CommandCell,
   type Recorded,
@@ -45,15 +51,23 @@ const nothing: State = {
   key_hats: new Map(),
 }
 
+/** The position of the fact recorded after so many, the first at 1. */
+const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
+
 /**
  * A cell for the commands: its state, the facts it recorded in order, each
  * at its position, the first at 1; the fact an operation recorded, kept
- * for every operation (DOM-11).
+ * for every operation (DOM-11); the entries queued with the facts, in
+ * order, after those it kept.
  */
-const command_cell = (): CommandCell => {
+const command_cell = (
+  kept: readonly wlib.StoredEntry[],
+): CommandCell & {
+  readonly entries: () => readonly wlib.StoredEntry[]
+} => {
   let state = nothing
   const recorded: Recorded[] = []
-  const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
+  const entries: wlib.StoredEntry[] = [...kept]
   return {
     get: () => state,
     record: (step) => {
@@ -63,6 +77,7 @@ const command_cell = (): CommandCell => {
         before: state,
         after: step.state,
       })
+      entries.push(...step.entries)
       state = step.state
     },
     position: () => position_at(recorded.length),
@@ -71,7 +86,60 @@ const command_cell = (): CommandCell => {
         (each) =>
           each.fact.operation.id === operation.id && each.fact.operation.scope === operation.scope,
       ),
+    entries: () => entries,
   }
+}
+
+/**
+ * What a store kept before a release (SC-8, SC-9): its facts, in the order
+ * of its log from position 1, each part at the version it was written at,
+ * and the outbox entries queued with them.
+ */
+export interface Kept {
+  readonly facts?: readonly wlib.StoredEnvelope[]
+  readonly entries?: readonly wlib.StoredEntry[]
+}
+
+/** How a shed starts: what its store kept, the majors its configurator gives, the zone of its calendar. */
+export interface Start {
+  readonly kept?: Kept
+  readonly majors?: readonly wlib.Majors[]
+  readonly time_zone?: string
+}
+
+/** Values given one at a time, each when asked. */
+export const one_at_a_time = <value>(values: readonly value[]): AsyncIterable<value> => ({
+  [Symbol.asyncIterator]: () => {
+    const each = values[Symbol.iterator]()
+    return { next: () => Promise.resolve(each.next()) }
+  },
+})
+
+/** The log of the facts a store kept, from the first, then the end of what it kept (DOM-17). */
+const log_of =
+  (facts: readonly wlib.StoredEnvelope[]): wlib.FactLog =>
+  () =>
+    one_at_a_time<wlib.LogEvent>([
+      ...facts.map((fact, i): wlib.LogEvent => ({
+        event: 'fact',
+        position: position_at(i + 1),
+        fact,
+      })),
+      { event: 'caught_up', position: position_at(facts.length) },
+    ])
+
+/** The paths and versions a store keeps, distinct, among its facts' parts and its entries (DOM-22). */
+const stored_versions = (kept: Kept): readonly wlib.StoredVersion[] => {
+  const all = [
+    ...(kept.facts ?? []).flatMap((fact) =>
+      fact.parts.map((part) => ({ path: part.path, version: part.version })),
+    ),
+    ...(kept.entries ?? []).map((entry) => ({ path: entry.effect, version: entry.version })),
+  ]
+  return all.filter(
+    (each, i) =>
+      all.findIndex((other) => other.path === each.path && other.version === each.version) === i,
+  )
 }
 
 /**
@@ -130,11 +198,24 @@ const paths_of_ports = (
  * instant. Each request is a new operation unless the scenario names one;
  * its correlation is its own (the origin, DOM-10).
  */
-export const oracle = async () => {
-  const cell = command_cell()
-  const versions = await wlib.versions([loans_majors, tools_majors])({
-    stored: () => Promise.resolve([]),
+export const oracle = async (start: Start = {}) => {
+  const kept = start.kept ?? {}
+  const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
+  const cell = command_cell(kept.entries ?? [])
+  // The versions of the store, checked against what it kept (SC-9); its
+  // state rebuilt from its log, each fact kept as it was stored (SC-8): a
+  // store that kept no fact has nothing to rebuild.
+  const versions = await wlib.versions(start.majors ?? [loans_majors, tools_majors])({
+    stored: () => Promise.resolve(stored_versions(kept)),
   })
+  const facts = kept.facts ?? []
+  const rebuilding =
+    facts.length === 0 ? one_at_a_time([]) : rebuilt(versions)(nothing)(log_of(facts))
+  for await (const each of rebuilding) {
+    const fact = facts[Number(each.position) - 1]
+    if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
+    cell.record({ fact, entries: [], state: each.state })
+  }
   const ports = memory_commands(cell)(versions)
   const alone_registry = {
     ...tools_registry,
@@ -163,8 +244,8 @@ export const oracle = async () => {
     operations += 1
     const id = sent.operation ?? `op-${String(operations)}`
     return {
-      now: wlib.in_zone(time_zone)(wlib.date_time.parse(instant)),
-      time_zone,
+      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      time_zone: zone,
       operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
       correlation: wlib.correlation.parse(`correlation-${id}`),
     }
@@ -203,6 +284,18 @@ export const oracle = async () => {
       notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
     at,
+    /**
+     * The entries queued for an effect, in order, as its executor will
+     * read them (part 7.1): at the current shape, by the store's versions
+     * (DOM-22), so that a wait queued at 1.x gives its return the input of
+     * 2.0.0.
+     */
+    queued: (effect: string): readonly wlib.EntryFields[] =>
+      cell
+        .entries()
+        .filter((entry) => entry.effect === effect)
+        .map((entry) => versions[wlib.$Versions].entry(entry)),
+    versions,
   }
 }
 

@@ -215,6 +215,24 @@ const command_parts = (command: Commands[string]): RuntimeCommand | undefined =>
   return { creator: command, input: 'input' in command ? command.input : undefined, outcomes }
 }
 
+/**
+ * The facts a command records, its branches' and those of the transitions
+ * they compose (DOM-19): what its duplicate branch reads back through the
+ * versions of the store, which must read their domain (CFG-2).
+ */
+const facts_recorded = (command: RuntimeCommand): readonly unknown[] =>
+  Object.values(command.outcomes).flatMap(([, fact, , composition]) => [
+    fact,
+    ...(composition === undefined
+      ? []
+      : Object.values(composition[$Composition]).flatMap((composed) => {
+          const transition = command_parts($Each in composed ? composed[$Each] : composed)
+          return transition === undefined
+            ? []
+            : Object.values(transition.outcomes).map(([, recorded]) => recorded)
+        })),
+  ])
+
 /** A branch's entry as the creator resolves it (DOM-13): its id, its payload, when it may go. */
 const resolved_entry = z.strictObject({
   id: entry_id,
@@ -550,6 +568,23 @@ const runtime_ports = (
     return path
   }
   const nodes_of = nodes_above(ports.registry)
+  // At wiring (CFG-2): the facts the ports record, and read back, are of
+  // domains whose majors the store's versions were given (DOM-22). A step's
+  // facts with the steps (part 7.4).
+  const unread = Object.values(ports.use_cases)
+    .flatMap((use_case) => {
+      const command = command_parts(use_case[$UseCase].command)
+      return command === undefined ? [] : facts_recorded(command)
+    })
+    .flatMap((fact) => {
+      const path = path_of(fact)
+      return path === undefined || ports.versions[$Versions].reads(path) ? [] : [path]
+    })
+  if (unread.length > 0) {
+    throw new Error(
+      `the use cases record ${[...new Set(unread)].join(', ')}, of no domain whose majors the versions were given (DOM-22, CFG-2)`,
+    )
+  }
 
   return <fragment, write>(adapter: RuntimeAdapter<fragment, write>) => {
     const fragment_of = (leaf: BoundLeaf): fragment => {

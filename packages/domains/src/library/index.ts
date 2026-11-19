@@ -158,6 +158,7 @@ export type {
   PlannedBranchOverAList,
   PlannedCommandBranch,
   StoredEntry,
+  EntryFields,
   PlannedCommand,
   AlreadyRecorded,
   Execution,
@@ -261,7 +262,7 @@ export type {
 } from './earlier.ts'
 export { builders_at } from './builders.ts'
 export { command_use_case_ports } from './command_port.ts'
-export { versions } from './versions.ts'
+export { versions, replay } from './versions.ts'
 export type { VersionsBuilder } from './versions.ts'
 export type { Builders, Sight } from './builders.ts'
 export { identity_of, fingerprint_of, canonical_json, type Retried } from './stable.ts'
