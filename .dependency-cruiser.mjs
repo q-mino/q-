@@ -191,7 +191,7 @@ export default {
     {
       name: 'generator-imports-the-library-only',
       comment:
-        'The generator imports of the domains the library only (§ 2, DOM-25): it finds the components of a tree by the marks the library\'s builders leave, and imports the authored files at runtime, which no arrow shows.',
+        "The generator imports of the domains the library only (§ 2, DOM-25): it finds the components of a tree by the marks the library's builders leave, and imports the authored files at runtime, which no arrow shows.",
       severity: 'error',
       from: { path: '^packages/generator/(src|shell)/' },
       to: { path: '^packages/domains/', pathNot: '^packages/domains/src/library/' },
@@ -217,7 +217,7 @@ export default {
     {
       name: 'nothing-imports-the-generator',
       comment:
-        'No package imports the generator (§ 2): a tool of the author, run by pnpm generate, never by a node; only the repository\'s configuration does.',
+        "No package imports the generator (§ 2): a tool of the author, run by pnpm generate, never by a node; only the repository's configuration does.",
       severity: 'error',
       from: { path: '^packages/', pathNot: '^packages/generator/' },
       to: { path: '^packages/generator/' },

@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { sight } from './packages/domains/test/shed/sight.ts'
 
 export default defineConfig(
-  globalIgnores(['**/dist/', '**/.tsbuild/', '**/coverage/']),
+  globalIgnores(['**/dist/', '**/.tsbuild/', '**/coverage/', '**/.generated/']),
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,

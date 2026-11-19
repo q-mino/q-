@@ -7,5 +7,13 @@
     "outDir": "../.tsbuild/test"
   },
   "include": ["."],
-  "references": [{ "path": ".." }, { "path": "../shell" }]
+  "references": [
+    {
+      "path": ".."
+    },
+    {
+      "path": "../shell"
+    }
+  ],
+  "exclude": [".generated"]
 }
