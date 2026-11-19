@@ -431,7 +431,10 @@ export const generate = async (
       const stale =
         on_disk === undefined ||
         runtime_imports(path, on_disk).join() !== runtime_imports(path, text).join()
-      if (!check && stale) writeFileSync(path, text)
+      if (!check && stale) {
+        writeFileSync(path, text)
+        written.add(shown(file.path))
+      }
       return
     }
     written.add(shown(file.path))
