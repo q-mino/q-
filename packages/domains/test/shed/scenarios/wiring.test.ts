@@ -7,6 +7,9 @@ import { registry as keeper_registry } from '../persona/keeper/_registry.ts'
 import { majors as keeper_majors } from '../persona/keeper/_majors.ts'
 import { retire_a_tool, send_a_tool_to_repair } from '../persona/keeper/_usecase.ts'
 import { the_catalogue } from '../persona/visitor/_usecase.ts'
+import { registry as member_registry } from '../persona/member/_registry.ts'
+import { majors as member_majors } from '../persona/member/_majors.ts'
+import { return_a_tool } from '../persona/member/_usecase.ts'
 
 // The wiring of a tree's ports (part 6.1, CFG-2): the configurator's faults
 // stop the node before the first request, every one named in one message.
@@ -58,6 +61,28 @@ describe("the wiring of a tree's ports", () => {
         'persona/keeper/usecase/retire_a_tool invokes a use case no port given serves (CFG-2)',
         'persona/keeper/usecase/send_a_tool_to_repair invokes a use case no port given serves (CFG-2)',
       ].join('\n'),
+    )
+  })
+
+  test('a leaf that follows, with no port to measure its wait: stopped at wiring (part 6.3)', async () => {
+    const shed = await oracle()
+    const tree = wlib.tree_ports({
+      registry: { ...persona_registry, ...member_registry },
+      versions: shed.versions,
+      majors: member_majors,
+      top: persona,
+      use_cases: { return_a_tool },
+    })
+    expect(() =>
+      tree({
+        invoked: {
+          'business/loans': { return_a_tool: shed.loans.return_a_tool },
+        },
+        log: shed.log,
+        trace: shed.trace,
+      }),
+    ).toThrow(
+      'persona/member/usecase/return_a_tool follows, and no port given measures how long it waits (elapsed, CFG-2)',
     )
   })
 })

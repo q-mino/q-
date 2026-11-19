@@ -1,9 +1,10 @@
 import * as z from 'zod'
-import { semver, type Semver } from './format.ts'
+import { position, semver, type Semver } from './format.ts'
 import { correlation, operation_id, type Operation } from './context.ts'
 import type { Majors, Registry, Versions } from './registry.ts'
-import type { FactLog } from './stream.ts'
-import type { Invoked, TreeLeaves, TreePorts } from './tree.ts'
+import type { FactLog, LogEvent } from './stream.ts'
+import type { Elapsed, Invoked, TreeLeaves, TreePorts } from './tree.ts'
+import { $Versions } from './registry.ts'
 import type { NotKnown, Trace, TraceReason, Traced, TracedFailure, TracedIssue } from './trace.ts'
 import { $Node, type EntryOf } from './node.ts'
 import { $UseCase } from './use_case.ts'
@@ -49,11 +50,12 @@ interface RuntimeTreePorts {
   readonly use_cases: Readonly<Record<string, unknown>>
 }
 
-/** What the ports of a tree invoke, at runtime: the ports by folder, the fact log, the trace. */
+/** What the ports of a tree invoke, at runtime: the ports by folder, the fact log, the trace, the time that passes. */
 interface RuntimeWired {
   readonly invoked: Readonly<Record<string, Readonly<Record<string, unknown>>>>
   readonly log: FactLog
   readonly trace: unknown
+  readonly elapsed?: Elapsed
 }
 
 /** A lookup a node runs, with the port that answers it. */
@@ -83,9 +85,26 @@ interface TreeLeaf {
   readonly nodes: readonly TreeNode[]
 }
 
-/** A command leaf: its events, by name, with their schemas. */
+/**
+ * What a command leaf follows, at runtime (DOM-3, D58.2): the events that
+ * end its flow; the projection of each fact it follows, by its path, which
+ * the store's versions give (DOM-24); how long it waits at most, and the
+ * port that measures it; the fact log it reads, by correlation; the
+ * versions that read what the log stored (DOM-22).
+ */
+interface LeafFollowing {
+  readonly ends: ReadonlySet<string>
+  readonly projections: ReadonlyMap<string, unknown>
+  readonly at_most: number
+  readonly elapsed: Elapsed
+  readonly log: FactLog
+  readonly versions: Versions
+}
+
+/** A command leaf: its events, by name, with their schemas; what it follows, if it does. */
 interface CommandLeaf extends TreeLeaf {
   readonly events: Readonly<Record<string, z.ZodType>>
+  readonly following?: LeafFollowing
 }
 
 /**
@@ -192,6 +211,7 @@ export function tree_ports<
   readonly invoked: Invoked
   readonly log: FactLog
   readonly trace: Trace<EntryOf<top>>
+  readonly elapsed?: Elapsed
 }) => TreePorts<top, majors, use_cases>
 
 // The body, typed by what it meets at runtime (DOM-25, "The ports, typed by
@@ -575,6 +595,61 @@ const operation_of = (entered: Entered, input: unknown): Operation | undefined =
   return id.success ? { id: id.data, scope: entered.scope } : undefined
 }
 
+/** The end of a leaf's wait, a mark the race below tells from an event of the log. */
+const over: unique symbol = Symbol('over')
+
+/**
+ * The facts a command leaf follows after an outcome that does not end its
+ * flow (DOM-3, D58.2, D72.8): the fact log from the position of the
+ * outcome's fact on, that fact left out (its own event is the outcome's);
+ * of each fact of its chain, by correlation (DOM-10), whatever its domain,
+ * every part under a path it follows, read at the current shape (DOM-22),
+ * projected into its events, in the order of the log and of the parts
+ * (SC-44), up to the first in `ends`. At most so long: then
+ * `the_wait_is_over`, at the outcome's position, which closes the flow and
+ * records nothing; so too when the log keeps the position no longer
+ * (`position_unavailable`), from which nothing more can be followed. The
+ * log is read as a consumer reads it, once per request: a retry that
+ * meets its recorded fact follows again from its position (D72.8).
+ */
+async function* followed(
+  leaf: CommandLeaf,
+  following: LeafFollowing,
+  from: position,
+  chain: correlation,
+): AsyncIterable<RuntimeLeafEvent> {
+  const wait_is_over: RuntimeLeafEvent = { event: 'the_wait_is_over', position: from }
+  const elapsed = following.elapsed(following.at_most).then((): typeof over => over)
+  const log = following.log(from)[Symbol.asyncIterator]()
+  try {
+    for (;;) {
+      const next: IteratorResult<LogEvent> | typeof over = await Promise.race([log.next(), elapsed])
+      if (next === over || next.done === true) {
+        yield wait_is_over
+        return
+      }
+      const event = next.value
+      if (event.event === 'position_unavailable') {
+        yield wait_is_over
+        return
+      }
+      if (event.event === 'caught_up' || event.position === from) continue
+      if (event.fact.correlation !== chain) continue
+      for (const part of event.fact.parts) {
+        const projection = following.projections.get(part.path)
+        if (projection === undefined) continue
+        const read = following.versions[$Versions].part(part)
+        const own = event_of(leaf, called(projection, read.payload))
+        yield own
+        if (following.ends.has(own.event)) return
+      }
+    }
+  } finally {
+    // A log waiting for its next fact is let go, not awaited.
+    void log.return?.()
+  }
+}
+
 /**
  * A command leaf's port (PER-6, D45): its outcome, projected, the first
  * event and a terminal one (D72.3). A request answered with no fact leaves
@@ -582,8 +657,6 @@ const operation_of = (entered: Entered, input: unknown): Operation | undefined =
  */
 const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
   async function* (context: unknown, sent: unknown): AsyncIterable<RuntimeLeafEvent> {
-    // A flow that follows, with its part.
-    not_yet(leaf, [['follows', '6.3']])
     const entry = entry_of(context)
     const version = at_the_current_major(leaf, majors, entry.version)
     const entered = operation_entered(leaf, entry.operation)
@@ -649,9 +722,33 @@ const command_leaf_port = (leaf: CommandLeaf, majors: Majors, trace: unknown) =>
     ])
     for await (const outcome of outcomes) {
       const projected = projected_outcome(leaf, outcome)
-      yield projected.why === undefined
-        ? projected.event
-        : traced(tracing_operation, projected.event, projected.why)
+      const following = leaf.following
+      const goes_on = following !== undefined && !following.ends.has(projected.event.event)
+      if (projected.why !== undefined) {
+        // A rejection records no fact, so no chain follows it (DOM-3).
+        if (goes_on) {
+          throw new Error(
+            `${leaf.path}: ${projected.event.event} closes a request with no fact, and is not one of its ends (DOM-3)`,
+          )
+        }
+        yield traced(tracing_operation, projected.event, projected.why)
+        return
+      }
+      yield projected.event
+      if (!goes_on) return
+      // DOM-3, D58.2: the flow stays open on what the leaf follows, from
+      // its outcome's fact, by its chain's correlation.
+      // The chain is the outcome's fact's (DOM-10): a retry that meets it
+      // follows the chain the first request began, whatever it sent.
+      const fact = is_a_record(outcome) ? outcome['fact'] : undefined
+      const at = position.safeParse(is_a_record(outcome) ? outcome['position'] : undefined)
+      const chain = correlation.safeParse(is_a_record(fact) ? fact['correlation'] : undefined)
+      if (!at.success || !chain.success) {
+        throw new Error(
+          `${leaf.path}: the port below gives an applied outcome with no position or no correlation`,
+        )
+      }
+      yield* followed(leaf, following, at.data, chain.data)
       return
     }
     throw new Error(`${leaf.path}: the port below gives no outcome (DOM-3)`)
@@ -917,6 +1014,58 @@ const streaming_of = (
   }
 }
 
+/**
+ * What a command leaf follows, as the store serves it (DOM-3, CFG-2): its
+ * ends; each fact it follows by its path in the domains whose versions the
+ * store was given, with its projection by the name in that path; how long
+ * at most, measured by the port the configurator gives. A fact of no domain
+ * given, or no port to measure the wait, is a composition fault, named at
+ * wiring with the others; a leaf that follows nothing, nothing.
+ */
+const following_of = (
+  path: string,
+  declared: Context,
+  versions: Versions,
+  wired: RuntimeWired,
+): { readonly faults: readonly string[] } | { readonly following: LeafFollowing } | undefined => {
+  const follows = declared['follows']
+  if (follows === undefined) return undefined
+  if (!is_a_record(follows)) return { faults: [`${path} follows nothing it declares (DOM-3)`] }
+  const { facts, projection, at_most } = follows
+  const ends = declared['ends']
+  const paths = (Array.isArray(facts) ? facts : []).map((fact: unknown) =>
+    versions[$Versions].path(fact),
+  )
+  const faults = [
+    ...(paths.some((each) => each === undefined)
+      ? [`${path} follows a fact of no domain whose majors the versions were given (DOM-22, CFG-2)`]
+      : []),
+    ...(wired.elapsed === undefined
+      ? [`${path} follows, and no port given measures how long it waits (elapsed, CFG-2)`]
+      : []),
+  ]
+  if (faults.length > 0 || wired.elapsed === undefined) return { faults }
+  const projections = new Map(
+    paths.flatMap((each): readonly (readonly [string, unknown])[] => {
+      if (each === undefined) return []
+      const by_name = is_a_record(projection) ? projection[each.split('/').at(-1) ?? ''] : undefined
+      return typeof by_name === 'function' ? [[each, by_name]] : []
+    }),
+  )
+  return {
+    following: {
+      ends: new Set(
+        (Array.isArray(ends) ? ends : []).filter((name: unknown) => typeof name === 'string'),
+      ),
+      projections,
+      at_most: typeof at_most === 'number' ? at_most : 0,
+      elapsed: wired.elapsed,
+      log: wired.log,
+      versions,
+    },
+  }
+}
+
 const runtime_tree_ports = (
   ports: RuntimeTreePorts,
 ): ((wired: RuntimeWired) => Readonly<Record<string, unknown>>) => {
@@ -1005,6 +1154,7 @@ const runtime_tree_ports = (
       })
       const port = served.get(invokes)
       const streaming = port === undefined ? undefined : streaming_of(path, parts, port)
+      const following = following_of(path, parts, ports.versions, wired)
       const missing = [
         ...tree_nodes.flatMap((node) =>
           node.looks_up.flatMap((lookup) =>
@@ -1015,6 +1165,7 @@ const runtime_tree_ports = (
         ),
         ...(port === undefined ? [`${path} invokes a use case no port given serves (CFG-2)`] : []),
         ...(typeof streaming === 'string' ? [streaming] : []),
+        ...(following !== undefined && 'faults' in following ? following.faults : []),
       ]
       const leaf: TreeLeaf = {
         name,
@@ -1032,13 +1183,15 @@ const runtime_tree_ports = (
         own,
         missing,
         streaming: typeof streaming === 'string' ? undefined : streaming,
+        following:
+          following !== undefined && 'following' in following ? following.following : undefined,
       }
     })
     // A node above two leaves is named once.
     const wiring = [...new Set([...unserved, ...built.flatMap((each) => each.missing)])]
     if (wiring.length > 0) throw new Error(wiring.join('\n'))
     return Object.fromEntries(
-      built.map(({ leaf, own, streaming }): readonly [string, unknown] => {
+      built.map(({ leaf, own, streaming, following }): readonly [string, unknown] => {
         const entry = is_a_record(own) ? own['entry'] : undefined
         const events = is_a_record(own) ? own['events'] : undefined
         if (entry instanceof z.ZodObject) {
@@ -1059,7 +1212,11 @@ const runtime_tree_ports = (
         )
         return [
           leaf.name,
-          command_leaf_port({ ...leaf, events: schemas }, ports.majors, wired.trace),
+          command_leaf_port(
+            { ...leaf, events: schemas, ...(following === undefined ? {} : { following }) },
+            ports.majors,
+            wired.trace,
+          ),
         ]
       }),
     )

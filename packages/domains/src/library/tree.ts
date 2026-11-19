@@ -196,6 +196,16 @@ export type LeafPort<entry, majors, name extends string, leaf> = leaf extends {
 export type Invoked = Readonly<Record<string, Readonly<Record<string, unknown>>>>
 
 /**
+ * The time that passes, as the configurator measures it (DOM-3, part 6.3):
+ * a promise that resolves once so many milliseconds have elapsed. A leaf
+ * that follows waits at most so long (`Follows.at_most`), then its flow
+ * closes with `the_wait_is_over`. The domains have no clock that wakes
+ * (GR-8): the configurator gives one (a timeout of its runtime), the harness
+ * one the scenario ends when it says (TST-3).
+ */
+export type Elapsed = (milliseconds: number) => Promise<void>
+
+/**
  * The ports of a tree, one per leaf, by name (PER-6): a named type, so that
  * a configurator's declaration names it with its arguments instead of
  * spelling every leaf's port out.

@@ -262,6 +262,8 @@ export const versions: VersionsBuilder = (majors) => async (store) => {
       },
       reads: (path: string): boolean =>
         known.some((domain) => is_at_or_above(domain.folder, folder_of(path))),
+      path: (component: unknown): string | undefined =>
+        known.map((domain) => domain.path_of.get(component)).find((path) => path !== undefined),
     },
   }
 }

@@ -70,11 +70,14 @@ import { registry as repair_registry } from './reaction/repair/_registry.ts'
  * The world outside the shed, as the oracle fakes it: the members' phones,
  * and the clock of the executors and the consumers. The clock tells the zone
  * of the shed's calendar, which the shed's configuration declares (Toronto,
- * `America/Toronto`), not a domain: `loans` lends in any town (SC-12).
+ * `America/Toronto`), not a domain: `loans` lends in any town (SC-12). The
+ * time that passes, which measures how long a leaf that follows waits at
+ * most (`elapsed`, DOM-3): a timeout of the runtime that runs the shed.
  */
 export interface World {
   readonly phones: Phones
   readonly clock: wlib.Clock
+  readonly elapsed: wlib.Elapsed
 }
 
 export const shed = (cell: Cell) => async (world: World) => {
@@ -109,7 +112,7 @@ export const shed = (cell: Cell) => async (world: World) => {
         the_shelf,
         send_me_my_week_on_mondays,
       },
-    })({ invoked, log: adapter.log, trace: adapter.trace }),
+    })({ invoked, log: adapter.log, trace: adapter.trace, elapsed: world.elapsed }),
     keeper: wlib.tree_ports({
       registry: { ...persona_registry, ...keeper_registry },
       versions,

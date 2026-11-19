@@ -393,12 +393,21 @@ export const oracle = async (start: Start = {}) => {
   // The trace of the trees (F6, PER-14), as the cell keeps it: every entry,
   // in the order the library hands it.
   const trace: wlib.Traced<unknown>[] = []
+  // The time that passes (DOM-3, TST-3): every wait a leaf that follows
+  // asks for, how long, ended when the scenario says (`elapse`).
+  const waits: { readonly milliseconds: number; readonly over: () => void }[] = []
+  const asked: number[] = []
   const wired = {
     invoked,
     log: log(cell),
     trace: (traced: wlib.Traced<unknown>) => {
       trace.push(traced)
     },
+    elapsed: (milliseconds: number) =>
+      new Promise<void>((over) => {
+        asked.push(milliseconds)
+        waits.push({ milliseconds, over })
+      }),
   }
   const trees = {
     keeper: wlib.tree_ports({
@@ -515,6 +524,12 @@ export const oracle = async (start: Start = {}) => {
     log: wired.log,
     /** The trace of the trees, a port of the adapter (F6): where a test wires a tree of its own. */
     trace: wired.trace,
+    /** How long each wait a leaf that follows asked for, in milliseconds, in order (DOM-3). */
+    waits: (): readonly number[] => [...asked],
+    /** The time passes: every wait asked for so far is over (DOM-3, TST-3). */
+    elapse: () => {
+      for (const wait of waits.splice(0)) wait.over()
+    },
     /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
     traced: (): readonly wlib.Traced<unknown>[] => [...trace],
     /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
@@ -537,6 +552,11 @@ export const oracle = async (start: Start = {}) => {
     /** The positions before this one, which the cell keeps no longer (TST-4): a stream from one of them is `position_unavailable`. */
     forget: cell.forget,
   }
+}
+
+/** The promises already settled have run their course: what a port does before its next wait. */
+export const settled = async (): Promise<void> => {
+  for (let turn = 0; turn < 50; turn += 1) await Promise.resolve()
 }
 
 /** The first event of a port's stream: a command's outcome, the first event and a terminal one (DOM-2). */

@@ -296,6 +296,7 @@ export type {
   LeafAt,
   LeafPort,
   Invoked,
+  Elapsed,
   TreePorts,
 } from './tree.ts'
 export { tree_ports } from './tree_port.ts'

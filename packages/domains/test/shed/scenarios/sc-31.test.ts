@@ -119,14 +119,16 @@ describe('SC-31, Marta keeps a tool longer under "an ongoing loan"', () => {
 
   test("Marta's drill back in the shed: the path's predicate fails, named once with no branch", async () => {
     const shed = await the_shed()
-    // Her return's screen follows the workshop (part 6.3): the business's port here.
-    await first(
-      shed.loans.return_a_tool(shed.at('2026-11-12T18:00:00-05:00', { scope: 'member/A-MARTA' }), {
-        loan_id: 'L7',
-        tool_id: 'drill',
-        condition: 'good',
-      }),
-    )
+    // Whole, her return ends at once (SC-27).
+    expect(
+      await all(
+        shed.member.return_a_tool(shed.as(marta, '2.0.0').at('2026-11-12T18:00:00-05:00'), {
+          loan_id: 'L7',
+          tool_id: 'drill',
+          condition: 'good',
+        }),
+      ),
+    ).toEqual([{ event: 'you_returned_the_tool', payload: { tool_id: 'drill' } }])
     expect(
       await extend(shed, marta, { loan_id: 'L7', tool_id: 'drill', due_day: '2026-11-16' }),
     ).toEqual([{ event: 'the_loan_cannot_be_extended', payload: {} }])
