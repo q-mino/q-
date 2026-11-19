@@ -37,7 +37,7 @@ import {
   type BoundLeaf,
 } from './bound_condition.ts'
 import { resources_of } from './resources.ts'
-import { called, is_a_record, paths_in } from './runtime.ts'
+import { called, folder_of, is_a_record, is_at_or_above, paths_in, serving } from './runtime.ts'
 
 // The ports of the command use cases (DOM-2, LIB-1, LIB-14), which the
 // library builds over a state adapter: for each invocation, the input parsed
@@ -86,13 +86,6 @@ type RuntimeOutcome =
 
 /** A command use case's port at runtime: one message in, its outcome out (DOM-3). */
 type RuntimePort = (context: CommandRootContext, input: unknown) => AsyncIterable<RuntimeOutcome>
-
-/** The folder of a component's path: its segments before the kind and the name. */
-const folder_of = (path: string): string => path.split('/').slice(0, -2).join('/')
-
-/** Whether a folder is the other or holds it. */
-const is_at_or_above = (folder: string, below: string): boolean =>
-  below === folder || below.startsWith(`${folder}/`)
 
 /** The version of every domain in a registry, by its folder (`version.ts`, DOM-22). */
 const versions_in = (registry: Registry): readonly (readonly [string, Semver])[] =>
@@ -1017,12 +1010,15 @@ const runtime_ports = (
         const command = command_parts(use_case[$UseCase].command)
         return [
           name,
-          command === undefined
-            ? () => {
-                // Part 7.4: the plan of a step (DOM-20).
-                throw new Error(`${path} runs a step (DOM-20): planned from part 7.4`)
-              }
-            : port(path, command),
+          serving(
+            command === undefined
+              ? (): AsyncIterable<RuntimeOutcome> => {
+                  // Part 7.4: the plan of a step (DOM-20).
+                  throw new Error(`${path} runs a step (DOM-20): planned from part 7.4`)
+                }
+              : port(path, command),
+            { component: use_case, path },
+          ),
         ]
       }),
     )

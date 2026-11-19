@@ -19,7 +19,7 @@ import type {
 } from './use_case_port.ts'
 import { is_a_schema, kind_of } from './kind.ts'
 import { bind, fold, type BoundLeaf } from './bound_condition.ts'
-import { called, is_a_record, paths_in } from './runtime.ts'
+import { called, is_a_record, paths_in, serving } from './runtime.ts'
 import {
   stream_after,
   stream_from,
@@ -608,7 +608,10 @@ const runtime_ports = (
     return Object.fromEntries(
       built.map((each): readonly [string, RuntimePort] => [
         each.name,
-        port(each.name, each.path, each.query, each.identity, each.wiring),
+        serving(port(each.name, each.path, each.query, each.identity, each.wiring), {
+          component: ports.use_cases[each.name],
+          path: each.path,
+        }),
       ]),
     )
   }

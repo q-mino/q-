@@ -14,6 +14,7 @@ import {
   type Versions,
 } from './registry.ts'
 import { is_a_schema } from './kind.ts'
+import { folder_of, is_at_or_above } from './runtime.ts'
 
 // The versions of a store (DOM-22, A, 17 Nov 2026): the one place where a
 // stored part of a fact, or a stored outbox entry, becomes a parsed one, by
@@ -53,13 +54,6 @@ const major_and_minor = (version: string): readonly [number, number] => {
   const [major, minor] = version.split('.').map(Number)
   return [major ?? Number.NaN, minor ?? Number.NaN]
 }
-
-/** The folder of a component's path: its segments before the kind and the name. */
-const folder_of = (path: string): string => path.split('/').slice(0, -2).join('/')
-
-/** Whether a folder is the other or holds it. */
-const is_at_or_above = (folder: string, below: string): boolean =>
-  below === folder || below.startsWith(`${folder}/`)
 
 /** A function of the domain or the adapter called with its one argument (a step to the next major, a write): its result, unknown until parsed. */
 const called = (what: string, callee: unknown, argument: unknown): unknown => {

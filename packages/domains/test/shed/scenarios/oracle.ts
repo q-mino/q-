@@ -21,8 +21,13 @@
 // reference) or composed by the library over the cell's log (`streams`),
 // with the deviations a stream must bear injected (TST-4): a position the
 // cell keeps no longer (`forget`), every fact delivered twice
-// (`redelivered`).
+// (`redelivered`). Since part 6.1 the trees of the personas (`keeper`,
+// `member`, `visitor`) over the same ports and the lookups of `accounts`,
+// entered as an interface would, for who asks (`as`), the accounts the shed
+// is given at its start (`accounts`); and the fact log, a port of the
+// adapter (`log`).
 
+import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
 import {
   loans_command_adapter,
@@ -36,7 +41,29 @@ import {
   type Recorded,
   type State,
   type Strategy,
+  log,
 } from '../adapter/memory/index.ts'
+import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts.ts'
+import { account_id, key_id } from '../auth/accounts/_id.ts'
+import { hats, member_card } from '../auth/accounts/_value.ts'
+import { registry as accounts_registry } from '../auth/accounts/_registry.ts'
+import {
+  the_hats_of_a_key,
+  the_hats_of_an_account,
+  the_member_card_of_an_account,
+} from '../auth/accounts/_lookup.ts'
+import { persona } from '../persona/_node.ts'
+import { caller } from '../persona/_value.ts'
+import { registry as persona_registry } from '../persona/_registry.ts'
+import { registry as keeper_registry } from '../persona/keeper/_registry.ts'
+import { majors as keeper_majors } from '../persona/keeper/_majors.ts'
+import * as keeper from '../persona/keeper/_usecase.ts'
+import { registry as member_registry } from '../persona/member/_registry.ts'
+import { majors as member_majors } from '../persona/member/_majors.ts'
+import * as member from '../persona/member/_usecase.ts'
+import { registry as visitor_registry } from '../persona/visitor/_registry.ts'
+import { majors as visitor_majors } from '../persona/visitor/_majors.ts'
+import * as visitor from '../persona/visitor/_usecase.ts'
 import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
@@ -46,8 +73,8 @@ import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
 export const time_zone = wlib.time_zone.parse('America/Toronto')
 
-/** The state of a shed that has nothing yet. */
-const nothing: State = {
+/** The state of a shed that has nothing yet, but the accounts it is given (`Start.accounts`). */
+const nothing = (accounts: Partial<AccountsState> = {}): State => ({
   tools: new Map(),
   sheets: new Map(),
   sheet_lines: new Map(),
@@ -56,10 +83,10 @@ const nothing: State = {
   cancellations: new Map(),
   notice_rounds: new Map(),
   weekly_summaries: new Map(),
-  hats: new Map(),
-  member_cards: new Map(),
-  key_hats: new Map(),
-}
+  hats: accounts.hats ?? new Map(),
+  member_cards: accounts.member_cards ?? new Map(),
+  key_hats: accounts.key_hats ?? new Map(),
+})
 
 /** The position of the fact recorded after so many, the first at 1. */
 const position_at = (count: number): wlib.position => wlib.position.parse(String(count))
@@ -77,12 +104,13 @@ const position_at = (count: number): wlib.position => wlib.position.parse(String
 const command_cell = (
   kept: readonly wlib.StoredEntry[],
   redelivered: boolean,
+  initial: State,
 ): CommandCell &
   ReadCell & {
     readonly entries: () => readonly wlib.StoredEntry[]
     readonly forget: (before: wlib.position) => void
   } => {
-  let state = nothing
+  let state = initial
   const recorded: Recorded[] = []
   const entries: wlib.StoredEntry[] = [...kept]
   const waiting: (() => void)[] = []
@@ -160,7 +188,43 @@ export interface Start {
   readonly time_zone?: string
   readonly streams?: Strategy
   readonly redelivered?: boolean
+  readonly accounts?: Partial<AccountsState>
 }
+
+/** Who asks, as the interface verified it (PER-4): an account, a session, a key. */
+export type Who = z.input<typeof caller>
+
+/**
+ * The accounts a shed starts with (`Start.accounts`), as a test writes
+ * them: the hats and the member cards of each account, the hats of each key,
+ * parsed by the values of `accounts`.
+ */
+export const accounts = (written: {
+  readonly hats?: Readonly<Record<string, readonly string[]>>
+  readonly member_cards?: Readonly<
+    Record<string, { readonly id: string; readonly valid_until: string }>
+  >
+  readonly key_hats?: Readonly<Record<string, readonly string[]>>
+}): Partial<AccountsState> => ({
+  hats: new Map(
+    Object.entries(written.hats ?? {}).map(([id, each]) => [
+      account_id.parse(id),
+      hats.parse(each),
+    ]),
+  ),
+  member_cards: new Map(
+    Object.entries(written.member_cards ?? {}).map(([id, card]) => [
+      account_id.parse(id),
+      member_card.parse(card),
+    ]),
+  ),
+  key_hats: new Map(
+    Object.entries(written.key_hats ?? {}).map(([id, each]) => [
+      key_id.parse(id),
+      hats.parse(each),
+    ]),
+  ),
+})
 
 /** Values given one at a time, each when asked. */
 export const one_at_a_time = <value>(values: readonly value[]): AsyncIterable<value> => ({
@@ -215,6 +279,7 @@ const notify_alone_path = 'business/loans/usecase/notify_a_member_of_the_repair'
 export interface Sent {
   readonly operation?: string
   readonly scope?: string
+  readonly correlation?: string
 }
 
 /**
@@ -256,7 +321,8 @@ const paths_of_ports = (
 export const oracle = async (start: Start = {}) => {
   const kept = start.kept ?? {}
   const zone = start.time_zone === undefined ? time_zone : wlib.time_zone.parse(start.time_zone)
-  const cell = command_cell(kept.entries ?? [], start.redelivered ?? false)
+  const initial = nothing(start.accounts)
+  const cell = command_cell(kept.entries ?? [], start.redelivered ?? false, initial)
   // The versions of the store, checked against what it kept (SC-9); its
   // state rebuilt from its log, each fact kept as it was stored (SC-8): a
   // store that kept no fact has nothing to rebuild.
@@ -265,7 +331,7 @@ export const oracle = async (start: Start = {}) => {
   })
   const facts = kept.facts ?? []
   const rebuilding =
-    facts.length === 0 ? one_at_a_time([]) : rebuilt(versions)(nothing)(log_of(facts))
+    facts.length === 0 ? one_at_a_time([]) : rebuilt(versions)(initial)(log_of(facts))
   for await (const each of rebuilding) {
     const fact = facts[Number(each.position) - 1]
     if (fact === undefined) throw new Error('a rebuild gave a position the log did not keep')
@@ -303,9 +369,68 @@ export const oracle = async (start: Start = {}) => {
       now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
       time_zone: zone,
       operation: { id: wlib.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
-      correlation: wlib.correlation.parse(`correlation-${id}`),
+      correlation: wlib.correlation.parse(sent.correlation ?? `correlation-${id}`),
     }
   }
+  // The trees of the personas (part 6.1), as the configurator wires them:
+  // over the ports the library built, by the folder of what they serve, and
+  // the lookups of `accounts` over the accounts the shed is given.
+  const invoked = {
+    'business/tools': { ...ports.tools, ...reads.tools },
+    'business/loans': { ...ports.loans, ...reads.loans },
+    'auth/accounts': wlib.lookup_ports({
+      registry: accounts_registry,
+      lookups: { the_hats_of_an_account, the_hats_of_a_key, the_member_card_of_an_account },
+    })(accounts_lookups(cell.get)),
+  }
+  const wired = { invoked, log: log(cell) }
+  const trees = {
+    keeper: wlib.tree_ports({
+      registry: { ...persona_registry, ...keeper_registry },
+      versions,
+      majors: keeper_majors,
+      top: persona,
+      use_cases: {
+        retire_a_tool: keeper.retire_a_tool,
+        send_a_tool_to_repair: keeper.send_a_tool_to_repair,
+        put_a_repaired_tool_back_in_service: keeper.put_a_repaired_tool_back_in_service,
+        the_loans_of_the_month: keeper.the_loans_of_the_month,
+      },
+    })(wired),
+    member: wlib.tree_ports({
+      registry: { ...persona_registry, ...member_registry },
+      versions,
+      majors: member_majors,
+      top: persona,
+      use_cases: { borrow_a_tool: member.borrow_a_tool, return_a_tool: member.return_a_tool },
+    })(wired),
+    visitor: wlib.tree_ports({
+      registry: { ...persona_registry, ...visitor_registry },
+      versions,
+      majors: visitor_majors,
+      top: persona,
+      use_cases: { the_catalogue: visitor.the_catalogue },
+    })(wired),
+  }
+  /**
+   * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
+   * as the interface verified it, the version the client was built at
+   * (D72.7); for a command at an instant the context of `at`, with its
+   * operation and correlation, for a read the context of `when`.
+   */
+  const as = <const version extends wlib.Semver>(who: Who, version: version) => ({
+    at: (instant: string, sent: Sent = {}) => ({
+      caller: caller.parse(who),
+      version,
+      ...at(instant, sent),
+    }),
+    when: (instant: string) => ({
+      caller: caller.parse(who),
+      version,
+      now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),
+      time_zone: zone,
+    }),
+  })
   return {
     tools: {
       add_a_tool: entered(ports.tools.add_a_tool),
@@ -341,7 +466,11 @@ export const oracle = async (start: Start = {}) => {
     alone: {
       notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
+    ...trees,
     at,
+    as,
+    /** The fact log of the cell, a port of the adapter (DOM-17): what a fact carries, its correlation (DOM-10). */
+    log: wired.log,
     /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
     when: (instant: string): wlib.RootContext => ({
       now: wlib.in_zone(zone)(wlib.date_time.parse(instant)),

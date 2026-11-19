@@ -298,6 +298,8 @@ export type {
   Invoked,
   TreePorts,
 } from './tree.ts'
+export { tree_ports } from './tree_port.ts'
+export { lookup_ports } from './lookup_port.ts'
 export type {
   ReactionPart,
   ReactionDeadLetter,

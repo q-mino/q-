@@ -625,7 +625,7 @@ const stream =
  * oracle keeps them in one value; a consumer skips the paths it does not
  * read. The facts kept from a position, then "caught up", then each new one.
  */
-const log =
+export const log =
   (cell: ReadCell): wlib.FactLog =>
   (from) => {
     async function* live(position: wlib.position): AsyncGenerator<wlib.LogEvent> {

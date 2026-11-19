@@ -13,68 +13,17 @@ import type {
   Deliveries,
   EffectExecutor,
   ExecutorState,
-  FactLog,
-  Invoked,
-  LookupAdapter,
-  LookupPort,
-  Lookups,
-  Majors,
   Operation,
   Outbox,
   ReactionConsumers,
   ReactionState,
   ReactionWirings,
   Registry,
-  TreeLeaves,
-  TreePorts,
   Versions,
   entry_id,
 } from '../../src/library/index.ts'
 
 export * from '../../src/library/index.ts'
-
-// Part 6.1, the leaves and ports of a tree.
-
-/**
- * The ports of the leaves of a tree (PER-6): the registry where the library
- * finds the nodes and the leaves by path, the versions of the store it reads
- * (`Follows`), the majors of the persona (`persona/member/_majors.ts`,
- * generated from its folders, A, 17 Nov 2026), where it finds the leaf of a
- * past major at the message's version, the node at the top, which takes
- * what the entry gives, and the current leaves, command and read, one port
- * per name (`LeafPort`). At wiring (CFG-2) it stops on a current
- * leaf that is not the one of its path in the current major, and on a read
- * leaf that lists actions over a port with no `with_actions` (D110, SC-33). Curried as
- * `command_use_case_ports`: then the ports the tree invokes, and the fact
- * log a leaf that follows reads, by correlation (`Follows`).
- */
-export declare function tree_ports<
-  const top,
-  const majors extends Majors,
-  const use_cases extends TreeLeaves,
->(ports: {
-  readonly registry: Registry
-  readonly versions: Versions
-  readonly majors: majors
-  readonly top: top
-  readonly use_cases: use_cases
-}): (wired: {
-  readonly invoked: Invoked
-  readonly log: FactLog
-}) => TreePorts<top, majors, use_cases>
-
-// Part 6.2, nodes and lookups.
-
-/**
- * The ports of a set of lookups over an adapter, with the registry where the
- * library finds their paths. Curried as `command_use_case_ports`.
- */
-export declare function lookup_ports<const lookups extends Lookups>(ports: {
-  readonly registry: Registry
-  readonly lookups: lookups
-}): (adapter: LookupAdapter<lookups>) => {
-  readonly [name in keyof lookups]: LookupPort<lookups[name]>
-}
 
 // Part 7.1, the effect executor.
 

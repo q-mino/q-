@@ -1,6 +1,6 @@
 import type * as z from 'zod'
 import type { position } from './format.ts'
-import type { OperationContext } from './context.ts'
+import type { OperationContext, RootContext } from './context.ts'
 import type { Component } from './component.ts'
 import type { CommandInput, Commands, OutcomesOf, SchemaOf } from './command.ts'
 import type { Refused } from './base_event.ts'
@@ -142,7 +142,7 @@ export type LeafFlow<events extends Events, followed extends Component> =
  */
 export type CommandUseCaseOverBuilder<context, closes> = <
   const use_case extends CommandUseCase<Commands[string]>,
-  const input extends CommandInput<z.ZodType, context & OperationContext>,
+  const input extends CommandInput<z.ZodType, RootContext & OperationContext>,
   const events extends Events,
   const limits extends string = never,
   const followed extends Component = never,

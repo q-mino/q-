@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { all, first, oracle } from './oracle.ts'
+import * as wlib from '../wlib.ts'
+import { all, first, oracle, type Who } from './oracle.ts'
 
 // SC-14, the business's side (part 5.1): the catalogue of `tools`, a query
 // with its selection, order and identity, read in one snapshot at a
 // position (DOM-18, D66). The order is the query's, closed by the entry's
 // identity (LIB-9, D109), every value in the oracle's order: text by code
-// point, no collation. The visitor's leaf, the snapshot alone, projected
-// field by field without the keeper's notes, is part 6.1.
+// point, no collation. Since part 6.1 the visitor's leaf: the snapshot
+// alone, projected field by field without the keeper's notes (PER-18, D45),
+// in pages (SC-22).
 
 /** A tool as Luca adds it. */
 interface Added {
@@ -113,5 +115,61 @@ describe('SC-14, the catalogue of the shed (the business)', () => {
   test('the port streams, as the oracle declares (a member follows the shelf, SC-32): its snapshot is its first event', async () => {
     const shed = await the_shed()
     expect(shed.tools.the_catalogue.streamed).toBe(true)
+  })
+})
+
+/** Paolo, not signed in. */
+const paolo: Who = { identified_by: 'session', id: 'S-PAOLO' }
+
+describe("SC-14, the visitor's catalogue (the persona)", () => {
+  test("in his words, field by field: no keeper's notes; a page of 50 by default", async () => {
+    const shed = await the_shed()
+    const events = await all(
+      shed.visitor.the_catalogue(shed.as(paolo, '1.0.0').when('2026-11-16T11:00:00-05:00'), {}),
+    )
+    expect(events).toEqual([
+      {
+        event: 'snapshot',
+        entries: [shovel, another_rake, a_rake, ladder, drill, sander].map((tool) => ({
+          tool_id: tool.id,
+          name: tool.name,
+          category: tool.category,
+        })),
+        position: '10',
+        total: 6,
+      },
+    ])
+  })
+
+  test('his shelves, two tools a page: the next page from the cursor of the first', async () => {
+    const shed = await the_shed()
+    const when = shed.as(paolo, '1.0.0').when('2026-11-16T11:00:00-05:00')
+    const pages = await all(
+      shed.visitor.the_catalogue(when, { categories: ['power', 'garden'], page_size: 2 }),
+    )
+    expect(pages.map((page) => (page.event === 'snapshot' ? page.entries : page))).toEqual([
+      [
+        { tool_id: 'shovel', name: 'Shovel', category: 'garden' },
+        { tool_id: 'rake-1', name: 'rake', category: 'garden' },
+      ],
+      [
+        { tool_id: 'rake-2', name: 'rake', category: 'garden' },
+        { tool_id: 'drill', name: 'Cordless drill', category: 'power' },
+      ],
+      [{ tool_id: 'sander', name: 'Orbital sander', category: 'power' }],
+    ])
+    expect(pages[0]).toMatchObject({ total: 5, position: '10' })
+    // His connection drops after the first page: from its cursor, the pages after it.
+    const first_page = pages[0]
+    const next = first_page?.event === 'snapshot' ? first_page.next : undefined
+    expect(next).toBeDefined()
+    const resumed = await all(
+      shed.visitor.the_catalogue(
+        when,
+        { categories: ['power', 'garden'], page_size: 2 },
+        wlib.cursor.parse(next),
+      ),
+    )
+    expect(resumed).toEqual(pages.slice(1))
   })
 })
