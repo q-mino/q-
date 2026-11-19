@@ -13,6 +13,8 @@ The library reasons by tree and knows no domain: a component is an export built 
 
 [`wlib.ts`](wlib.ts) is the wished library: the types and signatures the domains want from the library, without bodies. The code typechecks; nothing here runs until the library exists. It becomes the requirement of the library steps of [the plan](../../../../docs/plan.md) (3–7), after Shed holds every scenario in scope (step 2), each run against the [catalogue of the scenarios](../../../../docs/scenarios.md).
 
+The scenarios of the [catalogue](../../../../docs/scenarios.md) run as tests on the oracle in [`scenarios/`](scenarios/), one file each (`sc-<nn>.test.ts`), over the harness [`scenarios/oracle.ts`](scenarios/oracle.ts): one cell of the in-memory adapter, the ports the library builds over it, the clock and the ids injected (TST-2, TST-3); a scenario observes what the ports give, never the cell's state. Since part 4.1 of the plan: the command ports of `tools` and `loans` (SC-1, SC-2, SC-4, SC-5, SC-6, SC-13); the other ports join the harness with their parts.
+
 Steps, in the order of the nucleus and the triggers (§ 3 of [`architecture.md`](../../../../docs/architecture.md)):
 
 1. First command and fact: `tools`, "add tool".
