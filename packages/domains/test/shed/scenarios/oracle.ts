@@ -30,6 +30,10 @@
 // alone (`as(…).named`, SC-34), and the trace of the trees, every request
 // answered with no fact, with why (`traced`, F6, PER-14). Since part 6.3
 // the member's live reads: "my loans", "my reservations", "in the workshop".
+// Since part 7.1 the effect executor of `loans` over the cell's outbox
+// (`executor`), its clock and its waits the scenario's (`pass`), the world
+// of the reminders faked (`network`, `received`), its letters shown
+// (`held`), and the facts the cell recorded (`recorded`).
 
 import type * as z from 'zod'
 import * as wlib from '../wlib.ts'
@@ -76,6 +80,19 @@ import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
 import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
+import { member_id } from '../business/loans/_id.ts'
+import {
+  declare_the_loan_overdue,
+  remind_the_member_of_the_due_date,
+  sum_up_the_week_for_the_member,
+} from '../business/loans/_usecase.ts'
+import {
+  send_the_due_date_reminder,
+  send_the_repair_notice,
+  send_the_weeks_summary,
+  type Message,
+  type Network,
+} from '../adapter/memory/reminders.ts'
 
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
 export const time_zone = wlib.time_zone.parse('America/Toronto')
@@ -104,9 +121,11 @@ const position_at = (count: number): wlib.position => wlib.position.parse(String
  * after it; the facts from a position on, inclusive, and those after it as
  * soon as there is one (DOM-17); the fact an operation recorded, kept for
  * every operation (DOM-11); the entries queued with the facts, in order,
- * after those it kept. Injected (TST-4): the positions before one it keeps
- * no longer, once forgotten (`forget`); every fact it gives a stream or a
- * log twice, if it redelivers (at least once, DOM-17).
+ * after those it kept, and each effect's from a position on, inclusive, the
+ * position counting every entry (DOM-14). Injected (TST-4): the positions
+ * before one it keeps no longer, once forgotten (`forget`); every fact it
+ * gives a stream or a log twice, and every entry its outbox gives, if it
+ * redelivers (at least once, DOM-17, DOM-14).
  */
 const command_cell = (
   kept: readonly wlib.StoredEntry[],
@@ -115,6 +134,7 @@ const command_cell = (
 ): CommandCell &
   ReadCell & {
     readonly entries: () => readonly wlib.StoredEntry[]
+    readonly outbox: wlib.Outbox
     readonly forget: (before: wlib.position) => void
   } => {
   let state = initial
@@ -166,6 +186,34 @@ const command_cell = (
           each.fact.operation.id === operation.id && each.fact.operation.scope === operation.scope,
       ),
     entries: () => entries,
+    outbox: (effect) => (from) => ({
+      [Symbol.asyncIterator]: () => {
+        let index = from === undefined ? 0 : Number(from) - 1
+        let again: wlib.QueuedEntry | undefined = undefined
+        const next = async (): Promise<IteratorResult<wlib.QueuedEntry>> => {
+          if (again !== undefined) {
+            const value = again
+            again = undefined
+            return { done: false, value }
+          }
+          for (;;) {
+            const entry = entries[index]
+            if (entry === undefined) {
+              await new Promise<void>((wake) => {
+                waiting.push(wake)
+              })
+              continue
+            }
+            index += 1
+            if (entry.effect !== effect) continue
+            const value = { position: position_at(index), entry }
+            if (redelivered) again = value
+            return { done: false, value }
+          }
+        }
+        return { next }
+      },
+    }),
     forget: (before) => {
       kept_from = Number(before)
     },
@@ -455,6 +503,98 @@ export const oracle = async (start: Start = {}) => {
       use_cases: { close_a_job: workshop.close_a_job },
     })(wired),
   }
+  // The effect executor of `loans` (part 7.1), as the configurator wires
+  // it: over the cell's outbox, the return ports the library built, its
+  // durable state (kept across a fall: the executor started again finds its
+  // positions and letters), the executor's clock, which a scenario sets
+  // (`pass`), and the time that passes, its own waits ended when the
+  // scenario says, apart from the trees'. The world of the reminders: the
+  // members' phones, the network's next answers, what each phone received.
+  const positions = new Map<string, wlib.position>()
+  let holding: readonly wlib.HeldEntry[] = []
+  const discards: wlib.Discarded<wlib.EffectDeadLetter>[] = []
+  let saves_its_position = true
+  const same_entry = (a: wlib.QueuedEntry) => (b: wlib.QueuedEntry) =>
+    a.entry.effect === b.entry.effect && a.entry.id === b.entry.id
+  const executor_state: wlib.ExecutorState = {
+    position: (effect) => Promise.resolve(positions.get(effect)),
+    advance: (effect) => (to) => {
+      if (saves_its_position) positions.set(effect, to)
+      return Promise.resolve()
+    },
+    held: (effect) => Promise.resolve(holding.filter((each) => each.entry.effect === effect)),
+    hold: (entry) => {
+      holding = (
+        holding.some(same_entry(entry))
+          ? holding.map((each) => (same_entry(entry)(each) ? entry : each))
+          : [...holding, entry]
+      ).toSorted((a, b) => Number(a.position) - Number(b.position))
+      return Promise.resolve()
+    },
+    release: (entry) => {
+      holding = holding.filter((each) => !same_entry(entry)(each))
+      return Promise.resolve()
+    },
+    discarded: (trace) => {
+      discards.push(trace)
+      return Promise.resolve()
+    },
+  }
+  let instant = wlib.date_time.parse('2026-11-01T00:00:00-04:00')
+  const executor_waits: (() => void)[] = []
+  const answers: Network[] = []
+  const received: Message[] = []
+  const loans_executor = wlib.effect_executor({
+    registry: loans_registry,
+    versions,
+    returns: {
+      remind_the_member_of_the_due_date,
+      declare_the_loan_overdue,
+      sum_up_the_week_for_the_member,
+    },
+  })
+  /**
+   * The executor of `loans` started (DOM-14), its clock at an instant: the
+   * members' phones by member, the network answering as told (`network`);
+   * one that saves no position falls, as far as its state knows, before
+   * each advance (TST-4).
+   */
+  const executor = (world: {
+    readonly at: string
+    readonly phones?: Readonly<Record<string, string>>
+    readonly saves_its_position?: boolean
+  }): wlib.EffectExecutor => {
+    instant = wlib.date_time.parse(world.at)
+    saves_its_position = world.saves_its_position ?? true
+    const phones = {
+      number_of: new Map(
+        Object.entries(world.phones ?? {}).map(([id, phone]) => [member_id.parse(id), phone]),
+      ),
+      network: (): Network => answers.shift() ?? 'delivers',
+      receive: (message: Message) => {
+        received.push(message)
+      },
+    }
+    return loans_executor({
+      'business/loans/effect/wait_until_the_eve_of_the_due_date': wlib.returns_the_payload,
+      'business/loans/effect/wait_until_the_due_date': wlib.returns_the_payload,
+      'business/loans/effect/send_the_due_date_reminder': send_the_due_date_reminder(cell.get)(
+        phones,
+      ),
+      'business/loans/effect/send_the_repair_notice': send_the_repair_notice(cell.get)(phones),
+      'business/loans/effect/wait_until_monday': wlib.returns_the_payload,
+      'business/loans/effect/send_the_weeks_summary': send_the_weeks_summary(phones),
+    })({
+      outbox: cell.outbox,
+      returns: ports.loans,
+      state: executor_state,
+      clock: { now: () => instant, time_zone: zone },
+      elapsed: () =>
+        new Promise<void>((over) => {
+          executor_waits.push(over)
+        }),
+    })
+  }
   /**
    * What the entry gives a tree for who asks (PER-4, PER-6): the `Caller`
    * as the interface verified it, the version the client was built at
@@ -554,8 +694,52 @@ export const oracle = async (start: Start = {}) => {
         .filter((entry) => entry.effect === effect)
         .map((entry) => versions[wlib.$Versions].entry(entry)),
     versions,
+    executor,
+    /** The network's next answers, in order, then it delivers (DOM-15, TST-4). */
+    network: (...next: readonly Network[]) => {
+      answers.push(...next)
+    },
+    /** What the members' phones received, in order. */
+    received: (): readonly Message[] => [...received],
+    /**
+     * Time passes up to an instant: the executor's clock reads it, and every
+     * wait it asked for is over, so that it delivers what has come; then
+     * its deliveries run their course (TST-3).
+     */
+    pass: async (to: string) => {
+      instant = wlib.date_time.parse(to)
+      for (const over of executor_waits.splice(0)) over()
+      await quiet()
+    },
+    /** The entries the executor holds for an effect, as its state keeps them (DOM-14): shown, never a business fact. */
+    held: (effect: string): readonly wlib.HeldEntry[] =>
+      holding.filter((each) => each.entry.effect === effect),
+    /** The letters an operator discarded, with their traces. */
+    discarded: (): readonly wlib.Discarded<wlib.EffectDeadLetter>[] => [...discards],
+    /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
+    recorded: async (): Promise<readonly wlib.StoredEnvelope[]> => {
+      const facts = new Map<wlib.position, wlib.StoredEnvelope>()
+      for await (const event of wired.log(undefined)) {
+        if (event.event !== 'fact') break
+        facts.set(event.position, event.fact)
+      }
+      return [...facts.values()]
+    },
     /** The positions before this one, which the cell keeps no longer (TST-4): a stream from one of them is `position_unavailable`. */
     forget: cell.forget,
+  }
+}
+
+/**
+ * Everything already set going has run its course, up to its next wait: the
+ * oracle and the harness wait on nothing but promises, so a turn of the
+ * runtime's timers comes after them all.
+ */
+export const quiet = async (): Promise<void> => {
+  for (let turn = 0; turn < 3; turn += 1) {
+    await new Promise<void>((done) => {
+      setTimeout(done, 0)
+    })
   }
 }
 

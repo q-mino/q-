@@ -169,6 +169,7 @@ export const shed = (cell: Cell) => async (world: World) => {
       returns: adapter.loans,
       state: cell.executor,
       clock: world.clock,
+      elapsed: world.elapsed,
     }),
     loans_reactions: wlib.reaction_consumers({ registry: loans_registry, versions })({
       'business/loans/reaction/the_first_reservation_on_the_sheet_is_taken_up': {

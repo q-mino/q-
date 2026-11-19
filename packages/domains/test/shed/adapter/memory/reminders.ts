@@ -5,7 +5,8 @@
 // effect fails (DOM-15): the network down is transient, a member with no
 // phone or a network that gives up exhausts the entry, a dead letter an
 // operator sees; a definitive outcome with a meaning would need a return,
-// which neither a reminder nor a notice has.
+// which neither a reminder nor a notice has. A network that falls throws: a
+// technical abort, which the executor does not take for an answer (TST-4).
 
 import type * as wlib from '../../wlib.ts'
 import type * as loans_effect from '../../business/loans/_effect.ts'
@@ -46,7 +47,7 @@ export interface WeeksSummary {
 export type Message = Reminder | RepairNotice | WeeksSummary
 
 /** What the network does with the next message, as a test chooses. */
-export type Network = 'delivers' | 'is_down' | 'gives_up'
+export type Network = 'delivers' | 'is_down' | 'gives_up' | 'falls'
 
 /** The members' phones, the network, and what each phone received, for a test to look at. */
 export interface Phones {
@@ -69,6 +70,9 @@ const send =
         outcome: 'exhausted',
         reason: 'the member has no phone',
       })
+    }
+    if (network === 'falls') {
+      return Promise.reject(new Error('the network fell'))
     }
     if (network === 'is_down') {
       return Promise.resolve<wlib.Delivered<never>>({ outcome: 'transient' })

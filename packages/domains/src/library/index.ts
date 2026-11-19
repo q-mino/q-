@@ -327,3 +327,5 @@ export type {
   ExecutorState,
   EffectExecutor,
 } from './effect.ts'
+export { effect_executor, returns_the_payload } from './effect_executor.ts'
+export type { ExecutorPorts } from './effect_executor.ts'

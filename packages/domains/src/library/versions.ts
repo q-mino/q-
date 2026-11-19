@@ -258,6 +258,7 @@ export const versions: VersionsBuilder = (majors) => async (store) => {
           payload: translated(resolved, stored.payload),
           ...(stored.not_before === undefined ? {} : { not_before: stored.not_before }),
           resources: stored.resources,
+          correlation: stored.correlation,
         }
       },
       reads: (path: string): boolean =>

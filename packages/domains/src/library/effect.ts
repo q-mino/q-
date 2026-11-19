@@ -1,8 +1,9 @@
 import type * as z from 'zod'
 import type { position } from './format.ts'
 import type { Component, PathOf } from './component.ts'
-import type { $Command, Outcomes, entry_id } from './command.ts'
-import type { Failure, StoredEntry } from './state_adapter.ts'
+import type { $Command, entry_id } from './command.ts'
+import type { StoredEntry } from './state_adapter.ts'
+import type { TracedFailure } from './trace.ts'
 import type { $UseCase } from './use_case.ts'
 import type { ComponentsIn } from './registry.ts'
 import type { Discarded, Redelivered } from './reaction_consumer.ts'
@@ -90,7 +91,13 @@ export interface QueuedEntry {
  *   failures; redelivered, the return runs again with it, never the effect
  *   (D108.4);
  * - `identity_already_used`: the entry came back with another outcome; the
- *   first stands (D108.4).
+ *   first stands (D108.4);
+ * - `invalid_request`: what the world said is not in the return's schema
+ *   (DOM-21), a static rule of the return; redelivered, the return runs
+ *   again with it, as for a rejection.
+ * The failures are named as the library knows them at runtime, by their
+ * paths (`TracedFailure`, as the trace of a tree names them): a dead letter
+ * is the executor's, of no domain's type.
  */
 export interface EffectDeadLetter extends QueuedEntry {
   readonly held: 'dead_letter'
@@ -99,9 +106,10 @@ export interface EffectDeadLetter extends QueuedEntry {
     | {
         readonly cause: 'rejected'
         readonly returns: unknown
-        readonly failures: readonly Failure<Outcomes>[]
+        readonly failures: readonly TracedFailure[]
       }
     | { readonly cause: 'identity_already_used'; readonly returns: unknown }
+    | { readonly cause: 'invalid_request'; readonly returns: unknown }
 }
 
 /**

@@ -8,83 +8,15 @@
 
 import type {
   Clock,
-  CommandUseCasePort,
-  CommandUseCases,
-  Deliveries,
-  EffectExecutor,
-  ExecutorState,
   Operation,
-  Outbox,
   ReactionConsumers,
   ReactionState,
   ReactionWirings,
   Registry,
   Versions,
-  entry_id,
 } from '../../src/library/index.ts'
 
 export * from '../../src/library/index.ts'
-
-// Part 7.1, the effect executor.
-
-/**
- * The library's delivery of an effect with no world (a wait: the eve of a
- * due date): the payload back, as the return's input. The executor waits
- * for `not_before` for every effect, so this one only answers: never
- * transient nor exhausted. It fits an effect whose payload is its return's
- * input. A timer is not a construct (A, 13 Nov 2026 (3)).
- */
-export declare const returns_the_payload: <payload>(entry: {
-  readonly id: entry_id
-  readonly payload: payload
-}) => Promise<{ readonly outcome: 'delivered'; readonly returns: payload }>
-
-/**
- * The effect executor of a domain (DOM-14, PER-12): an internal entry, a
- * durable consumer of its outbox, one delivery unit per effect, with its own
- * position, order and dead letters. For each entry it waits for
- * `not_before` by its clock, reads its payload at the current shape
- * (`Versions`: Marta's eve, queued at 1.x, reaches its return at 2.0.0),
- * delivers it at least once, and, if the world
- * answered and the effect has a return, invokes the return's port as
- * "system · executor of effect E" (D91.3): the scope is the effect's path,
- * the operation's id the entry's, so that a double report is the duplicate
- * branch (DOM-11) and the fingerprint covers the entry and what the world
- * said (D108.3); the context is the clock's, `now` told in its zone.
- * A dead letter holds its entry's resources for its effect (D108, D67.3;
- * SC-53), those of the part that queued it (`StoredEntry.resources`): a
- * later entry of the effect that touches one of them is not delivered; it
- * waits behind (`WaitingEntry`), and holds its own resources in turn. A
- * wait is never exhausted, but its return may refuse it: held the same way.
- * The position goes on past a held entry, and the other resources flow: a
- * dead letter stops its resources in its effect, never its effect, nor
- * another effect of the same resources (D108, the delivery unit is the
- * effect). When a letter is delivered at last or discarded
- * (`EffectExecutor`), the executor delivers the entries waiting behind it
- * that nothing held before them still holds, in the order of the outbox,
- * each as an entry met for the first time: it waits for its `not_before`,
- * and one refused becomes a dead letter in its place. It reads what it
- * holds from its state when it starts. An effect that tolerates reordering
- * (`order: 'any'`, D67.3, SC-56) holds nothing: its dead letters wait for
- * the operator, and its later entries go on, of any resource. Curried as
- * `command_use_case_ports`: the registry and the domain's return use cases,
- * where it finds each effect's return; then the deliveries; then its ports.
- */
-export declare function effect_executor<
-  const registry extends Registry,
-  const returns extends CommandUseCases,
->(executor: {
-  readonly registry: registry
-  readonly versions: Versions
-  readonly returns: returns
-}): (
-  deliveries: Deliveries<registry, returns>,
-) => (ports: {
-  readonly outbox: Outbox
-  readonly returns: { readonly [name in keyof returns]: CommandUseCasePort<returns[name]> }
-  readonly state: ExecutorState
-  readonly clock: Clock
-}) => EffectExecutor
 
 // Part 7.3, the reactions.
 

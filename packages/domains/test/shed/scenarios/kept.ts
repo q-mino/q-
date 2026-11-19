@@ -104,6 +104,7 @@ export const marta_s_waits_at_1 = (loan: {
     payload: { loan_id: 'L1', tool_id: drill.id, member_id: 'M-12', due_date: loan.due },
     not_before: wlib.date_time.parse(loan.eve),
     resources: the_loan_s_resources,
+    correlation: wlib.correlation.parse('correlation-L1'),
   },
   {
     effect: 'business/loans/effect/wait_until_the_due_date',
@@ -112,6 +113,7 @@ export const marta_s_waits_at_1 = (loan: {
     payload: { loan_id: 'L1' },
     not_before: wlib.date_time.parse(loan.due),
     resources: the_loan_s_resources,
+    correlation: wlib.correlation.parse('correlation-L1'),
   },
 ]
 

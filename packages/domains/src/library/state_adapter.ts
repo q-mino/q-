@@ -1,6 +1,6 @@
 import type * as z from 'zod'
 import type { Semver, date_time, position } from './format.ts'
-import type { Operation } from './context.ts'
+import type { Operation, correlation } from './context.ts'
 import type { Component, PathOf } from './component.ts'
 import type { Condition, Leaves } from './condition.ts'
 import type { Envelope, Part, Resource, StoredEnvelope } from './envelope.ts'
@@ -129,6 +129,13 @@ export interface EntryFields {
    * executor keeps the order of its effect and holds behind a dead letter.
    */
   readonly resources: readonly Resource[]
+  /**
+   * The correlation of the fact that queued it (DOM-10), which the library
+   * writes from the envelope: the executor returns with it, so that the
+   * return's fact is of the chain the queuing fact began (A, 16 Nov 2026
+   * (5)). A translation leaves it as queued.
+   */
+  readonly correlation: correlation
 }
 
 /**

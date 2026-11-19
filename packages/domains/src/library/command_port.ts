@@ -227,7 +227,7 @@ interface PlannedPart<write> {
   readonly bound: Bound
   readonly part: StoredPart
   readonly write: write
-  readonly entries: readonly StoredEntry[]
+  readonly entries: readonly Omit<StoredEntry, 'correlation'>[]
 }
 
 /**
@@ -641,7 +641,10 @@ const runtime_ports = (
       const write = adapter.write[fact_path]
       if (write === undefined) throw new Error(`the adapter gives no write of ${fact_path} (ADP-8)`)
       const queued: unknown = resolved[2] ?? {}
-      const entry_of = ([entry_name, effect]: readonly [string, z.ZodType]): StoredEntry => {
+      const entry_of = ([entry_name, effect]: readonly [string, z.ZodType]): Omit<
+        StoredEntry,
+        'correlation'
+      > => {
         const entry = resolved_entry.parse(is_a_record(queued) ? queued[entry_name] : undefined)
         const effect_path = named(effect)
         return {
@@ -760,7 +763,9 @@ const runtime_ports = (
           composed: chosen.composed,
           fingerprint: context.fingerprint,
         },
-        entries: chosen.parts.flatMap((part) => part.entries),
+        entries: chosen.parts.flatMap((part) =>
+          part.entries.map((entry) => ({ ...entry, correlation: context.correlation })),
+        ),
       })
 
     /**

@@ -100,6 +100,7 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
           { path: 'business/tools/id/tool_id', value: 'drill' },
           { path: 'business/loans/id/member_id', value: 'M-12' },
         ],
+        correlation: 'correlation-L1',
       },
     ])
     expect(shed.queued('business/loans/effect/wait_until_the_due_date')).toMatchObject([

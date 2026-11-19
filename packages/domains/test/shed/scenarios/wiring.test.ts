@@ -12,6 +12,12 @@ import { majors as member_majors } from '../persona/member/_majors.ts'
 import { borrow_a_tool, return_a_tool } from '../persona/member/_usecase.ts'
 import { registry as member_1_registry } from '../persona/member/1/_registry.ts'
 import { my_loans as my_loans_of_1 } from '../persona/member/1/_usecase.ts'
+import { registry as loans_registry } from '../business/loans/_registry.ts'
+import { majors as tools_majors } from '../business/tools/_majors.ts'
+import {
+  borrow_a_tool as loans_borrow_a_tool,
+  remind_the_member_of_the_due_date,
+} from '../business/loans/_usecase.ts'
 
 // The wiring of a tree's ports (part 6.1, CFG-2): the configurator's faults
 // stop the node before the first request, every one named in one message.
@@ -136,6 +142,36 @@ describe("the wiring of a tree's ports", () => {
       }),
     ).toThrow(
       'persona/member/usecase/borrow_a_tool of major 1 does not lead to the current leaf given (PER-17, CFG-2)',
+    )
+  })
+})
+
+// The wiring of an effect executor (part 7.1, CFG-2, DOM-13, DOM-22).
+
+describe('the wiring of an effect executor', () => {
+  test('effects of a domain the versions do not read, a return that returns from no effect: stopped at once', async () => {
+    const tools_alone = await wlib.versions([tools_majors])({ stored: () => Promise.resolve([]) })
+    expect(() =>
+      wlib.effect_executor({
+        registry: loans_registry,
+        versions: tools_alone,
+        returns: { remind_the_member_of_the_due_date, borrow_a_tool: loans_borrow_a_tool },
+      }),
+    ).toThrow(
+      [
+        'the effect executor: business/loans/effect/wait_until_the_eve_of_the_due_date is of no domain whose majors the versions were given (DOM-22)',
+        'business/loans/effect/send_the_due_date_reminder is of no domain whose majors the versions were given (DOM-22)',
+      ].join('; '),
+    )
+    const shed = await oracle()
+    expect(() =>
+      wlib.effect_executor({
+        registry: loans_registry,
+        versions: shed.versions,
+        returns: { remind_the_member_of_the_due_date, borrow_a_tool: loans_borrow_a_tool },
+      }),
+    ).toThrow(
+      'the effect executor: the return borrow_a_tool returns from no effect of the registry given (DOM-13)',
     )
   })
 })
