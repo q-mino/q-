@@ -1,8 +1,7 @@
 import type * as z from 'zod'
 import type { Component } from './component.ts'
-import type { Condition } from './condition.ts'
-import type { Composition, Each, Entries, Outcomes, OutcomesOf } from './command.ts'
-import type { Failure, PathFailures } from './state_adapter.ts'
+import type { Outcomes } from './command.ts'
+import type { ComposedParts, Failure, PathFailures } from './state_adapter.ts'
 import type { $UseCase, InputOfCommand } from './use_case.ts'
 
 // A use case over another (DOM-2, D105): it runs no command of its own, it
@@ -51,38 +50,6 @@ export type LeavesOfUseCase<use_case> = use_case extends {
 }
   ? leaves
   : never
-
-/**
- * A part a branch composed, as a leaf reads it (SC-54): the branch of the
- * transition applied, by name, and its fact's payload, an ADT by branch, as
- * a command's outcome.
- */
-export type ComposedPart<transition> = {
-  [branch in keyof OutcomesOf<transition> & string]: {
-    readonly branch: branch
-    readonly fact: z.output<OutcomesOf<transition>[branch][1]>
-  }
-}[keyof OutcomesOf<transition> & string]
-
-/**
- * The parts a branch composed, under the names of its composition (SC-10,
- * SC-54): a transition's part, or, for a transition on a list, one part per
- * element, in the order of the list; nothing for a branch that composes
- * none. Luca's screen reads which lines of his short sheet went in and
- * which were left.
- */
-export type ComposedParts<outcome> = outcome extends readonly [
-  Condition,
-  Component,
-  Entries,
-  Composition<infer transitions>,
-]
-  ? {
-      readonly [name in keyof transitions]: transitions[name] extends Each<infer transition>
-        ? readonly ComposedPart<transition>[]
-        : ComposedPart<transitions[name]>
-    }
-  : Readonly<Record<string, never>>
 
 /**
  * The projection of the invoked use case's outcome into the events of the

@@ -651,6 +651,28 @@ export const loans_command_use_cases = {
 }
 
 /**
+ * The oracle's state adapter for the commands of `tools` that run no step
+ * (TST-2): the fragments of its predicates, the writes of its facts, the
+ * execution.
+ */
+export const tools_command_adapter = (cell: CommandCell) => ({
+  algebra: algebra(tools_fragments),
+  write: tools_writes,
+  execute: execute(cell),
+})
+
+/**
+ * The oracle's state adapter for the commands of `loans` that run no step
+ * (TST-2): the fragments of its predicates, over the state of `tools` too
+ * (GR-3), the writes of its facts, the execution.
+ */
+export const loans_command_adapter = (cell: CommandCell) => ({
+  algebra: algebra(loans_fragments),
+  write: loans_writes,
+  execute: execute(cell),
+})
+
+/**
  * The command ports of `tools` and `loans` over the oracle (TST-2): what
  * the scenarios of the commands run on (`scenarios/oracle.ts`).
  */
@@ -660,9 +682,7 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
     versions,
     use_cases: tools_command_use_cases,
   })({
-    algebra: algebra(tools_fragments),
-    write: tools_writes,
-    execute: execute(cell),
+    ...tools_command_adapter(cell),
     // The loading of a sheet of tools walks its lines (SC-44): one
     // subject, its own selection.
     steps: {
@@ -678,9 +698,7 @@ export const memory_commands = (cell: CommandCell) => (versions: wlib.Versions) 
     versions,
     use_cases: loans_command_use_cases,
   })({
-    algebra: algebra(loans_fragments),
-    write: loans_writes,
-    execute: execute(cell),
+    ...loans_command_adapter(cell),
     steps: {
       selection: { ...reservation_selection, after },
       sources: reservation_steps,

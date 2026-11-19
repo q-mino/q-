@@ -158,7 +158,15 @@ const size = (bound: Bound): number => leaves_of(bound).length
  * Every leaf has its value, with no short-circuit (D51), so the failures are
  * the same in any order of evaluation. An interpreter rule (V10).
  */
-export const failures_of = (bound: Bound, values: readonly boolean[]): readonly FailedLeaf[] => {
+export const failures_of = (bound: Bound, values: readonly boolean[]): readonly FailedLeaf[] =>
+  judged(bound, values).blamed(true)
+
+/** Whether a bound condition holds on the values of its leaves, in order (a transition's branch, SC-10). */
+export const holds_on = (bound: Bound, values: readonly boolean[]): boolean =>
+  judged(bound, values).holds
+
+/** A bound condition judged on the values of its leaves, in order, with no short-circuit (D51). */
+const judged = (bound: Bound, values: readonly boolean[]): Judged => {
   const judge = (node: Bound, components: readonly string[], at: number): Judged => {
     switch (node.operator) {
       case 'leaf': {
@@ -197,5 +205,5 @@ export const failures_of = (bound: Bound, values: readonly boolean[]): readonly 
       }
     }
   }
-  return judge(bound, [], 0).blamed(true)
+  return judge(bound, [], 0)
 }

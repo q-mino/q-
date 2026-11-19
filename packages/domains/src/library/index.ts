@@ -71,6 +71,7 @@ export type {
   StoredPart,
   PartFields,
   StoredEnvelope,
+  ComposedBranches,
 } from './envelope.ts'
 export { $Composition, $Each, entry_id, $Command, pick, composes, each } from './command.ts'
 export type {
@@ -169,6 +170,8 @@ export type {
   PathFailure,
   PathFailures,
   CommandOutcome,
+  ComposedPart,
+  ComposedParts,
   ReadFailure,
   StepOutcome,
   OutcomeOf,
@@ -212,14 +215,7 @@ export type {
   ReadUseCases,
   QueriesOf,
 } from './use_case.ts'
-export type {
-  Events,
-  EventOf,
-  ComposedPart,
-  ComposedParts,
-  Projection,
-  EventOutOf,
-} from './use_case_over.ts'
+export type { Events, EventOf, Projection, EventOutOf } from './use_case_over.ts'
 export type {
   CommandUseCaseOver,
   WaitIsOver,

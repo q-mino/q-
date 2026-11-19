@@ -81,11 +81,24 @@ export interface PartFields {
  * A fact's envelope as an adapter stores it: its parts as stored, and what
  * the duplicate branch reads of the operation that recorded it (DOM-11): the
  * name of the branch applied (two branches may record one fact, as
- * `retire_a_tool`'s) and the fingerprint. The library writes both and reads
- * them back; the adapter keeps them opaque, as a part's version, and they
- * never leave the node (PER-18). SC-11
+ * `retire_a_tool`'s), the branch each part it composed applied (`composed`)
+ * and the fingerprint. The library writes them and reads them back; the
+ * adapter keeps them opaque, as a part's version, and they never leave the
+ * node (PER-18). SC-11, SC-10, SC-54
  */
 export interface StoredEnvelope extends Envelope<readonly StoredPart[]> {
   readonly branch: string
+  readonly composed: ComposedBranches
   readonly fingerprint: fingerprint
 }
+
+/**
+ * The branch each part a branch composed applied, under the names of its
+ * composition (SC-10, SC-54): a transition's, or, for a transition on a
+ * list, one per element, in the order of the list; nothing for a branch
+ * that composes none. With the parts after the first, in order, it gives
+ * back the composed parts of the outcome (`ComposedParts`) to a retry: two
+ * branches of a transition may record one fact, so the part's path does not
+ * tell its branch.
+ */
+export type ComposedBranches = Readonly<Record<string, string | readonly string[]>>

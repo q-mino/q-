@@ -6,12 +6,16 @@ import type { Condition, Leaves } from './condition.ts'
 import type { Envelope, Part, Resource, StoredEnvelope } from './envelope.ts'
 import type {
   Commands,
+  Composition,
+  Each,
+  Entries,
   FactsOf,
   InputOf,
   Outcomes,
   OutcomesOf,
   PredicatesOf,
   TransitionsOf,
+  Transitions,
   TransitionsOfOutcome,
   entry_id,
 } from './command.ts'
@@ -277,13 +281,61 @@ export type PathFailures<leaves extends Component> = [leaves] extends [never]
 type ComposedPredicatesOf<outcomes extends Outcomes> = PredicatesOfEach<TransitionsOf<outcomes>>
 
 /**
+ * A part a branch composed, as a leaf reads it (SC-54): the branch of the
+ * transition applied, by name, and its fact's payload, an ADT by branch, as
+ * a command's outcome.
+ */
+export type ComposedPart<transition> = {
+  [branch in keyof OutcomesOf<transition> & string]: {
+    readonly branch: branch
+    readonly fact: z.output<OutcomesOf<transition>[branch][1]>
+  }
+}[keyof OutcomesOf<transition> & string]
+
+/**
+ * The parts a branch composed, under the names of its composition (SC-10,
+ * SC-54): a transition's part, or, for a transition on a list, one part per
+ * element, in the order of the list; nothing for a branch that composes
+ * none. Luca's screen reads which lines of his short sheet went in and
+ * which were left.
+ */
+export type ComposedParts<outcome> = outcome extends readonly [
+  Condition,
+  Component,
+  Entries,
+  Composition<infer transitions>,
+]
+  ? {
+      readonly [name in keyof transitions]: transitions[name] extends Each<infer transition>
+        ? readonly ComposedPart<transition>[]
+        : ComposedPart<transitions[name]>
+    }
+  : Readonly<Record<string, never>>
+
+/**
+ * What the outcome of a branch that composes adds (SC-10, SC-54): the parts
+ * it composed, by the names of its composition, each with the branch of the
+ * transition it applied, which a leaf's projection reads (`ComposedParts`);
+ * nothing for a branch that composes none.
+ */
+type ComposedOutcome<outcome> = outcome extends readonly [
+  Condition,
+  Component,
+  Entries,
+  Composition<Transitions>,
+]
+  ? { readonly composed: ComposedParts<outcome> }
+  : unknown
+
+/**
  * The outcome of a command (DOM-7), an ADT: one declared branch applied, with
- * its typed fact in its envelope and its position; the rejection, naming
- * every failed predicate (DOM-6); from the duplicate branch, the identity
- * of the operation already used with another fingerprint (DOM-11, D79.4);
- * or an input not in the command's schema, built over the context (DOM-21):
- * a static rule, not a rejection. No projection sees the last two: they
- * cross a use case over another as they are, as base events.
+ * its typed fact in its envelope and its position, and, if it composes, the
+ * parts it composed by name; the rejection, naming every failed predicate
+ * (DOM-6); from the duplicate branch, the identity of the operation already
+ * used with another fingerprint (DOM-11, D79.4); or an input not in the
+ * command's schema, built over the context (DOM-21): a static rule, not a
+ * rejection. No projection sees the last two: they cross a use case over
+ * another as they are, as base events.
  */
 export type CommandOutcome<outcomes extends Outcomes, leaves extends Component = never> =
   | {
@@ -297,7 +349,7 @@ export type CommandOutcome<outcomes extends Outcomes, leaves extends Component =
             ...Part<FactsOfEach<TransitionsOfOutcome<outcomes[branch]>>>[],
           ]
         >
-      }
+      } & ComposedOutcome<outcomes[branch]>
     }[keyof outcomes & string]
   | {
       readonly outcome: 'rejected'

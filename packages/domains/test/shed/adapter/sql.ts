@@ -375,7 +375,7 @@ const record =
   (written: wlib.PlannedWrite<readonly sql[]>): Promise<void> =>
     [
       ...written.writes.flat(),
-      sql`insert into facts (parts, operation_scope, operation_id, branch, fingerprint, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.branch}, ${written.fact.fingerprint}, ${written.fact.correlation})`,
+      sql`insert into facts (parts, operation_scope, operation_id, branch, composed, fingerprint, correlation) values (${JSON.stringify(written.fact.parts)}, ${written.fact.operation.scope}, ${written.fact.operation.id}, ${written.fact.branch}, ${JSON.stringify(written.fact.composed)}, ${written.fact.fingerprint}, ${written.fact.correlation})`,
       ...written.entries.map(
         (entry) =>
           sql`insert into outbox (effect, id, version, payload, not_before, resources) values (${entry.effect}, ${entry.id}, ${entry.version}, ${JSON.stringify(entry.payload)}, ${entry.not_before ?? null}, ${JSON.stringify(entry.resources)})`,
@@ -635,12 +635,13 @@ const fact_row = z.strictObject({
   operation_scope: z.string(),
   operation_id: wlib.operation_id,
   branch: z.string(),
+  composed: z.string(),
   fingerprint: wlib.fingerprint,
   correlation: wlib.correlation,
 })
 
 /** The columns of a fact, as `fact_row` reads them. */
-const the_fact_columns = sql`sequence, parts, operation_scope, operation_id, branch, fingerprint, correlation`
+const the_fact_columns = sql`sequence, parts, operation_scope, operation_id, branch, composed, fingerprint, correlation`
 
 const parts = z.array(
   z.strictObject({
@@ -651,9 +652,13 @@ const parts = z.array(
   }),
 )
 
+/** The branch each composed part applied, by the names of the composition (SC-10, SC-54). */
+const composed = z.record(z.string(), z.union([z.string(), z.array(z.string())]))
+
 const as_fact = (row: unknown): wlib.LogEvent => {
   const fact = fact_row.parse(row)
   const stored: unknown = JSON.parse(fact.parts)
+  const branches: unknown = JSON.parse(fact.composed)
   return {
     event: 'fact',
     position: fact.sequence,
@@ -661,6 +666,7 @@ const as_fact = (row: unknown): wlib.LogEvent => {
       parts: parts.parse(stored),
       operation: { scope: fact.operation_scope, id: fact.operation_id },
       branch: fact.branch,
+      composed: composed.parse(branches),
       fingerprint: fact.fingerprint,
       correlation: fact.correlation,
     },

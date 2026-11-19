@@ -7,10 +7,13 @@
 // Part 4.1 gives the command ports of `tools` and `loans`; the reads, the
 // trees, the executors and the consumers join it with their parts, until the
 // configurator runs whole (7.5). Since part 4.2 the harness enters a request
-// as an entry does (DOM-11): the library computes its fingerprint.
+// as an entry does (DOM-11): the library computes its fingerprint. Since
+// part 4.3 it enters alone a transition only a step composes in Shed
+// (`alone`, SC-55), until the steps have a body (7.4).
 
 import * as wlib from '../wlib.ts'
 import {
+  loans_command_adapter,
   loans_command_use_cases,
   memory_commands,
   tools_command_use_cases,
@@ -22,6 +25,7 @@ import { majors as loans_majors } from '../business/loans/_majors.ts'
 import { majors as tools_majors } from '../business/tools/_majors.ts'
 import { registry as loans_registry } from '../business/loans/_registry.ts'
 import { registry as tools_registry } from '../business/tools/_registry.ts'
+import { notify_a_member_of_the_repair } from '../business/loans/_command.ts'
 
 /** The zone of the shed's calendar, as its configuration declares it (`configurator.ts`, SC-12). */
 export const time_zone = wlib.time_zone.parse('America/Toronto')
@@ -69,6 +73,20 @@ const command_cell = (): CommandCell => {
       ),
   }
 }
+
+/**
+ * A transition with no use case of its own, entered alone (SC-55): in Shed
+ * only the step of the round of the repair notices composes it, so that no
+ * one sends it (DOM-2); the harness declares a use case over it, at a path
+ * of its own, so that a scenario reads its fact's envelope before the steps
+ * have a body (part 7.4). The harness's entry, not Shed's.
+ */
+const notify_alone = wlib.builders_at<wlib.RootContext>().command_use_case({
+  command: notify_a_member_of_the_repair,
+})
+
+/** The path of the use case the harness declares over the notice (`notify_alone`). */
+const notify_alone_path = 'business/loans/usecase/notify_a_member_of_the_repair'
 
 /** A request's operation: its id, and the scope the entry composes (hat and `Caller`'s id, DOM-11). */
 export interface Sent {
@@ -118,9 +136,20 @@ export const oracle = async () => {
     stored: () => Promise.resolve([]),
   })
   const ports = memory_commands(cell)(versions)
+  const alone_registry = {
+    ...tools_registry,
+    ...loans_registry,
+    [notify_alone_path]: notify_alone,
+  }
+  const alone = wlib.command_use_case_ports({
+    registry: alone_registry,
+    versions,
+    use_cases: { notify_a_member_of_the_repair: notify_alone },
+  })(loans_command_adapter(cell))
   const paths = new Map([
     ...paths_of_ports(tools_registry, tools_command_use_cases, ports.tools),
     ...paths_of_ports(loans_registry, loans_command_use_cases, ports.loans),
+    ...paths_of_ports(alone_registry, { notify_a_member_of_the_repair: notify_alone }, alone),
   ])
   const entered =
     <input, event>(port: Port<input, event>) =>
@@ -169,6 +198,9 @@ export const oracle = async () => {
       continue_the_repair_notice_round: entered(ports.loans.continue_the_repair_notice_round),
       begin_a_weekly_summary: entered(ports.loans.begin_a_weekly_summary),
       sum_up_the_week_for_the_member: entered(ports.loans.sum_up_the_week_for_the_member),
+    },
+    alone: {
+      notify_a_member_of_the_repair: entered(alone.notify_a_member_of_the_repair),
     },
     at,
   }
