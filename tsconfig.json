@@ -19,6 +19,7 @@
     { "path": "packages/phone" },
     { "path": "packages/phone/test" },
     { "path": "packages/boundary" },
+    { "path": "packages/boundary/test" },
     { "path": "packages/extensions/greetings" }
   ]
 }

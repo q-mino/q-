@@ -3,8 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2024"],
     "types": [],
-    "rootDir": "src",
-    "outDir": ".tsbuild/src"
+    "rootDir": ".",
+    "outDir": ".tsbuild"
   },
-  "include": ["src"]
+  "include": ["src", "package.json"]
 }
