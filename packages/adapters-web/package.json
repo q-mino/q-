@@ -8,7 +8,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@q-mino/adapters-common": "workspace:*",
     "@q-mino/domains": "workspace:*",
-    "@q-mino/adapters-common": "workspace:*"
+    "qr": "^0.7.2"
   }
 }
