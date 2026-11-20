@@ -1,0 +1,151 @@
+{
+  "domain": "user/choices",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "user/choices/id/choice": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["the_active_face"] }
+        }
+      }
+    },
+    "user/choices/value/the_active_face": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "choice": { "type": "string", "enum": ["the_active_face"] },
+              "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "since": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["choice", "face", "since"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/fact/the_active_face_has_been_changed": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "active_face": {
+                "type": "object",
+                "properties": {
+                  "choice": { "type": "string", "enum": ["the_active_face"] },
+                  "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "since": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["choice", "face", "since"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["active_face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/fact/the_active_face_has_been_changed_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "face": { "type": "string", "minLength": 1, "maxLength": 128 } },
+            "required": ["face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/predicate/this_face_is_the_active_one": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "face": { "type": "string", "minLength": 1, "maxLength": 128 } },
+            "required": ["face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/selection/choice/the_choice_is_this_one": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "choice": { "type": "string", "enum": ["the_active_face"] } },
+            "required": ["choice"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/command/another_face": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "face": { "type": "string", "minLength": 1, "maxLength": 128 } },
+            "required": ["face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/command/change_face": { "kind": "command" },
+    "user/choices/command/change_face_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "face": { "type": "string", "minLength": 1, "maxLength": 128 } },
+            "required": ["face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/choices/query/the_active_face": { "kind": "query" },
+    "user/choices/query/the_active_face_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "user/choices/usecase/change_face": { "kind": "usecase" },
+    "user/choices/usecase/the_active_face": { "kind": "usecase" },
+    "user/choices/version/choices": { "kind": "version" }
+  }
+}

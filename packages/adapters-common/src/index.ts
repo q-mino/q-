@@ -2,4 +2,5 @@
 export * from './auth/index.ts'
 export * from './entry/index.ts'
 export * from './extensions/index.ts'
+export * from './user/index.ts'
 export { libsodium_primitives } from './libsodium/index.ts'
