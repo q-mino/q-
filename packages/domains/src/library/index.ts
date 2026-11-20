@@ -309,6 +309,8 @@ export type {
   TreePorts,
 } from './tree.ts'
 export { tree_ports, mounted_leaf_ports } from './tree_port.ts'
+export { the_surface_of } from './surface.ts'
+export type { Surface, SurfaceLeaf } from './surface.ts'
 export type {
   MountedLeaf,
   MountedSurface,

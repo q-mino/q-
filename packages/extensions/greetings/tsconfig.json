@@ -6,6 +6,14 @@
     "rootDir": ".",
     "outDir": ".tsbuild"
   },
-  "include": ["."],
-  "references": [{ "path": "../../domains" }, { "path": "../../boundary" }]
+  "include": [".", "package.json", "manifest.json"],
+  "references": [
+    {
+      "path": "../../domains"
+    },
+    {
+      "path": "../../boundary"
+    }
+  ],
+  "exclude": ["scripts", ".tsbuild"]
 }

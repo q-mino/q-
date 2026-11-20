@@ -2,7 +2,8 @@ import * as z from 'zod'
 import { seen_on_known } from './contexts.ts'
 import { place } from './places.ts'
 import { port } from './ports.ts'
-import { a_file, a_leaf, a_name, a_set_of, json, semver } from './values.ts'
+import { a_base_event, the_kernels_events_on_known } from './the_kernels_node.ts'
+import { a_file, a_leaf, a_name, a_set_of, json, semver, type Json } from './values.ts'
 import { version } from './version.ts'
 
 // The manifest (EXT-3, EXT-10): what an extension is to the kernel. Its
@@ -121,6 +122,60 @@ export const a_surface = z
     message: 'the majors do not hold the version’s',
   })
 export type a_surface = z.output<typeof a_surface>
+
+/** A schema of the boundary's as a surface carries it (EXT-10): its JSON Schema, on the input side, with no `$schema`. */
+const json_schema_of = (schema: z.ZodType): Json =>
+  json.parse(
+    Object.fromEntries(
+      Object.entries(z.toJSONSchema(schema, { io: 'input' })).filter(([key]) => key !== '$schema'),
+    ),
+  )
+
+/** The events the kernel's node and entry give above an extension's leaves on each persona (EXT-5): on `known` its closing and the base events, on `self` the base events. */
+const the_kernels_events = {
+  known: the_kernels_events_on_known.options,
+  self: a_base_event.options,
+} as const
+
+/**
+ * A surface as an extension's tree gives it (its leaves' own events, and the
+ * closings of its nodes and limits), below the kernel's node at the top of a
+ * persona (EXT-5, EXT-10): each leaf's events with those the kernel gives
+ * above it, as the boundary types them, whole, by name; a read leaf takes
+ * no operation, so no `identity_already_used`. So the surface the manifest
+ * carries types every event a peer's response may hold (EXT-12), and the
+ * kernel parses what the extension gives by it (EXT-15).
+ */
+export const below_the_kernels_node =
+  (persona: 'self' | 'known') =>
+  (surface: z.input<typeof a_surface>): z.input<typeof a_surface> => ({
+    version: surface.version,
+    majors: Object.fromEntries(
+      Object.entries(surface.majors).map(([major, leaves]) => [
+        major,
+        Object.fromEntries(
+          Object.entries(leaves).map(([path, leaf]) => [
+            path,
+            {
+              ...leaf,
+              events: {
+                ...leaf.events,
+                ...Object.fromEntries(
+                  the_kernels_events[persona]
+                    .filter(
+                      (event) =>
+                        leaf.kind === 'command' ||
+                        event.shape.event.value !== 'identity_already_used',
+                    )
+                    .map((event) => [event.shape.event.value, json_schema_of(event)]),
+                ),
+              },
+            },
+          ]),
+        ),
+      ]),
+    ),
+  })
 
 /**
  * The manifest as data (EXT-10), `manifest.json`, the one form the kernel

@@ -1,0 +1,160 @@
+{
+  "name": "greetings",
+  "version": "0.1.0",
+  "boundary_version": "1.0.0",
+  "sees": { "known": [] },
+  "touches": ["the_port_of_requests", "its_storage"],
+  "actions": { "greet": { "on": "a_bond", "invokes": "usecase/greet_a_bond" } },
+  "slots": {},
+  "pages": {},
+  "surfaces": {
+    "self": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/greet_a_bond": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": { "bond": { "type": "string", "minLength": 1 } },
+              "required": ["bond"],
+              "additionalProperties": false
+            },
+            "events": {
+              "the_greeting_is_sent": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_greeting_is_sent" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "greeting_id": { "type": "string", "minLength": 1 } },
+                    "required": ["greeting_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_greeting_cannot_be_sent": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_greeting_cannot_be_sent" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          }
+        }
+      }
+    },
+    "known": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/greet": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": { "words": { "type": "string", "minLength": 1, "maxLength": 280 } },
+              "required": ["words"],
+              "additionalProperties": false
+            },
+            "events": {
+              "greeted_back": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "greeted_back" },
+                  "payload": {
+                    "type": "object",
+                    "properties": {
+                      "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                    },
+                    "required": ["words"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "not_greeted_back": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "not_greeted_back" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "not_found": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "not_found" } },
+                "required": ["event"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          }
+        }
+      }
+    }
+  }
+}
