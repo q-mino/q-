@@ -446,6 +446,9 @@ export const a_phone = async (
     collect_secret: start.collect_secret,
     machine_of,
     the_request,
+    /** The ports of `post/requests` over the phone's cell, and the log of its facts: what the kernel's port of requests is wired with (12.4). */
+    post,
+    log: facts,
     /** The identity of the response to a request (PST-2). */
     the_response_to: (request_id: string): string =>
       the_identity_of_the_response_to(machine_of(start.face_id))(request_id),
@@ -663,6 +666,8 @@ export const a_story = async (
     bruno,
     carla,
     bonds_of,
+    /** The phones' clock (DOM-14). */
+    clock: time.clock,
     /** The phones' clock reads this instant (10:00:15 is `at('10:00:15')`). */
     at: (time_of_day: string) => {
       time.at(`2026-11-20T${time_of_day}Z`)
