@@ -21,20 +21,12 @@ export const face_id = id.face_id.brand<'bonds/address_book/id/face_id'>()
 export type face_id = z.output<typeof face_id>
 
 /**
- * A bond of the node's user: Anna's with Bruno, made at the handshake.
- * Named on the node (DOM-12), by the introduction that makes it (step 11.2).
+ * A bond of the node's user: Anna's with Bruno, from the ticket she showed
+ * him or presented to his (BND-7). Named on the node (DOM-12) when the ticket
+ * is asked for; the key of her mailbox of the bond in the safe has it too
+ * (BND-2).
  *
  * @see {@link id.bond_id}
  */
 export const bond_id = id.bond_id.brand<'bonds/address_book/id/bond_id'>()
 export type bond_id = z.output<typeof bond_id>
-
-/**
- * A mailbox of the node's user, one for each bond, where its peer deposits
- * for her: the key of the link with the mailbox key the safe keeps (GR-3,
- * SEA-4), so its opaque reference to the collect secret.
- *
- * @see {@link id.mailbox_id}
- */
-export const mailbox_id = id.mailbox_id.brand<'bonds/address_book/id/mailbox_id'>()
-export type mailbox_id = z.output<typeof mailbox_id>

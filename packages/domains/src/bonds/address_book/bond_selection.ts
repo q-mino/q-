@@ -26,3 +26,9 @@ export const my_mailbox_of_the_bond_is_at_this_address = selection({
     deposit_address: value.deposit_address,
   }),
 })
+
+/** The bond's ticket is ready: its mailbox is collected for an introduction (BND-11). */
+export const its_ticket_is_ready = selection({
+  subject: 'bond',
+  parameters: z.strictObject({}),
+})

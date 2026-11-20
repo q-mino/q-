@@ -52,3 +52,98 @@ export type the_bond_is_kept = z.output<typeof the_bond_is_kept>
 export const the_bond_is_removed =
   predicate.the_bond_is_removed.brand<'bonds/address_book/predicate/the_bond_is_removed'>()
 export type the_bond_is_removed = z.output<typeof the_bond_is_removed>
+
+/**
+ * The user has a face, being made or made: in stage 1, her one face (BND-8).
+ *
+ * @see {@link predicate.the_user_has_a_face}
+ */
+export const the_user_has_a_face =
+  predicate.the_user_has_a_face.brand<'bonds/address_book/predicate/the_user_has_a_face'>()
+export type the_user_has_a_face = z.output<typeof the_user_has_a_face>
+
+/**
+ * This face is being made: the safe is drawing its seed.
+ *
+ * @see {@link predicate.the_face_is_being_made}
+ */
+export const the_face_is_being_made =
+  predicate.the_face_is_being_made.brand<'bonds/address_book/predicate/the_face_is_being_made'>()
+export type the_face_is_being_made = z.output<typeof the_face_is_being_made>
+
+/**
+ * The ticket of this bond is being prepared: the safe is drawing its mailbox's key.
+ *
+ * @see {@link predicate.the_ticket_is_being_prepared}
+ */
+export const the_ticket_is_being_prepared =
+  predicate.the_ticket_is_being_prepared.brand<'bonds/address_book/predicate/the_ticket_is_being_prepared'>()
+export type the_ticket_is_being_prepared = z.output<typeof the_ticket_is_being_prepared>
+
+/**
+ * The ticket of this bond is ready: shown, and used by no one yet.
+ *
+ * @see {@link predicate.the_ticket_is_ready}
+ */
+export const the_ticket_is_ready =
+  predicate.the_ticket_is_ready.brand<'bonds/address_book/predicate/the_ticket_is_ready'>()
+export type the_ticket_is_ready = z.output<typeof the_ticket_is_ready>
+
+/**
+ * The ticket of this bond expired, used by no one.
+ *
+ * @see {@link predicate.the_ticket_has_expired}
+ */
+export const the_ticket_has_expired =
+  predicate.the_ticket_has_expired.brand<'bonds/address_book/predicate/the_ticket_has_expired'>()
+export type the_ticket_has_expired = z.output<typeof the_ticket_has_expired>
+
+/**
+ * The secret given is the ticket's (BND-9): my face's signature over the
+ * ticket's mailbox address holds. The adapter verifies it with the safe's
+ * pure function over the face's public key (`seals`' `dsl.the_signature_holds`).
+ *
+ * @see {@link predicate.the_secret_is_the_ticket_s}
+ */
+export const the_secret_is_the_ticket_s =
+  predicate.the_secret_is_the_ticket_s.brand<'bonds/address_book/predicate/the_secret_is_the_ticket_s'>()
+export type the_secret_is_the_ticket_s = z.output<typeof the_secret_is_the_ticket_s>
+
+/**
+ * The bond is with this face of theirs: their key is the one given.
+ *
+ * @see {@link predicate.the_bond_is_with_this_face}
+ */
+export const the_bond_is_with_this_face =
+  predicate.the_bond_is_with_this_face.brand<'bonds/address_book/predicate/the_bond_is_with_this_face'>()
+export type the_bond_is_with_this_face = z.output<typeof the_bond_is_with_this_face>
+
+/**
+ * My node has sent my introduction on this bond (BND-10).
+ *
+ * @see {@link predicate.my_introduction_is_sent}
+ */
+export const my_introduction_is_sent =
+  predicate.my_introduction_is_sent.brand<'bonds/address_book/predicate/my_introduction_is_sent'>()
+export type my_introduction_is_sent = z.output<typeof my_introduction_is_sent>
+
+/**
+ * A letter of theirs came on this bond: the confirmation is received (BND-5).
+ *
+ * @see {@link predicate.the_confirmation_is_received}
+ */
+export const the_confirmation_is_received =
+  predicate.the_confirmation_is_received.brand<'bonds/address_book/predicate/the_confirmation_is_received'>()
+export type the_confirmation_is_received = z.output<typeof the_confirmation_is_received>
+
+/**
+ * The handshake of this bond began within two minutes of this instant
+ * (BND-10): the two tickets crossed, in person.
+ *
+ * @see {@link predicate.the_handshake_began_within_two_minutes_of}
+ */
+export const the_handshake_began_within_two_minutes_of =
+  predicate.the_handshake_began_within_two_minutes_of.brand<'bonds/address_book/predicate/the_handshake_began_within_two_minutes_of'>()
+export type the_handshake_began_within_two_minutes_of = z.output<
+  typeof the_handshake_began_within_two_minutes_of
+>

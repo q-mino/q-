@@ -120,13 +120,44 @@ export type their_mailbox = z.output<typeof their_mailbox>
 
 /**
  * My mailbox, in a bond: the one they deposit on for me, one for each bond
- * (BND-4). Its key's reference in the safe, which collects with its R; its D
- * and its relays, which I declared to them.
+ * (BND-4), its key in the safe filed under the bond's id (BND-2, BND-7): its
+ * D and its relays, which I declared to them in my ticket.
  *
  * @see {@link value.my_mailbox}
  */
 export const my_mailbox = value.my_mailbox
 export type my_mailbox = z.output<typeof my_mailbox>
+
+/**
+ * My mailbox while the safe draws its key (BND-8): its relays, its D still to come.
+ *
+ * @see {@link value.my_mailbox_being_drawn}
+ */
+export const my_mailbox_being_drawn = value.my_mailbox_being_drawn
+export type my_mailbox_being_drawn = z.output<typeof my_mailbox_being_drawn>
+
+/**
+ * The secret of a ticket (BND-9): my face's signature over the ticket's
+ * mailbox address (`dsl.the_content_a_ticket_s_secret_signs`), 64 bytes in
+ * base64url, 86 characters. Only my face makes it, so no relay forges an
+ * introduction; it is kept nowhere, the safe makes it again when the ticket
+ * is shown.
+ *
+ * @see {@link value.ticket_secret}
+ */
+export const ticket_secret = value.ticket_secret
+export type ticket_secret = z.output<typeof ticket_secret>
+
+/**
+ * A ticket as its holder shows it, in a QR or after `#` in a link (BND-8):
+ * the face, by its key and the name it is introduced as; the mailbox of the
+ * bond to be, its D and its relays; the secret; until when it holds. Theirs,
+ * when I open it: their claims (F2), which my node keeps as they are.
+ *
+ * @see {@link value.their_ticket}
+ */
+export const their_ticket = value.their_ticket
+export type their_ticket = z.output<typeof their_ticket>
 
 /**
  * The name I give a bond: "Annina". Mine, on my node only; theirs stays as they introduced themselves.
@@ -164,12 +195,50 @@ export const confirmation = value.confirmation
 export type confirmation = z.output<typeof confirmation>
 
 /**
- * Kept, in the user's list; removed, by her, for good (BND-6).
+ * Whether I introduced myself to them (BND-10): not yet, when the bond came
+ * of their introduction to my ticket; sent, with when, once my node queued
+ * my introduction to their ticket.
+ *
+ * @see {@link value.my_introduction}
+ */
+export const my_introduction = value.my_introduction
+export type my_introduction = z.output<typeof my_introduction>
+
+/**
+ * The life of a bond (BND-7): its ticket first, being prepared while the
+ * safe draws my mailbox's key, then ready to be shown, until it is used,
+ * and the bond kept, or it expires; kept, in the user's list; removed, by
+ * her, for good (BND-6).
  *
  * @see {@link value.bond_status}
  */
 export const bond_status = value.bond_status
 export type bond_status = z.output<typeof bond_status>
+
+/**
+ * A ticket Anna asked for (BND-8), for her face, expiring 48 hours after:
+ * the safe is drawing the key of her mailbox for the bond to be.
+ *
+ * @see {@link value.ticket_being_prepared}
+ */
+export const ticket_being_prepared = value.ticket_being_prepared
+export type ticket_being_prepared = z.output<typeof ticket_being_prepared>
+
+/**
+ * A ticket with its mailbox: it can be shown, and used once until it expires (BND-8).
+ *
+ * @see {@link value.ticket_ready}
+ */
+export const ticket_ready = value.ticket_ready
+export type ticket_ready = z.output<typeof ticket_ready>
+
+/**
+ * A ticket no one used in its 48 hours (BND-8): no bond came of it, its mailbox is collected no more.
+ *
+ * @see {@link value.ticket_expired}
+ */
+export const ticket_expired = value.ticket_expired
+export type ticket_expired = z.output<typeof ticket_expired>
 
 /**
  * A bond in the user's list: one of her faces, exactly one, with their face
@@ -190,7 +259,7 @@ export const removed_bond = value.removed_bond
 export type removed_bond = z.output<typeof removed_bond>
 
 /**
- * A bond of the node's user: its states share every field, so any field reads without narrowing.
+ * A bond of the node's user, from its ticket on: its states share every field, so any field reads without narrowing.
  *
  * @see {@link value.bond}
  */
@@ -221,3 +290,29 @@ export type bond_card = z.output<typeof bond_card>
  */
 export const bond_at_my_mailbox = value.bond_at_my_mailbox
 export type bond_at_my_mailbox = z.output<typeof bond_at_my_mailbox>
+
+/**
+ * My ticket, to be shown (BND-8): my face, by its key and the name it is
+ * introduced as, the mailbox of the bond to be, and until when it holds. Its
+ * secret is the safe's to make (BND-9), joined where the ticket is drawn.
+ *
+ * @see {@link value.ticket_to_show}
+ */
+export const ticket_to_show = value.ticket_to_show
+export type ticket_to_show = z.output<typeof ticket_to_show>
+
+/**
+ * The ticket an introduction came for, by the mailbox it was deposited on (BND-10): the bond to be and my face.
+ *
+ * @see {@link value.ticket_at_my_mailbox}
+ */
+export const ticket_at_my_mailbox = value.ticket_at_my_mailbox
+export type ticket_at_my_mailbox = z.output<typeof ticket_at_my_mailbox>
+
+/**
+ * A mailbox the phone collects from (BND-11): a ready ticket's, for an introduction, or a kept bond's.
+ *
+ * @see {@link value.mailbox_to_collect}
+ */
+export const mailbox_to_collect = value.mailbox_to_collect
+export type mailbox_to_collect = z.output<typeof mailbox_to_collect>

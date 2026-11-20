@@ -90,3 +90,83 @@ export const the_bond_at_my_mailbox = query.the_bond_at_my_mailbox
  */
 export const the_bond_at_my_mailbox_input = query.the_bond_at_my_mailbox.input
 export type the_bond_at_my_mailbox_input = z.output<typeof the_bond_at_my_mailbox_input>
+
+/**
+ * The ticket is the one named, and ready.
+ *
+ * @see {@link query.the_ticket_is_ready_under_this_id}
+ */
+export const the_ticket_is_ready_under_this_id = query.the_ticket_is_ready_under_this_id
+export type the_ticket_is_ready_under_this_id = z.output<typeof the_ticket_is_ready_under_this_id>
+
+/**
+ * The ticket is ready, and its mailbox is at the address named.
+ *
+ * @see {@link query.the_ticket_is_ready_at_my_mailbox}
+ */
+export const the_ticket_is_ready_at_my_mailbox = query.the_ticket_is_ready_at_my_mailbox
+export type the_ticket_is_ready_at_my_mailbox = z.output<typeof the_ticket_is_ready_at_my_mailbox>
+
+/**
+ * The ticket Anna shows Bruno, or sends Carla in a link (BND-8): her face's
+ * key and the name it is introduced as, her mailbox for the bond to be,
+ * until when it holds. Its secret is the safe's signature, joined where the
+ * ticket is drawn (BND-9). No entry for a ticket being prepared, used or
+ * expired.
+ *
+ * @see {@link query.my_ticket}
+ */
+export const my_ticket = query.my_ticket
+
+/**
+ * The input of `my_ticket`, declared inline.
+ *
+ * @see {@link query.my_ticket}
+ */
+export const my_ticket_input = query.my_ticket.input
+export type my_ticket_input = z.output<typeof my_ticket_input>
+
+/**
+ * An introduction Carla's phone collected from a mailbox of hers (BND-10):
+ * the ticket it came for, ready, and her face it is for. No entry for an
+ * address of no ready ticket; a bond made already is `the_bond_at_my_mailbox`'s.
+ *
+ * @see {@link query.the_ticket_at_my_mailbox}
+ */
+export const the_ticket_at_my_mailbox = query.the_ticket_at_my_mailbox
+
+/**
+ * The input of `the_ticket_at_my_mailbox`, declared inline.
+ *
+ * @see {@link query.the_ticket_at_my_mailbox}
+ */
+export const the_ticket_at_my_mailbox_input = query.the_ticket_at_my_mailbox.input
+export type the_ticket_at_my_mailbox_input = z.output<typeof the_ticket_at_my_mailbox_input>
+
+/**
+ * The bond is kept, or its ticket is ready.
+ *
+ * @see {@link query.my_mailbox_of_the_bond_is_collected}
+ */
+export const my_mailbox_of_the_bond_is_collected = query.my_mailbox_of_the_bond_is_collected
+export type my_mailbox_of_the_bond_is_collected = z.output<
+  typeof my_mailbox_of_the_bond_is_collected
+>
+
+/**
+ * The mailboxes Anna's phone collects from (BND-11): those of her ready
+ * tickets, where introductions come, and those of her kept bonds, where
+ * their letters come. A ticket expired and a bond removed are not among
+ * them.
+ *
+ * @see {@link query.the_mailboxes_i_collect}
+ */
+export const the_mailboxes_i_collect = query.the_mailboxes_i_collect
+
+/**
+ * The input of `the_mailboxes_i_collect`, declared inline.
+ *
+ * @see {@link query.the_mailboxes_i_collect}
+ */
+export const the_mailboxes_i_collect_input = query.the_mailboxes_i_collect.input
+export type the_mailboxes_i_collect_input = z.output<typeof the_mailboxes_i_collect_input>

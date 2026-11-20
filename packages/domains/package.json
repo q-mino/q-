@@ -11,6 +11,7 @@
     "./mailbox/*": "./src/mailbox/*",
     "./desk/*": "./src/desk/*",
     "./bonds/*": "./src/bonds/*",
+    "./reaction/*": "./src/reaction/*",
     "./conversations": "./src/conversations/index.ts",
     "./auth": "./src/auth/index.ts",
     "./persona": "./src/persona/index.ts",

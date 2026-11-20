@@ -36,3 +36,12 @@ export const my_mailbox_of_the_bond_is_at_this_address =
 export type my_mailbox_of_the_bond_is_at_this_address = z.output<
   typeof my_mailbox_of_the_bond_is_at_this_address
 >
+
+/**
+ * The bond's ticket is ready: its mailbox is collected for an introduction (BND-11).
+ *
+ * @see {@link selection.its_ticket_is_ready}
+ */
+export const its_ticket_is_ready =
+  selection.its_ticket_is_ready.brand<'bonds/address_book/selection/bond/its_ticket_is_ready'>()
+export type its_ticket_is_ready = z.output<typeof its_ticket_is_ready>
