@@ -249,7 +249,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **23. Browser I/O** (`adapters-web`) — L · 260k · `step/23-browser-io` (before the gate: it does not depend on step 12)
 
 - Goal: QR drawn and scanned with the camera; the ticket link (after `#`); files for export and import; clock and randomness as injected sources.
-- Rules: ADP-1, ADP-4.
+- Rules: ADP-1, ADP-4; WEB-1..WEB-5, written by the step (part 23, 20 Nov 2026).
 
 ### (c) Configurators
 
