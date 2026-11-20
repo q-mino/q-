@@ -19,6 +19,7 @@ import {
   checks,
   compared,
   doors,
+  mounts,
   is_a_major_registry,
   generated,
   layer_order,
@@ -148,7 +149,7 @@ const declares = (declared: object, part: string): boolean => {
   return typeof value === 'object' && value !== null && Object.keys(value).length > 0
 }
 
-/** What a node's declaration adds to the types of the points below it: closes if it looks up, has a perimeter or a limit; accumulates if it binds or requires. */
+/** What a node's declaration adds to the types of the points below it: closes if it looks up, has a perimeter or a limit; accumulates if it binds or requires; and whether it takes from the entry. */
 const node_parts_of = (value: object): NodeParts | undefined => {
   if (!($Node in value)) return undefined
   const node: unknown = value[$Node]
@@ -160,6 +161,7 @@ const node_parts_of = (value: object): NodeParts | undefined => {
       declares(declared, part),
     ),
     accumulates: ['binds', 'requires'].some((part) => Reflect.get(declared, part) !== undefined),
+    takes: Reflect.get(declared, 'takes') !== undefined,
   }
 }
 
@@ -389,6 +391,7 @@ export const generate = async (
   const tree = (): Tree => ({
     sight: configuration.sight,
     library: configuration.library,
+    ...(configuration.mounted === undefined ? {} : { mounted: configuration.mounted }),
     folders: [...new Set(reads.map((read) => read.segments.join('/')))].map((folder): Folder => ({
       segments: folder.split('/'),
       files: reads
@@ -451,6 +454,8 @@ export const generate = async (
   }
 
   for (const file of scopes(tree()).files) await put(file, true)
+  // The points of the mounted folders need no runtime: their context's schemas are another unit's (EXT-11).
+  for (const file of mounts(tree()).files) await put(file)
   // The doors need no runtime: written before any file whose scope imports one is imported.
   const written_doors = doors(tree())
   failures.push(...written_doors.failures.map(from_the_repository))
@@ -548,6 +553,7 @@ export const generate = async (
     }
   }
   failures.push(...checks(tree()).map(from_the_repository))
+  failures.push(...mounts(tree()).failures.map(from_the_repository))
   if (configuration.compared_with_main) {
     const before = released(repository, configuration.root)
     if (before.is === 'read') {

@@ -1,4 +1,5 @@
 import type { Built, ConstructKind, Json, Sight } from '@q-mino/domains/library'
+import type { Mount } from './configuration.ts'
 
 // A tree as the shell reads it (DOM-25), the core's input: its folders, the
 // authored files in them, what their source says (the scope each imports, the
@@ -18,6 +19,8 @@ export interface Tree {
   readonly library: string
   /** Every folder of the tree holding an authored file, outer folders first. */
   readonly folders: readonly Folder[]
+  /** The folders mounted below a node of another tree, by their path, with the context given there (EXT-11); none if absent. */
+  readonly mounted?: Readonly<Record<string, Mount>>
 }
 
 /** A folder of the tree: its segments from the root (`['business', 'loans', '1']`) and its authored files. */
@@ -110,6 +113,8 @@ export interface Held {
 export interface NodeParts {
   readonly closes: boolean
   readonly accumulates: boolean
+  /** Whether it takes from the entry (`takes`): only a top does, never below a mounted folder (EXT-11). */
+  readonly takes: boolean
 }
 
 /** The input a command, a query or a leaf declares inline: a schema, a function of the context, or none. */
