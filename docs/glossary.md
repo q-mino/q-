@@ -30,6 +30,7 @@ Lowercase, as written; read with a capital.
 | `estensioni/<nome>`                                                 | `extensions/<name>` (the package of an extension, EXT-9)                                               |
 | `casella/depositi` · `sportello/depositante` · `sportello/titolare` | `mailbox/deposits` · `desk/depositor` · `desk/holder` (the relay's domain and its two personas, MBX-1) |
 | `sigilli/cassaforte`                                                | `seals/safe` (the domain of the secrets, SEA-1)                                                        |
+| `legami/rubrica`                                                    | `bonds/address_book` (the domain of faces and bonds, BND-1)                                            |
 
 ## Domain terms
 
@@ -68,10 +69,20 @@ Lowercase, as written; read with a capital.
 | chiave pubblica · chiave privata · chain code                     | public key · private key · chain code                          |
 | contenuto · contenuto sigillato · firma che regge                 | content · sealed content · the signature holds                 |
 | porta delle primitive                                             | primitives port                                                |
+| rubrica                                                           | address book                                                   |
+| nome di presentazione (si presenta come) · il nome che gli do     | introduced as · the name I give (a bond's name)                |
+| posizione (di un volto) · in cima · sotto un volto                | position (of a face) · at the top · under a face               |
+| il suo volto · la sua casella · la mia casella (di un legame)     | their face · their mailbox · my mailbox (of a bond)            |
+| indirizzo del relay · i relay (di una casella)                    | relay address · relays (of a mailbox)                          |
+| legame tenuto · eliminato · Elimina contatto                      | kept bond · removed · remove a bond                            |
+| di persona · a distanza (come è nato il legame)                   | in person · at a distance (the handshake's way)                |
+| conferma attesa · ricevuta ("lei ti ha?")                         | confirmation awaited · received                                |
 
 The relay's words (part 8.1, MBX-1..MBX-4, Claude, 20 Nov 2026): a **deposit** is an envelope left on a deposit address D, with the time the relay received it; the relay **discards** it seven days after, collected or not. Whoever deposits is a **depositor**, anyone; whoever shows the collect secret R of the mailbox at D = hash(R) is its **holder**, and collects. The relay's domain is `mailbox/deposits`, its personas `desk/depositor` and `desk/holder`. Rejected: `box` (a second word for the mailbox), `sender` (the relay knows no sender, F2, and a depositor need not be one).
 
 The secrets' words (part 9.1, SEA-1..SEA-7, Claude, 20 Nov 2026): the **safe** is the domain of `seals` that keeps every secret of the node: the **seeds** (32 random bytes, with their **seed scheme**, `slip10-flat`, and the **next index** a face of the seed will take), the **faces** (each at its **index** under its seed, `m/i'`, with its **private key**, its **chain code** and its **public key**, the only one that leaves) and the **mailbox keys** (a collect secret R with its deposit address D, as the key and the address of a post-office box). A **content** is what `post` gives to sign or to seal, bytes opaque to the safe; a **sealed content** is one sealed for a public key; a signature **holds** when it is the face's over that content. The **primitives port** is the safe's machine: the randomness, HMAC-SHA512, Ed25519, the sealed box, BLAKE2b (libsodium, step 18). Rejected: `keys` (a second word for the faces' keys and the mailboxes'), `keyring`, `vault` (Alessandro's notes are the vault).
+
+The bonds' words (part 11.1, BND-1..BND-6, Claude, 20 Nov 2026): the **address book** is the domain of `bonds` that keeps the node's user's **faces** and **bonds**, as an address book keeps one's own cards and one's contacts. A face has its **name** (the one it is **introduced as** to whoever it is shown), its **position** in the user's tree of faces (**at the top**, or **under a face**: data of the user's, never of the keys) and its public key, once the safe made it. A bond is one of my faces with **their face** (its key and the name it is introduced as) and **their mailbox** (its deposit address and its **relays**, the **relay addresses** where it is deposited on), **my mailbox** for them (the key's reference in the safe, its D and its relays), **the name I give** them, and the node's annotations: the **handshake**, **in person** or **at a distance**, and when; the **confirmation**, **awaited** until a letter of theirs comes on the bond ("does she have you?"), then **received**. A bond is **kept** in the list until the user **removes** it. Rejected: `contacts` (the screens' word, not the domain's: a bond is the relation, not the person), `peer` in the components (the architecture's word for a remote node), `directory` (an emergence of the network's, a shared index).
 
 Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026). `conversations` (`conversazioni`) is no longer a domain of the kernel: messaging is the first extension after stage 1 (Alessandro, 19 Nov 2026).
 
