@@ -9,5 +9,8 @@
   },
   "dependencies": {
     "@q-mino/domains": "workspace:*"
+  },
+  "devDependencies": {
+    "@q-mino/adapters-common": "workspace:*"
   }
 }

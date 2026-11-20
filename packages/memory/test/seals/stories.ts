@@ -8,12 +8,12 @@ import { bytes_all, recording } from './primitives.ts'
 import type { Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 
 // The safe's stories (`packages/domains/src/seals/README.md`, § Stories to
-// prove; SEA-1..SEA-8, GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of
+// prove; SEA-1..SEA-9, GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of
 // § 4), one test each, named as the README names it. A suite parametrized by
-// the primitives port (TST-1): the fake's (`safe.test.ts`), and from step 18
-// libsodium's, the same stories over the real machine. The stories of the
-// core (1–4) run on the safe's `dsl` through its generated `_dsl.ts`
-// (MBX-5), the port recorded; those of the safe (5–12) on q-'s oracle
+// the primitives port (TST-1): the fake's and libsodium's (`safe.test.ts`),
+// the same stories over the real machine. The stories of the core (1–4, 13)
+// run on the safe's `dsl` through its generated `_dsl.ts` (MBX-5), the port
+// recorded; those of the safe (5–12) on q-'s oracle
 // (MBX-7), through the ports a reaction and the executor send to (PER-21),
 // the world's random bytes the story's.
 //
@@ -36,6 +36,15 @@ const C2 = told(ascii('Anna to Bruno: another letter'))
 
 /** The bytes of "ed25519 seed", the key of SLIP-0010's master. */
 const the_curve_s_seed_key = ascii('ed25519 seed')
+
+/** A content sealed for a public key that is one (story 4): its sealed content. */
+const sealed_for =
+  (primitives: Primitives) =>
+  (public_key: string, content: string): string => {
+    const sealing = dsl.sealed_for(primitives)(public_key, content)
+    if (sealing.outcome !== 'sealed') throw new Error("a face's public key sealed nothing")
+    return sealing.sealed_content
+  }
 
 /** A command's last event, the one that closes its stream. */
 const last_of = <event>(events: readonly event[]): event => {
@@ -130,7 +139,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     test('a content is sealed for a public key and a signature checked by it', () => {
       const F = dsl.the_face_at(primitives)(told(S1), 0)
       const port = recording(primitives)
-      const sealed = dsl.sealed_for(port.primitives)(F.public_key, C1)
+      const sealed = sealed_for(port.primitives)(F.public_key, C1)
       const signature = dsl.the_signature_of(primitives)(F.private_key, C1)
       expect(dsl.the_signature_holds(port.primitives)(F.public_key, C1, signature)).toBe(true)
       expect(dsl.the_signature_holds(port.primitives)(F.public_key, C2, signature)).toBe(false)
@@ -146,8 +155,19 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
         ],
       ])
       const [seal] = port.calls()
-      if (!(seal?.gave instanceof Uint8Array)) throw new Error('the sealed box is no bytes')
-      expect(told(seal.gave)).toBe(sealed)
+      expect(seal?.gave).toEqual({ outcome: 'sealed', sealed_content: dsl.bytes_of(sealed) })
+    })
+
+    test('no content is sealed for what is no public key', () => {
+      // 32 zero bytes: a point of small order of Ed25519's group, which
+      // libsodium refuses to seal for (SEA-5), as the fake does.
+      const port = recording(primitives)
+      const no_key = told(bytes_all(0))
+      expect(value.public_key.safeParse(no_key).success).toBe(true)
+      expect(dsl.sealed_for(port.primitives)(no_key, C1)).toEqual({ outcome: 'not_sealed' })
+      expect(port.calls().map((call) => [call.name, call.arguments, call.gave])).toEqual([
+        ['seal_for', [bytes_all(0), dsl.bytes_of(C1)], { outcome: 'not_sealed' }],
+      ])
     })
   })
 
@@ -345,7 +365,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       await quiet()
       await machine.stop()
       const F1 = dsl.the_face_at(primitives)(told(S1), 0)
-      const sealed = dsl.sealed_for(primitives)(F1.public_key, C1)
+      const sealed = sealed_for(primitives)(F1.public_key, C1)
       expect(entries_of(await safe.opens('F1', sealed))).toEqual([
         { id: 'F1', public_key: F1.public_key, opened: { outcome: 'opened', content: C1 } },
       ])
@@ -365,7 +385,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       const safe = await a_safe(primitives)
       await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       const F = dsl.the_face_at(primitives)(told(S1), 0)
-      const sealed = dsl.sealed_for(primitives)(F.public_key, C1)
+      const sealed = sealed_for(primitives)(F.public_key, C1)
       expect(entries_of(await safe.signs('F1', C1))).toEqual([])
       expect(entries_of(await safe.opens('F1', sealed))).toEqual([])
       expect(entries_of(await safe.signs('F2', C1))).toEqual([])
@@ -388,7 +408,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       const secrets = [F1.private_key, F1.chain_code, told(S1)]
       const given = [
         ...entries_of(await safe.signs('F1', C1)),
-        ...entries_of(await safe.opens('F1', dsl.sealed_for(primitives)(F1.public_key, C1))),
+        ...entries_of(await safe.opens('F1', sealed_for(primitives)(F1.public_key, C1))),
       ]
       for (const entry of given) {
         expect(Object.keys(entry).filter((key) => key !== 'signature' && key !== 'opened')).toEqual(
