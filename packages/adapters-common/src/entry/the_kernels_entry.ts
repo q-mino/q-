@@ -192,8 +192,8 @@ const the_personas_caller = (
  *    the request names, its operation (its identity, in the scope of the
  *    persona and who asks) and its correlation (its identity). The answer
  *    is the leaf's first event; an extension's invocation that throws (it
- *    fell, it is not running) answers nothing (F8, EXT-15: the hosting
- *    traced it);
+ *    fell, it is not running) answers nothing (F8, EXT-15), the request
+ *    traced as not answered (F6), the fall the hosting's;
  * 4. the answer on the bond (F7, PST-9): only to a face; no bond with it at
  *    that mailbox, none; else the response written from my face to their
  *    mailbox, sealed for their key and deposited once under the
@@ -332,8 +332,14 @@ export const the_kernels_entry = (
         }
         try {
           return await the_first_event_of(leaves(context, leaf))
-        } catch {
-          // It fell, or it is not running: no response (F8, EXT-15); the hosting traced it.
+        } catch (fault) {
+          // It fell, or it is not running: no response (F8, EXT-15). The hosting traces a fall;
+          // the request unanswered is the entry's to trace (F6), a fall or not.
+          wiring.trace({
+            why: 'a_request_not_answered',
+            request: as_it_came,
+            because: fault instanceof Error ? fault.message : String(fault),
+          })
           return undefined
         }
       }

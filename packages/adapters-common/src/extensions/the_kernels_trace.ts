@@ -90,7 +90,12 @@ export type AResponseNotDeposited =
  * - `a_response_not_deposited`: a response the entry wrote and could not
  *   deposit (PST-9): not sealed for their key, refused by the relay (with
  *   what it said), or no answer came; the asker's sending again asks
- *   again (PST-6).
+ *   again (PST-6);
+ * - `a_request_not_answered`: a request routed to an extension whose
+ *   invocation threw (it fell while serving, or it is not running, EXT-15),
+ *   with the request as it came and why: nothing goes back (F8), and the
+ *   user sees which request had no answer (F6), beside the fall the
+ *   hosting traces.
  */
 export type TheKernelsTraced =
   | { readonly why: ASilence; readonly request: ARequestAsItCame }
@@ -152,6 +157,11 @@ export type TheKernelsTraced =
       readonly opened: AnEnvelopeNotOpened
     }
   | { readonly why: 'not_a_leaf_of_the_extension'; readonly request: ARequestAsItCame }
+  | {
+      readonly why: 'a_request_not_answered'
+      readonly request: ARequestAsItCame
+      readonly because: string
+    }
   | {
       readonly why: 'a_response_not_deposited'
       readonly response: {

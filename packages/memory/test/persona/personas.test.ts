@@ -240,7 +240,7 @@ describe('the personas (PER-1..PER-14, PER-25)', () => {
     expect(invocations_since(seeing)).toMatchObject([
       { message: 'invoke', context: { bond: 'L_b', peer_key: K_b, bond_name: 'Bruno' } },
     ])
-    expect(anna.whys().at(-1)).toBe('the_extension_has_fallen')
+    expect(anna.whys().slice(-2)).toEqual(['the_extension_has_fallen', 'a_request_not_answered'])
   })
 
   test('a known key at the mailbox of another bond is not found, traced', async () => {

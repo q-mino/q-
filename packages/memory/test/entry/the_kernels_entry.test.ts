@@ -770,6 +770,10 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
     await anna.serves()
     expect(anna.traced).toMatchObject([
       { why: 'the_extension_has_fallen', extension: 'greetings', fall: 'the_first' },
+      {
+        why: 'a_request_not_answered',
+        request: { letter: bruno.the_request_of(greeting) },
+      },
     ])
     expect(carried_by(anna)).toEqual([])
     // Each copy his post sends again meets it fallen again, then stopped: nothing, each time.
@@ -781,11 +785,16 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
     expect(await bruno.the_answer_to(bruno.the_request_of(greeting))).toMatchObject([
       { answer: { status: 'no_response' } },
     ])
-    // The copies at 30 and 45 seconds meet it stopped: answered by nothing, and with no entry
-    // of their own; the hosting traced its falls (PER-25, 4).
-    expect(anna.traced).toMatchObject([
-      { why: 'the_extension_has_fallen', fall: 'the_first' },
-      { why: 'the_extension_has_fallen', fall: 'the_second' },
+    // The copy at 15 seconds makes it fall again; those at 30 and 45 seconds meet it stopped:
+    // each answered by nothing and traced as a request not answered, beside the hosting's
+    // falls (PER-25, 4; F6, part 13.3).
+    expect(anna.whys()).toEqual([
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'a_request_not_answered',
+      'a_request_not_answered',
     ])
     expect(anna.the_hosted().life()).toEqual({ life: 'stopped', why: 'it_fell_twice' })
     // Four copies collected (0, 15, 30 and 45 seconds), none answered.

@@ -563,7 +563,8 @@ describe('5. the life of an extension (EXT-7, EXT-15)', () => {
     const { anna, bruno } = story
     const greeting = await greets(anna, 'B-BRUNO')
     await bruno.the_entry()
-    expect(bruno.whys()).toEqual(['the_extension_has_fallen'])
+    // The fall, the hosting's; Anna's request unanswered, the entry's (F6, part 13.3).
+    expect(bruno.whys()).toEqual(['the_extension_has_fallen', 'a_request_not_answered'])
     await until(() => bruno.the_hosted().life().life === 'running', 'loaded again')
     await expect(bruno.greets('B-ANNA')).rejects.toThrow('greetings: it has fallen')
     expect(bruno.the_hosted().life()).toEqual({ life: 'stopped', why: 'it_fell_twice' })
@@ -572,9 +573,18 @@ describe('5. the life of an extension (EXT-7, EXT-15)', () => {
     expect(anna.the_greeting(greeting)).toMatchObject(
       closed_with({ outcome: 'the_greeting_had_no_response' }),
     )
-    expect(bruno.traced).toMatchObject([
-      { why: 'the_extension_has_fallen', fall: 'the_first' },
-      { why: 'the_extension_has_fallen', fall: 'the_second' },
+    expect(bruno.traced.filter((entry) => entry.why === 'the_extension_has_fallen')).toMatchObject([
+      { fall: 'the_first' },
+      { fall: 'the_second' },
+    ])
+    // Anna's request unanswered at each fall, then each copy her post sends again meets it stopped.
+    expect(bruno.whys()).toEqual([
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'a_request_not_answered',
+      'a_request_not_answered',
     ])
     expect(bruno.post.carried()).toEqual([])
   })
