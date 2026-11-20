@@ -10,7 +10,9 @@
 // manifest's declaration and its data form (EXT-10), the mounted folders it
 // gives the generator's configuration (EXT-11), the places (EXT-16), the
 // ports typed by `touches` (EXT-2, EXT-3, EXT-14), the kernel's node above
-// the mounted folders (EXT-5) and the messages (EXT-2, EXT-15, EXT-16).
+// the mounted folders (EXT-5), the messages (EXT-2, EXT-15, EXT-16) and the
+// extension's side of them, which every extension's configurator speaks
+// through (`the_extensions_side`).
 
 export * from './contexts.ts'
 export * from './manifest.ts'
@@ -18,6 +20,7 @@ export * from './messages.ts'
 export * from './mounted.ts'
 export * from './places.ts'
 export * from './ports.ts'
+export * from './the_extensions_side.ts'
 export * from './the_kernels_node.ts'
 export * from './values.ts'
 export * from './version.ts'

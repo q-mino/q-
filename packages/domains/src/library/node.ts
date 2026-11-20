@@ -76,13 +76,23 @@ export interface Mounted<context extends z.ZodObject = z.ZodObject> {
   readonly context: context
 }
 
+/**
+ * What a mounted folder's point gives, beside the root's context: its
+ * context's output; nothing for an empty one, whose output zod types as
+ * `Record<string, never>`, which no entry beside it could satisfy (the
+ * point of `self`, EXT-11; part 12.4).
+ */
+type MountedContext<context extends z.ZodObject> = [keyof context['shape']] extends [never]
+  ? unknown
+  : z.output<context>
+
 /** The context a node gives, or a mounted folder's point, for the `_scope.ts` of its folder. */
 export type ContextOf<node> = node extends {
   [$Node]: { gives?: infer context extends RootContext }
 }
   ? context
   : node extends Mounted<infer context>
-    ? RootContext & z.output<context>
+    ? RootContext & MountedContext<context>
     : never
 
 /** How a node and the nodes above it may close a request, for the `_scope.ts` of its folder. */
@@ -92,7 +102,7 @@ export type ClosesOf<node> = node extends { [$Node]: { closes?: infer closes } }
 export type EntryOf<node> = node extends { [$Node]: { takes?: infer taken } }
   ? taken
   : node extends Mounted<infer context>
-    ? RootContext & z.output<context>
+    ? RootContext & MountedContext<context>
     : never
 
 /**

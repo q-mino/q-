@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./configurator.ts",
+    "./manifest.json": "./manifest.json"
+  },
   "dependencies": {
     "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",

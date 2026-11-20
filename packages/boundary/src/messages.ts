@@ -25,7 +25,7 @@ const an_id = z.string().min(1)
 const a_letter = z.string().min(1)
 
 /** An event of a leaf's flow, as the boundary carries it: a JSON object named by `event`, typed by the surface, which the receiver parses (EXT-15). */
-const an_event = z.object({ event: a_name }).catchall(json)
+export const an_event = z.object({ event: a_name }).catchall(json)
 
 /** One event of the flow the `id` opened, in order (DOM-3). */
 const event = z.strictObject({ message: z.literal('event'), id: an_id, event: an_event })
