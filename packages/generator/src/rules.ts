@@ -47,9 +47,10 @@ export const map_rules = (configuration: TreeConfiguration): readonly CruiserRul
   const authored = `${tree}[^_/][^/]*\\.ts$`
   const tests = '\\.test\\.ts$'
   const seen_by = (from: string): readonly string[] =>
-    Object.keys(configuration.sight[from] ?? {}).map(
-      (folder) => `${root}${escaped(folder)}/[^/]+/_door_${escaped(from)}\\.ts$`,
-    )
+    Object.keys(configuration.sight[from] ?? {}).flatMap((folder) => [
+      `${root}${escaped(folder)}/_door_${escaped(from)}\\.ts$`,
+      `${root}${escaped(folder)}/[^/]+/_door_${escaped(from)}\\.ts$`,
+    ])
   return [
     ...tops.map((from) => ({
       name: `${name}-sight-of-${from}`,
