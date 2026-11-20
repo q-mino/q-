@@ -20,6 +20,7 @@ import {
   a_node as the_node_of_the_oracle,
   a_story,
   bonded_by_a_link,
+  type AnExtensionOfTheApp,
   type Mailbox,
   type Story,
 } from '../node/harness.ts'
@@ -28,10 +29,11 @@ export {
   ask_for_a_greeting_back,
   composed_from,
   greetings_manifest,
+  ping_pong_manifest,
   until,
 } from '../node/harness.ts'
 
-/** Whether greetings is installed on a node, and whether its user activated it. */
+/** Whether the extension the apps carry (greetings, unless the story says ping pong) is installed on a node, and whether its user activated it. */
 export type Greetings = 'not_installed' | 'installed' | 'active'
 
 /** Where a node writes to a face (BND-4): its key, and a mailbox of that face's. */
@@ -54,6 +56,7 @@ export const a_node = async (
     readonly face_id: string
     readonly name: string
     readonly greetings: Greetings
+    readonly carries?: AnExtensionOfTheApp
     readonly characters?: number
   },
 ) => {
@@ -61,7 +64,8 @@ export const a_node = async (
     phone: start.phone,
     face_id: start.face_id,
     name: start.name,
-    greetings: start.greetings === 'not_installed' ? 'not_installed' : 'installed',
+    installed:
+      start.greetings === 'not_installed' ? 'not_installed' : (start.carries ?? 'greetings'),
     ...(start.characters === undefined ? {} : { characters: start.characters }),
   })
   return {
@@ -116,7 +120,8 @@ export type NodeUnderTest = Awaited<ReturnType<typeof a_node>>
  * The story of two nodes (three phones): one relay; Anna's node, bonded to
  * Bruno (`B-BRUNO`) and Carla (`B-CARLA`), each bond made by her ticket in
  * a link that Bruno, Carla opens (`B-ANNA` on theirs); Carla has no bond
- * with Bruno. Greetings is installed and activated on each, unless the
+ * with Bruno. The apps carry greetings, or ping pong where the story says
+ * (`carries`, step 14); it is installed and activated on each, unless the
  * story says otherwise, and started where active. Friday 20 November 2026,
  * 10:00 UTC.
  */
@@ -126,20 +131,24 @@ export const two_nodes = async (
     readonly bruno?: Greetings
     readonly carla?: Greetings
     readonly brunos_characters?: number
+    readonly carries?: AnExtensionOfTheApp
   } = {},
 ) => {
   const story = await a_story()
+  const carries = options.carries ?? 'greetings'
   const anna = await a_node(story, {
     phone: 1,
     face_id: 'F_a',
     name: 'Anna',
     greetings: options.anna ?? 'active',
+    carries,
   })
   const bruno = await a_node(story, {
     phone: 2,
     face_id: 'F_b',
     name: 'Bruno',
     greetings: options.bruno ?? 'active',
+    carries,
     ...(options.brunos_characters === undefined ? {} : { characters: options.brunos_characters }),
   })
   const carla = await a_node(story, {
@@ -147,6 +156,7 @@ export const two_nodes = async (
     face_id: 'F_c',
     name: 'Carla',
     greetings: options.carla ?? 'active',
+    carries,
   })
   await bonded_by_a_link(
     { node: anna, bond_id: 'B-BRUNO', name: 'Bruno' },

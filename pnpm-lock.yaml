@@ -157,6 +157,9 @@ importers:
       '@q-mino/greetings':
         specifier: workspace:*
         version: link:../extensions/greetings
+      '@q-mino/ping_pong':
+        specifier: workspace:*
+        version: link:../extensions/ping_pong
       '@q-mino/relay':
         specifier: workspace:*
         version: link:../relay

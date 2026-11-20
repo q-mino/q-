@@ -112,11 +112,11 @@ export const annas_phone = async (
     phone: 1,
     face_id: 'F_a',
     name: 'Anna',
-    greetings: annas_greetings === 'not_installed' ? 'not_installed' : 'installed',
+    installed: annas_greetings === 'not_installed' ? 'not_installed' : 'greetings',
     ...(options.characters === undefined ? {} : { characters: options.characters }),
   })
   const bruno = await a_node(story, { phone: 2, face_id: 'F_b', name: 'Bruno' })
-  const elsewhere = { greetings: 'not_installed' } as const
+  const elsewhere = { installed: 'not_installed' } as const
   const carla = await a_node(story, { phone: 3, face_id: 'F_c', name: 'Carla', ...elsewhere })
   const dario = await a_node(story, { phone: 4, face_id: 'F_d', name: 'Dario', ...elsewhere })
   if (options.opened_at !== undefined) story.at(options.opened_at)

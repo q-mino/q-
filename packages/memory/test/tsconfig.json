@@ -25,6 +25,9 @@
     },
     {
       "path": "../../extensions/greetings"
+    },
+    {
+      "path": "../../extensions/ping_pong"
     }
   ]
 }
