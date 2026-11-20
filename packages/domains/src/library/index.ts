@@ -203,6 +203,7 @@ export type {
   ContextOf,
   ClosesOf,
   EntryOf,
+  Mounted,
   NodeLookup,
   NodeLookups,
   Found,
@@ -307,7 +308,15 @@ export type {
   Elapsed,
   TreePorts,
 } from './tree.ts'
-export { tree_ports } from './tree_port.ts'
+export { tree_ports, mounted_leaf_ports } from './tree_port.ts'
+export type {
+  MountedLeaf,
+  MountedSurface,
+  MountedInvocation,
+  MountedLeafEvent,
+  MountedLeafPort,
+  OutsideTheSurface,
+} from './tree_port.ts'
 export type { Trace, Traced, TraceReason, TracedIssue, TracedFailure, NotKnown } from './trace.ts'
 export { lookup_ports } from './lookup_port.ts'
 export type {
