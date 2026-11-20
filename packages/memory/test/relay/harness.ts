@@ -22,6 +22,7 @@ import {
   the_desks_interface,
   the_scope_of_a_deposit,
   type MailboxState,
+  type Relay,
   type Shown,
   type Strategy,
 } from '../../src/index.ts'
@@ -52,27 +53,52 @@ export interface Sent {
 export const nobody: Shown = { shows: 'nothing' }
 export const showing = (secret: string): Shown => ({ shows: 'a_collect_secret', secret })
 
-/** The relay of a story, as the oracle starts it. */
-export const a_relay = async (start: Start = {}) => {
-  const made = cell<MailboxState>({
-    initial: no_deposit,
-    ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
-  })
-  // The world: the relay's clock, which a story sets (`pass`); the time that
-  // passes, every wait asked for, ended when the story says (TST-3).
+/** What the harness needs of a relay started: the desk's trees, the executor of the waits, the fact log. */
+export interface Started {
+  readonly depositor: Relay['depositor']
+  readonly holder: Relay['holder']
+  readonly waits: () => zz.EffectExecutor
+  readonly log: zz.FactLog
+}
+
+/** What a store under a relay lets a story inject or read (TST-4): the trees' trace, the positions it forgets. */
+export interface Injected {
+  readonly traced: () => readonly zz.Traced<unknown>[]
+  readonly forget: (before: zz.position) => void
+}
+
+/**
+ * The world of a story: the relay's clock, which a story sets (`pass`); the
+ * time that passes, every wait asked for, ended when the story says (TST-3).
+ */
+export const a_world = () => {
   let instant = zz.date_time.parse('2026-11-16T00:00:00Z')
   const waits: (() => void)[] = []
-  const world = {
+  return {
     clock: { now: () => instant, time_zone },
     elapsed: () =>
       new Promise<void>((over) => {
         waits.push(over)
       }),
+    /** The relay's clock at an instant. */
+    at: (at: string) => {
+      instant = zz.date_time.parse(at)
+    },
+    /** Every wait asked for, over. */
+    over: () => {
+      for (const over of waits.splice(0)) over()
+    },
   }
-  const the_relay = await relay(
-    made,
-    start.streams === undefined ? {} : { streams: start.streams },
-  )(world)
+}
+
+/** A story's world. */
+export type StoryWorld = ReturnType<typeof a_world>
+
+/**
+ * The harness over a relay started in a story's world, whatever its store
+ * (TST-1): the desk's trees entered as the desk's interface enters them.
+ */
+export const harnessed = (the_relay: Started, world: StoryWorld, injected: Injected) => {
   const the_interface = the_desks_interface(hash)
   let operations = 0
   /**
@@ -110,7 +136,7 @@ export const a_relay = async (start: Start = {}) => {
     as,
     /** The effect executor of the deposits' waits started (DOM-14), the relay's clock at an instant. */
     waits: (at: string): zz.EffectExecutor => {
-      instant = zz.date_time.parse(at)
+      world.at(at)
       return the_relay.waits()
     },
     /**
@@ -119,11 +145,11 @@ export const a_relay = async (start: Start = {}) => {
      * deliveries run their course (TST-3).
      */
     pass: async (to: string) => {
-      instant = zz.date_time.parse(to)
-      for (const over of waits.splice(0)) over()
+      world.at(to)
+      world.over()
       await quiet()
     },
-    /** Every fact the cell recorded, in order, as its log gives them (DOM-17), each once by its position. */
+    /** Every fact the store recorded, in order, as its log gives them (DOM-17), each once by its position. */
     recorded: async (): Promise<readonly zz.StoredEnvelope[]> => {
       const facts = new Map<zz.position, zz.StoredEnvelope>()
       for await (const event of the_relay.log(undefined)) {
@@ -133,10 +159,24 @@ export const a_relay = async (start: Start = {}) => {
       return [...facts.values()]
     },
     /** What the trees' trace holds, in the order handed (F6, PER-14). */
-    traced: made.traced,
-    /** The positions before this one, which the cell keeps no longer (TST-4). */
-    forget: made.forget,
+    traced: injected.traced,
+    /** The positions before this one, which the store keeps no longer (TST-4). */
+    forget: injected.forget,
   }
+}
+
+/** The relay of a story, as the oracle starts it. */
+export const a_relay = async (start: Start = {}) => {
+  const made = cell<MailboxState>({
+    initial: no_deposit,
+    ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
+  })
+  const world = a_world()
+  const the_relay = await relay(
+    made,
+    start.streams === undefined ? {} : { streams: start.streams },
+  )(world)
+  return harnessed(the_relay, world, { traced: made.traced, forget: made.forget })
 }
 
 /** The relay under the stories: the oracle's, or an adapter's with the same harness (TST-1). */
