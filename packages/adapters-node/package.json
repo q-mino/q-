@@ -8,7 +8,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@q-mino/adapters-common": "workspace:*",
     "@q-mino/domains": "workspace:*",
-    "@q-mino/adapters-common": "workspace:*"
+    "hono": "^4.13.19",
+    "zod": "^4.6.7"
   }
 }

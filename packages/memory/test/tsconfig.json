@@ -7,5 +7,18 @@
     "outDir": "../.tsbuild/test"
   },
   "include": ["."],
-  "references": [{ "path": ".." }, { "path": "../../adapters-common" }]
+  "references": [
+    {
+      "path": ".."
+    },
+    {
+      "path": "../../adapters-common"
+    },
+    {
+      "path": "../../adapters-node"
+    },
+    {
+      "path": "../../relay"
+    }
+  ]
 }

@@ -34,58 +34,58 @@ Lowercase, as written; read with a capital.
 
 ## Domain terms
 
-| Italian                                                           | English                                                        |
-| ----------------------------------------------------------------- | -------------------------------------------------------------- |
-| volto · seme · Cambia volto                                       | face · seed · change face                                      |
-| busta · lettera · ricevuta · dichiarazione                        | envelope · letter · receipt · declaration                      |
-| biglietto · stretta di mano · presentazione                       | ticket · handshake · introduction                              |
-| legame · contatto · invitato                                      | bond · contact · invitee                                       |
-| gruppo · appartenenza · membro · canale                           | group · membership · member · channel                          |
-| deposita · ritira · indirizzo di deposito D · segreto di ritiro R | deposit · collect · deposit address · collect secret           |
-| sigilla · apri · firma · verifica                                 | seal · open · sign · verify                                    |
-| annotazione · di persona                                          | annotation · in person                                         |
-| esportazione · trasloco d'origine                                 | export · origin relocation                                     |
-| a riposo · ammutolito                                             | resting · muted                                                |
-| nucleo (di Cumino) · estensione · manifest                        | kernel · extension · manifest                                  |
-| punto di aggancio: hook · pagina · slot · azione                  | extension point: hook · page · slot · action                   |
-| preinstallata · installata · attiva · disattiva l'estensione      | preinstalled · installed · activate · deactivate the extension |
-| offerta a un legame · revoca l'offerta                            | offered to a bond · withdraw the offer                         |
-| confine (di un'estensione) · invocazione                          | boundary · invocation                                          |
-| porta delle richieste · rientro (di una richiesta)                | port of requests · return (of a request)                       |
-| isolata · nello stesso processo                                   | isolated · in process                                          |
-| in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (with its case, EXT-13)                |
-| versione del confine · partizione                                 | boundary version · partition (an extension's storage)          |
-| caricata · pronta · avviata · fermata (un'estensione)             | loaded · ready · started · stopped                             |
-| luogo (di un punto di aggancio) · riquadro                        | place (of an extension point) · frame                          |
-| cornice (di un'estensione)                                        | mark (the kernel's, EXT-16)                                    |
-| estensioni in comune                                              | extensions in common                                           |
-| richiesta · risposta · nessuna risposta                           | request · response · no response                               |
-| tace (un nodo)                                                    | stays silent                                                   |
-| relay preferiti                                                   | preferred relays                                               |
-| ping · pong                                                       | ping · pong                                                    |
-| deposito (una busta su D) · scarta (dopo sette giorni)            | deposit (an envelope on D) · discard (after seven days)        |
-| depositante · titolare (della casella, chi mostra R)              | depositor · holder (of a mailbox, who shows R)                 |
-| cassaforte · chiave della casella (R con il suo D)                | safe · mailbox key (R with its D)                              |
-| schema del seme · indice (di un volto) · indice successivo        | seed scheme (`slip10-flat`) · index · next index               |
-| chiave pubblica · chiave privata · chain code                     | public key · private key · chain code                          |
-| contenuto · contenuto sigillato · non sigillato · firma che regge | content · sealed content · not sealed · the signature holds    |
-| porta delle primitive                                             | primitives port                                                |
-| rubrica                                                           | address book                                                   |
-| nome di presentazione (si presenta come) · il nome che gli do     | introduced as · the name I give (a bond's name)                |
-| posizione (di un volto) · in cima · sotto un volto                | position (of a face) · at the top · under a face               |
-| il suo volto · la sua casella · la mia casella (di un legame)     | their face · their mailbox · my mailbox (of a bond)            |
-| indirizzo del relay · i relay (di una casella)                    | relay address · relays (of a mailbox)                          |
-| legame tenuto · eliminato · Elimina contatto                      | kept bond · removed · remove a bond                            |
-| di persona · a distanza (come è nato il legame)                   | in person · at a distance (the handshake's way)                |
-| conferma attesa · ricevuta ("lei ti ha?")                         | confirmation awaited · received                                |
-| primo volto · primo avvio                                         | first face · first start                                       |
-| biglietto in preparazione · pronto · usato · scaduto              | ticket being prepared · ready · used · expired                 |
-| segreto del biglietto                                             | the ticket's secret                                            |
-| apri il suo biglietto · la mia presentazione · la sua             | open their ticket · my introduction · their introduction       |
-| QR incrociato · biglietti incrociati                              | crossed QR · crossed tickets                                   |
-| le caselle che ritiro                                             | the mailboxes I collect                                        |
+| Italian                                                                             | English                                                                        |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| volto · seme · Cambia volto                                                         | face · seed · change face                                                      |
+| busta · lettera · ricevuta · dichiarazione                                          | envelope · letter · receipt · declaration                                      |
+| biglietto · stretta di mano · presentazione                                         | ticket · handshake · introduction                                              |
+| legame · contatto · invitato                                                        | bond · contact · invitee                                                       |
+| gruppo · appartenenza · membro · canale                                             | group · membership · member · channel                                          |
+| deposita · ritira · indirizzo di deposito D · segreto di ritiro R                   | deposit · collect · deposit address · collect secret                           |
+| sigilla · apri · firma · verifica                                                   | seal · open · sign · verify                                                    |
+| annotazione · di persona                                                            | annotation · in person                                                         |
+| esportazione · trasloco d'origine                                                   | export · origin relocation                                                     |
+| a riposo · ammutolito                                                               | resting · muted                                                                |
+| nucleo (di Cumino) · estensione · manifest                                          | kernel · extension · manifest                                                  |
+| punto di aggancio: hook · pagina · slot · azione                                    | extension point: hook · page · slot · action                                   |
+| preinstallata · installata · attiva · disattiva l'estensione                        | preinstalled · installed · activate · deactivate the extension                 |
+| offerta a un legame · revoca l'offerta                                              | offered to a bond · withdraw the offer                                         |
+| confine (di un'estensione) · invocazione                                            | boundary · invocation                                                          |
+| porta delle richieste · rientro (di una richiesta)                                  | port of requests · return (of a request)                                       |
+| isolata · nello stesso processo                                                     | isolated · in process                                                          |
+| in tutto o in parte · parte (di un'estensione)                                      | whole or in part · part (with its case, EXT-13)                                |
+| versione del confine · partizione                                                   | boundary version · partition (an extension's storage)                          |
+| caricata · pronta · avviata · fermata (un'estensione)                               | loaded · ready · started · stopped                                             |
+| luogo (di un punto di aggancio) · riquadro                                          | place (of an extension point) · frame                                          |
+| cornice (di un'estensione)                                                          | mark (the kernel's, EXT-16)                                                    |
+| estensioni in comune                                                                | extensions in common                                                           |
+| richiesta · risposta · nessuna risposta                                             | request · response · no response                                               |
+| tace (un nodo)                                                                      | stays silent                                                                   |
+| relay preferiti                                                                     | preferred relays                                                               |
+| ping · pong                                                                         | ping · pong                                                                    |
+| deposito (una busta su D) · scarta (dopo sette giorni) · dimentica (un giorno dopo) | deposit (an envelope on D) · discard (after seven days) · forget (a day after) |
+| depositante · titolare (della casella, chi mostra R)                                | depositor · holder (of a mailbox, who shows R)                                 |
+| cassaforte · chiave della casella (R con il suo D)                                  | safe · mailbox key (R with its D)                                              |
+| schema del seme · indice (di un volto) · indice successivo                          | seed scheme (`slip10-flat`) · index · next index                               |
+| chiave pubblica · chiave privata · chain code                                       | public key · private key · chain code                                          |
+| contenuto · contenuto sigillato · non sigillato · firma che regge                   | content · sealed content · not sealed · the signature holds                    |
+| porta delle primitive                                                               | primitives port                                                                |
+| rubrica                                                                             | address book                                                                   |
+| nome di presentazione (si presenta come) · il nome che gli do                       | introduced as · the name I give (a bond's name)                                |
+| posizione (di un volto) · in cima · sotto un volto                                  | position (of a face) · at the top · under a face                               |
+| il suo volto · la sua casella · la mia casella (di un legame)                       | their face · their mailbox · my mailbox (of a bond)                            |
+| indirizzo del relay · i relay (di una casella)                                      | relay address · relays (of a mailbox)                                          |
+| legame tenuto · eliminato · Elimina contatto                                        | kept bond · removed · remove a bond                                            |
+| di persona · a distanza (come è nato il legame)                                     | in person · at a distance (the handshake's way)                                |
+| conferma attesa · ricevuta ("lei ti ha?")                                           | confirmation awaited · received                                                |
+| primo volto · primo avvio                                                           | first face · first start                                                       |
+| biglietto in preparazione · pronto · usato · scaduto                                | ticket being prepared · ready · used · expired                                 |
+| segreto del biglietto                                                               | the ticket's secret                                                            |
+| apri il suo biglietto · la mia presentazione · la sua                               | open their ticket · my introduction · their introduction                       |
+| QR incrociato · biglietti incrociati                                                | crossed QR · crossed tickets                                                   |
+| le caselle che ritiro                                                               | the mailboxes I collect                                                        |
 
-The relay's words (part 8.1, MBX-1..MBX-4, Claude, 20 Nov 2026): a **deposit** is an envelope left on a deposit address D, with the time the relay received it; the relay **discards** it seven days after, collected or not. Whoever deposits is a **depositor**, anyone; whoever shows the collect secret R of the mailbox at D = hash(R) is its **holder**, and collects. The relay's domain is `mailbox/deposits`, its personas `desk/depositor` and `desk/holder`. Rejected: `box` (a second word for the mailbox), `sender` (the relay knows no sender, F2, and a depositor need not be one).
+The relay's words (part 8.1, MBX-1..MBX-4, Claude, 20 Nov 2026): a **deposit** is an envelope left on a deposit address D, with the time the relay received it; the relay **discards** it seven days after, collected or not. Whoever deposits is a **depositor**, anyone; whoever shows the collect secret R of the mailbox at D = hash(R) is its **holder**, and collects. The relay's domain is `mailbox/deposits`, its personas `desk/depositor` and `desk/holder`. Rejected: `box` (a second word for the mailbox), `sender` (the relay knows no sender, F2, and a depositor need not be one). A day after its discard the relay **forgets** a deposit (part 19, MBX-8, Claude, 20 Nov 2026): it keeps nothing of it, neither its row nor its facts, so that a retry of its deposit is a new deposit; rejected: _expire_ (said of a ticket, part 11.2), _purge_ (an operator's act, not the relay's own rule).
 
 The secrets' words (part 9.1, SEA-1..SEA-7, Claude, 20 Nov 2026): the **safe** is the domain of `seals` that keeps every secret of the node: the **seeds** (32 random bytes, with their **seed scheme**, `slip10-flat`, and the **next index** a face of the seed will take), the **faces** (each at its **index** under its seed, `m/i'`, with its **private key**, its **chain code** and its **public key**, the only one that leaves) and the **mailbox keys** (a collect secret R with its deposit address D, as the key and the address of a post-office box). A **content** is what `post` gives to sign or to seal, bytes opaque to the safe; a **sealed content** is one sealed for a public key; a signature **holds** when it is the face's over that content. A content is **not sealed** for bytes that are no public key one can seal for (not a point of Ed25519's group, or a point of small order: libsodium refuses them, part 18), as a sealed content is **not opened** by a face it was not sealed for. The **primitives port** is the safe's machine: the randomness, HMAC-SHA512, Ed25519, the sealed box, BLAKE2b (libsodium, step 18). Rejected: `keys` (a second word for the faces' keys and the mailboxes'), `keyring`, `vault` (Alessandro's notes are the vault).
 

@@ -62,6 +62,12 @@ importers:
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../domains
+      hono:
+        specifier: ^4.13.19
+        version: 4.13.19
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/adapters-web:
     dependencies:
@@ -103,6 +109,12 @@ importers:
       '@q-mino/adapters-common':
         specifier: workspace:*
         version: link:../adapters-common
+      '@q-mino/adapters-node':
+        specifier: workspace:*
+        version: link:../adapters-node
+      '@q-mino/relay':
+        specifier: workspace:*
+        version: link:../relay
 
   packages/phone:
     dependencies:
@@ -1677,6 +1689,10 @@ packages:
   hasown@2.0.4:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
+
+  hono@4.13.19:
+    resolution: {integrity: sha512-KmXvQAXwcAHV+muzbIwoJ23niEB5nMoDVr9WcRkU8mvjUECm/1+7v4Jgp7P7a+H6MLFrh+vXrGonGrGS+RQfkA==}
+    engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
     resolution: {integrity: sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==}
@@ -4402,6 +4418,8 @@ snapshots:
   hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
+
+  hono@4.13.19: {}
 
   hookified@1.15.1: {}
 
