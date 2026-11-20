@@ -29,6 +29,7 @@ Lowercase, as written; read with a capital.
 | `confine`                                                           | `boundary` (the package of the kernel's contract with its extensions, EXT-9)                           |
 | `estensioni/<nome>`                                                 | `extensions/<name>` (the package of an extension, EXT-9)                                               |
 | `casella/depositi` · `sportello/depositante` · `sportello/titolare` | `mailbox/deposits` · `desk/depositor` · `desk/holder` (the relay's domain and its two personas, MBX-1) |
+| `sigilli/cassaforte`                                                | `seals/safe` (the domain of the secrets, SEA-1)                                                        |
 
 ## Domain terms
 
@@ -62,8 +63,15 @@ Lowercase, as written; read with a capital.
 | ping · pong                                                       | ping · pong                                                    |
 | deposito (una busta su D) · scarta (dopo sette giorni)            | deposit (an envelope on D) · discard (after seven days)        |
 | depositante · titolare (della casella, chi mostra R)              | depositor · holder (of a mailbox, who shows R)                 |
+| cassaforte · chiave della casella (R con il suo D)                | safe · mailbox key (R with its D)                              |
+| schema del seme · indice (di un volto) · indice successivo        | seed scheme (`slip10-flat`) · index · next index               |
+| chiave pubblica · chiave privata · chain code                     | public key · private key · chain code                          |
+| contenuto · contenuto sigillato · firma che regge                 | content · sealed content · the signature holds                 |
+| porta delle primitive                                             | primitives port                                                |
 
 The relay's words (part 8.1, MBX-1..MBX-4, Claude, 20 Nov 2026): a **deposit** is an envelope left on a deposit address D, with the time the relay received it; the relay **discards** it seven days after, collected or not. Whoever deposits is a **depositor**, anyone; whoever shows the collect secret R of the mailbox at D = hash(R) is its **holder**, and collects. The relay's domain is `mailbox/deposits`, its personas `desk/depositor` and `desk/holder`. Rejected: `box` (a second word for the mailbox), `sender` (the relay knows no sender, F2, and a depositor need not be one).
+
+The secrets' words (part 9.1, SEA-1..SEA-7, Claude, 20 Nov 2026): the **safe** is the domain of `seals` that keeps every secret of the node: the **seeds** (32 random bytes, with their **seed scheme**, `slip10-flat`, and the **next index** a face of the seed will take), the **faces** (each at its **index** under its seed, `m/i'`, with its **private key**, its **chain code** and its **public key**, the only one that leaves) and the **mailbox keys** (a collect secret R with its deposit address D, as the key and the address of a post-office box). A **content** is what `post` gives to sign or to seal, bytes opaque to the safe; a **sealed content** is one sealed for a public key; a signature **holds** when it is the face's over that content. The **primitives port** is the safe's machine: the randomness, HMAC-SHA512, Ed25519, the sealed box, BLAKE2b (libsodium, step 18). Rejected: `keys` (a second word for the faces' keys and the mailboxes'), `keyring`, `vault` (Alessandro's notes are the vault).
 
 Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026). `conversations` (`conversazioni`) is no longer a domain of the kernel: messaging is the first extension after stage 1 (Alessandro, 19 Nov 2026).
 
