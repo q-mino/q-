@@ -48,9 +48,9 @@ export const the_scope_of_the_executor = (effect: string): string => effect
 /**
  * What the safe's machine gives back for its effects (SEA-5, ADP-1): the
  * domain's deliveries over the primitives port, which an adapter only calls.
- * The configurator's in a stack; the harness's here.
+ * The configurator's in a stack; the harness's here, the phone's too (part 11.3).
  */
-const the_safe_s_machine = (primitives: Primitives) => ({
+export const the_safe_s_machine = (primitives: Primitives) => ({
   'seals/safe/effect/draw_a_seed_for_the_face': (entry: {
     readonly payload: { readonly face_id: string }
   }) =>
