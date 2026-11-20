@@ -148,7 +148,7 @@ describe('the kernel’s port of requests (F7, EXT-2)', () => {
     ])
   })
 
-  test('responded with the peer’s event; called again, the answer kept, never sent again, the bond removed meanwhile', async () => {
+  test('responded with the peer’s event; called again, the answer kept, never sent again, the bond removed, the offer withdrawn and the extension deactivated meanwhile; a new request refused', async () => {
     const { story, anna, bruno, state, port, sent, identity_of } = await annas_port()
     const greetings = port({ name: 'greetings', touches: ['the_port_of_requests'] })
     const answer = greetings(a_greeting('G1'))
@@ -167,6 +167,15 @@ describe('the kernel’s port of requests (F7, EXT-2)', () => {
     const carried = anna.carried().length
     state.bond = 'gone'
     expect(await greetings(a_greeting('G1'))).toEqual(responded)
+    state.offered = false
+    expect(await greetings(a_greeting('G1'))).toEqual(responded)
+    expect(await greetings(a_greeting('G2'))).toEqual({
+      answer: 'refused',
+      why: 'not_offered_to_the_bond',
+    })
+    state.active = false
+    expect(await greetings(a_greeting('G1'))).toEqual(responded)
+    expect(await greetings(a_greeting('G2'))).toEqual({ answer: 'refused', why: 'not_active' })
     await anna.runs()
     expect(await sent()).toEqual([identity_of('greetings', ask_for_a_greeting_back, 'G1')])
     expect(anna.carried()).toHaveLength(carried)

@@ -101,15 +101,18 @@ const in_the_ports_words = (
  * and its manifest's `touches`. In order:
  * - a call its manifest does not declare: `refused`, `not_declared`, in the
  *   kernel's trace (`a_call_not_declared`, EXT-4);
- * - the extension not active, or not offered to the bond (an offer goes
- *   both ways, EXT-7): `refused`, `not_active`, `not_offered_to_the_bond`;
- *   a refused call sends nothing and keeps nothing;
  * - the request's identity, composed by the kernel and hashed (F7, PST-2):
  *   `{ of: 'an_extension', extension, effect, id }`, the extension's name
  *   the kernel's;
  * - the answer kept under it (PST-8), if the port sent it: followed until
  *   the request closes, never sent again (F7, "The port keeps the
- *   answer"); a bond removed while its request waits does not stop it;
+ *   answer"); a bond removed, an offer withdrawn or the extension
+ *   deactivated while its request waits does not stop it, nor change the
+ *   answer a delivery met again reads (the request is out already);
+ * - else the extension not active, or not offered to the bond (an offer
+ *   goes both ways, EXT-7): `refused`, `not_active`,
+ *   `not_offered_to_the_bond`; a refused call sends nothing and keeps
+ *   nothing;
  * - else the bond, from `bonds`: gone, `the_bond_is_gone` (the same every
  *   time: a removed bond stays removed, BND-6);
  * - else `send_a_request` under the operation `{ id: identity, scope: the
@@ -172,12 +175,6 @@ export const the_port_of_requests =
         })
         return { answer: 'refused', why: 'not_declared' }
       }
-      if (!(await wiring.extensions.is_active(extension.name))) {
-        return { answer: 'refused', why: 'not_active' }
-      }
-      if (!(await wiring.extensions.is_offered(extension.name, request.bond))) {
-        return { answer: 'refused', why: 'not_offered_to_the_bond' }
-      }
       const identity = the_identity_of_a_request(wiring.machine)({
         of: 'an_extension',
         extension: extension.name,
@@ -186,6 +183,12 @@ export const the_port_of_requests =
       })
       const already = await kept(identity)
       if (already.answer !== undefined) return until_it_closes(identity, already)
+      if (!(await wiring.extensions.is_active(extension.name))) {
+        return { answer: 'refused', why: 'not_active' }
+      }
+      if (!(await wiring.extensions.is_offered(extension.name, request.bond))) {
+        return { answer: 'refused', why: 'not_offered_to_the_bond' }
+      }
       const bond = await wiring.the_bond(request.bond)
       if (bond.bond === 'gone') return { answer: 'the_bond_is_gone' }
       const input = {
