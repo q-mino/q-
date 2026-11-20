@@ -53,7 +53,8 @@ Lowercase, as written; read with a capital.
 | in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (its domains, each page, each slot)    |
 | versione del confine · partizione                                 | boundary version · partition (an extension's storage)          |
 | caricata · pronta · avviata · fermata (un'estensione)             | loaded · ready · started · stopped                             |
-| luogo (di un punto di aggancio) · cornice                         | place (of an extension point) · frame                          |
+| luogo (di un punto di aggancio) · riquadro                        | place (of an extension point) · frame                          |
+| segno (di un'estensione)                                          | mark (the kernel's, EXT-16)                                    |
 | estensioni in comune                                              | extensions in common                                           |
 | richiesta · risposta · nessuna risposta                           | request · response · no response                               |
 | tace (un nodo)                                                    | stays silent                                                   |
