@@ -14,11 +14,24 @@ export type Opening =
   { readonly outcome: 'opened'; readonly content: Bytes } | { readonly outcome: 'not_opened' }
 
 /**
+ * A content sealed for a public key, or not: bytes that are no key one can
+ * seal for (not a point of Ed25519's group, or one of small order, which
+ * libsodium refuses) seal nothing (SEA-5, part 18).
+ */
+export type Sealing =
+  | { readonly outcome: 'sealed'; readonly sealed_content: Bytes }
+  | { readonly outcome: 'not_sealed' }
+
+/**
  * The primitives port (GR-5, SEA-5): the safe's machine, libsodium's ready
  * constructions (step 18), with no composition of q-'s own but SLIP-0010,
  * written here over its HMAC. Every call is a function of its arguments but
  * two: `random_bytes`, the world's randomness, and `seal_for`, whose sealed
- * box draws its own ephemeral key.
+ * box draws its own ephemeral key. A private key is 32 bytes, as the safe
+ * derives it: another length is a fault of the caller. Whatever else the
+ * port is given, it answers: a signature or a public key of another length
+ * does not hold, bytes that are no public key seal nothing, a sealed content
+ * that is too short or broken is not opened (part 18).
  */
 export interface Primitives {
   /** HMAC-SHA512 of the data under the key: 64 bytes. */
@@ -29,8 +42,8 @@ export interface Primitives {
   readonly sign: (private_key: Bytes, content: Bytes) => Bytes
   /** Whether a signature is the one of that public key over that content. */
   readonly signature_holds: (public_key: Bytes, content: Bytes, signature: Bytes) => boolean
-  /** The sealed box of a content for the X25519 form of an Ed25519 public key. */
-  readonly seal_for: (public_key: Bytes, content: Bytes) => Bytes
+  /** The sealed box of a content for the X25519 form of an Ed25519 public key, or none for bytes that are no such key. */
+  readonly seal_for: (public_key: Bytes, content: Bytes) => Sealing
   /** A sealed box opened with the X25519 form of the key pair of a private key. */
   readonly open: (private_key: Bytes, sealed_content: Bytes) => Opening
   /** BLAKE2b of the data, 32 bytes long. */
@@ -191,11 +204,24 @@ export const the_signature_holds =
   (public_key: value.public_key, content: value.content, signature: value.signature): boolean =>
     primitives.signature_holds(bytes_of(public_key), bytes_of(content), bytes_of(signature))
 
-/** A content sealed for a public key (SEA-6): no secret, so anyone's to do. */
+/**
+ * A content sealed for a public key (SEA-6): no secret, so anyone's to do;
+ * not sealed for 32 bytes that are no key one can seal for (SEA-5). A peer's
+ * key is a claim (F2): `post` reads the outcome.
+ */
 export const sealed_for =
   (primitives: Primitives) =>
-  (public_key: value.public_key, content: value.content): value.sealed_content =>
-    base64url_of(primitives.seal_for(bytes_of(public_key), bytes_of(content)))
+  (
+    public_key: value.public_key,
+    content: value.content,
+  ):
+    | { readonly outcome: 'sealed'; readonly sealed_content: value.sealed_content }
+    | { readonly outcome: 'not_sealed' } => {
+    const sealing = primitives.seal_for(bytes_of(public_key), bytes_of(content))
+    return sealing.outcome === 'sealed'
+      ? { outcome: 'sealed', sealed_content: base64url_of(sealing.sealed_content) }
+      : { outcome: 'not_sealed' }
+  }
 
 /** A sealed content tried with a face's private key (SEA-6): the calculation `the_sealed_content_opened`. */
 export const opened_with =

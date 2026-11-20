@@ -5,7 +5,7 @@
 // and what they gave, one that draws the world's random bytes from a list a
 // story gives, so that a story knows the seed and the R it will meet.
 
-import type { Bytes, Opening, Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
+import type { Bytes, Opening, Primitives, Sealing } from '@q-mino/domains/seals/safe/_dsl.ts'
 
 /** The bytes of a text, one per character: the fake's labels are ASCII. */
 const ascii = (text: string): readonly number[] =>
@@ -43,12 +43,20 @@ export const same_bytes = (a: Bytes, b: Bytes): boolean =>
 const the_tag_length = 16
 
 /**
+ * The bytes the fake seals nothing for, as libsodium (part 18): what is not
+ * 32 bytes, and 32 zero bytes, a point of small order of Ed25519's group.
+ */
+export const no_public_key = (bytes: Bytes): boolean =>
+  bytes.length !== 32 || bytes.every((byte) => byte === 0)
+
+/**
  * The fake primitives port (TST-3): HMAC-SHA512 a digest of its key and its
  * data, 64 bytes; a public key a digest of its private key; a signature a
  * digest of the public key and the content, so that it holds by the public
  * key alone; a sealed box that names its public key, then the content, then a
  * tag over both, which opens only with the private key of that public key and
- * only whole; BLAKE2b a digest of its data. Its random bytes are none: a
+ * only whole, and none for what is no public key (`no_public_key`); BLAKE2b a
+ * digest of its data. Its random bytes are none: a
  * story draws them from a list (`drawn_from`).
  */
 export const fake_primitives: Primitives = {
@@ -58,12 +66,17 @@ export const fake_primitives: Primitives = {
     digest('signature', fake_primitives.public_key_of(private_key), content)(64),
   signature_holds: (public_key, content, signature) =>
     same_bytes(digest('signature', public_key, content)(64), signature),
-  seal_for: (public_key, content) =>
-    Uint8Array.from([
-      ...public_key,
-      ...content,
-      ...digest('sealed', public_key, content)(the_tag_length),
-    ]),
+  seal_for: (public_key, content): Sealing =>
+    no_public_key(public_key)
+      ? { outcome: 'not_sealed' }
+      : {
+          outcome: 'sealed',
+          sealed_content: Uint8Array.from([
+            ...public_key,
+            ...content,
+            ...digest('sealed', public_key, content)(the_tag_length),
+          ]),
+        },
   open: (private_key, sealed_content): Opening => {
     const public_key = fake_primitives.public_key_of(private_key)
     const named = sealed_content.slice(0, 32)
