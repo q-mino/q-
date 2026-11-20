@@ -1,5 +1,6 @@
 import type { Configuration } from './packages/generator/src/index.ts'
 import { sight } from './packages/domains/test/shed/sight.ts'
+import { sight as the_sight_of_q } from './packages/domains/src/sight.ts'
 
 // The trees the generator writes (DOM-25): `pnpm generate`, `pnpm generate:check`.
 
@@ -14,6 +15,15 @@ export default {
       sight,
       library: '../../src/library/index.ts',
       compared_with_main: false,
+    },
+    {
+      // q-'s tree, the kernel's domains (MBX-4): the folders its map names,
+      // the relay's since part 8.1. Released to clients: its registries are
+      // compared with main's (DOM-24, PER-17).
+      root: 'packages/domains/src',
+      sight: the_sight_of_q,
+      library: 'library/index.ts',
+      compared_with_main: true,
     },
   ],
 } satisfies Configuration
