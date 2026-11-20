@@ -17,6 +17,8 @@
     { "path": "packages/memory" },
     { "path": "packages/memory/test" },
     { "path": "packages/phone" },
-    { "path": "packages/phone/test" }
+    { "path": "packages/phone/test" },
+    { "path": "packages/boundary" },
+    { "path": "packages/extensions/greetings" }
   ]
 }

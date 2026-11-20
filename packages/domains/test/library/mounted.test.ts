@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import * as z from 'zod'
 import { mounted_leaf_ports, tree_ports } from '../../src/library/index.ts'
-import type { MountedInvocation, Mounted, OutsideTheSurface } from '../../src/library/index.ts'
+import type {
+  MountedInvocation,
+  Mounted,
+  MountedSurface,
+  OutsideTheSurface,
+} from '../../src/library/index.ts'
 import { persona } from '../shed/persona/_node.ts'
 import { registry as persona_registry } from '../shed/persona/_registry.ts'
 import { caller } from '../shed/persona/_value.ts'
@@ -101,12 +106,12 @@ const surface = {
   majors: {
     1: {
       'usecase/wave': {
-        kind: 'command' as const,
+        kind: 'command',
         input: z.strictObject({ to: z.string().min(1) }),
         events: { waved },
       },
       'usecase/the_waves': {
-        kind: 'read' as const,
+        kind: 'read',
         input: z.strictObject({}),
         events: {
           snapshot: z.strictObject({ event: z.literal('snapshot'), entries: z.array(z.string()) }),
@@ -114,7 +119,7 @@ const surface = {
       },
     },
   },
-}
+} satisfies MountedSurface
 
 /** Events as the other unit gives them, one at a time. */
 const streamed = async function* (events: readonly unknown[]): AsyncIterable<unknown> {

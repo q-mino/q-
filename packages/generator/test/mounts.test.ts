@@ -84,8 +84,8 @@ describe('EXT-11: a mounted folder', () => {
 })
 
 /** A node's export, with what its declaration adds: whether it takes. */
-const taking = (name: string, takes: boolean) =>
-  exported(name, {
-    ...component({ kind: 'node' }),
-    node: { closes: false, accumulates: false, takes },
-  })
+const taking = (name: string, takes: boolean) => {
+  const built = component({ kind: 'node' })
+  if (built.is !== 'component') throw new Error('a node is a component')
+  return exported(name, { ...built, node: { closes: false, accumulates: false, takes } })
+}

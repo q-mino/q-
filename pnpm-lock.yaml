@@ -81,8 +81,26 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2
 
+  packages/boundary:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   packages/domains:
     dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  packages/extensions/greetings:
+    dependencies:
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../../boundary
+      '@q-mino/domains':
+        specifier: workspace:*
+        version: link:../../domains
       zod:
         specifier: ^4.6.7
         version: 4.6.7
