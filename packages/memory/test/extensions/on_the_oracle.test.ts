@@ -1,6 +1,7 @@
 import * as zz from '@q-mino/domains/library'
+import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
 import { describe, expect, test } from 'vitest'
-import { all } from '../post/harness.ts'
+import { all, quiet } from '../post/harness.ts'
 import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 
 // The checks of step 12 (plan.md, "Checks"), on q-'s oracle with two nodes
@@ -333,5 +334,225 @@ describe('2. the silence and the gate (F8, EXT-6)', () => {
     expect(bruno.whys()).toEqual(['the_extension_is_not_offered_to_the_bond'])
     expect(bruno.post.carried()).toHaveLength(1)
     expect(bruno.to_the_extension.filter((message) => message.message === 'invoke')).toEqual([])
+  })
+})
+
+describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
+  test('Bruno withdraws greetings’ offer from Anna: her greeting meets silence; his greeting of her is refused by his port of requests, nothing sent, a dead letter', async () => {
+    const story = await two_nodes()
+    const { anna, bruno } = story
+    await bruno.withdraws_the_offer_from('B-ANNA')
+    const greeting = await greets(anna, 'B-BRUNO')
+    await to_the_end_of_its_time(story, bruno)
+    await until(() => anna.is_closed(greeting), 'the greeting closed')
+    expect(anna.the_greeting(greeting)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_had_no_response' }),
+    )
+    expect(new Set(bruno.whys())).toEqual(new Set(['the_extension_is_not_offered_to_the_bond']))
+    const his = await bruno.greets('B-ANNA')
+    await until(() => bruno.dead_letters().length === 1, 'the dead letter')
+    expect(bruno.dead_letters()).toEqual([
+      `business/greetings/effect/ask_for_a_greeting_back/${his}`,
+    ])
+    expect(JSON.stringify(bruno.notices[0])).toContain('not_offered_to_the_bond')
+    expect(await bruno.sent()).toEqual([])
+    expect(bruno.post.carried()).toEqual([])
+    expect(bruno.is_closed(his)).toBe(false)
+  })
+
+  test('a retry after a withdrawal, or after a deactivation, meets silence: Anna records no_response, Bruno keeps his greeting back', async () => {
+    for (const change of ['withdraws', 'deactivates'] as const) {
+      const story = await two_nodes()
+      const { anna, bruno } = story
+      const greeting = await greets(anna, 'B-BRUNO')
+      bruno.post.will('lost')
+      await bruno.the_entry()
+      expect(bruno.greetings_back()).toHaveLength(1)
+      if (change === 'withdraws') await bruno.withdraws_the_offer_from('B-ANNA')
+      else await bruno.deactivates()
+      await to_the_end_of_its_time(story, bruno)
+      await until(() => anna.is_closed(greeting), 'the greeting closed')
+      expect(anna.the_greeting(greeting)).toMatchObject(
+        closed_with({ outcome: 'the_greeting_had_no_response' }),
+      )
+      expect(bruno.greetings_back()).toMatchObject([{ bond: 'B-ANNA', words: 'ciao anche a te' }])
+      expect(new Set(bruno.whys())).toEqual(
+        new Set([
+          change === 'withdraws'
+            ? 'the_extension_is_not_offered_to_the_bond'
+            : 'the_extension_is_not_active',
+        ]),
+      )
+      expect(bruno.post.carried().map((deposit) => deposit.fault)).toEqual(['lost'])
+    }
+  })
+})
+
+describe('4. Claude’s fixes at the gate (F7, DOM-14, EXT-2, EXT-12)', () => {
+  test('Anna greets Bruno (P1, his phone off) and Carla (P2, her greeting back taken), her phone closed and started again: P1 no_response at its time, P2 delivered again reads the answer the port keeps, one closing each, no dead letter', async () => {
+    const { anna, carla, at } = await two_nodes()
+    const p1 = await anna.greets('B-BRUNO')
+    const p2 = await anna.greets('B-CARLA')
+    await until(async () => (await anna.sent()).length === 2, 'both requests sent')
+    await anna.post.runs()
+    await carla.the_entry()
+    await anna.the_entry()
+    await until(() => anna.is_closed(p2), 'P2 closed')
+    expect(anna.is_closed(p1)).toBe(false)
+    await anna.closes()
+    at('10:01:00')
+    expect(await anna.starts()).toEqual({ loaded: 'running' })
+    await anna.post.runs()
+    await until(() => anna.is_closed(p1), 'P1 closed')
+    expect(anna.the_greeting(p1)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_had_no_response' }),
+    )
+    expect(anna.the_greeting(p2)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_came_back', words: 'ciao anche a te' }),
+    )
+    expect(
+      anna.facts_of_greetings().filter((fact) => fact === 'a_greeting_has_been_closed'),
+    ).toHaveLength(2)
+    expect(anna.dead_letters()).toEqual([])
+    // P2 answered twice by the port, once before the close and once after the start, never sent again.
+    const answers_of_the_port = anna.to_the_extension.filter(
+      (message) => message.message === 'answer' && message.port === 'the_port_of_requests',
+    )
+    expect(answers_of_the_port).toHaveLength(3)
+    expect(await anna.sent()).toHaveLength(2)
+  })
+
+  test('the port answers a bond gone: a dead letter, nothing sent', async () => {
+    const { anna } = await two_nodes()
+    await anna.removes_a_bond('B-BRUNO')
+    const greeting = await anna.greets('B-BRUNO')
+    await until(() => anna.dead_letters().length === 1, 'the dead letter')
+    expect(anna.dead_letters()).toEqual([
+      `business/greetings/effect/ask_for_a_greeting_back/${greeting}`,
+    ])
+    expect(JSON.stringify(anna.notices[0])).toContain('the bond is gone')
+    expect(await anna.sent()).toEqual([])
+  })
+
+  test('a response that does not parse (Bruno’s code changed): a dead letter with his event, and the effect goes on toward Carla', async () => {
+    const { anna, bruno, carla } = await two_nodes()
+    bruno.tampers_with_its_responses(() => ({ event: 'pong' }))
+    const to_bruno = await anna.greets('B-BRUNO')
+    const to_carla = await anna.greets('B-CARLA')
+    await until(async () => (await anna.sent()).length === 2, 'both requests sent')
+    await anna.post.runs()
+    await bruno.the_entry()
+    await carla.the_entry()
+    await anna.the_entry()
+    await until(
+      () => anna.is_closed(to_carla) && anna.dead_letters().length === 1,
+      'Carla’s greeting closed, Bruno’s a dead letter',
+    )
+    expect(anna.dead_letters()).toEqual([
+      `business/greetings/effect/ask_for_a_greeting_back/${to_bruno}`,
+    ])
+    expect(JSON.stringify(anna.notices[0])).toContain('pong')
+    expect(anna.is_closed(to_bruno)).toBe(false)
+    expect(anna.the_greeting(to_carla)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_came_back', words: 'ciao anche a te' }),
+    )
+  })
+})
+
+/** Greetings' manifest with an extension point added: an update that asks more (EXT-7). */
+const asks_more = {
+  ...manifest_json,
+  actions: {
+    ...manifest_json.actions,
+    greet_from_its_page: { on: 'the_extension', invokes: 'usecase/greet_a_bond' },
+  },
+}
+
+/** That manifest with a leaf on self added: an update that asks no more (EXT-10). */
+const asks_no_more = {
+  ...asks_more,
+  surfaces: {
+    ...asks_more.surfaces,
+    self: {
+      ...asks_more.surfaces.self,
+      majors: {
+        1: {
+          ...asks_more.surfaces.self.majors['1'],
+          'usecase/greet_a_bond_again': asks_more.surfaces.self.majors['1']['usecase/greet_a_bond'],
+        },
+      },
+    },
+  },
+}
+
+describe('5. the life of an extension (EXT-7, EXT-15)', () => {
+  test('an update whose manifest asks more: greetings not loaded, its leaf silent, until Bruno accepts it; one that asks no more keeps it active', async () => {
+    const story = await two_nodes()
+    const { anna, bruno } = story
+    expect(await bruno.updated_to(asks_more)).toEqual({ loaded: 'not_active' })
+    expect(bruno.the_hosted().life()).toEqual({ life: 'unloaded' })
+    const greeting = await greets(anna, 'B-BRUNO')
+    await bruno.the_entry()
+    expect(bruno.whys()).toEqual(['the_extension_is_not_active'])
+    expect(bruno.post.carried()).toEqual([])
+    expect(await bruno.activates()).toEqual({ loaded: 'running' })
+    await story.runs_at(anna, '10:00:15')
+    await bruno.the_entry()
+    await anna.the_entry()
+    await until(() => anna.is_closed(greeting), 'the greeting closed')
+    expect(anna.the_greeting(greeting)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_came_back', words: 'ciao anche a te' }),
+    )
+    expect(await bruno.updated_to(asks_no_more)).toEqual({ loaded: 'running' })
+    const again = await greets(anna, 'B-BRUNO', 2)
+    await bruno.the_entry()
+    await anna.the_entry()
+    await until(() => anna.is_closed(again), 'the second greeting closed')
+    expect(anna.the_greeting(again)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_came_back', words: 'ciao anche a te' }),
+    )
+  })
+
+  test('deactivated while a greeting waits: not loaded, its consumers stopped; activated again, the delivery meets its request by its identity and reads the answer the port keeps', async () => {
+    const { anna, bruno } = await two_nodes()
+    const greeting = await greets(anna, 'B-BRUNO')
+    await anna.deactivates()
+    expect(anna.the_hosted().life()).toEqual({ life: 'unloaded' })
+    expect(anna.to_the_extension.filter((message) => message.message === 'stop')).toHaveLength(1)
+    expect(await anna.starts()).toEqual({ loaded: 'not_active' })
+    await bruno.the_entry()
+    await anna.the_entry()
+    await quiet()
+    expect(await anna.post.the_answer_to(anna.the_request_of(greeting))).toMatchObject([
+      { answer: { status: 'answered', event: greeted_back } },
+    ])
+    expect(anna.is_closed(greeting)).toBe(false)
+    expect(await anna.activates()).toEqual({ loaded: 'running' })
+    await until(() => anna.is_closed(greeting), 'the greeting closed')
+    expect(anna.the_greeting(greeting)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_came_back', words: 'ciao anche a te' }),
+    )
+    expect(await anna.sent()).toHaveLength(1)
+  })
+
+  test('greetings falls on Bruno’s node (its partition full): Anna’s request meets silence, his own greeting a technical outcome; the second fall leaves it stopped, and Anna reads no_response', async () => {
+    const story = await two_nodes({ brunos_characters: 200 })
+    const { anna, bruno } = story
+    const greeting = await greets(anna, 'B-BRUNO')
+    await bruno.the_entry()
+    expect(bruno.whys()).toEqual(['the_extension_has_fallen'])
+    await until(() => bruno.the_hosted().life().life === 'running', 'loaded again')
+    await expect(bruno.greets('B-ANNA')).rejects.toThrow('greetings: it has fallen')
+    expect(bruno.the_hosted().life()).toEqual({ life: 'stopped', why: 'it_fell_twice' })
+    await to_the_end_of_its_time(story, bruno)
+    await until(() => anna.is_closed(greeting), 'the greeting closed')
+    expect(anna.the_greeting(greeting)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_had_no_response' }),
+    )
+    expect(bruno.traced).toMatchObject([
+      { why: 'the_extension_has_fallen', fall: 'the_first' },
+      { why: 'the_extension_has_fallen', fall: 'the_second' },
+    ])
+    expect(bruno.post.carried()).toEqual([])
   })
 })

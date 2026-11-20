@@ -25,6 +25,18 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
    - `version_not_supported` only for an extension offered: `version_not_supported only for an extension offered: …`.
    - An undeclared leaf, `invalid_request` `not_a_leaf`: `an undeclared leaf of an extension offered: …`.
    - A peer's malformed input `invalid_request` before the kernel's node; a peer with no bond reads `not_found` only after it, and at the entry meets silence: `a peer’s malformed input: …`.
+3. **An offer withdrawn, both ways** (EXT-7, F8).
+   - The peer's requests meet silence, a request of the extension on that bond refused by the port of requests (`not_offered_to_the_bond`, nothing sent): `Bruno withdraws greetings’ offer from Anna: …`.
+   - A retry after a withdrawal or a deactivation meets silence, the asker records `no_response` and the server keeps its answer: `a retry after a withdrawal, or after a deactivation, …`.
+4. **Claude's fixes at the gate** (F7, DOM-14, EXT-2, EXT-12).
+   - Anna greets Bruno (P1, his phone off) and Carla (P2, answered), her phone closed and started again: P1 `no_response` at its time, P2 delivered again reads Carla's answer from the port's kept answer, one closing, no dead letter: `Anna greets Bruno (P1, his phone off) and Carla (P2, …`.
+   - The port answers a bond gone, a refused call sends nothing: `the port answers a bond gone: …`, and the refusal of check 3.
+   - A response that does not parse is a dead letter, the effect goes on toward the other bonds: `a response that does not parse (Bruno’s code changed): …`.
+   - Each silence in the kernel's trace with its case: check 2's first test. The scope a peer's command gives the extension holds no key: check 1's first test.
+5. **The life of an extension** (EXT-7, EXT-15).
+   - An update whose manifest asks more leaves it inactive (not loaded, its leaves silent) until accepted; one that does not keeps it active: `an update whose manifest asks more: …`.
+   - Not active, not loaded; at its deactivation its consumers stop; a delivery in flight meets its request again once it is active again: `deactivated while a greeting waits: …`.
+   - A fall answers the local invocations with a technical outcome and the peers' with silence; a second fall leaves it stopped: `greetings falls on Bruno’s node (its partition full): …`.
 
 ## Proven by the earlier blocks
 
