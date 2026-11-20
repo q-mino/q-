@@ -7,7 +7,7 @@
   "exports": {
     "./library": "./src/library/index.ts",
     "./seals/*": "./src/seals/*",
-    "./post": "./src/post/index.ts",
+    "./post/*": "./src/post/*",
     "./mailbox/*": "./src/mailbox/*",
     "./desk/*": "./src/desk/*",
     "./bonds/*": "./src/bonds/*",
