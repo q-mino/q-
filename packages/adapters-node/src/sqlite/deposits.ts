@@ -74,9 +74,19 @@ export const deposit_sources: {
 }
 
 /**
+ * The relay forgets every deposit discarded a day or more before an instant
+ * (MBX-8): the instant of a fact, by the relay's clock, or its configurator's now.
+ */
+export const forgetting = (at: string): Sql =>
+  sql(
+    'DELETE FROM deposits WHERE discarded_at IS NOT NULL AND julianday(discarded_at) <= julianday(?) - 1',
+    at,
+  )
+
+/**
  * How each fact of `deposits` reaches the table: a deposit is a row; a
- * discard takes its envelope away, and the relay forgets every deposit
- * discarded a day or more before it (MBX-8), by the discard's own time.
+ * discard takes its envelope away. Each forgets, by its own time, what was
+ * discarded a day or more before it (MBX-8).
  */
 export const deposit_writes: zz.FactWrites<zz.FactsIn<typeof deposits_fact>, Write> = {
   'mailbox/deposits/fact/an_envelope_has_been_deposited':
@@ -90,6 +100,7 @@ export const deposit_writes: zz.FactWrites<zz.FactsIn<typeof deposits_fact>, Wri
         new_deposit.envelope,
         Number(recording.position),
       ),
+      forgetting(new_deposit.deposited_at),
     ],
   'mailbox/deposits/fact/an_envelope_has_been_discarded':
     ({ discarded_deposit }) =>
@@ -99,10 +110,7 @@ export const deposit_writes: zz.FactWrites<zz.FactsIn<typeof deposits_fact>, Wri
         discarded_deposit.discarded_at,
         discarded_deposit.id,
       ),
-      sql(
-        'DELETE FROM deposits WHERE discarded_at IS NOT NULL AND julianday(discarded_at) <= julianday(?) - 1',
-        discarded_deposit.discarded_at,
-      ),
+      forgetting(discarded_deposit.discarded_at),
     ],
 }
 

@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import * as zz from '@q-mino/domains/library'
 import { a_relay, lines_of, over_http, quiet, reading } from './harness.ts'
 
 // The relay as its configurator wires it (CFG-3, MBX-8, MBX-9): its HTTP
@@ -192,6 +193,29 @@ describe("the relay's storage (MBX-8)", () => {
       event: 'snapshot',
       entries: [{ envelope: E1, deposited_at: '2026-11-24T10:00:00+00:00' }],
     })
+    await executor.stop()
+    relay.storage.close()
+  })
+})
+
+describe('a relay with nothing more to keep (MBX-8)', () => {
+  test('it forgets all the same when its configurator asks', async () => {
+    const relay = await a_relay(':memory:', '2026-11-16T09:00:00Z')
+    const http = over_http(relay.http)
+    await lines_of(await http.deposits(a_deposit('anna-deposit-1')))
+    const executor = relay.waits()
+    await relay.pass('2026-11-23T09:00:00Z')
+    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T08:59:00Z'))
+    expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
+      kept_at('2026-11-16T09:00:00+00:00'),
+    ])
+    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T09:00:00Z'))
+    const log = relay.log(undefined)[Symbol.asyncIterator]()
+    expect((await log.next()).value).toEqual({ event: 'position_unavailable' })
+    relay.at('2026-11-24T09:30:00Z')
+    expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
+      kept_at('2026-11-24T09:30:00+00:00'),
+    ])
     await executor.stop()
     relay.storage.close()
   })

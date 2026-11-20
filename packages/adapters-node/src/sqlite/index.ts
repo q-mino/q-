@@ -20,6 +20,7 @@ import {
   deposit_selection_fragments,
   deposit_sources,
   deposit_writes,
+  forgetting,
   the_deposits_tables,
   the_first_position_kept,
   type Write,
@@ -201,6 +202,17 @@ export const the_relays_storage = (location: string) => {
         streams: { the_envelopes_in_a_mailbox: { strategy: 'composed', log: facts.log } } as const,
       }),
     }),
+    /**
+     * The relay forgets, now, what it discarded a day or more ago (MBX-8), as
+     * each deposit and each discard does: so that a relay with neither for a
+     * while forgets all the same, when its configurator asks (step 24).
+     */
+    forget_what_is_past: (now: zz.date_time): void => {
+      in_one_step(() => {
+        write(forgetting(now))
+        forget_what_is_discarded()
+      })
+    },
     /** The positions before this one, which the store keeps no longer (MBX-8; TST-4 injects one). */
     forget: (before: zz.position): void => {
       in_one_step(() => {
