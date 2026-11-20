@@ -1,7 +1,8 @@
 // The post's pure functions over its values (DOM-5): the protocol's
 // encodings, the identities of F7, a letter put in an envelope and opened.
 // The cryptography is the safe's: the post's machine, given as a parameter
-// (GR-5, GR-8, PST-3).
+// (GR-5, GR-8, PST-3). The relay is reached through the post's mailbox port
+// (GR-6, PST-10).
 
 import { canonical_json } from '../library/index.ts'
 import { value } from './_scope_dsl.ts'
@@ -12,11 +13,13 @@ type Bytes = readonly number[]
  * The post's machine (GR-5, PST-3): what the safe does for the post, with a
  * face of the node's user, the one the configurator binds it to (the
  * sender's, or the one whose mailbox a letter came to). Its contents are
- * bytes in base64url, as the safe tells them.
+ * bytes in base64url, as the safe tells them. To sign and to open use the
+ * face's private key: they are the safe's reads (SEA-6), answered when the
+ * read is, so they give a promise (PST-10); the rest needs no secret.
  */
 export interface Machine {
   /** The face's signature over a content (the safe's `a_content_signed_by_a_face`). */
-  readonly sign: (content: value.some_bytes) => value.signature
+  readonly sign: (content: value.some_bytes) => Promise<value.signature>
   /** A content sealed for a public key, or not: bytes that are no key one can seal for (SEA-5). */
   readonly seal_for: (
     key: value.face_key,
@@ -27,9 +30,10 @@ export interface Machine {
   /** A sealed content opened by the face (the safe's `a_sealed_content_opened_by_a_face`). */
   readonly open: (
     sealed_content: value.some_bytes,
-  ) =>
+  ) => Promise<
     | { readonly outcome: 'opened'; readonly content: value.some_bytes }
     | { readonly outcome: 'not_opened' }
+  >
   /** Whether a signature is a key's over a content (the safe's `the_signature_holds`). */
   readonly signature_holds: (
     key: value.face_key,
@@ -38,6 +42,36 @@ export interface Machine {
   ) => boolean
   /** BLAKE2b-256 of a content: 32 bytes. */
   readonly hash: (content: value.some_bytes) => value.identity
+}
+
+/**
+ * What the relay answered a deposit, in the post's words (PST-10): it keeps
+ * the envelope; it keeps one of this deposit already, an envelope sealed
+ * before under the same operation (MBX-1: the relay's
+ * `identity_already_used`, an envelope sealed anew for each attempt); it
+ * refuses it, and why, as the relay said (MBX-1's limits); or no answer came.
+ */
+export type Deposited =
+  | { readonly outcome: 'kept' }
+  | { readonly outcome: 'kept_already' }
+  | { readonly outcome: 'refused'; readonly why: string }
+  | { readonly outcome: 'unreachable' }
+
+/**
+ * The post's mailbox port (GR-6, PST-10): it deposits an envelope on a
+ * deposit address at its relays, under an operation of the post's
+ * (`the_operation_of_a_deposit`). Over the relay's HTTP interface (step 20)
+ * or the relay's oracle (`memory`): a transport, which translates the
+ * relay's answer and keeps nothing. A fault of the transport (an abort)
+ * throws: the executor stops its effect, unadvanced (DOM-14).
+ */
+export interface MailboxPort {
+  readonly deposit: (deposit: {
+    readonly operation: value.identity
+    readonly deposit_address: value.deposit_address
+    readonly relays: value.relays
+    readonly envelope: value.some_bytes
+  }) => Promise<Deposited>
 }
 
 // UTF-8 and base64url, with no padding (RFC 3629, RFC 4648 § 5): the domains
@@ -152,15 +186,28 @@ export const the_identity_of_the_response_to =
     machine.hash(content_of(['the_identity_of_the_response_to', request]))
 
 /**
+ * The operation of a deposit at the relay (PST-10, MBX-1): the hash of what
+ * is deposited, a sending of a request (its key, the identity and the
+ * attempt) or a response (its identity), and the deposit address, told with
+ * no ambiguity. The same deposit tried again is the same operation, whose
+ * first envelope the relay keeps; two sendings are two deposits; two nodes'
+ * letters of one identity, on two mailboxes, never meet.
+ */
+export const the_operation_of_a_deposit =
+  (machine: Pick<Machine, 'hash'>) =>
+  (what: string, deposit_address: value.deposit_address): value.identity =>
+    machine.hash(content_of(['the_operation_of_a_deposit', what, deposit_address]))
+
+/**
  * A letter put in an envelope for the face it goes to (PST-3): signed by the
  * machine's face, sealed for theirs; not sealed if their key takes no seal.
  */
 export const a_letter_in_an_envelope =
   (machine: Pick<Machine, 'sign' | 'seal_for'>) =>
-  (letter: value.letter, their_key: value.face_key): value.sealed_letter => {
+  async (letter: value.letter, their_key: value.face_key): Promise<value.sealed_letter> => {
     const signed: value.signed_letter = {
       letter: letter,
-      signature: machine.sign(the_content_a_letter_signs(letter)),
+      signature: await machine.sign(the_content_a_letter_signs(letter)),
     }
     const sealing = machine.seal_for(their_key, content_of(signed))
     if (sealing.outcome === 'not_sealed') return { outcome: 'not_sealed' }
@@ -183,11 +230,11 @@ export const the_id_of_an_anonymous_letter =
  */
 export const the_letter_in_an_envelope =
   (machine: Pick<Machine, 'open' | 'signature_holds' | 'hash'>) =>
-  (came_to: value.deposit_address, envelope_text: string): value.opened_envelope => {
+  async (came_to: value.deposit_address, envelope_text: string): Promise<value.opened_envelope> => {
     const told = json_of(envelope_text)
     const envelope = value.envelope.safeParse(told?.json)
     if (!envelope.success) return { outcome: 'not_an_envelope' }
-    const opening = machine.open(envelope.data.sealed)
+    const opening = await machine.open(envelope.data.sealed)
     if (opening.outcome === 'not_opened') return { outcome: 'not_opened' }
     const signed = value.signed_letter.safeParse(json_of(opening.content)?.json)
     if (!signed.success) return { outcome: 'not_a_letter' }

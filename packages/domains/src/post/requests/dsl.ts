@@ -1,9 +1,9 @@
 // The requests' pure functions over their values (DOM-5): the meanings of
-// the predicates, for the oracle and the adapters, and the times of a
-// request.
+// the predicates, for the oracle and the adapters, the times of a request,
+// and the delivery of its deposits (PST-10).
 
-import { date_time } from '../../library/index.ts'
-import type { id, value } from './_scope_dsl.ts'
+import { date_time, type Delivered } from '../../library/index.ts'
+import { _post, type id, type value } from './_scope_dsl.ts'
 
 /** A request with this identity is in the record, whatever became of it. */
 export const a_request_is_there = (
@@ -59,3 +59,60 @@ export const the_instant_of_a_sending = (
 /** The key of a request's sending, unique per effect (DOM-13): the request's identity and the attempt. */
 export const the_key_of_a_sending = (request_id: id.request_id, attempt: number): string =>
   `${request_id}/${String(attempt)}`
+
+/**
+ * Why a deposit of a request is a dead letter (DOM-15, F6): the key of the
+ * face it goes to takes no seal (SEA-5, a claim of theirs, F2), or the relay
+ * refused the envelope (MBX-1's limits), with what it said.
+ */
+export const the_reasons_of_a_dead_deposit = {
+  their_key_takes_no_seal: 'their_key_takes_no_seal',
+  the_relay_refused_the_envelope: 'the_relay_refused_the_envelope',
+} as const
+
+/**
+ * The delivery of `deposit_a_letter` (PST-10, ADP-1): the letter put in an
+ * envelope by the machine of the face that signs it, for the key of the
+ * face it goes to, and deposited through the post's mailbox port under the
+ * sending's operation, so that the same sending tried again is the same
+ * deposit at the relay. Told as the executor reads it (DOM-15): kept, or
+ * kept already by an earlier attempt, delivered; refused by the relay, or
+ * not sealed, exhausted with why; no answer, transient. An abort of the
+ * transport throws, and the executor stops the effect (DOM-14). The
+ * configurator gives the machine of a face (PST-3) and the port (GR-6).
+ */
+export const the_deposit_of_a_letter =
+  (
+    machine_of: (face_id: value.deposit['face_id']) => _post.dsl.Machine,
+    mailbox: _post.dsl.MailboxPort,
+  ) =>
+  async (entry: {
+    readonly id: string
+    readonly payload: value.deposit
+  }): Promise<Delivered<never>> => {
+    const machine = machine_of(entry.payload.face_id)
+    const sealed = await _post.dsl.a_letter_in_an_envelope(machine)(
+      entry.payload.letter,
+      entry.payload.their_key,
+    )
+    if (sealed.outcome === 'not_sealed')
+      return { outcome: 'exhausted', reason: the_reasons_of_a_dead_deposit.their_key_takes_no_seal }
+    const deposited = await mailbox.deposit({
+      operation: _post.dsl.the_operation_of_a_deposit(machine)(entry.id, entry.payload.letter.to),
+      deposit_address: entry.payload.letter.to,
+      relays: entry.payload.relays,
+      envelope: sealed.envelope,
+    })
+    switch (deposited.outcome) {
+      case 'kept':
+      case 'kept_already':
+        return { outcome: 'delivered' }
+      case 'refused':
+        return {
+          outcome: 'exhausted',
+          reason: `${the_reasons_of_a_dead_deposit.the_relay_refused_the_envelope}: ${deposited.why}`,
+        }
+      case 'unreachable':
+        return { outcome: 'transient' }
+    }
+  }

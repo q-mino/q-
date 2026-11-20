@@ -68,8 +68,9 @@ export type mailbox = z.output<typeof mailbox>
 /**
  * What a letter carries for the use case it invokes, or the event a response
  * carries: a JSON value, a claim (F2), which the leaf's schema or the
- * asker's delivery parses. Unknown to the post's types: a recursive JSON type
- * goes too deep for the library's (TS2589).
+ * asker's delivery parses, at most `the_most_a_letter_carries` (PST-12).
+ * Unknown to the post's types: a recursive JSON type goes too deep for the
+ * library's (TS2589).
  *
  * @see {@link value.content}
  */

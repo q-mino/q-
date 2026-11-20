@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { date_time, is_a_json_value } from '../library/index.ts'
+import { canonical_json, date_time, is_a_json_value } from '../library/index.ts'
 
 // The values of the post (PST-1, PST-2): the protocol between two nodes,
 // above its business, `requests`. Bytes are told in base64url with no
@@ -47,12 +47,33 @@ export const mailbox = z.strictObject({
 })
 
 /**
+ * The most a letter carries for its use case, or for its event: 32 KiB of
+ * its canonical JSON in UTF-8 (PST-12), so that every letter, signed, sealed
+ * and told in its envelope, fits what a relay keeps (MBX-1: 64 KiB), and the
+ * safe signs it (SEA-1's limit).
+ */
+const the_most_a_letter_carries = 32_768
+
+/** The length of a text in UTF-8, by its code points (the domains have no `TextEncoder`, GR-8). */
+const utf8_length = (text: string): number =>
+  Array.from(text).reduce((length, character) => {
+    const point = character.codePointAt(0) ?? 0
+    return length + (point < 0x80 ? 1 : point < 0x800 ? 2 : point < 0x10000 ? 3 : 4)
+  }, 0)
+
+/**
  * What a letter carries for the use case it invokes, or the event a response
  * carries: a JSON value, a claim (F2), which the leaf's schema or the
- * asker's delivery parses. Unknown to the post's types: a recursive JSON type
- * goes too deep for the library's (TS2589).
+ * asker's delivery parses, at most `the_most_a_letter_carries` (PST-12).
+ * Unknown to the post's types: a recursive JSON type goes too deep for the
+ * library's (TS2589).
  */
-export const content = z.unknown().refine(is_a_json_value, 'a JSON value')
+export const content = z
+  .unknown()
+  .refine(is_a_json_value, { message: 'a JSON value', abort: true })
+  .refine((json) => utf8_length(canonical_json(json)) <= the_most_a_letter_carries, {
+    message: 'at most 32 KiB of JSON',
+  })
 
 /** The bytes of something the post gives the machine: a signed content, a sealed letter, an envelope. */
 export const some_bytes = bytes().max(87_382)
