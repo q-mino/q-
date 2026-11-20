@@ -179,7 +179,7 @@ export interface Carried {
  * operation, and tells the relay's answer in the post's words; the faults
  * the story injects, one per deposit, in order.
  */
-const a_transport = (relay: RelayUnderTest, now: () => string) => {
+export const a_transport = (relay: RelayUnderTest, now: () => string) => {
   const faults: Fault[] = []
   const carried: Carried[] = []
   /** The relay's answer, in the post's words (PST-10). */

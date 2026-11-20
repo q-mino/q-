@@ -92,6 +92,25 @@ export default defineConfig(
     rules: tree_rules,
   },
   {
+    // `user` wears the persona `self` only, never a remote peer's (GR-7, D76; part 13.3): its files
+    // import no other persona of the kernel, by a relative path or the package's.
+    files: ['packages/domains/src/user/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '(^|/)persona/(known|unknown|anonymous)(/|\\.ts$|$)',
+              message:
+                '`user` uses only the persona `self`, never the personas of remote peers (GR-7).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // The trees of the extensions, as Shed's (CLAUDE.md, GR-10; part 12.4).
     files: extension_trees.flatMap((tree) =>
       Object.keys(tree.sight).map((top) => `${tree.root}/${top}/**/*.ts`),

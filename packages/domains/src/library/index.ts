@@ -308,7 +308,7 @@ export type {
   Elapsed,
   TreePorts,
 } from './tree.ts'
-export { tree_ports, mounted_leaf_ports } from './tree_port.ts'
+export { tree_ports, tree_ports_by_path, mounted_leaf_ports } from './tree_port.ts'
 export { the_surface_of } from './surface.ts'
 export type { Surface, SurfaceLeaf } from './surface.ts'
 export type {
@@ -318,6 +318,7 @@ export type {
   MountedLeafEvent,
   MountedLeafPort,
   OutsideTheSurface,
+  TreePortByPath,
 } from './tree_port.ts'
 export type { Trace, Traced, TraceReason, TracedIssue, TracedFailure, NotKnown } from './trace.ts'
 export { lookup_ports } from './lookup_port.ts'

@@ -21,6 +21,7 @@ import {
   relay,
   the_desks_interface,
   the_scope_of_a_deposit,
+  type HashOfACollectSecret,
   type MailboxState,
   type Relay,
   type Shown,
@@ -37,10 +38,16 @@ export const time_zone = zz.time_zone.parse('UTC')
  */
 export const hash = (secret: string): Promise<string> => Promise.resolve(`hash-of-${secret}`)
 
-/** How a relay starts: how its read streams, natively or composed (DOM-2); whether its cell gives everything twice (TST-4). */
+/**
+ * How a relay starts: how its read streams, natively or composed (DOM-2);
+ * whether its cell gives everything twice (TST-4); the hash of its desk's
+ * interface, the harness's fake unless a story gives the one its phones'
+ * safes draw D with (the nodes of `../node/harness.ts`).
+ */
 export interface Start {
   readonly streams?: Strategy
   readonly redelivered?: boolean
+  readonly hash?: HashOfACollectSecret
 }
 
 /** A request's operation, if the story names it, and its correlation. */
@@ -98,8 +105,13 @@ export type StoryWorld = ReturnType<typeof a_world>
  * The harness over a relay started in a story's world, whatever its store
  * (TST-1): the desk's trees entered as the desk's interface enters them.
  */
-export const harnessed = (the_relay: Started, world: StoryWorld, injected: Injected) => {
-  const the_interface = the_desks_interface(hash)
+export const harnessed = (
+  the_relay: Started,
+  world: StoryWorld,
+  injected: Injected,
+  hash_of_a_secret: HashOfACollectSecret = hash,
+) => {
+  const the_interface = the_desks_interface(hash_of_a_secret)
   let operations = 0
   /**
    * What the desk's interface gives a tree for who comes (MBX-6): the `Caller`, the
@@ -176,7 +188,12 @@ export const a_relay = async (start: Start = {}) => {
     made,
     start.streams === undefined ? {} : { streams: start.streams },
   )(world)
-  return harnessed(the_relay, world, { traced: made.traced, forget: made.forget })
+  return harnessed(
+    the_relay,
+    world,
+    { traced: made.traced, forget: made.forget },
+    start.hash ?? hash,
+  )
 }
 
 /** The relay under the stories: the oracle's, or an adapter's with the same harness (TST-1). */

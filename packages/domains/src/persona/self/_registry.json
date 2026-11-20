@@ -1,0 +1,1882 @@
+{
+  "domain": "persona/self",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/self/value/face_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "persona/self/value/bond_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "persona/self/value/face_key": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+        }
+      }
+    },
+    "persona/self/value/face_position": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                "required": ["place"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "place": { "type": "string", "const": "under_a_face" },
+                  "face_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["place", "face_id"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "persona/self/value/relay_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 2048, "format": "uri" }
+        }
+      }
+    },
+    "persona/self/value/relays": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "minItems": 1,
+            "maxItems": 1,
+            "type": "array",
+            "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+          }
+        }
+      }
+    },
+    "persona/self/value/deposit_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "persona/self/value/mailbox": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+              }
+            },
+            "required": ["deposit_address", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/ticket_secret": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{85}[AQgw]$" }
+        }
+      }
+    },
+    "persona/self/value/their_ticket": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "secret": { "type": "string", "pattern": "^[A-Za-z0-9_-]{85}[AQgw]$" }
+            },
+            "required": ["key", "introduced_as", "mailbox", "secret"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/their_face": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["key", "introduced_as"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/handshake_way": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["in_person", "at_a_distance"] }
+        }
+      }
+    },
+    "persona/self/value/handshake": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["way", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/confirmation": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "state": { "type": "string", "const": "awaited" } },
+                "required": ["state"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "state": { "type": "string", "const": "received" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["state", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "persona/self/value/a_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          }
+        }
+      }
+    },
+    "persona/self/value/extension_version": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+          }
+        }
+      }
+    },
+    "persona/self/value/major": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        }
+      }
+    },
+    "persona/self/value/majors": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+          }
+        }
+      }
+    },
+    "persona/self/value/a_leaf": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+          }
+        }
+      }
+    },
+    "persona/self/value/extension_point": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "point": { "type": "string", "enum": ["action", "slot", "page"] },
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "place": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["point", "name", "place"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/manifest": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+              },
+              "sees": {
+                "type": "object",
+                "properties": {
+                  "known": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  }
+                },
+                "required": ["known"],
+                "additionalProperties": false
+              },
+              "touches": {
+                "maxItems": 16,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                }
+              },
+              "extension_points": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "place": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "required": ["point", "name", "place"],
+                  "additionalProperties": false
+                }
+              },
+              "leaves_on_known": {
+                "maxItems": 256,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 256,
+                  "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                }
+              },
+              "majors": {
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                  },
+                  "known": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                  }
+                },
+                "required": ["self", "known"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "sees",
+              "touches",
+              "extension_points",
+              "leaves_on_known",
+              "majors"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/more_asked": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "to_see_on_known" },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["asks", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "to_touch" },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["asks", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "an_extension_point" },
+                  "extension_point": {
+                    "type": "object",
+                    "properties": {
+                      "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "place": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["point", "name", "place"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["asks", "extension_point"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "a_leaf_on_known" },
+                  "leaf": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": ["asks", "leaf"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "persona/self/value/extension_state": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "is": { "type": "string", "const": "active" } },
+                "required": ["is"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "is": { "type": "string", "const": "not_active" } },
+                "required": ["is"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "waiting_for_the_new_manifest" },
+                  "asks_more": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "to_see_on_known" },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["asks", "name"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "to_touch" },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["asks", "name"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "an_extension_point" },
+                            "extension_point": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asks", "extension_point"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "a_leaf_on_known" },
+                            "leaf": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "required": ["asks", "leaf"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": ["is", "asks_more"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "persona/self/value/offered_extension": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "majors": {
+                "maxItems": 64,
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            },
+            "required": ["extension", "majors"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/value/offered_extensions": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "extension": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                },
+                "majors": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                }
+              },
+              "required": ["extension", "majors"],
+              "additionalProperties": false
+            },
+            "x-refined": true
+          }
+        }
+      }
+    },
+    "persona/self/node/self": { "kind": "node" },
+    "persona/self/usecase/make_my_first_face": {
+      "kind": "usecase",
+      "shapes": {
+        "event/your_face_is_being_made": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "face_id": { "type": "string", "minLength": 1 } },
+            "required": ["face_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_have_a_face_already": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/make_my_first_face_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "face_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["face_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/prepare_a_ticket": {
+      "kind": "usecase",
+      "shapes": {
+        "event/your_ticket_is_being_prepared": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["bond_id", "expires_at"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_ticket_cannot_be_prepared": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/prepare_a_ticket_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "face_id": { "type": "string", "minLength": 1 },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+              }
+            },
+            "required": ["bond_id", "face_id", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/open_their_ticket": {
+      "kind": "usecase",
+      "shapes": {
+        "event/you_are_bonded": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_met_in_person": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/your_introduction_is_sent": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/you_opened_their_ticket_already": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/their_ticket_cannot_be_opened": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/open_their_ticket_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "their_ticket": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["deposit_address", "relays"],
+                    "additionalProperties": false
+                  },
+                  "secret": { "type": "string", "pattern": "^[A-Za-z0-9_-]{85}[AQgw]$" }
+                },
+                "required": ["key", "introduced_as", "mailbox", "secret"],
+                "additionalProperties": false
+              },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["bond_id", "their_ticket", "name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/rename_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_bond_is_renamed": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["bond_id", "name"],
+            "additionalProperties": false
+          }
+        },
+        "event/there_is_no_such_bond": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/rename_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["bond_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/remove_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_bond_is_removed": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_bond_was_removed_already": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/there_is_no_such_bond": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/remove_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/activate_an_extension": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_extension_is_active": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_extension_was_active_already": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_manifest_is_not_the_installed_one": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/activate_an_extension_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["manifest"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/deactivate_an_extension": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_extension_is_deactivated": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_extension_was_not_active": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_extension_cannot_be_deactivated": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/deactivate_an_extension_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/withdraw_the_offer_from_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_offer_is_withdrawn": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_offer_was_withdrawn_already": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_offer_cannot_be_withdrawn": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/withdraw_the_offer_from_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/offer_an_extension_to_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_extension_is_offered_again": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_extension_was_offered_already": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_extension_cannot_be_offered": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/offer_an_extension_to_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["extension", "bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/ask_a_bond_for_the_extensions_in_common": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_bond_is_asked": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "question_id": { "type": "string", "minLength": 1 } },
+            "required": ["question_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_bond_cannot_be_asked": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/ask_a_bond_for_the_extensions_in_common_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "extension": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["extension", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["bond_id", "offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/my_faces": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "face_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "position": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                    "required": ["place"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "place": { "type": "string", "const": "under_a_face" },
+                      "face_id": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["place", "face_id"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["face_id", "name", "position", "key"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/my_faces_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/my_bonds": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["bond_id", "name", "my_face_id", "their_face", "confirmation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/my_bonds_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "their_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "my_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "handshake": {
+                "type": "object",
+                "properties": {
+                  "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["way", "at"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "bond_id",
+              "name",
+              "my_face_id",
+              "their_face",
+              "their_mailbox",
+              "my_mailbox",
+              "handshake",
+              "confirmation"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/my_ticket": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "bond_id",
+              "my_face_id",
+              "key",
+              "introduced_as",
+              "my_mailbox",
+              "expires_at"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/my_ticket_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/an_extension": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              },
+              "state": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "active" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "not_active" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "waiting_for_the_new_manifest" },
+                      "asks_more": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "to_see_on_known" },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["asks", "name"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "to_touch" },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["asks", "name"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "an_extension_point" },
+                                "extension_point": {
+                                  "type": "object",
+                                  "properties": {
+                                    "point": {
+                                      "type": "string",
+                                      "enum": ["action", "slot", "page"]
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    },
+                                    "place": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    }
+                                  },
+                                  "required": ["point", "name", "place"],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": ["asks", "extension_point"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "a_leaf_on_known" },
+                                "leaf": {
+                                  "type": "string",
+                                  "maxLength": 256,
+                                  "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                                }
+                              },
+                              "required": ["asks", "leaf"],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": ["is", "asks_more"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["extension", "manifest", "state"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/an_extension_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["extension"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/the_extensions_offered_to_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "majors": {
+                "maxItems": 64,
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            },
+            "required": ["extension", "majors"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/the_extensions_offered_to_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/version/self": { "kind": "version" }
+  }
+}

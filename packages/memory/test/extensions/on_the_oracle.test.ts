@@ -8,10 +8,11 @@ import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 // (F7, F8, EXT-2, EXT-4, EXT-6, EXT-7, EXT-12, EXT-15; part 12.4), each a
 // test named by what it proves, with greetings, the test extension, in
 // place of ping pong (step 14): Anna greets Bruno, Bruno's node greets her
-// back. The harness (`harness.ts`) plays the kernel's entry as step 13 will
-// write it, with a stand-in of the kernel's node at the top of `known`. The
-// README of this folder lists each check with its test, those proven by
-// the earlier blocks, and those deferred to their step.
+// back. The harness (`harness.ts`) runs them on the node of q-'s oracle
+// (`../node/harness.ts`, part 13.3): the kernel's entry of part 13.2, q-'s
+// persona trees and auth's lookups, one mailbox per bond. The README of
+// this folder lists each check with its test, those proven by the earlier
+// blocks, and those deferred to their step.
 
 /** Anna's words, and Bruno's greeting back (greetings' `dsl`, provisional texts). */
 const greeted_back = { event: 'greeted_back', payload: { words: 'ciao anche a te' } }
@@ -113,7 +114,8 @@ describe('1. a request and its response (F7)', () => {
   test('a response to no request of Anna’s, or from another face than the one asked: annotated, never taken', async () => {
     const { anna, carla } = await two_nodes()
     const greeting = await greets(anna, 'B-BRUNO')
-    const to_anna = { key: anna.post.key, mailbox: anna.post.mailbox }
+    // Carla writes on her bond with Anna: Anna's key, at the mailbox Anna keeps for her.
+    const to_anna = await carla.their_side_of('B-ANNA')
     await carla.post.deposits_a_response({
       answers: anna.the_request_of(greeting),
       to: to_anna,
@@ -165,6 +167,19 @@ const greetings_on_known = (version: string, use_case = 'usecase/greet') => ({
   version,
 })
 
+/**
+ * Where a node writes to another (BND-4): their key, at the mailbox the
+ * asker's bond with them gives; with no bond (Carla and Bruno), at a
+ * mailbox of theirs learned some other way: the one of their first bond.
+ */
+const where_it_writes = async (asker: NodeUnderTest, to: NodeUnderTest) => {
+  const bond = (await asker.my_bonds()).find((each) => each.their_face.key === to.key)
+  if (bond !== undefined) return asker.their_side_of(bond.id)
+  const [theirs] = await to.my_bonds()
+  if (theirs === undefined) throw new Error(`${to.name} has no mailbox to write to`)
+  return { key: to.key, mailbox: await to.my_mailbox_of(theirs.id) }
+}
+
 /** A request sent by a node's post itself, outside greetings (the code is free, F2): its identity. */
 const a_request_of_its_own = async (
   asker: NodeUnderTest,
@@ -176,7 +191,7 @@ const a_request_of_its_own = async (
   const request_id = asker.the_request_of(id, 'a peer’s code of its own')
   await asker.post.send_a_request({
     request_id,
-    to: { key: to.post.key, mailbox: to.post.mailbox },
+    to: await where_it_writes(asker, to),
     invokes,
     input,
   })
@@ -303,11 +318,13 @@ describe('2. the silence and the gate (F8, EXT-6)', () => {
       },
     ])
     expect(bruno.to_the_extension.filter((message) => message.message === 'invoke')).toEqual([])
-    // Carla, no bond of Bruno's, at the leaves below the kernel's node, as its entry would invoke them.
+    // Carla, no bond of Bruno's, at the leaves below the kernel's node, as its entry would invoke
+    // them: her letter at the mailbox Bruno keeps for Anna.
+    const to_my_mailbox = (await bruno.my_mailbox_of('B-ANNA')).deposit_address
     const as_carla = (operation: string) => ({
       now: zz.in_zone(story.clock.time_zone)(story.clock.now()),
       time_zone: story.clock.time_zone,
-      caller: { is: 'a_face' as const, key: carla.post.key },
+      caller: { is: 'a_face' as const, key: carla.post.key, to_my_mailbox },
       version: zz.semver.parse('1.0.0'),
       operation: { id: zz.operation_id.parse(operation), scope: `known/${carla.post.key}` },
     })
@@ -376,7 +393,13 @@ describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
         closed_with({ outcome: 'the_greeting_had_no_response' }),
       )
       expect(bruno.greetings_back()).toMatchObject([{ bond: 'B-ANNA', words: 'ciao anche a te' }])
-      expect(new Set(bruno.whys())).toEqual(
+      // The response lost on its way is in Bruno's kernel trace (PER-25, 5), then each retry's silence.
+      expect(bruno.traced[0]).toMatchObject({
+        why: 'a_response_not_deposited',
+        response: { answers: anna.the_request_of(greeting) },
+        answered: { outcome: 'unreachable' },
+      })
+      expect(new Set(bruno.whys().slice(1))).toEqual(
         new Set([
           change === 'withdraws'
             ? 'the_extension_is_not_offered_to_the_bond'
@@ -540,7 +563,8 @@ describe('5. the life of an extension (EXT-7, EXT-15)', () => {
     const { anna, bruno } = story
     const greeting = await greets(anna, 'B-BRUNO')
     await bruno.the_entry()
-    expect(bruno.whys()).toEqual(['the_extension_has_fallen'])
+    // The fall, the hosting's; Anna's request unanswered, the entry's (F6, part 13.3).
+    expect(bruno.whys()).toEqual(['the_extension_has_fallen', 'a_request_not_answered'])
     await until(() => bruno.the_hosted().life().life === 'running', 'loaded again')
     await expect(bruno.greets('B-ANNA')).rejects.toThrow('greetings: it has fallen')
     expect(bruno.the_hosted().life()).toEqual({ life: 'stopped', why: 'it_fell_twice' })
@@ -549,9 +573,18 @@ describe('5. the life of an extension (EXT-7, EXT-15)', () => {
     expect(anna.the_greeting(greeting)).toMatchObject(
       closed_with({ outcome: 'the_greeting_had_no_response' }),
     )
-    expect(bruno.traced).toMatchObject([
-      { why: 'the_extension_has_fallen', fall: 'the_first' },
-      { why: 'the_extension_has_fallen', fall: 'the_second' },
+    expect(bruno.traced.filter((entry) => entry.why === 'the_extension_has_fallen')).toMatchObject([
+      { fall: 'the_first' },
+      { fall: 'the_second' },
+    ])
+    // Anna's request unanswered at each fall, then each copy her post sends again meets it stopped.
+    expect(bruno.whys()).toEqual([
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'the_extension_has_fallen',
+      'a_request_not_answered',
+      'a_request_not_answered',
+      'a_request_not_answered',
     ])
     expect(bruno.post.carried()).toEqual([])
   })

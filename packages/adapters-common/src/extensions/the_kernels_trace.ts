@@ -41,6 +41,28 @@ export type AFence =
   'the_extension_is_not_active' | 'the_frame_is_not_shown' | 'not_a_frames_message'
 
 /**
+ * Why an envelope collected at a mailbox of mine went no further (PST-4):
+ * no face of mine at that mailbox to open it; else what `post` answered,
+ * every outcome but `opened`, a re-addressed letter with its identity and
+ * the face whose signature holds.
+ */
+export type AnEnvelopeNotOpened =
+  | {
+      readonly outcome:
+        'no_face_of_mine_at_the_mailbox' | 'not_an_envelope' | 'not_opened' | 'not_a_letter'
+    }
+  | { readonly outcome: 're_addressed'; readonly letter: string; readonly signed_by: string }
+
+/**
+ * Why a response was not deposited (PST-9, PST-10): their key takes no
+ * seal; the relay refused it, with what it said; or no answer came.
+ */
+export type AResponseNotDeposited =
+  | { readonly outcome: 'not_sealed' }
+  | { readonly outcome: 'refused'; readonly why: string }
+  | { readonly outcome: 'unreachable' }
+
+/**
  * An entry of the kernel's trace (EXT-6), an ADT by `why`, a closed set:
  * - the three silences of F8, with the request as it came;
  * - `a_call_not_declared`: a call of a port its manifest does not touch (EXT-4);
@@ -57,7 +79,23 @@ export type AFence =
  *   with what `post` answered (PST-7; step 13);
  * - `a_frame_fenced`: a frame's message the fence refused (EXT-4);
  * - `a_message_not_in_the_boundary`: a message of the extension's that does
- *   not parse, or that pairs no exchange in flight (EXT-2).
+ *   not parse, or that pairs no exchange in flight (EXT-2);
+ * - `an_envelope_not_opened`: an envelope collected at a mailbox of mine
+ *   that goes no further (PST-4, F6): no face of mine at that mailbox, or
+ *   what `post` answered, not an envelope, not opened, not a letter, or
+ *   re-addressed (the letter's identity and the face that signed it);
+ * - `not_a_leaf_of_the_extension`: a request routed to an extension that
+ *   has no surface on the persona it names, answered `invalid_request`,
+ *   `not_a_leaf` (EXT-4), with the request as it came;
+ * - `a_response_not_deposited`: a response the entry wrote and could not
+ *   deposit (PST-9): not sealed for their key, refused by the relay (with
+ *   what it said), or no answer came; the asker's sending again asks
+ *   again (PST-6);
+ * - `a_request_not_answered`: a request routed to an extension whose
+ *   invocation threw (it fell while serving, or it is not running, EXT-15),
+ *   with the request as it came and why: nothing goes back (F8), and the
+ *   user sees which request had no answer (F6), beside the fall the
+ *   hosting traces.
  */
 export type TheKernelsTraced =
   | { readonly why: ASilence; readonly request: ARequestAsItCame }
@@ -111,6 +149,28 @@ export type TheKernelsTraced =
       readonly now: string
       readonly message: boundary.Json
       readonly the_message: 'does_not_parse' | 'pairs_no_exchange'
+    }
+  | {
+      readonly why: 'an_envelope_not_opened'
+      readonly came_to: string
+      readonly now: string
+      readonly opened: AnEnvelopeNotOpened
+    }
+  | { readonly why: 'not_a_leaf_of_the_extension'; readonly request: ARequestAsItCame }
+  | {
+      readonly why: 'a_request_not_answered'
+      readonly request: ARequestAsItCame
+      readonly because: string
+    }
+  | {
+      readonly why: 'a_response_not_deposited'
+      readonly response: {
+        readonly letter: string
+        readonly answers: string
+        readonly caller: post_value.caller
+        readonly now: string
+      }
+      readonly answered: AResponseNotDeposited
     }
 
 /** The kernel's trace, a port required at wiring (EXT-6): served by the adapter of the trees' trace, eventual. */

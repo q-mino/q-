@@ -7,7 +7,11 @@
 // oracle, `phone` with step 22).
 
 export { through_a_frames_fence } from './a_frames_fence.ts'
-export { the_kernels_reads, the_manifest_to_accept } from './activations.ts'
+export {
+  the_delivery_of_the_extensions_in_common,
+  the_kernels_reads,
+  the_manifest_to_accept,
+} from './activations.ts'
 export type { TheKernelsReads, TheOfficesReads } from './activations.ts'
 export type { AFrame, Fenced } from './a_frames_fence.ts'
 export {
@@ -31,15 +35,24 @@ export type {
 export { as_traced, route } from './the_kernels_trace.ts'
 export type {
   AFence,
+  AnEnvelopeNotOpened,
   ARequestAsItCame,
+  AResponseNotDeposited,
   ASilence,
   Routed,
   TheKernelsTrace,
   TheKernelsTraced,
 } from './the_kernels_trace.ts'
-export { the_port_of_requests, the_scope_of_the_port_of_requests } from './the_port_of_requests.ts'
+export {
+  the_kernels_port_of_requests,
+  the_port_of_requests,
+  the_scope_of_the_port_of_requests,
+} from './the_port_of_requests.ts'
 export type {
   ABondToAskOn,
+  AKernelsRequest,
+  AnAnswerToTheKernelsRequest,
   TheAnswerKeptEvent,
+  TheKernelsPortOfRequestsWiring,
   ThePortOfRequestsWiring,
 } from './the_port_of_requests.ts'
