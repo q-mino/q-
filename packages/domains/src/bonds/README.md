@@ -1,0 +1,28 @@
+# The bonds: `bonds`
+
+The address book of the node's user: her faces, each with its name, its place in her tree of faces and its public key, and her bonds, each one of her faces with their face, their mailbox and hers, the name she gives them and what her node noted of the handshake. It holds no secret: the keys are the safe's, which it names by their opaque references. Its rules are BND-1..BND-6 of [`architecture.md`](../../../../docs/architecture.md), with DOM-23, GR-9, PER-11, PER-21, DOM-12 and the invariants of § 4; its words in the [glossary](../../../../docs/glossary.md).
+
+- [`address_book/`](address_book/), the domain (BND-1): the faces (being made, then made, BND-3) and the bonds (kept, then removed, BND-4..BND-6); `rename_a_bond` and `remove_a_bond`, what the user keeps of them; the reads `my_faces`, `my_bonds`, `a_bond` and `the_bond_at_my_mailbox`. The first face, the ticket and the introduction, which make the faces and the bonds, come with part 11.2.
+
+## Stories to prove
+
+Each story is the test named after it (part 11.3), in `packages/memory/test/bonds/stories.ts`, on q-'s oracle (MBX-7: a module `oracle/bonds.ts` on the model of `seals.ts`, a cell of the phone's with the state of `bonds` and `seals`), entering the address book's use cases as the user's entry would (`self`, step 13), the node's clock and the operations injected (TST-2, TST-3). The faces and bonds the stories start from are made as part 11.2's stories make them, through the first start and the introduction.
+
+The names: Anna's phone has her face F_a, "Anna", at the top, its public key K_a. Monday 10:00, by her clock, she and Bruno crossed their QR codes: bond L_b, Bruno's face K_b introduced as "Bruno", his mailbox D_b on the relay `https://relay.q-mino.test`, hers for him M_b at D_mb on the same relay, in person, the confirmation received at 10:00. Tuesday 18:30 she opened Carla's link: bond L_c, K_c "Carla", her mailbox D_c, Anna's for her M_c at D_mc, at a distance, the confirmation awaited.
+
+1. **My faces** (`my faces are the made ones, with their place and key`). While the safe makes F_a, `my_faces` holds nothing; once it is made, one entry: F_a, "Anna", at the top, K_a.
+2. **My list** (`my bonds are listed by the name I give, each with one face of mine`). `my_bonds` holds L_b "Bruno" and L_c "Carla", in that order, each with F_a, their face (K_b introduced as "Bruno"; K_c as "Carla") and the confirmation: received at 10:00 for Bruno, awaited for Carla.
+3. **A bond, whole** (`a bond reads whole, their mailbox and mine`). `a_bond` for L_b: "Bruno", F_a, K_b introduced as "Bruno", his mailbox D_b on its one relay, hers M_b at D_mb on its one relay, the handshake in person at Monday 10:00, the confirmation received at 10:00.
+4. **A name of mine** (`a bond renamed keeps the name they are introduced as`). Anna renames L_b "Bru": `a_bond_has_been_renamed`; `my_bonds` lists "Bru" then "Carla", and L_b's face is still introduced as "Bruno". Nothing is deposited for Bruno: the name is hers. Sent again under the same operation, the rename is the recorded fact (`a rename sent again is the same rename`, DOM-11).
+5. **The bond of a letter** (`a letter at my mailbox finds its bond, the face that opens it and the key that signs it`). `the_bond_at_my_mailbox` at D_mb gives L_b, F_a and K_b; at D_mc, L_c, F_a and K_c; at D_b, Bruno's mailbox and not hers, nothing (`an address of no mailbox of mine finds no bond`).
+6. **Removed** (`a bond removed leaves the list, and its mailbox finds it no more`). Wednesday 9:00 Anna removes L_c: `a_bond_has_been_removed`, removed at 9:00 by her clock; `my_bonds` holds L_b alone, `a_bond` for L_c nothing, `the_bond_at_my_mailbox` at D_mc nothing. Nothing is deposited for Carla. Removed again: `a_bond_has_been_removed_again`, and nothing changes (`a bond removed again changes nothing`). Renamed after: refused, `the_bond_is_kept` failed, no fact (`a bond removed cannot be renamed`).
+7. **Exactly one face** (`every bond belongs to exactly one of my faces`). Every entry of `my_bonds` and `the_bond_at_my_mailbox` names one face, which is in `my_faces`; a bond with no face, or with a list of faces, is not a bond of the address book: its schema refuses it. That a bond is made only on a made face of mine is part 11.2's story.
+8. **What the address book does not take** (`a name empty or too long, or an address out of its form, is not taken`). A rename to "" or to 81 characters, and `the_bond_at_my_mailbox` at a D with a character out of base64url or over 128 characters, are `invalid_request` before any node; nothing is recorded. A relay that is not an `https` URL, or two relays on a mailbox, are not a bond's (the schemas of their mailbox and mine): part 11.2's introduction meets them.
+9. **No secret** (`no read of the address book gives a secret`). The fields the four queries declare hold ids, names, positions, public keys, deposit addresses, relay addresses and annotations: no collect secret, no private key, no chain code, no seed, no index (BND-2, SEA-6).
+
+## Open
+
+- How the faces and the bonds are made: the first start, the ticket and the introduction, with their steps toward `seals` as reactions (part 11.2); there my D unique to its bond (BND-4), "in person" measured (BND-5) and the confirmation written at the introduction.
+- The confirmation at a later letter (BND-5): the entry of a letter, step 13.
+- "Elimina e avvisa", a removal that tells them (BND-6): a request of the kernel, steps 10 and 13.
+- The mailboxes the phone collects from (its bonds' and its tickets'): with the tickets, part 11.2, and the collect, step 10.
