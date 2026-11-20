@@ -3,6 +3,7 @@
 The tests of the kernel's side of the extensions on q-'s oracle (part 12.4; F7, F8, EXT-2..EXT-15 of [`architecture.md`](../../../../docs/architecture.md)), with `greetings`, the test extension ([`packages/extensions/greetings`](../../../extensions/greetings/README.md)), in place of ping pong (step 14):
 
 - [`the_port_of_requests.test.ts`](the_port_of_requests.test.ts): the kernel's port of requests over the post's oracle, Bruno's node played.
+- [`the_kernels_port_of_requests.test.ts`](the_kernels_port_of_requests.test.ts): the kernel's own port of requests (EXT-8), the path it shares with the extensions' port, over the post's oracle, Bruno's node played: the identity `{ of: 'the_kernel', … }`, what it sends invokes the kernel, no refusal.
 - [`greetings.test.ts`](greetings.test.ts): greetings composed from its `manifest.json`, hosted in process over its partition; the partitions.
 - [`activations/`](activations/): the stories of the kernel's office of the extensions (EXT-7, EXT-8).
 - [`on_the_oracle.test.ts`](on_the_oracle.test.ts), over [`harness.ts`](harness.ts): the checks of step 12 ([`plan.md`](../../../../docs/plan.md), "Checks") with two nodes.

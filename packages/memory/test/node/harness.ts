@@ -3,8 +3,9 @@
 // state (`seals`), the requests' (`post`), the address book's (`bonds`) and
 // the office of the extensions' (`extensions`), each domain's ports over it
 // (`seen_by`); the reactions of `reaction/` (the first face, the ticket) and
-// the executors of the safe, the post, the address book and the office; the
-// story's clock. Its face is made at its first start, from the app (`self`);
+// the executors of the safe, the post, the address book and the office (its
+// question of the extensions in common delivered over the kernel's own port
+// of requests, EXT-8); the story's clock. Its face is made at its first start, from the app (`self`);
 // its bonds are made for real, by tickets and introductions through the
 // address book's own commands, as the address book's stories make them, so
 // that keys, secrets and one mailbox per bond are the safe's. A collector
@@ -33,6 +34,8 @@ import {
   the_kernels_entry,
   the_kernels_offer,
   the_kernels_reads,
+  the_delivery_of_the_extensions_in_common,
+  the_kernels_port_of_requests,
   the_manifest_to_accept,
   the_port_of_requests,
   type ABondToAnswerOn,
@@ -60,7 +63,6 @@ import { the_content_a_ticket_s_secret_signs } from '@q-mino/domains/bonds/addre
 import { majors as activations_majors } from '@q-mino/domains/extensions/activations/_majors.ts'
 import { registry as activations_registry } from '@q-mino/domains/extensions/activations/_registry.ts'
 import { learn_the_extensions_in_common } from '@q-mino/domains/extensions/activations/_usecase.ts'
-import type { ask_for_the_extensions_in_common } from '@q-mino/domains/extensions/activations/_effect.ts'
 import * as zz from '@q-mino/domains/library'
 import { persona } from '@q-mino/domains/persona/_node.ts'
 import { registry as persona_registry } from '@q-mino/domains/persona/_registry.ts'
@@ -275,17 +277,6 @@ export interface Mailbox {
 /** How a letter a story writes itself is signed (the code is free, F2): by the node's face; unsigned (PER-2); with a signature given, one that need not hold. */
 export type Signed = 'by_my_face' | 'unsigned' | { readonly signature: string }
 
-/** A question of the office as its executor delivers it: the payload of `ask_for_the_extensions_in_common`. */
-export type AQuestion = ask_for_the_extensions_in_common
-
-/** What the story answers a question of the office with (EXT-8): what came back, or a delivery exhausted with its reason. */
-export type Answering = (
-  question: AQuestion,
-) => Promise<
-  | Parameters<zz.CommandUseCasePort<typeof learn_the_extensions_in_common>>[1]['what_came_back']
-  | { readonly exhausted: string }
->
-
 /** The scope of the user's entry (`self`, step 15): the persona and who asks. */
 export const the_scope_of_the_user = 'self/the_user'
 
@@ -369,12 +360,43 @@ export const a_node = async (story: Story, start: Start) => {
   })
   const machine = machine_of(start.face_id)
 
+  // The address book's reads, at the clock's instant.
+  const my_faces = async () => entries_of(await all(address_book.my_faces(when(), {})))
+  const my_bonds = async () => entries_of(await all(address_book.my_bonds(when(), {})))
+  const a_bond = async (bond_id: string) =>
+    entries_of(await all(address_book.a_bond(when(), { bond_id })))[0]
+  const my_ticket = async (bond_id: string) =>
+    entries_of(await all(address_book.my_ticket(when(), { bond_id })))[0]
+  const the_bond_at = async (deposit_address: string) =>
+    entries_of(await all(address_book.the_bond_at_my_mailbox(when(), { deposit_address })))[0]
+  const the_ticket_at = async (deposit_address: string) =>
+    entries_of(await all(address_book.the_ticket_at_my_mailbox(when(), { deposit_address })))[0]
+
+  /** The key of a face of the node's, as the address book keeps it (the safe made it). */
+  const the_key_of_my_face = async (face_id: string): Promise<string> => {
+    const face = (await my_faces()).find((mine) => mine.id === face_id)
+    if (face === undefined) throw new Error(`no face ${face_id} made on ${start.name}'s node`)
+    return face.public_key
+  }
+
+  /**
+   * The bond a request names, as the ports of requests read it (PST-5), an
+   * extension's by the boundary's bond, the kernel's by the address book's
+   * id: kept, with my face that signs and theirs with the mailbox they
+   * declared; gone otherwise.
+   */
+  const the_bond = async (bond_id: string): Promise<ABondToAskOn> => {
+    const card = await a_bond(bond_id)
+    if (card === undefined) return { bond: 'gone' }
+    return {
+      bond: 'kept',
+      from: { face_id: card.my_face_id, key: await the_key_of_my_face(card.my_face_id) },
+      to: { key: card.their_face.key, mailbox: card.their_mailbox },
+    }
+  }
+
   // The executors (DOM-14) and the reactions' consumers (DOM-16).
   const letters: Letter[] = []
-  const questions: AQuestion[] = []
-  const answering: { current: Answering } = {
-    current: () => Promise.resolve({ outcome: 'no_answer_came_back', why: 'no_response' }),
-  }
   const the_safe_s_executor = zz.effect_executor({
     registry: safe_registry,
     versions,
@@ -401,22 +423,25 @@ export const a_node = async (story: Story, start: Start) => {
       return Promise.resolve({ outcome: 'delivered' })
     },
   })
+  /** The kernel's own port of requests (F7, EXT-8): the node's post and machine, the address book's bond by its id. */
+  const the_kernels_port = the_kernels_port_of_requests({
+    clock,
+    machine,
+    post: {
+      send_a_request: post.send_a_request,
+      the_answer_to_a_request: post.the_answer_to_a_request,
+      log: facts,
+    },
+    the_bond,
+  })
   const the_office_s_executor = zz.effect_executor({
     registry: activations_registry,
     versions,
     returns: { learn_the_extensions_in_common },
   })({
-    // The question's delivery over the kernel's port of requests is step 15's: the story answers it.
-    'extensions/activations/effect/ask_for_the_extensions_in_common': async (entry) => {
-      questions.push(entry.payload)
-      const answered = await answering.current(entry.payload)
-      return 'exhausted' in answered
-        ? { outcome: 'exhausted', reason: answered.exhausted }
-        : {
-            outcome: 'delivered',
-            returns: { question_id: entry.payload.question_id, what_came_back: answered },
-          }
-    },
+    // The question's delivery (EXT-8), over the kernel's own port of requests.
+    'extensions/activations/effect/ask_for_the_extensions_in_common':
+      the_delivery_of_the_extensions_in_common(the_kernels_port),
   })
   const the_first_face = zz.reaction_consumers({ registry: first_face_registry, versions })({
     'reaction/first_face/reaction/the_safe_makes_the_first_face': {
@@ -463,40 +488,6 @@ export const a_node = async (story: Story, start: Start) => {
     ]
     await quiet()
     for (const each of running) await each.stop()
-  }
-
-  // The address book's reads, at the clock's instant.
-  const my_faces = async () => entries_of(await all(address_book.my_faces(when(), {})))
-  const my_bonds = async () => entries_of(await all(address_book.my_bonds(when(), {})))
-  const a_bond = async (bond_id: string) =>
-    entries_of(await all(address_book.a_bond(when(), { bond_id })))[0]
-  const my_ticket = async (bond_id: string) =>
-    entries_of(await all(address_book.my_ticket(when(), { bond_id })))[0]
-  const the_bond_at = async (deposit_address: string) =>
-    entries_of(await all(address_book.the_bond_at_my_mailbox(when(), { deposit_address })))[0]
-  const the_ticket_at = async (deposit_address: string) =>
-    entries_of(await all(address_book.the_ticket_at_my_mailbox(when(), { deposit_address })))[0]
-
-  /** The key of a face of the node's, as the address book keeps it (the safe made it). */
-  const the_key_of_my_face = async (face_id: string): Promise<string> => {
-    const face = (await my_faces()).find((mine) => mine.id === face_id)
-    if (face === undefined) throw new Error(`no face ${face_id} made on ${start.name}'s node`)
-    return face.public_key
-  }
-
-  /**
-   * The bond a call of an extension names, as the port of requests reads it
-   * (PST-5): kept, with my face that signs and theirs with the mailbox they
-   * declared; gone otherwise.
-   */
-  const the_bond = async (bond: boundary.bond): Promise<ABondToAskOn> => {
-    const card = await a_bond(bond)
-    if (card === undefined) return { bond: 'gone' }
-    return {
-      bond: 'kept',
-      from: { face_id: card.my_face_id, key: await the_key_of_my_face(card.my_face_id) },
-      to: { key: card.their_face.key, mailbox: card.their_mailbox },
-    }
   }
 
   /**
@@ -1115,12 +1106,6 @@ export const a_node = async (story: Story, start: Start) => {
     ): void => {
       tampered = change
     },
-    /** The story's answer to the office's next questions (EXT-8). */
-    answers: (with_this: Answering): void => {
-      answering.current = with_this
-    },
-    /** The questions the office's executor delivered. */
-    questions: (): readonly AQuestion[] => [...questions],
     /** The identity of a request of greetings' (F7, PST-2), as this node's kernel composes it. */
     the_request_of: (id: string, effect: string = ask_for_a_greeting_back): string =>
       the_identity_of_a_request(machine)({
@@ -1129,6 +1114,11 @@ export const a_node = async (story: Story, start: Start) => {
         effect,
         id,
       }),
+    /** The identity of a request of the kernel's (F7, PST-2), as this node's kernel composes it: the question of the office's, or a story's letter. */
+    the_kernels_request_of: (
+      id: string,
+      effect = 'extensions/activations/effect/ask_for_the_extensions_in_common',
+    ): string => the_identity_of_a_request(machine)({ of: 'the_kernel', effect, id }),
     /** The identity of the response to a request (PST-2). */
     the_response_to: (request_id: string): string =>
       the_identity_of_the_response_to(machine)(request_id),
