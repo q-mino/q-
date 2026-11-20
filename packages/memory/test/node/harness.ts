@@ -895,7 +895,7 @@ export const a_node = async (story: Story, start: Start) => {
     key,
     machine_of,
     /** The ports of `post/requests` over the node's cell, and the log of its facts. */
-    post,
+    requests: post,
     log: facts,
     /** The address book's ports over the node's cell. */
     address_book,

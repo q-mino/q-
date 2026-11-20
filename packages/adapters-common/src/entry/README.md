@@ -22,4 +22,4 @@ On q-'s oracle with nodes side by side (the post's phones, PST-13; the office of
 
 ## Left to the proof (13.3)
 
-The 12.4 harness's played entry and stand-in of the kernel's node (`packages/memory/test/extensions/harness.ts`) are replaced by this entry, q-'s trees and auth's adapters; its checks become this entry's tests.
+The 12.4 harness's played entry and stand-in of the kernel's node (`packages/memory/test/extensions/harness.ts`) are replaced by this entry, q-'s trees and auth's adapters, on the node of q-'s oracle (`packages/memory/test/node/harness.ts`; part 13.3, done); its checks become this entry's tests.
