@@ -11,7 +11,7 @@ const arrows = {
   desk: ['library', 'mailbox'],
   bonds: ['library'],
   reaction: ['library', 'seals', 'bonds'],
-  extensions: ['library'],
+  extensions: ['library', 'bonds'],
   auth: ['library'],
   persona: ['library', 'auth', 'bonds', 'extensions'],
   user: ['library', 'persona'],
