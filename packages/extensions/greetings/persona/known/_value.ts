@@ -8,9 +8,9 @@ import { z } from 'zod'
 import * as value from './value.ts'
 
 /**
- * A greeting, as the peer writes it.
+ * The words of a greeting, as the peer writes them.
  *
- * @see {@link value.greeting}
+ * @see {@link value.words}
  */
-export const greeting = value.greeting
-export type greeting = z.output<typeof greeting>
+export const words = value.words
+export type words = z.output<typeof words>

@@ -6,7 +6,12 @@
 
 import type * as zz from '../../../../domains/src/library/index.ts'
 import * as value from './_value.ts'
+import * as usecase from './_usecase.ts'
+import * as version from './_version.ts'
 
 export const registry = {
-  'persona/known/value/greeting': value.greeting,
+  'persona/known/value/words': value.words,
+  'persona/known/usecase/greet': usecase.greet,
+  'persona/known/usecase/greet_input': usecase.greet_input,
+  'persona/known/version/known': version.known,
 } satisfies zz.Registry
