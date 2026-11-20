@@ -6,6 +6,7 @@
 // 10.2 the requests of `post`, likewise; since part 12.4 the extensions'
 // partitions and the transport of an extension in process, and the
 // kernel's office of the extensions, `extensions`, beside the address book.
+// Since part 15.2 the user domain's offices, `user`, beside the kernel's.
 
 export { cell, position_at, seen_by } from './cell.ts'
 export type { Cell, CommandCell, Made, Making, ReadCell, Recorded, Step } from './cell.ts'
@@ -25,3 +26,5 @@ export { partitions } from './partitions.ts'
 export type { Partitions } from './partitions.ts'
 export { in_process } from './in_process.ts'
 export type { AnExtensionInProcess } from './in_process.ts'
+export { nothing_asked, user_ports } from './user.ts'
+export type { UserState } from './user.ts'
