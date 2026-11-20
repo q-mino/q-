@@ -50,7 +50,7 @@ Lowercase, as written; read with a capital.
 | confine (di un'estensione) · invocazione                          | boundary · invocation                                          |
 | porta delle richieste · ritorno (di una richiesta)                | port of requests · return (of a request)                       |
 | isolata · nello stesso processo                                   | isolated · in process                                          |
-| in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (its domains, each page, each slot)    |
+| in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (with its case, EXT-13)                |
 | versione del confine · partizione                                 | boundary version · partition (an extension's storage)          |
 | caricata · pronta · avviata · fermata (un'estensione)             | loaded · ready · started · stopped                             |
 | luogo (di un punto di aggancio) · riquadro                        | place (of an extension point) · frame                          |
@@ -83,7 +83,7 @@ How an extension is built and loaded (part 12.2, EXT-9..EXT-16):
 
 - An extension is a **package** of its own (`packages/extensions/ping_pong/`), whose root is its tree; it imports its library, `zod` and the **`boundary`** package, the kernel's contract with its extensions (EXT-9). The **boundary version** is that contract's, in a window the kernel speaks.
 - Its **manifest** is its declaration (`manifest.ts`) and its surface, which the build derives from its tree (EXT-10).
-- **Isolated**, it runs in a realm that reaches nothing of the node but the boundary, and the network only as far as the browser leaves it open, a limit declared to the user; **in process**, whole or in part, its **parts** are its domains and each of its pages and slots (EXT-13). Its storage is a **partition** of the node's, which only it reads and writes (EXT-14).
+- **Isolated**, it runs in a realm that reaches nothing of the node but the boundary, and the network only as far as the browser leaves it open, a limit declared to the user; **in process**, a choice of trust the user accepts informed; what runs in process, **whole or in part**, comes with its case (EXT-13). Its storage is a **partition** of the node's, which only it reads and writes (EXT-14).
 - An extension is **loaded** only while it is active, says it is **ready**, and its consumers are **started** and **stopped** by the kernel (EXT-15).
 - An extension point sits in a **place** of the kernel's screens (on a bond, in the extensions); an action is data the kernel draws, a slot or a page a **frame** the kernel places, with the extension's document in it (EXT-16).
 
