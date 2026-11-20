@@ -26,6 +26,10 @@ const tree_of_q = configuration.trees
   .flatMap((tree) => Object.keys(tree.sight))
   .map((top) => `${domain(top)}`)
 
+// What a folder outside q-'s tree reaches of it (MBX-5): its generated files (`_registry.ts`, `_fact.ts`, `_node.ts`…),
+// not its scopes and doors, which are the tree's inside; its authored files only through their twins, by its map's rules.
+const surface_of_q = tree_of_q.map((top) => `${top}(?:.*/|)_(?!scope_|door_)[^/]+\\.ts$`)
+
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   name: `arrows-of-${from}`,
   comment: `${from} may import only: ${allowed.length > 0 ? allowed.join(', ') : 'nothing'}`,
@@ -52,23 +56,23 @@ export default {
     {
       name: 'only-through-index-inside',
       comment:
-        "A folder of a package is reachable from another folder only through its index.ts; in q-'s tree, through the doors of its map (DOM-25, MBX-4).",
+        "A folder of a package is reachable from another folder only through its index.ts; in q-'s tree, through the doors of its map (DOM-25, MBX-4); q-'s tree from outside it, through its generated files (MBX-5).",
       severity: 'error',
       from: { path: '^(packages/[^/]+/src/[^/]+)/', pathNot: tree_of_q },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
-        pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$'],
+        pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$', ...surface_of_q],
       },
     },
     {
       name: 'only-through-index-outside',
       comment:
-        'From outside any folder (tests, other packages) a folder is reachable only through its index.ts.',
+        "From outside any folder (tests, other packages) a folder is reachable only through its index.ts; q-'s tree through its generated files, but its scopes and doors, which are its inside (MBX-5).",
       severity: 'error',
       from: { pathNot: '^packages/[^/]+/src/[^/]+/' },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
-        pathNot: '^packages/[^/]+/src/[^/]+/index\\.tsx?$',
+        pathNot: ['^packages/[^/]+/src/[^/]+/index\\.tsx?$', ...surface_of_q],
       },
     },
     {
