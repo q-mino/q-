@@ -16,7 +16,7 @@
     "./auth/*": "./src/auth/*",
     "./persona/*": "./src/persona/*",
     "./user/*": "./src/user/*",
-    "./ui": "./src/ui/index.ts"
+    "./ui/*": "./src/ui/*"
   },
   "dependencies": {
     "zod": "^4.6.7"
