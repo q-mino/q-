@@ -1,0 +1,383 @@
+{
+  "domain": "user/drafts",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "user/drafts/id/draft_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 256 }
+        }
+      }
+    },
+    "user/drafts/value/what_it_is_for": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "for": { "type": "string", "const": "the_name_of_my_first_face" } },
+                "required": ["for"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["for", "bond"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "user/drafts/value/a_text": {
+      "kind": "value",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "maxLength": 1024 } }
+      }
+    },
+    "user/drafts/value/a_draft": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "for": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_of_my_first_face" }
+                    },
+                    "required": ["for"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["for", "bond"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "text": { "type": "string", "maxLength": 1024 },
+              "kept_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["draft_id", "for", "text", "kept_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/fact/a_draft_has_been_kept": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "draft": {
+                "type": "object",
+                "properties": {
+                  "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+                  "for": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "for": { "type": "string", "const": "the_name_of_my_first_face" }
+                        },
+                        "required": ["for"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["for", "bond"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "text": { "type": "string", "maxLength": 1024 },
+                  "kept_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["draft_id", "for", "text", "kept_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["draft"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/fact/a_draft_has_been_kept_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "required": ["draft_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/fact/a_draft_has_been_dropped": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["draft_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/fact/a_draft_has_been_dropped_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "required": ["draft_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/predicate/a_draft_is_kept": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "required": ["draft_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/predicate/the_draft_holds_this_text": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "text": { "type": "string", "maxLength": 1024 }
+            },
+            "required": ["draft_id", "text"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/selection/draft/the_draft_has_this_id": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "required": ["draft_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/command/the_text_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "text": { "type": "string", "maxLength": 1024 }
+            },
+            "required": ["draft_id", "text"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/command/no_draft_is_kept": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "draft_id": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "required": ["draft_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/command/keep_a_draft": { "kind": "command" },
+    "user/drafts/command/keep_a_draft_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "for": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_of_my_first_face" }
+                    },
+                    "required": ["for"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["for", "bond"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "text": { "type": "string", "maxLength": 1024 }
+            },
+            "required": ["for", "text"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/command/drop_a_draft": { "kind": "command" },
+    "user/drafts/command/drop_a_draft_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "for": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_of_my_first_face" }
+                    },
+                    "required": ["for"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["for", "bond"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["for"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/query/a_draft": { "kind": "query" },
+    "user/drafts/query/a_draft_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "for": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_of_my_first_face" }
+                    },
+                    "required": ["for"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "for": { "type": "string", "const": "the_name_i_give_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["for", "bond"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["for"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/drafts/usecase/keep_a_draft": { "kind": "usecase" },
+    "user/drafts/usecase/drop_a_draft": { "kind": "usecase" },
+    "user/drafts/usecase/a_draft": { "kind": "usecase" },
+    "user/drafts/version/drafts": { "kind": "version" }
+  }
+}

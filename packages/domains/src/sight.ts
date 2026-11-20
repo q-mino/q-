@@ -6,7 +6,7 @@ import type * as zz from './library/index.ts'
 // listed is not seen; a folder sees its ancestors by the tree's rule. Its
 // keys are the top of the tree, the kernel's domains of § 2 as they are
 // written (MBX-4): since part 8.1 the relay's, since part 9.1 `seals`, since
-// part 11.1 `bonds`, since part 11.2 `reaction` (GR-9), since part 10.1 `post`, since part 12.4 `extensions`, since part 13.1 `auth` and `persona`. A folder they do not name (`library/`, the domains still
+// part 11.1 `bonds`, since part 11.2 `reaction` (GR-9), since part 10.1 `post`, since part 12.4 `extensions`, since part 13.1 `auth` and `persona`, since part 15.1 `user`. A folder they do not name (`library/`, the domains still
 // to write) is outside it.
 
 export const sight = {
@@ -32,4 +32,10 @@ export const sight = {
     extensions: ['usecase', 'id', 'fact'],
     auth: ['lookup', 'id'],
   },
+  /**
+   * The user domain sees no other domain (GR-2, GR-7, USR-1): it names faces,
+   * bonds and extensions by the identities `self`'s reads give, in its own
+   * words; the port toward `self` is the configurator's, typed on its contract.
+   */
+  user: {},
 } as const satisfies zz.Sight
