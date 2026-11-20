@@ -1,0 +1,1436 @@
+{
+  "domain": "bonds/address_book",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "bonds/address_book/id/face_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "bonds/address_book/id/bond_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "bonds/address_book/id/mailbox_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "bonds/address_book/value/face_key": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+        }
+      }
+    },
+    "bonds/address_book/value/face_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "bonds/address_book/value/face_position": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                "required": ["place"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "place": { "type": "string", "const": "under_a_face" },
+                  "face_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["place", "face_id"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/face_status": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["being_made", "made"] }
+        }
+      }
+    },
+    "bonds/address_book/value/face_being_made": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "const": "being_made" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "position": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                    "required": ["place"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "place": { "type": "string", "const": "under_a_face" },
+                      "face_id": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["place", "face_id"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "public_key": { "not": {} }
+            },
+            "required": ["id", "status", "name", "position"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/made_face": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "const": "made" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "position": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                    "required": ["place"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "place": { "type": "string", "const": "under_a_face" },
+                      "face_id": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["place", "face_id"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "public_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["id", "status", "name", "position", "public_key"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/face": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "being_made" },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "position": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                        "required": ["place"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "place": { "type": "string", "const": "under_a_face" },
+                          "face_id": { "type": "string", "minLength": 1 }
+                        },
+                        "required": ["place", "face_id"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "public_key": { "not": {} }
+                },
+                "required": ["id", "status", "name", "position"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "made" },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "position": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                        "required": ["place"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "place": { "type": "string", "const": "under_a_face" },
+                          "face_id": { "type": "string", "minLength": 1 }
+                        },
+                        "required": ["place", "face_id"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  }
+                },
+                "required": ["id", "status", "name", "position", "public_key"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/face_of_mine": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "position": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "place": { "type": "string", "const": "at_the_top" } },
+                    "required": ["place"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "place": { "type": "string", "const": "under_a_face" },
+                      "face_id": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["place", "face_id"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "public_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["id", "name", "position", "public_key"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/relay_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 2048, "format": "uri" }
+        }
+      }
+    },
+    "bonds/address_book/value/relays": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "minItems": 1,
+            "maxItems": 1,
+            "type": "array",
+            "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/deposit_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "bonds/address_book/value/their_face": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["key", "introduced_as"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/their_mailbox": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+              }
+            },
+            "required": ["deposit_address", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/my_mailbox": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+              }
+            },
+            "required": ["id", "deposit_address", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "bonds/address_book/value/handshake_way": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["in_person", "at_a_distance"] }
+        }
+      }
+    },
+    "bonds/address_book/value/handshake": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["way", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/confirmation": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "state": { "type": "string", "const": "awaited" } },
+                "required": ["state"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "state": { "type": "string", "const": "received" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["state", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond_status": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["kept", "removed"] }
+        }
+      }
+    },
+    "bonds/address_book/value/kept_bond": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "const": "kept" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "their_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "my_mailbox": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["id", "deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "handshake": {
+                "type": "object",
+                "properties": {
+                  "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["way", "at"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "removed_at": { "not": {} }
+            },
+            "required": [
+              "id",
+              "status",
+              "name",
+              "my_face_id",
+              "their_face",
+              "their_mailbox",
+              "my_mailbox",
+              "handshake",
+              "confirmation"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/removed_bond": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "const": "removed" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "their_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "my_mailbox": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["id", "deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "handshake": {
+                "type": "object",
+                "properties": {
+                  "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["way", "at"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "removed_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "name",
+              "my_face_id",
+              "their_face",
+              "their_mailbox",
+              "my_mailbox",
+              "handshake",
+              "confirmation",
+              "removed_at"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "kept" },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "my_face_id": { "type": "string", "minLength": 1 },
+                  "their_face": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                    },
+                    "required": ["key", "introduced_as"],
+                    "additionalProperties": false
+                  },
+                  "their_mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["deposit_address", "relays"],
+                    "additionalProperties": false
+                  },
+                  "my_mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["id", "deposit_address", "relays"],
+                    "additionalProperties": false
+                  },
+                  "handshake": {
+                    "type": "object",
+                    "properties": {
+                      "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["way", "at"],
+                    "additionalProperties": false
+                  },
+                  "confirmation": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "awaited" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "removed_at": { "not": {} }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "name",
+                  "my_face_id",
+                  "their_face",
+                  "their_mailbox",
+                  "my_mailbox",
+                  "handshake",
+                  "confirmation"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "removed" },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                  "my_face_id": { "type": "string", "minLength": 1 },
+                  "their_face": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                    },
+                    "required": ["key", "introduced_as"],
+                    "additionalProperties": false
+                  },
+                  "their_mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["deposit_address", "relays"],
+                    "additionalProperties": false
+                  },
+                  "my_mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["id", "deposit_address", "relays"],
+                    "additionalProperties": false
+                  },
+                  "handshake": {
+                    "type": "object",
+                    "properties": {
+                      "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["way", "at"],
+                    "additionalProperties": false
+                  },
+                  "confirmation": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "awaited" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "removed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "name",
+                  "my_face_id",
+                  "their_face",
+                  "their_mailbox",
+                  "my_mailbox",
+                  "handshake",
+                  "confirmation",
+                  "removed_at"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond_in_the_list": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "name", "my_face_id", "their_face", "confirmation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              },
+              "their_mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "my_mailbox": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["id", "deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "handshake": {
+                "type": "object",
+                "properties": {
+                  "way": { "type": "string", "enum": ["in_person", "at_a_distance"] },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["way", "at"],
+                "additionalProperties": false
+              },
+              "confirmation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "awaited" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "my_face_id",
+              "their_face",
+              "their_mailbox",
+              "my_mailbox",
+              "handshake",
+              "confirmation"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/value/bond_at_my_mailbox": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "my_face_id": { "type": "string", "minLength": 1 },
+              "their_face": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["key", "introduced_as"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["id", "my_face_id", "their_face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/fact/a_bond_has_been_renamed": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "renamed_bond": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+                },
+                "required": ["id", "name"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["renamed_bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/fact/a_bond_has_been_removed": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "removed_bond": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "removed" },
+                  "removed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["id", "status", "removed_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["removed_bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/fact/a_bond_has_been_removed_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/a_face_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "face_id": { "type": "string", "minLength": 1 } },
+            "required": ["face_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/the_face_is_made": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "face_id": { "type": "string", "minLength": 1 } },
+            "required": ["face_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/a_bond_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/the_bond_is_kept": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/the_bond_is_removed": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/selection/bond/the_bond_has_this_id": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/selection/bond/the_bond_is_kept": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "bonds/address_book/selection/bond/my_mailbox_of_the_bond_is_at_this_address": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": ["deposit_address"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/selection/face/the_face_is_made": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "bonds/address_book/command/rename_a_bond": { "kind": "command" },
+    "bonds/address_book/command/rename_a_bond_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "required": ["bond_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/command/remove_a_bond": { "kind": "command" },
+    "bonds/address_book/command/remove_a_bond_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/query/the_bond_is_kept_under_this_id": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_bond_has_the_id": {
+                "type": "object",
+                "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+                "required": ["bond_id"],
+                "additionalProperties": false
+              },
+              "the_bond_is_kept": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_bond_has_the_id", "the_bond_is_kept"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/query/the_bond_is_kept_at_my_mailbox": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "my_mailbox_is_at_the_address": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                },
+                "required": ["deposit_address"],
+                "additionalProperties": false
+              },
+              "the_bond_is_kept": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": ["my_mailbox_is_at_the_address", "the_bond_is_kept"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/query/my_faces": { "kind": "query" },
+    "bonds/address_book/query/my_faces_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "bonds/address_book/query/my_bonds": { "kind": "query" },
+    "bonds/address_book/query/my_bonds_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "bonds/address_book/query/a_bond": { "kind": "query" },
+    "bonds/address_book/query/a_bond_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/query/the_bond_at_my_mailbox": { "kind": "query" },
+    "bonds/address_book/query/the_bond_at_my_mailbox_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": ["deposit_address"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/usecase/rename_a_bond": { "kind": "usecase" },
+    "bonds/address_book/usecase/remove_a_bond": { "kind": "usecase" },
+    "bonds/address_book/usecase/my_faces": { "kind": "usecase" },
+    "bonds/address_book/usecase/my_bonds": { "kind": "usecase" },
+    "bonds/address_book/usecase/a_bond": { "kind": "usecase" },
+    "bonds/address_book/usecase/the_bond_at_my_mailbox": { "kind": "usecase" },
+    "bonds/address_book/version/address_book": { "kind": "version" }
+  }
+}

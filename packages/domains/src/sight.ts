@@ -5,8 +5,9 @@ import type * as zz from './library/index.ts'
 // scopes of a folder the folders it sees, with those kinds only. What is not
 // listed is not seen; a folder sees its ancestors by the tree's rule. Its
 // keys are the top of the tree, the kernel's domains of § 2 as they are
-// written (MBX-4): since part 8.1 the relay's, since part 9.1 `seals`. A folder they do not name
-// (`library/`, the domains still to write) is outside it.
+// written (MBX-4): since part 8.1 the relay's, since part 9.1 `seals`, since
+// part 11.1 `bonds`. A folder they do not name (`library/`, the domains still
+// to write) is outside it.
 
 export const sight = {
   /** The relay's business sees no other domain (GR-3): its mailboxes are its own. */
@@ -15,4 +16,6 @@ export const sight = {
   desk: { mailbox: ['usecase', 'id', 'fact'] },
   /** The safe sees no other domain: `seals` imports the library only (§ 2, SEA-1). */
   seals: {},
+  /** The address book sees no other domain: `bonds` imports the library only (§ 2, BND-1). */
+  bonds: {},
 } as const satisfies zz.Sight

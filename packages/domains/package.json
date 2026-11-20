@@ -10,7 +10,7 @@
     "./post": "./src/post/index.ts",
     "./mailbox/*": "./src/mailbox/*",
     "./desk/*": "./src/desk/*",
-    "./bonds": "./src/bonds/index.ts",
+    "./bonds/*": "./src/bonds/*",
     "./conversations": "./src/conversations/index.ts",
     "./auth": "./src/auth/index.ts",
     "./persona": "./src/persona/index.ts",
