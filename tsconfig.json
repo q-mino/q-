@@ -63,6 +63,12 @@
     },
     {
       "path": "packages/extensions/greetings/scripts"
+    },
+    {
+      "path": "packages/extensions/ping_pong"
+    },
+    {
+      "path": "packages/extensions/ping_pong/scripts"
     }
   ]
 }

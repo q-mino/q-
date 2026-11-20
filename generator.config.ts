@@ -3,6 +3,8 @@ import { sight } from './packages/domains/test/shed/sight.ts'
 import { sight as the_sight_of_q } from './packages/domains/src/sight.ts'
 import { sight as the_sight_of_greetings } from './packages/extensions/greetings/sight.ts'
 import { manifest as the_manifest_of_greetings } from './packages/extensions/greetings/manifest.ts'
+import { sight as the_sight_of_ping_pong } from './packages/extensions/ping_pong/sight.ts'
+import { manifest as the_manifest_of_ping_pong } from './packages/extensions/ping_pong/manifest.ts'
 import { mounted_of } from './packages/boundary/src/index.ts'
 
 // The trees the generator writes (DOM-25): `pnpm generate`, `pnpm generate:check`.
@@ -41,6 +43,18 @@ export default {
       library: '../../domains/src/library/index.ts',
       compared_with_main: false,
       mounted: mounted_of(the_manifest_of_greetings),
+    },
+    {
+      // Ping pong, the first extension (EXT-9, EXT-11; part 14.1): its
+      // personas mounted below the kernel's nodes, with the context its
+      // manifest's `sees` gives (`mounted_of`): the bond alone on `known`,
+      // the root's context on `self`. Its surfaces are given to peers:
+      // compared with main's (PER-17).
+      root: 'packages/extensions/ping_pong',
+      sight: the_sight_of_ping_pong,
+      library: '../../domains/src/library/index.ts',
+      compared_with_main: true,
+      mounted: mounted_of(the_manifest_of_ping_pong),
     },
   ],
 } satisfies Configuration

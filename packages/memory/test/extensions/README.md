@@ -7,6 +7,7 @@ The tests of the kernel's side of the extensions on q-'s oracle (part 12.4; F7, 
 - [`greetings.test.ts`](greetings.test.ts): greetings composed from its `manifest.json`, hosted in process over its partition; the partitions.
 - [`activations/`](activations/): the stories of the kernel's office of the extensions (EXT-7, EXT-8).
 - [`on_the_oracle.test.ts`](on_the_oracle.test.ts), over [`harness.ts`](harness.ts): the checks of step 12 ([`plan.md`](../../../../docs/plan.md), "Checks") with two nodes.
+- [`ping_pong.test.ts`](ping_pong.test.ts), over the same harness with the apps carrying ping pong (`carries: 'ping_pong'`; part 14.2): the checks of step 14, stories 10–14 of [ping pong's README](../../../extensions/ping_pong/README.md).
 
 ## The harness of two nodes
 
@@ -61,4 +62,14 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
 - A frame reaching only its extension's leaves on `self` while active and shown, its invocations in the mark (EXT-4, EXT-16); an action drawn on a bond's screen, and none on a bond whose offer is withdrawn (EXT-7); an action invoking its leaf with its place's bond: steps 15 and 16 (the fence as a function: `route_and_fence.test.ts`).
 - A dead letter shown in the extension's mark and redelivered by the user (EXT-2): steps 15 and 16 (at the host's level: `greetings.test.ts`, "its dead letter shown with its name; the user redelivers it").
 - The browser's checks (a frame reaches no storage of the app's origin, no `fetch`, opens no window; `frame-src`): step 22.
-- Ping pong in place of greetings: step 14.
+- Ping pong in place of greetings: proven in part 14.2, below.
+
+## The checks of step 14, proven here
+
+Each check by the name of its test in `ping_pong.test.ts` (part 14.2; PNG-1..PNG-6). The node of the oracle hosts the extension its app carries (`installed`: not installed, `greetings` or `ping_pong`); ping pong's screen on `self` stops following at once there (its realm's time a 2 ms timer), what came back read in its partition; its follow, its 70 seconds and its stories through the boundary are in `packages/extensions/ping_pong/test/stories.test.ts` (stories 1–9).
+
+- Preinstalled and off until the user activates it (PNG-1): `ping pong preinstalled and off: Bruno’s ping meets silence until Anna activates it`.
+- A ping between two nodes with ping pong active gives its pong: `a ping between two nodes with ping pong active gives its pong`.
+- To a node without it, or not offering it to that bond, no response, the same from outside; each silence in its node's trace with its case; the withdrawer's own ping refused by its port: `to a node without ping pong, or not offering it to that bond, no response: the same from outside`.
+- A ping redelivered gives one pong (DOM-11, the server's duplicate branch through the entry): `a ping redelivered gives one pong`.
+- The gate's scenario with ping pong (F7, DOM-14): `Anna pings Bruno (P1, his phone off) and Carla (P2): P1 no response, P2 its pong, none behind the other`.

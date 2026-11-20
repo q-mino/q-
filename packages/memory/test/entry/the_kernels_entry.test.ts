@@ -593,7 +593,7 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
       phone: 5,
       face_id: 'F_e',
       name: 'Elena',
-      greetings: 'not_installed',
+      installed: 'not_installed',
     })
     await elena.prepares_a_ticket('L_a')
     const D_e = (await elena.my_mailbox_of('L_a')).deposit_address

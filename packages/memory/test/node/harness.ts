@@ -14,8 +14,9 @@
 // not seen yet to the kernel's entry (`the_kernels_entry`), wired with the
 // four persona trees by path (`zz.tree_ports_by_path`) over the address
 // book's and the office's use cases and auth's lookups (`the_acquaintances`
-// by `zz.lookup_ports`); greetings, the test extension, hosted in process,
-// its leaves mounted on `self` and below q-'s node of `known`, its requests
+// by `zz.lookup_ports`); the extension the node's app carries (greetings,
+// the test extension, or ping pong, part 14.2), hosted in process, its
+// leaves mounted on `self` and below q-'s node of `known`, its requests
 // sent through the kernel's port of requests. `self` is invoked as the
 // user's entry will (step 15). The relay's desk hashes R as the safe draws D
 // (SEA-4), so that the safe's mailboxes are the relay's. Every wait is
@@ -114,6 +115,8 @@ import {
 } from '@q-mino/domains/seals/safe/_usecase.ts'
 import { greetings } from '@q-mino/greetings'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
+import { ping_pong } from '@q-mino/ping_pong'
+import ping_pong_manifest_json from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { z } from 'zod'
 import {
   bonds_ports,
@@ -151,6 +154,43 @@ export { all, entries_of, quiet, the_relay } from '../post/harness.ts'
 
 /** Greetings' manifest as its build writes it (EXT-10): what a node installs. */
 export const greetings_manifest: unknown = manifest_json
+
+/** Ping pong's manifest as its build writes it (EXT-10, PNG-5). */
+export const ping_pong_manifest: unknown = ping_pong_manifest_json
+
+/** The extensions an app of the story may carry (preinstalled, off until the user activates one, PNG-1). */
+export type AnExtensionOfTheApp = 'greetings' | 'ping_pong'
+
+/**
+ * Each extension an app may carry: its manifest as built, its realm (its
+ * side of the boundary, in process, EXT-13) and the effect whose
+ * deliveries are its requests (EXT-12).
+ */
+const the_apps_extensions: Readonly<
+  Record<
+    AnExtensionOfTheApp,
+    {
+      readonly manifest: unknown
+      readonly realm: (host: {
+        readonly clock: zz.Clock
+        readonly elapsed: zz.Elapsed
+        readonly send: boundary.Send
+      }) => ReturnType<typeof greetings>
+      readonly asks_by: string
+    }
+  >
+> = {
+  greetings: {
+    manifest: greetings_manifest,
+    realm: greetings,
+    asks_by: 'business/greetings/effect/ask_for_a_greeting_back',
+  },
+  ping_pong: {
+    manifest: ping_pong_manifest,
+    realm: ping_pong,
+    asks_by: 'business/pings/effect/ask_for_a_pong',
+  },
+}
 
 /** An extension composed from its manifest (EXT-4), or the story fails with the composition's message. */
 export const composed_from = (manifest: unknown): Composed => {
@@ -233,12 +273,12 @@ const a_world_of = (primitives: Primitives, phone: number): Primitives => {
   }
 }
 
-/** How a node starts: its number for the world's draws, its face's id and name, greetings, its partition's size. */
+/** How a node starts: its number for the world's draws, its face's id and name, the extension its app carries (greetings by default), its partition's size. */
 export interface Start {
   readonly phone: number
   readonly face_id: string
   readonly name: string
-  readonly greetings?: 'not_installed' | 'installed'
+  readonly installed?: 'not_installed' | AnExtensionOfTheApp
   readonly characters?: number
 }
 
@@ -286,7 +326,7 @@ export const the_scope_of_an_introduction = 'persona/unknown'
 /** What the node of `known` gives a mounted folder, as the hosting reads it (PER-24): the bond, whole. */
 const the_context_on_known = z.object({ bond: bond_of_a_face })
 
-/** A fact as greetings' partition keeps it, as far as a story reads it: its parts' paths. */
+/** A fact as an extension's partition keeps it, as far as a story reads it: its parts' paths. */
 const a_fact_kept = z.object({ parts: z.array(z.object({ path: z.string() })) })
 
 /** The effect of greetings whose deliveries are its requests (EXT-12). */
@@ -294,8 +334,8 @@ export const ask_for_a_greeting_back = 'business/greetings/effect/ask_for_a_gree
 
 /**
  * A node of the story, as the oracle starts it: its first start made (its
- * face, from the app), greetings installed or not (not active until its
- * user activates it, `activates`). What it gives a story is below.
+ * face, from the app), the extension its app carries installed or not
+ * (not active until its user activates it, `activates`). What it gives a story is below.
  */
 export const a_node = async (story: Story, start: Start) => {
   const made = cell<NodeState>({
@@ -322,10 +362,12 @@ export const a_node = async (story: Story, start: Start) => {
 
   // The office over the manifests installed (EXT-7): the composition's; an
   // update of the app is the same cell with another composition.
+  const installed = start.installed ?? 'greetings'
+  const carried = installed === 'not_installed' ? undefined : the_apps_extensions[installed]
   let composed: Composed | undefined =
-    (start.greetings ?? 'installed') === 'not_installed'
-      ? undefined
-      : composed_from(greetings_manifest)
+    carried === undefined ? undefined : composed_from(carried.manifest)
+  /** The extension the app carries, by its manifest's name: the user's gestures name it. */
+  const the_name = installed === 'not_installed' ? 'greetings' : installed
   const the_office_of = (installed: Composed | undefined) =>
     extensions_ports(
       seen_by<ExtensionsState & BondsState, NodeState>(made),
@@ -570,9 +612,15 @@ export const a_node = async (story: Story, start: Start) => {
     trace,
   })
 
-  /** The transport to greetings' realm, in process (EXT-13), each message to it kept for the story. */
-  const transport_to_greetings: Transport = (to_the_kernel) => {
-    const realm = in_process((send) => greetings({ clock, elapsed: a_timer(2), send }))(
+  /**
+   * The transport to the extension's realm, in process (EXT-13), each
+   * message to it kept for the story. Its time that passes is a timer of
+   * 2 ms: an executor's retry, and a screen's wait (ping pong's 70 seconds
+   * end at once on the oracle; the follow is proven through the boundary).
+   */
+  const transport_to_the_extension: Transport = (to_the_kernel) => {
+    if (carried === undefined) throw new Error(`no extension installed on ${start.name}'s node`)
+    const realm = in_process((send) => carried.realm({ clock, elapsed: a_timer(2), send }))(
       to_the_kernel,
     )
     return {
@@ -588,11 +636,11 @@ export const a_node = async (story: Story, start: Start) => {
    * The node wired over the office installed now (GR-6): auth's lookups
    * over the address book's and the office's reads; the four persona trees
    * by path, their invoked ports the address book's, the office's and auth's;
-   * greetings hosted, its leaves mounted on `self` and below the node of
+   * the extension hosted, its leaves mounted on `self` and below the node of
    * `known`; the kernel's entry. An update of the app wires it again.
    */
-  const wired_over = (installed: Composed | undefined) => {
-    const the_office = the_office_of(installed)
+  const wired_over = (installed_now: Composed | undefined) => {
+    const the_office = the_office_of(installed_now)
     const acquaintances = zz.lookup_ports({
       registry: acquaintances_registry,
       lookups: {
@@ -669,12 +717,12 @@ export const a_node = async (story: Story, start: Start) => {
       })(trees),
     }
 
-    /** Greetings hosted (EXT-15), and its leaves mounted on `self` and below the node of `known` (PER-6, EXT-11). */
-    const greetings_of = (extension: Composed) => {
+    /** The extension hosted (EXT-15), and its leaves mounted on `self` and below the node of `known` (PER-6, EXT-11). */
+    const hosted_of = (extension: Composed) => {
       const name = extension.manifest.name
       const hosted = a_hosted_extension({
         composed: extension,
-        transport: transport_to_greetings,
+        transport: transport_to_the_extension,
         is_active: () => reads.is_active(name),
         the_port_of_requests: port_of_requests({ name, touches: extension.manifest.touches }),
         its_storage: storage.of(name),
@@ -722,7 +770,7 @@ export const a_node = async (story: Story, start: Start) => {
       })
       return { name, hosted, on_self, on_known }
     }
-    const extension = installed === undefined ? undefined : greetings_of(installed)
+    const extension = installed_now === undefined ? undefined : hosted_of(installed_now)
 
     const entry = the_kernels_entry({
       clock,
@@ -851,10 +899,10 @@ export const a_node = async (story: Story, start: Start) => {
     if (faults.length > 0) throw faults[0]
   }
 
-  /** Greetings hosted, which the story installed. */
-  const the_greetings = () => {
+  /** The extension hosted, which the story installed. */
+  const the_extension = () => {
     if (wired.extension === undefined)
-      throw new Error(`greetings is not installed on ${start.name}'s node`)
+      throw new Error(`no extension is installed on ${start.name}'s node`)
     return wired.extension
   }
 
@@ -1047,31 +1095,31 @@ export const a_node = async (story: Story, start: Start) => {
       return events
     },
     // The user's gestures from the app, on `self` (PER-24, step 15).
-    /** The user activates greetings, accepting its manifest as shown, and the kernel loads it (EXT-7, EXT-15). */
+    /** The user activates the extension, accepting its manifest as shown, and the kernel loads it (EXT-7, EXT-15). */
     activates: async (): Promise<Loaded> => {
       await the_user('usecase/activate_an_extension', { manifest: the_node.shown() })
-      return the_greetings().hosted.load()
+      return the_extension().hosted.load()
     },
-    /** The user deactivates greetings, and the kernel unloads it (EXT-7, EXT-15). */
+    /** The user deactivates the extension, and the kernel unloads it (EXT-7, EXT-15). */
     deactivates: async (): Promise<void> => {
-      await the_user('usecase/deactivate_an_extension', { extension: 'greetings' })
-      await the_greetings().hosted.unload()
+      await the_user('usecase/deactivate_an_extension', { extension: the_name })
+      await the_extension().hosted.unload()
     },
-    /** The user withdraws greetings' offer from a bond (EXT-7). */
+    /** The user withdraws the extension's offer from a bond (EXT-7). */
     withdraws_the_offer_from: (bond_id: string) =>
-      the_user('usecase/withdraw_the_offer_from_a_bond', { extension: 'greetings', bond_id }),
-    /** The user offers greetings to a bond again (EXT-7). */
+      the_user('usecase/withdraw_the_offer_from_a_bond', { extension: the_name, bond_id }),
+    /** The user offers the extension to a bond again (EXT-7). */
     offers_again_to: (bond_id: string) =>
-      the_user('usecase/offer_an_extension_to_a_bond', { extension: 'greetings', bond_id }),
+      the_user('usecase/offer_an_extension_to_a_bond', { extension: the_name, bond_id }),
     /** The user renames a bond (BND-6). */
     renames: (bond_id: string, name: string) =>
       the_user('usecase/rename_a_bond', { bond_id, name }),
     /** The user removes a bond from her address book (BND-6). */
     removes_a_bond: (bond_id: string) => the_user('usecase/remove_a_bond', { bond_id }),
-    /** The node starts greetings, if active (EXT-15): the phone started. */
-    starts: (): Promise<Loaded> => the_greetings().hosted.load(),
-    /** The phone closes: greetings stopped and unloaded (EXT-15), what it keeps in its partition. */
-    closes: (): Promise<void> => the_greetings().hosted.unload(),
+    /** The node starts the extension, if active (EXT-15): the phone started. */
+    starts: (): Promise<Loaded> => the_extension().hosted.load(),
+    /** The phone closes: the extension stopped and unloaded (EXT-15), what it keeps in its partition. */
+    closes: (): Promise<void> => the_extension().hosted.unload(),
     /**
      * The user taps "Saluta" on a bond: greetings' leaf on `self`, through
      * its mounted port, as the user's entry will invoke it (step 15); the
@@ -1079,7 +1127,7 @@ export const a_node = async (story: Story, start: Start) => {
      */
     greets: async (bond_id: string): Promise<string> => {
       const events = await all(
-        the_greetings().on_self(as_the_user('1.0.0'), {
+        the_extension().on_self(as_the_user('1.0.0'), {
           leaf: 'usecase/greet_a_bond',
           input: { bond: bond_id },
         }),
@@ -1106,11 +1154,14 @@ export const a_node = async (story: Story, start: Start) => {
     ): void => {
       tampered = change
     },
-    /** The identity of a request of greetings' (F7, PST-2), as this node's kernel composes it. */
-    the_request_of: (id: string, effect: string = ask_for_a_greeting_back): string =>
+    /** The identity of a request of the extension's (F7, PST-2), as this node's kernel composes it. */
+    the_request_of: (
+      id: string,
+      effect: string = carried?.asks_by ?? ask_for_a_greeting_back,
+    ): string =>
       the_identity_of_a_request(machine)({
         of: 'an_extension',
-        extension: 'greetings',
+        extension: the_name,
         effect,
         id,
       }),
@@ -1247,22 +1298,22 @@ export const a_node = async (story: Story, start: Start) => {
     },
     /** The entries the executors hold, and the parts the reactions hold: their dead letters. */
     held: () => [...made.held(), ...made.held_parts()],
-    // Greetings, hosted (EXT-15).
-    /** Greetings hosted, which the story installed. */
-    the_hosted: (): Hosted => the_greetings().hosted,
-    /** Greetings' leaves on `known`, below the node of `known`, as the entry invokes them. */
-    on_known: () => the_greetings().on_known,
-    /** Greetings' leaves on `self`, below the node of `self`, as the user's entry will invoke them. */
-    on_self: () => the_greetings().on_self,
-    /** Greetings' manifest in the office's words, as the user is shown it (EXT-7). */
+    // The extension, hosted (EXT-15).
+    /** The extension hosted, which the story installed. */
+    the_hosted: (): Hosted => the_extension().hosted,
+    /** The extension's leaves on `known`, below the node of `known`, as the entry invokes them. */
+    on_known: () => the_extension().on_known,
+    /** The extension's leaves on `self`, below the node of `self`, as the user's entry will invoke them. */
+    on_self: () => the_extension().on_self,
+    /** The extension's manifest in the office's words, as the user is shown it (EXT-7). */
     shown: () => {
       if (composed === undefined)
-        throw new Error(`greetings is not installed on ${start.name}'s node`)
+        throw new Error(`no extension is installed on ${start.name}'s node`)
       return the_manifest_to_accept(composed.manifest)
     },
     /**
-     * An update of the app with this manifest of greetings (EXT-7, EXT-10):
-     * greetings unloaded, composed again, the node wired again over the
+     * An update of the app with this manifest of its extension (EXT-7,
+     * EXT-10): the extension unloaded, composed again, the node wired again over the
      * office with the manifest installed now (the same cell, the same
      * partition), then loaded, as a node starts: what its load came to.
      */
@@ -1271,7 +1322,7 @@ export const a_node = async (story: Story, start: Start) => {
       composed = composed_from(manifest)
       office = the_office_of(composed)
       wired = wired_over(composed)
-      return the_greetings().hosted.load()
+      return the_extension().hosted.load()
     },
     /** A greeting as greetings keeps it in its partition (`state/greeting/<id>`). */
     the_greeting: (greeting_id: string): unknown =>
@@ -1294,7 +1345,49 @@ export const a_node = async (story: Story, start: Start) => {
         .flatMap(([, value]) =>
           a_fact_kept.parse(value).parts.map((part) => part.path.split('/').at(-1) ?? ''),
         ),
-    /** The dead letters greetings told the kernel (EXT-2), by their names. */
+    // Ping pong (step 14), where the app carries it.
+    /**
+     * The user taps "Ping" on a bond (PNG-4): ping pong's leaf on `self`,
+     * through its mounted port, as the user's entry will invoke it (step
+     * 15); the ping its first event names. Her screen stops following at
+     * once on the oracle (its realm's 2 ms): what came back is read in the
+     * partition.
+     */
+    pings: async (bond_id: string, sent: { readonly operation?: string } = {}): Promise<string> => {
+      const events = await all(
+        the_extension().on_self(as_the_user('1.0.0', sent.operation), {
+          leaf: 'usecase/send_a_ping',
+          input: { bond: bond_id },
+        }),
+      )
+      const ping_id: unknown = Reflect.get(
+        Object(Reflect.get(Object(events[0]), 'payload')),
+        'ping_id',
+      )
+      if (typeof ping_id !== 'string') throw new Error(`no ping: ${JSON.stringify(events)}`)
+      return ping_id
+    },
+    /** A ping as ping pong keeps it in its partition (`state/ping/<id>`). */
+    the_ping: (ping_id: string): unknown => storage.kept('ping_pong').get(`state/ping/${ping_id}`),
+    /** Whether a ping is closed, as its partition keeps it. */
+    the_ping_is_closed: (ping_id: string): boolean =>
+      JSON.stringify(storage.kept('ping_pong').get(`state/ping/${ping_id}`) ?? null).includes(
+        '"stage":"closed"',
+      ),
+    /** The pongs ping pong gave back, as its partition keeps them. */
+    pongs: (): readonly unknown[] =>
+      [...storage.kept('ping_pong')]
+        .filter(([at]) => at.startsWith('state/pong/'))
+        .map(([, value]) => value),
+    /** The facts ping pong recorded in its partition, in order, by the last segment of each part's path. */
+    facts_of_ping_pong: (): readonly string[] =>
+      [...storage.kept('ping_pong')]
+        .filter(([at]) => at.startsWith('fact/'))
+        .toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .flatMap(([, value]) =>
+          a_fact_kept.parse(value).parts.map((part) => part.path.split('/').at(-1) ?? ''),
+        ),
+    /** The dead letters the extension told the kernel (EXT-2), by their names. */
     dead_letters: (): readonly string[] =>
       notices.flatMap((notice) =>
         notice.notice.message === 'dead_letter' ? [notice.notice.letter] : [],

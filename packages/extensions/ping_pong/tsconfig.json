@@ -1,0 +1,19 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "types": [],
+    "rootDir": ".",
+    "outDir": ".tsbuild"
+  },
+  "include": [".", "package.json", "manifest.json"],
+  "references": [
+    {
+      "path": "../../domains"
+    },
+    {
+      "path": "../../boundary"
+    }
+  ],
+  "exclude": ["scripts", ".tsbuild"]
+}

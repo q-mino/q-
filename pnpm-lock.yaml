@@ -111,6 +111,18 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
+  packages/extensions/ping_pong:
+    dependencies:
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../../boundary
+      '@q-mino/domains':
+        specifier: workspace:*
+        version: link:../../domains
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   packages/generator:
     dependencies:
       '@q-mino/domains':
@@ -145,6 +157,9 @@ importers:
       '@q-mino/greetings':
         specifier: workspace:*
         version: link:../extensions/greetings
+      '@q-mino/ping_pong':
+        specifier: workspace:*
+        version: link:../extensions/ping_pong
       '@q-mino/relay':
         specifier: workspace:*
         version: link:../relay

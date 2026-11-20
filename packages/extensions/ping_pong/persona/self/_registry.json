@@ -1,0 +1,67 @@
+{
+  "domain": "persona/self",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/self/usecase/send_a_ping": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_ping_is_sent": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_ping_cannot_be_sent": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/pong": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/no_response": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_peer_cannot_answer": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/send_a_ping_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/version/self": { "kind": "version" }
+  }
+}
