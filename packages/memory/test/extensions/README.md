@@ -57,7 +57,7 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
 
 ## Deferred, each to its step
 
-- The extensions in common asked of a peer, and an asker that tells a silence from a node off by them (F8): the kernel's leaf on `known` and the delivery over the port of requests, step 13 (the server's read is proven by block 4, above).
+- The extensions in common asked of a peer (EXT-8): proven in part 13.3, end to end on the node of q-'s oracle (`../persona/personas.test.ts`, story 5; `../entry/the_kernels_entry.test.ts`, story 3: the kernel never silent while an extension is). That an asker tells a silence from a node off by them (F8, "Another") has no test with the peer off: with `user`'s screens (step 15) or the stack (step 17).
 - A frame reaching only its extension's leaves on `self` while active and shown, its invocations in the mark (EXT-4, EXT-16); an action drawn on a bond's screen, and none on a bond whose offer is withdrawn (EXT-7); an action invoking its leaf with its place's bond: steps 15 and 16 (the fence as a function: `route_and_fence.test.ts`).
 - A dead letter shown in the extension's mark and redelivered by the user (EXT-2): steps 15 and 16 (at the host's level: `greetings.test.ts`, "its dead letter shown with its name; the user redelivers it").
 - The browser's checks (a frame reaches no storage of the app's origin, no `fetch`, opens no window; `frame-src`): step 22.
