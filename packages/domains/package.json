@@ -13,7 +13,7 @@
     "./bonds/*": "./src/bonds/*",
     "./reaction/*": "./src/reaction/*",
     "./extensions/*": "./src/extensions/*",
-    "./auth": "./src/auth/index.ts",
+    "./auth/*": "./src/auth/*",
     "./persona": "./src/persona/index.ts",
     "./user": "./src/user/index.ts",
     "./ui": "./src/ui/index.ts"
