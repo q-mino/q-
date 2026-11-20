@@ -48,13 +48,13 @@ Lowercase, as written; read with a capital.
 | preinstallata · installata · attiva · disattiva l'estensione      | preinstalled · installed · activate · deactivate the extension |
 | offerta a un legame · revoca l'offerta                            | offered to a bond · withdraw the offer                         |
 | confine (di un'estensione) · invocazione                          | boundary · invocation                                          |
-| porta delle richieste · ritorno (di una richiesta)                | port of requests · return (of a request)                       |
+| porta delle richieste · rientro (di una richiesta)                | port of requests · return (of a request)                       |
 | isolata · nello stesso processo                                   | isolated · in process                                          |
 | in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (with its case, EXT-13)                |
 | versione del confine · partizione                                 | boundary version · partition (an extension's storage)          |
 | caricata · pronta · avviata · fermata (un'estensione)             | loaded · ready · started · stopped                             |
 | luogo (di un punto di aggancio) · riquadro                        | place (of an extension point) · frame                          |
-| segno (di un'estensione)                                          | mark (the kernel's, EXT-16)                                    |
+| cornice (di un'estensione)                                        | mark (the kernel's, EXT-16)                                    |
 | estensioni in comune                                              | extensions in common                                           |
 | richiesta · risposta · nessuna risposta                           | request · response · no response                               |
 | tace (un nodo)                                                    | stays silent                                                   |
@@ -85,7 +85,7 @@ How an extension is built and loaded (part 12.2, EXT-9..EXT-16):
 - Its **manifest** is its declaration (`manifest.ts`) and its surface, which the build derives from its tree (EXT-10).
 - **Isolated**, it runs in a realm that reaches nothing of the node but the boundary, and the network only as far as the browser leaves it open, a limit declared to the user; **in process**, a choice of trust the user accepts informed; what runs in process, **whole or in part**, comes with its case (EXT-13). Its storage is a **partition** of the node's, which only it reads and writes (EXT-14).
 - An extension is **loaded** only while it is active, says it is **ready**, and its consumers are **started** and **stopped** by the kernel (EXT-15).
-- An extension point sits in a **place** of the kernel's screens (on a bond, in the extensions); an action is data the kernel draws, a slot or a page a **frame** the kernel places, with the extension's document in it (EXT-16).
+- An extension point sits in a **place** of the kernel's screens (on a bond, in the extensions); an action is data the kernel draws, a slot or a page a **frame** the kernel places, with the extension's document in it; each in the kernel's **mark** of its extension, its name and a border (EXT-16).
 
 ## Architecture terms
 
@@ -165,7 +165,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | guasto di composizione                              | composition fault                                                                                                                                                            |                                       |
 | foglia montata · cartella montata                   | mounted leaf (D78.6) · mounted folder (`mounted`, of q-: a folder whose point takes the context a node of another tree gives, EXT-11)                                        | D78.6                                 |
 
-Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain; Cumino's _nucleo_ is the **kernel**.
+Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain; Cumino's _nucleo_ is the **kernel**. The paper's _frame_ is a frame of the request's stack; q-'s _riquadro_ is the **frame** of an extension point (EXT-16).
 
 The paper's _soggetto_ has two senses: what a query speaks of (D50.1, D64.1), and on whose behalf one acts (D87.1). q- keeps only the first: **subject** is always a query's, a view named by the business, where the paper's is an aggregate (V12). A **candidate** is an instance of the subject that a selection looks at; an **entry** is what the query returns of a candidate it keeps (its fields). Both are q-'s words, not the paper's.
 
