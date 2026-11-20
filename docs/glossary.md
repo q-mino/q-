@@ -21,7 +21,7 @@ Lowercase, as written; read with a capital.
 | `libreria/`                                       | `library/`                                           |
 | `sigilli` · `posta` · `casella`                   | `seals` · `post` · `mailbox`                         |
 | sportello                                         | `desk` (the persona layer of `mailbox`)              |
-| `legami` · `conversazioni`                        | `bonds` · `conversations`                            |
+| `legami` · `estensioni`                           | `bonds` · `extensions`                               |
 | `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                   |
 | `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node` |
 | `telefono` · `relay` · `memoria`                  | `phone` · `relay` · `memory`                         |
@@ -29,29 +29,32 @@ Lowercase, as written; read with a capital.
 
 ## Domain terms
 
-| Italian                                                           | English                                              |
-| ----------------------------------------------------------------- | ---------------------------------------------------- |
-| volto · seme · Cambia volto                                       | face · seed · change face                            |
-| busta · lettera · ricevuta · dichiarazione                        | envelope · letter · receipt · declaration            |
-| biglietto · stretta di mano · presentazione                       | ticket · handshake · introduction                    |
-| legame · contatto · invitato                                      | bond · contact · invitee                             |
-| gruppo · appartenenza · membro · canale                           | group · membership · member · channel                |
-| deposita · ritira · indirizzo di deposito D · segreto di ritiro R | deposit · collect · deposit address · collect secret |
-| sigilla · apri · firma · verifica                                 | seal · open · sign · verify                          |
-| annotazione · di persona                                          | annotation · in person                               |
-| esportazione · trasloco d'origine                                 | export · origin relocation                           |
-| a riposo · ammutolito                                             | resting · muted                                      |
-| nucleo (di Cumino) · estensione · manifest                        | kernel · extension · manifest                        |
-| punto di aggancio: hook · pagina · slot · azione                  | extension point: hook · page · slot · action         |
-| preinstallata · attiva l'estensione                               | preinstalled · activate the extension                |
-| isolata · nello stesso processo                                   | isolated · in process                                |
-| estensioni in comune                                              | extensions in common                                 |
-| richiesta · risposta · nessuna risposta                           | request · response · no response                     |
-| tace (un nodo)                                                    | stays silent                                         |
-| relay preferiti                                                   | preferred relays                                     |
-| ping · pong                                                       | ping · pong                                          |
+| Italian                                                           | English                                                        |
+| ----------------------------------------------------------------- | -------------------------------------------------------------- |
+| volto · seme · Cambia volto                                       | face · seed · change face                                      |
+| busta · lettera · ricevuta · dichiarazione                        | envelope · letter · receipt · declaration                      |
+| biglietto · stretta di mano · presentazione                       | ticket · handshake · introduction                              |
+| legame · contatto · invitato                                      | bond · contact · invitee                                       |
+| gruppo · appartenenza · membro · canale                           | group · membership · member · channel                          |
+| deposita · ritira · indirizzo di deposito D · segreto di ritiro R | deposit · collect · deposit address · collect secret           |
+| sigilla · apri · firma · verifica                                 | seal · open · sign · verify                                    |
+| annotazione · di persona                                          | annotation · in person                                         |
+| esportazione · trasloco d'origine                                 | export · origin relocation                                     |
+| a riposo · ammutolito                                             | resting · muted                                                |
+| nucleo (di Cumino) · estensione · manifest                        | kernel · extension · manifest                                  |
+| punto di aggancio: hook · pagina · slot · azione                  | extension point: hook · page · slot · action                   |
+| preinstallata · installata · attiva · disattiva l'estensione      | preinstalled · installed · activate · deactivate the extension |
+| offerta a un legame · revoca l'offerta                            | offered to a bond · withdraw the offer                         |
+| confine (di un'estensione) · invocazione                          | boundary · invocation                                          |
+| porta delle richieste · ritorno (di una richiesta)                | port of requests · return (of a request)                       |
+| isolata · nello stesso processo                                   | isolated · in process                                          |
+| estensioni in comune                                              | extensions in common                                           |
+| richiesta · risposta · nessuna risposta                           | request · response · no response                               |
+| tace (un nodo)                                                    | stays silent                                                   |
+| relay preferiti                                                   | preferred relays                                               |
+| ping · pong                                                       | ping · pong                                                    |
 
-Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026).
+Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026). `conversations` (`conversazioni`) is no longer a domain of the kernel: messaging is the first extension after stage 1 (Alessandro, 19 Nov 2026).
 
 What the words of the kernel mean (Alessandro, 19 Nov 2026; their rules come with the extensions' step of [`plan.md`](plan.md)):
 
@@ -62,6 +65,12 @@ What the words of the kernel mean (Alessandro, 19 Nov 2026; their rules come wit
 - A node **stays silent** when it has not the extension invoked, or does not offer it to that bond, and the two cases look the same from outside; the node that asked waits for a time, then says **no response**.
 - The **extensions in common** of two known faces are read through a use case of the kernel, offered to the persona `known`.
 - **Ping pong** is the first extension, **preinstalled** and off until the user activates it: a ping is a request, the pong its response.
+
+Their rules are F7, F8 and EXT-1..EXT-8 of [`architecture.md`](architecture.md) (step 12's design, Claude, 20 Nov 2026), with these words:
+
+- The **boundary** of an extension is the messages between it and the kernel: an **invocation** of one of its leaves in, the leaf's events out, its calls to the kernel's ports (EXT-2).
+- An extension is **installed** when the node has it (in stage 1 the app's composition); **activated** and **deactivated** by the user, who accepts its manifest; **offered to a bond** while active, to every bond but those the user **withdraws the offer** from (EXT-7).
+- The **port of requests** is the kernel's: it sends a request on a bond and answers with its response, or `no_response` after the time the asker set; the response comes back as the **return** of the request, its effect's return use case (F7).
 
 ## Architecture terms
 
