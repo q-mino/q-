@@ -47,12 +47,18 @@ importers:
 
   packages/adapters-common:
     dependencies:
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../boundary
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../domains
       libsodium-wrappers-sumo:
         specifier: ^0.8.4
         version: 0.8.4
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/adapters-node:
     dependencies:
@@ -81,8 +87,26 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2
 
+  packages/boundary:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   packages/domains:
     dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  packages/extensions/greetings:
+    dependencies:
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../../boundary
+      '@q-mino/domains':
+        specifier: workspace:*
+        version: link:../../domains
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -105,19 +129,28 @@ importers:
 
   packages/memory:
     dependencies:
+      '@q-mino/adapters-common':
+        specifier: workspace:*
+        version: link:../adapters-common
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../boundary
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../domains
     devDependencies:
-      '@q-mino/adapters-common':
-        specifier: workspace:*
-        version: link:../adapters-common
       '@q-mino/adapters-node':
         specifier: workspace:*
         version: link:../adapters-node
+      '@q-mino/greetings':
+        specifier: workspace:*
+        version: link:../extensions/greetings
       '@q-mino/relay':
         specifier: workspace:*
         version: link:../relay
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/phone:
     dependencies:

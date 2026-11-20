@@ -6,7 +6,7 @@ import type * as zz from './library/index.ts'
 // listed is not seen; a folder sees its ancestors by the tree's rule. Its
 // keys are the top of the tree, the kernel's domains of § 2 as they are
 // written (MBX-4): since part 8.1 the relay's, since part 9.1 `seals`, since
-// part 11.1 `bonds`, since part 11.2 `reaction` (GR-9), since part 10.1 `post`. A folder they do not name (`library/`, the domains still
+// part 11.1 `bonds`, since part 11.2 `reaction` (GR-9), since part 10.1 `post`, since part 12.4 `extensions`. A folder they do not name (`library/`, the domains still
 // to write) is outside it.
 
 export const sight = {
@@ -22,4 +22,6 @@ export const sight = {
   bonds: {},
   /** The reactions between the kernel's domains see the facts they react to and the use cases they invoke (GR-9, DOM-16). */
   reaction: { bonds: ['usecase', 'fact'], seals: ['usecase', 'fact'] },
+  /** The extensions' office sees the address book's identities: an offer is withdrawn from a bond, named by its id (GR-3, EXT-7). */
+  extensions: { bonds: ['id'] },
 } as const satisfies zz.Sight

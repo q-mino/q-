@@ -19,7 +19,8 @@ export type {
   Tree,
   Value,
 } from './model.ts'
-export type { Configuration, TreeConfiguration } from './configuration.ts'
+export type { Configuration, Mount, TreeConfiguration } from './configuration.ts'
+export { mounts } from './mounts.ts'
 export { scopes } from './scopes.ts'
 export { twin } from './twins.ts'
 export { doors } from './doors.ts'

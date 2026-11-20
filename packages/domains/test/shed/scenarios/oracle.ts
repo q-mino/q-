@@ -497,6 +497,7 @@ export const oracle = async (start: Start = {}) => {
   const asked: number[] = []
   const answers: Network[] = []
   const received: Message[] = []
+  const hung: (() => void)[] = []
   const number_of = new Map<member_id, string>()
   const world: World = {
     phones: {
@@ -504,6 +505,9 @@ export const oracle = async (start: Start = {}) => {
       network: (): Network => answers.shift() ?? 'delivers',
       receive: (message: Message) => {
         received.push(message)
+      },
+      hang: (answer: () => void) => {
+        hung.push(answer)
       },
     },
     clock: { now: () => instant, time_zone: zone },
@@ -760,6 +764,13 @@ export const oracle = async (start: Start = {}) => {
     },
     /** What the members' phones received, in order. */
     received: (): readonly Message[] => [...received],
+    /** How many deliveries hang, in flight (F7, DOM-14). */
+    hanging: (): number => hung.length,
+    /** The deliveries that hang answer, in the order they were made: each phone receives, then the delivery tells `delivered`. */
+    answer_the_hanging: async () => {
+      for (const answer of hung.splice(0)) answer()
+      await quiet()
+    },
     /**
      * Time passes up to an instant: the clock reads it, and every wait asked
      * for is over, so that the executor delivers what has come; then its

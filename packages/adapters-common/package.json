@@ -8,7 +8,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
-    "libsodium-wrappers-sumo": "^0.8.4"
+    "libsodium-wrappers-sumo": "^0.8.4",
+    "zod": "^4.6.7"
   }
 }

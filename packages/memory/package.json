@@ -8,11 +8,14 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@q-mino/adapters-common": "workspace:*",
+    "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*"
   },
   "devDependencies": {
-    "@q-mino/adapters-common": "workspace:*",
     "@q-mino/adapters-node": "workspace:*",
-    "@q-mino/relay": "workspace:*"
+    "@q-mino/greetings": "workspace:*",
+    "@q-mino/relay": "workspace:*",
+    "zod": "^4.6.7"
   }
 }

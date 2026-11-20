@@ -12,7 +12,7 @@
     "./desk/*": "./src/desk/*",
     "./bonds/*": "./src/bonds/*",
     "./reaction/*": "./src/reaction/*",
-    "./conversations": "./src/conversations/index.ts",
+    "./extensions/*": "./src/extensions/*",
     "./auth": "./src/auth/index.ts",
     "./persona": "./src/persona/index.ts",
     "./user": "./src/user/index.ts",

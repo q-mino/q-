@@ -1,0 +1,49 @@
+{
+  "domain": "persona/known",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/known/value/words": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 280 }
+        }
+      }
+    },
+    "persona/known/usecase/greet": {
+      "kind": "usecase",
+      "shapes": {
+        "event/greeted_back": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "words": { "type": "string", "minLength": 1, "maxLength": 280 } },
+            "required": ["words"],
+            "additionalProperties": false
+          }
+        },
+        "event/not_greeted_back": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/known/usecase/greet_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "words": { "type": "string", "minLength": 1, "maxLength": 280 } },
+            "required": ["words"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/known/version/known": { "kind": "version" }
+  }
+}
