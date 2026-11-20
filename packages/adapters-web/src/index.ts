@@ -32,3 +32,13 @@ export {
   type AnOpenedCamera,
   type NotOn,
 } from './camera/index.ts'
+export {
+  save_a_file,
+  pick_a_file,
+  a_saved_file_s_minute,
+  type AFile,
+  type APick,
+  type AFileInput,
+  type APageToSaveIn,
+  type APageToPickIn,
+} from './files/index.ts'
