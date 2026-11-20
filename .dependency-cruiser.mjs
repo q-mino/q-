@@ -10,6 +10,7 @@ const arrows = {
   mailbox: ['library'],
   desk: ['library', 'mailbox'],
   bonds: ['library'],
+  reaction: ['library', 'seals', 'bonds'],
   conversations: ['library'],
   auth: ['library'],
   persona: ['library', 'auth', 'bonds', 'conversations'],
