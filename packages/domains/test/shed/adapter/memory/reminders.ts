@@ -7,6 +7,8 @@
 // operator sees; a definitive outcome with a meaning would need a return,
 // which neither a reminder nor a notice has. A network that falls throws: a
 // technical abort, which the executor does not take for an answer (TST-4).
+// A network that hangs answers when the test says (`hang`): a delivery in
+// flight, as a request waits for its response (F7, DOM-14).
 
 import type * as zz from '../../../../src/library/index.ts'
 import type * as loans_effect from '../../business/loans/_effect.ts'
@@ -47,13 +49,15 @@ export interface WeeksSummary {
 export type Message = Reminder | RepairNotice | WeeksSummary
 
 /** What the network does with the next message, as a test chooses. */
-export type Network = 'delivers' | 'is_down' | 'gives_up' | 'falls'
+export type Network = 'delivers' | 'is_down' | 'gives_up' | 'falls' | 'hangs'
 
 /** The members' phones, the network, and what each phone received, for a test to look at. */
 export interface Phones {
   readonly number_of: ReadonlyMap<member_id, string>
   readonly network: () => Network
   readonly receive: (message: Message) => void
+  /** A delivery that hangs, kept until the test answers it: the message received, then delivered. */
+  readonly hang: (answer: () => void) => void
 }
 
 /**
@@ -76,6 +80,14 @@ const send =
     }
     if (network === 'is_down') {
       return Promise.resolve<zz.Delivered<never>>({ outcome: 'transient' })
+    }
+    if (network === 'hangs') {
+      return new Promise<zz.Delivered<never>>((answered) => {
+        phones.hang(() => {
+          phones.receive(to.message(phone))
+          answered({ outcome: 'delivered' })
+        })
+      })
     }
     if (network === 'gives_up') {
       return Promise.resolve<zz.Delivered<never>>({
