@@ -1,8 +1,7 @@
 import type * as zz from '@q-mino/domains/library'
 import * as user_value from '@q-mino/domains/user/_value.ts'
 import { z } from 'zod'
-import type { ANotice } from '../extensions/hosting.ts'
-import type { ARequestAsItCame, TheKernelsTraced } from '../extensions/the_kernels_trace.ts'
+import type { ANotice, ARequestAsItCame, TheKernelsTraced } from '../extensions/index.ts'
 
 // The port of `user`'s news (USR-8, F6, DOM-15; part 15.2): nothing happens
 // in silence. What the executors and the reactions hold, what the

@@ -8,8 +8,7 @@ import type { carry_out_an_activity } from '@q-mino/domains/user/activities/_eff
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type { z } from 'zod'
-import type { Composed } from '../extensions/composition.ts'
-import type { Handed, Life } from '../extensions/hosting.ts'
+import type { Composed, Handed, Life } from '../extensions/index.ts'
 
 // The port of `user` toward `self` (GR-7, USR-1..USR-4, USR-8; part 15.2):
 // the delivery of `carry_out_an_activity`, the configurator's. For a

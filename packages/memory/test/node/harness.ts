@@ -672,9 +672,9 @@ export const a_node = async (story: Story, start: Start) => {
 
   /**
    * The transport to the extension's realm, in process (EXT-13), each
-   * message to it kept for the story. Its time that passes is a timer of
-   * 2 ms: an executor's retry, and a screen's wait (ping pong's 70 seconds
-   * end at once on the oracle; the follow is proven through the boundary).
+   * message to it kept for the story. Its time that passes is
+   * `the_screens_wait`: a timer of 2 ms (an executor's retry; a screen's
+   * wait, at once over), or a screen's wait for its time (part 15.2).
    */
   const transport_to_the_extension: Transport = (to_the_kernel) => {
     if (carried === undefined) throw new Error(`no extension installed on ${start.name}'s node`)
