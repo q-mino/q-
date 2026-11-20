@@ -1,0 +1,58 @@
+{
+  "domain": "desk/depositor",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "desk/depositor/value/envelope": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "desk/depositor/usecase/deposit_an_envelope": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_envelope_is_kept": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposited_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["deposited_at"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_envelope_is_not_kept": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "desk/depositor/usecase/deposit_an_envelope_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+              "envelope": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+            },
+            "required": ["deposit_address", "envelope"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/depositor/version/depositor": { "kind": "version" }
+  }
+}

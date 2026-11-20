@@ -19,6 +19,13 @@ const arrows = {
 
 const domain = (name) => `^packages/domains/src/${name}/`
 
+// The folders of q-'s tree, the ones its map names (MBX-4): inside them a folder is reached through the
+// doors and the scopes the map opens (DOM-25), kept by the tree's rules below, not through an index.ts.
+const tree_of_q = configuration.trees
+  .filter((tree) => tree.root === 'packages/domains/src')
+  .flatMap((tree) => Object.keys(tree.sight))
+  .map((top) => `${domain(top)}`)
+
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   name: `arrows-of-${from}`,
   comment: `${from} may import only: ${allowed.length > 0 ? allowed.join(', ') : 'nothing'}`,
@@ -44,9 +51,10 @@ export default {
     },
     {
       name: 'only-through-index-inside',
-      comment: 'A folder of a package is reachable from another folder only through its index.ts.',
+      comment:
+        "A folder of a package is reachable from another folder only through its index.ts; in q-'s tree, through the doors of its map (DOM-25, MBX-4).",
       severity: 'error',
-      from: { path: '^(packages/[^/]+/src/[^/]+)/' },
+      from: { path: '^(packages/[^/]+/src/[^/]+)/', pathNot: tree_of_q },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
         pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$'],
