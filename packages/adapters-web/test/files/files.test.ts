@@ -25,7 +25,7 @@ const a_page_to_save_in = () => {
   return {
     page: {
       document: {
-        createElement: (_tag: 'a') => {
+        createElement: () => {
           const link = {
             href: '',
             download: '',
@@ -87,7 +87,7 @@ const a_page_to_pick_in = (
   return {
     page: {
       document: {
-        createElement: (_tag: 'input'): AFileInput => {
+        createElement: (): AFileInput => {
           const listeners = new Map<string, () => void>()
           let files: AFileInput['files'] = null
           const input: AFileInput = {
