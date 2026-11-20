@@ -15,17 +15,19 @@ Lowercase, as written; read with a capital.
 
 ## Packages and folders
 
-| Italian                                           | English                                              |
-| ------------------------------------------------- | ---------------------------------------------------- |
-| `domini`                                          | `domains`                                            |
-| `libreria/`                                       | `library/`                                           |
-| `sigilli` · `posta` · `casella`                   | `seals` · `post` · `mailbox`                         |
-| sportello                                         | `desk` (the persona layer of `mailbox`)              |
-| `legami` · `estensioni`                           | `bonds` · `extensions`                               |
-| `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                   |
-| `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node` |
-| `telefono` · `relay` · `memoria`                  | `phone` · `relay` · `memory`                         |
-| `generatore`                                      | `generator` (the compilation of the domains, DOM-25) |
+| Italian                                           | English                                                                      |
+| ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `domini`                                          | `domains`                                                                    |
+| `libreria/`                                       | `library/`                                                                   |
+| `sigilli` · `posta` · `casella`                   | `seals` · `post` · `mailbox`                                                 |
+| sportello                                         | `desk` (the persona layer of `mailbox`)                                      |
+| `legami` · `estensioni`                           | `bonds` · `extensions`                                                       |
+| `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                                           |
+| `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node`                         |
+| `telefono` · `relay` · `memoria`                  | `phone` · `relay` · `memory`                                                 |
+| `generatore`                                      | `generator` (the compilation of the domains, DOM-25)                         |
+| `confine`                                         | `boundary` (the package of the kernel's contract with its extensions, EXT-9) |
+| `estensioni/<nome>`                               | `extensions/<name>` (the package of an extension, EXT-9)                     |
 
 ## Domain terms
 
@@ -48,6 +50,10 @@ Lowercase, as written; read with a capital.
 | confine (di un'estensione) · invocazione                          | boundary · invocation                                          |
 | porta delle richieste · ritorno (di una richiesta)                | port of requests · return (of a request)                       |
 | isolata · nello stesso processo                                   | isolated · in process                                          |
+| in tutto o in parte · parte (di un'estensione)                    | whole or in part · part (its domains, each page, each slot)    |
+| versione del confine · partizione                                 | boundary version · partition (an extension's storage)          |
+| caricata · pronta · avviata · fermata (un'estensione)             | loaded · ready · started · stopped                             |
+| luogo (di un punto di aggancio) · cornice                         | place (of an extension point) · frame                          |
 | estensioni in comune                                              | extensions in common                                           |
 | richiesta · risposta · nessuna risposta                           | request · response · no response                               |
 | tace (un nodo)                                                    | stays silent                                                   |
@@ -71,6 +77,14 @@ Their rules are F7, F8 and EXT-1..EXT-8 of [`architecture.md`](architecture.md) 
 - The **boundary** of an extension is the messages between it and the kernel: an **invocation** of one of its leaves in, the leaf's events out, its calls to the kernel's ports (EXT-2).
 - An extension is **installed** when the node has it (in stage 1 the app's composition); **activated** and **deactivated** by the user, who accepts its manifest; **offered to a bond** while active, to every bond but those the user **withdraws the offer** from (EXT-7).
 - The **port of requests** is the kernel's: it sends a request on a bond and answers with its response, or `no_response` after the time the asker set; the response comes back as the **return** of the request, its effect's return use case (F7).
+
+How an extension is built and loaded (part 12.2, EXT-9..EXT-16):
+
+- An extension is a **package** of its own (`packages/extensions/ping_pong/`), whose root is its tree; it imports its library, `zod` and the **`boundary`** package, the kernel's contract with its extensions (EXT-9). The **boundary version** is that contract's, in a window the kernel speaks.
+- Its **manifest** is its declaration (`manifest.ts`) and its surface, which the build derives from its tree (EXT-10).
+- **Isolated**, it runs in a realm that reaches nothing of the node but the boundary, and the network only as far as the browser leaves it open, a limit declared to the user; **in process**, whole or in part, its **parts** are its domains and each of its pages and slots (EXT-13). Its storage is a **partition** of the node's, which only it reads and writes (EXT-14).
+- An extension is **loaded** only while it is active, says it is **ready**, and its consumers are **started** and **stopped** by the kernel (EXT-15).
+- An extension point sits in a **place** of the kernel's screens (on a bond, in the extensions); an action is data the kernel draws, a slot or a page a **frame** the kernel places, with the extension's document in it (EXT-16).
 
 ## Architecture terms
 
@@ -148,6 +162,7 @@ From the paper _Architettura a domini_. Where the paper maps a classical name, i
 | registro per major · verso (di una forma)           | registry by major (`_registry.json`) · direction of a shape: read by the tree, given to its clients, carried by others (DOM-24)                                              | PER-17                                |
 | cancello · finestra (di una superficie)             | gate (`version_not_supported`: a version out of the window, before any node) · window (a tree's majors, its folders, and the version it speaks; PER-17)                      | version negotiation                   |
 | guasto di composizione                              | composition fault                                                                                                                                                            |                                       |
+| foglia montata · cartella montata                   | mounted leaf (D78.6) · mounted folder (`mounted`, of q-: a folder whose point takes the context a node of another tree gives, EXT-11)                                        | D78.6                                 |
 
 Two names that collide in Italian: the paper's _busta_ is the **event envelope**; q-'s _busta_ (what the relay sees) is the **envelope**. The paper's _nucleo_ is the **nucleus**; the _core_ is the pure part of a domain; Cumino's _nucleo_ is the **kernel**.
 
