@@ -31,7 +31,9 @@ export type {
 export { as_traced, route } from './the_kernels_trace.ts'
 export type {
   AFence,
+  AnEnvelopeNotOpened,
   ARequestAsItCame,
+  AResponseNotDeposited,
   ASilence,
   Routed,
   TheKernelsTrace,
