@@ -148,6 +148,9 @@ importers:
       '@q-mino/relay':
         specifier: workspace:*
         version: link:../relay
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/phone:
     dependencies:

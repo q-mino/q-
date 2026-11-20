@@ -69,6 +69,21 @@ const turns = async (count: number): Promise<void> => {
   for (let turn = 0; turn < count; turn += 1) await Promise.resolve()
 }
 
+/** A cell nobody writes, for a wait that only times out. */
+const no_one_writes = new Int32Array(new SharedArrayBuffer(4))
+
+/**
+ * A turn of the event loop on a real timer, a millisecond (the rule on
+ * loops, A, 20 Nov 2026): a wait on a cell nobody writes, which times out.
+ * This package compiles with no host's types (`types: []`, no `setTimeout`), and
+ * ES2024's `Atomics.waitAsync` is one; its promise settles from the event
+ * loop, so that the timers due run first.
+ */
+const a_tick = async (): Promise<void> => {
+  const waited = Atomics.waitAsync(no_one_writes, 0, 0, 1)
+  if (waited.async) await waited.value
+}
+
 /**
  * A node hosting `greetings` (EXT-15): the extension loaded over a
  * partition, `ready` awaited. `invoke` sends an invocation and gives its
@@ -113,13 +128,18 @@ export const a_node = async (story: {
   }
   const extension = greetings({
     clock,
-    elapsed: () => Promise.resolve(),
+    // A real timer, never `Promise.resolve()`: an executor that waits on a
+    // promise already settled loops on microtasks, and no timer fires.
+    elapsed: a_tick,
     send: (message) => {
       kernel(boundary.a_message_from_an_extension.parse(copied(message)))
     },
   })
   const until = async (holds: () => boolean): Promise<void> => {
-    for (let round = 0; round < 200 && !holds(); round += 1) await turns(50)
+    for (let round = 0; round < 200 && !holds(); round += 1) {
+      await turns(50)
+      await a_tick()
+    }
     if (!holds()) throw new Error('the story did not come to pass')
   }
   await until(() => sent.some((message) => message.message === 'ready'))
@@ -137,7 +157,10 @@ export const a_node = async (story: {
     start: () => extension.receive({ message: 'start' }),
     stop: () => extension.receive({ message: 'stop' }),
     redeliver: (letter: string) => extension.receive({ message: 'redeliver', letter }),
-    settled: () => turns(2000),
+    settled: async () => {
+      await turns(2000)
+      await a_tick()
+    },
   }
 }
 

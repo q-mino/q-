@@ -18,7 +18,8 @@ import { in_process, partitions } from '../../src/index.ts'
 // EXT-4, EXT-6, EXT-13, EXT-14, EXT-15; part 12.4): `greetings` composed
 // from its `manifest.json`, loaded in process (each message copied as
 // JSON) over its partition, its leaves invoked through the boundary, its
-// calls served. The story of two nodes and the relay is block 5's.
+// calls served. The story of two nodes and the relay is
+// `on_the_oracle.test.ts`.
 
 const clock: zz.Clock = {
   now: () => zz.date_time.parse('2026-11-20T10:00:00+01:00'),

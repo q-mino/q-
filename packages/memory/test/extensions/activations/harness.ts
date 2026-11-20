@@ -130,18 +130,32 @@ export type Answering = (
   question: AQuestion,
 ) => Promise<WhatCameBack | { readonly exhausted: string }>
 
-/** A bond of the phone's address book as the stories start from it: kept, with its name. */
+/**
+ * A bond of the phone's address book as the stories start from it: kept,
+ * with its name; their face's key and mailbox if the story has a phone of
+ * theirs (the stories of two nodes, `../harness.ts`), else made up.
+ */
 export interface ABond {
   readonly id: string
   readonly name: string
+  readonly their_face?: {
+    readonly key: string
+    readonly mailbox: { readonly deposit_address: string; readonly relays: readonly string[] }
+  }
 }
 
-/** How a phone starts: its owner's face, its bonds, the manifests installed, its clock's first instant. */
+/**
+ * How a phone starts: its owner's face (and its key, if the story's safe
+ * made it), its bonds, the manifests installed, its clock's first instant,
+ * or the story's clock, which it then reads.
+ */
 export interface Start {
   readonly face: string
+  readonly face_key?: string
   readonly bonds: readonly ABond[]
   readonly installed: readonly Manifest[]
   readonly at: string
+  readonly clock?: zz.Clock
 }
 
 /** A key of a face, the address book's form, from a letter (no secret: the stories never sign). */
@@ -159,7 +173,7 @@ const an_address_book = (start: Start): BondsState => {
     status: 'made',
     name: start.face,
     position: { place: 'at_the_top' },
-    public_key: a_key('F'),
+    public_key: start.face_key ?? a_key('F'),
   })
   const bonds = start.bonds.map((bond, at) =>
     kept_bond.parse({
@@ -167,8 +181,14 @@ const an_address_book = (start: Start): BondsState => {
       status: 'kept',
       name: bond.name,
       my_face_id: start.face,
-      their_face: { key: a_key(String.fromCharCode(66 + at)), introduced_as: bond.name },
-      their_mailbox: { deposit_address: `D-${bond.id}`, relays: [the_relay] },
+      their_face: {
+        key: bond.their_face?.key ?? a_key(String.fromCharCode(66 + at)),
+        introduced_as: bond.name,
+      },
+      their_mailbox: bond.their_face?.mailbox ?? {
+        deposit_address: `D-${bond.id}`,
+        relays: [the_relay],
+      },
       my_mailbox: { deposit_address: `D-mine-${bond.id}`, relays: [the_relay] },
       expires_at: start.at,
       handshake: { way: 'in_person', at: start.at },
@@ -193,10 +213,11 @@ export const a_phone = async (start: Start) => {
     stored: made.stored_versions,
   })
   const address_book = bonds_ports(seen_by<BondsState, PhoneState>(made), fake_primitives)(versions)
-  // The phone's clock, which a story sets (`at`); every wait ended when it moves.
+  // The phone's clock, which a story sets (`at`); every wait ended when it
+  // moves. Or the story's clock, given, which the phone reads.
   let instant = zz.date_time.parse(start.at)
   const waits: (() => void)[] = []
-  const clock: zz.Clock = { now: () => instant, time_zone }
+  const clock: zz.Clock = start.clock ?? { now: () => instant, time_zone }
   const elapsed = () =>
     new Promise<void>((over) => {
       waits.push(over)
@@ -209,14 +230,14 @@ export const a_phone = async (start: Start) => {
       operations += 1
       const id = sent.operation ?? `op-${String(operations)}`
       return {
-        now: zz.in_zone(time_zone)(instant),
-        time_zone,
+        now: zz.in_zone(clock.time_zone)(clock.now()),
+        time_zone: clock.time_zone,
         operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = () => ({ now: zz.in_zone(time_zone)(instant), time_zone })
+  const when = () => ({ now: zz.in_zone(clock.time_zone)(clock.now()), time_zone: clock.time_zone })
   const facts = log(made)
   const questions: AQuestion[] = []
   const answering: { current: Answering } = {
@@ -259,6 +280,10 @@ export const a_phone = async (start: Start) => {
             offered: offered.map((each) => ({ name: each.name, majors: [...each.majors] })),
           }),
         ),
+      /** The address book's reads (BND-1, BND-3, BND-6): a bond's card, the user's faces, her list of bonds. */
+      a_bond: (bond_id: string) => all(address_book.a_bond(when(), { bond_id })),
+      my_faces: () => all(address_book.my_faces(when(), {})),
+      my_bonds: () => all(address_book.my_bonds(when(), {})),
     }
     const commands = {
       activate_an_extension: (manifest: Manifest, sent?: Sent) =>

@@ -436,6 +436,46 @@ export const a_phone = async (
     return opened
   }
 
+  /**
+   * The kernel's entry gives a response back (PST-9; played, step 13 wires
+   * it): the response to a request, its identity PST-2's, from the phone's
+   * face to the mailbox the bond gives, its declared time the clock's, the
+   * event of the leaf that served it; put in an envelope for their key
+   * (PST-3) and deposited once through the phone's transport under its
+   * operation (PST-11). What the deposit came to, or `not_sealed`.
+   */
+  const deposits_a_response = async (response_to: {
+    readonly answers: string
+    readonly to: {
+      readonly key: string
+      readonly mailbox: { readonly deposit_address: string; readonly relays: readonly string[] }
+    }
+    readonly event: unknown
+  }): Promise<Deposited | 'not_sealed'> => {
+    const machine = machine_of(start.face_id)
+    const response: post_value.letter = {
+      is: 'a_response',
+      schema: 1,
+      identity: the_identity_of_the_response_to(machine)(response_to.answers),
+      from: key,
+      to: response_to.to.mailbox.deposit_address,
+      declared_at: zz.date_time.parse(time.now()),
+      answers: response_to.answers,
+      event: response_to.event,
+    }
+    const sealed = await a_letter_in_an_envelope(machine)(response, response_to.to.key)
+    if (sealed.outcome === 'not_sealed') return 'not_sealed'
+    return transport.port.deposit({
+      operation: the_operation_of_a_deposit(machine)(
+        response.identity,
+        response_to.to.mailbox.deposit_address,
+      ),
+      deposit_address: response_to.to.mailbox.deposit_address,
+      relays: [...response_to.to.mailbox.relays],
+      envelope: sealed.envelope,
+    })
+  }
+
   const the_phone = {
     face_id: start.face_id,
     /** The phone's face's key (A, B, C). */
@@ -537,31 +577,15 @@ export const a_phone = async (
         if (their_mailbox === undefined) continue
         const answered = served.get(letter.identity) ?? event
         served.set(letter.identity, answered)
-        const response: post_value.letter = {
-          is: 'a_response',
-          schema: 1,
-          identity: the_identity_of_the_response_to(machine_of(start.face_id))(letter.identity),
-          from: key,
-          to: their_mailbox.deposit_address,
-          declared_at: zz.date_time.parse(time.now()),
+        await deposits_a_response({
           answers: letter.identity,
+          to: { key: caller.key, mailbox: their_mailbox },
           event: answered,
-        }
-        const machine = machine_of(start.face_id)
-        const sealed = await a_letter_in_an_envelope(machine)(response, caller.key)
-        if (sealed.outcome === 'not_sealed') continue
-        await transport.port.deposit({
-          operation: the_operation_of_a_deposit(machine)(
-            response.identity,
-            their_mailbox.deposit_address,
-          ),
-          deposit_address: their_mailbox.deposit_address,
-          relays: [...their_mailbox.relays],
-          envelope: sealed.envelope,
         })
       }
       return opened
     },
+    deposits_a_response,
     /**
      * The kernel's entry takes the responses that came to the phone's mailbox
      * (played, step 13): each opened response from a face, under its

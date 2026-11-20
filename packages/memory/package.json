@@ -15,6 +15,7 @@
   "devDependencies": {
     "@q-mino/adapters-node": "workspace:*",
     "@q-mino/greetings": "workspace:*",
-    "@q-mino/relay": "workspace:*"
+    "@q-mino/relay": "workspace:*",
+    "zod": "^4.6.7"
   }
 }

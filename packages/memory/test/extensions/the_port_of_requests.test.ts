@@ -14,7 +14,8 @@ import { fake_primitives } from '../seals/primitives.ts'
 // with its post's ports and log, its machine, the bond with Bruno, and
 // `extensions` played (block 4 writes it); Bruno's node played by the
 // harness as a peer that serves (step 13 wires the kernel's entry). The
-// story of two nodes through the kernel's entry and greetings is block 5's.
+// story of two nodes through the kernel's entry and greetings is
+// `on_the_oracle.test.ts`.
 
 const ask_for_a_greeting_back = 'business/greetings/effect/ask_for_a_greeting_back'
 
