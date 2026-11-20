@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import * as library from '../src/library/index.ts'
-import * as seals from '../src/seals/index.ts'
 import * as post from '../src/post/index.ts'
 import * as bonds from '../src/bonds/index.ts'
 import * as conversations from '../src/conversations/index.ts'
@@ -11,7 +10,7 @@ import * as ui from '../src/ui/index.ts'
 
 describe('domains', () => {
   test('every domain exposes its index', () => {
-    const surfaces = [library, seals, post, bonds, conversations, auth, persona, user, ui]
+    const surfaces = [library, post, bonds, conversations, auth, persona, user, ui]
     for (const surface of surfaces) expect(typeof surface).toBe('object')
   })
 })

@@ -6,7 +6,7 @@
   "license": "AGPL-3.0-only",
   "exports": {
     "./library": "./src/library/index.ts",
-    "./seals": "./src/seals/index.ts",
+    "./seals/*": "./src/seals/*",
     "./post": "./src/post/index.ts",
     "./mailbox/*": "./src/mailbox/*",
     "./desk/*": "./src/desk/*",
