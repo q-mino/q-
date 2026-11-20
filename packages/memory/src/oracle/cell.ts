@@ -41,7 +41,8 @@ export type History<state> =
  * soon as there is one (DOM-17); the fact an operation recorded, kept for
  * every operation (DOM-11); the outbox, effect by effect, each entry at its
  * position counting every entry (DOM-14); the paths and versions it keeps
- * (DOM-22); the executors' durable state; the trees' trace (F6, PER-14).
+ * (DOM-22); the executors' durable state, and the reactions' consumers'
+ * (DOM-16); the trees' trace (F6, PER-14).
  */
 export interface Cell<state> {
   readonly get: () => state
@@ -53,6 +54,7 @@ export interface Cell<state> {
   readonly outbox: zz.Outbox
   readonly stored_versions: zz.StoredVersions
   readonly executor: zz.ExecutorState
+  readonly reactions: zz.ReactionState
   readonly trace: zz.Trace<unknown>
 }
 
@@ -61,6 +63,25 @@ export type CommandCell<state> = Pick<Cell<state>, 'get' | 'record' | 'position'
 
 /** What the reads need of the cell: its state and its position, for a snapshot; its history, for a stream. */
 export type ReadCell<state> = Pick<Cell<state>, 'get' | 'position' | 'history' | 'after'>
+
+/**
+ * The cell of a node with more domains, as one domain's module sees it
+ * (MBX-7): the state of the node, read as its domain's part of it; a step
+ * recorded over the part, the rest of the node's state kept as it is. The
+ * phone's, whose cell holds `bonds` and `seals` (part 11.3).
+ */
+export const seen_by = <part, whole extends part>(
+  cell: CommandCell<whole> & ReadCell<whole>,
+): CommandCell<part> & ReadCell<part> => ({
+  get: cell.get,
+  record: (step) => {
+    cell.record({ ...step, state: { ...cell.get(), ...step.state } })
+  },
+  position: cell.position,
+  recorded_by: cell.recorded_by,
+  history: cell.history,
+  after: cell.after,
+})
 
 /** The position of the fact recorded after so many, the first at 1. */
 export const position_at = (count: number): zz.position => zz.position.parse(String(count))
@@ -81,12 +102,15 @@ export interface Made<state> extends Cell<state> {
   readonly traced: () => readonly zz.Traced<unknown>[]
   /** The entries the executor holds, as its state keeps them (DOM-14). */
   readonly held: () => readonly zz.HeldEntry[]
+  /** The parts the reactions' consumers hold, as their state keeps them (DOM-16). */
+  readonly held_parts: () => readonly zz.HeldPart[]
 }
 
 /**
  * A new cell (TST-2): the facts it records in order, each at its position,
  * with the state before and after it; the executor's state kept across a
- * fall, so that an executor started again finds its positions and letters.
+ * fall, so that an executor started again finds its positions and letters;
+ * the reactions' consumers' likewise, on the model of Shed's.
  */
 export const cell = <state>(making: Making<state>): Made<state> => {
   let state = making.initial
@@ -121,6 +145,34 @@ export const cell = <state>(making: Making<state>): Made<state> => {
     },
     release: (entry) => {
       holding = holding.filter((each) => !same_entry(entry)(each))
+      return Promise.resolve()
+    },
+    discarded: () => Promise.resolve(),
+  }
+  const reaction_positions = new Map<string, zz.position>()
+  let parts_held: readonly zz.HeldPart[] = []
+  const same_part = (a: zz.ReactionPart) => (b: zz.ReactionPart) =>
+    a.reaction === b.reaction &&
+    a.part === b.part &&
+    a.fact.operation.scope === b.fact.operation.scope &&
+    a.fact.operation.id === b.fact.operation.id
+  const reactions: zz.ReactionState = {
+    position: (reaction) => Promise.resolve(reaction_positions.get(reaction)),
+    advance: (reaction) => (to) => {
+      reaction_positions.set(reaction, to)
+      return Promise.resolve()
+    },
+    held: (reaction) => Promise.resolve(parts_held.filter((each) => each.reaction === reaction)),
+    hold: (part) => {
+      parts_held = (
+        parts_held.some(same_part(part))
+          ? parts_held.map((each) => (same_part(part)(each) ? part : each))
+          : [...parts_held, part]
+      ).toSorted((a, b) => Number(a.position) - Number(b.position) || a.part - b.part)
+      return Promise.resolve()
+    },
+    release: (part) => {
+      parts_held = parts_held.filter((each) => !same_part(part)(each))
       return Promise.resolve()
     },
     discarded: () => Promise.resolve(),
@@ -206,6 +258,7 @@ export const cell = <state>(making: Making<state>): Made<state> => {
     }),
     stored_versions: () => Promise.resolve(stored()),
     executor,
+    reactions,
     trace: (traced) => {
       trace.push(traced)
     },
@@ -215,5 +268,6 @@ export const cell = <state>(making: Making<state>): Made<state> => {
     },
     traced: () => [...trace],
     held: () => [...holding],
+    held_parts: () => [...parts_held],
   }
 }

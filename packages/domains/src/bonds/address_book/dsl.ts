@@ -12,6 +12,10 @@ export const a_face_is_there = (the_face: value.face | undefined): the_face is v
 export const the_face_is_made = (the_face: value.face | undefined): boolean =>
   the_face?.status === 'made'
 
+/** The face is being made: the safe is drawing its seed. */
+export const the_face_is_being_made = (the_face: value.face | undefined): boolean =>
+  the_face?.status === 'being_made'
+
 /** A bond with this id is in the address book, kept or removed. */
 export const a_bond_is_there = (the_bond: value.bond | undefined): the_bond is value.bond =>
   the_bond !== undefined
