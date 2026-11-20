@@ -208,7 +208,10 @@ export interface AnExtensionOnSelf {
   /** The letters its notices tell held (EXT-2): a `dead_letter` not `released` since. */
   readonly held: () => readonly string[]
   readonly redeliver: (letter: string) => Handed
-  readonly discard: (letter: string, trace: { readonly by: string; readonly reason: string }) => Handed
+  readonly discard: (
+    letter: string,
+    trace: { readonly by: string; readonly reason: string },
+  ) => Handed
 }
 
 /** The kernel's held letters, by their names (`<effect>/<entry id>`, DOM-15): whether held, and the executor's gestures on one by the user. */
@@ -383,7 +386,12 @@ export const the_delivery_of_an_activity = (wiring: ThePortTowardSelf) => {
 /** The reads of `self` her screens take through the port (USR-2: reads are free, D58), as `self` gives them. */
 export type TheReadsOfSelf = Extract<
   keyof typeof self_usecase,
-  'my_faces' | 'my_bonds' | 'a_bond' | 'my_ticket' | 'an_extension' | 'the_extensions_offered_to_a_bond'
+  | 'my_faces'
+  | 'my_bonds'
+  | 'a_bond'
+  | 'my_ticket'
+  | 'an_extension'
+  | 'the_extensions_offered_to_a_bond'
 >
 
 /** A read of `self` through the port, as the user, at the version it speaks: passing through, `self`'s words unchanged. */

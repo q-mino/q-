@@ -23,16 +23,13 @@ export const the_name_of_a_part = (part: zz.ReactionDeadLetter): string =>
   `${part.reaction}/${String(part.position)}/${String(part.part)}`
 
 /** The office a path is of: what stands before its kind's segment (`user/activities` of `user/activities/effect/…`). */
-const the_office_of = (path: string): string =>
-  path.split(/\/(?:effect|reaction)\//)[0] ?? path
+const the_office_of = (path: string): string => path.split(/\/(?:effect|reaction)\//)[0] ?? path
 
 /** The last segment of a path: what the letter was. */
 const the_last_of = (path: string): string => path.split('/').at(-1) ?? path
 
 /** Why an executor's dead letter is held (DOM-15), in her words: one case per cause. */
-const why_an_entry_is_held = (
-  cause: zz.EffectDeadLetter['cause'],
-): user_value.why_it_is_held => {
+const why_an_entry_is_held = (cause: zz.EffectDeadLetter['cause']): user_value.why_it_is_held => {
   switch (cause.cause) {
     case 'exhausted':
       return { why: 'it_could_not_be_delivered', because: cause.reason.slice(0, 1024) }

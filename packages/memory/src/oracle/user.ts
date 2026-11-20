@@ -303,7 +303,13 @@ export const user_ports =
         registry: activities_registry,
         versions,
         use_cases: { an_activity, the_activities_in_progress },
-      })({ algebra: { ...activity_selection, after }, sources: activity_sources, read: read(cell), page: page(cell), streams: {} }),
+      })({
+        algebra: { ...activity_selection, after },
+        sources: activity_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: {},
+      }),
       ...zz.command_use_case_ports({
         registry: drafts_registry,
         versions,
@@ -317,7 +323,13 @@ export const user_ports =
         registry: drafts_registry,
         versions,
         use_cases: { a_draft: a_draft_use_case },
-      })({ algebra: { ...draft_selection, after }, sources: draft_sources, read: read(cell), page: page(cell), streams: {} }),
+      })({
+        algebra: { ...draft_selection, after },
+        sources: draft_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: {},
+      }),
       ...zz.command_use_case_ports({
         registry: choices_registry,
         versions,
@@ -331,6 +343,12 @@ export const user_ports =
         registry: choices_registry,
         versions,
         use_cases: { the_active_face: the_active_face_use_case },
-      })({ algebra: { ...choice_selection, after }, sources: choice_sources, read: read(cell), page: page(cell), streams: {} }),
+      })({
+        algebra: { ...choice_selection, after },
+        sources: choice_sources,
+        read: read(cell),
+        page: page(cell),
+        streams: {},
+      }),
     }
   }

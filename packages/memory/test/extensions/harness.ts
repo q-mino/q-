@@ -116,6 +116,18 @@ export const a_node = async (
 /** A node of the story. */
 export type NodeUnderTest = Awaited<ReturnType<typeof a_node>>
 
+/** The story of two nodes (three phones), as its checks read it. */
+export interface TwoNodes {
+  readonly story: Story
+  readonly anna: NodeUnderTest
+  readonly bruno: NodeUnderTest
+  readonly carla: NodeUnderTest
+  /** The nodes' clock reads this time of the day. */
+  readonly at: (time_of_day: string) => void
+  /** The nodes' clock reads this time, and the asker runs (its post's sendings again, its waits). */
+  readonly runs_at: (asker: NodeUnderTest, time_of_day: string) => Promise<void>
+}
+
 /**
  * The story of two nodes (three phones): one relay; Anna's node, bonded to
  * Bruno (`B-BRUNO`) and Carla (`B-CARLA`), each bond made by her ticket in
@@ -133,7 +145,7 @@ export const two_nodes = async (
     readonly brunos_characters?: number
     readonly carries?: AnExtensionOfTheApp
   } = {},
-) => {
+): Promise<TwoNodes> => {
   const story = await a_story()
   const carries = options.carries ?? 'greetings'
   const anna = await a_node(story, {
@@ -179,9 +191,7 @@ export const two_nodes = async (
     anna,
     bruno,
     carla,
-    /** The nodes' clock reads this time of the day. */
     at: story.at,
-    /** The nodes' clock reads this time, and the asker runs (its post's sendings again, its waits). */
     runs_at: async (asker: NodeUnderTest, time_of_day: string): Promise<void> => {
       story.at(time_of_day)
       await asker.post.runs()

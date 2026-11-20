@@ -39,6 +39,12 @@ import {
   the_kernels_port_of_requests,
   the_manifest_to_accept,
   the_port_of_requests,
+  the_delivery_of_an_activity,
+  the_held_letters,
+  the_letters_an_extension_holds,
+  the_name_of_a_letter,
+  what_happened_in_a_tree,
+  what_happened_in_the_kernel,
   type ABondToAnswerOn,
   type ABondToAskOn,
   type ANotice,
@@ -113,6 +119,14 @@ import {
   keep_a_mailbox_key,
   keep_a_new_seed_and_its_face,
 } from '@q-mino/domains/seals/safe/_usecase.ts'
+import { majors as activities_majors } from '@q-mino/domains/user/activities/_majors.ts'
+import { registry as activities_registry } from '@q-mino/domains/user/activities/_registry.ts'
+import { end_an_activity } from '@q-mino/domains/user/activities/_usecase.ts'
+import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
+import { majors as choices_majors } from '@q-mino/domains/user/choices/_majors.ts'
+import { majors as drafts_majors } from '@q-mino/domains/user/drafts/_majors.ts'
+import type * as drafts_value from '@q-mino/domains/user/drafts/_value.ts'
+import type * as user_value from '@q-mino/domains/user/_value.ts'
 import { greetings } from '@q-mino/greetings'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
 import { ping_pong } from '@q-mino/ping_pong'
@@ -128,14 +142,17 @@ import {
   no_bond,
   no_request,
   no_secret,
+  nothing_asked,
   partitions,
   post_ports,
   seals_ports,
   seen_by,
+  user_ports,
   type BondsState,
   type ExtensionsState,
   type PostState,
   type SealsState,
+  type UserState,
 } from '../../src/index.ts'
 import {
   a_clock,
@@ -254,8 +271,8 @@ export const a_story = async (primitives: Primitives = fake_primitives) => {
 /** The story of the nodes. */
 export type Story = Awaited<ReturnType<typeof a_story>>
 
-/** A node's cell: the safe, the requests, the address book and the office, one cell (MBX-7). */
-type NodeState = SealsState & PostState & BondsState & ExtensionsState
+/** A node's cell: the safe, the requests, the address book, the office, and the user's offices beside them (USR-1), one cell (MBX-7). */
+type NodeState = SealsState & PostState & BondsState & ExtensionsState & UserState
 
 /**
  * The world's random bytes for a node: each draw new, of the length asked,
@@ -280,6 +297,13 @@ export interface Start {
   readonly name: string
   readonly installed?: 'not_installed' | AnExtensionOfTheApp
   readonly characters?: number
+  /**
+   * How long a screen of the extension's follows (DOM-3): at once over, as
+   * the stories of steps 12–14 read what came back in its partition; or for
+   * its time (part 15.2), a wait of a minute or more over once the story's
+   * clock has moved past it, a shorter one a real timer of 2 ms.
+   */
+  readonly screens_follow?: 'at_once' | 'for_their_time'
 }
 
 /** A ticket as its holder shows it, in a QR or after `#` in a link (BND-8, BND-9). */
@@ -339,7 +363,7 @@ export const ask_for_a_greeting_back = 'business/greetings/effect/ask_for_a_gree
  */
 export const a_node = async (story: Story, start: Start) => {
   const made = cell<NodeState>({
-    initial: { ...no_secret, ...no_request, ...no_bond, ...no_activation },
+    initial: { ...no_secret, ...no_request, ...no_bond, ...no_activation, ...nothing_asked },
   })
   const world = a_world_of(story.primitives, start.phone)
   const versions = await zz.versions([
@@ -347,10 +371,14 @@ export const a_node = async (story: Story, start: Start) => {
     requests_majors,
     address_book_majors,
     activations_majors,
+    activities_majors,
+    drafts_majors,
+    choices_majors,
   ])({ stored: made.stored_versions })
   const safe = seals_ports(seen_by<SealsState, NodeState>(made), world)(versions)
   const post = post_ports(seen_by<PostState, NodeState>(made))(versions)
   const address_book = bonds_ports(seen_by<BondsState, NodeState>(made), world)(versions)
+  const user = user_ports(seen_by<UserState, NodeState>(made))(versions)
   const clock = story.clock
   const when = (): zz.RootContext => ({
     now: zz.in_zone(clock.time_zone)(clock.now()),
@@ -573,6 +601,21 @@ export const a_node = async (story: Story, start: Start) => {
   const notices: ANotice[] = []
   const to_the_extension: boundary.a_message_to_an_extension[] = []
   const storage = partitions({ characters: start.characters ?? 1_000_000 })
+  // The partition's next commits as a story scripts them (TST-4): each
+  // committed, or refused as a full partition refuses it, so that the
+  // extension falls there (EXT-15); then as the partition answers.
+  const commits: ('committed' | 'refused')[] = []
+  /** An extension's partition, its next commits as the story scripts them. */
+  const the_partition_of = (name: string): boundary.Ports['its_storage'] => {
+    const partition = storage.of(name)
+    return {
+      read: partition.read,
+      commit: (writes) =>
+        commits.shift() === 'refused'
+          ? Promise.resolve({ answer: 'refused', why: 'the_partition_is_full' })
+          : partition.commit(writes),
+    }
+  }
   // A node whose code is changed (the code is free, F2): what its entry
   // answers in place of an extension's leaf's event.
   let tampered: ((event: zz.MountedLeafEvent) => zz.MountedLeafEvent) | undefined = undefined
@@ -613,6 +656,21 @@ export const a_node = async (story: Story, start: Start) => {
   })
 
   /**
+   * The time that passes in the extension's realm (DOM-3): at once over, or,
+   * for a screen that follows for its time, a wait of a minute or more over
+   * once the story's clock has moved that far from when it began (the
+   * screen's 70 seconds), a shorter one a real timer (an executor's retry).
+   */
+  const the_screens_wait: zz.Elapsed =
+    start.screens_follow === 'for_their_time'
+      ? async (milliseconds) => {
+          if (milliseconds < 60_000) return a_timer(2)()
+          const from = Date.parse(clock.now())
+          while (Date.parse(clock.now()) - from < milliseconds) await story.time.elapsed()
+        }
+      : a_timer(2)
+
+  /**
    * The transport to the extension's realm, in process (EXT-13), each
    * message to it kept for the story. Its time that passes is a timer of
    * 2 ms: an executor's retry, and a screen's wait (ping pong's 70 seconds
@@ -620,7 +678,7 @@ export const a_node = async (story: Story, start: Start) => {
    */
   const transport_to_the_extension: Transport = (to_the_kernel) => {
     if (carried === undefined) throw new Error(`no extension installed on ${start.name}'s node`)
-    const realm = in_process((send) => carried.realm({ clock, elapsed: a_timer(2), send }))(
+    const realm = in_process((send) => carried.realm({ clock, elapsed: the_screens_wait, send }))(
       to_the_kernel,
     )
     return {
@@ -725,7 +783,7 @@ export const a_node = async (story: Story, start: Start) => {
         transport: transport_to_the_extension,
         is_active: () => reads.is_active(name),
         the_port_of_requests: port_of_requests({ name, touches: extension.manifest.touches }),
-        its_storage: storage.of(name),
+        its_storage: the_partition_of(name),
         the_bond_on_known: (context) => {
           const given = the_context_on_known.parse(context)
           return {
@@ -837,6 +895,106 @@ export const a_node = async (story: Story, start: Start) => {
       }
     }
 
+  // The user's offices (USR-1..USR-8, part 15.2): her activities carried
+  // out by `user`'s executor through the port toward `self` (GR-7), the
+  // kernel's tree by path as the user and the extension's `self` through
+  // its hosting; the app open while the executor runs (`opens_the_app`),
+  // each delivery in flight together (`order: 'any'`).
+  /** The kernel's executors an operator's gesture reaches, started, by the office their effects are of (DOM-14: on a phone, the user). */
+  const the_executor_of = (of: string): zz.EffectExecutor | undefined => {
+    const ports = { outbox: made.outbox, state: made.executor, clock, elapsed: story.time.elapsed }
+    return of === 'post/requests'
+      ? the_post_s_executor({ ...ports, returns: post })
+      : of === 'bonds/address_book'
+        ? the_address_book_s_executor({ ...ports, returns: address_book })
+        : of === 'extensions/activations'
+          ? the_office_s_executor({ ...ports, returns: office })
+          : undefined
+  }
+  /** The extension's notices of its held letters, by name (EXT-2). */
+  const the_extension_s_letters = (name: string): readonly string[] =>
+    the_letters_an_extension_holds(notices)
+      .filter((held) => held.extension === name)
+      .map((held) => held.notice.letter)
+  let the_app: zz.EffectExecutor | undefined = undefined
+  /** A gesture of the user's on a kernel's held letter: through the running executor of its effect, `user`'s while the app is open, else the office's, started for it. */
+  const on_a_kernel_s_letter = async <outcome>(
+    letter: string,
+    gesture: (executor: zz.EffectExecutor, held: zz.EffectDeadLetter) => Promise<outcome>,
+  ): Promise<outcome | 'not_held'> => {
+    const held = made
+      .held()
+      .find(
+        (entry): entry is zz.EffectDeadLetter =>
+          entry.held === 'dead_letter' && the_name_of_a_letter(entry) === letter,
+      )
+    if (held === undefined) return 'not_held'
+    const office = held.entry.effect.split('/effect/')[0] ?? ''
+    if (office === 'user/activities') {
+      if (the_app === undefined) throw new Error('the app is closed: no executor of user')
+      return gesture(the_app, held)
+    }
+    const running = the_executor_of(office)
+    if (running === undefined) throw new Error(`no executor of ${office} on ${start.name}'s node`)
+    try {
+      return await gesture(running, held)
+    } finally {
+      await running.stop()
+    }
+  }
+  const the_port_toward_self = the_delivery_of_an_activity({
+    clock,
+    self: (context, request) => wired.the_personas.self(context, request),
+    relays: [the_relay],
+    the_extension: (name) => {
+      const extension = wired.extension
+      if (extension?.name !== name || composed === undefined) return undefined
+      return {
+        composed,
+        is_active: () => reads.is_active(name),
+        life: () => extension.hosted.life(),
+        on_self: as_served(extension.on_self),
+        held: () => the_extension_s_letters(name),
+        redeliver: (letter) => extension.hosted.redeliver(letter),
+        discard: (letter, trace) => extension.hosted.discard(letter, trace),
+      }
+    },
+    the_kernels_letters: {
+      held: () =>
+        Promise.resolve(
+          made
+            .held()
+            .flatMap((entry) =>
+              entry.held === 'dead_letter' ? [the_name_of_a_letter(entry)] : [],
+            ),
+        ),
+      redeliver: async (letter) => {
+        const outcome = await on_a_kernel_s_letter(letter, (executor, held) =>
+          executor.redeliver(held),
+        )
+        return outcome === 'not_held'
+          ? 'not_held'
+          : outcome.outcome === 'delivered'
+            ? 'delivered'
+            : outcome.outcome === 'dead_letter'
+              ? 'held_again'
+              : 'not_held'
+      },
+      discard: async (letter, trace) => {
+        const outcome = await on_a_kernel_s_letter(letter, async (executor, held) => {
+          await executor.discard(held)(trace)
+          return 'discarded' as const
+        })
+        return outcome
+      },
+    },
+  })
+  const the_user_s_executor = zz.effect_executor({
+    registry: activities_registry,
+    versions,
+    returns: { end_an_activity },
+  })({ 'user/activities/effect/carry_out_an_activity': the_port_toward_self })
+
   // The collector (DOM-17): every mailbox the node collects, at the relay,
   // with its R from the safe; each deposit not seen yet handed to the entry;
   // one the entry throws on is left unseen, and the mailbox's next deposits
@@ -926,6 +1084,10 @@ export const a_node = async (story: Story, start: Start) => {
       secret,
     }
   }
+
+  /** An activity, as her screens read it (USR-2). */
+  const the_activity_of = async (activity_id: string) =>
+    entries_of(await all(user.an_activity(when(), { activity_id })))[0]
 
   const the_node = {
     name: start.name,
@@ -1298,6 +1460,94 @@ export const a_node = async (story: Story, start: Start) => {
     },
     /** The entries the executors hold, and the parts the reactions hold: their dead letters. */
     held: () => [...made.held(), ...made.held_parts()],
+    // The user's offices (USR-1..USR-8, part 15.2), as her screens will use them (step 16).
+    /** The app opens: `user`'s executor runs, her activities carried out as they come, until it closes. */
+    opens_the_app: (): void => {
+      the_app ??= the_user_s_executor({
+        outbox: made.outbox,
+        state: made.executor,
+        clock,
+        elapsed: story.time.elapsed,
+        returns: user,
+      })
+    },
+    /** The app closes: `user`'s executor stopped, the deliveries in flight abandoned (met again when it opens). */
+    closes_the_app: async (): Promise<void> => {
+      const running = the_app
+      the_app = undefined
+      await running?.stop()
+    },
+    /** Her screen asks for an activity, with the id it drew (USR-2, DOM-12): its events. */
+    asks: (
+      activity_id: string,
+      what: activities_value.what_is_asked,
+      sent?: string,
+    ): Promise<readonly unknown[]> => {
+      const input = { activity_id, what }
+      return all(
+        user.ask_for_an_activity(
+          sent_as(
+            'user/activities/usecase/ask_for_an_activity',
+            input,
+            the_scope_of_the_user,
+          )(sent),
+          input,
+        ),
+      )
+    },
+    /** An activity, as her screens read it. */
+    the_activity: the_activity_of,
+    /** The activities in progress, in the order she asked them. */
+    the_activities_in_progress: async () =>
+      entries_of(await all(user.the_activities_in_progress(when(), {}))),
+    /** How an activity ended, once it has (at most about two seconds, else the story fails). */
+    how_it_ended: async (activity_id: string): Promise<activities_value.how_it_ended> => {
+      const the_stage = async () => (await the_activity_of(activity_id))?.stage
+      await until(async () => (await the_stage())?.stage === 'ended', `the end of ${activity_id}`)
+      const stage = await the_stage()
+      if (stage?.stage !== 'ended') throw new Error(`${activity_id} did not end`)
+      return stage.how_it_ended
+    },
+    /** Her screen keeps a draft, or drops it (USR-5): its events. */
+    keeps_a_draft: (purpose: drafts_value.what_it_is_for, text: string) => {
+      const input = { for: purpose, text }
+      return all(
+        user.keep_a_draft(
+          sent_as('user/drafts/usecase/keep_a_draft', input, the_scope_of_the_user)(),
+          input,
+        ),
+      )
+    },
+    drops_a_draft: (purpose: drafts_value.what_it_is_for) => {
+      const input = { for: purpose }
+      return all(
+        user.drop_a_draft(
+          sent_as('user/drafts/usecase/drop_a_draft', input, the_scope_of_the_user)(),
+          input,
+        ),
+      )
+    },
+    /** The draft for this, if one is kept. */
+    a_draft: async (purpose: drafts_value.what_it_is_for) =>
+      entries_of(await all(user.a_draft(when(), { for: purpose })))[0],
+    /** She changes face (USR-6): its events. */
+    changes_face: (face: string) =>
+      all(
+        user.change_face(
+          sent_as('user/choices/usecase/change_face', { face }, the_scope_of_the_user)(),
+          { face },
+        ),
+      ),
+    /** The face she acts as, if she has chosen one. */
+    the_active_face: async () => entries_of(await all(user.the_active_face(when(), {})))[0],
+    /** The letters held on the node, as she is told them (USR-8). */
+    held_letters: (): readonly user_value.a_held_letter[] =>
+      the_held_letters({ entries: made.held(), parts: made.held_parts(), notices }),
+    /** What happened without a fact, as she is told it (USR-8): the kernel's trace, then the trees'. */
+    what_happened: (): readonly user_value.what_happened_without_a_fact[] => [
+      ...traced.map(what_happened_in_the_kernel),
+      ...tree_traced.flatMap((entry) => what_happened_in_a_tree(entry) ?? []),
+    ],
     // The extension, hosted (EXT-15).
     /** The extension hosted, which the story installed. */
     the_hosted: (): Hosted => the_extension().hosted,
@@ -1387,6 +1637,30 @@ export const a_node = async (story: Story, start: Start) => {
         .flatMap(([, value]) =>
           a_fact_kept.parse(value).parts.map((part) => part.path.split('/').at(-1) ?? ''),
         ),
+    /** The next commits of the extension's partition, as the story scripts them (TST-4): `refused` makes it fall. */
+    its_partition_will: (...next: readonly ('committed' | 'refused')[]): void => {
+      commits.push(...next)
+    },
+    /** The entries queued for an effect, by their ids, in order (DOM-13). */
+    queued: (effect: string): readonly string[] =>
+      made
+        .entries()
+        .filter((entry) => entry.effect === effect)
+        .map((entry) => entry.id),
+    /** `user`'s executor's return as a story sends it (USR-3): an end, under an operation of the effect's scope. */
+    ends: (activity_id: string, how_it_ended: activities_value.how_it_ended) => {
+      const input = { activity_id, how_it_ended }
+      return all(
+        user.end_an_activity(
+          sent_as(
+            'user/activities/usecase/end_an_activity',
+            input,
+            'user/activities/effect/carry_out_an_activity',
+          )(),
+          input,
+        ),
+      )
+    },
     /** The dead letters the extension told the kernel (EXT-2), by their names. */
     dead_letters: (): readonly string[] =>
       notices.flatMap((notice) =>
