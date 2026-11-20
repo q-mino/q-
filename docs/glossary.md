@@ -15,19 +15,20 @@ Lowercase, as written; read with a capital.
 
 ## Packages and folders
 
-| Italian                                           | English                                                                      |
-| ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `domini`                                          | `domains`                                                                    |
-| `libreria/`                                       | `library/`                                                                   |
-| `sigilli` · `posta` · `casella`                   | `seals` · `post` · `mailbox`                                                 |
-| sportello                                         | `desk` (the persona layer of `mailbox`)                                      |
-| `legami` · `estensioni`                           | `bonds` · `extensions`                                                       |
-| `auth` · `persona` · `utente` · `ui`              | `auth` · `persona` · `user` · `ui`                                           |
-| `adapter-comuni` · `adapter-web` · `adapter-node` | `adapters-common` · `adapters-web` · `adapters-node`                         |
-| `telefono` · `relay` · `memoria`                  | `phone` · `relay` · `memory`                                                 |
-| `generatore`                                      | `generator` (the compilation of the domains, DOM-25)                         |
-| `confine`                                         | `boundary` (the package of the kernel's contract with its extensions, EXT-9) |
-| `estensioni/<nome>`                               | `extensions/<name>` (the package of an extension, EXT-9)                     |
+| Italian                                                             | English                                                                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `domini`                                                            | `domains`                                                                                              |
+| `libreria/`                                                         | `library/`                                                                                             |
+| `sigilli` · `posta` · `casella`                                     | `seals` · `post` · `mailbox`                                                                           |
+| sportello                                                           | `desk` (the persona layer of `mailbox`)                                                                |
+| `legami` · `estensioni`                                             | `bonds` · `extensions`                                                                                 |
+| `auth` · `persona` · `utente` · `ui`                                | `auth` · `persona` · `user` · `ui`                                                                     |
+| `adapter-comuni` · `adapter-web` · `adapter-node`                   | `adapters-common` · `adapters-web` · `adapters-node`                                                   |
+| `telefono` · `relay` · `memoria`                                    | `phone` · `relay` · `memory`                                                                           |
+| `generatore`                                                        | `generator` (the compilation of the domains, DOM-25)                                                   |
+| `confine`                                                           | `boundary` (the package of the kernel's contract with its extensions, EXT-9)                           |
+| `estensioni/<nome>`                                                 | `extensions/<name>` (the package of an extension, EXT-9)                                               |
+| `casella/depositi` · `sportello/depositante` · `sportello/titolare` | `mailbox/deposits` · `desk/depositor` · `desk/holder` (the relay's domain and its two personas, MBX-1) |
 
 ## Domain terms
 
@@ -60,6 +61,10 @@ Lowercase, as written; read with a capital.
 | tace (un nodo)                                                    | stays silent                                                   |
 | relay preferiti                                                   | preferred relays                                               |
 | ping · pong                                                       | ping · pong                                                    |
+| deposito (una busta su D) · scarta (dopo sette giorni)            | deposit (an envelope on D) · discard (after seven days)        |
+| depositante · titolare (della casella, chi mostra R)              | depositor · holder (of a mailbox, who shows R)                 |
+
+The relay's words (part 8.1, MBX-1..MBX-4, Claude, 20 Nov 2026): a **deposit** is an envelope left on a deposit address D, with the time the relay received it; the relay **discards** it seven days after, collected or not. Whoever deposits is a **depositor**, anyone; whoever shows the collect secret R of the mailbox at D = hash(R) is its **holder**, and collects. The relay's domain is `mailbox/deposits`, its personas `desk/depositor` and `desk/holder`. Rejected: `box` (a second word for the mailbox), `sender` (the relay knows no sender, F2, and a depositor need not be one).
 
 Choices: `post`, not `mail` (it suggests email); `ticket` for the biglietto (single use, with an expiry); `bonds`, not `links` (ambiguous in code); `kernel` for Cumino's nucleo, not `nucleus` (the paper's, of the library) nor `core` (the pure part of a domain) (Alessandro, 19 Nov 2026). `conversations` (`conversazioni`) is no longer a domain of the kernel: messaging is the first extension after stage 1 (Alessandro, 19 Nov 2026).
 
