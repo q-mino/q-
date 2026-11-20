@@ -1,0 +1,6 @@
+{
+  "domain": "persona/anonymous",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": { "persona/anonymous/version/anonymous": { "kind": "version" } }
+}

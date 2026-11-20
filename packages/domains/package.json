@@ -14,7 +14,7 @@
     "./reaction/*": "./src/reaction/*",
     "./extensions/*": "./src/extensions/*",
     "./auth/*": "./src/auth/*",
-    "./persona": "./src/persona/index.ts",
+    "./persona/*": "./src/persona/*",
     "./user": "./src/user/index.ts",
     "./ui": "./src/ui/index.ts"
   },
