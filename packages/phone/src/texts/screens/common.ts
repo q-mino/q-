@@ -50,4 +50,11 @@ export const common = {
   the_kernels_events: (event) => the_kernels_events.get(event),
   something_went_wrong: 'Qualcosa non è arrivato al telefono: riprova.',
   the_mark_of: (extension) => `Estensione «${extension}»`,
+  the_points: {
+    opens_the_page: (page) => `Apri la pagina «${page}»`,
+    the_frame: (name) => `Riquadro «${name}» dell’estensione`,
+    no_document: 'L’app non ha il riquadro di questa estensione.',
+    it_did: (use_case, at, time_zone) =>
+      `Il riquadro ha chiesto ${use_case} alle ${new Intl.DateTimeFormat('it-IT', { timeStyle: 'short', timeZone: time_zone }).format(new Date(at))}, da sé: non è un tuo gesto.`,
+  },
 } satisfies TheCommonTexts

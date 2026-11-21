@@ -4,6 +4,7 @@ import { a_page } from './a_page.ts'
 import { an_extension } from './an_extension.ts'
 import { an_invitation } from './an_invitation.ts'
 import { common } from './common.ts'
+import { extensions } from './extensions.ts'
 import { my_contacts } from './my_contacts.ts'
 import { the_extensions } from './the_extensions.ts'
 import { the_first_face } from './the_first_face.ts'
@@ -25,4 +26,5 @@ export const screens = {
   an_extension,
   a_page,
   what_happened,
+  extensions,
 } satisfies TheScreensTexts

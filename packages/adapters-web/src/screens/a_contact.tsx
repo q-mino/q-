@@ -3,7 +3,8 @@
 // they shook hands, whether it has her yet, the relays of its mailbox;
 // renaming it, its name a draft (USR-5); removing it, confirmed; the
 // extensions active, each offered to it or not (EXT-7); the question of the
-// extensions in common (EXT-8). The marks of its place are part 22.2's.
+// extensions in common (EXT-8); since part 22.2 the marks of its place, the
+// points of each extension active and offered to it (WEB-22).
 
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
@@ -12,7 +13,7 @@ import type * as a_contact_value from '@q-mino/domains/ui/a_contact/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { Back, TheCourse } from './parts.tsx'
+import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
 import { the_app, what_it_asked_now } from './the_app.ts'
 
 type the_contact_shown = Extract<a_contact_value.what_it_shows, { shows: 'the_contact' }>
@@ -101,6 +102,10 @@ export const AContact = (props: {
     const it = shown()
     return it?.shows === 'the_contact' ? it : undefined
   }
+  /** Whether an extension is active, as the screen read it (a frame is served only then, EXT-4). */
+  const is_active = (extension: string): boolean =>
+    given()?.given.extensions.some((one) => one.extension === extension && one.is === 'active') ??
+    false
   /** She starts renaming it: with her draft, if one is kept, or the name she gives it. */
   const starts_renaming = async (name: string): Promise<void> => {
     const draft = await app.node.a_draft({ for: 'the_name_i_give_a_bond', bond })
@@ -300,6 +305,34 @@ export const AContact = (props: {
                 </button>
                 <TheCourse course={the_course_for(it(), { for: 'the_extensions_in_common' })} />
               </section>
+              <For each={it().marks}>
+                {(mark) => (
+                  <TheMark extension={mark.extension}>
+                    <ThePoints
+                      mark={mark}
+                      active={is_active(mark.extension)}
+                      course_of={(action) =>
+                        the_course_for(it(), {
+                          for: 'an_action',
+                          extension: mark.extension,
+                          action,
+                        })
+                      }
+                      taps={(action) => {
+                        screen.happens({
+                          happens: 'she_taps_an_action',
+                          mark,
+                          action,
+                          asked: what_it_asked_now(app.device),
+                        })
+                      }}
+                      opens={(page) => {
+                        screen.happens({ happens: 'she_opens_a_page', mark, page })
+                      }}
+                    />
+                  </TheMark>
+                )}
+              </For>
             </>
           )}
         </Match>

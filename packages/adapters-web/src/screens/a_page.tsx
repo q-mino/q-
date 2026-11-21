@@ -1,16 +1,16 @@
 // A page of an extension (UI-4, UI-5; EXT-16; story 22 of `ui`'s README):
 // its name in the kernel's mark of its extension, where its frame is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
-// longer there. The frame itself is part 22.2's: here its placeholder.
+// longer there. Since part 22.2 its frame (WEB-23).
 
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
 import { createMemo, Match, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { Back } from './parts.tsx'
+import { TheFrame } from './a_frame.tsx'
+import { Back, TheMark } from './parts.tsx'
 import { the_app } from './the_app.ts'
-import { the_marks_style } from './what_happened.tsx'
 
 /** The words of a page (provisional, A to confirm). */
 export interface APageTexts {
@@ -46,6 +46,10 @@ export const APage = (props: {
       ? undefined
       : a_page.what_it_shows(state, read.given)
   })
+  /** Whether its extension is active, as the screen read it (EXT-4). */
+  const is_active = (extension: string): boolean =>
+    given()?.given.extensions.some((one) => one.extension === extension && one.is === 'active') ??
+    false
   const the_frame = () => {
     const it = shown()
     return it?.shows === 'the_frame' ? it : undefined
@@ -64,11 +68,13 @@ export const APage = (props: {
         </Match>
         <Match when={the_frame()}>
           {(frame) => (
-            <section aria-label={app.common.the_mark_of(frame().extension)} style={the_marks_style}>
-              <h2>{app.common.the_mark_of(frame().extension)}</h2>
-              <p>{frame().page}</p>
-              <div data-the-frame={frame().page} />
-            </section>
+            <TheMark extension={frame().extension}>
+              <TheFrame
+                frame={{ extension: frame().extension, point: 'page', name: frame().page }}
+                told={frame().told}
+                active={is_active(frame().extension)}
+              />
+            </TheMark>
           )}
         </Match>
       </Switch>

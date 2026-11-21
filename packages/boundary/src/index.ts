@@ -12,7 +12,8 @@
 // ports typed by `touches` (EXT-2, EXT-3, EXT-14), the kernel's node above
 // the mounted folders (EXT-5), the messages (EXT-2, EXT-15, EXT-16) and the
 // extension's side of them, which every extension's configurator speaks
-// through (`the_extensions_side`).
+// through (`the_extensions_side`). Since part 22.2, the words of an
+// extension the kernel draws (EXT-16).
 
 export * from './contexts.ts'
 export * from './manifest.ts'
@@ -24,3 +25,4 @@ export * from './the_extensions_side.ts'
 export * from './the_kernels_node.ts'
 export * from './values.ts'
 export * from './version.ts'
+export * from './words.ts'

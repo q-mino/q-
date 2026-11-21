@@ -1,7 +1,10 @@
 // The words the screens show, by screen (provisional, A to confirm: the
 // words she reads, UI-5): the shape a language gives, which the phone's
-// texts fill (`packages/phone/src/texts/`), Italian first.
+// texts fill (`packages/phone/src/texts/`), Italian first; and the words of
+// each extension in that language, its own (its `texts/`, EXT-16), which the
+// phone gives by the extension's name.
 
+import type * as boundary from '@q-mino/boundary'
 import type { AContactTexts } from './a_contact.tsx'
 import type { APageTexts } from './a_page.tsx'
 import type { AnExtensionTexts } from './an_extension.tsx'
@@ -27,4 +30,6 @@ export interface TheScreensTexts {
   readonly an_extension: AnExtensionTexts
   readonly a_page: APageTexts
   readonly what_happened: WhatHappenedTexts
+  /** The words of each extension the app carries, by its name (EXT-16, WEB-22). */
+  readonly extensions: Readonly<Record<string, boundary.the_words_of_an_extension>>
 }

@@ -3,7 +3,8 @@
 // notice of what it asks, the flaws the kernel cannot fence included, and
 // the manifest she was shown accepted or not; a new manifest accepted the
 // same way; deactivating it. In the kernel's mark of it, its letters held
-// and what happened to it; the points of its place are part 22.2's.
+// and what happened to it, and since part 22.2 the points of its place
+// (WEB-22): its actions, its slots, the pages it opens.
 
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as an_extension from '@q-mino/domains/ui/an_extension/_dsl.ts'
@@ -12,9 +13,9 @@ import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { Back, TheCourse } from './parts.tsx'
+import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
 import { the_app, what_it_asked_now } from './the_app.ts'
-import { TheNews, the_marks_style, type TheNewsTexts } from './what_happened.tsx'
+import { TheNews, type TheNewsTexts } from './what_happened.tsx'
 
 type the_extension_shown = Extract<an_extension_value.what_it_shows, { shows: 'the_extension' }>
 type what_an_extension_asks = user_value.what_an_extension_asks
@@ -71,6 +72,11 @@ const the_words_of_what_it_asks = (
 const nothing_asked: ui_value.a_course = { course: 'nothing_asked' }
 
 /** The course of its activation or deactivation, the last she asked. */
+/** The course of the last activity of an action of its mark (UI-3). */
+const the_course_of_an_action = (shown: the_extension_shown, action: string): ui_value.a_course =>
+  shown.courses.filter((one) => one.for.for === 'an_action' && one.for.action === action).at(-1)
+    ?.course ?? nothing_asked
+
 const the_course_of_its_state = (shown: the_extension_shown): ui_value.a_course =>
   shown.courses
     .filter((one) => one.for.for === 'activating' || one.for.for === 'deactivating')
@@ -195,8 +201,27 @@ export const AnExtension = (props: {
                   </section>
                 )}
               </Show>
-              <section aria-label={app.common.the_mark_of(it().extension)} style={the_marks_style}>
-                <h2>{app.common.the_mark_of(it().extension)}</h2>
+              <TheMark extension={it().extension}>
+                <Show when={it().mark.points}>
+                  {(points) => (
+                    <ThePoints
+                      mark={points()}
+                      active={it().is === 'active'}
+                      course_of={(action) => the_course_of_an_action(it(), action)}
+                      taps={(action) => {
+                        screen.happens({
+                          happens: 'she_taps_an_action',
+                          mark: points(),
+                          action,
+                          asked: what_it_asked_now(app.device),
+                        })
+                      }}
+                      opens={(page) => {
+                        screen.happens({ happens: 'she_opens_a_page', mark: points(), page })
+                      }}
+                    />
+                  )}
+                </Show>
                 <Show
                   when={it().mark.held_letters.length + it().mark.happened.length > 0}
                   fallback={<p>{props.texts.no_news}</p>}
@@ -222,7 +247,7 @@ export const AnExtension = (props: {
                     }}
                   />
                 </Show>
-              </section>
+              </TheMark>
             </>
           )}
         </Match>

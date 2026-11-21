@@ -6,8 +6,12 @@
 // texts, its screens read as she reads them. Real timers only, every wait
 // bounded (two seconds).
 
+import type { TheKernelsTraced } from '@q-mino/adapters-common'
 import {
   TheScreens,
+  type AFrameServed,
+  type AFrameToPlace,
+  type AnEventOfALeaf,
   type HerNode,
   type HerTicket,
   type TheDevice,
@@ -70,12 +74,21 @@ export interface ANodeOfTest {
   readonly comes_to_hold: (change: (now: WhatTheNodeHolds) => WhatTheNodeHolds) => void
   /** An activity in progress ends, how in her words; the screens are told. */
   readonly ends: (activity_id: string, how: activities_value.how_it_ended) => void
+  /** What the frames asked, as the fence served it, in order (EXT-16). */
+  readonly frames_asked: () => readonly AFrameServed[]
+  /** What the fence refused, as the kernel's trace keeps it (EXT-4). */
+  readonly frames_fenced: () => readonly TheKernelsTraced[]
+  /** How the node answers a frame: the events of the leaf it asked, given by the story. */
+  readonly answers_frames: (answer: (served: AFrameServed) => readonly AnEventOfALeaf[]) => void
 }
 
 export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): ANodeOfTest => {
   let held: WhatTheNodeHolds = { ...nothing_held, ...at_the_start }
   let handed: readonly ui_value.what_it_asks[] = []
   let listeners: readonly (() => void)[] = []
+  let frames_asked: readonly AFrameServed[] = []
+  let frames_fenced: readonly TheKernelsTraced[] = []
+  let answers_frames: (served: AFrameServed) => readonly AnEventOfALeaf[] = () => []
   const tell = (): void => {
     for (const listener of listeners) listener()
   }
@@ -140,6 +153,16 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
       takes(what)
       return Promise.resolve()
     },
+    a_frame_asks: async function* (served) {
+      frames_asked = [...frames_asked, served]
+      for (const event of answers_frames(served)) {
+        await Promise.resolve()
+        yield event
+      }
+    },
+    a_frame_is_fenced: (traced) => {
+      frames_fenced = [...frames_fenced, traced]
+    },
     when_it_changes: (listener) => {
       listeners = [...listeners, listener]
       return () => {
@@ -153,6 +176,11 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
     activities_asked: () => handed.flatMap((one) => (one.asks === 'an_activity' ? [one.what] : [])),
     holds: () => held,
     comes_to_hold,
+    frames_asked: () => frames_asked,
+    frames_fenced: () => frames_fenced,
+    answers_frames: (answer) => {
+      answers_frames = answer
+    },
     ends: (activity_id, how) => {
       comes_to_hold((now) => ({
         ...now,
@@ -199,10 +227,23 @@ export const opens_the_app = (wiring: {
   readonly node: HerNode
   readonly device: TheDevice
   readonly a_link?: ui_value.what_it_holds
+  /** The documents of the frames the app has (EXT-16); none by default. */
+  readonly documents?: (frame: AFrameToPlace) => string | undefined
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
-  const dispose = render(() => <TheScreens {...wiring} texts={texts.screens} />, root)
+  const dispose = render(
+    () => (
+      <TheScreens
+        node={wiring.node}
+        device={wiring.device}
+        {...(wiring.a_link === undefined ? {} : { a_link: wiring.a_link })}
+        documents={wiring.documents ?? (() => undefined)}
+        texts={texts.screens}
+      />
+    ),
+    root,
+  )
   const shown = (): HTMLElement => {
     const screen = root.querySelector<HTMLElement>('main > div:not([hidden]) > section')
     if (screen === null) throw new Error('no screen shown')

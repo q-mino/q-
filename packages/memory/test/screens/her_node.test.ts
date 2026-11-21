@@ -10,7 +10,12 @@
 // and tells no write: the news' teller here tells nothing, and a change is
 // told by the node's fact log alone.
 
-import { the_manifest_to_accept, the_reads_of_self } from '@q-mino/adapters-common'
+import {
+  the_manifest_to_accept,
+  the_reads_of_self,
+  through_a_frames_fence,
+  type TheKernelsTraced,
+} from '@q-mino/adapters-common'
 import { her_node_over, the_ticket_in_a_link, type HerNode } from '@q-mino/adapters-web'
 import * as zz from '@q-mino/domains/library'
 import type { Bytes, Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
@@ -112,6 +117,7 @@ const annas_phone = async (story: Story) => {
     relays: [the_relay],
   })
   let operations = 0
+  const frames_traced: TheKernelsTraced[] = []
   const her: HerNode = her_node_over({
     clock,
     draws_an_id: () => {
@@ -134,6 +140,12 @@ const annas_phone = async (story: Story) => {
       when_written: () => () => undefined,
     },
     the_log: node.log,
+    the_frames: {
+      on_self: (extension) => node.the_extension(extension)?.on_self,
+      traces: (entry) => {
+        frames_traced.push(entry)
+      },
+    },
   })
 
   /** The node runs until it is quiet (DOM-14, DOM-16): the reactions and the kernel's executors started, what is due delivered, then stopped. */
@@ -162,6 +174,13 @@ const annas_phone = async (story: Story) => {
   return {
     her,
     runs,
+    /** The extensions follow the office (EXT-15): loaded at an activation, as the phone's composition does. */
+    follows_the_office: () => node.the_extensions_follow_the_office(),
+    /** The life of an extension the phone hosts (EXT-15). */
+    the_life_of: (extension: string) => node.the_extension(extension)?.hosted.life().life,
+    /** What the frames' fence traced, through her node (EXT-4). */
+    frames_traced: (): readonly TheKernelsTraced[] => frames_traced,
+
     how_it_ended,
     /** The ticket of a bond as the phone shows it (BND-9). */
     shows: node.the_ticket_shown,
@@ -389,5 +408,66 @@ describe('her node, over a phone of the stack', () => {
     await anna.runs()
     await a_timer(20)()
     expect(told).toBe(told_when_stopped)
+  })
+  test('a frame served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {
+    const anna = await anna_with_her_face(await a_story())
+    const [shown] = await anna.her.the_extensions()
+    if (shown === undefined) throw new Error('no extension shown')
+    await anna.asks_and_it_ends('A1', {
+      activity: 'activate_an_extension',
+      manifest: shown.manifest,
+    })
+    const following = anna.follows_the_office()
+    await until(() => anna.the_life_of('ping_pong') === 'running', 'ping pong loaded')
+    const served = (message: unknown) => {
+      const fenced = through_a_frames_fence({
+        frame: { extension: 'ping_pong', shown: true },
+        active: true,
+        message,
+        now: '2026-11-21T10:00:00+01:00',
+      })
+      if (fenced.fenced !== 'served') throw new Error('the fence refused it')
+      return fenced
+    }
+    const the_first_event_of = async (message: unknown) => {
+      const flow = anna.her.a_frame_asks(served(message))[Symbol.asyncIterator]()
+      const first = await flow.next()
+      await flow.return?.(undefined)
+      return first.done === true ? undefined : first.value
+    }
+    expect(
+      await the_first_event_of({
+        message: 'invoke',
+        id: 'x1',
+        use_case: 'usecase/send_a_ping',
+        version: '1.0.0',
+        input: { bond: 'L_b' },
+      }),
+    ).toMatchObject({ event: 'the_ping_is_sent' })
+    expect(
+      await the_first_event_of({
+        message: 'invoke',
+        id: 'x2',
+        use_case: 'usecase/no_such_leaf',
+        version: '1.0.0',
+        input: {},
+      }),
+    ).toMatchObject({ event: 'invalid_request', reason: 'not_a_leaf' })
+    const refused = through_a_frames_fence({
+      frame: { extension: 'ping_pong', shown: false },
+      active: true,
+      message: {
+        message: 'invoke',
+        id: 'x3',
+        use_case: 'usecase/send_a_ping',
+        version: '1.0.0',
+        input: {},
+      },
+      now: '2026-11-21T10:00:00+01:00',
+    })
+    if (refused.fenced !== 'refused') throw new Error('the fence served a frame not shown')
+    anna.her.a_frame_is_fenced(refused.traced)
+    expect(anna.frames_traced()).toEqual([refused.traced])
+    await following.stop()
   })
 })

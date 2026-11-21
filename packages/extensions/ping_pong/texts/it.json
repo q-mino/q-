@@ -1,0 +1,10 @@
+{
+  "actions": { "ping": "Ping" },
+  "events": {
+    "the_ping_is_sent": "ping mandato, aspetto il pong",
+    "the_ping_cannot_be_sent": "il ping non può partire",
+    "pong": "pong!",
+    "no_response": "nessuna risposta",
+    "the_peer_cannot_answer": "non può rispondere"
+  }
+}

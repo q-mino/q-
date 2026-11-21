@@ -11,8 +11,11 @@
 // operation of its own, drawn before the first attempt (DOM-12); what `user`
 // does not take is thrown, so that the screens tell it. A change is told at
 // each fact the node's log records after it caught up (DOM-17), and at each
-// news written beside it (F6). The phone's composition root gives it the
-// phone it composed (step 25); the stories, a phone of the stack.
+// news written beside it (F6). A frame's message the kernel's fence served
+// is invoked on its extension's leaves mounted on `self`, as the user, under
+// an operation the kernel draws (WEB-23); one it refused is traced. The
+// phone's composition root gives it the phone it composed (step 25); the
+// stories, a phone of the stack.
 
 import {
   the_held_letters,
@@ -24,6 +27,7 @@ import {
 } from '@q-mino/adapters-common'
 import type { their_ticket } from '@q-mino/domains/bonds/address_book/_value.ts'
 import * as zz from '@q-mino/domains/library'
+import type { persona } from '@q-mino/domains/persona/_node.ts'
 import * as self_usecase from '@q-mino/domains/persona/self/_usecase.ts'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { what_an_extension_asks } from '@q-mino/domains/user/_dsl.ts'
@@ -35,7 +39,7 @@ import type * as drafts_usecase from '@q-mino/domains/user/drafts/_usecase.ts'
 import type * as drafts_value from '@q-mino/domains/user/drafts/_value.ts'
 import { z } from 'zod'
 import { the_link_of_a_ticket } from '../ticket_link/index.ts'
-import type { HerNode, HerTicket } from './her_node.ts'
+import type { AFrameServed, AnEventOfALeaf, HerNode, HerTicket } from './her_node.ts'
 
 /** A command of `user`'s, as its use case types it (USR-1). */
 type ACommand<use_case> = zz.CommandUseCasePort<use_case>
@@ -75,6 +79,21 @@ export interface TheNewsOfHerNode {
 }
 
 /**
+ * What the frames reach of the phone (EXT-16, WEB-23): an extension's
+ * leaves mounted on `self`, as the phone hosts it (none if the app does not
+ * carry it), and the kernel's trace (EXT-6).
+ */
+export interface TheFramesOfHerNode {
+  readonly on_self: (
+    extension: string,
+  ) => zz.MountedLeafPort<zz.EntryOf<typeof persona>> | undefined
+  readonly traces: (entry: TheKernelsTraced) => void
+}
+
+/** The scope of a frame's commands on `self` (WEB-23): the persona, and who asks through it. */
+export const the_scope_of_a_frame = 'self/a_frame'
+
+/**
  * What the composition root gives the link, from the phone it composed: the
  * node's clock; the ids of the operations, drawn before the first attempt
  * (`ids_drawn_at_random`, DOM-12); `user`'s ports; `self`'s reads through the
@@ -93,6 +112,7 @@ export interface HerNodesWiring {
   readonly the_extensions_installed: () => readonly string[]
   readonly the_news: TheNewsOfHerNode
   readonly the_log: zz.FactLog
+  readonly the_frames: TheFramesOfHerNode
 }
 
 // `self`'s words, as its read leaves declare their entries.
@@ -422,6 +442,36 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
     }
   }
 
+  /**
+   * What a frame asks (EXT-16, WEB-23): its extension's leaf on `self`,
+   * invoked as the user (`self` is her persona: the frame acts on her node,
+   * shown in the mark as its extension's activity), a command under an
+   * operation the kernel draws in the frames' scope, never the frame's id,
+   * which pairs its exchange only; a read with none. An extension the app
+   * does not carry gives nothing.
+   */
+  const a_frame_asks = async function* (served: AFrameServed): AsyncGenerator<AnEventOfALeaf> {
+    const on_self = wiring.the_frames.on_self(served.invokes.extension)
+    if (on_self === undefined) return
+    const version = zz.semver.parse(served.invokes.version)
+    yield* on_self(
+      {
+        ...now(),
+        caller: { is: 'the_user' },
+        version,
+        ...(served.exchange === 'invoke'
+          ? {
+              operation: {
+                id: zz.operation_id.parse(wiring.draws_an_id()),
+                scope: the_scope_of_a_frame,
+              },
+            }
+          : {}),
+      },
+      { leaf: served.invokes.use_case, input: served.input },
+    )
+  }
+
   return {
     her_faces: async () =>
       (
@@ -458,6 +508,8 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
         ...wiring.the_news.tree_traced().flatMap((entry) => what_happened_in_a_tree(entry) ?? []),
       ]),
     asks,
+    a_frame_asks,
+    a_frame_is_fenced: wiring.the_frames.traces,
     when_it_changes,
   }
 }

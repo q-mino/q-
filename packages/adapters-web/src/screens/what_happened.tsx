@@ -13,7 +13,7 @@ import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { createMemo, For, Match, Show, Switch } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { Back, TheCourse } from './parts.tsx'
+import { Back, TheCourse, TheMark } from './parts.tsx'
 import { the_app, what_it_asked_now, type TheApp } from './the_app.ts'
 
 type what_happened_without_a_fact = user_value.what_happened_without_a_fact
@@ -172,9 +172,6 @@ export const TheNews = (props: {
   )
 }
 
-/** The kernel's mark of an extension around what it holds (EXT-16): its name and a border. */
-export const the_marks_style = { border: '2px solid', padding: '0.5em', margin: '0.5em 0' }
-
 /** The activities a screen asked, as `user` reads them (none not read yet). */
 const the_activities_asked = async (
   app: TheApp,
@@ -278,11 +275,7 @@ export const WhatHappened = (props: { texts: WhatHappenedTexts }) => {
                 {(extension) => (
                   <Show when={it().in_their_marks.find((one) => one.extension === extension)}>
                     {(mark) => (
-                      <section
-                        aria-label={app.common.the_mark_of(extension)}
-                        style={the_marks_style}
-                      >
-                        <h2>{app.common.the_mark_of(extension)}</h2>
+                      <TheMark extension={extension}>
                         <TheNews
                           texts={props.texts.the_news}
                           held_letters={mark().held_letters}
@@ -290,7 +283,7 @@ export const WhatHappened = (props: { texts: WhatHappenedTexts }) => {
                           sends_again={sends_again}
                           puts_aside={puts_aside}
                         />
-                      </section>
+                      </TheMark>
                     )}
                   </Show>
                 )}

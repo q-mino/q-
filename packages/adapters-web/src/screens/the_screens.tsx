@@ -14,7 +14,13 @@ import { AnExtension } from './an_extension.tsx'
 import { AnInvitation } from './an_invitation.tsx'
 import { MyContacts } from './my_contacts.tsx'
 import type { TheScreensTexts } from './texts.ts'
-import { TheAppContext, type TheApp, type TheDevice } from './the_app.ts'
+import {
+  TheAppContext,
+  TheScreenIsShown,
+  type AFrameToPlace,
+  type TheApp,
+  type TheDevice,
+} from './the_app.ts'
 import { TheExtensions } from './the_extensions.tsx'
 import { TheFirstFace } from './the_first_face.tsx'
 import { TheHandshakeAtADistance } from './the_handshake_at_a_distance.tsx'
@@ -28,6 +34,8 @@ export interface TheScreensWiring {
   readonly texts: TheScreensTexts
   /** The link she opened the app with (WEB-1), as the page's address holds it; none without one. */
   readonly a_link?: ui_value.what_it_holds
+  /** The documents of the frames, the files of the extensions' bundles their points `show` (EXT-16, WEB-23): the composition's. */
+  readonly documents: (frame: AFrameToPlace) => string | undefined
 }
 
 export const TheScreens = (props: TheScreensWiring) => {
@@ -79,6 +87,8 @@ export const TheScreens = (props: TheScreensWiring) => {
     changes,
     asks,
     goes,
+    words: (extension) => props.texts.extensions[extension],
+    document_of: (frame) => props.documents(frame),
   }
   onMount(() => {
     set_the_link(props.a_link)
@@ -115,9 +125,14 @@ export const TheScreens = (props: TheScreensWiring) => {
         <Show when={way()} fallback={<p role="status">{props.texts.common.opening}</p>}>
           {(the_way) => (
             <For each={the_way()}>
-              {(screen, index) => (
-                <div hidden={index() !== the_way().length - 1}>{the_screen(screen)}</div>
-              )}
+              {(screen, index) => {
+                const shown = () => index() === the_way().length - 1
+                return (
+                  <TheScreenIsShown.Provider value={shown}>
+                    <div hidden={!shown()}>{the_screen(screen)}</div>
+                  </TheScreenIsShown.Provider>
+                )
+              }}
             </For>
           )}
         </Show>

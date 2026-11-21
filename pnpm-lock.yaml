@@ -203,9 +203,15 @@ importers:
       '@q-mino/adapters-web':
         specifier: workspace:*
         version: link:../adapters-web
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../boundary
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../domains
+      '@q-mino/ping_pong':
+        specifier: workspace:*
+        version: link:../extensions/ping_pong
       solid-js:
         specifier: ^1.9.18
         version: 1.9.18
