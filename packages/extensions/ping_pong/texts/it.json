@@ -5,6 +5,7 @@
     "the_ping_cannot_be_sent": "il ping non può partire",
     "pong": "pong!",
     "no_response": "nessuna risposta",
-    "the_peer_cannot_answer": "non può rispondere"
+    "the_peer_cannot_answer": "non può rispondere",
+    "called_off": "ping annullato"
   }
 }
