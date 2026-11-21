@@ -183,7 +183,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
     primitives: world,
     mailbox: transport.port,
     collect,
-    extensions: [{ manifest: ping_pong_manifest, realm: ping_pong }],
+    extensions: [{ manifest: ping_pong_manifest, runs: 'in_process', realm: ping_pong }],
     relays: [the_relay],
   })
   const { address_book, user } = node
@@ -397,7 +397,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
      * loaded: what its load came to.
      */
     updated_to: async (manifest: unknown) => {
-      await node.updated_to([{ manifest, realm: ping_pong }])
+      await node.updated_to([{ manifest, runs: 'in_process', realm: ping_pong }])
       return the_extension().hosted.load()
     },
     /** The user taps "Ping" on a bond (PNG-4): ping pong's leaf on `self`, through its mounted port; the ping its first event names. */

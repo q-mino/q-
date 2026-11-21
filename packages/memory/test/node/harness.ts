@@ -379,7 +379,10 @@ export const a_node = async (story: Story, start: Start) => {
     primitives: world,
     mailbox: transport.port,
     collect,
-    extensions: carried === undefined ? [] : [{ manifest: carried.manifest, realm: carried.realm }],
+    extensions:
+      carried === undefined
+        ? []
+        : [{ manifest: carried.manifest, runs: 'in_process', realm: carried.realm }],
     relays: [the_relay],
   })
   const { address_book, user } = node
@@ -971,7 +974,7 @@ export const a_node = async (story: Story, start: Start) => {
     updated_to: async (manifest: unknown) => {
       if (carried === undefined)
         throw new Error(`no extension is installed on ${start.name}'s node`)
-      await node.updated_to([{ manifest, realm: carried.realm }])
+      await node.updated_to([{ manifest, runs: 'in_process', realm: carried.realm }])
       return the_extension().hosted.load()
     },
     /** A greeting as greetings keeps it in its partition (`state/greeting/<id>`). */

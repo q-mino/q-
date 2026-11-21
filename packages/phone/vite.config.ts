@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import solid from 'vite-plugin-solid'
+import { the_realms } from './build/the_realms.ts'
 
 const git = (command: string): string => {
   try {
@@ -16,6 +17,10 @@ const version = process.env['Q_VERSION'] ?? git('describe --tags --always --dirt
 const commit = process.env['GITHUB_SHA'] ?? git('rev-parse HEAD')
 // 'release' on q-mino, 'test' on q-mino-prova, 'dev' locally.
 const channel = process.env['Q_CHANNEL'] ?? 'dev'
+// The relay the node's tickets declare (PWA-2): the release's; locally, an
+// address of no relay (`.test`, RFC 2606), since no public relay runs before
+// step 24 (A's): the node starts and collects nothing.
+const relay = process.env['Q_RELAY'] ?? 'https://relay.cumino.test'
 
 export default defineConfig({
   base: '/q-/',
@@ -23,9 +28,12 @@ export default defineConfig({
     __Q_VERSION__: JSON.stringify(version),
     __Q_COMMIT__: JSON.stringify(commit),
     __Q_CHANNEL__: JSON.stringify(channel),
+    __Q_RELAY__: JSON.stringify(relay),
   },
   plugins: [
     solid(),
+    // The extensions the app carries, each its realm bundled, and the app's policy (PWA-3, PWA-4).
+    ...the_realms([{ name: 'ping_pong', entry: 'src/realms/ping_pong.ts' }], relay),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src/sw',

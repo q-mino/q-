@@ -398,7 +398,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         clock: time.clock,
         elapsed: time.elapsed,
         primitives: a_world_of(factory.primitives, start.phone),
-        extensions: [{ manifest: ping_pong_manifest, realm: ping_pong }],
+        extensions: [{ manifest: ping_pong_manifest, runs: 'in_process', realm: ping_pong }],
         relays: [the_relay],
       },
       release: { the_realm_s_time: the_realm_s_time(time), a_while: a_timer(5) },
