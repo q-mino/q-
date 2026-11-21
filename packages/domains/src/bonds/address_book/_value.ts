@@ -205,6 +205,16 @@ export const my_introduction = value.my_introduction
 export type my_introduction = z.output<typeof my_introduction>
 
 /**
+ * Whether their introduction came (BND-10): not yet, when the bond came of
+ * my opening their ticket; received, with the time their letter declares
+ * (their claim, PER-13), the one the window of a crossing is measured from.
+ *
+ * @see {@link value.their_introduction}
+ */
+export const their_introduction = value.their_introduction
+export type their_introduction = z.output<typeof their_introduction>
+
+/**
  * The life of a bond (BND-7): its ticket first, being prepared while the
  * safe draws my mailbox's key, then ready to be shown, until it is used,
  * and the bond kept, or it expires; kept, in the user's list; removed, by
