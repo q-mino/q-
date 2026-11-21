@@ -57,7 +57,7 @@ type TheKernelsEntryContext = zz.EntryOf<typeof persona>
 export type APersonasTree = zz.TreePortByPath<TheKernelsEntryContext>
 
 /** An extension's leaves mounted on a persona of the kernel (PER-6, "A mounted folder"). */
-export type AnExtensionsLeaves = zz.MountedLeafPort<TheKernelsEntryContext>
+export type AnExtensionsLeaves = zz.PortByPath<TheKernelsEntryContext>
 
 /** An event of a leaf, the kernel's or an extension's: what a response carries (F7). */
 type ALeafsEvent = { readonly event: string } & Readonly<Record<string, unknown>>
@@ -310,6 +310,7 @@ export const the_kernels_entry = (
     const context = {
       ...when(),
       caller: the_personas_caller(caller, asked.came_to),
+      declared_at: request.declared_at,
       version: zz.semver.parse(request.invokes.version),
       operation: {
         id: zz.operation_id.parse(request.identity),

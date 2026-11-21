@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { date_time } from '../library/index.ts'
 
 // The values of the persona base (PER-4, DOM-25): above every persona, what
 // every request takes from the kernel's entry, which builds it from the
@@ -47,3 +48,11 @@ export const caller = z.discriminatedUnion('is', [
     to_my_mailbox: deposit_address,
   }),
 ])
+
+/**
+ * When the request says it was asked (PER-13, PER-23), beside who asks: a
+ * letter's declared time, its sender's claim (Dario's introduction, written
+ * at 10:00:15 by his clock); the user's request from the app, the instant
+ * of her gesture, by my clock.
+ */
+export const declared_at = date_time

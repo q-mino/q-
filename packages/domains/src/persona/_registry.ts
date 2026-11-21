@@ -13,5 +13,6 @@ export const registry = {
   'persona/value/deposit_address': value.deposit_address,
   'persona/value/annotation': value.annotation,
   'persona/value/caller': value.caller,
+  'persona/value/declared_at': value.declared_at,
   'persona/node/persona': node.persona,
 } satisfies zz.Registry

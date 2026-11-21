@@ -36,17 +36,36 @@ export const the_expiry_of_a_ticket_asked_at = (now: date_time): date_time =>
   date_time.parse(new Date(Date.parse(now) + a_ticket_s_hours * 3_600_000).toISOString())
 
 /**
- * The window of a crossing (BND-10): two tickets opened by both sides within
- * two minutes of each other are a handshake in person.
+ * The window of a crossing (BND-10): their introduction declares a time
+ * within two minutes of my opening their ticket, before or after it, and
+ * the handshake is in person.
  */
 export const a_crossing_s_minutes = 2
 
-/** The handshake began within the window of a crossing before this instant (BND-10). */
-export const the_handshake_began_within_two_minutes_of =
+/** Two instants within the window of a crossing of each other, in either order (BND-10). */
+const within_the_window_of_a_crossing = (one: date_time, other: date_time): boolean =>
+  Math.abs(Date.parse(one) - Date.parse(other)) <= a_crossing_s_minutes * 60_000
+
+/**
+ * I opened their ticket within the window of a crossing of the time their
+ * introduction declares (BND-10): my opening, when my introduction was
+ * sent, by my clock; their time, their claim (PER-13).
+ */
+export const i_opened_their_ticket_within_the_window_of_a_crossing_of =
+  (declared_at: date_time) =>
+  (the_bond: value.bond | undefined): boolean =>
+    the_bond?.my_introduction?.state === 'sent' &&
+    within_the_window_of_a_crossing(the_bond.my_introduction.at, declared_at)
+
+/**
+ * Their introduction, come first, declares a time within the window of a
+ * crossing of this instant, my opening their ticket (BND-10).
+ */
+export const their_introduction_is_declared_within_the_window_of_a_crossing_of =
   (now: date_time) =>
   (the_bond: value.bond | undefined): boolean =>
-    the_bond?.handshake !== undefined &&
-    Date.parse(now) - Date.parse(the_bond.handshake.at) <= a_crossing_s_minutes * 60_000
+    the_bond?.their_introduction?.state === 'received' &&
+    within_the_window_of_a_crossing(the_bond.their_introduction.declared_at, now)
 
 /**
  * What my face signs to make a ticket's secret (BND-9): the text `q-ticket/`

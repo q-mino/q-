@@ -1873,7 +1873,7 @@ const runtime_tree_ports = (
  * The port of a tree by path: what the entry gives the top of the tree,
  * with the version the request names and, for a command, its operation and
  * correlation; the leaf, by its path in the surface, and its input; its
- * events out. The shape of a `MountedLeafPort`.
+ * events out. The shape of a `PortByPath`.
  */
 export type TreePortByPath<entry> = <const version extends Semver>(
   context: entry &
@@ -2037,23 +2037,29 @@ export interface OutsideTheSurface {
   readonly event: unknown
 }
 
-/** An event of a leaf mounted from outside: its unit's, as its surface types it, a closing of this tree's nodes, or a base event. */
-export type MountedLeafEvent = { readonly event: string } & Readonly<Record<string, unknown>>
+/**
+ * An event of a leaf asked for by its path (`PortByPath`): its own, as its
+ * surface types it for a leaf mounted from outside; a closing of the nodes
+ * of its path; or a base event.
+ */
+export type EventByPath = { readonly event: string } & Readonly<Record<string, unknown>>
 
 /**
- * The port of the leaves mounted below a folder: what the entry gives the
- * top of this tree, with the version the request names and, for a command,
- * its operation and correlation; the leaf, by its path in the surface, and
- * its input; its events out.
+ * A port by path (PER-6, "A mounted folder"; A, 21 Nov 2026: one type for
+ * every port that takes the leaf in the request): what the entry gives the
+ * top of the tree, with the version the request names and, for a command,
+ * its operation and correlation; the leaf, by its path (in the surface, for
+ * leaves mounted from outside), and its input; its events out. The type of
+ * `mounted_leaf_ports`' port.
  */
-export type MountedLeafPort<entry> = <const version extends Semver>(
+export type PortByPath<entry> = <const version extends Semver>(
   context: entry &
     VersionContext<version> & {
       readonly operation?: Operation
       readonly correlation?: correlation
     },
   request: { readonly leaf: string; readonly input: unknown },
-) => AsyncIterable<MountedLeafEvent>
+) => AsyncIterable<EventByPath>
 
 /**
  * The port of leaves mounted from outside below a folder of a tree (PER-6,
@@ -2089,7 +2095,7 @@ export function mounted_leaf_ports<const top>(ports: {
   readonly surface: MountedSurface
   readonly invokes: (invocation: MountedInvocation) => AsyncIterable<unknown>
   readonly outside_the_surface: (event: OutsideTheSurface) => void
-}) => MountedLeafPort<EntryOf<top>>
+}) => PortByPath<EntryOf<top>>
 
 // The body, typed by what it meets at runtime (DOM-25).
 export function mounted_leaf_ports(ports: {
@@ -2151,7 +2157,7 @@ export function mounted_leaf_ports(ports: {
     if (wiring.length > 0) throw new Error([...new Set(wiring)].join('\n'))
     const oldest = Math.min(...numbers)
 
-    return async function* (context: unknown, request: unknown): AsyncIterable<MountedLeafEvent> {
+    return async function* (context: unknown, request: unknown): AsyncIterable<EventByPath> {
       const entered = entry_of(context)
       const { given, operation, version } = entered
       // The correlation the entry gives, if any: one that is none is not handed on.

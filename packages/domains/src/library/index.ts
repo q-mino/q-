@@ -315,8 +315,8 @@ export type {
   MountedLeaf,
   MountedSurface,
   MountedInvocation,
-  MountedLeafEvent,
-  MountedLeafPort,
+  EventByPath,
+  PortByPath,
   OutsideTheSurface,
   TreePortByPath,
 } from './tree_port.ts'
