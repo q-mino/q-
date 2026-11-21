@@ -44,6 +44,7 @@ export const registry = {
   'bonds/address_book/value/handshake': value.handshake,
   'bonds/address_book/value/confirmation': value.confirmation,
   'bonds/address_book/value/my_introduction': value.my_introduction,
+  'bonds/address_book/value/their_introduction': value.their_introduction,
   'bonds/address_book/value/bond_status': value.bond_status,
   'bonds/address_book/value/ticket_being_prepared': value.ticket_being_prepared,
   'bonds/address_book/value/ticket_ready': value.ticket_ready,
@@ -100,8 +101,10 @@ export const registry = {
   'bonds/address_book/predicate/my_introduction_is_sent': predicate.my_introduction_is_sent,
   'bonds/address_book/predicate/the_confirmation_is_received':
     predicate.the_confirmation_is_received,
-  'bonds/address_book/predicate/the_handshake_began_within_two_minutes_of':
-    predicate.the_handshake_began_within_two_minutes_of,
+  'bonds/address_book/predicate/i_opened_their_ticket_within_the_window_of_a_crossing_of':
+    predicate.i_opened_their_ticket_within_the_window_of_a_crossing_of,
+  'bonds/address_book/predicate/their_introduction_is_declared_within_the_window_of_a_crossing_of':
+    predicate.their_introduction_is_declared_within_the_window_of_a_crossing_of,
   'bonds/address_book/effect/wait_until_the_ticket_expires': effect.wait_until_the_ticket_expires,
   'bonds/address_book/effect/send_my_introduction': effect.send_my_introduction,
   'bonds/address_book/selection/bond/the_bond_has_this_id': bond_selection.the_bond_has_this_id,
@@ -134,10 +137,10 @@ export const registry = {
   'bonds/address_book/command/let_a_ticket_expire': command.let_a_ticket_expire,
   'bonds/address_book/command/let_a_ticket_expire_input': command.let_a_ticket_expire_input,
   'bonds/address_book/command/their_introduction_came_first': command.their_introduction_came_first,
-  'bonds/address_book/command/their_introduction_came_first_within_two_minutes':
-    command.their_introduction_came_first_within_two_minutes,
-  'bonds/address_book/command/their_introduction_came_first_earlier':
-    command.their_introduction_came_first_earlier,
+  'bonds/address_book/command/their_introduction_came_first_within_the_window_of_a_crossing':
+    command.their_introduction_came_first_within_the_window_of_a_crossing,
+  'bonds/address_book/command/their_introduction_came_first_outside_the_window_of_a_crossing':
+    command.their_introduction_came_first_outside_the_window_of_a_crossing,
   'bonds/address_book/command/my_introduction_was_sent_already':
     command.my_introduction_was_sent_already,
   'bonds/address_book/command/open_their_ticket': command.open_their_ticket,
@@ -145,10 +148,10 @@ export const registry = {
   'bonds/address_book/command/my_ticket_is_ready_with_its_secret':
     command.my_ticket_is_ready_with_its_secret,
   'bonds/address_book/command/i_opened_their_ticket_first': command.i_opened_their_ticket_first,
-  'bonds/address_book/command/i_opened_their_ticket_first_within_two_minutes':
-    command.i_opened_their_ticket_first_within_two_minutes,
-  'bonds/address_book/command/i_opened_their_ticket_first_earlier':
-    command.i_opened_their_ticket_first_earlier,
+  'bonds/address_book/command/i_opened_their_ticket_first_within_the_window_of_a_crossing':
+    command.i_opened_their_ticket_first_within_the_window_of_a_crossing,
+  'bonds/address_book/command/i_opened_their_ticket_first_outside_the_window_of_a_crossing':
+    command.i_opened_their_ticket_first_outside_the_window_of_a_crossing,
   'bonds/address_book/command/their_introduction_came_already':
     command.their_introduction_came_already,
   'bonds/address_book/command/accept_their_introduction': command.accept_their_introduction,

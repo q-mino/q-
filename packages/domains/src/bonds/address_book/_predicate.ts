@@ -137,13 +137,27 @@ export const the_confirmation_is_received =
 export type the_confirmation_is_received = z.output<typeof the_confirmation_is_received>
 
 /**
- * The handshake of this bond began within two minutes of this instant
- * (BND-10): the two tickets crossed, in person.
+ * I opened their ticket on this bond within the window of a crossing of the
+ * time their introduction declares (BND-10): the two tickets crossed, in
+ * person. The time is theirs, a claim (PER-13).
  *
- * @see {@link predicate.the_handshake_began_within_two_minutes_of}
+ * @see {@link predicate.i_opened_their_ticket_within_the_window_of_a_crossing_of}
  */
-export const the_handshake_began_within_two_minutes_of =
-  predicate.the_handshake_began_within_two_minutes_of.brand<'bonds/address_book/predicate/the_handshake_began_within_two_minutes_of'>()
-export type the_handshake_began_within_two_minutes_of = z.output<
-  typeof the_handshake_began_within_two_minutes_of
+export const i_opened_their_ticket_within_the_window_of_a_crossing_of =
+  predicate.i_opened_their_ticket_within_the_window_of_a_crossing_of.brand<'bonds/address_book/predicate/i_opened_their_ticket_within_the_window_of_a_crossing_of'>()
+export type i_opened_their_ticket_within_the_window_of_a_crossing_of = z.output<
+  typeof i_opened_their_ticket_within_the_window_of_a_crossing_of
+>
+
+/**
+ * Their introduction on this bond, come first, declares a time within the
+ * window of a crossing of this instant, my opening their ticket (BND-10):
+ * the two tickets crossed, in person.
+ *
+ * @see {@link predicate.their_introduction_is_declared_within_the_window_of_a_crossing_of}
+ */
+export const their_introduction_is_declared_within_the_window_of_a_crossing_of =
+  predicate.their_introduction_is_declared_within_the_window_of_a_crossing_of.brand<'bonds/address_book/predicate/their_introduction_is_declared_within_the_window_of_a_crossing_of'>()
+export type their_introduction_is_declared_within_the_window_of_a_crossing_of = z.output<
+  typeof their_introduction_is_declared_within_the_window_of_a_crossing_of
 >
