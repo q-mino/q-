@@ -263,7 +263,8 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **25. `phone`** — L · 320k · `step/25-phone`
 
 - Goal: the PWA's composition root, the kernel with the preinstalled extensions (ping pong, off); the composition check before the first request (a library piece, at its trigger), each extension's manifest checked with it; the service worker and the update with notice.
-- Rules: CFG-1, CFG-2, CFG-4, DOM-9.
+- Rules: CFG-1, CFG-2, CFG-4, DOM-9; PWA-1..PWA-6, written by the step (21 Nov 2026), with STK-1, WEB-19, WEB-23 amended.
+- Checks: the PWA starts locally (`pnpm build`, the preview opened and closed within a limit): the first face, ping pong activated and loaded in its frame under the app's policy, "use here"; a node whose extensions' manifests are wrong does not start, and says why for every one (`phone/test/node/the_start.test.ts`).
 
 ### (d) Delivery
 

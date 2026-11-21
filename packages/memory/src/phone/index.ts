@@ -213,13 +213,22 @@ export interface TheRealmsHost {
 
 /**
  * An extension the app carries (EXT-9, CFG-3): its manifest as its build
- * writes it (data, composed at the start, EXT-4), and its realm, its side of
- * the boundary as its package gives it, loaded in process (EXT-13).
+ * writes it (data, composed at the start, EXT-4), and how the kernel reaches
+ * its realm, the configurator's (EXT-13): **in process**, its side of the
+ * boundary as its package gives it, loaded in the kernel's realm (`memory`,
+ * the oracle); or **isolated**, a transport to a realm of its own, which
+ * keeps its clock and its time (`phone`, a sandboxed frame, PWA-3).
+ * [Q, C, 21 Nov 2026] (step 25)
  */
-export interface AnExtensionOfTheApp {
-  readonly manifest: unknown
-  readonly realm: (host: TheRealmsHost) => { readonly receive: (message: unknown) => Promise<void> }
-}
+export type AnExtensionOfTheApp =
+  | {
+      readonly manifest: unknown
+      readonly runs: 'in_process'
+      readonly realm: (host: TheRealmsHost) => {
+        readonly receive: (message: unknown) => Promise<void>
+      }
+    }
+  | { readonly manifest: unknown; readonly runs: 'isolated'; readonly transport: Transport }
 
 /**
  * The world outside the phone: its clock; the time that passes, which wakes
@@ -300,20 +309,40 @@ export interface AnExtensionHostedOnThePhone {
   readonly on_known: AnExtensionsLeaves
 }
 
-/** The extensions of the app composed (EXT-4, EXT-3: each name once), or the start stops with the composition's message (CFG-2). */
+/**
+ * The extensions of the app composed (EXT-4, EXT-3: each name once), or the
+ * start stops with the composition's message (CFG-2): every extension's
+ * faults, one message, its lines in the order the app carries them, so that
+ * a second extension's fault is not seen only once the first's is fixed (as
+ * one extension's faults are told together, EXT-4). [Q, C, 21 Nov 2026]
+ * (step 25; until then the first extension's fault stopped it alone)
+ */
 const the_compositions_of = (
   extensions: readonly AnExtensionOfTheApp[],
-): readonly { readonly composed: Composed; readonly carried: AnExtensionOfTheApp }[] =>
-  extensions.reduce<{ readonly composed: Composed; readonly carried: AnExtensionOfTheApp }[]>(
-    (composed, carried) => {
+): readonly { readonly composed: Composed; readonly carried: AnExtensionOfTheApp }[] => {
+  const told = extensions.reduce<{
+    readonly composed: readonly {
+      readonly composed: Composed
+      readonly carried: AnExtensionOfTheApp
+    }[]
+    readonly faults: readonly string[]
+  }>(
+    (so_far, carried) => {
       const composition = compose_an_extension(
-        the_kernels_offer(composed.map((each) => each.composed.manifest.name)),
+        the_kernels_offer(so_far.composed.map((each) => each.composed.manifest.name)),
       )(carried.manifest)
-      if (composition.composition === 'a_fault') throw new Error(composition.message)
-      return [...composed, { composed: composition.composed, carried }]
+      return composition.composition === 'a_fault'
+        ? { ...so_far, faults: [...so_far.faults, composition.message] }
+        : {
+            ...so_far,
+            composed: [...so_far.composed, { composed: composition.composed, carried }],
+          }
     },
-    [],
+    { composed: [], faults: [] },
   )
+  if (told.faults.length > 0) throw new Error(told.faults.join('\n'))
+  return told.composed
+}
 
 export const phone =
   <partitions extends APhonesPartitions>(kept: PhoneStorage<partitions>, release: Release = {}) =>
@@ -434,13 +463,21 @@ export const phone =
 
     // The traces (F6), kept by the phone in memory for the news (USR-8):
     // the kernel's (EXT-6), the trees' (PER-14), the extensions' notices (EXT-2).
+    // Each written, whoever listens is told (`when_written`, WEB-19: her
+    // screens read the news again). [Q, C, 21 Nov 2026] (step 25)
+    const listening = new Set<() => void>()
+    const written = (): void => {
+      for (const tell of listening) tell()
+    }
     const traced: TheKernelsTraced[] = []
     const trace = (entry: TheKernelsTraced): void => {
       traced.push(entry)
+      written()
     }
     const tree_traced: zz.Traced<unknown>[] = []
     const tree_trace = (entry: zz.Traced<unknown>): void => {
       tree_traced.push(entry)
+      written()
     }
     const notices: ANotice[] = []
 
@@ -664,9 +701,10 @@ export const phone =
         carried: AnExtensionOfTheApp,
       ): AnExtensionHostedOnThePhone => {
         const name = extension.manifest.name
-        const in_its_realm = in_process((send) =>
-          carried.realm({ clock, elapsed: the_realm_s_time, send }),
-        )
+        const in_its_realm =
+          carried.runs === 'isolated'
+            ? carried.transport
+            : in_process((send) => carried.realm({ clock, elapsed: the_realm_s_time, send }))
         const hosted = a_hosted_extension({
           composed: extension,
           transport:
@@ -687,6 +725,7 @@ export const phone =
           trace,
           notices: (notice) => {
             notices.push(notice)
+            written()
           },
           clock,
           a_while,
@@ -929,8 +968,17 @@ export const phone =
       partitions: storage,
       /** The kernel's trace (EXT-6), the trees' (PER-14), the extensions' notices (EXT-2), in order. */
       traced: a_view_of(traced),
+      /** Writes an entry of the kernel's trace (EXT-6): a frame's fence's, which the screens' door refuses (EXT-4, WEB-23). */
+      trace,
       tree_traced: a_view_of(tree_traced),
       notices: a_view_of(notices),
+      /** Tells, at each trace or notice written, until the returned function is called (WEB-19). */
+      when_written: (tell: () => void): (() => void) => {
+        listening.add(tell)
+        return () => {
+          listening.delete(tell)
+        }
+      },
       /** One pass of the collector (DOM-17): its first fault thrown once it is over. */
       collects,
       /** What the collector handed the entry, in order. */

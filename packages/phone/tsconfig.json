@@ -5,6 +5,16 @@
     "rootDir": ".",
     "outDir": ".tsbuild/config"
   },
-  "include": ["vite.config.ts"],
-  "references": [{ "path": "./src" }, { "path": "./src/sw" }]
+  "include": ["vite.config.ts", "build"],
+  "references": [
+    {
+      "path": "./src"
+    },
+    {
+      "path": "./src/sw"
+    },
+    {
+      "path": "../adapters-web"
+    }
+  ]
 }
