@@ -118,9 +118,10 @@ export type TheKernelsTrace = (entry: TheKernelsTraced) => void
 
 /**
  * Where the kernel's entry sends a request (EXT-6, F8), an ADT: to the
- * kernel's persona (its use cases are never silent, D78.2); to an
- * extension's leaf, by its name, through the boundary; or nowhere, the
- * node silent, with the case its trace keeps.
+ * kernel's persona, whose use cases always answer a bonded face (D78.2),
+ * while toward a face with no bond the node is silent, the kernel included
+ * (F8, V16); to an extension's leaf, by its name, through the boundary; or
+ * nowhere, the node silent, with the case its trace keeps.
  */
 export type Routed =
   | { readonly routed: 'to_the_kernel' }
