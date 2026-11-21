@@ -6,13 +6,15 @@
 export * from './oracle/index.ts'
 export { relay, the_desks_interface, the_scope_of_a_deposit } from './relay/index.ts'
 export type { HashOfACollectSecret, Relay, Release, Shown, World } from './relay/index.ts'
-export { a_new_phone, phone } from './phone/index.ts'
+export { a_new_phone, on_the_cell, phone } from './phone/index.ts'
 export type {
   AnExtensionHostedOnThePhone,
   AnExtensionOfTheApp,
+  APhonesPartitions,
   Phone,
   PhoneCell,
   PhoneState,
+  PhoneStorage,
   Release as PhoneRelease,
   TheRealmsHost,
   World as PhoneWorld,

@@ -14,6 +14,14 @@
 // (DOM-11). A story observes what the ports give: the events of a command,
 // the entries of a read, the facts of the log, the executor's letters, the
 // envelopes at the relay; never the cell's state. The clock is the story's.
+//
+// The harness is parametrized by a storage factory (TST-1): each phone's,
+// the oracle's cell unless a suite gives another (`on_indexeddb.test.ts`),
+// the domain's stories then its conformance suite. The factory gives the
+// ports of the safe and of the requests over its storage, the node's
+// versions, log, outbox and executors' state, and what a story reads of
+// it, each as a function: the entries queued, those held, and the time its
+// storage takes to run its course (`quiet`).
 
 import * as zz from '@q-mino/domains/library'
 import { majors as safe_majors } from '@q-mino/domains/seals/safe/_majors.ts'
@@ -63,7 +71,7 @@ import {
   type SealsState,
 } from '../../src/index.ts'
 import { a_relay, hash, type RelayUnderTest } from '../relay/harness.ts'
-import { the_safe_s_machine } from '../seals/harness.ts'
+import { the_safe_s_machine, type AKernelsStorage } from '../seals/harness.ts'
 
 /** The zone of the phones' clock, in the stories. */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -260,29 +268,62 @@ export interface Sent {
   readonly operation?: string
 }
 
+/**
+ * What a phone of a story keeps: the ports of the safe and of the requests,
+ * the node's versions, log, outbox and executors' state; its entries queued
+ * and held.
+ */
+export type APostsStorage = Pick<
+  AKernelsStorage,
+  'safe' | 'post' | 'stored_versions' | 'log' | 'outbox' | 'executor' | 'queued' | 'held' | 'quiet'
+>
+
+/** How a suite makes the storage of a story's phone (TST-1): the oracle's cell, or an adapter's. */
+export type APostsFactory = (start: { readonly redelivered?: boolean }) => Promise<APostsStorage>
+
+/** A phone's storage on a new cell of the oracle: the safe and the requests, side by side (MBX-7), every fact and entry given twice if asked (TST-4). */
+export const the_post_on_a_cell: APostsFactory = (start) => {
+  const made = cell<PhoneState>({
+    initial: { ...no_secret, ...no_request },
+    ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
+  })
+  return Promise.resolve({
+    safe: (primitives: Primitives) =>
+      seals_ports(seen_by<SealsState, PhoneState>(made), primitives),
+    post: post_ports(seen_by<PostState, PhoneState>(made)),
+    stored_versions: made.stored_versions,
+    log: log(made),
+    outbox: made.outbox,
+    executor: made.executor,
+    queued: () => Promise.resolve(made.entries()),
+    held: () => Promise.resolve(made.held()),
+    quiet,
+  })
+}
+
 /** A letter a phone opened at its mailbox, with the deposit it came in. */
 export interface Opened {
   readonly deposit_id: string
   readonly opened: post_value.opened_envelope
 }
 
-/** A phone of a story, over a primitives port, its relay and its clock, as the oracle starts it. */
+/** A phone of a story, over a primitives port, its relay and its clock, on the storage a suite makes: the oracle's cell, unless another. */
 export const a_phone = async (
   primitives: Primitives,
   relay: RelayUnderTest,
   time: Clock,
   start: Start,
+  storage: APostsFactory = the_post_on_a_cell,
 ) => {
-  const made = cell<PhoneState>({
-    initial: { ...no_secret, ...no_request },
-    ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
-  })
+  const made = await storage(
+    start.redelivered === undefined ? {} : { redelivered: start.redelivered },
+  )
   const world = a_world_of(primitives, start.phone)
   const versions = await zz.versions([safe_majors, requests_majors])({
     stored: made.stored_versions,
   })
-  const safe = seals_ports(seen_by<SealsState, PhoneState>(made), world)(versions)
-  const post = post_ports(seen_by<PostState, PhoneState>(made))(versions)
+  const safe = made.safe(world)(versions)
+  const post = made.post(versions)
   const when = () => ({ now: zz.in_zone(time_zone)(time.now()), time_zone })
   let operations = 0
   /** The context of a command sent under an operation and a scope (DOM-11), its fingerprint over its use case's path and its input. */
@@ -325,7 +366,7 @@ export const a_phone = async (
     hash: the_hash_over(world),
   })
   const transport = a_transport(relay, time.now)
-  const facts = log(made)
+  const facts = made.log
   const the_safe_s_executor = zz.effect_executor({
     registry: safe_registry,
     versions,
@@ -357,7 +398,7 @@ export const a_phone = async (
       the_safe_s_executor({ ...ports, returns: safe }),
       the_post_s_executor({ ...ports, returns: post }),
     ]
-    await quiet()
+    await made.quiet()
     for (const each of running) await each.stop()
   }
   // The face of the phone, made in the safe as the first start makes it
@@ -609,7 +650,7 @@ export const a_phone = async (
       return [...kept.values()]
     },
     /** The entries queued with the facts, in order (DOM-14). */
-    queued: made.entries,
+    queued: made.queued,
     /** The entries the executors hold: their dead letters (DOM-15). */
     held: made.held,
   }
@@ -640,25 +681,36 @@ export const entries_of = <entry>(
 export const a_story = async (
   primitives: Primitives,
   options: { readonly redelivered?: boolean } = {},
+  storage: APostsFactory = the_post_on_a_cell,
 ) => {
   const relay = await a_relay()
   const time = a_clock('2026-11-20T10:00:00Z')
-  const anna = await a_phone(primitives, relay, time, {
-    phone: 1,
-    face_id: 'F_a',
-    collect_secret: 'anna-R',
-    ...(options.redelivered === undefined ? {} : { redelivered: options.redelivered }),
-  })
-  const bruno = await a_phone(primitives, relay, time, {
-    phone: 2,
-    face_id: 'F_b',
-    collect_secret: 'bruno-R',
-  })
-  const carla = await a_phone(primitives, relay, time, {
-    phone: 3,
-    face_id: 'F_c',
-    collect_secret: 'carla-R',
-  })
+  const anna = await a_phone(
+    primitives,
+    relay,
+    time,
+    {
+      phone: 1,
+      face_id: 'F_a',
+      collect_secret: 'anna-R',
+      ...(options.redelivered === undefined ? {} : { redelivered: options.redelivered }),
+    },
+    storage,
+  )
+  const bruno = await a_phone(
+    primitives,
+    relay,
+    time,
+    { phone: 2, face_id: 'F_b', collect_secret: 'bruno-R' },
+    storage,
+  )
+  const carla = await a_phone(
+    primitives,
+    relay,
+    time,
+    { phone: 3, face_id: 'F_c', collect_secret: 'carla-R' },
+    storage,
+  )
   /** The bonds each phone keeps (BND-4): the face's key, and the mailbox the bond gives for it. */
   const bonds_of = {
     anna: new Map([[bruno.key, bruno.mailbox]]),

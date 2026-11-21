@@ -51,8 +51,11 @@ import {
   a_new_phone,
   a_stack,
   cell,
+  on_the_cell,
+  type APhonesPartitions,
   type Phone,
   type PhoneState,
+  type PhoneStorage,
   no_deposit,
   type MailboxState,
   type Stack,
@@ -83,6 +86,39 @@ export interface ARelayOfTheStory {
 export interface AFactory {
   readonly primitives: Primitives
   readonly relay: (world: TheStacksWorld) => Promise<ARelayOfTheStory>
+  /** What each phone of the story keeps: a new oracle's cell, unless the factory gives another storage (step 21). */
+  readonly storage?: () => Promise<AStorageUnderTest>
+}
+
+/**
+ * What a phone of the story keeps (STK-1: steps 21 and 25 vary it), and what
+ * a round reads of it: its position, the entries and the parts it holds.
+ */
+export interface AStorageUnderTest {
+  readonly storage: PhoneStorage
+  readonly position: () => Promise<zz.position>
+  readonly held: () => Promise<readonly zz.HeldEntry[]>
+  readonly held_parts: () => Promise<readonly zz.HeldPart[]>
+}
+
+/** An extension's partition as the phone's port reads it whole (EXT-14): its records, in its order. */
+const the_records_of = async (
+  node: Phone<APhonesPartitions>,
+  name: string,
+): Promise<readonly { readonly key: string; readonly value: unknown }[]> => {
+  const read = await node.partitions.of(name).read({ read: 'range' })
+  return read.answer === 'read' ? read.entries : []
+}
+
+/** A phone's storage on a new cell of the oracle. */
+export const on_a_cell = (): Promise<AStorageUnderTest> => {
+  const made = cell<PhoneState>({ initial: a_new_phone })
+  return Promise.resolve({
+    storage: on_the_cell(made),
+    position: () => Promise.resolve(made.position()),
+    held: () => Promise.resolve(made.held()),
+    held_parts: () => Promise.resolve(made.held_parts()),
+  })
 }
 
 /** The oracle's factory over a primitives port: the stack's relay, its transports in process as they are. */
@@ -157,8 +193,8 @@ const under_the_plan = (
     readonly in_flight: { count: number }
   },
   carried: ACarriedDeposit[],
+  phase: { deposits: number },
 ) => {
-  let deposits = 0
   let collects = 0
   const next = <fault>(cycle: readonly (fault | 'none')[], count: number): fault | 'none' =>
     plan === 'none' ? 'none' : (cycle[count % cycle.length] ?? 'none')
@@ -175,8 +211,8 @@ const under_the_plan = (
     mailbox: {
       deposit: (deposit) =>
         counted(async () => {
-          const fault = next(the_lossy_schedule.deposits, deposits)
-          deposits += 1
+          const fault = next(the_lossy_schedule.deposits, phase.deposits)
+          phase.deposits += 1
           const kept = (answered: ACarriedDeposit['answered']) => {
             carried.push({ deposit_address: deposit.deposit_address, fault, answered })
           }
@@ -318,7 +354,7 @@ export const send_my_introduction = 'bonds/address_book/effect/send_my_introduct
 /** What a round of `settles` needs of a phone: whether it is on, what its ports show, its round, its going off. */
 interface APhoneInTheRounds {
   readonly is_on: () => boolean
-  readonly shows: () => string
+  readonly shows: () => Promise<string>
   readonly a_round: () => Promise<void>
   readonly off: () => Promise<void>
 }
@@ -352,11 +388,12 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
 
   /** A phone of the story over the stack, on, with no face yet: what it gives a story is below. */
   const a_phone = async (start: Start) => {
-    const made = cell<PhoneState>({ initial: a_new_phone })
+    const made = await (factory.storage ?? on_a_cell)()
     const carried: ACarriedDeposit[] = []
+    const phase = { deposits: 0 }
     let aborted = false
-    const node: Phone = await stack.a_phone({
-      cell: made,
+    const node: Phone<APhonesPartitions> = await stack.a_phone({
+      storage: made.storage,
       world: {
         clock: time.clock,
         elapsed: time.elapsed,
@@ -379,6 +416,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
             in_flight,
           },
           carried,
+          phase,
         )(the_story_s_relay.transports(in_process)),
     })
     const when = (): zz.RootContext => ({
@@ -459,21 +497,23 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         }
       },
       /** What the ports show of the phone, compared between two rounds: its facts, the deposits it asked for, what it collected, its trace, its letters, the extension's partition and life. */
-      shows: (): string =>
+      shows: async (): Promise<string> =>
         JSON.stringify([
-          made.position(),
+          await made.position(),
           carried.length,
           node.collected().length,
           node.traced.length,
           node.notices.length,
-          made.held().length,
-          made.held_parts().length,
-          node
-            .extensions()
-            .map((each) => [
-              each.hosted.life().life,
-              [...node.partitions.kept(each.name).keys()].length,
-            ]),
+          (await made.held()).length,
+          (await made.held_parts()).length,
+          await Promise.all(
+            node
+              .extensions()
+              .map(async (each) => [
+                each.hosted.life().life,
+                (await the_records_of(node, each.name)).length,
+              ]),
+          ),
         ]),
       /** Her screen asks for an activity, with the id the story drew (USR-2, DOM-12): its events. */
       asks: (
@@ -538,10 +578,10 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       offers_ping_pong_to: (bond_id: string): Promise<boolean> =>
         node.reads.is_offered('ping_pong', boundary.bond.parse(bond_id)),
       /** The pongs ping pong gave back, as its partition keeps them. */
-      pongs: (): readonly unknown[] =>
-        [...node.partitions.kept('ping_pong')]
-          .filter(([at]) => at.startsWith('state/pong/'))
-          .map(([, value]) => value),
+      pongs: async (): Promise<readonly unknown[]> =>
+        (await the_records_of(node, 'ping_pong'))
+          .filter((record) => record.key.startsWith('state/pong/'))
+          .map((record) => record.value),
       /** The facts the cell recorded, each part by its path and payload, those whose path begins so. */
       facts_of: async (
         begins: string,
@@ -563,9 +603,23 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       collected: (): readonly AnEnvelopeCollected[] => node.collected(),
       /** Every deposit the phone's transport was asked for, in order. */
       deposited: (): readonly ACarriedDeposit[] => [...carried],
+      /**
+       * The lossy schedule's phase set at a mark of the story: the phone's
+       * next deposit meets this fault, and the cycle goes on from there. So
+       * a story names the fault a letter meets, whatever the rounds before
+       * took, which a storage's timing changes (more turns of the event loop
+       * on IndexedDB, step 21) and the schedule's count with them.
+       */
+      next_deposit_meets: (fault: AFaultOfADeposit): void => {
+        phase.deposits = the_lossy_schedule.deposits.indexOf(fault)
+      },
       /** The letters held on the phone, as she is told them (USR-8). */
-      held_letters: (): readonly user_value.a_held_letter[] =>
-        the_held_letters({ entries: made.held(), parts: made.held_parts(), notices: node.notices }),
+      held_letters: async (): Promise<readonly user_value.a_held_letter[]> =>
+        the_held_letters({
+          entries: await made.held(),
+          parts: await made.held_parts(),
+          notices: node.notices,
+        }),
     }
     phones.push(the_phone)
     on()
@@ -573,8 +627,11 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   }
 
   /** The ports of the stack, compared between two rounds: the relay's facts and each phone's. */
-  const shows = (): string =>
-    JSON.stringify([relay_cell.position(), ...phones.map((each) => [each.is_on(), each.shows()])])
+  const shows = async (): Promise<string> =>
+    JSON.stringify([
+      relay_cell.position(),
+      ...(await Promise.all(phones.map(async (each) => [each.is_on(), await each.shows()]))),
+    ])
 
   /**
    * Time passes and the clock stays (DOM-14, DOM-17): rounds of the
@@ -588,12 +645,12 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   const settles = async (): Promise<void> => {
     let still = 0
     for (let round = 0; round < 60; round += 1) {
-      const before = shows()
+      const before = await shows()
       time.pauses_over()
       for (const each of phones) await each.a_round()
       await quiet()
       await until(() => in_flight.count === 0, "the transports' calls in flight")
-      still = shows() === before ? still + 1 : 0
+      still = (await shows()) === before ? still + 1 : 0
       if (still >= 2) return
     }
     throw new Error('the stack did not settle in 60 rounds')

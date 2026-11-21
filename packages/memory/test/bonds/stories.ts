@@ -7,7 +7,9 @@ import {
   a_phone_with,
   entries_of,
   last_of,
+  the_address_book_on_a_cell,
   the_relay,
+  type AnAddressBooksFactory,
   type PhoneUnderTest,
   type Shown,
 } from './harness.ts'
@@ -16,7 +18,9 @@ import {
 // Stories to prove; BND-1..BND-12, DOM-23, GR-9, PER-11, PER-21, DOM-12, the
 // invariants of § 4), one test each, named as the README names it: a suite
 // parametrized by the primitives port (TST-1), the fake's (`address_book.test.ts`),
-// libsodium's from step 18. Each phone is a cell of q-'s oracle with
+// libsodium's from step 18; and by the phones' storage, the oracle's cell
+// unless a suite gives another (`on_indexeddb.test.ts`), the same stories
+// its conformance suite. Each phone is a cell of q-'s oracle with
 // `bonds` and `seals` (MBX-7), its reactions and its executors; the faces
 // and bonds the stories start from are made through the first start, the
 // ticket and the introduction, as stories 10–21 make them. A letter of
@@ -79,28 +83,40 @@ const the_key_of = async (phone: PhoneUnderTest): Promise<string> => {
 }
 
 /** Anna, Bruno and Carla's phones, each through its first start and a ticket on Monday 10:00 (BND-8): Carla's she sends as a link. */
-const three_phones = async (primitives: Primitives) => ({
-  anna: await a_phone_with(primitives, {
-    phone: 1,
-    at: monday('10:00:00'),
-    face_id: 'F_a',
-    name: 'Anna',
-    tickets: ['L_b'],
-  }),
-  bruno: await a_phone_with(primitives, {
-    phone: 2,
-    at: monday('10:00:00'),
-    face_id: 'F_b',
-    name: 'Bruno',
-    tickets: ['L_a'],
-  }),
-  carla: await a_phone_with(primitives, {
-    phone: 3,
-    at: monday('10:00:00'),
-    face_id: 'F_c',
-    name: 'Carla',
-    tickets: ['L_a'],
-  }),
+const three_phones = async (primitives: Primitives, storage: AnAddressBooksFactory) => ({
+  anna: await a_phone_with(
+    primitives,
+    {
+      phone: 1,
+      at: monday('10:00:00'),
+      face_id: 'F_a',
+      name: 'Anna',
+      tickets: ['L_b'],
+    },
+    storage,
+  ),
+  bruno: await a_phone_with(
+    primitives,
+    {
+      phone: 2,
+      at: monday('10:00:00'),
+      face_id: 'F_b',
+      name: 'Bruno',
+      tickets: ['L_a'],
+    },
+    storage,
+  ),
+  carla: await a_phone_with(
+    primitives,
+    {
+      phone: 3,
+      at: monday('10:00:00'),
+      face_id: 'F_c',
+      name: 'Carla',
+      tickets: ['L_a'],
+    },
+    storage,
+  ),
 })
 
 /** An introduction carried from one phone to the other and taken there, at an instant of the other's clock. */
@@ -117,8 +133,8 @@ const carried = async (from: PhoneUnderTest, to: PhoneUnderTest, at: string) => 
  * other's introduction at 10:00, in person; Carla's link opened on Tuesday
  * 18:30, presenting a ticket prepared for it, at a distance.
  */
-const annas_address_book = async (primitives: Primitives) => {
-  const { anna, bruno, carla } = await three_phones(primitives)
+const annas_address_book = async (primitives: Primitives, storage: AnAddressBooksFactory) => {
+  const { anna, bruno, carla } = await three_phones(primitives, storage)
   const T_b = await shown(bruno, 'L_a')
   const T_mb = await shown(anna, 'L_b')
   await anna.open_their_ticket({ bond_id: 'L_b', their_ticket: T_b, name: 'Bruno' })
@@ -149,10 +165,14 @@ const annas_address_book = async (primitives: Primitives) => {
   }
 }
 
-export const stories_of_the_address_book = (name: string, primitives: Primitives) => {
+export const stories_of_the_address_book = (
+  name: string,
+  primitives: Primitives,
+  storage: AnAddressBooksFactory = the_address_book_on_a_cell,
+) => {
   describe(`the address book, ${name}`, () => {
     test('my faces are the made ones, with their place and key', async () => {
-      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') })
+      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') }, storage)
       await anna.make_my_first_face({ face_id: 'F_a', name: 'Anna' })
       expect(entries_of(await anna.my_faces())).toEqual([])
       await anna.runs()
@@ -167,7 +187,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('my bonds are listed by the name I give, each with one face of mine', async () => {
-      const { anna, K_b, K_c } = await annas_address_book(primitives)
+      const { anna, K_b, K_c } = await annas_address_book(primitives, storage)
       expect(entries_of(await anna.my_bonds())).toEqual([
         {
           id: 'L_b',
@@ -187,7 +207,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a bond reads whole, their mailbox and mine', async () => {
-      const { anna, K_b, D_b, D_mb } = await annas_address_book(primitives)
+      const { anna, K_b, D_b, D_mb } = await annas_address_book(primitives, storage)
       expect(entries_of(await anna.a_bond('L_b'))).toEqual([
         {
           id: 'L_b',
@@ -205,9 +225,9 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a bond renamed keeps the name they are introduced as', async () => {
-      const { anna } = await annas_address_book(primitives)
+      const { anna } = await annas_address_book(primitives, storage)
       const letters = anna.letters().length
-      const queued = anna.queued().length
+      const queued = (await anna.queued()).length
       const renamed = last_of(await anna.rename_a_bond({ bond_id: 'L_b', name: 'Bru' }))
       expect(renamed).toMatchObject({
         outcome: 'applied',
@@ -226,11 +246,11 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       // Nothing for Bruno: the name is hers.
       await anna.runs()
       expect(anna.letters()).toHaveLength(letters)
-      expect(anna.queued()).toHaveLength(queued)
+      expect(await anna.queued()).toHaveLength(queued)
     })
 
     test('a rename sent again is the same rename', async () => {
-      const { anna } = await annas_address_book(primitives)
+      const { anna } = await annas_address_book(primitives, storage)
       const first = await anna.rename_a_bond(
         { bond_id: 'L_b', name: 'Bru' },
         { operation: 'bruno-is-bru' },
@@ -245,7 +265,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a letter at my mailbox finds its bond, the face that opens it and the key that signs it', async () => {
-      const { anna, K_b, K_c, D_mb, D_mc } = await annas_address_book(primitives)
+      const { anna, K_b, K_c, D_mb, D_mc } = await annas_address_book(primitives, storage)
       expect(entries_of(await anna.the_bond_at_my_mailbox(D_mb))).toEqual([
         { id: 'L_b', my_face_id: 'F_a', their_face: { key: K_b, introduced_as: 'Bruno' } },
       ])
@@ -255,7 +275,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('an address of no mailbox of mine finds no bond', async () => {
-      const { anna, D_b, D_c } = await annas_address_book(primitives)
+      const { anna, D_b, D_c } = await annas_address_book(primitives, storage)
       // Bruno's mailbox and Carla's are theirs, where Anna deposits: not hers.
       expect(entries_of(await anna.the_bond_at_my_mailbox(D_b))).toEqual([])
       expect(entries_of(await anna.the_bond_at_my_mailbox(D_c))).toEqual([])
@@ -263,9 +283,9 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a bond removed leaves the list, and its mailbox finds it no more', async () => {
-      const { anna, D_mc } = await annas_address_book(primitives)
+      const { anna, D_mc } = await annas_address_book(primitives, storage)
       const letters = anna.letters().length
-      const queued = anna.queued().length
+      const queued = (await anna.queued()).length
       anna.at(wednesday('09:00:00'))
       const removed = last_of(await anna.remove_a_bond({ bond_id: 'L_c' }))
       expect(removed).toMatchObject({
@@ -290,11 +310,11 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       ])
       await anna.runs()
       expect(anna.letters()).toHaveLength(letters)
-      expect(anna.queued()).toHaveLength(queued)
+      expect(await anna.queued()).toHaveLength(queued)
     })
 
     test('a bond removed again changes nothing', async () => {
-      const { anna } = await annas_address_book(primitives)
+      const { anna } = await annas_address_book(primitives, storage)
       await anna.remove_a_bond({ bond_id: 'L_c' })
       const before = {
         bonds: await anna.my_bonds(),
@@ -318,7 +338,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a bond removed cannot be renamed', async () => {
-      const { anna } = await annas_address_book(primitives)
+      const { anna } = await annas_address_book(primitives, storage)
       await anna.remove_a_bond({ bond_id: 'L_c' })
       const facts = (await anna.recorded()).length
       const renamed = last_of(await anna.rename_a_bond({ bond_id: 'L_c', name: 'Carlotta' }))
@@ -336,7 +356,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('every bond belongs to exactly one of my faces', async () => {
-      const { anna, bruno, carla, D_mb, D_mc } = await annas_address_book(primitives)
+      const { anna, bruno, carla, D_mb, D_mc } = await annas_address_book(primitives, storage)
       for (const phone of [anna, bruno, carla]) {
         const faces = entries_of(await phone.my_faces()).map((face) => face.id)
         const bonds = entries_of(await phone.my_bonds())
@@ -370,7 +390,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a name empty or too long, or an address out of its form, is not taken', async () => {
-      const { anna } = await annas_address_book(primitives)
+      const { anna } = await annas_address_book(primitives, storage)
       const facts = (await anna.recorded()).length
       for (const name of ['', 'x'.repeat(81)]) {
         expect(await anna.rename_a_bond({ bond_id: 'L_b', name })).toEqual([
@@ -390,7 +410,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('no read of the address book gives a secret', async () => {
-      const { anna, D_mb, D_mc } = await annas_address_book(primitives)
+      const { anna, D_mb, D_mc } = await annas_address_book(primitives, storage)
       // The safe's secrets, as its facts carry them (SEA-1, SEA-7): the seed,
       // the face's private key and chain code, the mailboxes' collect
       // secrets; every long value of its facts but the public ones.
@@ -436,7 +456,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('the first start makes my face, its key from the safe', async () => {
-      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') })
+      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') }, storage)
       const asked = last_of(await anna.make_my_first_face({ face_id: 'F_a', name: 'Anna' }))
       expect(asked).toMatchObject({
         outcome: 'applied',
@@ -472,11 +492,11 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       expect(entries_of(await anna.my_faces())).toEqual([
         { id: 'F_a', name: 'Anna', position: { place: 'at_the_top' }, public_key: K_a },
       ])
-      expect(anna.held()).toEqual([])
+      expect(await anna.held()).toEqual([])
     })
 
     test('a second first face is refused', async () => {
-      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') })
+      const anna = await a_phone(primitives, { phone: 1, at: monday('09:00:00') }, storage)
       await anna.make_my_first_face({ face_id: 'F_a', name: 'Anna' })
       const refused = {
         outcome: 'rejected',
@@ -500,12 +520,16 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a ticket is ready once the safe drew its mailbox, for 48 hours', async () => {
-      const anna = await a_phone_with(primitives, {
-        phone: 1,
-        at: monday('10:00:00'),
-        face_id: 'F_a',
-        name: 'Anna',
-      })
+      const anna = await a_phone_with(
+        primitives,
+        {
+          phone: 1,
+          at: monday('10:00:00'),
+          face_id: 'F_a',
+          name: 'Anna',
+        },
+        storage,
+      )
       const asked = last_of(
         await anna.prepare_a_ticket({ bond_id: 'L_b', face_id: 'F_a', relays: on_the_relay }),
       )
@@ -527,9 +551,9 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
           ],
         },
       })
-      const wait = anna
-        .queued()
-        .find((entry) => entry.effect === 'bonds/address_book/effect/wait_until_the_ticket_expires')
+      const wait = (await anna.queued()).find(
+        (entry) => entry.effect === 'bonds/address_book/effect/wait_until_the_ticket_expires',
+      )
       expect(wait?.payload).toEqual({ bond_id: 'L_b' })
       expect(instant(wait?.not_before)).toBe(instant(wednesday('10:00:00')))
       expect(entries_of(await anna.my_ticket('L_b'))).toEqual([])
@@ -563,7 +587,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a ticket on a face not made is refused', async () => {
-      const anna = await a_phone(primitives, { phone: 1, at: monday('10:00:00') })
+      const anna = await a_phone(primitives, { phone: 1, at: monday('10:00:00') }, storage)
       await anna.make_my_first_face({ face_id: 'F_a', name: 'Anna' })
       // The safe is still making F_a; F_x is no face of hers.
       for (const face_id of ['F_a', 'F_x']) {
@@ -600,7 +624,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test("a ticket's secret is my face's signature over its mailbox", async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       await anna.prepare_a_ticket({ bond_id: 'L_c', face_id: 'F_a', relays: on_the_relay })
       await anna.runs()
       const T_mb = await shown(anna, 'L_b')
@@ -643,7 +667,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('crossed QR: I open theirs, their introduction comes within two minutes, in person', async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       // Monday 10:00: Bruno's ticket and Anna's on the two screens.
       const T_b = await shown(bruno, 'L_a')
       const T_mb = await shown(anna, 'L_b')
@@ -675,9 +699,9 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         },
       })
       expect(
-        anna
-          .queued()
-          .filter((entry) => entry.effect === 'bonds/address_book/effect/send_my_introduction'),
+        (await anna.queued()).filter(
+          (entry) => entry.effect === 'bonds/address_book/effect/send_my_introduction',
+        ),
       ).toMatchObject([{ id: 'L_b', payload: { bond_id: 'L_b', their_ticket: T_b } }])
       await anna.runs()
       expect(anna.letters()).toEqual([{ bond_id: 'L_b', their_ticket: T_b }])
@@ -715,7 +739,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('crossed QR: their introduction comes first, I open theirs within two minutes, in person', async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       const T_b = await shown(bruno, 'L_a')
       const T_mb = await shown(anna, 'L_b')
       anna.at(monday('10:00:05'))
@@ -784,7 +808,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         ['bruno opens', 'anna takes', 'anna opens', 'bruno takes'],
       ] as const
       for (const order of orders) {
-        const { anna, bruno } = await three_phones(primitives)
+        const { anna, bruno } = await three_phones(primitives, storage)
         const T_b = await shown(bruno, 'L_a')
         const T_mb = await shown(anna, 'L_b')
         const steps = {
@@ -845,12 +869,12 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         expect(entries_of(await bruno.the_mailboxes_i_collect())).toEqual([
           { id: 'L_a', my_mailbox: T_b.mailbox },
         ])
-        expect([...anna.held(), ...bruno.held()]).toEqual([])
+        expect([...(await anna.held()), ...(await bruno.held())]).toEqual([])
       }
     })
 
     test('a link opened makes a bond at a distance, awaiting their confirmation', async () => {
-      const { anna, carla } = await three_phones(primitives)
+      const { anna, carla } = await three_phones(primitives, storage)
       const T_c = await shown(carla, 'L_a')
       anna.at(tuesday('18:30:00'))
       await anna.prepare_a_ticket({ bond_id: 'L_c', face_id: 'F_a', relays: on_the_relay })
@@ -909,7 +933,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
 
     test('tickets crossed later than two minutes stay at a distance', async () => {
       // Anna opens Bruno's at 10:00:05; his introduction comes at 10:03.
-      const first = await three_phones(primitives)
+      const first = await three_phones(primitives, storage)
       const T_b = await shown(first.bruno, 'L_a')
       const T_mb = await shown(first.anna, 'L_b')
       first.anna.at(monday('10:00:05'))
@@ -939,7 +963,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         { handshake: { way: 'at_a_distance', at: monday('10:00:05') } },
       ])
       // Bruno's introduction comes first, at 10:00:10; Anna opens his ticket at 10:03.
-      const second = await three_phones(primitives)
+      const second = await three_phones(primitives, storage)
       const T_b2 = await shown(second.bruno, 'L_a')
       const T_mb2 = await shown(second.anna, 'L_b')
       await second.bruno.open_their_ticket({ bond_id: 'L_a', their_ticket: T_mb2, name: 'Anna' })
@@ -979,12 +1003,12 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('an opening or an introduction again changes nothing', async () => {
-      const { anna, bruno } = await annas_address_book(primitives)
+      const { anna, bruno } = await annas_address_book(primitives, storage)
       const T_b = anna.letters()[0]?.their_ticket
       if (T_b === undefined) throw new Error('no ticket of Bruno')
       const bond = await anna.a_bond('L_b')
       const letters = anna.letters().length
-      const queued = anna.queued().length
+      const queued = (await anna.queued()).length
       const again = last_of(
         await anna.open_their_ticket({ bond_id: 'L_b', their_ticket: T_b, name: 'Bruno' }),
       )
@@ -1001,7 +1025,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         },
       })
       await anna.runs()
-      expect(anna.queued()).toHaveLength(queued)
+      expect(await anna.queued()).toHaveLength(queued)
       expect(anna.letters()).toHaveLength(letters)
       // His introduction again: the same letter, collected twice.
       const his = await bruno.carries(the_last_letter(bruno))
@@ -1028,7 +1052,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a ticket used by another face is refused', async () => {
-      const { anna, bruno, carla } = await three_phones(primitives)
+      const { anna, bruno, carla } = await three_phones(primitives, storage)
       // Carla saw Anna's QR too, on Monday 10:00, before Bruno used it.
       const T_b = await shown(bruno, 'L_a')
       const T_mb = await shown(anna, 'L_b')
@@ -1068,7 +1092,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test("an introduction with a secret not the ticket's is refused", async () => {
-      const { anna, carla } = await three_phones(primitives)
+      const { anna, carla } = await three_phones(primitives, storage)
       anna.at(tuesday('18:30:00'))
       await anna.prepare_a_ticket({ bond_id: 'L_c', face_id: 'F_a', relays: on_the_relay })
       await anna.runs()
@@ -1098,7 +1122,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a ticket unused for 48 hours expires, and is refused after', async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       // Monday 10:00: L_b used by Bruno, L_x shown to no one, L_y whose mailbox the safe has not drawn.
       const T_b = await shown(bruno, 'L_a')
       await anna.open_their_ticket({ bond_id: 'L_b', their_ticket: T_b, name: 'Bruno' })
@@ -1150,11 +1174,11 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         ),
       ).toContain('the_ticket_is_ready')
       expect(await anna.recorded()).toHaveLength(facts)
-      expect(anna.held()).toEqual([])
+      expect(await anna.held()).toEqual([])
     })
 
     test("a bond's relays are those its peer declared", async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       const T_b = await shown(bruno, 'L_a')
       const T_mb = await shown(anna, 'L_b')
       await anna.open_their_ticket({ bond_id: 'L_b', their_ticket: T_b, name: 'Bruno' })
@@ -1195,7 +1219,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
     })
 
     test('a ticket with a relay out of its form is not taken', async () => {
-      const { anna, bruno } = await three_phones(primitives)
+      const { anna, bruno } = await three_phones(primitives, storage)
       const T_b = await shown(bruno, 'L_a')
       const facts = (await anna.recorded()).length
       const out_of_form = [

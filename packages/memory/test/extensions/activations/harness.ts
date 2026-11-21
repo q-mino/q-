@@ -1,16 +1,19 @@
-// The harness of the stories of the extensions' office (TST-2, TST-3; README
-// of `extensions`, § Stories to prove): a phone of q-'s oracle, one cell
-// with the state of `extensions` beside the address book's (MBX-7, GR-3),
-// the ports of both over it, the manifests installed the composition's
+// The harness of the stories of the extensions' office (TST-1, TST-2,
+// TST-3; README of `extensions`, § Stories to prove): a phone whose storage
+// holds the office's state beside the address book's (MBX-7, GR-3), the
+// ports of both over it, the manifests installed the composition's
 // (`greetings`, composed from its `manifest.json` and translated by the
 // kernel's adapter, `the_manifest_to_accept`), and the office's executor,
 // whose delivery of a question is the story's: the kernel's port of
-// requests and its leaf on `known` are step 13's. An update of the app is
-// the same cell with other manifests installed. The user's commands are
-// sent as her entry would send them (`self`, step 13); the clock and the
-// operations are the story's (TST-3). A story observes only what the ports
-// give: the events of a command, the entries of a read, the facts of the
-// log; never the cell's state.
+// requests and its leaf on `known` are step 13's. The storage is a
+// factory's (TST-1): a cell of q-'s oracle unless another (`on_a_cell`), so
+// that an adapter of `extensions` runs the same stories (`stories.ts`) as
+// its conformance suite. An update of the app is the same storage with
+// other manifests installed. The user's commands are sent as her entry
+// would send them (`self`, step 13); the clock and the operations are the
+// story's (TST-3). A story observes only what the ports give: the events of
+// a command, the entries of a read, the facts of the log since the story
+// began, the entries the executor holds; never the storage's state.
 
 import {
   compose_an_extension,
@@ -204,15 +207,144 @@ const an_address_book = (start: Start): BondsState => {
   }
 }
 
-/** A phone of a story, as the oracle starts it; `updated_to` the same phone after an update of the app. */
-export const a_phone = async (start: Start) => {
+/** The manifests of the office's extensions, as the office is given them (EXT-7). */
+type Installed = Parameters<typeof extensions_ports>[1]
+
+/** The office's ports over a phone's storage, with the manifests installed. */
+type TheOffice = ReturnType<ReturnType<typeof extensions_ports>>
+
+/** The address book's ports over a phone's storage. */
+type TheAddressBook = ReturnType<ReturnType<typeof bonds_ports>>
+
+/**
+ * What a phone of the stories keeps (TST-1), as a factory gives it, with
+ * the address book of the story's start: the office's ports and the
+ * address book's over one storage (MBX-7, GR-3), its fact log (DOM-17), its
+ * outbox and the executor's state (DOM-14), the versions it keeps (DOM-22),
+ * the entries the executor holds. The oracle's cell is one (`on_a_cell`);
+ * IndexedDB's another (`on_indexeddb.test.ts`).
+ */
+export interface AStorageUnderTest {
+  readonly stored_versions: zz.StoredVersions
+  readonly log: zz.FactLog
+  readonly outbox: zz.Outbox
+  readonly executor: zz.ExecutorState
+  readonly held: () => Promise<readonly zz.HeldEntry[]>
+  readonly office: (installed: Installed) => (versions: zz.Versions) => TheOffice
+  readonly address_book: (versions: zz.Versions) => TheAddressBook
+}
+
+/** How the phone of a story is kept (TST-1): a storage that starts with the story's address book. */
+export type AFactory = (start: Start) => Promise<AStorageUnderTest>
+
+/** A phone's storage on a new cell of q-'s oracle (TST-2), its address book written as its state. */
+export const on_a_cell: AFactory = (start) => {
   const made = cell<PhoneState>({
     initial: { ...no_activation, ...no_bond, ...an_address_book(start) },
   })
+  return Promise.resolve({
+    stored_versions: made.stored_versions,
+    log: log(made),
+    outbox: made.outbox,
+    executor: made.executor,
+    held: () => Promise.resolve(made.held()),
+    office: (installed) => extensions_ports(made, installed),
+    address_book: bonds_ports(seen_by<BondsState, PhoneState>(made), fake_primitives),
+  })
+}
+
+/** A secret of a ticket of theirs, the address book's form: kept as given when her phone opens it (BND-10). */
+const a_ticket_s_secret = `${'S'.repeat(85)}A`
+
+/**
+ * The address book a story starts from, made through its commands (BND-8,
+ * BND-10), on a storage the story cannot write as its state: her face asked
+ * for and made with its key, as the safe's reaction keeps it; for each
+ * bond, her ticket asked for and ready at her mailbox of it, then their
+ * ticket opened, at a distance, the bond kept. The office reads of it only
+ * `the_bond_exists`, the same as of the state written (`an_address_book`);
+ * its facts come before the story, which reads none of them (`recorded`).
+ */
+export const the_address_book_made_through_its_commands = async (
+  storage: AStorageUnderTest,
+  start: Start,
+): Promise<void> => {
+  const versions = await zz.versions([activations_majors, address_book_majors])({
+    stored: storage.stored_versions,
+  })
+  const address_book = storage.address_book(versions)
+  let operations = 0
+  /** A command of the address book sent at the start's instant, which applies, or the story fails. */
+  const sends = async <input>(
+    use_case: string,
+    port: (
+      context: zz.CommandRootContext,
+      input: input,
+    ) => AsyncIterable<{ readonly outcome: string }>,
+    input: input,
+  ): Promise<void> => {
+    operations += 1
+    const id = `the-start-${String(operations)}`
+    const events = await all(
+      port(
+        {
+          now: zz.in_zone(time_zone)(zz.date_time.parse(start.at)),
+          time_zone,
+          operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
+          correlation: zz.correlation.parse(`correlation-${id}`),
+          fingerprint: zz.fingerprint_of({ path: `bonds/address_book/usecase/${use_case}`, input }),
+        },
+        input,
+      ),
+    )
+    if (last_of(events).outcome !== 'applied')
+      throw new Error(`the address book's ${use_case} at the start: ${JSON.stringify(events)}`)
+  }
+  await sends('make_my_first_face', address_book.make_my_first_face, {
+    face_id: start.face,
+    name: start.face,
+  })
+  await sends('keep_the_key_of_a_face', address_book.keep_the_key_of_a_face, {
+    face_id: start.face,
+    public_key: start.face_key ?? a_key('F'),
+  })
+  for (const [at, bond] of start.bonds.entries()) {
+    await sends('prepare_a_ticket', address_book.prepare_a_ticket, {
+      bond_id: bond.id,
+      face_id: start.face,
+      relays: [the_relay],
+    })
+    await sends('keep_the_mailbox_of_a_ticket', address_book.keep_the_mailbox_of_a_ticket, {
+      bond_id: bond.id,
+      deposit_address: `D-mine-${bond.id}`,
+    })
+    await sends('open_their_ticket', address_book.open_their_ticket, {
+      bond_id: bond.id,
+      their_ticket: {
+        key: bond.their_face?.key ?? a_key(String.fromCharCode(66 + at)),
+        introduced_as: bond.name,
+        mailbox: {
+          deposit_address: bond.their_face?.mailbox.deposit_address ?? `D-${bond.id}`,
+          relays: [...(bond.their_face?.mailbox.relays ?? [the_relay])],
+        },
+        secret: a_ticket_s_secret,
+      },
+      name: bond.name,
+    })
+  }
+}
+
+/**
+ * A phone of a story, kept as the factory keeps it (the oracle's cell
+ * unless another, TST-1); `updated_to` the same phone after an update of
+ * the app.
+ */
+export const a_phone = async (start: Start, factory: AFactory = on_a_cell) => {
+  const made = await factory(start)
   const versions = await zz.versions([activations_majors, address_book_majors])({
     stored: made.stored_versions,
   })
-  const address_book = bonds_ports(seen_by<BondsState, PhoneState>(made), fake_primitives)(versions)
+  const address_book = made.address_book(versions)
   // The phone's clock, which a story sets (`at`); every wait ended when it
   // moves. Or the story's clock, given, which the phone reads.
   let instant = zz.date_time.parse(start.at)
@@ -238,7 +370,18 @@ export const a_phone = async (start: Start) => {
       }
     }
   const when = () => ({ now: zz.in_zone(clock.time_zone)(clock.now()), time_zone: clock.time_zone })
-  const facts = log(made)
+  /** Every fact the log gives, each once by its position, up to where it is caught up (DOM-17). */
+  const the_facts_logged = async (): Promise<ReadonlyMap<zz.position, zz.StoredEnvelope>> => {
+    const kept = new Map<zz.position, zz.StoredEnvelope>()
+    for await (const event of made.log(undefined)) {
+      if (event.event !== 'fact') break
+      kept.set(event.position, event.fact)
+    }
+    return kept
+  }
+  // The facts the storage recorded before the story, its address book made
+  // through its commands (`the_address_book_made_through_its_commands`): none on the oracle.
+  const before_the_story = new Set((await the_facts_logged()).keys())
   const questions: AQuestion[] = []
   const answering: { current: Answering } = {
     current: () => Promise.resolve({ outcome: 'no_answer_came_back', why: 'no_response' }),
@@ -262,10 +405,7 @@ export const a_phone = async (start: Start) => {
 
   /** The phone with these manifests installed: the composition's, at its start or after an update. */
   const with_installed = (installed: readonly Manifest[]) => {
-    const office = extensions_ports(
-      made,
-      installed.map((each) => manifest.parse(each)),
-    )(versions)
+    const office = made.office(installed.map((each) => manifest.parse(each)))(versions)
     const reads = {
       an_extension: (name: string) => all(office.an_extension(when(), { name })),
       the_extensions_offered_to_a_bond: (bond: string) =>
@@ -374,15 +514,11 @@ export const a_phone = async (start: Start) => {
       },
       /** The questions the executor delivered, as the kernel's port would take them (step 13). */
       questions: (): readonly AQuestion[] => [...questions],
-      /** Every fact the cell recorded, in order, as its log gives them (DOM-17). */
-      recorded: async (): Promise<readonly zz.StoredEnvelope[]> => {
-        const kept = new Map<zz.position, zz.StoredEnvelope>()
-        for await (const event of facts(undefined)) {
-          if (event.event !== 'fact') break
-          kept.set(event.position, event.fact)
-        }
-        return [...kept.values()]
-      },
+      /** Every fact the storage recorded since the story began, in order, as its log gives them (DOM-17). */
+      recorded: async (): Promise<readonly zz.StoredEnvelope[]> =>
+        [...(await the_facts_logged())].flatMap(([position, fact]) =>
+          before_the_story.has(position) ? [] : [fact],
+        ),
       /** The entries the executor holds: its dead letters. */
       held: made.held,
       /** The phone's clock reads this instant; every wait asked for wakes, to look again. */
@@ -394,7 +530,7 @@ export const a_phone = async (start: Start) => {
   }
   return {
     ...with_installed(start.installed),
-    /** The phone after an update of the app, with these manifests installed (EXT-7): the same cell. */
+    /** The phone after an update of the app, with these manifests installed (EXT-7): the same storage. */
     updated_to: (manifests: readonly Manifest[]) => with_installed(manifests),
   }
 }

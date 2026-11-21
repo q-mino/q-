@@ -11,6 +11,14 @@
 // and the operations are the story's (TST-3). A story observes only what
 // the ports give: the events of a command, the entries of a read, the
 // facts of the log, the letters handed to `post`; never the cell's state.
+//
+// The harness is parametrized by a storage factory (TST-1): the oracle's
+// cell unless a suite gives another (`on_indexeddb.test.ts`), the domain's
+// stories then its conformance suite. The factory gives the ports of both
+// domains over its storage, the node's versions, log, outbox, executors'
+// and reactions' state, and what a story reads of it, each as a function:
+// the entries queued, the entries and parts held, and the time its storage
+// takes to run its course (`quiet`).
 
 import * as zz from '@q-mino/domains/library'
 import { majors as address_book_majors } from '@q-mino/domains/bonds/address_book/_majors.ts'
@@ -37,7 +45,7 @@ import {
   type BondsState,
   type SealsState,
 } from '../../src/index.ts'
-import { all, quiet, the_safe_s_machine } from '../seals/harness.ts'
+import { all, quiet, the_safe_s_machine, type AKernelsStorage } from '../seals/harness.ts'
 
 /** The zone of the phone's clock, in the stories. */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -128,15 +136,62 @@ export interface Start {
   readonly at: string
 }
 
-/** A phone of a story, over a primitives port, as the oracle starts it. */
-export const a_phone = async (primitives: Primitives, start: Start) => {
+/**
+ * What a phone of a story keeps: the ports of the address book and of the
+ * safe, the node's versions, log, outbox, executors' and reactions' state;
+ * its entries queued, its entries and parts held.
+ */
+export type AnAddressBooksStorage = Pick<
+  AKernelsStorage,
+  | 'address_book'
+  | 'safe'
+  | 'stored_versions'
+  | 'log'
+  | 'outbox'
+  | 'executor'
+  | 'reactions'
+  | 'queued'
+  | 'held'
+  | 'held_parts'
+  | 'quiet'
+>
+
+/** How a suite makes the storage of a story's phone (TST-1): the oracle's cell, or an adapter's. */
+export type AnAddressBooksFactory = () => Promise<AnAddressBooksStorage>
+
+/** A phone's storage on a new cell of the oracle: the address book and the safe, side by side (MBX-7). */
+export const the_address_book_on_a_cell: AnAddressBooksFactory = () => {
   const made = cell<PhoneState>({ initial: { ...no_bond, ...no_secret } })
+  return Promise.resolve({
+    address_book: (primitives: Primitives) =>
+      bonds_ports(seen_by<BondsState, PhoneState>(made), primitives),
+    safe: (primitives: Primitives) =>
+      seals_ports(seen_by<SealsState, PhoneState>(made), primitives),
+    stored_versions: made.stored_versions,
+    log: log(made),
+    outbox: made.outbox,
+    executor: made.executor,
+    reactions: made.reactions,
+    queued: () => Promise.resolve(made.entries()),
+    held: () => Promise.resolve(made.held()),
+    held_parts: () => Promise.resolve(made.held_parts()),
+    quiet,
+  })
+}
+
+/** A phone of a story, over a primitives port, on the storage a suite makes: the oracle's cell, unless another. */
+export const a_phone = async (
+  primitives: Primitives,
+  start: Start,
+  storage: AnAddressBooksFactory = the_address_book_on_a_cell,
+) => {
+  const made = await storage()
   const world = a_world_of(primitives, start.phone)
   const versions = await zz.versions([address_book_majors, safe_majors])({
     stored: made.stored_versions,
   })
-  const address_book = bonds_ports(seen_by<BondsState, PhoneState>(made), world)(versions)
-  const safe = seals_ports(seen_by<SealsState, PhoneState>(made), world)(versions)
+  const address_book = made.address_book(world)(versions)
+  const safe = made.safe(world)(versions)
   // The phone's clock, which a story sets (`at`); the time that passes, every
   // wait ended when the story moves the clock.
   let instant = zz.date_time.parse(start.at)
@@ -162,7 +217,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
       }
     }
   const when = () => ({ now: zz.in_zone(time_zone)(instant), time_zone })
-  const facts = log(made)
+  const facts = made.log
   // The letters the address book hands to `post` (step 10): kept, in order.
   const letters: Letter[] = []
   const the_safe_s_executor = zz.effect_executor({
@@ -215,7 +270,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
       the_safe_s_executor({ ...ports, returns: safe }),
       the_address_book_s_executor({ ...ports, returns: address_book }),
     ]
-    await quiet()
+    await made.quiet()
     for (const each of running) await each.stop()
   }
   /**
@@ -224,7 +279,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
    */
   const the_waits_come_back = async (): Promise<void> => {
     const executor = the_address_book_s_executor({ ...ports, returns: address_book })
-    await quiet()
+    await made.quiet()
     await executor.stop()
   }
   const reads = {
@@ -421,9 +476,12 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
       return [...kept.values()]
     },
     /** The entries queued with the facts, in order (DOM-14). */
-    queued: made.entries,
+    queued: made.queued,
     /** The entries the executors hold, and the parts the reactions hold: their dead letters. */
-    held: () => [...made.held(), ...made.held_parts()],
+    held: async (): Promise<readonly (zz.HeldEntry | zz.HeldPart)[]> => [
+      ...(await made.held()),
+      ...(await made.held_parts()),
+    ],
   }
   return the_phone
 }
@@ -443,8 +501,9 @@ export const a_phone_with = async (
     readonly name: string
     readonly tickets?: readonly string[]
   },
+  storage: AnAddressBooksFactory = the_address_book_on_a_cell,
 ): Promise<PhoneUnderTest> => {
-  const phone = await a_phone(primitives, start)
+  const phone = await a_phone(primitives, start, storage)
   await phone.make_my_first_face({ face_id: start.face_id, name: start.name })
   await phone.runs()
   for (const bond_id of start.tickets ?? []) {

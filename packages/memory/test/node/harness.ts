@@ -70,6 +70,7 @@ import { z } from 'zod'
 import {
   a_new_phone,
   cell,
+  on_the_cell,
   phone,
   the_relay_s_transports,
   type PhoneState,
@@ -339,7 +340,7 @@ export const a_node = async (story: Story, start: Start) => {
         }
       : a_timer(2)
 
-  const node = await phone(made, {
+  const node = await phone(on_the_cell(made), {
     // The introduction handed to `post`: kept, carried by the story (`carries`),
     // unless the story sends it through `post` as the phone does.
     ...(start.introductions === 'sent_through_post'

@@ -19,6 +19,7 @@
     "@q-mino/greetings": "workspace:*",
     "@q-mino/ping_pong": "workspace:*",
     "@q-mino/relay": "workspace:*",
+    "fake-indexeddb": "6.2.7",
     "zod": "^4.6.7"
   }
 }

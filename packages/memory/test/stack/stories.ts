@@ -277,7 +277,7 @@ export const stories_of_the_stack = (
         })
         await story.settles()
         expect(await anna.my_faces()).toMatchObject([{ id: 'F_a', name: 'Anna', public_key: key }])
-        expect(anna.held_letters()).toEqual([])
+        expect(await anna.held_letters()).toEqual([])
       })
 
       test('Anna and Bruno cross their QR: bonded in person, each confirmed', async () => {
@@ -310,8 +310,8 @@ export const stories_of_the_stack = (
         expect(await bruno.phone.the_answer_to(the_introduction_of(bruno))).toMatchObject({
           status: 'answered',
         })
-        expect(anna.phone.held_letters()).toEqual([])
-        expect(bruno.phone.held_letters()).toEqual([])
+        expect(await anna.phone.held_letters()).toEqual([])
+        expect(await bruno.phone.held_letters()).toEqual([])
         met_the_faults(story, plan, { since: 0, deposits_of: ['Anna', 'Bruno'] })
       })
 
@@ -345,8 +345,8 @@ export const stories_of_the_stack = (
           status: 'answered',
           event: { event: 'you_are_bonded', payload: {} },
         })
-        expect(anna.phone.held_letters()).toEqual([])
-        expect(carla.phone.held_letters()).toEqual([])
+        expect(await anna.phone.held_letters()).toEqual([])
+        expect(await carla.phone.held_letters()).toEqual([])
         met_the_faults(story, plan, { since: 0, deposits_of: ['Anna', 'Carla'] })
       })
 
@@ -370,6 +370,7 @@ export const stories_of_the_stack = (
         await activates_ping_pong(story, bruno.phone)
         const before_the_ping = story.the_faults_met().length
         const his_deposits = bruno.phone.deposited().length
+        bruno.phone.next_deposit_meets('aborted')
         await anna.phone.asks('A1', ping('L_b'))
         await story.settles_through_the_quarters(
           a_ping_s_quarter,
@@ -382,13 +383,13 @@ export const stories_of_the_stack = (
         })
         // One pong in Bruno's partition, however many copies of the ping came (DOM-11): under
         // the lossy plan his response's deposit aborts, and his entry meets the ping again.
-        expect(bruno.phone.pongs()).toHaveLength(1)
+        expect(await bruno.phone.pongs()).toHaveLength(1)
         if (plan === 'lossy')
           expect(bruno.phone.deposited().slice(his_deposits)).toContainEqual(
             expect.objectContaining({ fault: 'aborted' }),
           )
-        expect(anna.phone.held_letters()).toEqual([])
-        expect(bruno.phone.held_letters()).toEqual([])
+        expect(await anna.phone.held_letters()).toEqual([])
+        expect(await bruno.phone.held_letters()).toEqual([])
         met_the_faults(story, plan, { since: before_the_ping, deposits_of: ['Anna', 'Bruno'] })
       })
 

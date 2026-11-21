@@ -1,0 +1,90 @@
+// A phone's storage on IndexedDB, for the suites (TST-1, WEB-13; part
+// 21.2): the node's database on fake-indexeddb, in Node, with Node's Web
+// Locks; each kernel domain's ports over it, as the PWA's composition root
+// will wire them (step 25). One database per phone, named apart, so that
+// every phone is its own node with its own writer (WEB-10).
+
+import {
+  bonds_ports_on_indexeddb,
+  extensions_ports_on_indexeddb,
+  post_ports_on_indexeddb,
+  seals_ports_on_indexeddb,
+  the_node_s_storage,
+  the_partition_of,
+  user_ports_on_indexeddb,
+  type AnIndexedDb,
+  type TheNodesStorage,
+} from '@q-mino/adapters-web'
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
+import type { PhoneStorage } from '../../src/index.ts'
+import type { AStorageUnderTest } from '../stack/harness.ts'
+
+/** The kernel's business domains, a store each (WEB-8). */
+export const the_kernel_s_domains = [
+  'seals/safe',
+  'post/requests',
+  'bonds/address_book',
+  'extensions/activations',
+  'user/activities',
+  'user/drafts',
+  'user/choices',
+] as const
+
+/** The extensions the suites' apps carry, a partition each (WEB-12). */
+export const the_extensions_carried = ['ping_pong', 'greetings'] as const
+
+/** The phone's storage over a node's storage on IndexedDB: the five modules, the consumers, the partitions. */
+export const a_phone_s_storage = (opened: TheNodesStorage): PhoneStorage => ({
+  stored_versions: opened.stored_versions,
+  log: opened.log,
+  outbox: opened.outbox,
+  executor: opened.executor,
+  reactions: opened.reactions,
+  held: opened.held,
+  safe: (primitives) => seals_ports_on_indexeddb(opened, primitives),
+  post: post_ports_on_indexeddb(opened),
+  address_book: (primitives) => bonds_ports_on_indexeddb(opened, primitives),
+  office: (installed) => extensions_ports_on_indexeddb(opened, installed),
+  user: user_ports_on_indexeddb(opened),
+  partitions: ({ characters }) => ({
+    of: the_partition_of({
+      database: opened.database,
+      key_range: IDBKeyRange,
+      term: opened.term,
+      characters,
+    }),
+  }),
+})
+
+/** A node's storage opened on a browser's IndexedDB, as its only tab: the writer. */
+export const a_node_on_indexeddb = async (
+  indexed_db: AnIndexedDb = new IDBFactory(),
+  name = `cumino ${crypto.randomUUID()}`,
+): Promise<TheNodesStorage> => {
+  const opened = await the_node_s_storage({
+    indexed_db,
+    key_range: IDBKeyRange,
+    locks: navigator.locks,
+  })(
+    {
+      name,
+      paths: the_kernel_s_domains,
+      extensions: the_extensions_carried,
+      characters: 1_000_000,
+    },
+    'if_no_tab_is',
+  )
+  if (opened.writer !== 'this_tab') throw new Error(`another tab writes ${name}`)
+  return opened
+}
+
+/** A phone of a story on a new browser's IndexedDB (the stack's factory, STK-6). */
+export const on_indexeddb = async (): Promise<AStorageUnderTest> => {
+  const opened = await a_node_on_indexeddb()
+  return {
+    storage: a_phone_s_storage(opened),
+    position: opened.position,
+    held: opened.held,
+    held_parts: opened.held_parts,
+  }
+}
