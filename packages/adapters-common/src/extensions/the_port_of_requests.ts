@@ -138,7 +138,10 @@ const sending = 'post/requests/usecase/send_a_request'
 const calling_off = 'post/requests/usecase/call_off_a_request'
 
 /** A request the kernel called off (PST-14), in the port's words: refused, with why (EXT-2). */
-type ACalledOff = { readonly answer: 'refused'; readonly why: requests_value.why_called_off }
+interface ACalledOff {
+  readonly answer: 'refused'
+  readonly why: requests_value.why_called_off
+}
 
 /** The first event of a stream, its rest left. */
 const first_of = async <event>(events: AsyncIterable<event>): Promise<event | undefined> => {
