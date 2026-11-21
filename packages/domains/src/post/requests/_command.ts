@@ -46,7 +46,7 @@ export const the_request_waits_within_its_time = command.the_request_waits_withi
 export type the_request_waits_within_its_time = z.output<typeof the_request_waits_within_its_time>
 
 /**
- * The request waits no more: it closed, or its time is over.
+ * The request waits no more: it closed (answered, with no response, called off), or its time is over.
  *
  * @see {@link command.the_request_waits_no_more}
  */
@@ -57,8 +57,8 @@ export type the_request_waits_no_more = z.output<typeof the_request_waits_no_mor
  * A quarter of the request's time has passed with no response (PST-6): the
  * post deposits the same letter again, under the same identity, so that a
  * response lost on its way comes again (F7: the peer answers from its
- * recorded fact), and waits for the next quarter. Closed, or its time over,
- * nothing is sent. Its input is the payload of the wait; its operation is
+ * recorded fact), and waits for the next quarter. Closed, called off
+ * included, or its time over, nothing is sent. Its input is the payload of the wait; its operation is
  * the entry's (DOM-14).
  *
  * @see {@link command.send_a_request_again}
@@ -74,18 +74,11 @@ export const send_a_request_again_input = command.send_a_request_again.input
 export type send_a_request_again_input = z.output<typeof send_a_request_again_input>
 
 /**
- * The request is closed: answered, since only this command closes it otherwise.
- *
- * @see {@link command.the_request_is_closed}
- */
-export const the_request_is_closed = command.the_request_is_closed
-export type the_request_is_closed = z.output<typeof the_request_is_closed>
-
-/**
  * Bruno's phone stayed off for the 60 seconds of Anna's ping (PST-7, V18):
  * her request's time is over with no response, which the port gives the
- * delivery as `no_response`. A response came first: nothing changes. Its
- * input is the payload of the wait; its operation is the entry's (DOM-14).
+ * delivery as `no_response`. A response came first, or the request was
+ * called off: nothing changes. Its input is the payload of the wait; its
+ * operation is the entry's (DOM-14).
  *
  * @see {@link command.close_a_request_with_no_response}
  */
@@ -100,6 +93,27 @@ export const close_a_request_with_no_response_input = command.close_a_request_wi
 export type close_a_request_with_no_response_input = z.output<
   typeof close_a_request_with_no_response_input
 >
+
+/**
+ * Anna withdraws ping pong from her bond with Carla while her ping to Carla
+ * waits (F7, EXT-7; A, 21 Nov 2026: an offer goes both ways): the kernel
+ * calls the request off, which the post sends again no more, with why
+ * (`not_offered_to_the_bond`; at a deactivation `not_active`); the port
+ * gives its delivery the refusal kept. Carla's pong coming after is a late
+ * one, refused (`take_a_response`). A request no longer waiting is refused:
+ * nothing to call off. Its operation is the kernel's (step 12).
+ *
+ * @see {@link command.call_off_a_request}
+ */
+export const call_off_a_request = command.call_off_a_request
+
+/**
+ * The input of `call_off_a_request`, declared inline.
+ *
+ * @see {@link command.call_off_a_request}
+ */
+export const call_off_a_request_input = command.call_off_a_request.input
+export type call_off_a_request_input = z.output<typeof call_off_a_request_input>
 
 /**
  * The request waits, and it went to the face that answers.

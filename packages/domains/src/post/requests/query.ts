@@ -19,3 +19,20 @@ export const the_answer_to_a_request = query({
     selection: { request_id: input.request_id },
   }),
 })
+
+/**
+ * The requests that wait for their response (F7, EXT-7): what each invokes,
+ * the face that signs it and the key of the face it went to, so that the
+ * kernel calls off those of an extension the user deactivated, or withdrew
+ * from their bond (the port of requests, step 12).
+ */
+export const the_requests_waiting = query({
+  input: z.strictObject({}),
+  fields: value.waiting_request_card,
+  identity: 'id',
+  selection: request_selection.the_request_is_waiting,
+  order: { id: 'ascending' },
+  creator: () => () => ({
+    selection: {},
+  }),
+})

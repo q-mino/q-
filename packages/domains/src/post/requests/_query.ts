@@ -24,3 +24,21 @@ export const the_answer_to_a_request = query.the_answer_to_a_request
  */
 export const the_answer_to_a_request_input = query.the_answer_to_a_request.input
 export type the_answer_to_a_request_input = z.output<typeof the_answer_to_a_request_input>
+
+/**
+ * The requests that wait for their response (F7, EXT-7): what each invokes,
+ * the face that signs it and the key of the face it went to, so that the
+ * kernel calls off those of an extension the user deactivated, or withdrew
+ * from their bond (the port of requests, step 12).
+ *
+ * @see {@link query.the_requests_waiting}
+ */
+export const the_requests_waiting = query.the_requests_waiting
+
+/**
+ * The input of `the_requests_waiting`, declared inline.
+ *
+ * @see {@link query.the_requests_waiting}
+ */
+export const the_requests_waiting_input = query.the_requests_waiting.input
+export type the_requests_waiting_input = z.output<typeof the_requests_waiting_input>
