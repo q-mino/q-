@@ -45,7 +45,10 @@ export type a_request = z.output<typeof a_request>
  * the kernel's (`the_kernels_events_on_known`); `no_response`, the time
  * over; `the_bond_is_gone`; `refused`, which sent nothing: a call the
  * manifest does not declare (EXT-4), the extension not active (EXT-7), the
- * offer withdrawn from that bond (an offer goes both ways, EXT-7).
+ * offer withdrawn from that bond (an offer goes both ways, EXT-7), an input
+ * over what a letter carries (`too_large_for_a_letter`, PST-12). Not active
+ * and not offered also answer a request in flight the kernel called off at
+ * a deactivation or a withdrawal (F7), which it sends again no more.
  */
 export const an_answer_to_a_request = z.discriminatedUnion('answer', [
   z.strictObject({ answer: z.literal('responded'), event: json }),
@@ -53,7 +56,7 @@ export const an_answer_to_a_request = z.discriminatedUnion('answer', [
   z.strictObject({ answer: z.literal('the_bond_is_gone') }),
   z.strictObject({
     answer: z.literal('refused'),
-    why: z.enum(['not_declared', 'not_active', 'not_offered_to_the_bond']),
+    why: z.enum(['not_declared', 'not_active', 'not_offered_to_the_bond', 'too_large_for_a_letter']),
   }),
 ])
 export type an_answer_to_a_request = z.output<typeof an_answer_to_a_request>

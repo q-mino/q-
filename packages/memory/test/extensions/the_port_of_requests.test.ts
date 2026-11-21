@@ -180,4 +180,15 @@ describe('the kernel’s port of requests (F7, EXT-2)', () => {
     expect(await sent()).toEqual([identity_of('greetings', ask_for_a_greeting_back, 'G1')])
     expect(anna.carried()).toHaveLength(carried)
   })
+  test('an input over what a letter carries: refused, too_large_for_a_letter, nothing sent, nothing kept', async () => {
+    const { anna, port, sent } = await annas_port()
+    const greetings = port({ name: 'greetings', touches: ['the_port_of_requests'] })
+    const too_large = { ...a_greeting('G1'), input: { words: 'x'.repeat(32_760) } }
+    const refused = { answer: 'refused', why: 'too_large_for_a_letter' }
+    expect(await greetings(too_large)).toEqual(refused)
+    expect(await greetings(too_large)).toEqual(refused)
+    await anna.runs()
+    expect(await sent()).toEqual([])
+    expect(anna.carried()).toEqual([])
+  })
 })

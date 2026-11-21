@@ -1,6 +1,7 @@
 import * as boundary from '@q-mino/boundary'
 import * as zz from '@q-mino/domains/library'
 import { the_identity_of_a_request, type Machine } from '@q-mino/domains/post/_dsl.ts'
+import { content } from '@q-mino/domains/post/_value.ts'
 import type { send_a_request } from '@q-mino/domains/post/requests/_usecase.ts'
 import type * as requests_value from '@q-mino/domains/post/requests/_value.ts'
 import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
@@ -101,6 +102,10 @@ const in_the_ports_words = (
  * and its manifest's `touches`. In order:
  * - a call its manifest does not declare: `refused`, `not_declared`, in the
  *   kernel's trace (`a_call_not_declared`, EXT-4);
+ * - an input over what a letter carries (`content` of the post, PST-12):
+ *   `refused`, `too_large_for_a_letter` (A, 21 Nov 2026), so that the call
+ *   is answered and its delivery exhausted, never thrown and left
+ *   unanswered behind the executor's position (EXT-2, DOM-14);
  * - the request's identity, composed by the kernel and hashed (F7, PST-2):
  *   `{ of: 'an_extension', extension, effect, id }`, the extension's name
  *   the kernel's;
@@ -118,9 +123,9 @@ const in_the_ports_words = (
  * - else `send_a_request` under the operation `{ id: identity, scope: the
  *   port's }`, from my face to theirs, what it invokes (EXT-5: the
  *   extension's name added), the input and its time; then the answer kept,
- *   followed until it closes. A request `post` does not send (its input
- *   over what a letter carries, PST-12) is the kernel's fault, thrown: the
- *   call is left unanswered and traced (`a_call_not_answered`).
+ *   followed until it closes. A request `post` does not send otherwise is
+ *   the kernel's fault, thrown: the call is left unanswered and traced
+ *   (`a_call_not_answered`).
  */
 export const the_port_of_requests =
   (wiring: ThePortOfRequestsWiring) =>
@@ -174,6 +179,9 @@ export const the_port_of_requests =
           call: { port: 'the_port_of_requests', request: as_traced(request) },
         })
         return { answer: 'refused', why: 'not_declared' }
+      }
+      if (!content.safeParse(request.input).success) {
+        return { answer: 'refused', why: 'too_large_for_a_letter' }
       }
       const identity = the_identity_of_a_request(wiring.machine)({
         of: 'an_extension',
