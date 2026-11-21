@@ -4,7 +4,8 @@
 // so the manifest is translated here into the office's words (`activations`).
 // In the browser and in Node alike: the transport to an extension's realm
 // and its partition's technology are the configurator's (`memory` on the
-// oracle, `phone` with step 22).
+// oracle, `phone` with step 22). And the consumer that loads and unloads
+// them as the office says (EXT-15, step 17).
 
 export { through_a_frames_fence } from './a_frames_fence.ts'
 export {
@@ -56,3 +57,9 @@ export type {
   TheKernelsPortOfRequestsWiring,
   ThePortOfRequestsWiring,
 } from './the_port_of_requests.ts'
+export { the_extensions_follow_the_office } from './the_extensions_follow_the_office.ts'
+export type {
+  AnExtensionHosted,
+  TheFollowing,
+  TheFollowingWiring,
+} from './the_extensions_follow_the_office.ts'

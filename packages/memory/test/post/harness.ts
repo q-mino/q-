@@ -58,10 +58,11 @@ import {
   post_ports,
   seals_ports,
   seen_by,
+  the_relay_s_transports,
   type PostState,
   type SealsState,
 } from '../../src/index.ts'
-import { a_relay, nobody, showing, type RelayUnderTest } from '../relay/harness.ts'
+import { a_relay, hash, type RelayUnderTest } from '../relay/harness.ts'
 import { the_safe_s_machine } from '../seals/harness.ts'
 
 /** The zone of the phones' clock, in the stories. */
@@ -174,21 +175,20 @@ export interface Carried {
 }
 
 /**
- * The post's mailbox port over the relay's oracle (GR-6, PST-10): a
- * transport that deposits as the relay's depositor, under the post's
- * operation, and tells the relay's answer in the post's words; the faults
- * the story injects, one per deposit, in order.
+ * The post's mailbox port over the relay's oracle (GR-6, PST-10): the
+ * `memory` stack's transport in process (`the_relay_s_transports`), which
+ * deposits as the relay's depositor, under the post's operation, and tells
+ * the relay's answer in the post's words, at the story's instant; the
+ * faults the story injects, one per deposit, in order, decorating it
+ * (ADP-5).
  */
 export const a_transport = (relay: RelayUnderTest, now: () => string) => {
   const faults: Fault[] = []
   const carried: Carried[] = []
-  /** The relay's answer, in the post's words (PST-10). */
-  const told = (events: readonly { readonly event: string }[]): Deposited => {
-    const answer = events.at(-1)?.event
-    if (answer === 'the_envelope_is_kept') return { outcome: 'kept' }
-    if (answer === 'identity_already_used') return { outcome: 'kept_already' }
-    return { outcome: 'refused', why: answer ?? 'no_event' }
-  }
+  const in_process = the_relay_s_transports(relay, {
+    clock: { now: () => zz.date_time.parse(now()), time_zone },
+    hash,
+  })
   const port: MailboxPort = {
     deposit: async (deposit) => {
       const fault = faults.shift() ?? 'none'
@@ -207,17 +207,9 @@ export const a_transport = (relay: RelayUnderTest, now: () => string) => {
       }
       if (fault === 'lost') return kept({ outcome: 'unreachable' })
       if (fault === 'refused') return kept({ outcome: 'refused', why: 'invalid_request' })
-      const depositor = await relay.as(nobody, '1.0.0')
-      const once = () =>
-        all(
-          relay.depositor.deposit_an_envelope(
-            depositor.at(now(), { operation: deposit.operation }),
-            { deposit_address: deposit.deposit_address, envelope: deposit.envelope },
-          ),
-        )
-      const first = await once()
-      const answered = fault === 'doubled' ? await once() : first
-      return kept(fault === 'answer_lost' ? { outcome: 'unreachable' } : told(answered))
+      const first = await in_process.mailbox.deposit(deposit)
+      const answered = fault === 'doubled' ? await in_process.mailbox.deposit(deposit) : first
+      return kept(fault === 'answer_lost' ? { outcome: 'unreachable' } : answered)
     },
   }
   return {
@@ -403,21 +395,10 @@ export const a_phone = async (
       id: entry,
     })
 
-  /** What the phone collects at its mailbox, in the relay's order: the deposits the relay keeps there. */
-  const collects = async (): Promise<readonly { deposit_id: string; envelope: string }[]> => {
-    const holder = await relay.as(showing(start.collect_secret), '1.0.0')
-    const stream = relay.holder
-      .collect_the_envelopes(holder.when(time.now()), { deposit_address })
-      [Symbol.asyncIterator]()
-    const first = await stream.next()
-    await stream.return?.()
-    if (first.done === true || first.value.event !== 'snapshot')
-      throw new Error('a collect began with no snapshot')
-    return first.value.entries.map((entry) => ({
-      deposit_id: entry.deposit_id,
-      envelope: entry.envelope,
-    }))
-  }
+  /** What the phone collects at its mailbox, in the relay's order: the deposits the relay keeps there, through the stack's collect port. */
+  const collect = the_relay_s_transports(relay, { clock: time.clock, hash }).collect
+  const collects = async (): Promise<readonly { deposit_id: string; envelope: string }[]> =>
+    collect({ deposit_address, collect_secret: start.collect_secret, relays: [the_relay] })
 
   /** The envelopes at the phone's mailbox it has not opened yet, each opened by its face (PST-4). */
   const opens_what_came = async (): Promise<readonly Opened[]> => {
