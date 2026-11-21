@@ -73,6 +73,10 @@ export const pings_fragments: zz.PredicateFragments<
     reads: [],
     holds: () => what_came_back_is('the_peer_cannot_answer')(p.what_came_back),
   }),
+  'business/pings/predicate/the_ping_was_called_off': (p) => ({
+    reads: [],
+    holds: () => what_came_back_is('the_ping_was_called_off')(p.what_came_back),
+  }),
   'business/pings/predicate/a_pong_has_this_id': (p) => ({
     reads: [the_pong(p.pong_id)],
     holds: (seen) => seen(the_pong(p.pong_id)) !== undefined,
@@ -87,6 +91,7 @@ export const pings_writes: zz.FactWrites<zz.FactsIn<typeof pings_fact>, Write> =
   'business/pings/fact/a_pong_has_been_received': closing('the_pong_came_back'),
   'business/pings/fact/a_ping_has_had_no_response': closing('the_ping_had_no_response'),
   'business/pings/fact/a_ping_could_not_be_answered': closing('the_peer_cannot_answer'),
+  'business/pings/fact/a_ping_has_been_called_off': closing('the_ping_was_called_off'),
   'business/pings/fact/a_ping_has_been_answered': (fact) => ({
     reads: [],
     writes: () => [{ write: 'set', key: the_pong(fact.pong.id), value: zz.as_json(fact.pong) }],

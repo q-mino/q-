@@ -19,12 +19,14 @@ export const waiting_time = z.number().int().min(1).max(604_800)
  * (EXT-12, D108), never the peer's events: its pong; no response within its
  * time; a peer that cannot answer it (its node closed the request, refused
  * it as malformed or of a version it does not speak, or its office gave no
- * pong).
+ * pong); called off by the user's own gesture while it waited, ping pong
+ * deactivated or withdrawn from the bond (EXT-12, F7; A, 21 Nov 2026).
  */
 export const what_came_back = z.enum([
   'the_pong_came_back',
   'the_ping_had_no_response',
   'the_peer_cannot_answer',
+  'the_ping_was_called_off',
 ])
 
 /** Where a ping the node sent stands: waiting for what comes back, or closed with it, and when. */

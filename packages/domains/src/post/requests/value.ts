@@ -62,26 +62,56 @@ export const request_with_no_response = z.strictObject({
   status: z.literal('no_response'),
 })
 
+/**
+ * Why the kernel called off a request that waited (F7, EXT-7; A, 21 Nov
+ * 2026): the user deactivated the extension that asks, `not_active`, or
+ * withdrew its offer from the bond it goes on, `not_offered_to_the_bond`.
+ * In the port's words (EXT-2), which give them back as its answer.
+ */
+export const why_called_off = z.enum(['not_active', 'not_offered_to_the_bond'])
+
+/** A request called off while it waited (F7): sent again no more, with why. */
+export const called_off_request = z.strictObject({
+  ...as_sent,
+  status: z.literal('called_off'),
+  why: why_called_off,
+})
+
 /** A request of the port, in its states. */
 export const request = z.discriminatedUnion('status', [
   waiting_request,
   answered_request,
   request_with_no_response,
+  called_off_request,
 ])
 
 /**
  * The answer the port keeps under a request's identity (F7, PST-8): still
- * waiting, the response's event, or no response; kept as long as the
- * request, forever in the prototype (DOM-11).
+ * waiting, the response's event, no response, or called off with why; kept
+ * as long as the request, forever in the prototype (DOM-11).
  */
 export const answer = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('waiting') }),
   z.strictObject({ status: z.literal('answered'), event: _post.value.content }),
   z.strictObject({ status: z.literal('no_response') }),
+  z.strictObject({ status: z.literal('called_off'), why: why_called_off }),
 ])
 
 /** A request as the port reads it: its identity and its answer. */
 export const request_card = z.strictObject({
   id: id.request_id,
   answer: answer,
+})
+
+/**
+ * A request that waits, as the kernel reads it to call it off (F7, EXT-7):
+ * its identity, what it invokes (an extension's, by its name), the face of
+ * the node's that signs it and the key of the face it went to (the bond, to
+ * the kernel, which knows it by them).
+ */
+export const waiting_request_card = z.strictObject({
+  id: id.request_id,
+  invokes: _post.value.invocation,
+  face_id: safe.id.face_id,
+  their_key: _post.value.face_key,
 })
