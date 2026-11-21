@@ -108,10 +108,23 @@ export const the_confirmation_is_received = predicate({
 })
 
 /**
- * The handshake of this bond began within two minutes of this instant
- * (BND-10): the two tickets crossed, in person.
+ * I opened their ticket on this bond within the window of a crossing of the
+ * time their introduction declares (BND-10): the two tickets crossed, in
+ * person. The time is theirs, a claim (PER-13).
  */
-export const the_handshake_began_within_two_minutes_of = predicate({
+export const i_opened_their_ticket_within_the_window_of_a_crossing_of = predicate({
+  parameters: z.strictObject({
+    bond_id: id.bond_id,
+    declared_at: date_time,
+  }),
+})
+
+/**
+ * Their introduction on this bond, come first, declares a time within the
+ * window of a crossing of this instant, my opening their ticket (BND-10):
+ * the two tickets crossed, in person.
+ */
+export const their_introduction_is_declared_within_the_window_of_a_crossing_of = predicate({
   parameters: z.strictObject({
     bond_id: id.bond_id,
     now: date_time,

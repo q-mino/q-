@@ -119,8 +119,8 @@ export type a_bond_has_been_made_by_opening_their_ticket = z.output<
 
 /**
  * Bruno's introduction to Anna's ticket came first, and she opened his
- * ticket within two minutes (BND-10): the tickets crossed, in person, and
- * her introduction is sent.
+ * ticket within the window of a crossing of the time it declares (BND-10):
+ * the tickets crossed, in person, and her introduction is sent.
  *
  * @see {@link fact.their_ticket_has_been_opened_in_person}
  */
@@ -131,8 +131,9 @@ export type their_ticket_has_been_opened_in_person = z.output<
 >
 
 /**
- * Their introduction came first, and the user opened their ticket later
- * (BND-10): her introduction is sent, the handshake stays at a distance.
+ * Their introduction came first, and the user opened their ticket outside
+ * the window of a crossing of the time it declares (BND-10): her
+ * introduction is sent, the handshake stays at a distance.
  *
  * @see {@link fact.their_ticket_has_been_opened_after_their_introduction}
  */
@@ -167,8 +168,9 @@ export type a_bond_has_been_made_by_their_introduction = z.output<
 >
 
 /**
- * Anna opened Bruno's ticket, and his introduction to hers came within two
- * minutes (BND-10): the tickets crossed, in person, and he has her.
+ * Anna opened Bruno's ticket, and his introduction to hers came, declaring
+ * a time within the window of a crossing of her opening (BND-10): the
+ * tickets crossed, in person, and he has her.
  *
  * @see {@link fact.their_introduction_has_come_in_person}
  */
@@ -179,7 +181,8 @@ export type their_introduction_has_come_in_person = z.output<
 >
 
 /**
- * Their introduction to my ticket came after I opened theirs, later than two minutes (BND-10): they have me.
+ * Their introduction to my ticket came after I opened theirs, declaring a
+ * time outside the window of a crossing of my opening (BND-10): they have me.
  *
  * @see {@link fact.their_introduction_has_come}
  */
