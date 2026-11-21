@@ -164,24 +164,26 @@ export const their_introduction_came_first = command.their_introduction_came_fir
 export type their_introduction_came_first = z.output<typeof their_introduction_came_first>
 
 /**
- * Their introduction came first, within two minutes: the tickets crossed in person.
+ * Their introduction came first, and declares a time within the window of a
+ * crossing of my opening now: the tickets crossed in person.
  *
- * @see {@link command.their_introduction_came_first_within_two_minutes}
+ * @see {@link command.their_introduction_came_first_within_the_window_of_a_crossing}
  */
-export const their_introduction_came_first_within_two_minutes =
-  command.their_introduction_came_first_within_two_minutes
-export type their_introduction_came_first_within_two_minutes = z.output<
-  typeof their_introduction_came_first_within_two_minutes
+export const their_introduction_came_first_within_the_window_of_a_crossing =
+  command.their_introduction_came_first_within_the_window_of_a_crossing
+export type their_introduction_came_first_within_the_window_of_a_crossing = z.output<
+  typeof their_introduction_came_first_within_the_window_of_a_crossing
 >
 
 /**
- * Their introduction came first, earlier than two minutes ago.
+ * Their introduction came first, and declares a time outside the window of a crossing of my opening now.
  *
- * @see {@link command.their_introduction_came_first_earlier}
+ * @see {@link command.their_introduction_came_first_outside_the_window_of_a_crossing}
  */
-export const their_introduction_came_first_earlier = command.their_introduction_came_first_earlier
-export type their_introduction_came_first_earlier = z.output<
-  typeof their_introduction_came_first_earlier
+export const their_introduction_came_first_outside_the_window_of_a_crossing =
+  command.their_introduction_came_first_outside_the_window_of_a_crossing
+export type their_introduction_came_first_outside_the_window_of_a_crossing = z.output<
+  typeof their_introduction_came_first_outside_the_window_of_a_crossing
 >
 
 /**
@@ -200,8 +202,9 @@ export type my_introduction_was_sent_already = z.output<typeof my_introduction_w
  * a distance for now, the confirmation awaited, and her introduction goes
  * to their ticket's mailbox. If Bruno's introduction to her ticket came
  * first (the QR crossed), the bond is there: her introduction goes all the
- * same, and within two minutes the handshake is in person. The same flow
- * on both phones, in either order (one path, near and far).
+ * same, and the handshake is in person when his introduction declares a
+ * time within the window of a crossing of her opening (two minutes). The
+ * same flow on both phones, in either order (one path, near and far).
  *
  * @see {@link command.open_their_ticket}
  */
@@ -232,24 +235,26 @@ export const i_opened_their_ticket_first = command.i_opened_their_ticket_first
 export type i_opened_their_ticket_first = z.output<typeof i_opened_their_ticket_first>
 
 /**
- * I opened their ticket first, within two minutes: the tickets crossed in person.
+ * I opened their ticket first, within the window of a crossing of the time
+ * their introduction declares: the tickets crossed in person.
  *
- * @see {@link command.i_opened_their_ticket_first_within_two_minutes}
+ * @see {@link command.i_opened_their_ticket_first_within_the_window_of_a_crossing}
  */
-export const i_opened_their_ticket_first_within_two_minutes =
-  command.i_opened_their_ticket_first_within_two_minutes
-export type i_opened_their_ticket_first_within_two_minutes = z.output<
-  typeof i_opened_their_ticket_first_within_two_minutes
+export const i_opened_their_ticket_first_within_the_window_of_a_crossing =
+  command.i_opened_their_ticket_first_within_the_window_of_a_crossing
+export type i_opened_their_ticket_first_within_the_window_of_a_crossing = z.output<
+  typeof i_opened_their_ticket_first_within_the_window_of_a_crossing
 >
 
 /**
- * I opened their ticket first, earlier than two minutes ago.
+ * I opened their ticket first, outside the window of a crossing of the time their introduction declares.
  *
- * @see {@link command.i_opened_their_ticket_first_earlier}
+ * @see {@link command.i_opened_their_ticket_first_outside_the_window_of_a_crossing}
  */
-export const i_opened_their_ticket_first_earlier = command.i_opened_their_ticket_first_earlier
-export type i_opened_their_ticket_first_earlier = z.output<
-  typeof i_opened_their_ticket_first_earlier
+export const i_opened_their_ticket_first_outside_the_window_of_a_crossing =
+  command.i_opened_their_ticket_first_outside_the_window_of_a_crossing
+export type i_opened_their_ticket_first_outside_the_window_of_a_crossing = z.output<
+  typeof i_opened_their_ticket_first_outside_the_window_of_a_crossing
 >
 
 /**
@@ -263,11 +268,13 @@ export type their_introduction_came_already = z.output<typeof their_introduction
 /**
  * Carla's phone takes an introduction to her ticket (BND-10, PER-11): the
  * entry of `unknown` (step 13) gives the bond of the ticket at whose mailbox
- * it was collected, the secret it carries, the face that signed it and the
- * mailbox its ticket declares. Her ticket ready and the secret its, the bond
- * is kept, named as Anna is introduced, at a distance, the confirmation
- * received. On a bond made by opening their ticket (the QR crossed), it
- * confirms it, in person within two minutes. A ticket used by another face,
+ * it was collected, the secret it carries, the face that signed it, the
+ * mailbox its ticket declares and the time its letter declares (a claim,
+ * PER-13). Her ticket ready and the secret its, the bond is kept, named as
+ * Anna is introduced, at a distance, the confirmation received. On a bond
+ * made by opening their ticket (the QR crossed), it confirms it, in person
+ * when the time it declares is within the window of a crossing of the
+ * opening, whenever the node takes it. A ticket used by another face,
  * expired, or a secret not its: refused, no fact, to the trace (F6).
  *
  * @see {@link command.accept_their_introduction}
