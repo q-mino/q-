@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc -b",
-    "lint": "node --max-old-space-size=6144 node_modules/eslint/bin/eslint.js .",
+    "lint": "node --max-old-space-size=8192 node_modules/eslint/bin/eslint.js .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
