@@ -13,7 +13,9 @@
     "@q-mino/domains": "workspace:*"
   },
   "devDependencies": {
+    "@hono/node-server": "2.1.6",
     "@q-mino/adapters-node": "workspace:*",
+    "@q-mino/adapters-web": "workspace:*",
     "@q-mino/greetings": "workspace:*",
     "@q-mino/ping_pong": "workspace:*",
     "@q-mino/relay": "workspace:*",
