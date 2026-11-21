@@ -10,7 +10,12 @@ import { the_range_of } from './command.ts'
 import { the_node_s_store } from './database.ts'
 import type { ABell } from './log.ts'
 import { the_store_of } from './records.ts'
-import { the_end_of, the_record_of, the_records_of as records_of, the_result_of } from './requests.ts'
+import {
+  the_end_of,
+  the_record_of,
+  the_records_of as records_of,
+  the_result_of,
+} from './requests.ts'
 import { the_term_holds } from './the_writer.ts'
 
 /** What the consumers need of the node: its database, IndexedDB's ranges, the writer's term, the bell of its commits. */

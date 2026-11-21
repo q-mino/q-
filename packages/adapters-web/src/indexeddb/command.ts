@@ -96,8 +96,7 @@ export const the_range_of = (
 
 /** Whether a key begins with a prefix, part by part. */
 const begins_with = (key: IDBValidKey, prefix: readonly IDBValidKey[]): boolean =>
-  Array.isArray(key) &&
-  prefix.every((part, at) => JSON.stringify(key[at]) === JSON.stringify(part))
+  Array.isArray(key) && prefix.every((part, at) => JSON.stringify(key[at]) === JSON.stringify(part))
 
 /** What a business domain's command port needs of the node. */
 export interface ADomainsStore {

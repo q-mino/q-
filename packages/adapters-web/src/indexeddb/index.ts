@@ -37,12 +37,7 @@ export {
   type Write,
 } from './command.ts'
 export { a_bell, the_node_s_log, type ABell, type TheNodesFacts } from './log.ts'
-export {
-  read_in,
-  the_range_of,
-  type ARange,
-  type ARead,
-} from './command.ts'
+export { read_in, the_range_of, type ARange, type ARead } from './command.ts'
 export {
   deleted,
   every_parsed,

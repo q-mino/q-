@@ -84,7 +84,12 @@ export const after =
       )
       .find((comparison) => comparison !== 0) ?? 0) > 0
 
-type Plan<candidate> = zz.PlannedQuery<Selection<candidate>, Source<candidate>, Field<candidate>, Fragment>
+type Plan<candidate> = zz.PlannedQuery<
+  Selection<candidate>,
+  Source<candidate>,
+  Field<candidate>,
+  Fragment
+>
 
 /** What the reads need of the node: its database and IndexedDB's ranges. */
 export interface ADomainsReads {
