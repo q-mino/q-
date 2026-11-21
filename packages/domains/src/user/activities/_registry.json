@@ -532,7 +532,7 @@
               {
                 "type": "object",
                 "properties": {
-                  "ended": { "type": "string", "const": "the_extension_answered" },
+                  "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
                   "said": {
                     "type": "object",
                     "properties": {
@@ -1046,7 +1046,7 @@
                       {
                         "type": "object",
                         "properties": {
-                          "ended": { "type": "string", "const": "the_extension_answered" },
+                          "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
                           "said": {
                             "type": "object",
                             "properties": {
@@ -1564,7 +1564,10 @@
                           {
                             "type": "object",
                             "properties": {
-                              "ended": { "type": "string", "const": "the_extension_answered" },
+                              "ended": {
+                                "type": "string",
+                                "const": "the_extension_told_how_it_ended"
+                              },
                               "said": {
                                 "type": "object",
                                 "properties": {
@@ -2124,7 +2127,7 @@
                   {
                     "type": "object",
                     "properties": {
-                      "ended": { "type": "string", "const": "the_extension_answered" },
+                      "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
                       "said": {
                         "type": "object",
                         "properties": {
@@ -3089,7 +3092,7 @@
                   {
                     "type": "object",
                     "properties": {
-                      "ended": { "type": "string", "const": "the_extension_answered" },
+                      "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
                       "said": {
                         "type": "object",
                         "properties": {

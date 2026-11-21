@@ -325,7 +325,10 @@ export const the_delivery_of_an_activity = (wiring: ThePortTowardSelf) => {
     if (last === undefined)
       return { outcome: 'exhausted' as const, reason: `${what.action} said nothing` }
     const said = what_it_said_of(last)
-    return ended(activity_id, how_a_closing_ends(said) ?? { ended: 'the_extension_answered', said })
+    return ended(
+      activity_id,
+      how_a_closing_ends(said) ?? { ended: 'the_extension_told_how_it_ended', said },
+    )
   }
 
   const handed = { event: 'the_letter_is_handed', payload: {} }
