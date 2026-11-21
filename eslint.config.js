@@ -36,6 +36,21 @@ const tree_rules = {
   '@typescript-eslint/ban-ts-comment': ['error', { 'ts-expect-error': true }],
 }
 
+// An extension's declaration (EXT-10; A, 21 Nov 2026): its actions' `invokes` are typed by the registry of its
+// leaves on `self` only through the `satisfies`, which no compiler asks for: the lint asks it of the export
+// `manifest` of every extension's `manifest.ts`.
+const the_rule_of_a_manifest = {
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector:
+        "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='manifest']:not([init.type='TSSatisfiesExpression'][init.typeAnnotation.typeName.left.name='boundary'][init.typeAnnotation.typeName.right.name='Manifest'][init.typeAnnotation.typeArguments.params.0.exprName.name='registry'])",
+      message:
+        "An extension's manifest satisfies `boundary.Manifest<typeof registry>` (EXT-10): its actions' `invokes` typed by the registry of its leaves on `self`.",
+    },
+  ],
+}
+
 // The extensions' trees (EXT-9, EXT-11, GR-10): the folders each map names, from the generator's
 // configuration as the cruiser reads them; not their `adapter/`, `configurator.ts`, `manifest.ts`, tests.
 const extension_trees = configuration.trees.filter((tree) =>
@@ -98,6 +113,11 @@ export default defineConfig(
     ),
     ignores: extension_trees.map((tree) => `${tree.root}/**/@*/**`),
     rules: tree_rules,
+  },
+  {
+    // The declaration of every extension (EXT-10).
+    files: ['packages/extensions/*/manifest.ts'],
+    rules: the_rule_of_a_manifest,
   },
   prettier,
 )
