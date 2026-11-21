@@ -239,7 +239,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **21. IndexedDB** (`adapters-web`) — 21.1 J · 240k (the stores, the single writer, an extension's partition: the rules and the skeleton), 21.2 L · 350k · `step/21-indexeddb`
 
 - Goal: command and read ports and stream reads of every domain; the single writer with Web Locks ("use here"); `storage.persist()`; one atomic write per domain; an extension's storage, a partition of its own (step 12).
-- Rules: DOM-8, DOM-9, DOM-11, DOM-17, ADP-6, TST-1..6; WEB-8..WEB-13, written by part 21.1 (21 Nov 2026).
+- Rules: DOM-8, DOM-9, DOM-11, DOM-17, ADP-6, TST-1..6; WEB-8..WEB-13, written by part 21.1 (21 Nov 2026); WEB-14..WEB-17, written by part 21.2 (21 Nov 2026), and STK-1, STK-6, WEB-9, WEB-10 amended.
 - Checks: the domain suites parametrized on the adapter factory; concurrency equals some serial order; a rejection leaves no fact; a second tab cannot write; the cost of the duplicate branch's lookups measured: a request through a leaf reads its operation twice, at the leaf and at the port, before the step reads it again (DOM-11, "Where the duplicate branch runs", 19 Nov 2026), and A decides on the measure whether to keep the two reads.
 
 **22. Solid rendering** (`adapters-web`, texts in `phone`) — 22.1 L · 300k (the kernel's screens), 22.2 L · 300k (the extension points, ping pong) · `step/22-solid`
