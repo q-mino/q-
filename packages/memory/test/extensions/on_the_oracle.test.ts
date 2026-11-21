@@ -325,6 +325,7 @@ describe('2. the silence and the gate (F8, EXT-6)', () => {
       now: zz.in_zone(story.clock.time_zone)(story.clock.now()),
       time_zone: story.clock.time_zone,
       caller: { is: 'a_face' as const, key: carla.post.key, to_my_mailbox },
+      declared_at: zz.in_zone(story.clock.time_zone)(story.clock.now()),
       version: zz.semver.parse('1.0.0'),
       operation: { id: zz.operation_id.parse(operation), scope: `known/${carla.post.key}` },
     })

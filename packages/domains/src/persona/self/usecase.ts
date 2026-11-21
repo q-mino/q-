@@ -102,9 +102,9 @@ export const open_their_ticket = command_use_case_over({
   events: {
     /** At a distance: her introduction is sent, their confirmation awaited. */
     you_are_bonded: z.strictObject({ bond_id: address_book.id.bond_id }),
-    /** Their introduction came first, within two minutes: the QR crossed, in person. */
+    /** Their introduction came first, declaring a time within the window of a crossing of her opening: the QR crossed, in person. */
     you_met_in_person: z.strictObject({ bond_id: address_book.id.bond_id }),
-    /** Their introduction came first, earlier: hers goes now, the bond stays at a distance. */
+    /** Their introduction came first, outside the window of a crossing: hers goes now, the bond stays at a distance. */
     your_introduction_is_sent: z.strictObject({ bond_id: address_book.id.bond_id }),
     you_opened_their_ticket_already: z.strictObject({ bond_id: address_book.id.bond_id }),
     /** Her ticket not ready (being prepared, expired, used by another face), or the bond removed: she need not know which. */
@@ -115,11 +115,11 @@ export const open_their_ticket = command_use_case_over({
       event: 'you_are_bonded',
       payload: { bond_id: fact.opened_bond.id },
     }),
-    their_introduction_came_within_two_minutes_so_we_met_in_person: (fact) => ({
+    their_introduction_came_within_the_window_of_a_crossing_so_we_met_in_person: (fact) => ({
       event: 'you_met_in_person',
       payload: { bond_id: fact.met_bond.id },
     }),
-    their_introduction_came_earlier_so_mine_goes_now: (fact) => ({
+    their_introduction_came_outside_the_window_of_a_crossing_so_mine_goes_now: (fact) => ({
       event: 'your_introduction_is_sent',
       payload: { bond_id: fact.introduced_bond.id },
     }),

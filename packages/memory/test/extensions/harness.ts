@@ -117,6 +117,21 @@ export const a_node = async (
 export type NodeUnderTest = Awaited<ReturnType<typeof a_node>>
 
 /**
+ * The story of two nodes, as `two_nodes` gives it: its type named, since
+ * the compiler would not write it whole (TS7056).
+ */
+export interface TwoNodes {
+  readonly story: Story
+  readonly anna: NodeUnderTest
+  readonly bruno: NodeUnderTest
+  readonly carla: NodeUnderTest
+  /** The nodes' clock reads this time of the day. */
+  readonly at: Story['at']
+  /** The nodes' clock reads this time, and the asker runs (its post's sendings again, its waits). */
+  readonly runs_at: (asker: NodeUnderTest, time_of_day: string) => Promise<void>
+}
+
+/**
  * The story of two nodes (three phones): one relay; Anna's node, bonded to
  * Bruno (`B-BRUNO`) and Carla (`B-CARLA`), each bond made by her ticket in
  * a link that Bruno, Carla opens (`B-ANNA` on theirs); Carla has no bond
@@ -133,7 +148,7 @@ export const two_nodes = async (
     readonly brunos_characters?: number
     readonly carries?: AnExtensionOfTheApp
   } = {},
-) => {
+): Promise<TwoNodes> => {
   const story = await a_story()
   const carries = options.carries ?? 'greetings'
   const anna = await a_node(story, {

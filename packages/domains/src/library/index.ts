@@ -315,10 +315,9 @@ export type {
   MountedLeaf,
   MountedSurface,
   MountedInvocation,
-  MountedLeafEvent,
-  MountedLeafPort,
+  EventByPath,
+  PortByPath,
   OutsideTheSurface,
-  TreePortByPath,
 } from './tree_port.ts'
 export type { Trace, Traced, TraceReason, TracedIssue, TracedFailure, NotKnown } from './trace.ts'
 export { lookup_ports } from './lookup_port.ts'
