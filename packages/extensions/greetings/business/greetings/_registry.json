@@ -70,6 +70,14 @@
                 },
                 "required": ["outcome"],
                 "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
+                },
+                "required": ["outcome"],
+                "additionalProperties": false
               }
             ]
           }
@@ -116,6 +124,14 @@
                         "type": "object",
                         "properties": {
                           "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                        },
+                        "required": ["outcome"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
                         },
                         "required": ["outcome"],
                         "additionalProperties": false
@@ -180,6 +196,17 @@
                             "type": "object",
                             "properties": {
                               "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                            },
+                            "required": ["outcome"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "outcome": {
+                                "type": "string",
+                                "const": "the_greeting_was_called_off"
+                              }
                             },
                             "required": ["outcome"],
                             "additionalProperties": false
@@ -276,6 +303,17 @@
                                 },
                                 "required": ["outcome"],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "outcome": {
+                                    "type": "string",
+                                    "const": "the_greeting_was_called_off"
+                                  }
+                                },
+                                "required": ["outcome"],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -328,6 +366,14 @@
                     "type": "object",
                     "properties": {
                       "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
                     },
                     "required": ["outcome"],
                     "additionalProperties": false
@@ -490,6 +536,14 @@
                     "type": "object",
                     "properties": {
                       "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
                     },
                     "required": ["outcome"],
                     "additionalProperties": false

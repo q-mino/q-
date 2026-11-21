@@ -39,6 +39,13 @@ export const the_peer_cannot_answer = predicate({
   }),
 })
 
+/** What came back of a ping is its calling off, the user's own gesture. */
+export const the_ping_was_called_off = predicate({
+  parameters: z.strictObject({
+    what_came_back: value.what_came_back,
+  }),
+})
+
 /** A pong with this identity has been given back. */
 export const a_pong_has_this_id = predicate({
   parameters: z.strictObject({

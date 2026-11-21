@@ -124,14 +124,14 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
     expect(bruno.post.carried()).toEqual([])
     expect(carla.post.carried()).toEqual([])
     expect(bruno.pongs()).toEqual([])
-    // Bruno's own ping to Anna, after his withdrawal: refused by his port of requests, nothing sent, a dead letter.
+    // Bruno's own ping to Anna, after his withdrawal: refused by his port of requests, nothing sent,
+    // called off, his own gesture, no dead letter (EXT-12; A, 21 Nov 2026).
     const his = await bruno.pings('B-ANNA')
-    await until(() => bruno.dead_letters().length === 1, 'the dead letter')
-    expect(bruno.dead_letters()).toEqual([`business/pings/effect/ask_for_a_pong/${his}`])
-    expect(JSON.stringify(bruno.notices[0])).toContain('not_offered_to_the_bond')
+    await until(() => bruno.the_ping_is_closed(his), 'his ping closed')
+    expect(bruno.the_ping(his)).toMatchObject(closed_with('the_ping_was_called_off'))
+    expect(bruno.dead_letters()).toEqual([])
     expect(await bruno.sent()).toEqual([])
     expect(bruno.post.carried()).toEqual([])
-    expect(bruno.the_ping(his)).toMatchObject({ progress: { stage: 'waiting' } })
   })
 
   test('a ping redelivered gives one pong', async () => {

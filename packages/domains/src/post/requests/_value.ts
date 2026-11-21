@@ -62,6 +62,25 @@ export const request_with_no_response = value.request_with_no_response
 export type request_with_no_response = z.output<typeof request_with_no_response>
 
 /**
+ * Why the kernel called off a request that waited (F7, EXT-7; A, 21 Nov
+ * 2026): the user deactivated the extension that asks, `not_active`, or
+ * withdrew its offer from the bond it goes on, `not_offered_to_the_bond`.
+ * In the port's words (EXT-2), which give them back as its answer.
+ *
+ * @see {@link value.why_called_off}
+ */
+export const why_called_off = value.why_called_off
+export type why_called_off = z.output<typeof why_called_off>
+
+/**
+ * A request called off while it waited (F7): sent again no more, with why.
+ *
+ * @see {@link value.called_off_request}
+ */
+export const called_off_request = value.called_off_request
+export type called_off_request = z.output<typeof called_off_request>
+
+/**
  * A request of the port, in its states.
  *
  * @see {@link value.request}
@@ -71,8 +90,8 @@ export type request = z.output<typeof request>
 
 /**
  * The answer the port keeps under a request's identity (F7, PST-8): still
- * waiting, the response's event, or no response; kept as long as the
- * request, forever in the prototype (DOM-11).
+ * waiting, the response's event, no response, or called off with why; kept
+ * as long as the request, forever in the prototype (DOM-11).
  *
  * @see {@link value.answer}
  */
@@ -86,3 +105,14 @@ export type answer = z.output<typeof answer>
  */
 export const request_card = value.request_card
 export type request_card = z.output<typeof request_card>
+
+/**
+ * A request that waits, as the kernel reads it to call it off (F7, EXT-7):
+ * its identity, what it invokes (an extension's, by its name), the face of
+ * the node's that signs it and the key of the face it went to (the bond, to
+ * the kernel, which knows it by them).
+ *
+ * @see {@link value.waiting_request_card}
+ */
+export const waiting_request_card = value.waiting_request_card
+export type waiting_request_card = z.output<typeof waiting_request_card>
