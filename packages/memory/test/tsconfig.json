@@ -18,6 +18,9 @@
       "path": "../../adapters-node"
     },
     {
+      "path": "../../adapters-web"
+    },
+    {
       "path": "../../relay"
     },
     {

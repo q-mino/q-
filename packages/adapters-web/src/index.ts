@@ -42,3 +42,12 @@ export {
   type APageToSaveIn,
   type APageToPickIn,
 } from './files/index.ts'
+export {
+  the_relay_s_http_transports,
+  the_longest_wait_for_the_relay,
+  the_paths_of_the_relay,
+  type AFetch,
+  type ARequest,
+  type AnAnswer,
+  type TheRelaysHttpWiring,
+} from './relay_client/index.ts'
