@@ -1,4 +1,5 @@
 import {
+  the_calling_off,
   the_port_of_requests,
   type ABondToAskOn,
   type TheKernelsTraced,
@@ -80,7 +81,25 @@ const annas_port = async () => {
       effect,
       id,
     })
-  return { story, anna, bruno, traced, state, port, sent, identity_of }
+  /** The kernel's calling off on Anna's phone (F7, EXT-7, PST-14): her bond with Bruno known by her face and his key. */
+  const calling_off = the_calling_off({
+    clock: story.clock,
+    post: {
+      the_requests_waiting: anna.post.the_requests_waiting,
+      call_off_a_request: anna.post.call_off_a_request,
+    },
+    the_bond_of: (asked) =>
+      Promise.resolve(
+        asked.face_id === anna.face_id && asked.their_key === bruno.key
+          ? boundary.bond.parse('B-BRUNO')
+          : undefined,
+      ),
+    extensions: {
+      is_active: () => Promise.resolve(state.active),
+      is_offered: () => Promise.resolve(state.offered),
+    },
+  })
+  return { story, anna, bruno, traced, state, port, sent, identity_of, calling_off }
 }
 
 describe('the kernel’s port of requests (F7, EXT-2)', () => {
@@ -180,6 +199,7 @@ describe('the kernel’s port of requests (F7, EXT-2)', () => {
     expect(await sent()).toEqual([identity_of('greetings', ask_for_a_greeting_back, 'G1')])
     expect(anna.carried()).toHaveLength(carried)
   })
+
   test('an input over what a letter carries: refused, too_large_for_a_letter, nothing sent, nothing kept', async () => {
     const { anna, port, sent } = await annas_port()
     const greetings = port({ name: 'greetings', touches: ['the_port_of_requests'] })
@@ -190,5 +210,45 @@ describe('the kernel’s port of requests (F7, EXT-2)', () => {
     await anna.runs()
     expect(await sent()).toEqual([])
     expect(anna.carried()).toEqual([])
+  })
+
+  test('a request in flight called off at a withdrawal, then at a deactivation: sent again no more, its delivery refused, the refusal kept; a late response refused', async () => {
+    const { story, anna, bruno, state, port, identity_of, calling_off } = await annas_port()
+    const greetings = port({ name: 'greetings', touches: ['the_port_of_requests'] })
+    const G1 = identity_of('greetings', ask_for_a_greeting_back, 'G1')
+    const answer = greetings(a_greeting('G1'))
+    await quiet()
+    await anna.runs()
+    expect(anna.carried()).toHaveLength(1)
+    // Offered and active: nothing to call off.
+    expect(await calling_off()).toEqual([])
+    // At 10:00:10 Anna withdraws greetings from her bond with Bruno.
+    story.at('10:00:10')
+    state.offered = false
+    expect(await calling_off()).toEqual([G1])
+    const not_offered = { answer: 'refused', why: 'not_offered_to_the_bond' }
+    expect(await answer).toEqual(not_offered)
+    expect(await greetings(a_greeting('G1'))).toEqual(not_offered)
+    expect(await calling_off()).toEqual([])
+    // Its sendings again send nothing; Bruno's answer, coming after, changes nothing.
+    for (const quarter of ['10:00:15', '10:00:30', '10:00:45', '10:01:00']) {
+      story.at(quarter)
+      await anna.runs()
+    }
+    expect(anna.carried()).toHaveLength(1)
+    await bruno.serves(story.bonds_of.bruno, {
+      event: 'greeted_back',
+      payload: { words: 'ciao anche a te' },
+    })
+    await anna.receives()
+    expect(await greetings(a_greeting('G1'))).toEqual(not_offered)
+    // Offered again, then deactivated while G2 waits.
+    state.offered = true
+    const G2 = identity_of('greetings', ask_for_a_greeting_back, 'G2')
+    const second = greetings(a_greeting('G2'))
+    await quiet()
+    state.active = false
+    expect(await calling_off()).toEqual([G2])
+    expect(await second).toEqual({ answer: 'refused', why: 'not_active' })
   })
 })

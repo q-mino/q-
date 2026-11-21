@@ -2,7 +2,7 @@ import * as boundary from '@q-mino/boundary'
 import * as zz from '@q-mino/domains/library'
 import { the_identity_of_a_request, type Machine } from '@q-mino/domains/post/_dsl.ts'
 import { content } from '@q-mino/domains/post/_value.ts'
-import type { send_a_request } from '@q-mino/domains/post/requests/_usecase.ts'
+import type { call_off_a_request, send_a_request } from '@q-mino/domains/post/requests/_usecase.ts'
 import type * as requests_value from '@q-mino/domains/post/requests/_value.ts'
 import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
 
@@ -14,7 +14,10 @@ import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
 // keeps under it, following a request that waits until it closes. Its
 // wiring is functions: the post's ports, the bonds' read, the machine's
 // hash, the kernel's `extensions` (block 4), so that the oracle and the
-// phone wire it alike.
+// phone wire it alike. Beside it, the calling off (F7, EXT-7; A, 21 Nov
+// 2026): the requests in flight of an extension the user deactivated, or
+// withdrew from their bond, called off in `post`, which sends them again no
+// more, so that their deliveries read the refusal kept.
 
 /** The scope of the port of requests' operations (DOM-11): the port is the entry that sends, under the request's identity. */
 export const the_scope_of_the_port_of_requests = 'the_port_of_requests'
@@ -74,6 +77,9 @@ export interface ThePortOfRequestsWiring {
 /** The path of the post's use case the port invokes, for the fingerprint (LIB-10). */
 const sending = 'post/requests/usecase/send_a_request'
 
+/** The path of the post's use case the calling off invokes, for the fingerprint (LIB-10). */
+const calling_off = 'post/requests/usecase/call_off_a_request'
+
 /** The first event of a stream, its rest left. */
 const first_of = async <event>(events: AsyncIterable<event>): Promise<event | undefined> => {
   for await (const event of events) return event
@@ -87,14 +93,21 @@ const every = async <event>(events: AsyncIterable<event>): Promise<readonly even
   return all
 }
 
-/** The answer `post` keeps, in the port's words (EXT-2): answered, with the event; no response. */
+/** The answer `post` keeps, in the port's words (EXT-2): answered, with the event; no response; called off, refused with why (PST-14). */
 const in_the_ports_words = (
   answer: Exclude<requests_value.answer, { readonly status: 'waiting' }>,
 ): boundary.an_answer_to_a_request => {
-  if (answer.status === 'no_response') return { answer: 'no_response' }
-  const event = boundary.json.safeParse(answer.event)
-  if (!event.success) throw new Error('the event kept is no JSON value (PST-12)')
-  return { answer: 'responded', event: event.data }
+  switch (answer.status) {
+    case 'no_response':
+      return { answer: 'no_response' }
+    case 'called_off':
+      return { answer: 'refused', why: answer.why }
+    case 'answered': {
+      const event = boundary.json.safeParse(answer.event)
+      if (!event.success) throw new Error('the event kept is no JSON value (PST-12)')
+      return { answer: 'responded', event: event.data }
+    }
+  }
 }
 
 /**
@@ -111,9 +124,10 @@ const in_the_ports_words = (
  *   the kernel's;
  * - the answer kept under it (PST-8), if the port sent it: followed until
  *   the request closes, never sent again (F7, "The port keeps the
- *   answer"); a bond removed, an offer withdrawn or the extension
- *   deactivated while its request waits does not stop it, nor change the
- *   answer a delivery met again reads (the request is out already);
+ *   answer"); a bond removed while its request waits does not stop it
+ *   (its letter is out already, PST-8); an offer withdrawn or the extension
+ *   deactivated calls it off (`the_calling_off`), the refusal kept its
+ *   answer (F7, PST-14);
  * - else the extension not active, or not offered to the bond (an offer
  *   goes both ways, EXT-7): `refused`, `not_active`,
  *   `not_offered_to_the_bond`; a refused call sends nothing and keeps
@@ -241,4 +255,100 @@ export const the_port_of_requests =
       }
       return until_it_closes(identity, await kept(identity))
     }
+  }
+
+/** The scope of the calling off's operations (DOM-11): the kernel calls a request off under its identity. */
+export const the_scope_of_the_calling_off = 'the_calling_off'
+
+/** The events of `the_requests_waiting`, as the calling off reads them: its snapshot. */
+export type TheRequestsWaitingEvent =
+  | {
+      readonly event: 'snapshot'
+      readonly entries: readonly requests_value.waiting_request_card[]
+    }
+  | { readonly event: 'invalid_request' }
+
+/**
+ * The calling off's wiring (GR-6): the clock; the post's ports,
+ * `the_requests_waiting` and `call_off_a_request` (PST-14); the bond a
+ * request went on, by the face of the node's that signs it and the key of
+ * theirs, as `bonds` keeps it (none: removed, BND-6); what `extensions`
+ * tells (EXT-7), as the port reads it.
+ */
+export interface TheCallingOffWiring {
+  readonly clock: zz.Clock
+  readonly post: {
+    readonly the_requests_waiting: (
+      context: zz.RootContext,
+      input: Record<string, never>,
+    ) => AsyncIterable<TheRequestsWaitingEvent>
+    readonly call_off_a_request: zz.CommandUseCasePort<typeof call_off_a_request>
+  }
+  readonly the_bond_of: (asked: {
+    readonly face_id: string
+    readonly their_key: string
+  }) => Promise<boundary.bond | undefined>
+  readonly extensions: ThePortOfRequestsWiring['extensions']
+}
+
+/** Why a request waiting is called off, if it is (EXT-7): its extension not active; else not offered to the bond it went on, if that bond is kept. */
+const why_called_off = async (
+  wiring: Pick<TheCallingOffWiring, 'the_bond_of' | 'extensions'>,
+  request: requests_value.waiting_request_card,
+): Promise<requests_value.why_called_off | undefined> => {
+  if (request.invokes.of !== 'an_extension') return undefined
+  const extension = request.invokes.extension
+  if (!(await wiring.extensions.is_active(extension))) return 'not_active'
+  const bond = await wiring.the_bond_of({ face_id: request.face_id, their_key: request.their_key })
+  if (bond === undefined) return undefined
+  return (await wiring.extensions.is_offered(extension, bond))
+    ? undefined
+    : 'not_offered_to_the_bond'
+}
+
+/**
+ * The calling off (F7, EXT-7, PST-14; A, 21 Nov 2026: who withdraws does
+ * not keep asking): one look, which calls off in `post` each request that
+ * waits of an extension not active, or not offered to the bond it went on,
+ * with why, under the operation `{ id: <the request's identity>, scope: the
+ * calling off's }`; `post` sends it again no more, and the port gives its
+ * delivery the refusal kept (`not_active`, `not_offered_to_the_bond`). The
+ * kernel's own requests are never called off, nor one whose bond is gone
+ * (its letter is out already, PST-8). The kernel looks after each fact of
+ * the office and when the node starts (the extensions following the office,
+ * EXT-15), so that a fall between a withdrawal and its look is made good at
+ * the next start. A request that closed between the read and its calling
+ * off is refused by `post`: nothing to call off. Gives the requests called
+ * off.
+ */
+export const the_calling_off =
+  (wiring: TheCallingOffWiring) => async (): Promise<readonly string[]> => {
+    const now = (): zz.RootContext => ({
+      now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+      time_zone: wiring.clock.time_zone,
+    })
+    const read = await first_of(wiring.post.the_requests_waiting(now(), {}))
+    if (read?.event !== 'snapshot') throw new Error('no requests waiting read (PST-14)')
+    const called_off: string[] = []
+    for (const request of read.entries) {
+      const why = await why_called_off(wiring, request)
+      if (why === undefined) continue
+      const input = { request_id: request.id, why }
+      const outcomes = await every(
+        wiring.post.call_off_a_request(
+          {
+            ...now(),
+            operation: {
+              id: zz.operation_id.parse(request.id),
+              scope: the_scope_of_the_calling_off,
+            },
+            correlation: zz.correlation.parse(request.id),
+            fingerprint: zz.fingerprint_of({ path: calling_off, input }),
+          },
+          input,
+        ),
+      )
+      if (outcomes.at(-1)?.outcome === 'applied') called_off.push(request.id)
+    }
+    return called_off
   }
