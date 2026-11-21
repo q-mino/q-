@@ -167,6 +167,16 @@ export const my_introduction = z.discriminatedUnion('state', [
 ])
 
 /**
+ * Whether their introduction came (BND-10): not yet, when the bond came of
+ * my opening their ticket; received, with the time their letter declares
+ * (their claim, PER-13), the one the window of a crossing is measured from.
+ */
+export const their_introduction = z.discriminatedUnion('state', [
+  z.strictObject({ state: z.literal('not_received') }),
+  z.strictObject({ state: z.literal('received'), declared_at: date_time }),
+])
+
+/**
  * The life of a bond (BND-7): its ticket first, being prepared while the
  * safe draws my mailbox's key, then ready to be shown, until it is used,
  * and the bond kept, or it expires; kept, in the user's list; removed, by
@@ -193,6 +203,7 @@ const every_bond_field = z.strictObject({
   handshake: handshake,
   confirmation: confirmation,
   my_introduction: my_introduction,
+  their_introduction: their_introduction,
   removed_at: date_time,
 })
 
@@ -204,6 +215,7 @@ const nothing_of_them = {
   handshake: absent,
   confirmation: absent,
   my_introduction: absent,
+  their_introduction: absent,
   removed_at: absent,
 }
 

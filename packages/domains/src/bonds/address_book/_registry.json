@@ -525,6 +525,37 @@
         }
       }
     },
+    "bonds/address_book/value/their_introduction": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "state": { "type": "string", "const": "not_received" } },
+                "required": ["state"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "state": { "type": "string", "const": "received" },
+                  "declared_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["state", "declared_at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
     "bonds/address_book/value/bond_status": {
       "kind": "value",
       "shapes": {
@@ -572,6 +603,7 @@
               "handshake": { "not": {} },
               "confirmation": { "not": {} },
               "my_introduction": { "not": {} },
+              "their_introduction": { "not": {} },
               "removed_at": { "not": {} }
             },
             "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -620,6 +652,7 @@
               "handshake": { "not": {} },
               "confirmation": { "not": {} },
               "my_introduction": { "not": {} },
+              "their_introduction": { "not": {} },
               "removed_at": { "not": {} }
             },
             "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -685,6 +718,7 @@
               "handshake": { "not": {} },
               "confirmation": { "not": {} },
               "my_introduction": { "not": {} },
+              "their_introduction": { "not": {} },
               "removed_at": { "not": {} }
             },
             "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -814,6 +848,29 @@
                   }
                 ]
               },
+              "their_introduction": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "not_received" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "declared_at"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
               "removed_at": { "not": {} }
             },
             "required": [
@@ -827,7 +884,8 @@
               "expires_at",
               "handshake",
               "confirmation",
-              "my_introduction"
+              "my_introduction",
+              "their_introduction"
             ],
             "additionalProperties": false
           }
@@ -955,6 +1013,29 @@
                   }
                 ]
               },
+              "their_introduction": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "state": { "type": "string", "const": "not_received" } },
+                    "required": ["state"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": { "type": "string", "const": "received" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": ["state", "declared_at"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
               "removed_at": {
                 "type": "string",
                 "format": "date-time",
@@ -973,6 +1054,7 @@
               "handshake",
               "confirmation",
               "my_introduction",
+              "their_introduction",
               "removed_at"
             ],
             "additionalProperties": false
@@ -1017,6 +1099,7 @@
                   "handshake": { "not": {} },
                   "confirmation": { "not": {} },
                   "my_introduction": { "not": {} },
+                  "their_introduction": { "not": {} },
                   "removed_at": { "not": {} }
                 },
                 "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -1057,6 +1140,7 @@
                   "handshake": { "not": {} },
                   "confirmation": { "not": {} },
                   "my_introduction": { "not": {} },
+                  "their_introduction": { "not": {} },
                   "removed_at": { "not": {} }
                 },
                 "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -1114,6 +1198,7 @@
                   "handshake": { "not": {} },
                   "confirmation": { "not": {} },
                   "my_introduction": { "not": {} },
+                  "their_introduction": { "not": {} },
                   "removed_at": { "not": {} }
                 },
                 "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -1238,6 +1323,29 @@
                       }
                     ]
                   },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
                   "removed_at": { "not": {} }
                 },
                 "required": [
@@ -1251,7 +1359,8 @@
                   "expires_at",
                   "handshake",
                   "confirmation",
-                  "my_introduction"
+                  "my_introduction",
+                  "their_introduction"
                 ],
                 "additionalProperties": false
               },
@@ -1374,6 +1483,29 @@
                       }
                     ]
                   },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
                   "removed_at": {
                     "type": "string",
                     "format": "date-time",
@@ -1392,6 +1524,7 @@
                   "handshake",
                   "confirmation",
                   "my_introduction",
+                  "their_introduction",
                   "removed_at"
                 ],
                 "additionalProperties": false
@@ -1856,6 +1989,7 @@
                   "handshake": { "not": {} },
                   "confirmation": { "not": {} },
                   "my_introduction": { "not": {} },
+                  "their_introduction": { "not": {} },
                   "removed_at": { "not": {} }
                 },
                 "required": ["id", "status", "my_face_id", "my_mailbox", "expires_at"],
@@ -2043,6 +2177,29 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -2053,7 +2210,8 @@
                   "their_mailbox",
                   "handshake",
                   "confirmation",
-                  "my_introduction"
+                  "my_introduction",
+                  "their_introduction"
                 ],
                 "additionalProperties": false
               }
@@ -2285,6 +2443,29 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -2295,7 +2476,8 @@
                   "their_mailbox",
                   "handshake",
                   "confirmation",
-                  "my_introduction"
+                  "my_introduction",
+                  "their_introduction"
                 ],
                 "additionalProperties": false
               }
@@ -2353,9 +2535,32 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
-                "required": ["id", "handshake", "confirmation"],
+                "required": ["id", "handshake", "confirmation", "their_introduction"],
                 "additionalProperties": false
               }
             },
@@ -2399,9 +2604,32 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "their_introduction": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "state": { "type": "string", "const": "not_received" } },
+                        "required": ["state"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "const": "received" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": ["state", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
-                "required": ["id", "confirmation"],
+                "required": ["id", "confirmation", "their_introduction"],
                 "additionalProperties": false
               }
             },
@@ -2622,7 +2850,28 @@
         }
       }
     },
-    "bonds/address_book/predicate/the_handshake_began_within_two_minutes_of": {
+    "bonds/address_book/predicate/i_opened_their_ticket_within_the_window_of_a_crossing_of": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond_id": { "type": "string", "minLength": 1 },
+              "declared_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": ["bond_id", "declared_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bonds/address_book/predicate/their_introduction_is_declared_within_the_window_of_a_crossing_of": {
       "kind": "predicate",
       "shapes": {
         "schema": {
@@ -3056,7 +3305,7 @@
         }
       }
     },
-    "bonds/address_book/command/their_introduction_came_first_within_two_minutes": {
+    "bonds/address_book/command/their_introduction_came_first_within_the_window_of_a_crossing": {
       "kind": "command",
       "shapes": {
         "schema": {
@@ -3099,7 +3348,7 @@
                 ],
                 "additionalProperties": false
               },
-              "the_handshake_began_within_two_minutes": {
+              "their_introduction_is_declared_within_the_window_of_a_crossing": {
                 "type": "object",
                 "properties": {
                   "bond_id": { "type": "string", "minLength": 1 },
@@ -3113,13 +3362,16 @@
                 "additionalProperties": false
               }
             },
-            "required": ["their_introduction_came_first", "the_handshake_began_within_two_minutes"],
+            "required": [
+              "their_introduction_came_first",
+              "their_introduction_is_declared_within_the_window_of_a_crossing"
+            ],
             "additionalProperties": false
           }
         }
       }
     },
-    "bonds/address_book/command/their_introduction_came_first_earlier": {
+    "bonds/address_book/command/their_introduction_came_first_outside_the_window_of_a_crossing": {
       "kind": "command",
       "shapes": {
         "schema": {
@@ -3162,7 +3414,7 @@
                 ],
                 "additionalProperties": false
               },
-              "the_handshake_began_earlier": {
+              "their_introduction_is_declared_outside_the_window_of_a_crossing": {
                 "type": "object",
                 "properties": {
                   "bond_id": { "type": "string", "minLength": 1 },
@@ -3176,7 +3428,10 @@
                 "additionalProperties": false
               }
             },
-            "required": ["their_introduction_came_first", "the_handshake_began_earlier"],
+            "required": [
+              "their_introduction_came_first",
+              "their_introduction_is_declared_outside_the_window_of_a_crossing"
+            ],
             "additionalProperties": false
           }
         }
@@ -3348,7 +3603,7 @@
         }
       }
     },
-    "bonds/address_book/command/i_opened_their_ticket_first_within_two_minutes": {
+    "bonds/address_book/command/i_opened_their_ticket_first_within_the_window_of_a_crossing": {
       "kind": "command",
       "shapes": {
         "schema": {
@@ -3401,27 +3656,30 @@
                 ],
                 "additionalProperties": false
               },
-              "the_handshake_began_within_two_minutes": {
+              "i_opened_their_ticket_within_the_window_of_a_crossing": {
                 "type": "object",
                 "properties": {
                   "bond_id": { "type": "string", "minLength": 1 },
-                  "now": {
+                  "declared_at": {
                     "type": "string",
                     "format": "date-time",
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                   }
                 },
-                "required": ["bond_id", "now"],
+                "required": ["bond_id", "declared_at"],
                 "additionalProperties": false
               }
             },
-            "required": ["i_opened_their_ticket_first", "the_handshake_began_within_two_minutes"],
+            "required": [
+              "i_opened_their_ticket_first",
+              "i_opened_their_ticket_within_the_window_of_a_crossing"
+            ],
             "additionalProperties": false
           }
         }
       }
     },
-    "bonds/address_book/command/i_opened_their_ticket_first_earlier": {
+    "bonds/address_book/command/i_opened_their_ticket_first_outside_the_window_of_a_crossing": {
       "kind": "command",
       "shapes": {
         "schema": {
@@ -3474,21 +3732,24 @@
                 ],
                 "additionalProperties": false
               },
-              "the_handshake_began_earlier": {
+              "i_opened_their_ticket_outside_the_window_of_a_crossing": {
                 "type": "object",
                 "properties": {
                   "bond_id": { "type": "string", "minLength": 1 },
-                  "now": {
+                  "declared_at": {
                     "type": "string",
                     "format": "date-time",
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                   }
                 },
-                "required": ["bond_id", "now"],
+                "required": ["bond_id", "declared_at"],
                 "additionalProperties": false
               }
             },
-            "required": ["i_opened_their_ticket_first", "the_handshake_began_earlier"],
+            "required": [
+              "i_opened_their_ticket_first",
+              "i_opened_their_ticket_outside_the_window_of_a_crossing"
+            ],
             "additionalProperties": false
           }
         }
@@ -3571,9 +3832,14 @@
                 },
                 "required": ["deposit_address", "relays"],
                 "additionalProperties": false
+              },
+              "declared_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
               }
             },
-            "required": ["bond_id", "secret", "their_face", "their_mailbox"],
+            "required": ["bond_id", "secret", "their_face", "their_mailbox", "declared_at"],
             "additionalProperties": false
           }
         }
