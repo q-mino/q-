@@ -56,7 +56,12 @@ export const an_answer_to_a_request = z.discriminatedUnion('answer', [
   z.strictObject({ answer: z.literal('the_bond_is_gone') }),
   z.strictObject({
     answer: z.literal('refused'),
-    why: z.enum(['not_declared', 'not_active', 'not_offered_to_the_bond', 'too_large_for_a_letter']),
+    why: z.enum([
+      'not_declared',
+      'not_active',
+      'not_offered_to_the_bond',
+      'too_large_for_a_letter',
+    ]),
   }),
 ])
 export type an_answer_to_a_request = z.output<typeof an_answer_to_a_request>

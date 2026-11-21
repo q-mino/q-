@@ -338,7 +338,7 @@ describe('2. the silence and the gate (F8, EXT-6)', () => {
 })
 
 describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
-  test('Bruno withdraws greetings’ offer from Anna: her greeting meets silence; his greeting of her is refused by his port of requests, nothing sent, a dead letter', async () => {
+  test('Bruno withdraws greetings’ offer from Anna: her greeting meets silence; his greeting of her is refused by his port of requests, nothing sent, closed as called off', async () => {
     const story = await two_nodes()
     const { anna, bruno } = story
     await bruno.withdraws_the_offer_from('B-ANNA')
@@ -349,15 +349,15 @@ describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
       closed_with({ outcome: 'the_greeting_had_no_response' }),
     )
     expect(new Set(bruno.whys())).toEqual(new Set(['the_extension_is_not_offered_to_the_bond']))
+    // His own gesture, a meaning (EXT-12; A, 21 Nov 2026): his greeting closed as called off, no dead letter.
     const his = await bruno.greets('B-ANNA')
-    await until(() => bruno.dead_letters().length === 1, 'the dead letter')
-    expect(bruno.dead_letters()).toEqual([
-      `business/greetings/effect/ask_for_a_greeting_back/${his}`,
-    ])
-    expect(JSON.stringify(bruno.notices[0])).toContain('not_offered_to_the_bond')
+    await until(() => bruno.is_closed(his), 'his greeting closed')
+    expect(bruno.the_greeting(his)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_was_called_off' }),
+    )
+    expect(bruno.dead_letters()).toEqual([])
     expect(await bruno.sent()).toEqual([])
     expect(bruno.post.carried()).toEqual([])
-    expect(bruno.is_closed(his)).toBe(false)
   })
 
   test('a retry after a withdrawal, or after a deactivation, meets silence: Anna records no_response, Bruno keeps his greeting back', async () => {
