@@ -1,3 +1,5 @@
+import { screens } from './screens/index.ts'
+
 // App texts. Italian is the first language: another language is a new file
 // with the same shape, without touching the code.
 export const texts = {
@@ -18,4 +20,5 @@ export const texts = {
     version: 'Versione',
     code: 'Codice',
   },
+  screens,
 } as const
