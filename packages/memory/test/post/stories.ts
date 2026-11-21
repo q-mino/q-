@@ -846,7 +846,7 @@ export const stories_of_the_post = (
             ),
           ),
         ).toEqual(['the_request_is_waiting'])
-        expect(anna.held()).toEqual([])
+        expect(await anna.held()).toEqual([])
       })
     })
   })
