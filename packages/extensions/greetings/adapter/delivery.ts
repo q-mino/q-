@@ -11,9 +11,11 @@ import { known } from '../persona/known/_version.ts'
 // port of requests, which sends the request on the bond and answers with
 // the peer's response, `no_response` at its time, the bond gone, or a
 // refusal (EXT-2). Every case maps onto the business's closed set, the
-// input of its return, or exhausts the delivery with its reason, a dead
-// letter shown (DOM-15); never an exception, so that one peer's response
-// never stops the effect toward the other bonds (EXT-12).
+// input of its return, a refusal of the user's own gesture included (not
+// active, not offered to the bond: a meaning, EXT-12), or exhausts the
+// delivery with its reason, a dead letter shown (DOM-15), only for a fault;
+// never an exception, so that one peer's response never stops the effect
+// toward the other bonds (EXT-12).
 
 /** The effect this delivery delivers, by its path (DOM-24). */
 export const the_effect = 'business/greetings/effect/ask_for_a_greeting_back'
@@ -70,9 +72,12 @@ const the_meaning_of = (event: boundary.Json): outcome | undefined =>
  * speaks (its current, EXT-5), the greeting's words, the effect's path and
  * the entry's id (from which the kernel composes the request's identity,
  * F7), and the time the greeting waits. `responded` with an event of
- * `greet` or of the kernel's, and `no_response`, are delivered to the
- * return; a response that is neither is exhausted with the peer's event
- * kept; the bond gone and a refusal are exhausted with their reason.
+ * `greet` or of the kernel's, `no_response`, and a refusal for the
+ * extension not active or not offered to the bond (a greeting called off,
+ * A, 21 Nov 2026) are delivered to the return; a response that is neither
+ * is exhausted with the peer's event kept; the faults, the bond gone and a
+ * refusal of the call undeclared or too large for a letter, are exhausted
+ * with their reason.
  */
 export const the_delivery_of_a_request_for_a_greeting_back =
   (port: boundary.Ports['the_port_of_requests']) =>
@@ -107,6 +112,16 @@ export const the_delivery_of_a_request_for_a_greeting_back =
       case 'the_bond_is_gone':
         return { outcome: 'exhausted', reason: 'the bond is gone' }
       case 'refused':
-        return { outcome: 'exhausted', reason: `the port of requests refused it: ${answer.why}` }
+        switch (answer.why) {
+          case 'not_active':
+          case 'not_offered_to_the_bond':
+            return returned({ outcome: 'the_greeting_was_called_off' })
+          case 'not_declared':
+          case 'too_large_for_a_letter':
+            return {
+              outcome: 'exhausted',
+              reason: `the port of requests refused it: ${answer.why}`,
+            }
+        }
     }
   }

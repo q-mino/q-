@@ -45,6 +45,15 @@ export const a_ping_could_not_be_answered =
 export type a_ping_could_not_be_answered = z.output<typeof a_ping_could_not_be_answered>
 
 /**
+ * A ping has been called off: the user deactivated ping pong, or withdrew it from the bond, while it waited (EXT-12, F7).
+ *
+ * @see {@link fact.a_ping_has_been_called_off}
+ */
+export const a_ping_has_been_called_off =
+  fact.a_ping_has_been_called_off.brand<'business/pings/fact/a_ping_has_been_called_off'>()
+export type a_ping_has_been_called_off = z.output<typeof a_ping_has_been_called_off>
+
+/**
  * A bond's ping has been answered with a pong.
  *
  * @see {@link fact.a_ping_has_been_answered}

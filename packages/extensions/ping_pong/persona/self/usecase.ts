@@ -9,8 +9,10 @@ import { command_use_case_over, pings } from './_scope_usecase.ts'
  * Anna taps "Ping" on the screen of her bond with Bruno (PNG-4, EXT-16):
  * the action invokes this leaf with the place's data, the bond, and her
  * ping goes. Her screen follows it to what comes back (DOM-3, F7): Bruno's
- * pong, no response within its time, or a peer that cannot answer, each a
- * fact the return records with the correlation of her ping; or, after 70
+ * pong, no response within its time, a peer that cannot answer, or her
+ * own calling off (ping pong deactivated or withdrawn from the bond while
+ * it waited), each a fact the return records with the correlation of her
+ * ping; or, after 70
  * seconds, the wait over, which records nothing (the ping's own 60 seconds
  * and the executor's delivery before them).
  */
@@ -25,8 +27,9 @@ export const send_a_ping = command_use_case_over({
     pong: z.strictObject({ ping_id: pings.id.ping_id }),
     no_response: z.strictObject({ ping_id: pings.id.ping_id }),
     the_peer_cannot_answer: z.strictObject({ ping_id: pings.id.ping_id }),
+    called_off: z.strictObject({ ping_id: pings.id.ping_id }),
   },
-  ends: ['the_ping_cannot_be_sent', 'pong', 'no_response', 'the_peer_cannot_answer'],
+  ends: ['the_ping_cannot_be_sent', 'pong', 'no_response', 'the_peer_cannot_answer', 'called_off'],
   projection: {
     the_ping_is_new_so_it_is_sent: (fact) => ({
       event: 'the_ping_is_sent',
@@ -39,6 +42,7 @@ export const send_a_ping = command_use_case_over({
       pings.fact.a_pong_has_been_received,
       pings.fact.a_ping_has_had_no_response,
       pings.fact.a_ping_could_not_be_answered,
+      pings.fact.a_ping_has_been_called_off,
     ],
     projection: {
       a_pong_has_been_received: (fact) => ({
@@ -51,6 +55,10 @@ export const send_a_ping = command_use_case_over({
       }),
       a_ping_could_not_be_answered: (fact) => ({
         event: 'the_peer_cannot_answer',
+        payload: { ping_id: fact.ping_id },
+      }),
+      a_ping_has_been_called_off: (fact) => ({
+        event: 'called_off',
         payload: { ping_id: fact.ping_id },
       }),
     },

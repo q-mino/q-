@@ -77,10 +77,18 @@ export const the_ping_waits_and_the_peer_cannot_answer = AND({
   the_peer_cannot_answer: predicate.the_peer_cannot_answer,
 })
 
+/** The ping waits, and the user called it off. */
+export const the_ping_waits_and_was_called_off = AND({
+  the_ping_waits: predicate.the_ping_waits,
+  it_was_called_off: predicate.the_ping_was_called_off,
+})
+
 /**
  * What came back of Anna's ping closes it (PNG-2, EXT-12, DOM-13): Bruno's
- * pong; no response within its 60 seconds; or a peer that cannot answer
- * it, each a happening of its own. The return of `ask_for_a_pong`, its
+ * pong; no response within its 60 seconds; a peer that cannot answer it;
+ * or her own calling off, ping pong deactivated or withdrawn from the bond
+ * while it waited (A, 21 Nov 2026: a meaning, not a fault), each a
+ * happening of its own. The return of `ask_for_a_pong`, its
  * input the business's closed set; the branch is chosen by what came back,
  * a predicate over the input, as the office of the extensions learns or
  * has no answer (EXT-8). A ping that waits no more (closed, or never sent)
@@ -104,6 +112,10 @@ export const close_a_ping = command({
       the_ping_waits_and_the_peer_cannot_answer,
       fact.a_ping_could_not_be_answered,
     ],
+    the_ping_was_called_off_so_it_is_closed: [
+      the_ping_waits_and_was_called_off,
+      fact.a_ping_has_been_called_off,
+    ],
   },
   creator: (context) => (input) => {
     const the_ping_waits = { ping_id: input.ping_id }
@@ -120,6 +132,10 @@ export const close_a_ping = command({
       ],
       the_peer_cannot_answer_so_the_ping_could_not_be_answered: [
         { the_ping_waits, the_peer_cannot_answer: what_came_back },
+        closed,
+      ],
+      the_ping_was_called_off_so_it_is_closed: [
+        { the_ping_waits, it_was_called_off: what_came_back },
         closed,
       ],
     }

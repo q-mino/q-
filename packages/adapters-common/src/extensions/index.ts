@@ -44,8 +44,10 @@ export type {
   TheKernelsTraced,
 } from './the_kernels_trace.ts'
 export {
+  the_calling_off,
   the_kernels_port_of_requests,
   the_port_of_requests,
+  the_scope_of_the_calling_off,
   the_scope_of_the_port_of_requests,
 } from './the_port_of_requests.ts'
 export type {
@@ -53,6 +55,8 @@ export type {
   AKernelsRequest,
   AnAnswerToTheKernelsRequest,
   TheAnswerKeptEvent,
+  TheCallingOffWiring,
   TheKernelsPortOfRequestsWiring,
   ThePortOfRequestsWiring,
+  TheRequestsWaitingEvent,
 } from './the_port_of_requests.ts'
