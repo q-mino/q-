@@ -12,6 +12,9 @@ import { files_of, folder_at, is_a_major, major_of } from './tree.ts'
 // below it, its subtree (D105), under their names. A door to the folders
 // below, `_door_below.ts`: every twin of a folder, each a namespace by its
 // file's name, which the scopes below carry as the ancestor (`_persona`).
+// A domain's top folder has a door too, of its own twins only, when the map
+// opens a kind it holds (`user/_door_ui.ts`: the user's words shared by her
+// offices, UI-2); its folders below keep their own.
 // Neither needs the runtime: the shell writes them before it imports a file.
 
 /** A namespace a door exports: its name, the module it re-exports, and what it is, in the tree's words. */
@@ -78,9 +81,13 @@ const door = (
     const files = files_of(folder, kind)
     return files.length === 0 ? [] : [{ kind, files }]
   })
-  const below = children_of(tree, folder)
-    .filter((child) => door(tree, child, audience, kinds).namespaces.length > 0)
-    .map((child) => child.segments.at(-1) ?? '')
+  // A domain's top gives its own twins only: its folders below have their own doors (UI-2).
+  const below =
+    folder.segments.length === 1
+      ? []
+      : children_of(tree, folder)
+          .filter((child) => door(tree, child, audience, kinds).namespaces.length > 0)
+          .map((child) => child.segments.at(-1) ?? '')
   const namespaces: readonly Namespace[] = [
     ...own.flatMap(({ kind, files }) =>
       files.length === 1
@@ -200,9 +207,7 @@ export const doors = (
   tree: Tree,
 ): { readonly files: readonly GeneratedFile[]; readonly failures: readonly Failure[] } => {
   const current = tree.folders.filter((folder) => !folder.segments.some(is_a_major))
-  const audiences = current
-    .filter((folder) => folder.segments.length > 1)
-    .map((folder) => audience_doors(tree, folder))
+  const audiences = current.map((folder) => audience_doors(tree, folder))
   return {
     files: [
       ...current.flatMap((folder) => below_door(tree, folder)),

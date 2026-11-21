@@ -114,8 +114,12 @@ export const doors_of = (
   const seen = tree.sight[top] ?? {}
   return Object.entries(seen)
     .filter(([, kinds]) => carried(kinds))
-    .flatMap(([seen_top]) =>
-      [
+    .flatMap(([seen_top]) => [
+      // The top's own door first, under the domain's name (UI-2): its twins, when it holds a kind the map opens.
+      ...(is_a_prefix([seen_top], segments)
+        ? []
+        : [{ name: seen_top, segments: [seen_top], file: `_door_${top}.ts` }]),
+      ...[
         ...new Set(
           tree.folders
             .filter((folder) => folder.segments[0] === seen_top && folder.segments.length > 1)
@@ -125,7 +129,7 @@ export const doors_of = (
         .filter((name) => !is_a_prefix([seen_top, name], segments))
         .sort()
         .map((name) => ({ name, segments: [seen_top, name], file: `_door_${top}.ts` })),
-    )
+    ])
 }
 
 /** The path of a file of a folder, from another folder (`../loans/_door_business.ts`). */

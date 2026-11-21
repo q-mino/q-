@@ -92,3 +92,47 @@ describe('SC-45, the map: what a door exposes (DOM-25, GR-1, GR-3, GR-9)', () =>
     ])
   })
 })
+
+describe("UI-2, a domain's top: its own twins, when the map opens their kind (DOM-25)", () => {
+  // q-'s user domain and its screens, reduced to their kinds: the user's words
+  // shared by her offices, at the top, and the screens that see them.
+  const tree = {
+    ...shed,
+    sight: { user: {}, ui: { user: ['value', 'id'] } },
+    folders: [
+      folder('user', [file('value', 'value'), file('dsl', 'dsl')]),
+      folder('user/activities', [
+        file('id', 'id'),
+        file('value', 'value'),
+        file('command', 'command'),
+      ]),
+      folder('user/choices', [file('id', 'id'), file('command', 'command')]),
+      folder('ui', [file('value', 'value')]),
+      folder('ui/a_contact', [file('value', 'value'), file('dsl', 'dsl')]),
+    ],
+  } as const satisfies typeof shed
+  const files = doors(tree).files
+
+  it('the top opens its own value, never its folders below, which keep their own doors', () => {
+    expect(namespaces_in(files, 'user/_door_ui.ts')).toEqual(['value ./_value.ts'])
+    expect(namespaces_in(files, 'user/activities/_door_ui.ts')).toEqual([
+      'value ./_value.ts',
+      'id ./_id.ts',
+    ])
+    expect(namespaces_in(files, 'user/choices/_door_ui.ts')).toEqual(['id ./_id.ts'])
+  })
+
+  it("a scope under the audience carries the top's door under the domain's name, before its folders'", () => {
+    const scope = scopes(tree).files.find((one) => one.path === 'ui/a_contact/_scope_value.ts')
+    expect(scope?.text).toContain("export * as user from '../../user/_door_ui.ts'")
+    expect(scope?.text.indexOf('as user ')).toBeLessThan(scope?.text.indexOf('as activities ') ?? 0)
+  })
+
+  it('a top with no twin of a kind the map opens has no door (Shed: persona sees business, whose top holds none)', () => {
+    expect(
+      doors(shed)
+        .files.map((one) => one.path)
+        .filter((path) => /^[^/]+\/_door_(?!below)/.test(path)),
+    ).toEqual([])
+  })
+})
