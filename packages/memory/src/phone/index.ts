@@ -127,6 +127,7 @@ import {
   type Cell,
   type ExtensionsState,
   type Made,
+  type Partitions,
   type PostState,
   type SealsState,
   type UserState,
@@ -146,6 +147,62 @@ export const a_new_phone: PhoneState = {
 
 /** The cell a phone runs over: the oracle's, with the entries its executors hold (DOM-14), which the user is told and acts on (USR-8). */
 export type PhoneCell = Cell<PhoneState> & Pick<Made<PhoneState>, 'held'>
+
+/** The manifests of the office's extensions, as the office is given them (EXT-7). */
+type Installed = Parameters<typeof extensions_ports>[1]
+
+/**
+ * What a phone keeps, as its composition root wires it (STK-1; steps 21 and
+ * 25 vary it, ADP-6): each kernel domain's ports over its storage, the
+ * node's fact log (DOM-17), the outbox (DOM-14), the executors' and the
+ * reactions' durable state (DOM-14, DOM-16), the versions it keeps (DOM-22),
+ * the entries its executors hold (USR-8), and the extensions' partitions
+ * (EXT-14) of a size. The oracle's cell is one (`on_the_cell`); IndexedDB's
+ * another (part 21.2). [Q, C, 21 Nov 2026]
+ */
+export interface PhoneStorage<partitions extends APhonesPartitions = APhonesPartitions> {
+  readonly stored_versions: zz.StoredVersions
+  readonly log: zz.FactLog
+  readonly outbox: zz.Outbox
+  readonly executor: zz.ExecutorState
+  readonly reactions: zz.ReactionState
+  readonly held: () => Promise<readonly zz.HeldEntry[]>
+  readonly safe: (
+    primitives: Primitives,
+  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof seals_ports>>
+  readonly post: (versions: zz.Versions) => ReturnType<ReturnType<typeof post_ports>>
+  readonly address_book: (
+    primitives: Primitives,
+  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof bonds_ports>>
+  readonly office: (
+    installed: Installed,
+  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof extensions_ports>>
+  readonly user: (versions: zz.Versions) => ReturnType<ReturnType<typeof user_ports>>
+  readonly partitions: (limit: { readonly characters: number }) => partitions
+}
+
+/** The extensions' partitions of a phone (EXT-14): each extension's `its_storage`, by its name. */
+export interface APhonesPartitions {
+  readonly of: (name: string) => boundary.Ports['its_storage']
+}
+
+/** A phone's storage on the oracle's cell (TST-2): each domain's ports over it (`seen_by`), its partitions in memory. */
+export const on_the_cell = (cell: PhoneCell) =>
+  ({
+    stored_versions: cell.stored_versions,
+    log: log(cell),
+    outbox: cell.outbox,
+    executor: cell.executor,
+    reactions: cell.reactions,
+    held: () => Promise.resolve(cell.held()),
+    safe: (primitives) => seals_ports(seen_by<SealsState, PhoneState>(cell), primitives),
+    post: post_ports(seen_by<PostState, PhoneState>(cell)),
+    address_book: (primitives) => bonds_ports(seen_by<BondsState, PhoneState>(cell), primitives),
+    office: (installed) =>
+      extensions_ports(seen_by<ExtensionsState & BondsState, PhoneState>(cell), installed),
+    user: user_ports(seen_by<UserState, PhoneState>(cell)),
+    partitions,
+  }) satisfies PhoneStorage
 
 /** What an extension's realm is given beside the boundary (EXT-13): its clock, the time that passes, how it speaks to the kernel. */
 export interface TheRealmsHost {
@@ -259,7 +316,7 @@ const the_compositions_of = (
   )
 
 export const phone =
-  (cell: PhoneCell, release: Release = {}) =>
+  <partitions extends APhonesPartitions>(kept: PhoneStorage<partitions>, release: Release = {}) =>
   async (world: World) => {
     // The versions of the cell, from the majors of the seven domains whose
     // facts and effects it keeps, checked against what it keeps (DOM-22).
@@ -271,20 +328,17 @@ export const phone =
       activities_majors,
       drafts_majors,
       choices_majors,
-    ])({ stored: cell.stored_versions })
+    ])({ stored: kept.stored_versions })
     const clock = world.clock
     const when = (): zz.RootContext => ({
       now: zz.in_zone(clock.time_zone)(clock.now()),
       time_zone: clock.time_zone,
     })
-    const safe = seals_ports(seen_by<SealsState, PhoneState>(cell), world.primitives)(versions)
-    const post = post_ports(seen_by<PostState, PhoneState>(cell))(versions)
-    const address_book = bonds_ports(
-      seen_by<BondsState, PhoneState>(cell),
-      world.primitives,
-    )(versions)
-    const user = user_ports(seen_by<UserState, PhoneState>(cell))(versions)
-    const facts = log(cell)
+    const safe = kept.safe(world.primitives)(versions)
+    const post = kept.post(versions)
+    const address_book = kept.address_book(world.primitives)(versions)
+    const user = kept.user(versions)
+    const facts = kept.log
 
     /** The post's hash (PST-3): BLAKE2b-256, in base64url; no face's. */
     const the_hash = (content: string): string =>
@@ -481,7 +535,7 @@ export const phone =
     })
 
     // The extensions' partitions (EXT-14): the oracle's, the same across an update of the app.
-    const storage = partitions({ characters: release.characters ?? a_partition_s_size })
+    const storage = kept.partitions({ characters: release.characters ?? a_partition_s_size })
     const the_partition_of = (name: string): boundary.Ports['its_storage'] =>
       release.the_partition === undefined
         ? storage.of(name)
@@ -494,10 +548,7 @@ export const phone =
 
     /** The office over the manifests installed (EXT-7): the composition's; an update of the app is the same cell with another composition. */
     const the_office_of = (installed: readonly Composed[]) =>
-      extensions_ports(
-        seen_by<ExtensionsState & BondsState, PhoneState>(cell),
-        installed.map((each) => the_manifest_to_accept(each.manifest)),
-      )(versions)
+      kept.office(installed.map((each) => the_manifest_to_accept(each.manifest)))(versions)
 
     /** The kernel's reads of its office (EXT-6, EXT-7), over the office installed now. */
     const reads = the_kernels_reads({
@@ -717,8 +768,8 @@ export const phone =
 
     /** The ports a started executor runs over (DOM-14). */
     const executor_ports = () => ({
-      outbox: cell.outbox,
-      state: cell.executor,
+      outbox: kept.outbox,
+      state: kept.executor,
       clock,
       elapsed: world.elapsed,
     })
@@ -733,8 +784,8 @@ export const phone =
     }
     /** The consumers of the reactions (DOM-16), by their folder, wired and not started. */
     const the_reactions = {
-      'reaction/first_face': () => the_first_face({ state: cell.reactions, clock }),
-      'reaction/ticket': () => the_ticket({ state: cell.reactions, clock }),
+      'reaction/first_face': () => the_first_face({ state: kept.reactions, clock }),
+      'reaction/ticket': () => the_ticket({ state: kept.reactions, clock }),
     }
 
     // The user's offices (USR-1..USR-9): her activities carried out by
@@ -752,12 +803,10 @@ export const phone =
       letter: string,
       gesture: (executor: zz.EffectExecutor, held: zz.EffectDeadLetter) => Promise<outcome>,
     ): Promise<outcome | 'not_held'> => {
-      const held = cell
-        .held()
-        .find(
-          (entry): entry is zz.EffectDeadLetter =>
-            entry.held === 'dead_letter' && the_name_of_a_letter(entry) === letter,
-        )
+      const held = (await kept.held()).find(
+        (entry): entry is zz.EffectDeadLetter =>
+          entry.held === 'dead_letter' && the_name_of_a_letter(entry) === letter,
+      )
       if (held === undefined) return 'not_held'
       const office = held.entry.effect.split('/effect/')[0] ?? ''
       if (office === 'user/activities') {
@@ -791,13 +840,9 @@ export const phone =
         }
       },
       the_kernels_letters: {
-        held: () =>
-          Promise.resolve(
-            cell
-              .held()
-              .flatMap((entry) =>
-                entry.held === 'dead_letter' ? [the_name_of_a_letter(entry)] : [],
-              ),
+        held: async () =>
+          (await kept.held()).flatMap((entry) =>
+            entry.held === 'dead_letter' ? [the_name_of_a_letter(entry)] : [],
           ),
         redeliver: async (letter) => {
           const outcome = await on_a_kernel_s_letter(letter, (executor, held) =>
@@ -928,5 +973,7 @@ export const phone =
     }
   }
 
-/** A phone, as the `memory` stack starts it. */
-export type Phone = Awaited<ReturnType<ReturnType<typeof phone>>>
+/** A phone, as the `memory` stack starts it: over the oracle's partitions unless its storage gives others. */
+export type Phone<partitions extends APhonesPartitions = Partitions> = Awaited<
+  ReturnType<ReturnType<typeof phone<partitions>>>
+>

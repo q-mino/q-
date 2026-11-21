@@ -18,9 +18,12 @@ import type { Deposited, MailboxPort } from '@q-mino/domains/post/_dsl.ts'
 import { cell, no_deposit, type Cell, type MailboxState } from '../oracle/index.ts'
 import {
   a_new_phone,
+  on_the_cell,
   phone,
+  type APhonesPartitions,
   type Phone,
   type PhoneCell,
+  type PhoneStorage,
   type Release as PhoneRelease,
   type World as PhoneWorld,
 } from '../phone/index.ts'
@@ -159,6 +162,8 @@ export type APhonesWorld = Omit<PhoneWorld, 'mailbox' | 'collect'>
 export interface APhoneOverTheRelay {
   readonly world: APhonesWorld
   readonly cell?: PhoneCell
+  /** What the phone keeps, if not the oracle's cell: IndexedDB's (step 21). */
+  readonly storage?: PhoneStorage
   readonly release?: PhoneRelease
   readonly transports?: (in_process: TheRelaysTransports) => TheRelaysTransports
 }
@@ -187,11 +192,11 @@ export const a_stack =
       /** The transports in process to the relay's desk, as every phone is given them before its hook. */
       transports: in_process,
       /** A phone started over the relay, its transports through its hook. */
-      a_phone: (given: APhoneOverTheRelay): Promise<Phone> => {
+      a_phone: (given: APhoneOverTheRelay): Promise<Phone<APhonesPartitions>> => {
         const transports =
           given.transports === undefined ? in_process : given.transports(in_process)
         return phone(
-          given.cell ?? cell({ initial: a_new_phone }),
+          given.storage ?? on_the_cell(given.cell ?? cell({ initial: a_new_phone })),
           given.release,
         )({
           ...given.world,
