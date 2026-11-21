@@ -129,7 +129,7 @@ const the_context_on_known = z.object({
 })
 
 /** The port the stand-in's tree gives greetings' leaves on `known`, as step 13's entry invokes it. */
-type TheLeavesOnKnown = zz.MountedLeafPort<zz.EntryOf<typeof the_kernels_node_on_known>>
+type TheLeavesOnKnown = zz.PortByPath<zz.EntryOf<typeof the_kernels_node_on_known>>
 
 /** A fact as greetings' partition keeps it, as far as a story reads it: its parts' paths. */
 const a_fact_kept = z.object({ parts: z.array(z.object({ path: z.string() })) })
@@ -303,7 +303,7 @@ export const a_node = async (
   let kernel = composed === undefined ? undefined : wired(composed)
   // A node whose code is changed (the code is free, F2): what its entry
   // deposits in place of the leaf's event.
-  let tampered: ((event: zz.MountedLeafEvent) => unknown) | undefined = undefined
+  let tampered: ((event: zz.EventByPath) => unknown) | undefined = undefined
 
   /** Greetings hosted, which the story installed. */
   const the_hosted = (): Hosted => {
@@ -321,8 +321,8 @@ export const a_node = async (
 
   /** What a mounted leaf answered: its first event, or nothing (the extension fell, or is not running). */
   const the_answer_of = async (
-    events: AsyncIterable<zz.MountedLeafEvent>,
-  ): Promise<zz.MountedLeafEvent | undefined> => {
+    events: AsyncIterable<zz.EventByPath>,
+  ): Promise<zz.EventByPath | undefined> => {
     try {
       return (await all(events))[0]
     } catch {
@@ -440,7 +440,7 @@ export const a_node = async (
       return kernel.on_known
     },
     /** The node's code changed (the code is free, F2): its responses carry this in place of the leaf's event. */
-    tampers_with_its_responses: (change: (event: zz.MountedLeafEvent) => unknown): void => {
+    tampers_with_its_responses: (change: (event: zz.EventByPath) => unknown): void => {
       tampered = change
     },
     /** The node starts greetings, if active (EXT-15): the phone started. */
