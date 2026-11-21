@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 
 // The checks of step 14 (plan.md, step 14, "Checks"; PNG-1..PNG-6, F7, F8,
-// DOM-11, DOM-14; part 14.2), and the stories 10–14 of ping pong's README,
+// DOM-11, DOM-14; part 14.2), and the stories 10–14 and 16 of ping pong's README,
 // each a test named after its story: on q-'s oracle with two nodes (three
 // phones, `harness.ts` over the node of `../node/harness.ts`), the apps
 // carrying ping pong in place of greetings. Anna pings Bruno: his kernel's
@@ -194,5 +194,43 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
     expect(answers_of_the_port).toHaveLength(3)
     expect(await anna.sent()).toHaveLength(2)
     expect(carla.pongs()).toHaveLength(1)
+  })
+
+  test('a ping in flight is called off at a withdrawal, and at a deactivation: sent again no more, closed as called off, no dead letter', async () => {
+    const story = await two_nodes({ carries: 'ping_pong' })
+    const { anna } = story
+    const life = () => anna.the_hosted().life().life
+    const the_answer_of = async (ping: string) =>
+      (await anna.post.the_answer_to(anna.the_request_of(ping)))[0]?.answer
+    const following = anna.the_extensions_follow_the_office()
+    // Bruno's phone off: nobody reads Anna's requests. She withdraws ping pong from their bond while P1 waits.
+    const first = await pings(anna, 'B-BRUNO')
+    await anna.withdraws_the_offer_from('B-BRUNO')
+    await until(() => anna.the_ping_is_closed(first), 'the first ping called off')
+    expect(anna.the_ping(first)).toMatchObject(closed_with('the_ping_was_called_off'))
+    expect(await the_answer_of(first)).toEqual({
+      status: 'called_off',
+      why: 'not_offered_to_the_bond',
+    })
+    // Offered again: P2; she deactivates ping pong while it waits, the kernel unloads it.
+    await anna.offers_again_to('B-BRUNO')
+    const second = await pings(anna, 'B-BRUNO', 2)
+    await anna.the_user('usecase/deactivate_an_extension', { extension: 'ping_pong' })
+    await until(() => life() === 'unloaded', 'ping pong unloaded')
+    await until(
+      async () => (await the_answer_of(second))?.status === 'called_off',
+      'the second request called off',
+    )
+    expect(await the_answer_of(second)).toEqual({ status: 'called_off', why: 'not_active' })
+    // Its sendings again send nothing.
+    const carried = anna.post.carried().length
+    await to_the_end_of_its_time(story, anna, [])
+    expect(anna.post.carried()).toHaveLength(carried)
+    // Active again: its delivery meets the refusal kept, and the ping closes as called off.
+    await anna.the_user('usecase/activate_an_extension', { manifest: anna.shown() })
+    await until(() => anna.the_ping_is_closed(second), 'the second ping closed')
+    expect(anna.the_ping(second)).toMatchObject(closed_with('the_ping_was_called_off'))
+    expect(anna.dead_letters()).toEqual([])
+    await following.stop()
   })
 })
