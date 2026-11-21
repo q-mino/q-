@@ -16,3 +16,12 @@ import * as selection from './request_selection.ts'
 export const the_request_has_this_id =
   selection.the_request_has_this_id.brand<'post/requests/selection/request/the_request_has_this_id'>()
 export type the_request_has_this_id = z.output<typeof the_request_has_this_id>
+
+/**
+ * The request waits for its response.
+ *
+ * @see {@link selection.the_request_is_waiting}
+ */
+export const the_request_is_waiting =
+  selection.the_request_is_waiting.brand<'post/requests/selection/request/the_request_is_waiting'>()
+export type the_request_is_waiting = z.output<typeof the_request_is_waiting>

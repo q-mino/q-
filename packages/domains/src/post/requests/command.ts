@@ -93,15 +93,15 @@ export const the_request_waits_within_its_time = AND({
   its_time_is_not_over: predicate.the_time_of_the_request_is_not_over,
 })
 
-/** The request waits no more: it closed, or its time is over. */
+/** The request waits no more: it closed (answered, with no response, called off), or its time is over. */
 export const the_request_waits_no_more = NOT(the_request_waits_within_its_time)
 
 /**
  * A quarter of the request's time has passed with no response (PST-6): the
  * post deposits the same letter again, under the same identity, so that a
  * response lost on its way comes again (F7: the peer answers from its
- * recorded fact), and waits for the next quarter. Closed, or its time over,
- * nothing is sent. Its input is the payload of the wait; its operation is
+ * recorded fact), and waits for the next quarter. Closed, called off
+ * included, or its time over, nothing is sent. Its input is the payload of the wait; its operation is
  * the entry's (DOM-14).
  */
 export const send_a_request_again = command({
@@ -147,14 +147,12 @@ export const send_a_request_again = command({
   },
 })
 
-/** The request is closed: answered, since only this command closes it otherwise. */
-export const the_request_is_closed = NOT(predicate.the_request_is_waiting)
-
 /**
  * Bruno's phone stayed off for the 60 seconds of Anna's ping (PST-7, V18):
  * her request's time is over with no response, which the port gives the
- * delivery as `no_response`. A response came first: nothing changes. Its
- * input is the payload of the wait; its operation is the entry's (DOM-14).
+ * delivery as `no_response`. A response came first, or the request was
+ * called off: nothing changes. Its input is the payload of the wait; its
+ * operation is the entry's (DOM-14).
  */
 export const close_a_request_with_no_response = command({
   input: z.strictObject({
@@ -165,9 +163,13 @@ export const close_a_request_with_no_response = command({
       predicate.the_request_is_waiting,
       fact.a_request_had_no_response,
     ],
-    the_request_is_closed_so_nothing_changes: [
-      the_request_is_closed,
+    the_request_has_been_answered_so_nothing_changes: [
+      predicate.the_request_has_been_answered,
       fact.the_response_came_before_the_time,
+    ],
+    the_request_has_been_called_off_so_nothing_changes: [
+      predicate.the_request_has_been_called_off,
+      fact.the_call_off_came_before_the_time,
     ],
   },
   creator: () => (input) => ({
@@ -175,9 +177,41 @@ export const close_a_request_with_no_response = command({
       { request_id: input.request_id },
       { request_id: input.request_id },
     ],
-    the_request_is_closed_so_nothing_changes: [
+    the_request_has_been_answered_so_nothing_changes: [
       { request_id: input.request_id },
       { request_id: input.request_id },
+    ],
+    the_request_has_been_called_off_so_nothing_changes: [
+      { request_id: input.request_id },
+      { request_id: input.request_id },
+    ],
+  }),
+})
+
+/**
+ * Anna withdraws ping pong from her bond with Carla while her ping to Carla
+ * waits (F7, EXT-7; A, 21 Nov 2026: an offer goes both ways): the kernel
+ * calls the request off, which the post sends again no more, with why
+ * (`not_offered_to_the_bond`; at a deactivation `not_active`); the port
+ * gives its delivery the refusal kept. Carla's pong coming after is a late
+ * one, refused (`take_a_response`). A request no longer waiting is refused:
+ * nothing to call off. Its operation is the kernel's (step 12).
+ */
+export const call_off_a_request = command({
+  input: z.strictObject({
+    request_id: id.request_id,
+    why: value.why_called_off,
+  }),
+  outcomes: {
+    the_request_is_waiting_so_it_is_called_off: [
+      predicate.the_request_is_waiting,
+      fact.a_request_has_been_called_off,
+    ],
+  },
+  creator: () => (input) => ({
+    the_request_is_waiting_so_it_is_called_off: [
+      { request_id: input.request_id },
+      { request_id: input.request_id, why: input.why },
     ],
   }),
 })

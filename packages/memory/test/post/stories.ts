@@ -769,5 +769,85 @@ export const stories_of_the_post = (
         ).toHaveLength(1)
       })
     })
+
+    describe('17. a request called off is sent again no more', () => {
+      test('a request called off keeps its refusal and is sent again no more', async () => {
+        const story = await a_story(primitives)
+        const { anna, bruno, carla } = story
+        const P1 = anna.the_request('P1')
+        const P2 = anna.the_request('P2')
+        await asks(anna, bruno, 'P1')
+        await asks(anna, carla, 'P2')
+        await anna.runs()
+        // What the kernel reads to call off: the requests that wait, with what they invoke and where they went.
+        expect(await anna.the_requests_waiting()).toEqual(
+          [
+            { id: P1, invokes: a_ping, face_id: anna.face_id, their_key: bruno.key },
+            { id: P2, invokes: a_ping, face_id: anna.face_id, their_key: carla.key },
+          ].toSorted((one, other) => (one.id < other.id ? -1 : 1)),
+        )
+        // At 10:00:10 Anna withdraws her ping pong from her bond with Carla: the kernel calls P2 off.
+        story.at('10:00:10')
+        const called_off = last_of(
+          await anna.call_off_a_request({ request_id: P2, why: 'not_offered_to_the_bond' }),
+        )
+        expect(called_off).toMatchObject({
+          outcome: 'applied',
+          fact: {
+            parts: [
+              {
+                path: 'post/requests/fact/a_request_has_been_called_off',
+                payload: { request_id: P2, why: 'not_offered_to_the_bond' },
+              },
+            ],
+          },
+        })
+        expect(await anna.the_answer_to(P2)).toEqual([
+          { id: P2, answer: { status: 'called_off', why: 'not_offered_to_the_bond' } },
+        ])
+        expect((await anna.the_requests_waiting()).map((each) => each.id)).toEqual([P1])
+        // Called off again under its operation: the recorded fact (DOM-11); a request that waits no more: refused.
+        expect(
+          last_of(
+            await anna.call_off_a_request({ request_id: P2, why: 'not_offered_to_the_bond' }),
+          ),
+        ).toEqual(called_off)
+        expect(
+          failed(
+            last_of(
+              await anna.call_off_a_request(
+                { request_id: P2, why: 'not_active' },
+                { operation: 'again' },
+              ),
+            ),
+          ),
+        ).toEqual(['the_request_is_waiting'])
+        // Its sendings again send nothing; P1's go on; at 10:01:00 its time comes after the call-off.
+        for (const quarter of ['10:00:15', '10:00:30', '10:00:45', '10:01:00'])
+          await runs_at(story, anna, quarter)
+        const to_carla = (await carla.opens_what_came()).length
+        expect(to_carla).toBe(1)
+        expect(await bruno.opens_what_came()).toHaveLength(4)
+        const recorded = names_of(await anna.recorded())
+        expect(recorded).toContain('the_call_off_came_before_the_time')
+        expect(recorded.filter((each) => each === 'a_request_had_no_response')).toHaveLength(1)
+        expect(await anna.the_answer_to(P2)).toEqual([
+          { id: P2, answer: { status: 'called_off', why: 'not_offered_to_the_bond' } },
+        ])
+        // Carla's pong, coming after: a late one, refused (story 10).
+        expect(
+          failed(
+            last_of(
+              await anna.take_a_response({
+                request_id: P2,
+                from: carla.key,
+                event: { pong: true },
+              }),
+            ),
+          ),
+        ).toEqual(['the_request_is_waiting'])
+        expect(await anna.held()).toEqual([])
+      })
+    })
   })
 }
