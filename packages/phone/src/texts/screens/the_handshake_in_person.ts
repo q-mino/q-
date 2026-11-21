@@ -20,7 +20,9 @@ export const the_handshake_in_person = {
     a_ticket_out_of_its_form: 'Il QR inquadrato porta un biglietto guasto.',
   },
   opening_their_ticket: (name) => `Apro il biglietto di ${name}…`,
-  bonded: (name) => `Hai ${name}, di persona.`,
+  // [Q, C, provisional: A to confirm] (BND-10, 21 Nov 2026): "di persona" only when her node said so.
+  bonded: (name) => `Hai ${name}.`,
+  bonded_in_person: (name) => `Hai ${name}, di persona.`,
   bonded_already: (name) => `${name} era già tra i tuoi contatti.`,
   open_the_contact: 'Apri il contatto',
   shake_another_hand: 'Stringi un’altra mano',

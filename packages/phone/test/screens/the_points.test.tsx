@@ -233,7 +233,7 @@ describe('the extension points', () => {
     expect(anna_s.activities_asked()).toHaveLength(1)
 
     anna_s.ends('A8', {
-      ended: 'the_extension_answered',
+      ended: 'the_extension_told_how_it_ended',
       said: { event: 'pong', payload: { ping_id: 'P1' } },
     })
     await until(() => {
@@ -245,7 +245,7 @@ describe('the extension points', () => {
       expect(anna_s.activities_asked()).toHaveLength(2)
     })
     anna_s.ends('A9', {
-      ended: 'the_extension_answered',
+      ended: 'the_extension_told_how_it_ended',
       said: { event: 'no_response', payload: { ping_id: 'P2' } },
     })
     await until(() => {
@@ -257,7 +257,7 @@ describe('the extension points', () => {
       expect(anna_s.activities_asked()).toHaveLength(3)
     })
     anna_s.ends('A10', {
-      ended: 'the_extension_answered',
+      ended: 'the_extension_told_how_it_ended',
       said: { event: 'called_off', payload: { ping_id: 'P3' } },
     })
     await until(() => {

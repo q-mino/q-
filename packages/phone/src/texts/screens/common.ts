@@ -41,7 +41,7 @@ export const common = {
     done: 'Fatto',
     done_already: 'Era già fatto',
     cannot_be_done: 'Non si può fare',
-    the_extension_answered: 'L’estensione ha risposto',
+    the_extension_told_how_it_ended: 'L’estensione ha risposto',
     no_longer_followed: 'Non lo seguo più',
     the_extension_cannot_be_reached: 'L’estensione non si raggiunge',
     the_app_cannot_do_it: 'L’app non riesce a farlo',

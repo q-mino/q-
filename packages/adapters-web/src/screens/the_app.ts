@@ -117,7 +117,7 @@ export const the_words_of_an_actions_end = (
   words: boundary.the_words_of_an_extension | undefined,
   how: activities_value.how_it_ended,
 ): string => {
-  if (how.ended !== 'the_extension_answered') return the_words_of_an_end(common, how)
+  if (how.ended !== 'the_extension_told_how_it_ended') return the_words_of_an_end(common, how)
   return words?.events[how.said.event] ?? the_words_of_an_end(common, how)
 }
 

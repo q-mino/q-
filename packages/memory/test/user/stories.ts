@@ -171,7 +171,10 @@ export const stories_of_user = (name: string, factory: AFactory): void => {
       await bruno.collects()
       await anna.collects()
       const a2 = await anna.how_it_ended('A2')
-      expect(a2).toMatchObject({ ended: 'the_extension_answered', said: { event: 'pong' } })
+      expect(a2).toMatchObject({
+        ended: 'the_extension_told_how_it_ended',
+        said: { event: 'pong' },
+      })
       // The action's leaf from the composed manifest, on ping pong's `self`, with the bond, under A2.
       const invoked = anna.to_the_extension.find(
         (message) => message.message === 'invoke' && message.persona === 'self',
@@ -186,7 +189,7 @@ export const stories_of_user = (name: string, factory: AFactory): void => {
       await the_request_goes(anna, 2)
       await to_the_end_of_its_time(story)
       expect(await anna.how_it_ended('A3')).toMatchObject({
-        ended: 'the_extension_answered',
+        ended: 'the_extension_told_how_it_ended',
         said: { event: 'no_response' },
       })
     })
@@ -245,7 +248,7 @@ export const stories_of_user = (name: string, factory: AFactory): void => {
       await bruno.collects()
       await anna.collects()
       expect(await anna.how_it_ended('A7')).toMatchObject({
-        ended: 'the_extension_answered',
+        ended: 'the_extension_told_how_it_ended',
         said: { event: 'pong' },
       })
       expect(await anna.facts_of_ping_pong()).toEqual([
@@ -265,7 +268,7 @@ export const stories_of_user = (name: string, factory: AFactory): void => {
       await bruno.collects()
       await anna.collects()
       expect(await anna.how_it_ended('A8')).toMatchObject({
-        ended: 'the_extension_answered',
+        ended: 'the_extension_told_how_it_ended',
         said: { event: 'pong' },
       })
       expect(
@@ -288,7 +291,7 @@ export const stories_of_user = (name: string, factory: AFactory): void => {
       await the_request_goes(anna)
       await to_the_end_of_its_time(story)
       expect(await anna.how_it_ended('A8')).toMatchObject({
-        ended: 'the_extension_answered',
+        ended: 'the_extension_told_how_it_ended',
         said: { event: 'no_response' },
       })
     })

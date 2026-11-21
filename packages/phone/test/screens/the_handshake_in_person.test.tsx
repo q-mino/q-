@@ -3,7 +3,7 @@
 // while she scans, what it reads opened or told, what reaches her node.
 
 import { the_link_of_a_ticket } from '@q-mino/adapters-web'
-import type { HerTicket } from '@q-mino/adapters-web/screens'
+import { the_words_of_a_bond_made, type HerTicket } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { afterEach, describe, expect, test } from 'vitest'
@@ -128,7 +128,7 @@ describe('the handshake in person', () => {
 
     anna.ends('A11', { ended: 'done', said: { event: 'you_met_in_person', payload: {} } })
     await until(() => {
-      expect(the_words(app)).toContain(in_person.bonded('Bruno'))
+      expect(the_words(app)).toContain(in_person.bonded_in_person('Bruno'))
     })
     expect(anna.activities_asked()).toHaveLength(2)
     expect(camera.turned_on()).toBe(1)
@@ -244,5 +244,21 @@ describe('the handshake in person', () => {
     await until(() => {
       expect(the_words(refused)).toContain(in_person.the_camera.refused)
     })
+  })
+
+  test('"di persona" only when her node said it met them in person (BND-10)', () => {
+    const made = (event: string, already = false) =>
+      the_words_of_a_bond_made(in_person, {
+        shows: 'bonded',
+        introduced_as: 'Bruno',
+        already,
+        said: { event, payload: {} },
+      })
+    expect(made('you_met_in_person')).toBe(in_person.bonded_in_person('Bruno'))
+    for (const at_a_distance of ['you_are_bonded', 'your_introduction_is_sent']) {
+      expect(made(at_a_distance)).toBe(in_person.bonded('Bruno'))
+      expect(made(at_a_distance)).not.toContain('di persona')
+    }
+    expect(made('you_opened_their_ticket_already', true)).toBe(in_person.bonded_already('Bruno'))
   })
 })
