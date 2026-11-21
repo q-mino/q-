@@ -20,13 +20,16 @@ export const wait_until_the_ticket_expires =
 export type wait_until_the_ticket_expires = z.output<typeof wait_until_the_ticket_expires>
 
 /**
- * Bruno's phone introduces him to Anna's ticket (BND-10): a letter of
- * introduction deposited on her ticket's mailbox, on its relays, with her
- * ticket's secret and his own ticket, the one he shows or one prepared for
- * it. `post` delivers it (F4, DOM-14, step 10), signing it with his face and
- * reading his side of the bond (`a_bond`, `my_faces`): what is not in the
- * payload, since a creator reads no state. No return: nothing comes back
- * to the address book; her letter, if any, comes in as a letter.
+ * Bruno's phone introduces him to Anna's ticket (BND-10): a request of the
+ * kernel's to the leaf `introduce_myself` of her `unknown`, on her ticket's
+ * mailbox, with her ticket's secret and his side of the bond, the name his
+ * face is introduced as and his mailbox of the bond (his ticket's). Its
+ * delivery is the kernel's, through its port of requests (F7, F4, DOM-14),
+ * which signs it with his face; it reads his side of the bond (`a_bond`,
+ * `my_faces`): what is not in the payload, since a creator reads no state.
+ * No return: nothing comes back to the address book; her answer closes the
+ * request, and her letters, if any, come in as letters. Its deliveries are
+ * in flight together, none waiting for another's response (F7, SC-56).
  *
  * @see {@link effect.send_my_introduction}
  */
