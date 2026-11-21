@@ -14,6 +14,14 @@ export const a_request_is_there = (
 export const the_request_is_waiting = (the_request: value.request | undefined): boolean =>
   the_request?.status === 'waiting'
 
+/** The request has been answered by a response of its face. */
+export const the_request_has_been_answered = (the_request: value.request | undefined): boolean =>
+  the_request?.status === 'answered'
+
+/** The request has been called off while it waited (F7, EXT-7). */
+export const the_request_has_been_called_off = (the_request: value.request | undefined): boolean =>
+  the_request?.status === 'called_off'
+
 /** The request's time is not over at this instant. */
 export const the_time_of_the_request_is_not_over =
   (now: date_time) =>
@@ -35,8 +43,20 @@ export const the_answer_of = (the_request: value.request): value.answer => {
       return { status: 'answered', event: the_request.event }
     case 'no_response':
       return { status: 'no_response' }
+    case 'called_off':
+      return { status: 'called_off', why: the_request.why }
   }
 }
+
+/** A request that waits, as the kernel reads it to call it off (F7, EXT-7). */
+export const the_card_of_a_waiting_request = (
+  the_request: value.request,
+): value.waiting_request_card => ({
+  id: the_request.id,
+  invokes: the_request.deposit.letter.invokes,
+  face_id: the_request.deposit.face_id,
+  their_key: the_request.deposit.their_key,
+})
 
 /** The instant a request's time is over, from the instant it is sent and the seconds it waits. */
 export const the_end_of_a_time = (now: date_time, waits: value.waiting_time): date_time =>

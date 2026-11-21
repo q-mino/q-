@@ -114,13 +114,33 @@ describe('the stories of ping pong, through the boundary', () => {
   )
 
   test.each([
+    { answer: 'refused', why: 'not_offered_to_the_bond' } as const,
+    { answer: 'refused', why: 'not_active' } as const,
+  ])(
+    'called off, by a withdrawal or a deactivation: the ping called off, the screen reads it, no dead letter ($why)',
+    async (answer) => {
+      const { partition, anna, events } = await anna_pings_bruno(() => answer)
+      const ping_id = ping_of(events)
+      expect(events.at(-1)).toEqual({ event: 'called_off', payload: { ping_id } })
+      expect(the_ping(partition, ping_id)).toMatchObject(closed_with('the_ping_was_called_off'))
+      expect(the_facts(partition)).toEqual(['a_ping_has_been_sent', 'a_ping_has_been_called_off'])
+      expect(anna.sent.filter((message) => message.message === 'dead_letter')).toEqual([])
+      await anna.stop()
+    },
+  )
+
+  test.each([
     {
-      answer: { answer: 'refused', why: 'not_offered_to_the_bond' } as const,
-      reason: 'the port of requests refused it: not_offered_to_the_bond',
+      answer: { answer: 'refused', why: 'not_declared' } as const,
+      reason: 'the port of requests refused it: not_declared',
+    },
+    {
+      answer: { answer: 'refused', why: 'too_large_for_a_letter' } as const,
+      reason: 'the port of requests refused it: too_large_for_a_letter',
     },
     { answer: { answer: 'the_bond_is_gone' } as const, reason: 'the bond is gone' },
   ])(
-    'refused, or the bond gone: a dead letter, shown, the ping still waiting ($reason)',
+    'a fault, refused or the bond gone: a dead letter, shown, the ping still waiting ($reason)',
     async ({ answer, reason }) => {
       const partition = a_partition()
       const anna = await a_node({ partition, answering: () => answer })

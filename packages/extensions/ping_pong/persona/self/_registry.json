@@ -45,6 +45,15 @@
             "required": ["ping_id"],
             "additionalProperties": false
           }
+        },
+        "event/called_off": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
         }
       }
     },

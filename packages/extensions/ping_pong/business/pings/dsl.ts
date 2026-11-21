@@ -14,7 +14,7 @@ export const a_ping_is_there = (the_ping: value.ping | undefined): the_ping is v
 export const the_ping_waits = (the_ping: value.ping | undefined): boolean =>
   the_ping?.progress.stage === 'waiting'
 
-/** What came back is this meaning: the value of `the_pong_came_back`, `the_ping_had_no_response`, `the_peer_cannot_answer`. */
+/** What came back is this meaning: the value of `the_pong_came_back`, `the_ping_had_no_response`, `the_peer_cannot_answer`, `the_ping_was_called_off`. */
 export const what_came_back_is =
   (meaning: value.what_came_back) =>
   (what_came_back: value.what_came_back): boolean =>

@@ -37,6 +37,14 @@ export const a_ping_could_not_be_answered = fact({
   }),
 })
 
+/** A ping has been called off: the user deactivated ping pong, or withdrew it from the bond, while it waited (EXT-12, F7). */
+export const a_ping_has_been_called_off = fact({
+  payload: z.strictObject({
+    ping_id: id.ping_id,
+    at: value.instant,
+  }),
+})
+
 /** A bond's ping has been answered with a pong. */
 export const a_ping_has_been_answered = fact({
   payload: z.strictObject({

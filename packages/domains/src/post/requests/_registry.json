@@ -585,6 +585,132 @@
         }
       }
     },
+    "post/requests/value/why_called_off": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+        }
+      }
+    },
+    "post/requests/value/called_off_request": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "status": { "type": "string", "const": "called_off" },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["id", "deposit", "until", "status", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
     "post/requests/value/request": {
       "kind": "value",
       "shapes": {
@@ -952,6 +1078,127 @@
                 },
                 "required": ["id", "deposit", "until", "status"],
                 "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "status": { "type": "string", "const": "called_off" },
+                  "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                },
+                "required": ["id", "deposit", "until", "status", "why"],
+                "additionalProperties": false
               }
             ]
           }
@@ -984,6 +1231,15 @@
                 "type": "object",
                 "properties": { "status": { "type": "string", "const": "no_response" } },
                 "required": ["status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "const": "called_off" },
+                  "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                },
+                "required": ["status", "why"],
                 "additionalProperties": false
               }
             ]
@@ -1022,11 +1278,81 @@
                     "properties": { "status": { "type": "string", "const": "no_response" } },
                     "required": ["status"],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "called_off" },
+                      "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                    },
+                    "required": ["status", "why"],
+                    "additionalProperties": false
                   }
                 ]
               }
             },
             "required": ["id", "answer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/waiting_request_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "invokes": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "the_kernel" },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "extension", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "face_id": { "type": "string", "minLength": 1 },
+              "their_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["id", "invokes", "face_id", "their_key"],
             "additionalProperties": false
           }
         }
@@ -1239,6 +1565,42 @@
         }
       }
     },
+    "post/requests/fact/a_request_has_been_called_off": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["request_id", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/the_call_off_came_before_the_time": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
     "post/requests/fact/the_response_came_before_the_time": {
       "kind": "fact",
       "shapes": {
@@ -1272,6 +1634,38 @@
       }
     },
     "post/requests/predicate/the_request_is_waiting": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_has_been_answered": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_has_been_called_off": {
       "kind": "predicate",
       "shapes": {
         "schema": {
@@ -1575,6 +1969,15 @@
             "required": ["request_id"],
             "additionalProperties": false
           }
+        }
+      }
+    },
+    "post/requests/selection/request/the_request_is_waiting": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
         }
       }
     },
@@ -1898,22 +2301,6 @@
         }
       }
     },
-    "post/requests/command/the_request_is_closed": {
-      "kind": "command",
-      "shapes": {
-        "schema": {
-          "direction": "carried",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
-            },
-            "required": ["request_id"],
-            "additionalProperties": false
-          }
-        }
-      }
-    },
     "post/requests/command/close_a_request_with_no_response": { "kind": "command" },
     "post/requests/command/close_a_request_with_no_response_input": {
       "kind": "command",
@@ -1926,6 +2313,27 @@
               "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
             },
             "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/call_off_a_request": { "kind": "command" },
+    "post/requests/command/call_off_a_request_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["request_id", "why"],
             "additionalProperties": false
           }
         }
@@ -2008,10 +2416,22 @@
         }
       }
     },
+    "post/requests/query/the_requests_waiting": { "kind": "query" },
+    "post/requests/query/the_requests_waiting_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
     "post/requests/usecase/send_a_request": { "kind": "usecase" },
     "post/requests/usecase/send_a_request_again": { "kind": "usecase" },
     "post/requests/usecase/close_a_request_with_no_response": { "kind": "usecase" },
     "post/requests/usecase/take_a_response": { "kind": "usecase" },
+    "post/requests/usecase/call_off_a_request": { "kind": "usecase" },
+    "post/requests/usecase/the_requests_waiting": { "kind": "usecase" },
     "post/requests/usecase/the_answer_to_a_request": { "kind": "usecase" },
     "post/requests/version/requests": { "kind": "version" }
   }
