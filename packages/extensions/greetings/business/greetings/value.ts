@@ -20,12 +20,14 @@ export const waiting_time = z.number().int().min(1).max(604_800)
  * (EXT-12, D108), never the peer's events: its greeting back, with its
  * words; no response within its time; a peer that cannot answer it (its
  * node closed the request, or refused it as malformed or of a version it
- * does not speak).
+ * does not speak); called off by the user's own gesture, the extension
+ * deactivated or withdrawn from the bond while it waited (EXT-12, F7).
  */
 export const outcome = z.discriminatedUnion('outcome', [
   z.strictObject({ outcome: z.literal('the_greeting_came_back'), words }),
   z.strictObject({ outcome: z.literal('the_greeting_had_no_response') }),
   z.strictObject({ outcome: z.literal('the_peer_cannot_answer') }),
+  z.strictObject({ outcome: z.literal('the_greeting_was_called_off') }),
 ])
 
 /** Where a greeting the node sent stands: waiting for what comes back, or closed with it. */

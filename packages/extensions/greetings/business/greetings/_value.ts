@@ -30,7 +30,8 @@ export type waiting_time = z.output<typeof waiting_time>
  * (EXT-12, D108), never the peer's events: its greeting back, with its
  * words; no response within its time; a peer that cannot answer it (its
  * node closed the request, or refused it as malformed or of a version it
- * does not speak).
+ * does not speak); called off by the user's own gesture, the extension
+ * deactivated or withdrawn from the bond while it waited (EXT-12, F7).
  *
  * @see {@link value.outcome}
  */
