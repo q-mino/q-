@@ -11,8 +11,13 @@ import { the_end_of, the_record_of } from './requests.ts'
 /** The browser's `navigator.locks`, given (WEB-5). */
 export type ALockManager = Pick<LockManager, 'request'>
 
-/** The lock's name: one per origin, so one writer per browser for the node's database. */
-export const the_writer_s_lock = 'cumino: the writer'
+/**
+ * The lock's name, the node's database's (an origin's locks are its own): one
+ * writer per browser for the database. Two databases are two nodes, each
+ * with its writer (two tests in one process, two nodes of a story).
+ */
+export const the_writer_s_lock = (database: IDBDatabase): string =>
+  `cumino: the writer of ${database.name}`
 
 /** The key of the writer's term in the node's store. */
 export const the_writer_s_term = 'the_writer_s_term'
@@ -64,7 +69,7 @@ export const ask_to_be_the_writer =
         held.let_go = let_go
       })
       const options: LockOptions = how === 'if_no_tab_is' ? { ifAvailable: true } : { steal: true }
-      const asked = locks.request(the_writer_s_lock, options, async (lock) => {
+      const asked = locks.request(the_writer_s_lock(database), options, async (lock) => {
         if (lock === null) {
           resolve({ writer: 'another_tab' })
           return

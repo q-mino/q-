@@ -10,7 +10,7 @@
 
 import * as zz from '@q-mino/domains/library'
 import { the_name_of, the_node_s_store } from './database.ts'
-import { the_end_of, the_record_of } from './requests.ts'
+import { the_end_of, the_record_of, the_records_of, the_result_of } from './requests.ts'
 import { the_term_holds } from './the_writer.ts'
 
 /** A key a fragment or a write reads: in its domain's store, or another's (GR-3). */
@@ -19,14 +19,28 @@ export interface AKey {
   readonly key: IDBValidKey
 }
 
-/** The records a command read, by key; a key not present reads `undefined`. */
+/**
+ * The records under a prefix of keys, in a store (`['state', 'face']`: every
+ * face): what a predicate over a set reads ("the user has a face"), and a
+ * query's source (WEB-8: read by range, selected in memory).
+ */
+export interface ARange {
+  readonly store: string
+  readonly prefix: readonly IDBValidKey[]
+}
+
+/** What a fragment, a write or a query reads: a key, or the records under a prefix. */
+export type ARead = AKey | ARange
+
+/** The records read, by key (a key not present reads `undefined`), and under a prefix (in the store's order). */
 export interface Records {
   readonly of: (key: AKey) => unknown
+  readonly all: (range: ARange) => readonly unknown[]
 }
 
 /** A predicate's fragment: the keys it reads, and whether it holds on them. */
 export interface Fragment {
-  readonly reads: readonly AKey[]
+  readonly reads: readonly ARead[]
   readonly holds: (records: Records) => boolean
 }
 
@@ -37,7 +51,7 @@ export type APut =
 
 /** A fact's write: the keys it reads, and its records from them, at the fact's position. */
 export interface Write {
-  readonly reads: readonly AKey[]
+  readonly reads: readonly ARead[]
   readonly puts: (
     records: Records,
     recording: { readonly position: zz.position },
@@ -71,13 +85,26 @@ const the_last_entry = 'the_last_entry'
 
 const a_count = (value: unknown): number => (typeof value === 'number' ? value : 0)
 
-const the_text_of = (key: AKey): string => JSON.stringify([key.store, key.key])
+const the_text_of = (read: ARead): string =>
+  'key' in read ? JSON.stringify([read.store, read.key]) : JSON.stringify([read.store, read.prefix])
+
+/** IndexedDB's range of a prefix: every array key that begins with it (an id is never an array). */
+export const the_range_of = (
+  key_range: Pick<typeof IDBKeyRange, 'bound'>,
+  prefix: readonly IDBValidKey[],
+): IDBKeyRange => key_range.bound([...prefix], [...prefix, []], false, true)
+
+/** Whether a key begins with a prefix, part by part. */
+const begins_with = (key: IDBValidKey, prefix: readonly IDBValidKey[]): boolean =>
+  Array.isArray(key) &&
+  prefix.every((part, at) => JSON.stringify(key[at]) === JSON.stringify(part))
 
 /** What a business domain's command port needs of the node. */
 export interface ADomainsStore {
   readonly database: IDBDatabase
   /** The writer's term (WEB-10). */
   readonly term: number
+  readonly key_range: Pick<typeof IDBKeyRange, 'bound'>
   /** The business domain's path (`bonds/address_book`): its store's name. */
   readonly path: string
   /** Called after each commit: the node's log wakes its followers (WEB-9). */
@@ -86,7 +113,7 @@ export interface ADomainsStore {
 
 type Branch = zz.PlannedCommandBranch<Fragment, Write>
 
-const the_reads_of = (branch: Branch): readonly AKey[] => [
+const the_reads_of = (branch: Branch): readonly ARead[] => [
   ...branch.condition.reads,
   ...branch.leaves.flatMap((leaf) => leaf.reads),
   ...('elements' in branch
@@ -99,14 +126,71 @@ const the_reads_of = (branch: Branch): readonly AKey[] => [
     : branch.writes.flatMap((write) => write.reads)),
 ]
 
-const read_keys = async (transaction: IDBTransaction, keys: readonly AKey[]): Promise<Records> => {
-  const unique = [...new Map(keys.map((key) => [the_text_of(key), key])).values()]
-  const values = await Promise.all(
-    unique.map((key) => the_record_of(transaction.objectStore(key.store).get(key.key))),
-  )
-  const found = new Map(unique.map((key, at) => [the_text_of(key), values[at]]))
-  return { of: (key) => found.get(the_text_of(key)) }
+/** A record read under a key, with its key, so that a command's writes can be laid over a range. */
+interface AKept {
+  readonly key: IDBValidKey
+  readonly value: unknown
 }
+
+/** The records read, and each range's with their keys. */
+interface RecordsRead extends Records {
+  readonly kept_under: (range: ARange) => readonly AKept[]
+}
+
+/** Reads every key and range named, each once, in the transaction. */
+export const read_in = async (
+  transaction: IDBTransaction,
+  key_range: Pick<typeof IDBKeyRange, 'bound'>,
+  reads: readonly ARead[],
+): Promise<RecordsRead> => {
+  const unique = [...new Map(reads.map((read) => [the_text_of(read), read])).values()]
+  const values = await Promise.all(
+    unique.map(async (read): Promise<unknown> => {
+      const store = transaction.objectStore(read.store)
+      if ('key' in read) return the_record_of(store.get(read.key))
+      const range = the_range_of(key_range, read.prefix)
+      const [keys, kept] = await Promise.all([
+        the_result_of(store.getAllKeys(range)),
+        the_records_of(store.getAll(range)),
+      ])
+      return keys.map((key, at): AKept => ({ key, value: kept[at] }))
+    }),
+  )
+  const found = new Map(unique.map((read, at) => [the_text_of(read), values[at]]))
+  const kept_under = (range: ARange): readonly AKept[] => {
+    const given = found.get(the_text_of(range))
+    if (!Array.isArray(given)) throw new Error(`a range not read: ${the_text_of(range)}`)
+    // cast: the list `read_in` built above for this range, of `AKept`
+    return given as readonly AKept[]
+  }
+  return {
+    of: (key) => found.get(the_text_of(key)),
+    all: (range) => kept_under(range).map((kept) => kept.value),
+    kept_under,
+  }
+}
+
+/** The records a command reads, its writes laid over them as they are made (DOM-10). */
+const laid_over = (
+  read: RecordsRead,
+  store: string,
+  after: ReadonlyMap<string, AKept>,
+): Records => ({
+  of: (key) => {
+    const written = key.store === store ? after.get(JSON.stringify(key.key)) : undefined
+    return written === undefined ? read.of(key) : written.value
+  },
+  all: (range) => {
+    const before = read.kept_under(range)
+    if (range.store !== store) return before.map((kept) => kept.value)
+    const under = [...after.values()].filter((kept) => begins_with(kept.key, range.prefix))
+    const changed = new Set(under.map((kept) => JSON.stringify(kept.key)))
+    return [
+      ...before.filter((kept) => !changed.has(JSON.stringify(kept.key))),
+      ...under.filter((kept) => kept.value !== undefined),
+    ].map((kept) => kept.value)
+  },
+})
 
 const the_fact_recorded = async (
   records: IDBObjectStore,
@@ -149,7 +233,7 @@ export const execute_in =
   async (plan) => {
     const store = the_name_of({ of: 'a_domain', path: domain.path })
     const node = (key: IDBValidKey): AKey => ({ store: the_node_s_store, key })
-    const reads = [
+    const reads: readonly ARead[] = [
       node(the_last_fact),
       node(the_last_entry),
       ...plan.branches.flatMap(the_reads_of),
@@ -165,7 +249,7 @@ export const execute_in =
         await ended
         return recorded
       }
-      const records = await read_keys(transaction, reads)
+      const records = await read_in(transaction, domain.key_range, reads)
       const chosen = (branch: Branch): readonly number[] =>
         'elements' in branch
           ? branch.elements.map((element) =>
@@ -188,24 +272,23 @@ export const execute_in =
       const write = 'elements' in branch ? branch.applies(elements) : branch
       const more =
         'elements' in branch
-          ? await read_keys(
+          ? await read_in(
               transaction,
+              domain.key_range,
               write.writes.flatMap((each) => each.reads),
             )
           : records
       const position = a_count(records.of(node(the_last_fact))) + 1
       const first_entry = a_count(records.of(node(the_last_entry))) + 1
       const recording = { position: zz.position.parse(String(position)) }
-      const after = new Map<string, unknown>()
-      const seen: Records = {
-        of: (key) => {
-          const text = the_text_of(key)
-          return after.has(text) ? after.get(text) : more.of(key)
-        },
-      }
+      const after = new Map<string, AKept>()
+      const seen = laid_over(more, store, after)
       for (const each of write.writes)
         for (const put of each.puts(seen, recording)) {
-          after.set(the_text_of({ store, key: put.key }), put.put === 'set' ? put.value : undefined)
+          after.set(JSON.stringify(put.key), {
+            key: put.key,
+            value: put.put === 'set' ? put.value : undefined,
+          })
           if (put.put === 'set') kept.put(put.value, put.key)
           else kept.delete(put.key)
         }
