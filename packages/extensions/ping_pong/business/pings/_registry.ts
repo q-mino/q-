@@ -29,12 +29,14 @@ export const registry = {
   'business/pings/fact/a_pong_has_been_received': fact.a_pong_has_been_received,
   'business/pings/fact/a_ping_has_had_no_response': fact.a_ping_has_had_no_response,
   'business/pings/fact/a_ping_could_not_be_answered': fact.a_ping_could_not_be_answered,
+  'business/pings/fact/a_ping_has_been_called_off': fact.a_ping_has_been_called_off,
   'business/pings/fact/a_ping_has_been_answered': fact.a_ping_has_been_answered,
   'business/pings/predicate/a_ping_has_this_id': predicate.a_ping_has_this_id,
   'business/pings/predicate/the_ping_waits': predicate.the_ping_waits,
   'business/pings/predicate/the_pong_came_back': predicate.the_pong_came_back,
   'business/pings/predicate/the_ping_had_no_response': predicate.the_ping_had_no_response,
   'business/pings/predicate/the_peer_cannot_answer': predicate.the_peer_cannot_answer,
+  'business/pings/predicate/the_ping_was_called_off': predicate.the_ping_was_called_off,
   'business/pings/predicate/a_pong_has_this_id': predicate.a_pong_has_this_id,
   'business/pings/effect/ask_for_a_pong': effect.ask_for_a_pong,
   'business/pings/command/the_ping_is_new': command.the_ping_is_new,
@@ -46,6 +48,8 @@ export const registry = {
     command.the_ping_waits_and_had_no_response,
   'business/pings/command/the_ping_waits_and_the_peer_cannot_answer':
     command.the_ping_waits_and_the_peer_cannot_answer,
+  'business/pings/command/the_ping_waits_and_was_called_off':
+    command.the_ping_waits_and_was_called_off,
   'business/pings/command/close_a_ping': command.close_a_ping,
   'business/pings/command/close_a_ping_input': command.close_a_ping_input,
   'business/pings/command/the_pong_is_new': command.the_pong_is_new,

@@ -11,8 +11,10 @@ import * as usecase from './usecase.ts'
  * Anna taps "Ping" on the screen of her bond with Bruno (PNG-4, EXT-16):
  * the action invokes this leaf with the place's data, the bond, and her
  * ping goes. Her screen follows it to what comes back (DOM-3, F7): Bruno's
- * pong, no response within its time, or a peer that cannot answer, each a
- * fact the return records with the correlation of her ping; or, after 70
+ * pong, no response within its time, a peer that cannot answer, or her
+ * own calling off (ping pong deactivated or withdrawn from the bond while
+ * it waited), each a fact the return records with the correlation of her
+ * ping; or, after 70
  * seconds, the wait over, which records nothing (the ping's own 60 seconds
  * and the executor's delivery before them).
  *
