@@ -197,6 +197,7 @@ const an_address_book = (start: Start): BondsState => {
       handshake: { way: 'in_person', at: start.at },
       confirmation: { state: 'received', at: start.at },
       my_introduction: { state: 'sent', at: start.at },
+      their_introduction: { state: 'received', declared_at: start.at },
     }),
   )
   return {

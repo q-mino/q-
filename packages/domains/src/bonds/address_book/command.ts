@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { date_time } from '../../library/index.ts'
 import {
   command,
   AND,
@@ -260,16 +261,22 @@ export const their_introduction_came_first = AND({
   my_introduction_is_not_sent: NOT(predicate.my_introduction_is_sent),
 })
 
-/** Their introduction came first, within two minutes: the tickets crossed in person. */
-export const their_introduction_came_first_within_two_minutes = AND({
+/**
+ * Their introduction came first, and declares a time within the window of a
+ * crossing of my opening now: the tickets crossed in person.
+ */
+export const their_introduction_came_first_within_the_window_of_a_crossing = AND({
   their_introduction_came_first: their_introduction_came_first,
-  the_handshake_began_within_two_minutes: predicate.the_handshake_began_within_two_minutes_of,
+  their_introduction_is_declared_within_the_window_of_a_crossing:
+    predicate.their_introduction_is_declared_within_the_window_of_a_crossing_of,
 })
 
-/** Their introduction came first, earlier than two minutes ago. */
-export const their_introduction_came_first_earlier = AND({
+/** Their introduction came first, and declares a time outside the window of a crossing of my opening now. */
+export const their_introduction_came_first_outside_the_window_of_a_crossing = AND({
   their_introduction_came_first: their_introduction_came_first,
-  the_handshake_began_earlier: NOT(predicate.the_handshake_began_within_two_minutes_of),
+  their_introduction_is_declared_outside_the_window_of_a_crossing: NOT(
+    predicate.their_introduction_is_declared_within_the_window_of_a_crossing_of,
+  ),
 })
 
 /** The bond is kept with this face of theirs, and my introduction is sent already. */
@@ -287,8 +294,9 @@ export const my_introduction_was_sent_already = AND({
  * a distance for now, the confirmation awaited, and her introduction goes
  * to their ticket's mailbox. If Bruno's introduction to her ticket came
  * first (the QR crossed), the bond is there: her introduction goes all the
- * same, and within two minutes the handshake is in person. The same flow
- * on both phones, in either order (one path, near and far).
+ * same, and the handshake is in person when his introduction declares a
+ * time within the window of a crossing of her opening (two minutes). The
+ * same flow on both phones, in either order (one path, near and far).
  */
 export const open_their_ticket = command({
   input: z.strictObject({
@@ -302,13 +310,13 @@ export const open_their_ticket = command({
       fact.a_bond_has_been_made_by_opening_their_ticket,
       pick(effect, 'send_my_introduction'),
     ],
-    their_introduction_came_within_two_minutes_so_we_met_in_person: [
-      their_introduction_came_first_within_two_minutes,
+    their_introduction_came_within_the_window_of_a_crossing_so_we_met_in_person: [
+      their_introduction_came_first_within_the_window_of_a_crossing,
       fact.their_ticket_has_been_opened_in_person,
       pick(effect, 'send_my_introduction'),
     ],
-    their_introduction_came_earlier_so_mine_goes_now: [
-      their_introduction_came_first_earlier,
+    their_introduction_came_outside_the_window_of_a_crossing_so_mine_goes_now: [
+      their_introduction_came_first_outside_the_window_of_a_crossing,
       fact.their_ticket_has_been_opened_after_their_introduction,
       pick(effect, 'send_my_introduction'),
     ],
@@ -350,12 +358,16 @@ export const open_their_ticket = command({
             handshake: { way: 'at_a_distance', at: context.now },
             confirmation: { state: 'awaited' },
             my_introduction: { state: 'sent', at: context.now },
+            their_introduction: { state: 'not_received' },
           },
         },
         my_introduction,
       ],
-      their_introduction_came_within_two_minutes_so_we_met_in_person: [
-        { their_introduction_came_first: first, the_handshake_began_within_two_minutes: within },
+      their_introduction_came_within_the_window_of_a_crossing_so_we_met_in_person: [
+        {
+          their_introduction_came_first: first,
+          their_introduction_is_declared_within_the_window_of_a_crossing: within,
+        },
         {
           met_bond: {
             id: input.bond_id,
@@ -365,8 +377,11 @@ export const open_their_ticket = command({
         },
         my_introduction,
       ],
-      their_introduction_came_earlier_so_mine_goes_now: [
-        { their_introduction_came_first: first, the_handshake_began_earlier: within },
+      their_introduction_came_outside_the_window_of_a_crossing_so_mine_goes_now: [
+        {
+          their_introduction_came_first: first,
+          their_introduction_is_declared_outside_the_window_of_a_crossing: within,
+        },
         {
           introduced_bond: {
             id: input.bond_id,
@@ -401,16 +416,22 @@ export const i_opened_their_ticket_first = AND({
   the_secret_is_the_ticket_s: predicate.the_secret_is_the_ticket_s,
 })
 
-/** I opened their ticket first, within two minutes: the tickets crossed in person. */
-export const i_opened_their_ticket_first_within_two_minutes = AND({
+/**
+ * I opened their ticket first, within the window of a crossing of the time
+ * their introduction declares: the tickets crossed in person.
+ */
+export const i_opened_their_ticket_first_within_the_window_of_a_crossing = AND({
   i_opened_their_ticket_first: i_opened_their_ticket_first,
-  the_handshake_began_within_two_minutes: predicate.the_handshake_began_within_two_minutes_of,
+  i_opened_their_ticket_within_the_window_of_a_crossing:
+    predicate.i_opened_their_ticket_within_the_window_of_a_crossing_of,
 })
 
-/** I opened their ticket first, earlier than two minutes ago. */
-export const i_opened_their_ticket_first_earlier = AND({
+/** I opened their ticket first, outside the window of a crossing of the time their introduction declares. */
+export const i_opened_their_ticket_first_outside_the_window_of_a_crossing = AND({
   i_opened_their_ticket_first: i_opened_their_ticket_first,
-  the_handshake_began_earlier: NOT(predicate.the_handshake_began_within_two_minutes_of),
+  i_opened_their_ticket_outside_the_window_of_a_crossing: NOT(
+    predicate.i_opened_their_ticket_within_the_window_of_a_crossing_of,
+  ),
 })
 
 /** The bond is kept with this face of theirs, and they have me already. */
@@ -423,11 +444,13 @@ export const their_introduction_came_already = AND({
 /**
  * Carla's phone takes an introduction to her ticket (BND-10, PER-11): the
  * entry of `unknown` (step 13) gives the bond of the ticket at whose mailbox
- * it was collected, the secret it carries, the face that signed it and the
- * mailbox its ticket declares. Her ticket ready and the secret its, the bond
- * is kept, named as Anna is introduced, at a distance, the confirmation
- * received. On a bond made by opening their ticket (the QR crossed), it
- * confirms it, in person within two minutes. A ticket used by another face,
+ * it was collected, the secret it carries, the face that signed it, the
+ * mailbox its ticket declares and the time its letter declares (a claim,
+ * PER-13). Her ticket ready and the secret its, the bond is kept, named as
+ * Anna is introduced, at a distance, the confirmation received. On a bond
+ * made by opening their ticket (the QR crossed), it confirms it, in person
+ * when the time it declares is within the window of a crossing of the
+ * opening, whenever the node takes it. A ticket used by another face,
  * expired, or a secret not its: refused, no fact, to the trace (F6).
  */
 export const accept_their_introduction = command({
@@ -436,18 +459,19 @@ export const accept_their_introduction = command({
     secret: value.ticket_secret,
     their_face: value.their_face,
     their_mailbox: value.their_mailbox,
+    declared_at: date_time,
   }),
   outcomes: {
     my_ticket_is_ready_with_its_secret_so_we_are_bonded: [
       my_ticket_is_ready_with_its_secret,
       fact.a_bond_has_been_made_by_their_introduction,
     ],
-    i_opened_their_ticket_within_two_minutes_so_we_met_in_person: [
-      i_opened_their_ticket_first_within_two_minutes,
+    i_opened_their_ticket_within_the_window_of_a_crossing_so_we_met_in_person: [
+      i_opened_their_ticket_first_within_the_window_of_a_crossing,
       fact.their_introduction_has_come_in_person,
     ],
-    i_opened_their_ticket_earlier_so_they_have_me_now: [
-      i_opened_their_ticket_first_earlier,
+    i_opened_their_ticket_outside_the_window_of_a_crossing_so_they_have_me_now: [
+      i_opened_their_ticket_first_outside_the_window_of_a_crossing,
       fact.their_introduction_has_come,
     ],
     their_introduction_came_already_so_nothing_changes: [
@@ -464,7 +488,7 @@ export const accept_their_introduction = command({
       the_confirmation_is_awaited: { bond_id: input.bond_id },
       the_secret_is_the_ticket_s: the_secret,
     }
-    const within = { bond_id: input.bond_id, now: context.now }
+    const within = { bond_id: input.bond_id, declared_at: input.declared_at }
     return {
       my_ticket_is_ready_with_its_secret_so_we_are_bonded: [
         {
@@ -481,25 +505,34 @@ export const accept_their_introduction = command({
             handshake: { way: 'at_a_distance', at: context.now },
             confirmation: { state: 'received', at: context.now },
             my_introduction: { state: 'not_sent' },
+            their_introduction: { state: 'received', declared_at: input.declared_at },
           },
         },
       ],
-      i_opened_their_ticket_within_two_minutes_so_we_met_in_person: [
-        { i_opened_their_ticket_first: first, the_handshake_began_within_two_minutes: within },
+      i_opened_their_ticket_within_the_window_of_a_crossing_so_we_met_in_person: [
+        {
+          i_opened_their_ticket_first: first,
+          i_opened_their_ticket_within_the_window_of_a_crossing: within,
+        },
         {
           met_bond: {
             id: input.bond_id,
             handshake: { way: 'in_person', at: context.now },
             confirmation: { state: 'received', at: context.now },
+            their_introduction: { state: 'received', declared_at: input.declared_at },
           },
         },
       ],
-      i_opened_their_ticket_earlier_so_they_have_me_now: [
-        { i_opened_their_ticket_first: first, the_handshake_began_earlier: within },
+      i_opened_their_ticket_outside_the_window_of_a_crossing_so_they_have_me_now: [
+        {
+          i_opened_their_ticket_first: first,
+          i_opened_their_ticket_outside_the_window_of_a_crossing: within,
+        },
         {
           confirmed_bond: {
             id: input.bond_id,
             confirmation: { state: 'received', at: context.now },
+            their_introduction: { state: 'received', declared_at: input.declared_at },
           },
         },
       ],

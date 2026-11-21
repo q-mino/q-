@@ -648,7 +648,22 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         ...ready,
         activities: [...ready.activities, a_card('A11', open, done)],
       }),
-    ).toEqual({ shows: 'bonded', introduced_as: 'Bruno', already: false })
+    ).toEqual({
+      shows: 'bonded',
+      introduced_as: 'Bruno',
+      already: false,
+      said: { event: 'it_is_done', payload: {} },
+    })
+    // What her node said of it goes with it: in person only when it said so (BND-10).
+    for (const event of ['you_met_in_person', 'you_are_bonded', 'your_introduction_is_sent']) {
+      const met = how('done', event)
+      expect(
+        the_handshake_in_person.what_it_shows(bonded, {
+          ...ready,
+          activities: [...ready.activities, a_card('A11', open, met)],
+        }),
+      ).toMatchObject({ shows: 'bonded', said: { event } })
+    }
     expect(
       the_handshake_in_person.after(bonded, { happens: 'she_opens_the_contact' }).goes,
     ).toEqual({ goes: 'to_a_screen', screen: { screen: 'a_contact', bond: 'B1' } })
@@ -712,7 +727,12 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         ...ready,
         activities: [...ready.activities, a_card('A11', open, how('done_already'))],
       }),
-    ).toEqual({ shows: 'bonded', introduced_as: 'Bruno', already: true })
+    ).toEqual({
+      shows: 'bonded',
+      introduced_as: 'Bruno',
+      already: true,
+      said: { event: 'it_is_done', payload: {} },
+    })
     const refused = the_handshake_in_person.after(opened, {
       happens: 'the_camera_is',
       camera: 'refused',

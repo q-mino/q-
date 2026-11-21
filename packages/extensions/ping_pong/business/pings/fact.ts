@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { fact, id, value } from './_scope_fact.ts'
 
 // The facts of `pings` (PNG-2, PNG-3; DOM-6: each names a happening). A
-// ping is sent; it closes with one of three happenings, one fact each, as
+// ping is sent; it closes with one of four happenings, one fact each, since
+// the office speaks of them as different happenings (DOM-6's criterion), as
 // the office of the extensions learns or has no answer (EXT-8); a ping of a
 // bond's is answered with a pong.
 

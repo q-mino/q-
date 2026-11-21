@@ -378,7 +378,7 @@ export const stories_of_the_stack = (
           async () => (await anna.phone.the_end_of('A1')) !== undefined,
         )
         expect(await anna.phone.the_end_of('A1')).toMatchObject({
-          ended: 'the_extension_answered',
+          ended: 'the_extension_told_how_it_ended',
           said: { event: 'pong' },
         })
         // One pong in Bruno's partition, however many copies of the ping came (DOM-11): under
@@ -411,7 +411,7 @@ export const stories_of_the_stack = (
           async () => (await anna.phone.the_end_of('A1')) !== undefined,
         )
         expect(await anna.phone.the_end_of('A1')).toMatchObject({
-          ended: 'the_extension_answered',
+          ended: 'the_extension_told_how_it_ended',
           said: { event: 'no_response' },
         })
         // Carla's phone collected the ping, her kernel traced the silence (EXT-6), and nothing went back.
@@ -451,7 +451,10 @@ export const stories_of_the_stack = (
             (await anna.the_end_of('A1')) !== undefined &&
             (await anna.the_end_of('A2')) !== undefined,
         )
-        const no_response = { ended: 'the_extension_answered', said: { event: 'no_response' } }
+        const no_response = {
+          ended: 'the_extension_told_how_it_ended',
+          said: { event: 'no_response' },
+        }
         expect(await anna.the_end_of('A1')).toMatchObject(no_response)
         expect(await anna.the_end_of('A2')).toMatchObject(no_response)
         // She asks both for the extensions in common (EXT-8): the kernel is never silent.

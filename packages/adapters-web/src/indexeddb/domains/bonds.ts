@@ -21,6 +21,7 @@ import { bond, face } from '@q-mino/domains/bonds/address_book/_value.ts'
 import {
   a_bond_is_there,
   a_face_is_there,
+  i_opened_their_ticket_within_the_window_of_a_crossing_of,
   my_introduction_is_sent,
   the_bond_is_kept,
   the_bond_is_removed,
@@ -28,10 +29,10 @@ import {
   the_content_a_ticket_s_secret_signs,
   the_face_is_being_made,
   the_face_is_made,
-  the_handshake_began_within_two_minutes_of,
   the_ticket_has_expired,
   the_ticket_is_being_prepared,
   the_ticket_is_ready,
+  their_introduction_is_declared_within_the_window_of_a_crossing_of,
 } from '@q-mino/domains/bonds/address_book/_dsl.ts'
 import {
   a_bond,
@@ -160,8 +161,17 @@ const bonds_fragments = (
     on_a_bond(a_bond_s_key(p.bond_id), my_introduction_is_sent),
   'bonds/address_book/predicate/the_confirmation_is_received': (p) =>
     on_a_bond(a_bond_s_key(p.bond_id), the_confirmation_is_received),
-  'bonds/address_book/predicate/the_handshake_began_within_two_minutes_of': (p) =>
-    on_a_bond(a_bond_s_key(p.bond_id), the_handshake_began_within_two_minutes_of(p.now)),
+  'bonds/address_book/predicate/i_opened_their_ticket_within_the_window_of_a_crossing_of': (p) =>
+    on_a_bond(
+      a_bond_s_key(p.bond_id),
+      i_opened_their_ticket_within_the_window_of_a_crossing_of(p.declared_at),
+    ),
+  'bonds/address_book/predicate/their_introduction_is_declared_within_the_window_of_a_crossing_of':
+    (p) =>
+      on_a_bond(
+        a_bond_s_key(p.bond_id),
+        their_introduction_is_declared_within_the_window_of_a_crossing_of(p.now),
+      ),
 })
 
 // The reads of the subject `bonds/address_book/selection/face`: a face of the user's.
