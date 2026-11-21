@@ -29,7 +29,8 @@ export type waiting_time = z.output<typeof waiting_time>
  * (EXT-12, D108), never the peer's events: its pong; no response within its
  * time; a peer that cannot answer it (its node closed the request, refused
  * it as malformed or of a version it does not speak, or its office gave no
- * pong).
+ * pong); called off by the user's own gesture while it waited, ping pong
+ * deactivated or withdrawn from the bond (EXT-12, F7; A, 21 Nov 2026).
  *
  * @see {@link value.what_came_back}
  */

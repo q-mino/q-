@@ -8,7 +8,9 @@ import type { Hosted } from './hosting.ts'
 // the configurator sets to start (CFG-2): it follows the node's fact log
 // and, once caught up (the node's start) and after each fact of the office
 // (`extensions/activations`), brings each extension hosted to what the
-// office says of it.
+// office says of it, and the requests in flight too: those of an extension
+// not active, or not offered to their bond, called off (F7, EXT-7, PST-14;
+// A, 21 Nov 2026).
 
 /** The path of the office's facts, which this consumer looks at again after. */
 const the_office = 'extensions/activations/'
@@ -22,12 +24,14 @@ export interface AnExtensionHosted {
 /**
  * The consumer's wiring: the node's fact log (DOM-17); whether an
  * extension is active, by the office's read (EXT-7, `the_kernels_reads`);
- * the extensions hosted now (an update of the app changes them).
+ * the extensions hosted now (an update of the app changes them); the
+ * calling off of the port of requests, one look (`the_calling_off`, F7).
  */
 export interface TheFollowingWiring {
   readonly log: zz.FactLog
   readonly is_active: (extension: string) => Promise<boolean>
   readonly hosted: () => readonly AnExtensionHosted[]
+  readonly the_calling_off: () => Promise<readonly string[]>
 }
 
 /** The consumer running: stopped when asked, its fault, if it fell, thrown then. */
@@ -43,7 +47,11 @@ export interface TheFollowing {
  * extension hosted: active and unloaded, or active again after a
  * deactivation (a stop by two falls or a `ready` that differed is tried
  * again only by a new activation), loaded; not active and loading or
- * running, unloaded. Again after each fact with a part of the office's. It
+ * running, unloaded; then the calling off, which calls off the requests in
+ * flight of an extension not active or not offered to their bond, so that
+ * `post` sends them again no more and their deliveries read the refusal
+ * (F7, PST-14), a fall between a gesture and its look made good at the
+ * next start. Again after each fact with a part of the office's. It
  * waits on the log's next event or its stop, never in a loop of its own.
  * A load or an unload that throws stops it, the fault thrown at `stop`.
  */
@@ -72,6 +80,7 @@ export const the_extensions_follow_the_office =
           await each.hosted.unload()
         }
       }
+      await wiring.the_calling_off()
     }
 
     const fell: unknown[] = []

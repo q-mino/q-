@@ -56,6 +56,25 @@ export const a_request_had_no_response =
 export type a_request_had_no_response = z.output<typeof a_request_had_no_response>
 
 /**
+ * A request waiting has been called off (F7, EXT-7): the user deactivated
+ * its extension, or withdrew its offer from the bond; sent again no more.
+ *
+ * @see {@link fact.a_request_has_been_called_off}
+ */
+export const a_request_has_been_called_off =
+  fact.a_request_has_been_called_off.brand<'post/requests/fact/a_request_has_been_called_off'>()
+export type a_request_has_been_called_off = z.output<typeof a_request_has_been_called_off>
+
+/**
+ * The time of a request came after it was called off (PST-7): nothing changes.
+ *
+ * @see {@link fact.the_call_off_came_before_the_time}
+ */
+export const the_call_off_came_before_the_time =
+  fact.the_call_off_came_before_the_time.brand<'post/requests/fact/the_call_off_came_before_the_time'>()
+export type the_call_off_came_before_the_time = z.output<typeof the_call_off_came_before_the_time>
+
+/**
  * The time of a request came after its response (PST-7): nothing changes.
  *
  * @see {@link fact.the_response_came_before_the_time}

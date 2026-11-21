@@ -54,6 +54,15 @@ export const the_peer_cannot_answer =
 export type the_peer_cannot_answer = z.output<typeof the_peer_cannot_answer>
 
 /**
+ * What came back of a ping is its calling off, the user's own gesture.
+ *
+ * @see {@link predicate.the_ping_was_called_off}
+ */
+export const the_ping_was_called_off =
+  predicate.the_ping_was_called_off.brand<'business/pings/predicate/the_ping_was_called_off'>()
+export type the_ping_was_called_off = z.output<typeof the_ping_was_called_off>
+
+/**
  * A pong with this identity has been given back.
  *
  * @see {@link predicate.a_pong_has_this_id}
