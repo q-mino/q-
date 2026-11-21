@@ -18,13 +18,31 @@ export const a_request_has_this_id =
 export type a_request_has_this_id = z.output<typeof a_request_has_this_id>
 
 /**
- * This request is waiting for its response: neither answered nor closed with no response.
+ * This request is waiting for its response: neither answered, nor closed with no response, nor called off.
  *
  * @see {@link predicate.the_request_is_waiting}
  */
 export const the_request_is_waiting =
   predicate.the_request_is_waiting.brand<'post/requests/predicate/the_request_is_waiting'>()
 export type the_request_is_waiting = z.output<typeof the_request_is_waiting>
+
+/**
+ * This request has been answered: a response from its face came while it waited.
+ *
+ * @see {@link predicate.the_request_has_been_answered}
+ */
+export const the_request_has_been_answered =
+  predicate.the_request_has_been_answered.brand<'post/requests/predicate/the_request_has_been_answered'>()
+export type the_request_has_been_answered = z.output<typeof the_request_has_been_answered>
+
+/**
+ * This request has been called off while it waited (F7, EXT-7).
+ *
+ * @see {@link predicate.the_request_has_been_called_off}
+ */
+export const the_request_has_been_called_off =
+  predicate.the_request_has_been_called_off.brand<'post/requests/predicate/the_request_has_been_called_off'>()
+export type the_request_has_been_called_off = z.output<typeof the_request_has_been_called_off>
 
 /**
  * The time of this request is not over at this instant.

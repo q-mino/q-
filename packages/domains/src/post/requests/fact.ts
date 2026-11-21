@@ -38,6 +38,24 @@ export const a_request_had_no_response = fact({
   }),
 })
 
+/**
+ * A request waiting has been called off (F7, EXT-7): the user deactivated
+ * its extension, or withdrew its offer from the bond; sent again no more.
+ */
+export const a_request_has_been_called_off = fact({
+  payload: z.strictObject({
+    request_id: id.request_id,
+    why: value.why_called_off,
+  }),
+})
+
+/** The time of a request came after it was called off (PST-7): nothing changes. */
+export const the_call_off_came_before_the_time = fact({
+  payload: z.strictObject({
+    request_id: id.request_id,
+  }),
+})
+
 /** The time of a request came after its response (PST-7): nothing changes. */
 export const the_response_came_before_the_time = fact({
   payload: z.strictObject({

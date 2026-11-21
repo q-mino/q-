@@ -12,8 +12,22 @@ export const a_request_has_this_id = predicate({
   }),
 })
 
-/** This request is waiting for its response: neither answered nor closed with no response. */
+/** This request is waiting for its response: neither answered, nor closed with no response, nor called off. */
 export const the_request_is_waiting = predicate({
+  parameters: z.strictObject({
+    request_id: id.request_id,
+  }),
+})
+
+/** This request has been answered: a response from its face came while it waited. */
+export const the_request_has_been_answered = predicate({
+  parameters: z.strictObject({
+    request_id: id.request_id,
+  }),
+})
+
+/** This request has been called off while it waited (F7, EXT-7). */
+export const the_request_has_been_called_off = predicate({
   parameters: z.strictObject({
     request_id: id.request_id,
   }),

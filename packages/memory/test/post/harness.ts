@@ -50,6 +50,7 @@ import {
   type Machine,
 } from '@q-mino/domains/post/_dsl.ts'
 import type * as post_value from '@q-mino/domains/post/_value.ts'
+import type * as requests_value from '@q-mino/domains/post/requests/_value.ts'
 import {
   cell,
   log,
@@ -75,6 +76,9 @@ export const the_scope_of_the_port_of_requests = 'the_port_of_requests'
 
 /** The scope of the kernel's entry, under which it gives a response back (EXT-6): step 13 wires it. */
 export const the_scope_of_the_kernel_s_entry = 'the_kernel_s_entry'
+
+/** The scope of the kernel's calling off, under which it calls a request off (F7, EXT-7): step 12.4 wires it. */
+export const the_scope_of_the_calling_off = 'the_calling_off'
 
 /** The effect of Anna's ping pong that asks for a pong (EXT-12, step 14), whose names these only illustrate. */
 export const ask_for_a_pong = 'ping_pong/business/pings/effect/ask_for_a_pong'
@@ -552,6 +556,25 @@ export const a_phone = async (
     /** The answer the port keeps under a request's identity (PST-8). */
     the_answer_to: async (request_id: string) =>
       entries_of(await all(post.the_answer_to_a_request(when(), { request_id }))),
+    /** The kernel calls a request off (F7, EXT-7, step 12.4): under the request's identity, in the calling off's scope. */
+    call_off_a_request: (
+      input: { readonly request_id: string; readonly why: requests_value.why_called_off },
+      sent: Sent = {},
+    ) => {
+      const given = { request_id: input.request_id, why: input.why }
+      return all(
+        post.call_off_a_request(
+          sent_as(
+            'post/requests/usecase/call_off_a_request',
+            given,
+            the_scope_of_the_calling_off,
+          )({ operation: input.request_id, ...sent }),
+          given,
+        ),
+      )
+    },
+    /** The requests that wait, as the kernel reads them to call them off (F7, EXT-7). */
+    the_requests_waiting: async () => entries_of(await all(post.the_requests_waiting(when(), {}))),
     collects,
     opens_what_came,
     /**
