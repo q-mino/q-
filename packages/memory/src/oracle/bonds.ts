@@ -26,7 +26,8 @@ import {
   the_content_a_ticket_s_secret_signs,
   the_face_is_being_made,
   the_face_is_made,
-  the_handshake_began_within_two_minutes_of,
+  i_opened_their_ticket_within_the_window_of_a_crossing_of,
+  their_introduction_is_declared_within_the_window_of_a_crossing_of,
   the_ticket_has_expired,
   the_ticket_is_being_prepared,
   the_ticket_is_ready,
@@ -155,8 +156,16 @@ export const bonds_fragments = (
     my_introduction_is_sent(the_bond(state, p.bond_id)),
   'bonds/address_book/predicate/the_confirmation_is_received': (p) => (state) =>
     the_confirmation_is_received(the_bond(state, p.bond_id)),
-  'bonds/address_book/predicate/the_handshake_began_within_two_minutes_of': (p) => (state) =>
-    the_handshake_began_within_two_minutes_of(p.now)(the_bond(state, p.bond_id)),
+  'bonds/address_book/predicate/i_opened_their_ticket_within_the_window_of_a_crossing_of':
+    (p) => (state) =>
+      i_opened_their_ticket_within_the_window_of_a_crossing_of(p.declared_at)(
+        the_bond(state, p.bond_id),
+      ),
+  'bonds/address_book/predicate/their_introduction_is_declared_within_the_window_of_a_crossing_of':
+    (p) => (state) =>
+      their_introduction_is_declared_within_the_window_of_a_crossing_of(p.now)(
+        the_bond(state, p.bond_id),
+      ),
 })
 
 // The reads of the subject `bonds/address_book/selection/face`: a face of the user's.

@@ -359,6 +359,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         status: 'kept',
         expires_at: monday('10:00:00'),
         my_introduction: { state: 'sent', at: monday('10:00:00') },
+        their_introduction: { state: 'received', declared_at: monday('10:00:00') },
       }
       expect(value.kept_bond.safeParse(kept).success).toBe(true)
       const with_no_face = Object.fromEntries(
@@ -619,6 +620,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       const bruno_s = {
         their_face: { key: await the_key_of(bruno), introduced_as: 'Bruno' },
         their_mailbox: (await shown(bruno, 'L_a')).mailbox,
+        declared_at: monday('10:00:00'),
       }
       // Not a signature of the same content by another face, nor the secret of another ticket of hers.
       const by_another_face = await bruno.signs('F_b', the_content_a_ticket_s_secret_signs(D_mb))
@@ -668,6 +670,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
                   handshake: { way: 'at_a_distance', at: monday('10:00:05') },
                   confirmation: { state: 'awaited' },
                   my_introduction: { state: 'sent', at: monday('10:00:05') },
+                  their_introduction: { state: 'not_received' },
                 },
               },
             },
@@ -690,7 +693,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       expect(introduction.at).toBe(T_mb.mailbox.deposit_address)
       expect(taken).toMatchObject({
         outcome: 'applied',
-        branch: 'i_opened_their_ticket_within_two_minutes_so_we_met_in_person',
+        branch: 'i_opened_their_ticket_within_the_window_of_a_crossing_so_we_met_in_person',
         fact: {
           parts: [
             {
@@ -700,6 +703,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
                   id: 'L_b',
                   handshake: { way: 'in_person', at: monday('10:00:20') },
                   confirmation: { state: 'received', at: monday('10:00:20') },
+                  their_introduction: { state: 'received', declared_at: monday('10:00:15') },
                 },
               },
             },
@@ -740,6 +744,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
                   handshake: { way: 'at_a_distance', at: monday('10:00:10') },
                   confirmation: { state: 'received', at: monday('10:00:10') },
                   my_introduction: { state: 'not_sent' },
+                  their_introduction: { state: 'received', declared_at: monday('10:00:05') },
                 },
               },
             },
@@ -754,7 +759,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       )
       expect(opened).toMatchObject({
         outcome: 'applied',
-        branch: 'their_introduction_came_within_two_minutes_so_we_met_in_person',
+        branch: 'their_introduction_came_within_the_window_of_a_crossing_so_we_met_in_person',
         fact: {
           parts: [
             {
@@ -920,7 +925,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       const later = await carried(first.bruno, first.anna, monday('10:03:00'))
       expect(later.taken).toMatchObject({
         outcome: 'applied',
-        branch: 'i_opened_their_ticket_earlier_so_they_have_me_now',
+        branch: 'i_opened_their_ticket_outside_the_window_of_a_crossing_so_they_have_me_now',
         fact: {
           parts: [
             {
@@ -956,7 +961,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         ),
       ).toMatchObject({
         outcome: 'applied',
-        branch: 'their_introduction_came_earlier_so_mine_goes_now',
+        branch: 'their_introduction_came_outside_the_window_of_a_crossing_so_mine_goes_now',
         fact: {
           parts: [
             {
@@ -975,6 +980,58 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       expect(second.anna.letters()).toEqual([{ bond_id: 'L_b', their_ticket: T_b2 }])
       expect(entries_of(await second.anna.a_bond('L_b'))).toMatchObject([
         { handshake: { way: 'at_a_distance', at: monday('10:00:10') } },
+      ])
+    })
+
+    test('a crossing is measured from the time their introduction declares, whenever it is taken', async () => {
+      // Anna opens Bruno's at 10:00:05, his phone opens hers at 10:00:15;
+      // her phone, closed, takes his introduction at 10:30: in person all the same.
+      const late = await three_phones(primitives)
+      const T_b = await shown(late.bruno, 'L_a')
+      const T_mb = await shown(late.anna, 'L_b')
+      late.anna.at(monday('10:00:05'))
+      await late.anna.open_their_ticket({ bond_id: 'L_b', their_ticket: T_b, name: 'Bruno' })
+      late.bruno.at(monday('10:00:15'))
+      await late.bruno.open_their_ticket({ bond_id: 'L_a', their_ticket: T_mb, name: 'Anna' })
+      await late.bruno.runs()
+      const taken_late = await carried(late.bruno, late.anna, monday('10:30:00'))
+      expect(taken_late.introduction.declared_at).toBe(monday('10:00:15'))
+      expect(taken_late.taken).toMatchObject({
+        outcome: 'applied',
+        branch: 'i_opened_their_ticket_within_the_window_of_a_crossing_so_we_met_in_person',
+      })
+      expect(entries_of(await late.anna.a_bond('L_b'))).toMatchObject([
+        { handshake: { way: 'in_person' } },
+      ])
+      // Bruno's introduction, declared at 10:00:05, taken by her phone at
+      // 10:30:00, and she opens his ticket at 10:30:10: half an hour after
+      // he opened hers, at a distance, however close the two takings are.
+      const opened_late = await three_phones(primitives)
+      const T_b2 = await shown(opened_late.bruno, 'L_a')
+      const T_mb2 = await shown(opened_late.anna, 'L_b')
+      opened_late.bruno.at(monday('10:00:05'))
+      await opened_late.bruno.open_their_ticket({
+        bond_id: 'L_a',
+        their_ticket: T_mb2,
+        name: 'Anna',
+      })
+      await opened_late.bruno.runs()
+      await carried(opened_late.bruno, opened_late.anna, monday('10:30:00'))
+      opened_late.anna.at(monday('10:30:10'))
+      expect(
+        last_of(
+          await opened_late.anna.open_their_ticket({
+            bond_id: 'L_b',
+            their_ticket: T_b2,
+            name: 'Bruno',
+          }),
+        ),
+      ).toMatchObject({
+        outcome: 'applied',
+        branch: 'their_introduction_came_outside_the_window_of_a_crossing_so_mine_goes_now',
+      })
+      expect(entries_of(await opened_late.anna.a_bond('L_b'))).toMatchObject([
+        { handshake: { way: 'at_a_distance', at: monday('10:30:00') } },
       ])
     })
 
@@ -1059,6 +1116,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
             secret: introduction.secret,
             their_face: introduction.their_face,
             their_mailbox: introduction.their_mailbox,
+            declared_at: introduction.declared_at,
           }),
         ),
       )
@@ -1088,6 +1146,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
             secret,
             their_face: { key: T_c.key, introduced_as: 'Carla' },
             their_mailbox: T_c.mailbox,
+            declared_at: tuesday('18:30:00'),
           }),
         )
         expect(failed(refused)).toContain('the_secret_is_the_ticket_s')
@@ -1134,6 +1193,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
         secret: T_mx.secret,
         their_face: { key: T_b.key, introduced_as: 'Bruno' },
         their_mailbox: T_b.mailbox,
+        declared_at: wednesday('10:05:00'),
       }
       expect(await anna.receives(introduction)).toBeUndefined()
       const facts = (await anna.recorded()).length
@@ -1145,6 +1205,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
               secret: introduction.secret,
               their_face: introduction.their_face,
               their_mailbox: introduction.their_mailbox,
+              declared_at: introduction.declared_at,
             }),
           ),
         ),
@@ -1169,7 +1230,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
       }
       expect(last_of((await anna.receives(elsewhere)) ?? [])).toMatchObject({
         outcome: 'applied',
-        branch: 'i_opened_their_ticket_within_two_minutes_so_we_met_in_person',
+        branch: 'i_opened_their_ticket_within_the_window_of_a_crossing_so_we_met_in_person',
       })
       expect(entries_of(await anna.a_bond('L_b'))).toMatchObject([
         { their_mailbox: { deposit_address: T_b.mailbox.deposit_address, relays: on_the_relay } },
@@ -1221,6 +1282,7 @@ export const stories_of_the_address_book = (name: string, primitives: Primitives
             secret: T_b.secret,
             their_face: { key: T_b.key, introduced_as: 'Bruno' },
             their_mailbox: { ...T_b.mailbox, relays },
+            declared_at: monday('10:00:00'),
           }),
         ).toEqual([{ outcome: 'invalid_request' }])
       }
