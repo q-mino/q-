@@ -27,7 +27,6 @@ export { the_partition_of, type TheNodesPartitions } from './partition.ts'
 export {
   execute_in,
   recorded_in,
-  one_at_a_time,
   the_keys,
   the_operators,
   type ADomainsStore,

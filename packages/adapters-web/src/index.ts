@@ -63,7 +63,6 @@ export {
   the_partition_of,
   execute_in,
   recorded_in,
-  one_at_a_time,
   the_keys,
   the_operators,
   a_bell,
