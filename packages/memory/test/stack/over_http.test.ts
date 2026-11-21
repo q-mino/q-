@@ -1,4 +1,4 @@
-import { afterAll, expect } from 'vitest'
+import { afterAll, expect, vi } from 'vitest'
 import { libsodium_primitives } from '@q-mino/adapters-common'
 import { the_relay_s_http_transports } from '@q-mino/adapters-web'
 import { a_relay_served } from '../relay/served.ts'
@@ -16,6 +16,10 @@ import type { Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 // decorate the client's transports, as they decorate the stack's in process
 // (ADP-5); the faults of the network below the client are its own tests'
 // (`../relay/over_http.test.ts`).
+
+// Each test has fifteen seconds, as on the oracle (`stack.test.ts`): a
+// scenario turns on real timers, round after round.
+vi.setConfig({ testTimeout: 15_000 })
 
 /** A time that never passes: the relay is never unheard in a story (the longest wait is the client's own tests'). */
 const no_time = (): Promise<void> => new Promise<void>(() => undefined)

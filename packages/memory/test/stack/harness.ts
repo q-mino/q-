@@ -593,7 +593,6 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       for (const each of phones) await each.a_round()
       await quiet()
       await until(() => in_flight.count === 0, "the transports' calls in flight")
-      await quiet()
       still = shows() === before ? still + 1 : 0
       if (still >= 2) return
     }
