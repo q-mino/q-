@@ -232,8 +232,9 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **20. The relay's HTTP client** (`adapters-web`) — L · 240k · `step/20-relay-client`
 
 - Goal: the transport for the mailbox port of `post`; injected loss, duplication and abort.
-- Rules: ADP-4, ADP-5, TST-4.
+- Rules: ADP-4, ADP-5, TST-4; WEB-6, WEB-7, written by the step (part 20, 21 Nov 2026), and STK-6 amended.
 - Depends on: 19 (tested against the real relay adapter in Node).
+- Checks: the stack's scenarios (STK-6) over the client to the relay served, under both fault plans; the client's answers under the network's faults injected below it (`memory/test/relay/over_http.test.ts`).
 
 **21. IndexedDB** (`adapters-web`) — 21.1 J · 240k (the stores, the single writer, an extension's partition: the rules and the skeleton), 21.2 L · 350k · `step/21-indexeddb`
 
