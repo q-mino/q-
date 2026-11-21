@@ -193,8 +193,8 @@ const under_the_plan = (
     readonly in_flight: { count: number }
   },
   carried: ACarriedDeposit[],
+  phase: { deposits: number },
 ) => {
-  let deposits = 0
   let collects = 0
   const next = <fault>(cycle: readonly (fault | 'none')[], count: number): fault | 'none' =>
     plan === 'none' ? 'none' : (cycle[count % cycle.length] ?? 'none')
@@ -211,8 +211,8 @@ const under_the_plan = (
     mailbox: {
       deposit: (deposit) =>
         counted(async () => {
-          const fault = next(the_lossy_schedule.deposits, deposits)
-          deposits += 1
+          const fault = next(the_lossy_schedule.deposits, phase.deposits)
+          phase.deposits += 1
           const kept = (answered: ACarriedDeposit['answered']) => {
             carried.push({ deposit_address: deposit.deposit_address, fault, answered })
           }
@@ -390,6 +390,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   const a_phone = async (start: Start) => {
     const made = await (factory.storage ?? on_a_cell)()
     const carried: ACarriedDeposit[] = []
+    const phase = { deposits: 0 }
     let aborted = false
     const node: Phone<APhonesPartitions> = await stack.a_phone({
       storage: made.storage,
@@ -415,6 +416,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
             in_flight,
           },
           carried,
+          phase,
         )(the_story_s_relay.transports(in_process)),
     })
     const when = (): zz.RootContext => ({
@@ -601,6 +603,16 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       collected: (): readonly AnEnvelopeCollected[] => node.collected(),
       /** Every deposit the phone's transport was asked for, in order. */
       deposited: (): readonly ACarriedDeposit[] => [...carried],
+      /**
+       * The lossy schedule's phase set at a mark of the story: the phone's
+       * next deposit meets this fault, and the cycle goes on from there. So
+       * a story names the fault a letter meets, whatever the rounds before
+       * took, which a storage's timing changes (more turns of the event loop
+       * on IndexedDB, step 21) and the schedule's count with them.
+       */
+      next_deposit_meets: (fault: AFaultOfADeposit): void => {
+        phase.deposits = the_lossy_schedule.deposits.indexOf(fault)
+      },
       /** The letters held on the phone, as she is told them (USR-8). */
       held_letters: async (): Promise<readonly user_value.a_held_letter[]> =>
         the_held_letters({

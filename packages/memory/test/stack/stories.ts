@@ -370,6 +370,7 @@ export const stories_of_the_stack = (
         await activates_ping_pong(story, bruno.phone)
         const before_the_ping = story.the_faults_met().length
         const his_deposits = bruno.phone.deposited().length
+        bruno.phone.next_deposit_meets('aborted')
         await anna.phone.asks('A1', ping('L_b'))
         await story.settles_through_the_quarters(
           a_ping_s_quarter,
