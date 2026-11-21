@@ -48,3 +48,14 @@ export type annotation = z.output<typeof annotation>
  */
 export const caller = value.caller
 export type caller = z.output<typeof caller>
+
+/**
+ * When the request says it was asked (PER-13, PER-23), beside who asks: a
+ * letter's declared time, its sender's claim (Dario's introduction, written
+ * at 10:00:15 by his clock); the user's request from the app, the instant
+ * of her gesture, by my clock.
+ *
+ * @see {@link value.declared_at}
+ */
+export const declared_at = value.declared_at
+export type declared_at = z.output<typeof declared_at>

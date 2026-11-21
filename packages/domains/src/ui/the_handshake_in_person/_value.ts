@@ -58,8 +58,11 @@ export type what_it_is_given = z.output<typeof what_it_is_given>
 /**
  * What the screen shows: the ticket being got ready; one that cannot be;
  * ready, its QR and the camera, with what she scanned that holds no ticket;
- * their ticket being opened; bonded ("Hai Anna, di persona", or Anna was a
- * contact already); their ticket that cannot be opened, her QR still shown
+ * their ticket being opened; bonded, with what her node said of it ("in
+ * person" only when it said `you_met_in_person`, the QR crossed within the
+ * window of a crossing; at a distance, as her node measured it, when it
+ * said `you_are_bonded` or `your_introduction_is_sent`: BND-10), or Anna
+ * was a contact already; their ticket that cannot be opened, her QR still shown
  * and the camera on to scan again. The camera is wanted only while she scans.
  *
  * @see {@link value.what_it_shows}

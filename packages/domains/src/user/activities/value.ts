@@ -107,8 +107,10 @@ export const what_is_asked = z.discriminatedUnion('activity', [
 /**
  * How an activity ended (USR-3), in her words, an ADT (ADP-2, D74): the
  * meaning is the contract's, the name hers. `done`, `done_already` and
- * `cannot_be_done` are what the kernel's leaf said; `the_extension_answered`
- * an event of the extension's own, whose meaning its texts tell (EXT-16);
+ * `cannot_be_done` are what the kernel's leaf said;
+ * `the_extension_told_how_it_ended` an event of the extension's own, an
+ * answer or none (a pong, `no_response`), whose meaning its texts tell
+ * (EXT-16);
  * `no_longer_followed` the leaf's wait over before its end (DOM-3);
  * `the_extension_cannot_be_reached` an extension not active, or stopped
  * after its second fall (EXT-15); `the_app_cannot_do_it` a base event or a
@@ -118,7 +120,10 @@ export const how_it_ended = z.discriminatedUnion('ended', [
   z.strictObject({ ended: z.literal('done'), said: _user.value.what_it_said }),
   z.strictObject({ ended: z.literal('done_already'), said: _user.value.what_it_said }),
   z.strictObject({ ended: z.literal('cannot_be_done'), said: _user.value.what_it_said }),
-  z.strictObject({ ended: z.literal('the_extension_answered'), said: _user.value.what_it_said }),
+  z.strictObject({
+    ended: z.literal('the_extension_told_how_it_ended'),
+    said: _user.value.what_it_said,
+  }),
   z.strictObject({ ended: z.literal('no_longer_followed') }),
   z.strictObject({
     ended: z.literal('the_extension_cannot_be_reached'),

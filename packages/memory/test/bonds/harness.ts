@@ -77,14 +77,17 @@ export interface Letter {
 /**
  * An introduction as it reaches the other phone (BND-10): at the D of the
  * ticket it presents itself to, with that ticket's secret, the face that
- * signed it, and the mailbox its sender's ticket declares. What `post`
- * carries from the letter (step 10), signed by the sender's face.
+ * signed it, the mailbox its sender's ticket declares, and the time its
+ * letter declares, the sender's clock when `post` wrote it (a claim,
+ * PER-13). What `post` carries from the letter (step 10), signed by the
+ * sender's face.
  */
 export interface Introduction {
   readonly at: string
   readonly secret: string
   readonly their_face: { readonly key: string; readonly introduced_as: string }
   readonly their_mailbox: { readonly deposit_address: string; readonly relays: readonly string[] }
+  readonly declared_at: string
 }
 
 /**
@@ -163,8 +166,10 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
     }
   const when = () => ({ now: zz.in_zone(time_zone)(instant), time_zone })
   const facts = log(made)
-  // The letters the address book hands to `post` (step 10): kept, in order.
+  // The letters the address book hands to `post` (step 10): kept, in order,
+  // each with the instant `post` would declare it at, the phone's clock then.
   const letters: Letter[] = []
+  const declared = new Map<Letter, string>()
   const the_safe_s_executor = zz.effect_executor({
     registry: safe_registry,
     versions,
@@ -178,6 +183,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
     'bonds/address_book/effect/wait_until_the_ticket_expires': zz.returns_the_payload,
     'bonds/address_book/effect/send_my_introduction': (entry) => {
       letters.push(entry.payload)
+      declared.set(entry.payload, instant)
       return Promise.resolve({ outcome: 'delivered' })
     },
   })
@@ -290,6 +296,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
           readonly deposit_address: string
           readonly relays: readonly string[]
         }
+        readonly declared_at: string
       },
       sent: Sent = {},
     ) => {
@@ -388,6 +395,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
         secret: letter.their_ticket.secret,
         their_face: { key: my_face.public_key, introduced_as: my_face.name },
         their_mailbox: mine.my_mailbox,
+        declared_at: declared.get(letter) ?? instant,
       }
     },
     /**
@@ -407,6 +415,7 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
               secret: introduction.secret,
               their_face: introduction.their_face,
               their_mailbox: introduction.their_mailbox,
+              declared_at: introduction.declared_at,
             },
             sent,
           )
