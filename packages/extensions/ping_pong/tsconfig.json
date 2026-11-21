@@ -6,7 +6,7 @@
     "rootDir": ".",
     "outDir": ".tsbuild"
   },
-  "include": [".", "package.json", "manifest.json"],
+  "include": [".", "package.json", "manifest.json", "texts/*.json"],
   "references": [
     {
       "path": "../../domains"

@@ -6,6 +6,20 @@ export {
   type CryptographicRandomness,
 } from './randomness/index.ts'
 export {
+  the_document_of_a_frame,
+  the_policy_of_a_frame,
+  the_sandbox_of_a_frame,
+} from './frames/index.ts'
+export {
+  her_node_over,
+  type HerNode,
+  type HerNodesWiring,
+  type HerTicket,
+  type TheFramesOfHerNode,
+  type TheNewsOfHerNode,
+  type TheUsersPorts,
+} from './her_node/index.ts'
+export {
   the_link_of_a_ticket,
   the_ticket_in_a_link,
   the_mark_of_a_ticket,

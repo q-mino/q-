@@ -11,7 +11,7 @@ q- (read _Cumino_) is a network of messages between real people, with no center.
 ## Language
 
 - English: identifiers, comments, docs, commits, pull requests, issues.
-- Italian: the texts the users read, only in `packages/phone/src/texts/` (Italian is the first language).
+- Italian: the texts the users read, only in `packages/phone/src/texts/` (Italian is the first language), and an extension's own words in its `texts/` (EXT-16, WEB-22).
 
 ## TypeScript and the graph
 

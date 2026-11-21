@@ -10,5 +10,10 @@
   },
   "include": ["."],
   "exclude": ["sw"],
-  "references": [{ "path": "../../domains" }, { "path": "../../adapters-web" }]
+  "references": [
+    { "path": "../../domains" },
+    { "path": "../../adapters-web" },
+    { "path": "../../boundary" },
+    { "path": "../../extensions/ping_pong" }
+  ]
 }

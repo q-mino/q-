@@ -4,12 +4,20 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": [],
     "rootDir": "src",
-    "outDir": ".tsbuild/src"
+    "outDir": ".tsbuild/src",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
   "include": ["src"],
   "references": [
-    { "path": "../domains" },
-    { "path": "../boundary" },
-    { "path": "../adapters-common" }
+    {
+      "path": "../domains"
+    },
+    {
+      "path": "../boundary"
+    },
+    {
+      "path": "../adapters-common"
+    }
   ]
 }

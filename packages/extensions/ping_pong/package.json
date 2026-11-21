@@ -6,7 +6,8 @@
   "license": "AGPL-3.0-only",
   "exports": {
     ".": "./configurator.ts",
-    "./manifest.json": "./manifest.json"
+    "./manifest.json": "./manifest.json",
+    "./texts/it.json": "./texts/it.json"
   },
   "dependencies": {
     "@q-mino/boundary": "workspace:*",

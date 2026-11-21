@@ -4,8 +4,14 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "rootDir": ".",
-    "outDir": "../.tsbuild/test"
+    "outDir": "../.tsbuild/test",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
   "include": ["."],
-  "references": [{ "path": ".." }]
+  "references": [
+    {
+      "path": ".."
+    }
+  ]
 }

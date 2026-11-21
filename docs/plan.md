@@ -245,7 +245,7 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **22. Solid rendering** (`adapters-web`, texts in `phone`) — 22.1 L · 300k (the kernel's screens), 22.2 L · 300k (the extension points, ping pong) · `step/22-solid`
 
 - Goal: the rendering of the `ui` model as a very simple wireframe, usable and interactive (Alessandro, 19 Nov 2026), gestures to activities, Italian texts in `packages/phone/src/texts/`; the extension points rendered as step 12 decides (an isolated extension's page or slot, an action).
-- Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`.
+- Rules: ADP-7, V2, the Solid rules of `CLAUDE.md`; WEB-18..WEB-21, written by part 22.1 (21 Nov 2026); WEB-22..WEB-24, by part 22.2 (21 Nov 2026), with step 12's Checks in the browser measured (WEB-23): a frame reaches no storage of the app's origin, no `fetch`, opens no window; the app's `frame-src 'none'` stops a frame navigating itself (step 25's policy), WebRTC stays open.
 
 **23. Browser I/O** (`adapters-web`) — L · 260k · `step/23-browser-io` (before the gate: it does not depend on step 12)
 

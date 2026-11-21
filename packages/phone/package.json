@@ -12,7 +12,9 @@
   "dependencies": {
     "@q-mino/adapters-common": "workspace:*",
     "@q-mino/adapters-web": "workspace:*",
+    "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
+    "@q-mino/ping_pong": "workspace:*",
     "solid-js": "^1.9.18",
     "workbox-precaching": "^7.4.1",
     "workbox-window": "^7.4.1"
