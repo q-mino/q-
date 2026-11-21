@@ -39,7 +39,10 @@ export interface TheHandshakeInPersonTexts {
     >
   >
   readonly opening_their_ticket: (name: string) => string
+  /** Bonded, at a distance as her node measured it (BND-10): no word of the way. */
   readonly bonded: (name: string) => string
+  /** Bonded in person: only when her node said so (`you_met_in_person`, BND-10). */
+  readonly bonded_in_person: (name: string) => string
   readonly bonded_already: (name: string) => string
   readonly open_the_contact: string
   readonly shake_another_hand: string
@@ -101,6 +104,21 @@ const WhileSheScans = (props: {
     </>
   )
 }
+
+/**
+ * The words of a bond made on the screen (BND-10; Alessandro, 21 Nov 2026):
+ * "in person" only when her node said it met them in person; an opening
+ * done on a bond at a distance, as her node measured it, does not say it.
+ */
+export const the_words_of_a_bond_made = (
+  texts: TheHandshakeInPersonTexts,
+  made: Extract<the_handshake_in_person_value.what_it_shows, { shows: 'bonded' }>,
+): string =>
+  made.already
+    ? texts.bonded_already(made.introduced_as)
+    : made.said.event === 'you_met_in_person'
+      ? texts.bonded_in_person(made.introduced_as)
+      : texts.bonded(made.introduced_as)
 
 export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }) => {
   const app = the_app()
@@ -256,11 +274,7 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
           <Match when={bonded()}>
             {(it) => (
               <>
-                <p role="status">
-                  {it().already
-                    ? props.texts.bonded_already(it().introduced_as)
-                    : props.texts.bonded(it().introduced_as)}
-                </p>
+                <p role="status">{the_words_of_a_bond_made(props.texts, it())}</p>
                 <button
                   type="button"
                   onClick={() => {
