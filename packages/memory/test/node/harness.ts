@@ -67,7 +67,13 @@ import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' 
 import { ping_pong } from '@q-mino/ping_pong'
 import ping_pong_manifest_json from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { z } from 'zod'
-import { a_new_phone, cell, phone, type PhoneState } from '../../src/index.ts'
+import {
+  a_new_phone,
+  cell,
+  phone,
+  the_relay_s_transports,
+  type PhoneState,
+} from '../../src/index.ts'
 import {
   a_clock,
   a_transport,
@@ -77,7 +83,7 @@ import {
   the_relay,
   type Fault,
 } from '../post/harness.ts'
-import { a_relay, showing, type RelayUnderTest } from '../relay/harness.ts'
+import { a_relay, type RelayUnderTest } from '../relay/harness.ts'
 import { fake_primitives } from '../seals/primitives.ts'
 
 export { all, entries_of, quiet, the_relay } from '../post/harness.ts'
@@ -200,28 +206,6 @@ const a_world_of = (primitives: Primitives, phone: number): Primitives => {
   }
 }
 
-/**
- * The collect port over the relay's oracle (MBX-6): the deposits the relay
- * keeps at a mailbox, in its order, collected with its R as its holder,
- * the snapshot of its read.
- */
-const the_collect_at =
-  (relay: RelayUnderTest, now: () => string, whose: string): ACollect =>
-  async (mailbox) => {
-    const holder = await relay.as(showing(mailbox.collect_secret), '1.0.0')
-    const stream = relay.holder
-      .collect_the_envelopes(holder.when(now()), { deposit_address: mailbox.deposit_address })
-      [Symbol.asyncIterator]()
-    const first = await stream.next()
-    await stream.return?.()
-    if (first.done === true || first.value.event !== 'snapshot')
-      throw new Error(`${whose}'s collect at ${mailbox.deposit_address} began with no snapshot`)
-    return first.value.entries.map((entry) => ({
-      deposit_id: entry.deposit_id,
-      envelope: entry.envelope,
-    }))
-  }
-
 /** How a node starts: its number for the world's draws, its face's id and name, the extension its app carries (greetings by default), its partition's size. */
 export interface Start {
   readonly phone: number
@@ -308,6 +292,12 @@ export const a_node = async (story: Story, start: Start) => {
   })
   const relay: RelayUnderTest = story.relay
   const transport = a_transport(relay, story.time.now)
+  // The collect port over the relay's oracle (MBX-6): the `memory` stack's,
+  // in process, its R hashed as the relay's desk hashes it.
+  const collect: ACollect = the_relay_s_transports(relay, {
+    clock,
+    hash: the_hash_of_a_collect_secret(story.primitives),
+  }).collect
   const installed = start.installed ?? 'greetings'
   const carried = installed === 'not_installed' ? undefined : the_apps_extensions[installed]
   /** The extension the app carries, by its manifest's name: the user's gestures name it. */
@@ -387,7 +377,7 @@ export const a_node = async (story: Story, start: Start) => {
     elapsed: story.time.elapsed,
     primitives: world,
     mailbox: transport.port,
-    collect: the_collect_at(relay, story.time.now, start.name),
+    collect,
     extensions: carried === undefined ? [] : [{ manifest: carried.manifest, realm: carried.realm }],
     relays: [the_relay],
   })
@@ -484,7 +474,6 @@ export const a_node = async (story: Story, start: Start) => {
         },
       ),
     )
-  const collect = the_collect_at(relay, story.time.now, start.name)
 
   /** The extension hosted, which the story installed. */
   const the_extension = () => {
