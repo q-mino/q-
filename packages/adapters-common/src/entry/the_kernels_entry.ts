@@ -54,7 +54,7 @@ export const the_scope_of_a_letter = (
 type TheKernelsEntryContext = zz.EntryOf<typeof persona>
 
 /** A persona's tree of the kernel, its leaves by their path from the persona's segment (EXT-5). */
-export type APersonasTree = zz.TreePortByPath<TheKernelsEntryContext>
+export type APersonasTree = zz.PortByPath<TheKernelsEntryContext>
 
 /** An extension's leaves mounted on a persona of the kernel (PER-6, "A mounted folder"). */
 export type AnExtensionsLeaves = zz.PortByPath<TheKernelsEntryContext>
