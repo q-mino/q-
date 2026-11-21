@@ -64,9 +64,19 @@ export type the_ping_waits_and_the_peer_cannot_answer = z.output<
 >
 
 /**
+ * The ping waits, and the user called it off.
+ *
+ * @see {@link command.the_ping_waits_and_was_called_off}
+ */
+export const the_ping_waits_and_was_called_off = command.the_ping_waits_and_was_called_off
+export type the_ping_waits_and_was_called_off = z.output<typeof the_ping_waits_and_was_called_off>
+
+/**
  * What came back of Anna's ping closes it (PNG-2, EXT-12, DOM-13): Bruno's
- * pong; no response within its 60 seconds; or a peer that cannot answer
- * it, each a happening of its own. The return of `ask_for_a_pong`, its
+ * pong; no response within its 60 seconds; a peer that cannot answer it;
+ * or her own calling off, ping pong deactivated or withdrawn from the bond
+ * while it waited (A, 21 Nov 2026: a meaning, not a fault), each a
+ * happening of its own. The return of `ask_for_a_pong`, its
  * input the business's closed set; the branch is chosen by what came back,
  * a predicate over the input, as the office of the extensions learns or
  * has no answer (EXT-8). A ping that waits no more (closed, or never sent)

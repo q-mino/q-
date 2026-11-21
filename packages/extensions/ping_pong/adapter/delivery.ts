@@ -67,11 +67,14 @@ const the_meaning_of = (event: boundary.Json): what_came_back | undefined =>
  * called with the bond, `ping` at the version of `known` it speaks (its
  * current, EXT-5), no input, the effect's path and the entry's id (from
  * which the kernel composes the request's identity, F7), and the time the
- * ping waits. `responded` with an event of `ping` or of the kernel's, and
- * `no_response`, are delivered to the return; a response that is neither
- * is exhausted with the peer's event kept; the bond gone and a refusal are
- * exhausted with their reason: no meaning of the business's, a dead letter
- * the user sees in the extension's mark and may redeliver (EXT-2).
+ * ping waits. `responded` with an event of `ping` or of the kernel's,
+ * `no_response`, and a refusal for ping pong not active or not offered to
+ * the bond (her own gesture, a ping called off: a meaning, EXT-12; A, 21
+ * Nov 2026) are delivered to the return; a response that is neither is
+ * exhausted with the peer's event kept; the faults, the bond gone and a
+ * refusal of the call undeclared or too large for a letter, are exhausted
+ * with their reason: no meaning of the business's, a dead letter the user
+ * sees in the extension's mark and may redeliver (EXT-2).
  */
 export const the_delivery_of_a_request_for_a_pong =
   (port: boundary.Ports['the_port_of_requests']) =>
@@ -106,6 +109,16 @@ export const the_delivery_of_a_request_for_a_pong =
       case 'the_bond_is_gone':
         return { outcome: 'exhausted', reason: 'the bond is gone' }
       case 'refused':
-        return { outcome: 'exhausted', reason: `the port of requests refused it: ${answer.why}` }
+        switch (answer.why) {
+          case 'not_active':
+          case 'not_offered_to_the_bond':
+            return returned('the_ping_was_called_off')
+          case 'not_declared':
+          case 'too_large_for_a_letter':
+            return {
+              outcome: 'exhausted',
+              reason: `the port of requests refused it: ${answer.why}`,
+            }
+        }
     }
   }

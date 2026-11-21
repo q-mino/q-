@@ -22,6 +22,7 @@ import {
   a_hosted_extension,
   compose_an_extension,
   the_acquaintances,
+  the_calling_off,
   the_collector,
   the_delivery_of_an_activity,
   the_delivery_of_my_introduction,
@@ -48,7 +49,7 @@ import {
   type TheKernelsTraced,
   type Transport,
 } from '@q-mino/adapters-common'
-import type * as boundary from '@q-mino/boundary'
+import * as boundary from '@q-mino/boundary'
 import { registry as acquaintances_registry } from '@q-mino/domains/auth/acquaintances/_registry.ts'
 import {
   the_bond_of_a_face_at_my_mailbox,
@@ -921,11 +922,33 @@ export const phone =
       },
     })
 
-    /** The extensions following the office (EXT-15, USR-9): loaded at an activation, unloaded at a deactivation. */
+    /**
+     * The calling off (F7, EXT-7, PST-14): the requests in flight of an
+     * extension not active, or not offered to their bond, called off in the
+     * phone's post; the bond of a request by my face and their key, among
+     * the bonds the address book keeps.
+     */
+    const calling_off = the_calling_off({
+      clock,
+      post: {
+        the_requests_waiting: post.the_requests_waiting,
+        call_off_a_request: post.call_off_a_request,
+      },
+      the_bond_of: async (asked) => {
+        const bond = (await my_bonds()).find(
+          (mine) => mine.my_face_id === asked.face_id && mine.their_face.key === asked.their_key,
+        )
+        return bond === undefined ? undefined : boundary.bond.parse(bond.id)
+      },
+      extensions: { is_active: reads.is_active, is_offered: reads.is_offered },
+    })
+
+    /** The extensions following the office (EXT-15, USR-9): loaded at an activation, unloaded at a deactivation, their requests in flight called off. */
     const the_following = the_extensions_follow_the_office({
       log: facts,
       is_active: reads.is_active,
       hosted: () => wired.extensions,
+      the_calling_off: calling_off,
     })
 
     return {

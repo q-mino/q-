@@ -205,7 +205,7 @@ describe('the extension points', () => {
 
   test('tapping ping asks to use it on the bond, once while in progress; its pong is told in ping pong’s words', async () => {
     const anna_s = a_node_of_test(anna())
-    opened = opens_the_app({ node: anna_s.node, device: a_device_of_test(['A8', 'A9']) })
+    opened = opens_the_app({ node: anna_s.node, device: a_device_of_test(['A8', 'A9', 'A10']) })
     const app = opened
     await opens_the_contact(app, 'Bruno')
     await until(() => {
@@ -250,6 +250,18 @@ describe('the extension points', () => {
     })
     await until(() => {
       expect(the_mark_shown(app)?.textContent).toContain('nessuna risposta')
+    })
+    // A ping called off, by a withdrawal or a deactivation while it waited (PNG-2): her own gesture, in ping pong's words.
+    ping().click()
+    await until(() => {
+      expect(anna_s.activities_asked()).toHaveLength(3)
+    })
+    anna_s.ends('A10', {
+      ended: 'the_extension_answered',
+      said: { event: 'called_off', payload: { ping_id: 'P3' } },
+    })
+    await until(() => {
+      expect(the_mark_shown(app)?.textContent).toContain('ping annullato')
     })
   })
 
