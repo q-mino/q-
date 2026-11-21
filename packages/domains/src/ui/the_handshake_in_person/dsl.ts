@@ -115,7 +115,12 @@ export const what_it_shows = (
   const introduced_as = scanned.ticket.introduced_as
   if (opened.course !== 'ended') return { shows: 'opening_their_ticket', introduced_as }
   if (opened.how.ended === 'done' || opened.how.ended === 'done_already')
-    return { shows: 'bonded', introduced_as, already: opened.how.ended === 'done_already' }
+    return {
+      shows: 'bonded',
+      introduced_as,
+      already: opened.how.ended === 'done_already',
+      said: opened.how.said,
+    }
   return {
     shows: 'their_ticket_cannot_be_opened',
     introduced_as,

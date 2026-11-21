@@ -246,13 +246,15 @@ export interface Letter {
 /**
  * An introduction as it reaches the other node (BND-10): at the D of the
  * ticket it presents itself to, with that ticket's secret, the face that
- * signs it, and the mailbox the sender's ticket declares.
+ * signs it, the mailbox the sender's ticket declares, and the time its
+ * letter declares, the sender's clock when `post` wrote it (PER-13).
  */
 export interface Introduction {
   readonly at: string
   readonly secret: string
   readonly their_face: { readonly key: string; readonly introduced_as: string }
   readonly their_mailbox: { readonly deposit_address: string; readonly relays: readonly string[] }
+  readonly declared_at: string
 }
 
 /** A mailbox as a bond declares it: its D, at the relay. */
@@ -305,6 +307,8 @@ export const a_node = async (story: Story, start: Start) => {
 
   // What the story keeps or scripts, through the phone's release.
   const letters: Letter[] = []
+  // Each with the instant `post` would declare it at, the phone's clock then (PER-13).
+  const declared = new Map<Letter, string>()
   const to_the_extension: boundary.a_message_to_an_extension[] = []
   // The partition's next commits as a story scripts them (TST-4): each
   // committed, or refused as a full partition refuses it, so that the
@@ -312,7 +316,7 @@ export const a_node = async (story: Story, start: Start) => {
   const commits: ('committed' | 'refused')[] = []
   // A node whose code is changed (the code is free, F2): what its entry
   // answers in place of an extension's leaf's event.
-  let tampered: ((event: zz.MountedLeafEvent) => zz.MountedLeafEvent) | undefined = undefined
+  let tampered: ((event: zz.EventByPath) => zz.EventByPath) | undefined = undefined
   /** An extension's leaves as the node's code serves them: as mounted, or with their events changed. */
   const as_served =
     (leaves: AnExtensionsLeaves): AnExtensionsLeaves =>
@@ -347,6 +351,7 @@ export const a_node = async (story: Story, start: Start) => {
       : {
           send_my_introduction: (entry: { readonly payload: Letter }) => {
             letters.push(entry.payload)
+            declared.set(entry.payload, zz.date_time.parse(clock.now()))
             return Promise.resolve({ outcome: 'delivered' as const })
           },
         }),
@@ -428,9 +433,11 @@ export const a_node = async (story: Story, start: Start) => {
   const as_the_user = (version: string, operation?: string) => {
     operations += 1
     const id = operation ?? `${start.face_id}-op-${String(operations)}`
+    const at = when()
     return {
-      ...when(),
+      ...at,
       caller: { is: 'the_user' as const },
+      declared_at: at.now,
       version: zz.semver.parse(version),
       operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
       correlation: zz.correlation.parse(id),
@@ -631,6 +638,7 @@ export const a_node = async (story: Story, start: Start) => {
         secret: letter.their_ticket.secret,
         their_face: { key: my_face.public_key, introduced_as: my_face.name },
         their_mailbox: mine.my_mailbox,
+        declared_at: declared.get(letter) ?? zz.date_time.parse(clock.now()),
       }
     },
     /**
@@ -651,6 +659,7 @@ export const a_node = async (story: Story, start: Start) => {
           deposit_address: introduction.their_mailbox.deposit_address,
           relays: [...introduction.their_mailbox.relays],
         },
+        declared_at: introduction.declared_at,
       }
       const events = await all(
         address_book.accept_their_introduction(
@@ -720,9 +729,7 @@ export const a_node = async (story: Story, start: Start) => {
           ),
       ),
     /** The node's code changed (the code is free, F2): its entry answers this in place of an extension's leaf's event. */
-    tampers_with_its_responses: (
-      change: (event: zz.MountedLeafEvent) => zz.MountedLeafEvent,
-    ): void => {
+    tampers_with_its_responses: (change: (event: zz.EventByPath) => zz.EventByPath): void => {
       tampered = change
     },
     /** The identity of a request of the extension's (F7, PST-2), as this node's kernel composes it. */

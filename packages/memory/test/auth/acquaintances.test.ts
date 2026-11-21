@@ -261,6 +261,7 @@ describe('auth, the acquaintances (PER-22)', () => {
             now: zz.in_zone(story.clock.time_zone)(story.clock.now()),
             time_zone: story.clock.time_zone,
             caller: { is: 'a_face', key: face, to_my_mailbox: mailbox },
+            declared_at: zz.in_zone(story.clock.time_zone)(story.clock.now()),
             version: zz.semver.parse('1.0.0'),
           },
           { leaf: 'usecase/the_extensions_in_common', input: { offered: [] } },

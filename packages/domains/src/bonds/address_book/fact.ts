@@ -97,14 +97,15 @@ export const a_bond_has_been_made_by_opening_their_ticket = fact({
       handshake: true,
       confirmation: true,
       my_introduction: true,
+      their_introduction: true,
     }),
   }),
 })
 
 /**
  * Bruno's introduction to Anna's ticket came first, and she opened his
- * ticket within two minutes (BND-10): the tickets crossed, in person, and
- * her introduction is sent.
+ * ticket within the window of a crossing of the time it declares (BND-10):
+ * the tickets crossed, in person, and her introduction is sent.
  */
 export const their_ticket_has_been_opened_in_person = fact({
   payload: z.strictObject({
@@ -113,8 +114,9 @@ export const their_ticket_has_been_opened_in_person = fact({
 })
 
 /**
- * Their introduction came first, and the user opened their ticket later
- * (BND-10): her introduction is sent, the handshake stays at a distance.
+ * Their introduction came first, and the user opened their ticket outside
+ * the window of a crossing of the time it declares (BND-10): her
+ * introduction is sent, the handshake stays at a distance.
  */
 export const their_ticket_has_been_opened_after_their_introduction = fact({
   payload: z.strictObject({
@@ -147,24 +149,38 @@ export const a_bond_has_been_made_by_their_introduction = fact({
       handshake: true,
       confirmation: true,
       my_introduction: true,
+      their_introduction: true,
     }),
   }),
 })
 
 /**
- * Anna opened Bruno's ticket, and his introduction to hers came within two
- * minutes (BND-10): the tickets crossed, in person, and he has her.
+ * Anna opened Bruno's ticket, and his introduction to hers came, declaring
+ * a time within the window of a crossing of her opening (BND-10): the
+ * tickets crossed, in person, and he has her.
  */
 export const their_introduction_has_come_in_person = fact({
   payload: z.strictObject({
-    met_bond: value.kept_bond.pick({ id: true, handshake: true, confirmation: true }),
+    met_bond: value.kept_bond.pick({
+      id: true,
+      handshake: true,
+      confirmation: true,
+      their_introduction: true,
+    }),
   }),
 })
 
-/** Their introduction to my ticket came after I opened theirs, later than two minutes (BND-10): they have me. */
+/**
+ * Their introduction to my ticket came after I opened theirs, declaring a
+ * time outside the window of a crossing of my opening (BND-10): they have me.
+ */
 export const their_introduction_has_come = fact({
   payload: z.strictObject({
-    confirmed_bond: value.kept_bond.pick({ id: true, confirmation: true }),
+    confirmed_bond: value.kept_bond.pick({
+      id: true,
+      confirmation: true,
+      their_introduction: true,
+    }),
   }),
 })
 

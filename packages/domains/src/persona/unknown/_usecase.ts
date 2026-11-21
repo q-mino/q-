@@ -10,8 +10,10 @@ import * as usecase from './usecase.ts'
 /**
  * Dario introduces himself to Carla's phone with the ticket she sent him
  * in a link (BND-10, PER-11): the secret, the name he is introduced as,
- * his mailbox for the bond. Her ticket ready and the secret its, they are
- * bonded; at the bond kept with his face (the QR crossed), it confirms it.
+ * his mailbox for the bond, and the time his letter declares. Her ticket
+ * ready and the secret its, they are bonded; at the bond kept with his face
+ * (the QR crossed), it confirms it, in person within the window of a
+ * crossing of the time it declares (BND-10).
  *
  * @see {@link usecase.introduce_myself}
  */
