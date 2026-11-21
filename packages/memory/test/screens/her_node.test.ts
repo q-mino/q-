@@ -216,6 +216,7 @@ const annas_phone = async (story: Story) => {
           deposit_address: introduction.their_mailbox.deposit_address,
           relays: [...introduction.their_mailbox.relays],
         },
+        declared_at: introduction.declared_at,
       }
       operations += 1
       const id = `anna-op-${String(operations)}`

@@ -267,6 +267,7 @@ export const a_phone_over = async (
         {
           ...when(),
           caller: { is: 'the_user' as const },
+          declared_at: when().now,
           version: zz.semver.parse('1.0.0'),
           operation: { id: zz.operation_id.parse(operation), scope: the_scope_of_the_user },
           correlation: zz.correlation.parse(`correlation-${operation}`),
@@ -322,6 +323,7 @@ export const a_phone_over = async (
           deposit_address: base64url_of(Uint8Array.from({ length: 32 }, () => 3)),
           relays: [the_relay],
         },
+        declared_at: when().now,
       }
       const made = [
         await sends(

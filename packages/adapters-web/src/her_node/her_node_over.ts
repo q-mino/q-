@@ -84,9 +84,7 @@ export interface TheNewsOfHerNode {
  * carry it), and the kernel's trace (EXT-6).
  */
 export interface TheFramesOfHerNode {
-  readonly on_self: (
-    extension: string,
-  ) => zz.MountedLeafPort<zz.EntryOf<typeof persona>> | undefined
+  readonly on_self: (extension: string) => zz.PortByPath<zz.EntryOf<typeof persona>> | undefined
   readonly traces: (entry: TheKernelsTraced) => void
 }
 
@@ -454,10 +452,13 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
     const on_self = wiring.the_frames.on_self(served.invokes.extension)
     if (on_self === undefined) return
     const version = zz.semver.parse(served.invokes.version)
+    const at = now()
     yield* on_self(
       {
-        ...now(),
+        ...at,
         caller: { is: 'the_user' },
+        // Declared by her node, at its instant (PER-23): the frame acts as the user.
+        declared_at: at.now,
         version,
         ...(served.exchange === 'invoke'
           ? {

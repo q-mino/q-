@@ -136,6 +136,8 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
 
   // What the story keeps or scripts, through the phone's release.
   const letters: Letter[] = []
+  // Each with the instant `post` would declare it at, the phone's clock then (PER-13).
+  const declared = new Map<Letter, string>()
   const to_the_extension: boundary.a_message_to_an_extension[] = []
   // The partition's next commits as a story scripts them (TST-4): each
   // committed, or refused as a full partition refuses it, so that the
@@ -154,6 +156,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
   const node = await phone(kept.storage, {
     send_my_introduction: (entry: { readonly payload: Letter }) => {
       letters.push(entry.payload)
+      declared.set(entry.payload, zz.date_time.parse(clock.now()))
       return Promise.resolve({ outcome: 'delivered' as const })
     },
     the_realm_s_time: the_screens_wait,
@@ -220,9 +223,11 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
   const as_the_user = (version: string, operation?: string) => {
     operations += 1
     const id = operation ?? `${start.face_id}-op-${String(operations)}`
+    const at = when()
     return {
-      ...when(),
+      ...at,
       caller: { is: 'the_user' as const },
+      declared_at: at.now,
       version: zz.semver.parse(version),
       operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
       correlation: zz.correlation.parse(id),
@@ -348,6 +353,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
         secret: letter.their_ticket.secret,
         their_face: { key: my_face.public_key, introduced_as: my_face.name },
         their_mailbox: mine.my_mailbox,
+        declared_at: declared.get(letter) ?? zz.date_time.parse(clock.now()),
       }
     },
     /** An introduction collected at a mailbox of the node's, taken by the address book (PER-11): the bond of the ticket ready there. */
@@ -363,6 +369,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
           deposit_address: introduction.their_mailbox.deposit_address,
           relays: [...introduction.their_mailbox.relays],
         },
+        declared_at: introduction.declared_at,
       }
       await all(
         address_book.accept_their_introduction(

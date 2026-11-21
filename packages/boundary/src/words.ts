@@ -5,7 +5,7 @@ import { a_name } from './values.ts'
 // kernel draws for it, in one language, as data, so that no code of the
 // extension runs to draw them: the label of each of its actions, and the
 // words of its own events on `self`, which tell how an action it carries
-// out ended (USR-3, `the_extension_answered`). The extension writes them in
+// out ended (USR-3, `the_extension_told_how_it_ended`). The extension writes them in
 // its `texts/`, one file per language (`texts/it.json`); the kernel parses
 // them with this schema and draws them in the extension's mark, never as its
 // own words. A frame's texts are in its document, the extension's too.

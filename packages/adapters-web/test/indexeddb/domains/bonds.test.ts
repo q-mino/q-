@@ -188,6 +188,7 @@ test("an introduction with the ticket's secret bonds; sent again, it is the same
       deposit_address: base64url_of(new Uint8Array(32).fill(3)),
       relays: [the_relay],
     },
+    declared_at: when().now,
   }
   const sent = { operation: 'bruno-introduces-himself', scope: 'persona/unknown' }
   const first = await all(
@@ -228,6 +229,7 @@ test("an introduction with a secret not the ticket's is refused, and writes no f
       deposit_address: base64url_of(new Uint8Array(32).fill(3)),
       relays: [the_relay],
     },
+    declared_at: when().now,
   }
   const before = String(await opened.position())
   const refused = await all(
