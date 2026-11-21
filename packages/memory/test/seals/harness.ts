@@ -8,6 +8,14 @@
 // log, the executor's letters; never the cell's state. The world's random
 // bytes are the story's (`will_draw`); every fact and every entry can be
 // given twice (`redelivered`, TST-4).
+//
+// The harness is parametrized by a storage factory (TST-1): the oracle's
+// cell unless a suite gives another (`on_indexeddb.test.ts`), the domain's
+// stories then its conformance suite. The factory gives the ports of the
+// safe over its storage, its versions, its log, its outbox and its
+// executor's state, and what a story reads of it, each as a function: the
+// entries queued, those held, and the time its storage takes to run its
+// course (`quiet`), the oracle's turns of the event loop or more.
 
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/seals/safe/_registry.ts'
@@ -22,16 +30,59 @@ import {
   keep_a_mailbox_key,
   keep_a_new_seed_and_its_face,
 } from '@q-mino/domains/seals/safe/_usecase.ts'
-import { cell, log, no_secret, seals_ports, type SealsState } from '../../src/index.ts'
+import {
+  cell,
+  log,
+  no_secret,
+  seals_ports,
+  type PhoneStorage,
+  type SealsState,
+} from '../../src/index.ts'
 import { drawn_from, recording } from './primitives.ts'
 
 /** The zone of the phone's clock: the safe reads no time, its context has one all the same. */
 export const time_zone = zz.time_zone.parse('UTC')
 
-/** How a safe starts: whether its cell gives every fact and every entry twice (TST-4). */
+/** How a safe starts: whether its storage gives every fact and every entry twice (TST-4). */
 export interface Start {
   readonly redelivered?: boolean
 }
+
+/**
+ * What a phone's kernel keeps, as the suites of its domains read it (TST-1,
+ * TST-3): the ports of each domain over its storage, the node's versions,
+ * log, outbox, and executors' and reactions' state, as the phone's storage
+ * gives them (`PhoneStorage`); what a story reads of it, the entries queued
+ * with the facts, in order (DOM-14), the entries and the parts held
+ * (DOM-15, DOM-16); and the time it takes for everything set going to run
+ * its course, up to its next wait (`quiet`). Each harness takes the pieces
+ * its domain needs.
+ */
+export interface AKernelsStorage extends Pick<
+  PhoneStorage,
+  | 'stored_versions'
+  | 'log'
+  | 'outbox'
+  | 'executor'
+  | 'reactions'
+  | 'held'
+  | 'safe'
+  | 'address_book'
+  | 'post'
+> {
+  readonly queued: () => Promise<readonly zz.StoredEntry[]>
+  readonly held_parts: () => Promise<readonly zz.HeldPart[]>
+  readonly quiet: () => Promise<void>
+}
+
+/** What a safe of a story keeps: its ports, the node's versions, log, outbox and executor's state; its entries queued and held. */
+export type ASafesStorage = Pick<
+  AKernelsStorage,
+  'safe' | 'stored_versions' | 'log' | 'outbox' | 'executor' | 'queued' | 'held' | 'quiet'
+>
+
+/** How a suite makes the storage of a story's safe (TST-1): the oracle's cell, or an adapter's. */
+export type ASafesFactory = (start: Start) => Promise<ASafesStorage>
 
 /** A request's operation, if the story names it, and its scope: a reaction's, by default. */
 export interface Sent {
@@ -86,17 +137,36 @@ export const quiet = async (): Promise<void> => {
   }
 }
 
-/** The safe of a story, over a primitives port, as the oracle starts it. */
-export const a_safe = async (given: Primitives, start: Start = {}) => {
+/** A safe's storage on a new cell of the oracle, which gives every fact and every entry twice if asked (TST-4). */
+export const the_safe_on_a_cell: ASafesFactory = (start) => {
   const made = cell<SealsState>({
     initial: no_secret,
     ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
   })
+  return Promise.resolve({
+    safe: (primitives: Primitives) => seals_ports(made, primitives),
+    stored_versions: made.stored_versions,
+    log: log(made),
+    outbox: made.outbox,
+    executor: made.executor,
+    queued: () => Promise.resolve(made.entries()),
+    held: () => Promise.resolve(made.held()),
+    quiet,
+  })
+}
+
+/** The safe of a story, over a primitives port, on the storage a suite makes: the oracle's cell, unless another. */
+export const a_safe = async (
+  given: Primitives,
+  start: Start = {},
+  storage: ASafesFactory = the_safe_on_a_cell,
+) => {
+  const made = await storage(start)
   const world = drawn_from(given)
   const calls = recording(world.primitives)
   const primitives = calls.primitives
   const versions = await zz.versions([majors])({ stored: made.stored_versions })
-  const ports = seals_ports(made, primitives)(versions)
+  const ports = made.safe(primitives)(versions)
   const instant = zz.date_time.parse('2026-11-20T09:00:00Z')
   let operations = 0
   /** The context of a command sent under an operation (DOM-11), its fingerprint over its use case's path and its input. */
@@ -119,7 +189,7 @@ export const a_safe = async (given: Primitives, start: Start = {}) => {
     versions,
     returns: { keep_a_new_seed_and_its_face, keep_a_mailbox_key },
   })(the_safe_s_machine(primitives))
-  const facts = log(made)
+  const facts = made.log
   return {
     /** The world draws these bytes next, in order (TST-3). */
     will_draw: (...bytes: readonly Bytes[]) => {
@@ -202,8 +272,10 @@ export const a_safe = async (given: Primitives, start: Start = {}) => {
       }
       return [...kept.values()]
     },
+    /** Everything set going has run its course, up to its next wait, as long as the storage takes. */
+    quiet: made.quiet,
     /** The entries queued with the facts, in order (DOM-14). */
-    queued: made.entries,
+    queued: made.queued,
     /** The entries the executor holds: its dead letters (DOM-15). */
     held: made.held,
   }

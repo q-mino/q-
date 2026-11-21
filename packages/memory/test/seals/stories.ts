@@ -3,7 +3,7 @@ import * as dsl from '@q-mino/domains/seals/safe/_dsl.ts'
 import * as value from '@q-mino/domains/seals/safe/_value.ts'
 import * as id from '@q-mino/domains/seals/safe/_id.ts'
 import * as zz from '@q-mino/domains/library'
-import { a_safe, quiet, type SafeUnderTest } from './harness.ts'
+import { a_safe, the_safe_on_a_cell, type ASafesFactory, type SafeUnderTest } from './harness.ts'
 import { bytes_all, recording } from './primitives.ts'
 import type { Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 
@@ -11,7 +11,9 @@ import type { Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 // prove; SEA-1..SEA-9, GR-5, GR-8, DOM-8, DOM-21, PER-21, the invariants of
 // § 4), one test each, named as the README names it. A suite parametrized by
 // the primitives port (TST-1): the fake's and libsodium's (`safe.test.ts`),
-// the same stories over the real machine. The stories of the core (1–4, 13)
+// the same stories over the real machine; and by the safe's storage, the
+// oracle's cell unless a suite gives another (`on_indexeddb.test.ts`), the
+// same stories its conformance suite. The stories of the core (1–4, 13)
 // run on the safe's `dsl` through its generated `_dsl.ts` (MBX-5), the port
 // recorded; those of the safe (5–12) on q-'s oracle
 // (MBX-7), through the ports a reaction and the executor send to (PER-21),
@@ -72,17 +74,21 @@ const paths_of = (facts: Awaited<ReturnType<SafeUnderTest['recorded']>>) =>
   facts.map((fact) => fact.parts.map((part) => part.path))
 
 /** Anna's phone with F1 made from S1: the reaction asks, the machine draws. */
-const with_F1 = async (primitives: Primitives) => {
-  const safe = await a_safe(primitives)
+const with_F1 = async (primitives: Primitives, storage: ASafesFactory) => {
+  const safe = await a_safe(primitives, {}, storage)
   safe.will_draw(S1)
   await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
   const machine = safe.the_machine_runs()
-  await quiet()
+  await safe.quiet()
   await machine.stop()
   return safe
 }
 
-export const stories_of_the_safe = (name: string, primitives: Primitives) => {
+export const stories_of_the_safe = (
+  name: string,
+  primitives: Primitives,
+  storage: ASafesFactory = the_safe_on_a_cell,
+) => {
   describe(`the core of seals, ${name}`, () => {
     test('the face at an index is the hardened child of the seed', () => {
       const port = recording(primitives)
@@ -173,7 +179,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
 
   describe(`the safe, ${name}`, () => {
     test('the first face is made from a new seed', async () => {
-      const safe = await a_safe(primitives)
+      const safe = await a_safe(primitives, {}, storage)
       const asked = last_of(
         await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' }),
       )
@@ -189,7 +195,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
           ],
         },
       })
-      expect(safe.queued()).toMatchObject([
+      expect(await safe.queued()).toMatchObject([
         {
           effect: 'seals/safe/effect/draw_a_seed_for_the_face',
           id: 'F1',
@@ -198,7 +204,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       ])
       safe.will_draw(S1)
       const machine = safe.the_machine_runs()
-      await quiet()
+      await safe.quiet()
       await machine.stop()
       const facts = await safe.recorded()
       expect(paths_of(facts)).toEqual([
@@ -220,15 +226,15 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
         new_seed: { id: seed_id, scheme: 'slip10-flat', secret: told(S1), next_index: 1 },
         made_face: { id: 'F1', status: 'made', seed_id, index: 0, ...F1 },
       })
-      expect(safe.held()).toEqual([])
+      expect(await safe.held()).toEqual([])
     })
 
     test('a face asked for again is one face', async () => {
-      const safe = await a_safe(primitives)
+      const safe = await a_safe(primitives, {}, storage)
       const first = await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       const again = await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       expect(again).toEqual(first)
-      expect(safe.queued()).toHaveLength(1)
+      expect(await safe.queued()).toHaveLength(1)
       const another = last_of(await safe.makes_a_face('F1', { operation: 'another-reaction' }))
       expect(another).toEqual({
         outcome: 'rejected',
@@ -247,7 +253,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       // The world answers a delivery again as it answered it (its key, the
       // entry's id, sent with the effect): the return's second delivery is
       // the duplicate branch, one seed, one face.
-      const twice = await a_safe(primitives, { redelivered: true })
+      const twice = await a_safe(primitives, { redelivered: true }, storage)
       twice.will_draw(S1)
       await twice.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       const F1 = dsl.the_face_at(primitives)(told(S1), 0)
@@ -261,11 +267,11 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       // already, so the second return is no retry of it but another request
       // under its identity (DOM-11), a dead letter; the first seed and its
       // face stand (SEA-3).
-      const redrawn = await a_safe(primitives, { redelivered: true })
+      const redrawn = await a_safe(primitives, { redelivered: true }, storage)
       redrawn.will_draw(S1, S2)
       await redrawn.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       const machine = redrawn.the_machine_runs()
-      await quiet()
+      await redrawn.quiet()
       await machine.stop()
       const facts = await redrawn.recorded()
       expect(paths_of(facts)).toEqual([
@@ -273,7 +279,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
         ['seals/safe/fact/a_face_has_been_made_from_a_new_seed'],
       ])
       expect(facts[1]?.parts[0]?.payload).toMatchObject({ new_seed: { secret: told(S1) } })
-      expect(redrawn.held()).toMatchObject([
+      expect(await redrawn.held()).toMatchObject([
         {
           held: 'dead_letter',
           entry: { effect: 'seals/safe/effect/draw_a_seed_for_the_face', id: 'F1' },
@@ -304,7 +310,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     })
 
     test('a mailbox key is drawn with its deposit address', async () => {
-      const safe = await a_safe(primitives)
+      const safe = await a_safe(primitives, {}, storage)
       const asked = last_of(
         await safe.draws_a_mailbox_key('M1', { operation: 'a-mailbox-for-the-bond-with-bruno' }),
       )
@@ -322,7 +328,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
       expect(entries_of(await safe.the_key_of('M1'))).toEqual([])
       safe.will_draw(R1)
       const machine = safe.the_machine_runs()
-      await quiet()
+      await safe.quiet()
       await machine.stop()
       const D1 = told(primitives.blake2b_256(R1))
       expect(paths_of(await safe.recorded())).toEqual([
@@ -337,7 +343,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     })
 
     test('a content signed by a face holds for its public key', async () => {
-      const safe = await with_F1(primitives)
+      const safe = await with_F1(primitives, storage)
       const recorded = await safe.recorded()
       const F1 = dsl.the_face_at(primitives)(told(S1), 0)
       const [signed, ...more] = entries_of(await safe.signs('F1', C1))
@@ -358,11 +364,11 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     })
 
     test('a content sealed for a face is opened by it alone', async () => {
-      const safe = await with_F1(primitives)
+      const safe = await with_F1(primitives, storage)
       safe.will_draw(S2)
       await safe.makes_a_face('F2', { operation: 'a-face-for-the-bond-with-carla' })
       const machine = safe.the_machine_runs()
-      await quiet()
+      await safe.quiet()
       await machine.stop()
       const F1 = dsl.the_face_at(primitives)(told(S1), 0)
       const sealed = sealed_for(primitives)(F1.public_key, C1)
@@ -382,7 +388,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     })
 
     test('a face not made signs and opens nothing', async () => {
-      const safe = await a_safe(primitives)
+      const safe = await a_safe(primitives, {}, storage)
       await safe.makes_a_face('F1', { operation: 'a-face-for-the-bond-with-bruno' })
       const F = dsl.the_face_at(primitives)(told(S1), 0)
       const sealed = sealed_for(primitives)(F.public_key, C1)
@@ -393,7 +399,7 @@ export const stories_of_the_safe = (name: string, primitives: Primitives) => {
     })
 
     test('no read of the safe gives a secret', async () => {
-      const safe = await with_F1(primitives)
+      const safe = await with_F1(primitives, storage)
       const F1 = dsl.the_face_at(primitives)(told(S1), 0)
       // By the fields their queries declare: a face's id and public key, and
       // the calculation; a mailbox key's id, R and D (V5).

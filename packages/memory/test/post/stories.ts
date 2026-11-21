@@ -19,7 +19,9 @@ import {
   a_story,
   ask_for_a_pong,
   last_of,
+  the_post_on_a_cell,
   the_relay,
+  type APostsFactory,
   type Face,
   type PhoneUnderTest,
 } from './harness.ts'
@@ -28,7 +30,9 @@ import {
 // prove; PST-1..PST-13, F2..F5, F7, PER-2, PER-4, DOM-11, DOM-13..DOM-15,
 // TST-4), one test each, named as the README names it: a suite
 // parametrized by the primitives port (TST-1), the fake's and libsodium's
-// (`post.test.ts`). Stories 1–6 run on the post's `dsl`, a face known by
+// (`post.test.ts`); and by the phones' storage, the oracle's cell unless a
+// suite gives another (`on_indexeddb.test.ts`), the same stories its
+// conformance suite. Stories 1–6 run on the post's `dsl`, a face known by
 // its private key; stories 7–16 on q-'s oracle, Anna's phone, Bruno's and
 // Carla's over one relay, the port of requests and the kernel's entry played
 // by the harness as steps 12.4 and 13 will wire them.
@@ -143,9 +147,8 @@ const runs_at = async (
 }
 
 /** The post's entries queued by a phone, as the executor reads them: effect, key, not before. */
-const queued_of = (phone: PhoneUnderTest) =>
-  phone
-    .queued()
+const queued_of = async (phone: PhoneUnderTest) =>
+  (await phone.queued())
     .filter((entry) => entry.effect.startsWith('post/'))
     .map((entry) => ({
       effect: entry.effect.split('/').at(-1),
@@ -153,7 +156,11 @@ const queued_of = (phone: PhoneUnderTest) =>
       not_before: entry.not_before,
     }))
 
-export const stories_of_the_post = (name: string, primitives: Primitives): void => {
+export const stories_of_the_post = (
+  name: string,
+  primitives: Primitives,
+  storage: APostsFactory = the_post_on_a_cell,
+): void => {
   describe(`the post, ${name}`, () => {
     describe('1. a letter goes in an envelope and comes out the same', () => {
       test('a letter sealed for a face is opened by it with its sender as Caller', async () => {
@@ -329,7 +336,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('7. a request is sent', () => {
       test('a request is sent and waits within its time', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         expect(last_of(await asks(anna, bruno, 'P1'))).toMatchObject({
@@ -364,7 +371,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
             ],
           },
         })
-        expect(queued_of(anna)).toEqual([
+        expect(await queued_of(anna)).toEqual([
           { effect: 'deposit_a_letter', id: `${P1}/0`, not_before: undefined },
           { effect: 'wait_to_send_again', id: `${P1}/1`, not_before: computed('10:00:15') },
           { effect: 'wait_for_the_response', id: P1, not_before: computed('10:01:00') },
@@ -389,13 +396,13 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
           { outcome: 'kept' },
           { outcome: 'kept' },
         ])
-        expect(anna.held()).toEqual([])
+        expect(await anna.held()).toEqual([])
       })
     })
 
     describe('8. a request is sent again while it waits', () => {
       test('a request that waits is sent again at each quarter, the same letter', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1')
@@ -433,7 +440,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
         ])
 
         // Answered at 10:00:20: the sending of 10:00:30 is too late, nothing deposited.
-        const answered = await a_story(primitives)
+        const answered = await a_story(primitives, {}, storage)
         await asks(answered.anna, answered.bruno, 'P1')
         await answered.anna.runs()
         await runs_at(answered, answered.anna, '10:00:15')
@@ -452,7 +459,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('9. a response answers its request', () => {
       test('a response from the face the request went to answers it once', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1')
@@ -493,7 +500,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('10. a response from another face, or to no request, is refused', () => {
       test('a response not awaited is refused', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno, carla } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1')
@@ -521,7 +528,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('11. no response in its time', () => {
       test('a request with no response in its time closes with no response', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1')
@@ -547,16 +554,16 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('12. the answer is kept', () => {
       test('a request called again reads the answer kept', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         const first = last_of(await asks(anna, bruno, 'P1'))
         await anna.runs()
         // After a fall, the port's call again while it waits: the recorded fact, its time the first's.
         story.at('10:00:10')
-        const queued = anna.queued().length
+        const queued = (await anna.queued()).length
         expect(last_of(await asks(anna, bruno, 'P1'))).toEqual(first)
-        expect(anna.queued()).toHaveLength(queued)
+        expect(await anna.queued()).toHaveLength(queued)
         await anna.runs()
         expect(anna.carried()).toHaveLength(1)
         // Answered, then called again.
@@ -596,7 +603,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('13. a deposit lost, doubled or aborted', () => {
       test('the deposits of a request survive loss, duplication and abort', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         // P1/0 lost on its way, then kept with its answer lost, then kept already.
@@ -634,7 +641,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
         )
         expect(letters).toHaveLength(3)
         for (const letter of letters) expect(letter).toEqual(letters[0])
-        expect(anna.held()).toEqual([])
+        expect(await anna.held()).toEqual([])
         await anna.receives()
         const names = names_of(await anna.recorded())
         expect(names.filter((each) => each === 'a_request_has_been_sent')).toHaveLength(1)
@@ -644,7 +651,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
         ])
 
         // Every fact and entry given twice (TST-4): each sending one envelope at the relay.
-        const twice = await a_story(primitives, { redelivered: true })
+        const twice = await a_story(primitives, { redelivered: true }, storage)
         await asks(twice.anna, twice.bruno, 'P1')
         await twice.anna.runs()
         await runs_at(twice, twice.anna, '10:00:15')
@@ -653,15 +660,15 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
           names_of(await twice.anna.recorded()).filter((each) => each.startsWith('a_request')),
         ).toEqual(['a_request_has_been_sent', 'a_request_has_been_sent_again'])
         // The safe's draw of Anna's seed, given twice, is its own dead letter (SEA-3); the post holds none.
-        expect(twice.anna.held().filter((each) => each.entry.effect.startsWith('post/'))).toEqual(
-          [],
-        )
+        expect(
+          (await twice.anna.held()).filter((each) => each.entry.effect.startsWith('post/')),
+        ).toEqual([])
       })
     })
 
     describe('14. a response lost is asked again', () => {
       test('a response lost comes back with a sending again', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1')
@@ -692,14 +699,14 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('15. a deposit that cannot be sealed is a dead letter, shown', () => {
       test('a letter for a key that takes no seal is a dead letter', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno } = story
         const P1 = anna.the_request('P1')
         await asks(anna, bruno, 'P1', { key: no_key })
         await anna.runs()
         for (const quarter of ['10:00:15', '10:00:30', '10:00:45', '10:01:00'])
           await runs_at(story, anna, quarter)
-        const letters = anna.held()
+        const letters = await anna.held()
         expect(letters.map((each) => [each.entry.id, each.held])).toEqual(
           [0, 1, 2, 3].map((attempt) => [`${P1}/${String(attempt)}`, 'dead_letter']),
         )
@@ -719,12 +726,12 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
           'a_request_had_no_response',
         ])
         // A relay that refuses the envelope: a dead letter with what it said.
-        const refusing = await a_story(primitives)
+        const refusing = await a_story(primitives, {}, storage)
         refusing.anna.will('refused')
         await asks(refusing.anna, refusing.bruno, 'P1')
         await refusing.anna.runs()
         expect(
-          refusing.anna.held().map((each) => each.held === 'dead_letter' && each.cause),
+          (await refusing.anna.held()).map((each) => each.held === 'dead_letter' && each.cause),
         ).toEqual([
           { cause: 'exhausted', reason: 'the_relay_refused_the_envelope: invalid_request' },
         ])
@@ -733,7 +740,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
 
     describe('16. a phone closed while a request waits', () => {
       test('a phone started again closes its requests from the record', async () => {
-        const story = await a_story(primitives)
+        const story = await a_story(primitives, {}, storage)
         const { anna, bruno, carla } = story
         const P1 = anna.the_request('P1')
         const P2 = anna.the_request('P2')
@@ -756,7 +763,7 @@ export const stories_of_the_post = (name: string, primitives: Primitives): void 
         expect(last_of(await asks(anna, carla, 'P2'))).toEqual(to_carla)
         await anna.runs()
         expect(anna.carried()).toHaveLength(2)
-        expect(anna.held()).toEqual([])
+        expect(await anna.held()).toEqual([])
         expect(
           names_of(await anna.recorded()).filter((each) => each === 'a_request_has_been_answered'),
         ).toHaveLength(1)
