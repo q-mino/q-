@@ -3,10 +3,12 @@
 // and the phones of a story over it, each phone the composition root of
 // `src/phone/` over a cell of its own, with ping pong preinstalled (PNG-1).
 // The suite is parametrized by a factory (TST-1): the phones' primitives,
-// and their transports from the stack's in process, which an adapter's step
-// puts its own in place of (20: HTTP; 21, 25: the phone's). The faults of
-// the mailbox are injected (TST-4) by decorators of the transports (ADP-5),
-// under a plan: none, or a deterministic lossy schedule per phone.
+// and the relay of a story, made in the story's world, with the phones'
+// transports to it, which an adapter's step puts its own in place of (20:
+// the relay's HTTP client to the relay served, WEB-7; 21, 25: the phone's).
+// The faults of the mailbox are injected (TST-4) by decorators of the
+// transports (ADP-5), under a plan: none, or a deterministic lossy schedule
+// per phone.
 //
 // A phone is on or off. On, her app is open (`the_app`), the kernel's
 // executors and the reactions run, the extensions follow the office; off,
@@ -55,6 +57,7 @@ import {
   type MailboxState,
   type Stack,
   type TheRelaysTransports,
+  type TheStacksWorld,
 } from '../../src/index.ts'
 
 /** The zone of the story's clock. */
@@ -63,16 +66,30 @@ export const time_zone = zz.time_zone.parse('UTC')
 /** The relay of the stack (BND-4): one, in stage 1. */
 export const the_relay = 'https://relay.q-mino.test'
 
-/** What a run of the suite is given (TST-1): the phones' primitives, and their transports from the stack's in process. */
-export interface AFactory {
-  readonly primitives: Primitives
+/**
+ * The relay of a story, as a factory makes it: each phone's transports to
+ * it, from the stack's in process; and its end, at the story's.
+ */
+export interface ARelayOfTheStory {
   readonly transports: (in_process: TheRelaysTransports) => TheRelaysTransports
+  readonly stops: () => Promise<void>
 }
 
-/** The oracle's factory over a primitives port: the stack's transports in process, as they are. */
+/**
+ * What a run of the suite is given (TST-1): the phones' primitives, and the
+ * relay of a story, made in its world (its clock, the time that passes, the
+ * hash of R), the stack's relay unless another.
+ */
+export interface AFactory {
+  readonly primitives: Primitives
+  readonly relay: (world: TheStacksWorld) => Promise<ARelayOfTheStory>
+}
+
+/** The oracle's factory over a primitives port: the stack's relay, its transports in process as they are. */
 export const on_the_oracle = (primitives: Primitives): AFactory => ({
   primitives,
-  transports: (in_process) => in_process,
+  relay: () =>
+    Promise.resolve({ transports: (in_process) => in_process, stops: () => Promise.resolve() }),
 })
 
 /** The faults a run injects on the mailbox (TST-4): none, or the lossy schedule. */
@@ -134,46 +151,62 @@ export interface ACarriedDeposit {
 const under_the_plan = (
   plan: AFaultPlan,
   whose: string,
-  told: { readonly met: (fault: AFaultMet) => void; readonly aborted: () => void },
+  told: {
+    readonly met: (fault: AFaultMet) => void
+    readonly aborted: () => void
+    readonly in_flight: { count: number }
+  },
   carried: ACarriedDeposit[],
 ) => {
   let deposits = 0
   let collects = 0
   const next = <fault>(cycle: readonly (fault | 'none')[], count: number): fault | 'none' =>
     plan === 'none' ? 'none' : (cycle[count % cycle.length] ?? 'none')
+  /** A call of a transport, counted in flight until it answers or throws. */
+  const counted = async <answer>(call: () => Promise<answer>): Promise<answer> => {
+    told.in_flight.count += 1
+    try {
+      return await call()
+    } finally {
+      told.in_flight.count -= 1
+    }
+  }
   return (transports: TheRelaysTransports): TheRelaysTransports => ({
     mailbox: {
-      deposit: async (deposit) => {
-        const fault = next(the_lossy_schedule.deposits, deposits)
-        deposits += 1
-        const kept = (answered: ACarriedDeposit['answered']) => {
-          carried.push({ deposit_address: deposit.deposit_address, fault, answered })
-        }
-        if (fault !== 'none') told.met({ phone: whose, on: 'a_deposit', fault })
-        if (fault === 'aborted') {
-          kept('aborted')
-          told.aborted()
-          throw the_transport_aborted
-        }
-        if (fault === 'lost') {
-          kept({ outcome: 'unreachable' })
-          return { outcome: 'unreachable' }
-        }
-        const first = await transports.mailbox.deposit(deposit)
-        const answered = fault === 'doubled' ? await transports.mailbox.deposit(deposit) : first
-        const told_back: Deposited = fault === 'answer_lost' ? { outcome: 'unreachable' } : answered
-        kept(told_back)
-        return told_back
-      },
+      deposit: (deposit) =>
+        counted(async () => {
+          const fault = next(the_lossy_schedule.deposits, deposits)
+          deposits += 1
+          const kept = (answered: ACarriedDeposit['answered']) => {
+            carried.push({ deposit_address: deposit.deposit_address, fault, answered })
+          }
+          if (fault !== 'none') told.met({ phone: whose, on: 'a_deposit', fault })
+          if (fault === 'aborted') {
+            kept('aborted')
+            told.aborted()
+            throw the_transport_aborted
+          }
+          if (fault === 'lost') {
+            kept({ outcome: 'unreachable' })
+            return { outcome: 'unreachable' }
+          }
+          const first = await transports.mailbox.deposit(deposit)
+          const answered = fault === 'doubled' ? await transports.mailbox.deposit(deposit) : first
+          const told_back: Deposited =
+            fault === 'answer_lost' ? { outcome: 'unreachable' } : answered
+          kept(told_back)
+          return told_back
+        }),
     },
-    collect: async (mailbox) => {
-      const fault = next(the_lossy_schedule.collects, collects)
-      collects += 1
-      if (fault !== 'none') told.met({ phone: whose, on: 'a_collect', fault })
-      if (fault === 'lost') throw the_collect_was_lost
-      const deposited = await transports.collect(mailbox)
-      return fault === 'doubled' ? deposited.flatMap((each) => [each, each]) : deposited
-    },
+    collect: (mailbox) =>
+      counted(async () => {
+        const fault = next(the_lossy_schedule.collects, collects)
+        collects += 1
+        if (fault !== 'none') told.met({ phone: whose, on: 'a_collect', fault })
+        if (fault === 'lost') throw the_collect_was_lost
+        const deposited = await transports.collect(mailbox)
+        return fault === 'doubled' ? deposited.flatMap((each) => [each, each]) : deposited
+      }),
   })
 }
 
@@ -305,12 +338,15 @@ export interface Start {
 export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   const time = a_clock('2026-11-20T10:00:00Z')
   const relay_cell = cell<MailboxState>({ initial: no_deposit })
-  const stack: Stack = await a_stack(relay_cell)({
+  const world: TheStacksWorld = {
     clock: time.clock,
     elapsed: time.elapsed,
     hash: (secret) => Promise.resolve(the_deposit_address_of(factory.primitives)(secret)),
-  })
+  }
+  const stack: Stack = await a_stack(relay_cell)(world)
   const the_relay_s_waits = stack.relay.waits()
+  const the_story_s_relay = await factory.relay(world)
+  const in_flight = { count: 0 }
   const met: AFaultMet[] = []
   const phones: APhoneInTheRounds[] = []
 
@@ -340,9 +376,10 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
             aborted: () => {
               aborted = true
             },
+            in_flight,
           },
           carried,
-        )(factory.transports(in_process)),
+        )(the_story_s_relay.transports(in_process)),
     })
     const when = (): zz.RootContext => ({
       now: zz.in_zone(time_zone)(time.clock.now()),
@@ -542,9 +579,11 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   /**
    * Time passes and the clock stays (DOM-14, DOM-17): rounds of the
    * executors' pauses over, every phone on collecting once, then the event
-   * loop quiet; over when two rounds in a row change nothing the ports
-   * show (a deposit asked for, lost or not, is a change: it is tried again
-   * after the next pause), else the story fails after 60 rounds.
+   * loop quiet and every call of the transports answered (a request over
+   * HTTP takes turns of the network, step 20); over when two rounds in a
+   * row change nothing the ports show (a deposit asked for, lost or not, is
+   * a change: it is tried again after the next pause), else the story
+   * fails after 60 rounds.
    */
   const settles = async (): Promise<void> => {
     let still = 0
@@ -552,6 +591,8 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       const before = shows()
       time.pauses_over()
       for (const each of phones) await each.a_round()
+      await quiet()
+      await until(() => in_flight.count === 0, "the transports' calls in flight")
       await quiet()
       still = shows() === before ? still + 1 : 0
       if (still >= 2) return
@@ -594,10 +635,11 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
     },
     /** The faults the plan injected, in order. */
     the_faults_met: (): readonly AFaultMet[] => [...met],
-    /** Every phone off and the relay's executor stopped, at the story's end: nothing outlives it. */
+    /** Every phone off, the relay's executor stopped and the story's relay let go, at the story's end: nothing outlives it. */
     stops: async (): Promise<void> => {
       for (const each of phones) await each.off()
       await the_relay_s_waits.stop()
+      await the_story_s_relay.stops()
     },
   }
 }
