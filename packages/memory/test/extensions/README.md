@@ -29,7 +29,7 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
    - An undeclared leaf, `invalid_request` `not_a_leaf`: `an undeclared leaf of an extension offered: …`.
    - A peer's malformed input `invalid_request` before the kernel's node; a peer with no bond reads `not_found` only after it, and at the entry meets silence: `a peer’s malformed input: …`.
 3. **An offer withdrawn, both ways** (EXT-7, F8).
-   - The peer's requests meet silence, a request of the extension on that bond refused by the port of requests (`not_offered_to_the_bond`, nothing sent): `Bruno withdraws greetings’ offer from Anna: …`.
+   - The peer's requests meet silence, a request of the extension on that bond refused by the port of requests (`not_offered_to_the_bond`, nothing sent), the asker's greeting closed as called off, no dead letter (EXT-12; A, 21 Nov 2026): `Bruno withdraws greetings’ offer from Anna: …`.
    - A retry after a withdrawal or a deactivation meets silence, the asker records `no_response` and the server keeps its answer: `a retry after a withdrawal, or after a deactivation, …`.
 4. **Claude's fixes at the gate** (F7, DOM-14, EXT-2, EXT-12).
    - Anna greets Bruno (P1, his phone off) and Carla (P2, answered), her phone closed and started again: P1 `no_response` at its time, P2 delivered again reads Carla's answer from the port's kept answer, one closing, no dead letter: `Anna greets Bruno (P1, his phone off) and Carla (P2, …`.

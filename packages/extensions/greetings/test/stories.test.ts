@@ -105,9 +105,27 @@ describe('the stories of greetings', () => {
   })
 
   test.each([
+    { answer: 'refused', why: 'not_offered_to_the_bond' } as const,
+    { answer: 'refused', why: 'not_active' } as const,
+  ])('called off, $why: the greeting closed with it, no dead letter', async (answer) => {
+    const { partition, anna, events } = await anna_greets_and_waits(() => answer)
+    const greeting_id = greeting_of(events)
+    await anna.until(() => JSON.stringify(the_greeting(partition, greeting_id)).includes('closed'))
+    expect(the_greeting(partition, greeting_id)).toMatchObject({
+      progress: { stage: 'closed', outcome: { outcome: 'the_greeting_was_called_off' } },
+    })
+    expect(anna.sent.filter((message) => message.message === 'dead_letter')).toEqual([])
+    await anna.stop()
+  })
+
+  test.each([
     {
-      answer: { answer: 'refused', why: 'not_offered_to_the_bond' } as const,
-      reason: 'the port of requests refused it: not_offered_to_the_bond',
+      answer: { answer: 'refused', why: 'not_declared' } as const,
+      reason: 'the port of requests refused it: not_declared',
+    },
+    {
+      answer: { answer: 'refused', why: 'too_large_for_a_letter' } as const,
+      reason: 'the port of requests refused it: too_large_for_a_letter',
     },
     { answer: { answer: 'the_bond_is_gone' } as const, reason: 'the bond is gone' },
   ])('$reason: a dead letter, shown', async ({ answer, reason }) => {

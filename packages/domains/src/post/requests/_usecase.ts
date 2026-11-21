@@ -35,6 +35,20 @@ export const close_a_request_with_no_response = usecase.close_a_request_with_no_
 export const take_a_response = usecase.take_a_response
 
 /**
+ * A request that waits is called off: the kernel's, at a deactivation or a withdrawal.
+ *
+ * @see {@link usecase.call_off_a_request}
+ */
+export const call_off_a_request = usecase.call_off_a_request
+
+/**
+ * The requests that wait, for the kernel to call off.
+ *
+ * @see {@link usecase.the_requests_waiting}
+ */
+export const the_requests_waiting = usecase.the_requests_waiting
+
+/**
  * The answer the port keeps under a request's identity.
  *
  * @see {@link usecase.the_answer_to_a_request}

@@ -12,3 +12,9 @@ export const the_request_has_this_id = selection({
     request_id: id.request_id,
   }),
 })
+
+/** The request waits for its response. */
+export const the_request_is_waiting = selection({
+  subject: 'request',
+  parameters: z.strictObject({}),
+})
