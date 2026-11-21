@@ -203,7 +203,7 @@ export interface AnExtensionOnSelf {
   readonly composed: Composed
   readonly is_active: () => Promise<boolean>
   readonly life: () => Life
-  readonly on_self: zz.MountedLeafPort<zz.EntryOf<typeof persona>>
+  readonly on_self: zz.PortByPath<zz.EntryOf<typeof persona>>
   /** The letters its notices tell held (EXT-2): a `dead_letter` not `released` since. */
   readonly held: () => readonly string[]
   readonly redeliver: (letter: string) => Handed
@@ -231,7 +231,7 @@ export interface TheKernelsLetters {
  */
 export interface ThePortTowardSelf {
   readonly clock: zz.Clock
-  readonly self: zz.TreePortByPath<zz.EntryOf<typeof persona>>
+  readonly self: zz.PortByPath<zz.EntryOf<typeof persona>>
   readonly speaks?: zz.Semver
   readonly relays: readonly string[]
   readonly the_extension: (name: string) => AnExtensionOnSelf | undefined
@@ -251,14 +251,19 @@ const by_the_user = (because: string) => ({
  * exhausted (a held letter of `user`'s, DOM-15).
  */
 export const the_delivery_of_an_activity = (wiring: ThePortTowardSelf) => {
-  const the_context = (activity_id: string, version: zz.Semver) => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
-    time_zone: wiring.clock.time_zone,
-    caller: { is: 'the_user' as const },
-    version,
-    operation: { id: zz.operation_id.parse(activity_id), scope: the_scope_of_the_user },
-    correlation: zz.correlation.parse(activity_id),
-  })
+  const the_context = (activity_id: string, version: zz.Semver) => {
+    const now = zz.in_zone(wiring.clock.time_zone)(wiring.clock.now())
+    return {
+      now,
+      time_zone: wiring.clock.time_zone,
+      caller: { is: 'the_user' as const },
+      // The user's request, declared at her gesture's instant, by the node's clock (PER-23).
+      declared_at: now,
+      version,
+      operation: { id: zz.operation_id.parse(activity_id), scope: the_scope_of_the_user },
+      correlation: zz.correlation.parse(activity_id),
+    }
+  }
   const ended = (activity_id: string, how_it_ended: activities_value.how_it_ended) => ({
     outcome: 'delivered' as const,
     returns: { activity_id, how_it_ended } satisfies returned,
@@ -396,13 +401,16 @@ export type TheReadsOfSelf = Extract<
 /** A read of `self` through the port, as the user, at the version it speaks: passing through, `self`'s words unchanged. */
 export const the_reads_of_self =
   (wiring: Pick<ThePortTowardSelf, 'clock' | 'self' | 'speaks'>) =>
-  (read: TheReadsOfSelf, input: unknown) =>
-    wiring.self(
+  (read: TheReadsOfSelf, input: unknown) => {
+    const now = zz.in_zone(wiring.clock.time_zone)(wiring.clock.now())
+    return wiring.self(
       {
-        now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+        now,
         time_zone: wiring.clock.time_zone,
         caller: { is: 'the_user' as const },
+        declared_at: now,
         version: wiring.speaks ?? self[zz.$Version],
       },
       { leaf: `usecase/${read}`, input },
     )
+  }
