@@ -30,9 +30,21 @@ export const the_document_of_a_realm = (script: string): string =>
 export const the_script_inline = (script: string): string =>
   script.replaceAll('</script', '<\\/script')
 
+/**
+ * The page's document, by the parts a realm's frame uses (WEB-5, WEB-21):
+ * its window, which hears the frame; an iframe made; its body, which holds
+ * it. The browser's document is given as it is; a test with no realm, a
+ * document of its own.
+ */
+export interface ARealmsDocument {
+  readonly defaultView: Pick<Window, 'addEventListener' | 'removeEventListener'> | null
+  createElement(tag: 'iframe'): HTMLIFrameElement
+  readonly body: { append(frame: HTMLIFrameElement): void }
+}
+
 /** Where a realm's frame is placed: the page's document (WEB-5). */
 export interface ThePageOfTheRealms {
-  readonly document: Document
+  readonly document: ARealmsDocument
 }
 
 /** A transport to an extension's realm in a hidden frame of the page, its script the realm its build made. */

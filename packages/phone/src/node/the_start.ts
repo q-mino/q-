@@ -7,6 +7,7 @@ import {
   the_node_s_storage,
   the_relay_s_http_transports,
   type AFetch,
+  type ARealmsDocument,
   type AStorageManager,
   type CryptographicRandomness,
   type HerNode,
@@ -41,7 +42,7 @@ export interface TheBrowser extends TheBrowsersStorage {
   readonly storage: AStorageManager | undefined
   readonly fetch: AFetch
   readonly crypto: CryptographicRandomness
-  readonly document: Document
+  readonly document: ARealmsDocument
 }
 
 /** An extension the app carries (EXT-9, PWA-3): its manifest as its build wrote it, its realm's script as the phone's build bundled it. */

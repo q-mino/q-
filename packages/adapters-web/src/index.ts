@@ -12,6 +12,7 @@ export {
   the_policy_of_a_frame,
   the_sandbox_of_a_frame,
   the_script_inline,
+  type ARealmsDocument,
   type ThePageOfTheRealms,
 } from './frames/index.ts'
 export {

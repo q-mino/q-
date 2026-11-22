@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { afterEach, describe, expect, test } from 'vitest'
 import {
   a_realm_in_a_frame,

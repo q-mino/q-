@@ -9,5 +9,6 @@ export {
   a_realm_in_a_frame,
   the_document_of_a_realm,
   the_script_inline,
+  type ARealmsDocument,
   type ThePageOfTheRealms,
 } from './a_realm_in_a_frame.ts'

@@ -105,6 +105,9 @@ importers:
       fake-indexeddb:
         specifier: 6.2.7
         version: 6.2.7
+      happy-dom:
+        specifier: 21.0.4
+        version: 21.0.4
 
   packages/boundary:
     dependencies:
@@ -231,6 +234,9 @@ importers:
       fake-indexeddb:
         specifier: 6.2.7
         version: 6.2.7
+      happy-dom:
+        specifier: 21.0.4
+        version: 21.0.4
       vite:
         specifier: ^8.3.6
         version: 8.3.6(@types/node@24.19.2)(terser@5.51.2)

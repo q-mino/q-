@@ -17,6 +17,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "fake-indexeddb": "6.2.7"
+    "fake-indexeddb": "6.2.7",
+    "happy-dom": "21.0.4"
   }
 }
