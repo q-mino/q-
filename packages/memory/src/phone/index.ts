@@ -44,6 +44,7 @@ import {
   type AnExtensionsLeaves,
   type ANotice,
   type Composed,
+  type Composition,
   type Hosted,
   type TheFollowing,
   type TheKernelsTraced,
@@ -326,14 +327,14 @@ const the_compositions_of = (
       readonly composed: Composed
       readonly carried: AnExtensionOfTheApp
     }[]
-    readonly faults: readonly string[]
+    readonly faults: readonly AnExtensionThatDoesNotCompose[]
   }>(
     (so_far, carried) => {
       const composition = compose_an_extension(
         the_kernels_offer(so_far.composed.map((each) => each.composed.manifest.name)),
       )(carried.manifest)
       return composition.composition === 'a_fault'
-        ? { ...so_far, faults: [...so_far.faults, composition.message] }
+        ? { ...so_far, faults: [...so_far.faults, composition] }
         : {
             ...so_far,
             composed: [...so_far.composed, { composed: composition.composed, carried }],
@@ -341,8 +342,28 @@ const the_compositions_of = (
     },
     { composed: [], faults: [] },
   )
-  if (told.faults.length > 0) throw new Error(told.faults.join('\n'))
+  if (told.faults.length > 0) throw new TheExtensionsDoNotCompose(told.faults)
   return told.composed
+}
+
+/** An extension the app carries that does not compose (EXT-4): its name, its faults, and their message, a line each. */
+export type AnExtensionThatDoesNotCompose = Extract<
+  Composition,
+  { readonly composition: 'a_fault' }
+>
+
+/**
+ * The phone's composition fault (CFG-2, EXT-4): every extension the app
+ * carries that does not compose, with its faults, so that the start tells
+ * each in her words (PWA-5); its message, every fault in one, a line each.
+ */
+export class TheExtensionsDoNotCompose extends Error {
+  readonly extensions: readonly AnExtensionThatDoesNotCompose[]
+  constructor(extensions: readonly AnExtensionThatDoesNotCompose[]) {
+    super(extensions.map((each) => each.message).join('\n'))
+    this.name = 'TheExtensionsDoNotCompose'
+    this.extensions = extensions
+  }
 }
 
 export const phone =

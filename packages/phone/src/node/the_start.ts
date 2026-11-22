@@ -15,7 +15,14 @@ import {
 } from '@q-mino/adapters-web'
 import type * as zz from '@q-mino/domains/library'
 import type { MailboxPort } from '@q-mino/domains/post/_dsl.ts'
-import { phone, type APhonesPartitions, type Phone, type PhoneWorld } from '@q-mino/memory'
+import type { ACompositionFault } from '@q-mino/adapters-common'
+import {
+  phone,
+  TheExtensionsDoNotCompose,
+  type APhonesPartitions,
+  type Phone,
+  type PhoneWorld,
+} from '@q-mino/memory'
 import { a_phone_s_storage, the_kernel_s_domains } from './storage.ts'
 
 // The PWA's composition root at its start (CFG-1, CFG-2, DOM-9; step 25,
@@ -69,10 +76,26 @@ export interface ANodeRunning {
   readonly stopped: Promise<WhyItStopped>
 }
 
+/**
+ * Why the node does not start (PWA-2, PWA-5): an extension the app carries
+ * does not compose, each fault by its extension's name and its case, told
+ * in her words; or another fault. The message, whole, under "Perché".
+ */
+export type WhyItDoesNotStart =
+  | {
+      readonly why: 'an_extension_does_not_compose'
+      readonly faults: readonly {
+        readonly extension: string
+        readonly fault: ACompositionFault['fault']
+      }[]
+      readonly message: string
+    }
+  | { readonly why: 'a_fault'; readonly message: string }
+
 /** How the start went (PWA-2): another tab writes the node; the node does not start, and why; it runs. */
 export type TheStart =
   | { readonly start: 'another_tab' }
-  | { readonly start: 'it_does_not_start'; readonly why: string }
+  | { readonly start: 'it_does_not_start'; readonly why: WhyItDoesNotStart }
   | { readonly start: 'running'; readonly node: ANodeRunning }
 
 /** How a tab asks to write the node (WEB-10): if no tab writes it, or taking it ("usa qui"). */
@@ -214,7 +237,19 @@ export const the_start =
       // A composition fault (CFG-2, EXT-4): the node does not start, and lets the writer go.
       opened.let_go()
       opened.database.close()
-      return { start: 'it_does_not_start', why: why_of(fault) }
+      return {
+        start: 'it_does_not_start',
+        why:
+          fault instanceof TheExtensionsDoNotCompose
+            ? {
+                why: 'an_extension_does_not_compose',
+                faults: fault.extensions.flatMap((each) =>
+                  each.faults.map((one) => ({ extension: each.name, fault: one.fault })),
+                ),
+                message: fault.message,
+              }
+            : { why: 'a_fault', message: why_of(fault) },
+      }
     }
     const stops_running = the_node_runs(node, time, post.aborted)
     const draws_an_id = ids_drawn_at_random(browser.crypto)
@@ -246,6 +281,8 @@ export const the_start =
           node.trace(entry)
         },
       },
+      // The relay of the configuration, as the server's screen tells it, and how the client last met it (UI-5).
+      the_relay: { address: configuration.relay, as_met: transports.the_relay },
     })
     let the_end: Promise<void> | undefined = undefined
     const stops = (): Promise<void> => {

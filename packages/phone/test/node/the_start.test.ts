@@ -81,7 +81,15 @@ describe('the start of the PWA', () => {
     const start = await starts(browser, configuration)
     expect(start).toMatchObject({ start: 'it_does_not_start' })
     if (start.start !== 'it_does_not_start') return
-    const lines = start.why.split('\n')
+    // Each fault by its extension and its case, told in her words (PWA-5); the message, whole, under "Perché".
+    expect(start.why).toMatchObject({
+      why: 'an_extension_does_not_compose',
+      faults: [
+        { extension: 'ping_pong', fault: 'a_boundary_major_not_spoken' },
+        { extension: 'pong_ping', fault: 'the_manifest_does_not_parse' },
+      ],
+    })
+    const lines = start.why.message.split('\n')
     expect(lines.some((line) => line.startsWith('ping_pong:') && line.includes('2'))).toBe(true)
     expect(lines.some((line) => line.startsWith('pong_ping:'))).toBe(true)
     // The writer let go: the release that composes starts on the same node.

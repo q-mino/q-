@@ -1,5 +1,11 @@
-import { createSignal, Match, onMount, Show, Switch, type JSX } from 'solid-js'
-import type { ANodeRunning, HowItAsks, TheStart, WhyItStopped } from './node/index.ts'
+import { createSignal, For, Match, onMount, Show, Switch, type JSX } from 'solid-js'
+import type {
+  ANodeRunning,
+  HowItAsks,
+  TheStart,
+  WhyItDoesNotStart,
+  WhyItStopped,
+} from './node/index.ts'
 import { texts } from './texts/index.ts'
 import { UpdatePrompt } from './UpdatePrompt.tsx'
 
@@ -16,7 +22,7 @@ const repository = 'https://github.com/q-mino/q-'
 type TheAppNow =
   | { readonly now: 'opening' }
   | { readonly now: 'another_tab' }
-  | { readonly now: 'it_does_not_start'; readonly why: string }
+  | { readonly now: 'it_does_not_start'; readonly why: WhyItDoesNotStart }
   | { readonly now: 'running'; readonly node: ANodeRunning }
   | { readonly now: 'stopped'; readonly why: WhyItStopped }
 
@@ -51,7 +57,7 @@ export const App = (props: TheAppsWiring) => {
         }
       },
       (fault: unknown) => {
-        set_now({ now: 'it_does_not_start', why: why_of(fault) })
+        set_now({ now: 'it_does_not_start', why: { why: 'a_fault', message: why_of(fault) } })
       },
     )
   }
@@ -62,7 +68,7 @@ export const App = (props: TheAppsWiring) => {
     const it = now()
     return it.now === 'running' ? it.node : undefined
   }
-  const does_not_start = (): string | undefined => {
+  const does_not_start = (): WhyItDoesNotStart | undefined => {
     const it = now()
     return it.now === 'it_does_not_start' ? it.why : undefined
   }
@@ -94,9 +100,32 @@ export const App = (props: TheAppsWiring) => {
         <Match when={does_not_start()}>
           {(why) => (
             <section role="alert">
-              <h1>{texts.start.it_does_not_start}</h1>
+              <Switch>
+                <Match
+                  when={(() => {
+                    const it = why()
+                    return it.why === 'an_extension_does_not_compose' ? it : undefined
+                  })()}
+                >
+                  {(composing) => (
+                    <>
+                      <h1>{texts.start.an_extension_does_not_compose}</h1>
+                      <ul>
+                        <For each={composing().faults}>
+                          {(one) => (
+                            <li>{texts.start.the_composition_faults[one.fault](one.extension)}</li>
+                          )}
+                        </For>
+                      </ul>
+                    </>
+                  )}
+                </Match>
+                <Match when={why().why === 'a_fault'}>
+                  <h1>{texts.start.it_does_not_start}</h1>
+                </Match>
+              </Switch>
               <h2>{texts.start.why}</h2>
-              <pre>{why()}</pre>
+              <pre>{why().message}</pre>
             </section>
           )}
         </Match>

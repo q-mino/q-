@@ -8,6 +8,7 @@ export type {
   TheConfiguration,
   TheDevicesTime,
   TheStart,
+  WhyItDoesNotStart,
   WhyItStopped,
 } from './the_start.ts'
 export { a_phone_s_storage, the_kernel_s_domains } from './storage.ts'

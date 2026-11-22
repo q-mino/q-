@@ -89,6 +89,8 @@ render(
                 video,
                 elapsed: the_time_that_passes,
               }),
+            // The page's navigator, its share and its clipboard, as it is (WEB-5, WEB-18).
+            the_navigator: navigator,
           }}
           texts={texts.screens}
           {...with_the_link}
