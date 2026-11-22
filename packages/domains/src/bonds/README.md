@@ -42,4 +42,4 @@ On the oracle a phone runs `bonds`, `seals` and the reactions of `reaction/`, wi
 
 - The delivery of `send_my_introduction` (`post`, step 10): the letter, its secret and my ticket, signed by my face; the entry of `accept_their_introduction` on `unknown` (step 13).
 - The confirmation at a later letter (BND-5): the entry of a letter, step 13.
-- "Elimina e avvisa", a removal that tells them (BND-6): a request of the kernel, steps 10 and 13.
+- "Elimina e avvisa", a removal that tells them (BND-6): a request of the kernel between bonded faces, not messaging; its design written in BND-6, open, after the block (Alessandro, 22 Nov 2026).
