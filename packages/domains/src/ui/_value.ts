@@ -177,3 +177,32 @@ export type what_it_asked_ended = z.output<typeof what_it_asked_ended>
  */
 export const the_offers = value.the_offers
 export type the_offers = z.output<typeof the_offers>
+
+/**
+ * What came back of the last question she asked a contact about the
+ * extensions in common (EXT-8, UI-5; `self`'s `the_questions_asked_of_a_bond`):
+ * none asked; waiting; the extensions in common, by name (none, maybe); or no
+ * answer, with why.
+ *
+ * @see {@link value.the_extensions_in_common}
+ */
+export const the_extensions_in_common = value.the_extensions_in_common
+export type the_extensions_in_common = z.output<typeof the_extensions_in_common>
+
+/**
+ * The relay, as her node last met it (UI-5): it answered, or it did not (the
+ * relay client's `unreachable`: no network, or a relay silent, not told
+ * apart). Before her node met it, as if it answered.
+ *
+ * @see {@link value.the_relay_met}
+ */
+export const the_relay_met = value.the_relay_met
+export type the_relay_met = z.output<typeof the_relay_met>
+
+/**
+ * The strip over every screen (UI-5): none, or the relay that does not answer (her letters wait).
+ *
+ * @see {@link value.a_strip}
+ */
+export const a_strip = value.a_strip
+export type a_strip = z.output<typeof a_strip>

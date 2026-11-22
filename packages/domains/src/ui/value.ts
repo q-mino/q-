@@ -56,6 +56,8 @@ export const a_screen = z.discriminatedUnion('screen', [
   }),
   /** What happened: the letters held and what happened without a fact, the kernel's (USR-8). */
   z.strictObject({ screen: z.literal('what_happened') }),
+  /** The server: the relay her letters go through, what it declares, what it sees and what not (1c, informative, UI-5). */
+  z.strictObject({ screen: z.literal('the_server') }),
 ])
 
 /** The screens she opened, the last the one shown; back goes to the one before (UI-1). */
@@ -208,3 +210,35 @@ export const the_offers = z
     }),
   )
   .max(256)
+
+/**
+ * What came back of the last question she asked a contact about the
+ * extensions in common (EXT-8, UI-5; `self`'s `the_questions_asked_of_a_bond`):
+ * none asked; waiting; the extensions in common, by name (none, maybe); or no
+ * answer, with why.
+ */
+export const the_extensions_in_common = z.discriminatedUnion('answer', [
+  z.strictObject({ answer: z.literal('not_asked') }),
+  z.strictObject({ answer: z.literal('waiting') }),
+  z.strictObject({
+    answer: z.literal('in_common'),
+    extensions: z.array(user.value.an_extension).max(64),
+  }),
+  z.strictObject({
+    answer: z.literal('no_answer'),
+    why: z.enum(['no_response', 'the_peer_cannot_answer']),
+  }),
+])
+
+/**
+ * The relay, as her node last met it (UI-5): it answered, or it did not (the
+ * relay client's `unreachable`: no network, or a relay silent, not told
+ * apart). Before her node met it, as if it answered.
+ */
+export const the_relay_met = z.enum(['answered', 'did_not_answer'])
+
+/** The strip over every screen (UI-5): none, or the relay that does not answer (her letters wait). */
+export const a_strip = z.discriminatedUnion('strip', [
+  z.strictObject({ strip: z.literal('none') }),
+  z.strictObject({ strip: z.literal('the_relay_does_not_answer') }),
+])

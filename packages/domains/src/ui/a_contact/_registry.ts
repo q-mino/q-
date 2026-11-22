@@ -14,6 +14,7 @@ export const registry = {
   'ui/a_contact/value/what_happens': value.what_happens,
   'ui/a_contact/value/a_turn': value.a_turn,
   'ui/a_contact/value/what_it_is_given': value.what_it_is_given,
+  'ui/a_contact/value/the_answer_shown': value.the_answer_shown,
   'ui/a_contact/value/an_extension_on_the_contact': value.an_extension_on_the_contact,
   'ui/a_contact/value/what_it_shows': value.what_it_shows,
 } satisfies zz.Registry

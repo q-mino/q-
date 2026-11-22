@@ -399,6 +399,7 @@ export type TheReadsOfSelf = Extract<
   | 'my_ticket'
   | 'an_extension'
   | 'the_extensions_offered_to_a_bond'
+  | 'the_questions_asked_of_a_bond'
 >
 
 /** A read of `self` through the port, as the user, at the version it speaks: passing through, `self`'s words unchanged. */

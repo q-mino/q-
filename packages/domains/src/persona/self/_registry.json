@@ -667,6 +667,131 @@
         }
       }
     },
+    "persona/self/value/the_answer_about_the_extensions_in_common": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "is": { "type": "string", "const": "waiting" } },
+                "required": ["is"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "learned" },
+                  "in_common": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "extension": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["extension", "majors"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": ["is", "in_common"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "not_answered" },
+                  "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                },
+                "required": ["is", "why"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "persona/self/value/a_question_asked": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "answer": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "waiting" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "learned" },
+                      "in_common": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["is", "in_common"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "not_answered" },
+                      "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                    },
+                    "required": ["is", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["question_id", "asked_at", "answer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
     "persona/self/node/self": { "kind": "node" },
     "persona/self/usecase/make_my_first_face": {
       "kind": "usecase",
@@ -1833,6 +1958,89 @@
               }
             },
             "required": ["extension"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/the_questions_asked_of_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "answer": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "waiting" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "learned" },
+                      "in_common": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["is", "in_common"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "not_answered" },
+                      "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                    },
+                    "required": ["is", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["question_id", "asked_at", "answer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/usecase/the_questions_asked_of_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond_id": { "type": "string", "minLength": 1 } },
+            "required": ["bond_id"],
             "additionalProperties": false
           }
         }

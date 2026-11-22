@@ -36,6 +36,9 @@ export const registry = {
   'persona/self/value/extension_state': value.extension_state,
   'persona/self/value/offered_extension': value.offered_extension,
   'persona/self/value/offered_extensions': value.offered_extensions,
+  'persona/self/value/the_answer_about_the_extensions_in_common':
+    value.the_answer_about_the_extensions_in_common,
+  'persona/self/value/a_question_asked': value.a_question_asked,
   'persona/self/node/self': node.self,
   'persona/self/usecase/make_my_first_face': usecase.make_my_first_face,
   'persona/self/usecase/make_my_first_face_input': usecase.make_my_first_face_input,
@@ -71,6 +74,9 @@ export const registry = {
   'persona/self/usecase/my_ticket_input': usecase.my_ticket_input,
   'persona/self/usecase/an_extension': usecase.an_extension,
   'persona/self/usecase/an_extension_input': usecase.an_extension_input,
+  'persona/self/usecase/the_questions_asked_of_a_bond': usecase.the_questions_asked_of_a_bond,
+  'persona/self/usecase/the_questions_asked_of_a_bond_input':
+    usecase.the_questions_asked_of_a_bond_input,
   'persona/self/usecase/the_extensions_offered_to_a_bond': usecase.the_extensions_offered_to_a_bond,
   'persona/self/usecase/the_extensions_offered_to_a_bond_input':
     usecase.the_extensions_offered_to_a_bond_input,
