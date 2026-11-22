@@ -44,6 +44,31 @@ describe('the JSON Schema export of a schema', () => {
     })
   })
 
+  it('marks what zod’s reading of the export loses: a URL’s protocol, finite keys, an overwrite, a pipe, a Unicode pattern (EXT-6)', () => {
+    expect(
+      json_schema_of(
+        z.strictObject({
+          relay: z.url({ protocol: /^https$/ }).max(2048),
+          counts: z.record(z.enum(['a', 'b']), z.number()),
+          name: z.string().trim().min(1),
+          code: z.string().pipe(z.string().min(2)),
+          letters: z.string().regex(/^\p{L}+$/u),
+          plain: z.string().regex(/^[a-z]+$/),
+        }),
+      ),
+    ).toMatchObject({
+      properties: {
+        relay: { 'x-lossy': ['url'] },
+        counts: { 'x-lossy': ['record_keys'] },
+        name: { 'x-lossy': ['overwrite'] },
+        code: { 'x-lossy': ['pipe'] },
+        letters: { 'x-lossy': ['unicode_pattern'] },
+        plain: { type: 'string', pattern: '^[a-z]+$' },
+      },
+    })
+    expect(json_schema_of(z.string().regex(/^[a-z]+$/))).not.toHaveProperty('x-lossy')
+  })
+
   it('tells nothing of a brand, which is in the types alone', () => {
     expect(json_schema_of(z.string().min(1).brand<'tools/id/tool_id'>())).toEqual(
       json_schema_of(z.string().min(1)),
