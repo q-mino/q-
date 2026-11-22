@@ -14,8 +14,10 @@ import type { registry } from './persona/self/_registry.ts'
 // "Ping", its `texts/` with step 16) invokes its leaf on `self` with the
 // bond, which follows the ping to its pong (EXT-16, DOM-3): where the pong
 // is shown. No slot, no page in stage 1's first release of it: the slot of
-// a bond's pings comes with a frame's follow (steps 16 and 22), and asks
-// more of an activation (EXT-10).
+// a bond's pings, a frame that follows a read of them, is the remedy
+// deferred of PNG-4's declared flaw (a pong later than the leaf's 70
+// seconds is recorded but shown on no screen), an extension point that
+// asks more of an activation (EXT-10).
 
 export const manifest = boundary.manifest({
   name: 'ping_pong',
