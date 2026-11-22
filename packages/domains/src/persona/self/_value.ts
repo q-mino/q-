@@ -210,3 +210,24 @@ export type offered_extension = z.output<typeof offered_extension>
  */
 export const offered_extensions = value.offered_extensions
 export type offered_extensions = z.output<typeof offered_extensions>
+
+/**
+ * What came back of a question she asked a bond about the extensions in
+ * common (EXT-8): nothing yet, the extensions in common (none, maybe), or no
+ * answer, with why.
+ *
+ * @see {@link value.the_answer_about_the_extensions_in_common}
+ */
+export const the_answer_about_the_extensions_in_common =
+  value.the_answer_about_the_extensions_in_common
+export type the_answer_about_the_extensions_in_common = z.output<
+  typeof the_answer_about_the_extensions_in_common
+>
+
+/**
+ * A question she asked a bond about the extensions in common, when, and its answer (EXT-8, UI-5).
+ *
+ * @see {@link value.a_question_asked}
+ */
+export const a_question_asked = value.a_question_asked
+export type a_question_asked = z.output<typeof a_question_asked>

@@ -4,10 +4,10 @@
 
 import type { value } from './_scope_dsl.ts'
 
-/** The words of a greeting from the node: the user's gesture on a bond carries none (EXT-16). An Italian text the peer's user reads: provisional. */
+/** The words of a greeting from the node: the user's gesture on a bond carries none (EXT-16). An Italian text the peer's user reads (Alessandro, 22 Nov 2026). */
 export const the_words_of_a_greeting = 'ciao'
 
-/** The words of a greeting back. An Italian text the peer's user reads: provisional. */
+/** The words of a greeting back. An Italian text the peer's user reads (Alessandro, 22 Nov 2026). */
 export const the_words_of_a_greeting_back = 'ciao anche a te'
 
 /** How long a greeting waits for its greeting back: 60 seconds, as ping pong's ping (F7). */

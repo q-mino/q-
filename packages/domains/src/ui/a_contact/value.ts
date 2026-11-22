@@ -86,13 +86,37 @@ export const a_turn = z.strictObject({
   goes: _ui.value.where_it_goes,
 })
 
-/** What the screen is given: the card (none once removed), the extensions, those offered to the bond, the activities it asked. */
+/**
+ * What the screen is given: the card (none once removed), the extensions,
+ * those offered to the bond, the activities it asked, and what came back of
+ * the last question about the extensions in common.
+ */
 export const what_it_is_given = z.strictObject({
   card: _ui.value.a_contact_card.optional(),
   extensions: z.array(_ui.value.an_extension_seen).max(256),
   offered: activities.value.offered,
   activities: z.array(activities.value.activity_card).max(64),
+  in_common: _ui.value.the_extensions_in_common,
 })
+
+/**
+ * What came back of the question, beside it (UI-5: a request's return is
+ * shown where its gesture is): none asked; waiting; the extensions in common,
+ * by name; none in common; no answer, with why.
+ */
+export const the_answer_shown = z.discriminatedUnion('answer', [
+  z.strictObject({ answer: z.literal('not_asked') }),
+  z.strictObject({ answer: z.literal('waiting') }),
+  z.strictObject({
+    answer: z.literal('in_common'),
+    extensions: z.array(user.value.an_extension).min(1).max(64),
+  }),
+  z.strictObject({ answer: z.literal('none_in_common') }),
+  z.strictObject({
+    answer: z.literal('no_answer'),
+    why: z.enum(['no_response', 'the_peer_cannot_answer']),
+  }),
+])
 
 /** An extension on the contact: active, offered to it or not, and the gesture it allows. */
 export const an_extension_on_the_contact = z.strictObject({
@@ -114,5 +138,6 @@ export const what_it_shows = z.discriminatedUnion('shows', [
     the_extensions: z.array(an_extension_on_the_contact).max(256),
     marks: z.array(_ui.value.a_mark).max(256),
     courses: z.array(z.strictObject({ for: what_it_is_for, course: _ui.value.a_course })).max(64),
+    in_common: the_answer_shown,
   }),
 ])

@@ -243,6 +243,25 @@ export const an_extension_input = usecase.an_extension.input
 export type an_extension_input = z.output<typeof an_extension_input>
 
 /**
+ * Anna's phone reads the questions it asked Bruno's about the extensions in
+ * common, the last first, with what came back: her screen of their bond
+ * shows the last one's answer beside the question (UI-5).
+ *
+ * @see {@link usecase.the_questions_asked_of_a_bond}
+ */
+export const the_questions_asked_of_a_bond = usecase.the_questions_asked_of_a_bond
+
+/**
+ * The input of `the_questions_asked_of_a_bond`, declared inline.
+ *
+ * @see {@link usecase.the_questions_asked_of_a_bond}
+ */
+export const the_questions_asked_of_a_bond_input = usecase.the_questions_asked_of_a_bond.input
+export type the_questions_asked_of_a_bond_input = z.output<
+  typeof the_questions_asked_of_a_bond_input
+>
+
+/**
  * Anna's phone reads what it offers Bruno, before it asks him: greetings, at major 1.
  *
  * @see {@link usecase.the_extensions_offered_to_a_bond}

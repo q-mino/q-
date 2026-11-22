@@ -9,6 +9,7 @@ import * as my_contacts from '../../src/ui/my_contacts/_dsl.ts'
 import * as the_first_face from '../../src/ui/the_first_face/_dsl.ts'
 import * as the_handshake_at_a_distance from '../../src/ui/the_handshake_at_a_distance/_dsl.ts'
 import * as the_handshake_in_person from '../../src/ui/the_handshake_in_person/_dsl.ts'
+import * as the_server from '../../src/ui/the_server/_dsl.ts'
 import * as what_happened from '../../src/ui/what_happened/_dsl.ts'
 import type * as a_contact_value from '../../src/ui/a_contact/_value.ts'
 import type * as an_extension_value from '../../src/ui/an_extension/_value.ts'
@@ -169,12 +170,14 @@ const the_contact_given = (
     readonly is?: 'active' | 'not_active'
     readonly offered?: boolean
     readonly activities?: readonly activities_value.activity_card[]
+    readonly in_common?: a_contact_value.what_it_is_given['in_common']
   } = {},
 ): a_contact_value.what_it_is_given => ({
   card: a_card_of(bond, bond === L_b ? 'Bruno' : 'Carla R.'),
   extensions: [ping_pong_seen(given.is ?? 'active')],
   offered: offers_a_bond(given.offered ?? true),
   activities: [...(given.activities ?? [])],
+  in_common: given.in_common ?? { answer: 'not_asked' },
 })
 
 /** Held letters: ping pong's (a ping to a bond removed), the kernel's. */
@@ -277,7 +280,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     })
   })
 
-  test('making the first face asks once, and once made drops the draft and starts again', () => {
+  test('making the first face asks once, and once made drops the draft and shows the server', () => {
     const typed = the_first_face.after(the_first_face.at_the_start(undefined), {
       happens: 'she_types_the_name',
       name: 'Anna',
@@ -303,7 +306,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       expect(after.asks).toEqual([
         { asks: 'to_drop_a_draft', for: { for: 'the_name_of_my_first_face' } },
       ])
-      expect(after.goes).toEqual({ goes: 'to_the_start' })
+      expect(after.goes).toEqual({ goes: 'to_a_screen', screen: { screen: 'the_server' } })
     }
     expect(the_first_face.after(made.state, it_ended('A_other', done)).asks).toEqual([])
   })
@@ -378,6 +381,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       'the_handshake_at_a_distance',
       'the_extensions',
       'what_happened',
+      'the_server',
     ] as const
     expect(
       my_contacts.what_it_shows(open.state, { contacts: [], held_letters: 0, happened: 0 }).menu,
@@ -1175,5 +1179,49 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         what: { activity: 'put_a_held_letter_aside', whose, letter: 'K1', because: 'non serve' },
       },
     ])
+  })
+  test('the server is shown once after the first face, read again from the menu, and goes on to the start', () => {
+    const shown = the_server.what_it_shows(the_server.at_the_start(), {
+      relay: 'https://relay.cumino.test',
+    })
+    expect(shown).toEqual({ relay: 'https://relay.cumino.test' })
+    for (const happens of [{ happens: 'she_goes_on' }, { happens: 'she_goes_back' }] as const) {
+      expect(the_server.after(the_server.at_the_start(), happens)).toEqual({
+        state: {},
+        asks: [],
+        goes: { goes: 'to_the_start' },
+      })
+    }
+    const from_the_menu = my_contacts.after(
+      { menu: 'open' },
+      { happens: 'she_chooses', entry: 'the_server' },
+    )
+    expect(from_the_menu.goes).toEqual({ goes: 'to_a_screen', screen: { screen: 'the_server' } })
+  })
+
+  test('a strip over every screen while the relay does not answer, none once it answers', () => {
+    expect(ui.the_strip('did_not_answer')).toEqual({ strip: 'the_relay_does_not_answer' })
+    expect(ui.the_strip('answered')).toEqual({ strip: 'none' })
+  })
+
+  test('the answer of the extensions in common is shown beside its question, the last one asked', () => {
+    const shown = (in_common: a_contact_value.what_it_is_given['in_common']) => {
+      const it = a_contact.what_it_shows(
+        a_contact.at_the_start(L_b),
+        the_contact_given(L_b, { in_common }),
+      )
+      return it.shows === 'the_contact' ? it.in_common : undefined
+    }
+    expect(shown({ answer: 'not_asked' })).toEqual({ answer: 'not_asked' })
+    expect(shown({ answer: 'waiting' })).toEqual({ answer: 'waiting' })
+    expect(shown({ answer: 'in_common', extensions: [ping_pong] })).toEqual({
+      answer: 'in_common',
+      extensions: [ping_pong],
+    })
+    expect(shown({ answer: 'in_common', extensions: [] })).toEqual({ answer: 'none_in_common' })
+    expect(shown({ answer: 'no_answer', why: 'no_response' })).toEqual({
+      answer: 'no_answer',
+      why: 'no_response',
+    })
   })
 })
