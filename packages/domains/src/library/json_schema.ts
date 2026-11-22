@@ -7,7 +7,9 @@ import * as z from 'zod'
 // tell is marked, never left as "anything": a field that must be absent
 // (`z.undefined()`) accepts nothing (`not: {}`); a refinement, a function the
 // shape does not show, `x-refined`; a form JSON Schema has no word for
-// (a transform, a function, a date), `x-unrepresentable` with its zod type.
+// (a transform, a function, a date), `x-unrepresentable` with its zod type;
+// a form whose JSON Schema zod's reader reads back as another shape, which
+// accepts or refuses more (EXT-6, as measured), `x-lossy` with what it loses.
 // A reader that cannot decide over a marked shape takes any change of it as a
 // change.
 
@@ -50,6 +52,45 @@ const unrepresentable: ReadonlySet<string> = new Set([
   'promise',
 ])
 
+/** A regular expression whose meaning needs its Unicode flag, which a reader of its JSON Schema's pattern drops. */
+const is_a_unicode_pattern = (pattern: unknown): boolean =>
+  pattern instanceof RegExp && (pattern.unicode || pattern.unicodeSets)
+
+/**
+ * What zod's reader of the export (`fromJSONSchema`) loses of a shape, as
+ * measured (EXT-6): a URL's protocol, hostname or normalization (`format:
+ * uri`); the keys a record with finite keys requires; an overwrite
+ * (`.trim()`, `.toLowerCase()`…: the export tells the value before it); a
+ * pipe (its input's side only); a pattern with the Unicode flag (read
+ * without it). In the order of that list, none when it reads back whole.
+ */
+const what_the_reading_loses = (shape: z.core.$ZodTypes): readonly string[] => {
+  const definition = shape._zod.def
+  const checks = 'checks' in definition ? (definition.checks ?? []) : []
+  const parts = [definition, ...checks.map((check) => check._zod.def)]
+  const a_url_narrowed = parts.some(
+    (part) =>
+      'format' in part &&
+      part.format === 'url' &&
+      (('protocol' in part && part.protocol !== undefined) ||
+        ('hostname' in part && part.hostname !== undefined) ||
+        ('normalize' in part && part.normalize === true)),
+  )
+  const finite_keys = definition.type === 'record' && definition.keyType._zod.values !== undefined
+  const an_overwrite = checks.some((check) => check._zod.def.check === 'overwrite')
+  const a_pipe = definition.type === 'pipe'
+  const a_unicode_pattern = parts.some(
+    (part) => 'pattern' in part && is_a_unicode_pattern(part.pattern),
+  )
+  return [
+    ...(a_url_narrowed ? ['url'] : []),
+    ...(finite_keys ? ['record_keys'] : []),
+    ...(an_overwrite ? ['overwrite'] : []),
+    ...(a_pipe ? ['pipe'] : []),
+    ...(a_unicode_pattern ? ['unicode_pattern'] : []),
+  ]
+}
+
 /** The JSON Schema of a schema, on its input side, with the marks of what JSON Schema cannot tell (DOM-21, TST-7). */
 export const json_schema_of = (schema: z.ZodType): Json => {
   const whole = z.toJSONSchema(schema, {
@@ -65,6 +106,8 @@ export const json_schema_of = (schema: z.ZodType): Json => {
       if (checks?.some((check) => check._zod.def.check === 'custom') === true) {
         context.jsonSchema['x-refined'] = true
       }
+      const lost = what_the_reading_loses(context.zodSchema)
+      if (lost.length > 0) context.jsonSchema['x-lossy'] = lost
     },
   })
   const json = as_json(whole)

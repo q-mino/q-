@@ -314,6 +314,10 @@ describe('the personas (PER-1..PER-14, PER-25)', () => {
       await anna.runs()
       return question_id
     }
+    const learned_greetings = {
+      is: 'learned',
+      in_common: [{ extension: 'greetings', majors: [1] }],
+    }
     const q1 = await anna_asks_bruno()
     // The request is the kernel's, keyed by the question (F7); Bruno's response, taken by Anna's entry.
     expect(await anna.sent()).toEqual([anna.the_kernels_request_of(q1)])
@@ -342,6 +346,28 @@ describe('the personas (PER-1..PER-14, PER-25)', () => {
       path: 'extensions/activations/fact/the_extensions_in_common_with_a_bond_have_been_learned',
       payload: { question_id: q2, in_common: [] },
     })
+    // Her screen of the bond reads the questions through `self`, the last first, with what came back (UI-5).
+    const [questions] = await anna.the_user('usecase/the_questions_asked_of_a_bond', {
+      bond_id: 'L_b',
+    })
+    expect(questions).toMatchObject({ event: 'snapshot', total: 2 })
+    const field = (entry: unknown, key: string): unknown => Reflect.get(Object(entry), key)
+    const entries: unknown = field(questions, 'entries')
+    if (!Array.isArray(entries)) throw new Error('no entries read')
+    const read: readonly unknown[] = entries
+    expect(
+      new Map(read.map((entry) => [field(entry, 'question_id'), field(entry, 'answer')])),
+    ).toEqual(
+      new Map<unknown, unknown>([
+        [q1, learned_greetings],
+        [q2, { is: 'learned', in_common: [] }],
+      ]),
+    )
+    const [last, before_it] = read
+    expect(String(field(last, 'asked_at')) >= String(field(before_it, 'asked_at'))).toBe(true)
+    expect(
+      await anna.the_user('usecase/the_questions_asked_of_a_bond', { bond_id: 'L_c' }),
+    ).toMatchObject([{ event: 'snapshot', entries: [], total: 0 }])
     // An input that names a bond, or a field beyond `offered`: invalid_request, before any node.
     const before = bruno.tree_traced.length
     for (const [id, input] of [

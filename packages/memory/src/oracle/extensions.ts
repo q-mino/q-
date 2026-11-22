@@ -15,6 +15,7 @@ import type * as activations_fact from '@q-mino/domains/extensions/activations/_
 import type * as activations_predicate from '@q-mino/domains/extensions/activations/_predicate.ts'
 import type * as activations_query from '@q-mino/domains/extensions/activations/_query.ts'
 import type * as extension_selections from '@q-mino/domains/extensions/activations/_extension_selection.ts'
+import type * as question_selections from '@q-mino/domains/extensions/activations/_question_selection.ts'
 import type { extension_name, question_id } from '@q-mino/domains/extensions/activations/_id.ts'
 import type { bond_id } from '@q-mino/domains/bonds/address_book/_id.ts'
 import {
@@ -44,6 +45,7 @@ import {
   offer_an_extension_to_a_bond,
   the_extensions_in_common,
   the_extensions_offered_to_a_bond,
+  the_questions_asked_of_a_bond,
   withdraw_the_offer_from_a_bond,
 } from '@q-mino/domains/extensions/activations/_usecase.ts'
 import { the_bond_is_kept } from '@q-mino/domains/bonds/address_book/_dsl.ts'
@@ -227,6 +229,42 @@ export const extension_sources = (
   the_extensions_in_common: { from: the_installed(installed), fields: as_offered },
 })
 
+// The reads of the subject `extensions/activations/selection/question`: a question the node asked a bond.
+
+export const question_selection: zz.Algebra<
+  zz.SelectionsIn<typeof question_selections>,
+  Selection<Read, question>
+> = {
+  ...selection_operators<Read, question>(),
+  predicate: {
+    'extensions/activations/selection/question/the_question_was_asked_of_this_bond':
+      (p) => () => (asked) =>
+        asked.bond === p.bond,
+  },
+}
+
+/** The questions her node asked, every one the office keeps. */
+const the_questions: Source<Read, question> = (state) => [...state.activations.questions.values()]
+
+export const question_sources: {
+  readonly the_questions_asked_of_a_bond: zz.QuerySource<
+    zz.FieldsOf<typeof activations_query.the_questions_asked_of_a_bond>,
+    Source<Read, question>,
+    Field<Read, question>
+  >
+} = {
+  the_questions_asked_of_a_bond: {
+    from: the_questions,
+    fields: {
+      id: () => (asked) => asked.id,
+      bond: () => (asked) => asked.bond,
+      offered: () => (asked) => asked.offered,
+      asked_at: () => (asked) => asked.asked_at,
+      progress: () => (asked) => asked.progress,
+    },
+  },
+}
+
 /** The office after a change of its record. */
 const with_the_office =
   (change: (office: ExtensionsState['activations']) => Partial<ExtensionsState['activations']>) =>
@@ -348,6 +386,18 @@ export const extensions_ports =
     })({
       algebra: { ...extension_selection, after },
       sources: extension_sources(installed),
+      read: read(cell),
+      page: page(cell),
+      streams: {},
+    }),
+    ...zz.read_use_case_ports({
+      registry,
+      identities: address_book_registry,
+      versions,
+      use_cases: { the_questions_asked_of_a_bond },
+    })({
+      algebra: { ...question_selection, after },
+      sources: question_sources,
       read: read(cell),
       page: page(cell),
       streams: {},

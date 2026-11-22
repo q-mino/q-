@@ -634,6 +634,7 @@ export const phone =
             my_ticket: self_usecase.my_ticket,
             an_extension: self_usecase.an_extension,
             the_extensions_offered_to_a_bond: self_usecase.the_extensions_offered_to_a_bond,
+            the_questions_asked_of_a_bond: self_usecase.the_questions_asked_of_a_bond,
           },
         })(trees),
         known: zz.tree_ports_by_path({

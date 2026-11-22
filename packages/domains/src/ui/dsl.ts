@@ -216,3 +216,7 @@ export const it_happened_to = (
   happened: user.value.what_happened_without_a_fact,
   extension: string,
 ): boolean => 'extension' in happened && happened.extension === extension
+
+/** The strip over every screen (UI-5): the relay that did not answer when her node last met it; else none. */
+export const the_strip = (relay: value.the_relay_met): value.a_strip =>
+  relay === 'did_not_answer' ? { strip: 'the_relay_does_not_answer' } : { strip: 'none' }
