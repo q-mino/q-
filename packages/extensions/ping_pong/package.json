@@ -15,6 +15,7 @@
     "zod": "^4.6.7"
   },
   "scripts": {
-    "manifest": "node scripts/manifest.ts"
+    "manifest": "node scripts/manifest.ts",
+    "words": "node scripts/words.ts"
   }
 }

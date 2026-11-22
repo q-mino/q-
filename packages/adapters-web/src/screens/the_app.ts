@@ -48,18 +48,24 @@ export interface TheCommonTexts {
   readonly the_kernels_events: (event: string) => string | undefined
   /** A gesture handed to her node that did not reach it (a fault of the app's, never hers). */
   readonly something_went_wrong: string
-  /** The kernel's mark of an extension: its name (EXT-16). */
-  readonly the_mark_of: (extension: string) => string
+  /** The kernel's mark of an extension: its name, from its words (EXT-16, WEB-22). */
+  readonly the_mark_of: (name: string) => string
+  /**
+   * A word of an extension the app does not have (its name, a point's label,
+   * an event's words), drawn as a fault by the name in the manifest it is
+   * for: never silently that name (WEB-22).
+   */
+  readonly a_word_missing: (name: string) => string
   /** The kernel's words around an extension's points in its mark (EXT-16, WEB-22). */
   readonly the_points: ThePointsTexts
 }
 
 /** The kernel's words around an extension's points (provisional, A to confirm): the extension's own words are its (`texts/`, EXT-16). */
 export interface ThePointsTexts {
-  /** The gesture that opens a page, by its name. */
-  readonly opens_the_page: (page: string) => string
-  /** A frame, by its name (its title, for who cannot see it). */
-  readonly the_frame: (name: string) => string
+  /** The gesture that opens a page, by its label in the extension's words. */
+  readonly opens_the_page: (label: string) => string
+  /** A frame, by its label in the extension's words (its title, for who cannot see it). */
+  readonly the_frame: (label: string) => string
   /** A frame whose document the app does not have: a fault of the app's composition. */
   readonly no_document: string
   /** What a frame did, told as its extension's activity (EXT-16): the leaf it invoked, when. */
@@ -107,10 +113,17 @@ export const the_words_of_an_end = (
   return said === undefined ? ended : `${ended}: ${said}`
 }
 
+/** A word of an extension, or the fault of its missing, by the name in the manifest it is for (WEB-22). */
+export const the_word_or_its_fault = (
+  common: TheCommonTexts,
+  word: string | undefined,
+  name: string,
+): string => word ?? common.a_word_missing(name)
+
 /**
  * How an action of an extension ended, in her words (EXT-16): with what its
- * extension answered, its own words for its event when it has them; else as
- * any activity ends.
+ * extension answered, its own words for its event, a fault when it has none
+ * (WEB-22); else as any activity ends.
  */
 export const the_words_of_an_actions_end = (
   common: TheCommonTexts,
@@ -118,7 +131,9 @@ export const the_words_of_an_actions_end = (
   how: activities_value.how_it_ended,
 ): string => {
   if (how.ended !== 'the_extension_told_how_it_ended') return the_words_of_an_end(common, how)
-  return words?.events[how.said.event] ?? the_words_of_an_end(common, how)
+  const event = how.said.event
+  const said = words?.events[event]
+  return said ?? `${common.how_it_ended[how.ended]}: ${common.a_word_missing(event)}`
 }
 
 /** The app, given by the root to every screen (Solid's context: static wiring, read once at a screen's setup). */

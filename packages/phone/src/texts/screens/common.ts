@@ -49,10 +49,12 @@ export const common = {
   cannot_be_reached: { it_is_not_active: 'è spenta', it_has_stopped: 'si è fermata' },
   the_kernels_events: (event) => the_kernels_events.get(event),
   something_went_wrong: 'Qualcosa non è arrivato al telefono: riprova.',
-  the_mark_of: (extension) => `Estensione «${extension}»`,
+  the_mark_of: (name) => `Estensione «${name}»`,
+  // A word an extension's words lack, drawn as a fault (WEB-22) [Q, C, provisional: A to confirm].
+  a_word_missing: (name) => `${name} (parola mancante)`,
   the_points: {
-    opens_the_page: (page) => `Apri la pagina «${page}»`,
-    the_frame: (name) => `Riquadro «${name}» dell’estensione`,
+    opens_the_page: (label) => `Apri la pagina «${label}»`,
+    the_frame: (label) => `Riquadro «${label}» dell’estensione`,
     no_document: 'L’app non ha il riquadro di questa estensione.',
     it_did: (use_case, at, time_zone) =>
       `Il riquadro ha chiesto ${use_case} alle ${new Intl.DateTimeFormat('it-IT', { timeStyle: 'short', timeZone: time_zone }).format(new Date(at))}, da sé: non è un tuo gesto.`,

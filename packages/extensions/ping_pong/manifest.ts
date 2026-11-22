@@ -11,7 +11,7 @@ import type { registry } from './persona/self/_registry.ts'
 // folders from it (`mounted_of`, EXT-11). It sees on `known` the bond alone;
 // it calls the port of requests, toward its own leaf `ping` on a bond's
 // node, and its storage; on a bond's screen, the action `ping` (the label
-// "Ping", its `texts/` with step 16) invokes its leaf on `self` with the
+// "Ping", in its words, `texts/it.ts`) invokes its leaf on `self` with the
 // bond, which follows the ping to its pong (EXT-16, DOM-3): where the pong
 // is shown. No slot, no page in stage 1's first release of it: the slot of
 // a bond's pings, a frame that follows a read of them, is the remedy

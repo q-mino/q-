@@ -88,7 +88,13 @@ const anna = (extension = ping_pong('active')): Partial<WhatTheNodeHolds> => ({
   offered: [{ bond: 'L_b', offered: [{ extension: 'ping_pong', majors: [1] }] }],
 })
 
-const the_mark = words.common.the_mark_of('ping_pong')
+/** Ping pong's mark, by the name its words give it (WEB-22). */
+const the_mark = words.common.the_mark_of('Ping pong')
+
+/** Ping pong's words with a label for its page `the_scores`, as a page of its would have one. */
+const with_the_scores_labelled = {
+  ping_pong: { ...words.extensions.ping_pong, pages: { the_scores: 'I punteggi' } },
+}
 
 /** Ping pong's mark on the screen shown, if drawn. */
 const the_mark_shown = (app: TheAppOpened): HTMLElement | null =>
@@ -265,6 +271,42 @@ describe('the extension points', () => {
     })
   })
 
+  test('an extension the app has no words for: its name, its action and its end drawn as faults, never silently its names', async () => {
+    const anna_s = a_node_of_test(anna())
+    opened = opens_the_app({
+      node: anna_s.node,
+      device: a_device_of_test(['A8']),
+      words: {},
+    })
+    const app = opened
+    await opens_the_contact(app, 'Bruno')
+    const the_faulty_mark = words.common.the_mark_of(words.common.a_word_missing('ping_pong'))
+    const mark = () => {
+      const found = app
+        .shown()
+        .querySelector<HTMLElement>(`section[aria-label="${the_faulty_mark}"]`)
+      if (found === null) throw new Error('no mark')
+      return found
+    }
+    await until(() => {
+      expect(mark().querySelector('h2')?.textContent).toBe(the_faulty_mark)
+    })
+    expect(has_a_button(mark(), 'ping')).toBe(false)
+    the_button(mark(), words.common.a_word_missing('ping')).click()
+    await until(() => {
+      expect(anna_s.activities_asked()).toHaveLength(1)
+    })
+    anna_s.ends('A8', {
+      ended: 'the_extension_told_how_it_ended',
+      said: { event: 'pong', payload: { ping_id: 'P1' } },
+    })
+    await until(() => {
+      expect(mark().textContent).toContain(
+        `${words.common.how_it_ended.the_extension_told_how_it_ended}: ${words.common.a_word_missing('pong')}`,
+      )
+    })
+  })
+
   test('the extension’s own screen holds its page; opened, its frame in the mark, no longer there once deactivated', async () => {
     const with_a_page = ping_pong('active', [
       { point: 'page', name: 'the_scores', place: 'the_extension' },
@@ -277,15 +319,16 @@ describe('the extension points', () => {
         frame.extension === 'ping_pong' && frame.point === 'page' && frame.name === 'the_scores'
           ? a_document
           : undefined,
+      words: with_the_scores_labelled,
     })
     const app = opened
     await opens_ping_pong(app)
     await until(() => {
-      expect(has_a_button(app.shown(), words.common.the_points.opens_the_page('the_scores'))).toBe(
+      expect(has_a_button(app.shown(), words.common.the_points.opens_the_page('I punteggi'))).toBe(
         true,
       )
     })
-    the_button(app.shown(), words.common.the_points.opens_the_page('the_scores')).click()
+    the_button(app.shown(), words.common.the_points.opens_the_page('I punteggi')).click()
     await until(() => {
       expect(the_title(app)).toBe(words.a_page.title)
       expect(the_mark_shown(app)?.querySelector('iframe')).toBeTruthy()
@@ -294,7 +337,7 @@ describe('the extension points', () => {
     if (mark === null) throw new Error('no mark')
     const frame = the_frame_in(mark)
     expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
-    expect(frame.getAttribute('title')).toBe(words.common.the_points.the_frame('the_scores'))
+    expect(frame.getAttribute('title')).toBe(words.common.the_points.the_frame('I punteggi'))
     const document_given = frame.getAttribute('srcdoc') ?? ''
     expect(
       document_given.startsWith('<!doctype html><meta http-equiv="Content-Security-Policy"'),
@@ -434,7 +477,14 @@ describe('the extension points', () => {
     const mark = the_mark_shown(app)
     if (mark === null) throw new Error('no mark')
     const the_board = the_frame_in(mark)
-    the_button(app.shown(), words.common.the_points.opens_the_page('the_scores')).click()
+    // Ping pong's words label neither: each drawn as a fault, by its name (WEB-22).
+    expect(the_board.getAttribute('title')).toBe(
+      words.common.the_points.the_frame(words.common.a_word_missing('the_board')),
+    )
+    the_button(
+      app.shown(),
+      words.common.the_points.opens_the_page(words.common.a_word_missing('the_scores')),
+    ).click()
     await until(() => {
       expect(the_title(app)).toBe(words.a_page.title)
     })

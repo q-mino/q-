@@ -17,7 +17,12 @@ import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { createEffect, createSignal, For, on, onCleanup, onMount, Show, untrack } from 'solid-js'
 import { the_document_of_a_frame, the_sandbox_of_a_frame } from '../frames/index.ts'
 import type { AFrameServed, AnEventOfALeaf } from '../her_node/index.ts'
-import { the_app, the_screen_is_shown, type AFrameToPlace } from './the_app.ts'
+import {
+  the_app,
+  the_screen_is_shown,
+  the_word_or_its_fault,
+  type AFrameToPlace,
+} from './the_app.ts'
 
 /** What a frame is told of its place (EXT-16): the boundary's form of `ui`'s place. */
 const placed = (told: ui_value.a_place): boundary.a_message_to_a_frame =>
@@ -42,6 +47,13 @@ export const TheFrame = (props: {
   const shown = the_screen_is_shown()
   const frame = untrack(() => props.frame)
   const document = app.document_of(frame)
+  /** Its label, from its extension's words, or the fault of its missing (WEB-22). */
+  const words = app.words(frame.extension)
+  const label = the_word_or_its_fault(
+    app.common,
+    frame.point === 'slot' ? words?.slots[frame.name] : words?.pages[frame.name],
+    frame.name,
+  )
   const [did, set_did] = createSignal<readonly WhatItDid[]>([])
   const flows = new Set<AsyncIterator<AnEventOfALeaf>>()
   let element: HTMLIFrameElement | undefined
@@ -111,7 +123,7 @@ export const TheFrame = (props: {
             ref={(it) => {
               element = it
             }}
-            title={app.common.the_points.the_frame(frame.name)}
+            title={app.common.the_points.the_frame(label)}
             sandbox={the_sandbox_of_a_frame}
             srcdoc={the_document_of_a_frame(it())}
             style={{ width: '100%', border: '1px dashed' }}

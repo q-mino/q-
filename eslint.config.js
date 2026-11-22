@@ -38,7 +38,8 @@ const tree_rules = {
 
 // An extension's declaration (EXT-10; A, 21 Nov 2026): its actions' `invokes` are typed by the registry of its
 // leaves on `self` only through the `satisfies`, which no compiler asks for: the lint asks it of the export
-// `manifest` of every extension's `manifest.ts`.
+// `manifest` of every extension's `manifest.ts`; and of the export `words` of every module of its words in
+// `texts/`, whose completeness is typed by its declaration and that registry the same way (WEB-22; A, 22 Nov 2026).
 const the_rule_of_a_manifest = {
   'no-restricted-syntax': [
     'error',
@@ -47,6 +48,12 @@ const the_rule_of_a_manifest = {
         "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='manifest']:not([init.type='TSSatisfiesExpression'][init.typeAnnotation.typeName.left.name='boundary'][init.typeAnnotation.typeName.right.name='Manifest'][init.typeAnnotation.typeArguments.params.0.exprName.name='registry'])",
       message:
         "An extension's manifest satisfies `boundary.Manifest<typeof registry>` (EXT-10): its actions' `invokes` typed by the registry of its leaves on `self`.",
+    },
+    {
+      selector:
+        "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='words']:not([init.type='TSSatisfiesExpression'][init.typeAnnotation.typeName.left.name='boundary'][init.typeAnnotation.typeName.right.name='Words'][init.typeAnnotation.typeArguments.params.0.exprName.name='manifest'][init.typeAnnotation.typeArguments.params.1.exprName.name='registry'])",
+      message:
+        "An extension's words satisfy `boundary.Words<typeof manifest, typeof registry>` (WEB-22): a label for each of its points, words for each own event of the leaves its actions invoke.",
     },
   ],
 }
@@ -135,8 +142,8 @@ export default defineConfig(
     rules: tree_rules,
   },
   {
-    // The declaration of every extension (EXT-10).
-    files: ['packages/extensions/*/manifest.ts'],
+    // The declaration of every extension (EXT-10), and the modules of its words (WEB-22).
+    files: ['packages/extensions/*/manifest.ts', 'packages/extensions/*/texts/*.ts'],
     rules: the_rule_of_a_manifest,
   },
   prettier,
