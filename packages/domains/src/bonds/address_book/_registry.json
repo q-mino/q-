@@ -262,7 +262,7 @@
       "shapes": {
         "schema": {
           "direction": "carried",
-          "schema": { "type": "string", "maxLength": 2048, "format": "uri" }
+          "schema": { "type": "string", "maxLength": 2048, "format": "uri", "x-lossy": ["url"] }
         }
       }
     },
@@ -275,7 +275,7 @@
             "minItems": 1,
             "maxItems": 1,
             "type": "array",
-            "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+            "items": { "type": "string", "maxLength": 2048, "format": "uri", "x-lossy": ["url"] }
           }
         }
       }
@@ -323,7 +323,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["deposit_address", "relays"],
@@ -349,7 +354,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["deposit_address", "relays"],
@@ -370,7 +380,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["relays"],
@@ -410,7 +425,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -589,7 +609,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["relays"],
@@ -638,7 +663,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -689,7 +719,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -702,7 +737,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["relays"],
@@ -760,7 +800,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -778,7 +823,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -925,7 +975,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -943,7 +998,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -1085,7 +1145,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["relays"],
@@ -1126,7 +1191,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -1169,7 +1239,12 @@
                             "minItems": 1,
                             "maxItems": 1,
                             "type": "array",
-                            "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                            "items": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "format": "uri",
+                              "x-lossy": ["url"]
+                            }
                           }
                         },
                         "required": ["deposit_address", "relays"],
@@ -1182,7 +1257,12 @@
                             "minItems": 1,
                             "maxItems": 1,
                             "type": "array",
-                            "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                            "items": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "format": "uri",
+                              "x-lossy": ["url"]
+                            }
                           }
                         },
                         "required": ["relays"],
@@ -1235,7 +1315,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -1253,7 +1338,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -1395,7 +1485,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -1413,7 +1508,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -1616,7 +1716,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -1634,7 +1739,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -1742,7 +1852,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -1798,7 +1913,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],
@@ -1975,7 +2095,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["relays"],
@@ -2113,7 +2238,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -2379,7 +2509,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -2932,7 +3067,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -3165,7 +3305,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["bond_id", "face_id", "relays"],
@@ -3504,7 +3649,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -3827,7 +3977,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["deposit_address", "relays"],

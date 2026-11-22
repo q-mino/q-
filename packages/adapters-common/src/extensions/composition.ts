@@ -59,7 +59,7 @@ export type ACompositionFault =
       readonly leaf: string
     }
   | {
-      readonly fault: 'a_refined_input_on_known'
+      readonly fault: 'an_input_on_known_the_kernel_cannot_check'
       readonly major: number
       readonly leaf: string
       readonly marks: readonly string[]
@@ -117,8 +117,8 @@ const told = (fault: ACompositionFault): string => {
       return `it touches ${fault.port}, a port the kernel does not offer extensions (EXT-4)`
     case 'a_leaf_on_known_that_does_not_answer_in_one_event':
       return `its leaf ${fault.leaf} on known, at major ${String(fault.major)}, does not answer in one event (F7, EXT-4)`
-    case 'a_refined_input_on_known':
-      return `the input of its leaf ${fault.leaf} on known, at major ${String(fault.major)}, holds a refinement JSON Schema cannot tell, at ${fault.marks.join(', ')} (EXT-6, EXT-4)`
+    case 'an_input_on_known_the_kernel_cannot_check':
+      return `the input of its leaf ${fault.leaf} on known, at major ${String(fault.major)}, holds a shape its JSON Schema does not tell whole (a refinement, a form with no JSON word, a form its reading loses), at ${fault.marks.join(', ')} (EXT-6, EXT-4)`
     case 'a_surface_with_no_leaves_at_its_version':
       return `its surface on ${fault.persona} speaks ${fault.version}, a major with no leaves (PER-17, EXT-4)`
     case 'a_json_schema_not_read':
@@ -147,8 +147,9 @@ const is_an_object = (value: boundary.Json): value is boundary.JsonObject =>
 
 /**
  * The places in a JSON Schema where the export marked what JSON Schema
- * cannot tell (`json_schema_of`, DOM-21: `x-refined`, `x-unrepresentable`),
- * as JSON Pointers (`/properties/words`).
+ * cannot tell (`json_schema_of`, DOM-21: `x-refined`, `x-unrepresentable`)
+ * or what zod's reading of it loses (`x-lossy`, EXT-6), as JSON Pointers
+ * (`/properties/words`).
  */
 export const the_marks_in = (schema: boundary.Json, at = ''): readonly string[] => {
   if (Array.isArray(schema)) {
@@ -158,7 +159,9 @@ export const the_marks_in = (schema: boundary.Json, at = ''): readonly string[] 
   }
   if (!is_an_object(schema)) return []
   const here =
-    Object.hasOwn(schema, 'x-refined') || Object.hasOwn(schema, 'x-unrepresentable')
+    Object.hasOwn(schema, 'x-refined') ||
+    Object.hasOwn(schema, 'x-unrepresentable') ||
+    Object.hasOwn(schema, 'x-lossy')
       ? [at === '' ? '/' : at]
       : []
   return [
@@ -202,7 +205,9 @@ const a_mounted_surface = (
         faults.push({ fault: 'a_leaf_on_known_that_does_not_answer_in_one_event', major, leaf })
       }
       const marks = persona === 'known' ? the_marks_in(given.input) : []
-      if (marks.length > 0) faults.push({ fault: 'a_refined_input_on_known', major, leaf, marks })
+      if (marks.length > 0) {
+        faults.push({ fault: 'an_input_on_known_the_kernel_cannot_check', major, leaf, marks })
+      }
       const input = read(given.input)
       if (input.read === 'not_read') not_read('input', input.error)
       const events = Object.entries(given.events).flatMap(

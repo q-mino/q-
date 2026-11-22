@@ -108,7 +108,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["letter", "face_id", "their_key", "relays"],
@@ -223,7 +228,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -333,7 +343,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -449,7 +464,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -566,7 +586,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -691,7 +716,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -822,7 +852,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["letter", "face_id", "their_key", "relays"],
@@ -942,7 +977,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["letter", "face_id", "their_key", "relays"],
@@ -1063,7 +1103,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["letter", "face_id", "their_key", "relays"],
@@ -1183,7 +1228,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["letter", "face_id", "their_key", "relays"],
@@ -1470,7 +1520,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["letter", "face_id", "their_key", "relays"],
@@ -1812,7 +1867,12 @@
                 "minItems": 1,
                 "maxItems": 1,
                 "type": "array",
-                "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
               }
             },
             "required": ["letter", "face_id", "their_key", "relays"],
@@ -1927,7 +1987,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],
@@ -2035,7 +2100,12 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
                       }
                     },
                     "required": ["deposit_address", "relays"],
@@ -2288,7 +2358,12 @@
                     "minItems": 1,
                     "maxItems": 1,
                     "type": "array",
-                    "items": { "type": "string", "maxLength": 2048, "format": "uri" }
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
                   }
                 },
                 "required": ["letter", "face_id", "their_key", "relays"],

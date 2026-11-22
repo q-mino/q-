@@ -54,7 +54,7 @@ describe('the manifest of greetings (EXT-10)', () => {
       'version_not_supported',
       'identity_already_used',
     ])
-    expect(JSON.stringify(greet?.input)).not.toMatch(/x-refined|x-unrepresentable/)
+    expect(JSON.stringify(greet?.input)).not.toMatch(/x-refined|x-unrepresentable|x-lossy/)
   })
 
   test('an action whose leaf is no leaf of self does not compile against its registry', () => {
