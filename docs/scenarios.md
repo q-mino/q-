@@ -53,6 +53,7 @@ Every open scenario is written in Shed at step 2 of the plan, before any code of
 - **SC-32** (covered, Shed 11) A persona's limit on reads: a leaf that streams for some wearers and not for others, by their values. PER-18, D80. Test: [`sc-32.test.ts`](../packages/domains/test/shed/scenarios/sc-32.test.ts).
 - **SC-33** (covered, Shed 11) Which buttons are active on each row of "my loans" (return, extend): a command's applicability evaluated per entry. D51. Test: [`sc-33.test.ts`](../packages/domains/test/shed/scenarios/sc-33.test.ts).
 - **SC-34** (covered, Shed 11) The workshop's system confirms a repair by a call from outside: a caller that is neither a person nor an internal entry. PER-4, PER-12. Test: [`sc-34.test.ts`](../packages/domains/test/shed/scenarios/sc-34.test.ts).
+- **SC-57** (open, reshapes; found at q-'s PNG-4, 22 Nov 2026, with the catalogue closed: it waits for the library, unless Alessandro decides) A follow until what it follows closes: Marta's screen follows the drill to the workshop until the stay it opened is closed, however long the workshop takes, not for a fixed minute from her tap (SC-27): a `follows` bounded by the followed chain's own closing rather than by the leaf's `at_most`. In q-, a ping's 60 seconds run from its delivery, and a pong later than the leaf's 70 seconds from the tap is recorded but shown on no screen, a flaw declared (PNG-4). DOM-3, DOM-10, D58.2.
 
 ## Effects, reactions, processes (step 7)
 
