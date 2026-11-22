@@ -4,7 +4,14 @@
 // load no DOM rendering.
 export { TheScreens, type TheScreensWiring } from './the_screens.tsx'
 export type { TheScreensTexts } from './texts.ts'
-export type { AFrameToPlace, TheApp, TheCommonTexts, TheDevice, ThePointsTexts } from './the_app.ts'
+export type {
+  AFrameToPlace,
+  TheApp,
+  TheCommonTexts,
+  TheDevice,
+  TheNavigatorsSharing,
+  ThePointsTexts,
+} from './the_app.ts'
 export type { AContactTexts } from './a_contact.tsx'
 export type { APageTexts } from './a_page.tsx'
 export type { AnExtensionTexts } from './an_extension.tsx'
@@ -12,6 +19,7 @@ export type { AnInvitationTexts } from './an_invitation.tsx'
 export type { MyContactsTexts } from './my_contacts.tsx'
 export type { TheExtensionsTexts } from './the_extensions.tsx'
 export type { TheFirstFaceTexts } from './the_first_face.tsx'
+export type { TheServerTexts } from './the_server.tsx'
 export type { TheHandshakeAtADistanceTexts } from './the_handshake_at_a_distance.tsx'
 export {
   the_words_of_a_bond_made,

@@ -1,6 +1,6 @@
 import type { TheCommonTexts } from '@q-mino/adapters-web/screens'
 
-// The words every screen shares (provisional, A to confirm).
+// The words every screen shares (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 
 /** What a kernel's leaf said, by its event (USR-3), in her words. */
 const the_kernels_events = new Map<string, string>([
@@ -10,7 +10,7 @@ const the_kernels_events = new Map<string, string>([
   ['you_met_in_person', 'vi siete incontrati di persona'],
   ['your_introduction_is_sent', 'la tua presentazione è partita'],
   ['the_bond_is_renamed', 'il nome è cambiato'],
-  ['the_bond_is_removed', 'il contatto è tolto'],
+  ['the_bond_is_removed', 'il contatto è eliminato'],
   ['the_extension_is_active', 'l’estensione è accesa'],
   ['the_extension_is_deactivated', 'l’estensione è spenta'],
   ['the_offer_is_withdrawn', 'l’estensione non è più offerta'],
@@ -18,7 +18,7 @@ const the_kernels_events = new Map<string, string>([
   ['the_bond_is_asked', 'la domanda è partita'],
   ['you_have_a_face_already', 'hai già un volto'],
   ['you_opened_their_ticket_already', 'avevi già aperto il suo biglietto'],
-  ['the_bond_was_removed_already', 'il contatto era già tolto'],
+  ['the_bond_was_removed_already', 'il contatto era già eliminato'],
   ['the_extension_was_active_already', 'l’estensione era già accesa'],
   ['the_extension_was_not_active', 'l’estensione non era accesa'],
   ['the_offer_was_withdrawn_already', 'l’estensione non era già più offerta'],
@@ -41,7 +41,6 @@ export const common = {
     done: 'Fatto',
     done_already: 'Era già fatto',
     cannot_be_done: 'Non si può fare',
-    the_extension_told_how_it_ended: 'L’estensione ha risposto',
     no_longer_followed: 'Non lo seguo più',
     the_extension_cannot_be_reached: 'L’estensione non si raggiunge',
     the_app_cannot_do_it: 'L’app non riesce a farlo',
@@ -50,8 +49,9 @@ export const common = {
   the_kernels_events: (event) => the_kernels_events.get(event),
   something_went_wrong: 'Qualcosa non è arrivato al telefono: riprova.',
   the_mark_of: (name) => `Estensione «${name}»`,
-  // A word an extension's words lack, drawn as a fault (WEB-22) [Q, C, provisional: A to confirm].
-  a_word_missing: (name) => `${name} (parola mancante)`,
+  // A word an extension's words lack, drawn as a fault in place of the whole text (WEB-22).
+  a_word_missing: (name) => `«${name}»: manca la parola dell’estensione`,
+  the_relay_does_not_answer: 'Il server non risponde: le lettere aspettano e partono appena torna.',
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,
     the_frame: (label) => `Riquadro «${label}» dell’estensione`,

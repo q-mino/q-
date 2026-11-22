@@ -125,9 +125,9 @@ const opens_ping_pong = async (app: TheAppOpened): Promise<void> => {
   the_button(app.shown(), words.my_contacts.the_entries.the_extensions).click()
   await until(() => {
     expect(the_title(app)).toBe(words.the_extensions.title)
-    expect(has_a_button(app.shown(), 'ping_pong')).toBe(true)
+    expect(has_a_button(app.shown(), 'Ping pong')).toBe(true)
   })
-  the_button(app.shown(), 'ping_pong').click()
+  the_button(app.shown(), 'Ping pong').click()
   await until(() => {
     expect(the_title(app)).toBe(words.an_extension.title)
   })
@@ -280,7 +280,7 @@ describe('the extension points', () => {
     })
     const app = opened
     await opens_the_contact(app, 'Bruno')
-    const the_faulty_mark = words.common.the_mark_of(words.common.a_word_missing('ping_pong'))
+    const the_faulty_mark = words.common.a_word_missing('ping_pong')
     const mark = () => {
       const found = app
         .shown()
@@ -301,9 +301,7 @@ describe('the extension points', () => {
       said: { event: 'pong', payload: { ping_id: 'P1' } },
     })
     await until(() => {
-      expect(mark().textContent).toContain(
-        `${words.common.how_it_ended.the_extension_told_how_it_ended}: ${words.common.a_word_missing('pong')}`,
-      )
+      expect(mark().textContent).toContain(words.common.a_word_missing('pong'))
     })
   })
 
@@ -478,13 +476,8 @@ describe('the extension points', () => {
     if (mark === null) throw new Error('no mark')
     const the_board = the_frame_in(mark)
     // Ping pong's words label neither: each drawn as a fault, by its name (WEB-22).
-    expect(the_board.getAttribute('title')).toBe(
-      words.common.the_points.the_frame(words.common.a_word_missing('the_board')),
-    )
-    the_button(
-      app.shown(),
-      words.common.the_points.opens_the_page(words.common.a_word_missing('the_scores')),
-    ).click()
+    expect(the_board.getAttribute('title')).toBe(words.common.a_word_missing('the_board'))
+    the_button(app.shown(), words.common.a_word_missing('the_scores')).click()
     await until(() => {
       expect(the_title(app)).toBe(words.a_page.title)
     })

@@ -7,6 +7,7 @@ import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { For, Match, Show, Switch, type JSX } from 'solid-js'
 import { TheFrame } from './a_frame.tsx'
 import {
+  in_its_words,
   the_app,
   the_word_or_its_fault,
   the_words_of_an_actions_end,
@@ -54,8 +55,11 @@ export const the_marks_style = { border: '2px solid', padding: '0.5em', margin: 
 export const TheMark = (props: { extension: string; children: JSX.Element }) => {
   const app = the_app()
   const title = () =>
-    app.common.the_mark_of(
-      the_word_or_its_fault(app.common, app.words(props.extension)?.name, props.extension),
+    in_its_words(
+      app.common,
+      app.words(props.extension)?.name,
+      props.extension,
+      app.common.the_mark_of,
     )
   return (
     <section aria-label={title()} style={the_marks_style}>
@@ -136,8 +140,11 @@ export const ThePoints = (props: {
                     props.opens(page)
                   }}
                 >
-                  {app.common.the_points.opens_the_page(
-                    the_word_or_its_fault(app.common, words()?.pages[page], page),
+                  {in_its_words(
+                    app.common,
+                    words()?.pages[page],
+                    page,
+                    app.common.the_points.opens_the_page,
                   )}
                 </button>
               </li>

@@ -12,6 +12,7 @@ export const registry = {
   'ui/the_handshake_at_a_distance/value/the_state': value.the_state,
   'ui/the_handshake_at_a_distance/value/what_happens': value.what_happens,
   'ui/the_handshake_at_a_distance/value/a_turn': value.a_turn,
+  'ui/the_handshake_at_a_distance/value/the_phone': value.the_phone,
   'ui/the_handshake_at_a_distance/value/what_it_is_given': value.what_it_is_given,
   'ui/the_handshake_at_a_distance/value/what_it_shows': value.what_it_shows,
 } satisfies zz.Registry

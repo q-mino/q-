@@ -6,8 +6,8 @@ import type { registry } from '../persona/self/_registry.ts'
 import { words } from '../texts/it.ts'
 
 // Ping pong's words (EXT-16, WEB-22; part 22.2, A, 22 Nov 2026): its texts
-// the kernel draws in its mark, in Italian (provisional, A to confirm: words
-// she reads), written in a typed module (`texts/it.ts`) whose type asks its
+// the kernel draws in its mark, in Italian (confirmed by Alessandro, 22 Nov
+// 2026: words she reads), written in a typed module (`texts/it.ts`) whose type asks its
 // name, a label for each of its actions, slots and pages, and words for
 // each own event of the leaves its actions invoke on `self`; and their data
 // form, written by its build and committed (`texts/it.json`), which must

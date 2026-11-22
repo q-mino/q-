@@ -15,6 +15,7 @@ import type { TheExtensionsTexts } from './the_extensions.tsx'
 import type { TheFirstFaceTexts } from './the_first_face.tsx'
 import type { TheHandshakeAtADistanceTexts } from './the_handshake_at_a_distance.tsx'
 import type { TheHandshakeInPersonTexts } from './the_handshake_in_person.tsx'
+import type { TheServerTexts } from './the_server.tsx'
 import type { WhatHappenedTexts } from './what_happened.tsx'
 
 /** The words of the screens, in one language. */
@@ -30,6 +31,7 @@ export interface TheScreensTexts {
   readonly an_extension: AnExtensionTexts
   readonly a_page: APageTexts
   readonly what_happened: WhatHappenedTexts
+  readonly the_server: TheServerTexts
   /** The words of each extension the app carries, by its name (EXT-16, WEB-22). */
   readonly extensions: Readonly<Record<string, boundary.the_words_of_an_extension>>
 }

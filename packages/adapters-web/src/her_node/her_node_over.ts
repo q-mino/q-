@@ -38,6 +38,7 @@ import type * as choices_usecase from '@q-mino/domains/user/choices/_usecase.ts'
 import type * as drafts_usecase from '@q-mino/domains/user/drafts/_usecase.ts'
 import type * as drafts_value from '@q-mino/domains/user/drafts/_value.ts'
 import { z } from 'zod'
+import type { TheRelayAsMet } from '../relay_client/index.ts'
 import { the_link_of_a_ticket } from '../ticket_link/index.ts'
 import type { AFrameServed, AnEventOfALeaf, HerNode, HerTicket } from './her_node.ts'
 
@@ -98,7 +99,8 @@ export const the_scope_of_a_frame = 'self/a_frame'
  * port toward `self` (`the_reads_of_self`); her ticket as her node shows it,
  * with its secret (BND-9), and the address of the phone's page, where its
  * link points (WEB-1); the extensions installed, by name (the
- * composition's, EXT-4); the news; the node's fact log (DOM-17).
+ * composition's, EXT-4); the news; the node's fact log (DOM-17); the relay
+ * of the configuration, and how the relay client last met it (UI-5).
  */
 export interface HerNodesWiring {
   readonly clock: zz.Clock
@@ -111,6 +113,7 @@ export interface HerNodesWiring {
   readonly the_news: TheNewsOfHerNode
   readonly the_log: zz.FactLog
   readonly the_frames: TheFramesOfHerNode
+  readonly the_relay: { readonly address: string; readonly as_met: TheRelayAsMet }
 }
 
 // `self`'s words, as its read leaves declare their entries.
@@ -122,6 +125,31 @@ type AnExtension = z.output<(typeof self_usecase.an_extension)[typeof zz.$UseCas
 type AnOffer = z.output<
   (typeof self_usecase.the_extensions_offered_to_a_bond)[typeof zz.$UseCase]['entry']
 >
+type AQuestionAsked = z.output<
+  (typeof self_usecase.the_questions_asked_of_a_bond)[typeof zz.$UseCase]['entry']
+>
+
+/** What came back of the last question asked (the first entry: the last first), in `ui`'s words (UI-5). */
+const the_extensions_in_common = (
+  last: AQuestionAsked | undefined,
+): ui_value.the_extensions_in_common => {
+  if (last === undefined) return { answer: 'not_asked' }
+  switch (last.answer.is) {
+    case 'waiting':
+      return { answer: 'waiting' }
+    case 'learned':
+      return {
+        answer: 'in_common',
+        extensions: last.answer.in_common.map((each) => each.extension),
+      }
+    case 'not_answered':
+      return { answer: 'no_answer', why: last.answer.why }
+  }
+}
+
+/** How the relay client last met the relay, in `ui`'s words: not met yet is as if it answered (UI-5). */
+const the_relay_met = (met: ReturnType<TheRelayAsMet['last']>): ui_value.the_relay_met =>
+  met === 'did_not_answer' ? 'did_not_answer' : 'answered'
 
 /** An event of a read of `self`, as the port toward `self` passes it: `self`'s words unchanged. */
 type AnEventOfSelf = { readonly event: string } & Readonly<Record<string, unknown>>
@@ -432,10 +460,12 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
     }
     void follows().catch(told)
     const stop_the_news = wiring.the_news.when_written(told)
+    const stop_the_relay = wiring.the_relay.as_met.when_it_changes(told)
     return () => {
       following = false
       stop_now()
       stop_the_news()
+      stop_the_relay()
       void log.return?.().catch(() => undefined)
     }
   }
@@ -495,6 +525,20 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
     the_extensions,
     the_offers,
     offered_to,
+    the_extensions_in_common_with: async (bond) =>
+      the_extensions_in_common(
+        (
+          await the_entries_of_self(
+            self_usecase.the_questions_asked_of_a_bond[zz.$UseCase].entry,
+            wiring.self('the_questions_asked_of_a_bond', { bond_id: bond }),
+          )
+        )[0],
+      ),
+    the_relay: () =>
+      Promise.resolve({
+        address: wiring.the_relay.address,
+        met: the_relay_met(wiring.the_relay.as_met.last()),
+      }),
     an_activity: async (activity_id) =>
       (await the_entries_of_user(wiring.user.an_activity(now(), { activity_id })))[0],
     the_activities_in_progress: () =>

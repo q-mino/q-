@@ -9,6 +9,7 @@ import * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { afterEach, describe, expect, test } from 'vitest'
 import {
   a_device_of_test,
+  a_sharing_of_test,
   a_node_of_test,
   has_a_button,
   opens_the_app,
@@ -42,11 +43,50 @@ const anna_s_ticket_for = (bond: string): HerTicket => ({
 })
 
 describe('the handshake at a distance', () => {
-  test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', async () => {
-    const anna = a_node_of_test({ faces: [{ face: 'F_a', name: 'Anna' }], the_active_face: 'F_a' })
+  test('where the phone has no share, the link is copied, and she is told it is copied', async () => {
+    const anna = a_node_of_test({
+      faces: [{ face: 'F_a', name: 'Anna' }],
+      the_active_face: 'F_a',
+      tickets: [anna_s_ticket_for('B2')],
+    })
+    const sharing = a_sharing_of_test(false)
     opened = opens_the_app({
       node: anna.node,
-      device: a_device_of_test(['A12', 'B2', 'A13', 'B3', 'A14', 'B4']),
+      device: a_device_of_test(['A12', 'B2'], undefined, sharing),
+    })
+    const app = opened
+    await until(() => {
+      expect(the_title(app)).toBe(words.my_contacts.title)
+    })
+    the_button(app.shown(), words.my_contacts.the_entries.the_handshake_at_a_distance).click()
+    await until(() => {
+      expect(has_a_button(app.shown(), at_a_distance.make_a_link)).toBe(true)
+    })
+    the_button(app.shown(), at_a_distance.make_a_link).click()
+    await until(() => {
+      expect(anna.activities_asked()).toHaveLength(1)
+    })
+    anna.ends('A12', {
+      ended: 'done',
+      said: { event: 'your_ticket_is_being_prepared', payload: {} },
+    })
+    await until(() => {
+      expect(has_a_button(app.shown(), at_a_distance.copy_the_link)).toBe(true)
+    })
+    expect(has_a_button(app.shown(), at_a_distance.share_the_link)).toBe(false)
+    the_button(app.shown(), at_a_distance.copy_the_link).click()
+    await until(() => {
+      expect(the_words(app)).toContain(at_a_distance.the_link_is_copied)
+    })
+    expect(sharing.copied()).toEqual([anna_s_ticket_for('B2').link])
+  })
+
+  test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', async () => {
+    const anna = a_node_of_test({ faces: [{ face: 'F_a', name: 'Anna' }], the_active_face: 'F_a' })
+    const sharing = a_sharing_of_test(true)
+    opened = opens_the_app({
+      node: anna.node,
+      device: a_device_of_test(['A12', 'B2', 'A13', 'B3', 'A14', 'B4'], undefined, sharing),
     })
     const app = opened
     await until(() => {
@@ -87,7 +127,11 @@ describe('the handshake at a distance', () => {
       )
     })
     expect(app.shown().querySelector<HTMLInputElement>('input[name="link"]')?.readOnly).toBe(true)
-    expect(app.shown().querySelector('a')?.getAttribute('href')).toBe(ready.link)
+    // Shared with the phone's share (WEB-18).
+    the_button(app.shown(), at_a_distance.share_the_link).click()
+    await until(() => {
+      expect(sharing.shared()).toEqual([ready.link])
+    })
 
     // Another link, for another bond; it cannot be prepared, and she makes it again.
     the_button(app.shown(), at_a_distance.make_another).click()

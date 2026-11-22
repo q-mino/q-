@@ -1,6 +1,6 @@
 import type { TheExtensionsTexts } from '@q-mino/adapters-web/screens'
 
-// The extensions installed (provisional, A to confirm).
+// The extensions installed (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 
 export const the_extensions = {
   title: 'Estensioni',

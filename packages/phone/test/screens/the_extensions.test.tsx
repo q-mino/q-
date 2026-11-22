@@ -58,8 +58,9 @@ const what_ping_pong_asks: user_value.what_an_extension_asks[] = [
 const ping_pong_s_notice = [
   its.what_it_asks.to_send_requests_on_your_bonds,
   its.to_answer_your_bonds(['usecase/ping']),
-  its.a_place_on_your_screens.action('ping', 'a_bond'),
-  its.a_place_on_your_screens.page('the_scores', 'the_extension'),
+  its.a_place_on_your_screens.action('Ping', 'a_bond'),
+  // A page whose label ping pong's words lack: the fault, in place of the whole line (WEB-22).
+  words.common.a_word_missing('the_scores'),
   its.what_it_asks.the_network_as_far_as_the_browser_leaves_it,
   its.what_it_asks.its_frames_act_with_no_tap,
 ]
@@ -139,11 +140,11 @@ describe('the extensions', () => {
     the_button(app.shown(), words.my_contacts.the_entries.the_extensions).click()
     await until(() => {
       expect(the_words(app)).toContain(
-        `ping_pong ${words.the_extensions.the_version('0.1.0')} ${words.the_extensions.is.not_active}`,
+        `Ping pong ${words.the_extensions.the_version('0.1.0')} ${words.the_extensions.is.not_active}`,
       )
     })
     the_button(app.shown(), words.common.back).click()
-    await opens_the_extension(app, 'ping_pong')
+    await opens_the_extension(app, 'Ping pong')
     expect(the_words(app)).toContain(its.is.not_active)
     expect(the_notice(app)).toEqual([])
 
@@ -152,7 +153,7 @@ describe('the extensions', () => {
     await until(() => {
       expect(the_notice(app)).toEqual(ping_pong_s_notice)
     })
-    expect(the_words(app)).toContain(its.the_notice('ping_pong', '0.1.0'))
+    expect(the_words(app)).toContain(its.the_notice('Ping pong', '0.1.0'))
     the_button(app.shown(), its.do_not_accept).click()
     await until(() => {
       expect(the_notice(app)).toEqual([])
@@ -192,7 +193,7 @@ describe('the extensions', () => {
       device: a_device_of_test(['A15', 'A16', 'A16bis']),
     })
     const app = opened
-    await opens_the_extension(app, 'ping_pong')
+    await opens_the_extension(app, 'Ping pong')
     expect(the_words(app)).toContain(its.is.waiting_for_the_new_manifest)
     the_button(app.shown(), its.may.accept_the_new_manifest).click()
     await until(() => {
@@ -201,7 +202,7 @@ describe('the extensions', () => {
         its.what_it_asks.a_storage_of_its_own,
       ])
     })
-    expect(the_words(app)).toContain(its.the_notice('ping_pong', '0.2.0'))
+    expect(the_words(app)).toContain(its.the_notice('Ping pong', '0.2.0'))
     the_button(app.shown(), its.accept).click()
     await until(() => {
       expect(anna_s.activities_asked()).toEqual([
@@ -260,7 +261,7 @@ describe('the extensions', () => {
     })
     opened = opens_the_app({ node: anna_s.node, device: a_device_of_test(['A17', 'A18']) })
     const app = opened
-    await opens_the_extension(app, 'ping_pong')
+    await opens_the_extension(app, 'Ping pong')
     const news = words.an_extension.the_news
     const the_silence = `${news.happened.a_request_met_silence}: ${news.the_silence_because.the_extension_is_not_offered_to_the_bond}`
     await until(() => {

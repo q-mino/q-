@@ -4,16 +4,18 @@ import { _ui, activities, user } from './_scope_value.ts'
 // The handshake at a distance, from who invites (UI-5; 6 of the notes on
 // screens): told the flaw first (whoever opens the link becomes her contact;
 // it holds once, for 48 hours), she makes a link, a ticket of hers for a bond
-// to be (BND-7), and shares it; the rendering draws the link and hands it to
-// the phone's sharing (WEB-1).
+// to be (BND-7), and shares it with the phone's share, or copies it where
+// the phone has none (WEB-18): the rendering draws the link and hands it to
+// the phone, and tells the screen once it is copied (WEB-1).
 
-/** The screen's state: the ticket it prepares, once she made a link, and whether it ended. */
+/** The screen's state: the ticket it prepares, once she made a link, whether it ended, and whether its link was copied. */
 export const the_state = z.strictObject({
   ticket: z
     .strictObject({
       bond: user.value.a_bond,
       asked: _ui.value.what_it_asked,
       ended: z.boolean(),
+      copied: z.boolean(),
     })
     .optional(),
 })
@@ -27,6 +29,8 @@ export const what_happens = z.discriminatedUnion('happens', [
     bond: user.value.a_bond,
     face: user.value.a_face,
   }),
+  /** The link is copied, as the phone's clipboard told it. */
+  z.strictObject({ happens: z.literal('the_link_is_copied') }),
   _ui.value.she_goes_back,
   _ui.value.what_it_asked_ended,
 ])
@@ -38,10 +42,14 @@ export const a_turn = z.strictObject({
   goes: _ui.value.where_it_goes,
 })
 
-/** What the screen is given: her ticket, once ready; the activity it asked. */
+/** How the phone shares a link (WEB-18), as the browser gives it: with its own share, or only by copying it. */
+export const the_phone = z.enum(['shares', 'copies'])
+
+/** What the screen is given: her ticket, once ready; the activity it asked; how the phone shares. */
 export const what_it_is_given = z.strictObject({
   ticket: _ui.value.a_ticket_ready.optional(),
   activity: activities.value.activity_card.optional(),
+  the_phone,
 })
 
 /** What the screen shows: the flaw told, and the gesture; the link being got ready; one that cannot be; the link, to share. */
@@ -52,5 +60,10 @@ export const what_it_shows = z.discriminatedUnion('shows', [
     shows: z.literal('the_link_cannot_be_prepared'),
     how: activities.value.how_it_ended,
   }),
-  z.strictObject({ shows: z.literal('the_link'), ticket: _ui.value.a_ticket_ready }),
+  z.strictObject({
+    shows: z.literal('the_link'),
+    ticket: _ui.value.a_ticket_ready,
+    /** The gesture on the link: share it; copy it, where the phone has no share; copied. */
+    gesture: z.enum(['share', 'copy', 'copied']),
+  }),
 ])

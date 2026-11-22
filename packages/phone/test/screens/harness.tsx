@@ -39,6 +39,13 @@ export interface WhatTheNodeHolds {
   readonly drafts: readonly { readonly for: ui_value.a_draft_for; readonly text: string }[]
   readonly held_letters: readonly user_value.a_held_letter[]
   readonly happened: readonly user_value.what_happened_without_a_fact[]
+  /** What came back of the last question asked of each bond about the extensions in common (UI-5). */
+  readonly in_common: readonly {
+    readonly bond: string
+    readonly answer: ui_value.the_extensions_in_common
+  }[]
+  /** The relay of the configuration, and how her node last met it (UI-5). */
+  readonly the_relay: { readonly address: string; readonly met: ui_value.the_relay_met }
 }
 
 export const nothing_held: WhatTheNodeHolds = {
@@ -54,6 +61,8 @@ export const nothing_held: WhatTheNodeHolds = {
   drafts: [],
   held_letters: [],
   happened: [],
+  in_common: [],
+  the_relay: { address: 'https://relay.cumino.test', met: 'answered' },
 }
 
 /** Saturday 21 November 2026, 10:00 in Rome. */
@@ -142,6 +151,11 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
     the_offers: () => Promise.resolve(held.offers),
     offered_to: (bond) =>
       Promise.resolve(held.offered.find((one) => one.bond === bond)?.offered ?? []),
+    the_extensions_in_common_with: (bond) =>
+      Promise.resolve(
+        held.in_common.find((one) => one.bond === bond)?.answer ?? { answer: 'not_asked' },
+      ),
+    the_relay: () => Promise.resolve(held.the_relay),
     an_activity: (activity_id) =>
       Promise.resolve(held.activities.find((one) => one.activity_id === activity_id)),
     the_activities_in_progress: () =>
@@ -198,10 +212,40 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
   }
 }
 
-/** The device of a story: the ids it draws, in order (A1, F_a…), the time at ten in Rome, a camera that a story gives or none. */
+/** A phone's sharing of test: its share, or none (a browser with no Web Share), and its clipboard, each recording what it was given. */
+export const a_sharing_of_test = (
+  with_a_share: boolean,
+): TheDevice['the_navigator'] & {
+  readonly shared: () => readonly string[]
+  readonly copied: () => readonly string[]
+} => {
+  let shared: readonly string[] = []
+  let copied: readonly string[] = []
+  return {
+    ...(with_a_share
+      ? {
+          share: (data: { readonly url: string }) => {
+            shared = [...shared, data.url]
+            return Promise.resolve()
+          },
+        }
+      : {}),
+    clipboard: {
+      writeText: (text: string) => {
+        copied = [...copied, text]
+        return Promise.resolve()
+      },
+    },
+    shared: () => shared,
+    copied: () => copied,
+  }
+}
+
+/** The device of a story: the ids it draws, in order (A1, F_a…), the time at ten in Rome, a camera that a story gives or none, a phone that shares. */
 export const a_device_of_test = (
   ids: readonly string[],
   scans: TheDevice['scans'] = () => Promise.resolve({ is: 'missing' }),
+  the_navigator: TheDevice['the_navigator'] = a_sharing_of_test(true),
 ): TheDevice => {
   let left = [...ids]
   return {
@@ -213,6 +257,7 @@ export const a_device_of_test = (
     },
     clock: { now: () => ten_in_rome, time_zone: zz.time_zone.parse('Europe/Rome') },
     scans,
+    the_navigator,
   }
 }
 

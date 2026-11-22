@@ -1,6 +1,6 @@
 import type { TheHandshakeInPersonTexts } from '@q-mino/adapters-web/screens'
 
-// The handshake in person, the crossed QR (provisional, A to confirm).
+// The handshake in person, the crossed QR (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 export const the_handshake_in_person = {
   title: 'Stretta di mano di persona',
   getting_the_ticket_ready: 'Preparo il tuo biglietto…',
@@ -20,10 +20,11 @@ export const the_handshake_in_person = {
     a_ticket_out_of_its_form: 'Il QR inquadrato porta un biglietto guasto.',
   },
   opening_their_ticket: (name) => `Apro il biglietto di ${name}…`,
-  // [Q, C, provisional: A to confirm] (BND-10, 21 Nov 2026): "di persona" only when her node said so.
-  bonded: (name) => `Hai ${name}.`,
-  bonded_in_person: (name) => `Hai ${name}, di persona.`,
-  bonded_already: (name) => `${name} era già tra i tuoi contatti.`,
+  // "di persona" only when her node said so (BND-10, 21 Nov 2026).
+  bonded: (name) => `Nuovo contatto: si presenta come ${name}.`,
+  bonded_in_person: (name) => `Nuovo contatto: si presenta come ${name}, di persona.`,
+  // [Q, C, provisional: A to confirm]: as the bond made, no identity claimed (WEB-20).
+  bonded_already: (name) => `Era già tra i tuoi contatti: si presenta come ${name}.`,
   open_the_contact: 'Apri il contatto',
   shake_another_hand: 'Stringi un’altra mano',
   their_ticket_cannot_be_opened: (name) => `Il biglietto di ${name} non si apre.`,

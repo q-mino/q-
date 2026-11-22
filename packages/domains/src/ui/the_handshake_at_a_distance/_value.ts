@@ -9,7 +9,7 @@ import { z } from 'zod'
 import * as value from './value.ts'
 
 /**
- * The screen's state: the ticket it prepares, once she made a link, and whether it ended.
+ * The screen's state: the ticket it prepares, once she made a link, whether it ended, and whether its link was copied.
  *
  * @see {@link value.the_state}
  */
@@ -33,7 +33,15 @@ export const a_turn = value.a_turn
 export type a_turn = z.output<typeof a_turn>
 
 /**
- * What the screen is given: her ticket, once ready; the activity it asked.
+ * How the phone shares a link (WEB-18), as the browser gives it: with its own share, or only by copying it.
+ *
+ * @see {@link value.the_phone}
+ */
+export const the_phone = value.the_phone
+export type the_phone = z.output<typeof the_phone>
+
+/**
+ * What the screen is given: her ticket, once ready; the activity it asked; how the phone shares.
  *
  * @see {@link value.what_it_is_given}
  */

@@ -16,7 +16,12 @@ import {
   through_a_frames_fence,
   type TheKernelsTraced,
 } from '@q-mino/adapters-common'
-import { her_node_over, the_ticket_in_a_link, type HerNode } from '@q-mino/adapters-web'
+import {
+  her_node_over,
+  the_ticket_in_a_link,
+  type HerNode,
+  type TheRelayMet,
+} from '@q-mino/adapters-web'
 import * as zz from '@q-mino/domains/library'
 import type { Bytes, Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 import { what_an_extension_asks } from '@q-mino/domains/user/_dsl.ts'
@@ -118,6 +123,13 @@ const annas_phone = async (story: Story) => {
   })
   let operations = 0
   const frames_traced: TheKernelsTraced[] = []
+  // How the relay client last met the relay (UI-5): the story sets it, as the phone's collects would.
+  let met: TheRelayMet = 'not_met_yet'
+  let told_of_the_relay: readonly (() => void)[] = []
+  const the_relay_meets = (now: TheRelayMet): void => {
+    met = now
+    for (const tell of told_of_the_relay) tell()
+  }
   const her: HerNode = her_node_over({
     clock,
     draws_an_id: () => {
@@ -144,6 +156,18 @@ const annas_phone = async (story: Story) => {
       on_self: (extension) => node.the_extension(extension)?.on_self,
       traces: (entry) => {
         frames_traced.push(entry)
+      },
+    },
+    the_relay: {
+      address: the_relay,
+      as_met: {
+        last: () => met,
+        when_it_changes: (tell) => {
+          told_of_the_relay = [...told_of_the_relay, tell]
+          return () => {
+            told_of_the_relay = told_of_the_relay.filter((one) => one !== tell)
+          }
+        },
       },
     },
   })
@@ -180,6 +204,8 @@ const annas_phone = async (story: Story) => {
     the_life_of: (extension: string) => node.the_extension(extension)?.hosted.life().life,
     /** What the frames' fence traced, through her node (EXT-4). */
     frames_traced: (): readonly TheKernelsTraced[] => frames_traced,
+    /** The relay client meets the relay, as a collect would (UI-5). */
+    the_relay_meets,
 
     how_it_ended,
     /** The ticket of a bond as the phone shows it (BND-9). */
@@ -410,6 +436,22 @@ describe('her node, over a phone of the stack', () => {
     await a_timer(20)()
     expect(told).toBe(told_when_stopped)
   })
+  test('the relay, its address and how it was last met, each change told; no question asked of a bond yet (UI-5)', async () => {
+    const anna = await annas_phone(await a_story())
+    expect(await anna.her.the_relay()).toEqual({ address: the_relay, met: 'answered' })
+    expect(await anna.her.the_extensions_in_common_with('L_b')).toEqual({ answer: 'not_asked' })
+    let told = 0
+    const stops = anna.her.when_it_changes(() => {
+      told += 1
+    })
+    anna.the_relay_meets('did_not_answer')
+    expect(told).toBe(1)
+    expect(await anna.her.the_relay()).toEqual({ address: the_relay, met: 'did_not_answer' })
+    stops()
+    anna.the_relay_meets('answered')
+    expect(told).toBe(1)
+  })
+
   test('a frame served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {
     const anna = await anna_with_her_face(await a_story())
     const [shown] = await anna.her.the_extensions()

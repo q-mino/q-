@@ -751,7 +751,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
 
   test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', () => {
     const start = the_handshake_at_a_distance.at_the_start()
-    expect(the_handshake_at_a_distance.what_it_shows(start, {})).toEqual({
+    const shares = { the_phone: 'shares' } as const
+    expect(the_handshake_at_a_distance.what_it_shows(start, shares)).toEqual({
       shows: 'the_flaw_told',
     })
     const make = (state: at_a_distance_value.the_state, id: string, bond: string) =>
@@ -764,21 +765,32 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     const prepare = (bond: string) => ({ activity: 'prepare_a_ticket', bond, face: F_a }) as const
     const made = make(start, 'A12', 'B2')
     expect(made.asks).toEqual([{ asks: 'an_activity', activity_id: 'A12', what: prepare('B2') }])
-    expect(the_handshake_at_a_distance.what_it_shows(made.state, {})).toEqual({
+    expect(the_handshake_at_a_distance.what_it_shows(made.state, shares)).toEqual({
       shows: 'getting_the_link_ready',
     })
-    expect(
-      the_handshake_at_a_distance.what_it_shows(made.state, {
-        ticket: her_ticket('B2'),
-        activity: a_card('A12', prepare('B2'), done),
-      }),
-    ).toEqual({ shows: 'the_link', ticket: her_ticket('B2') })
+    const ready = { ticket: her_ticket('B2'), activity: a_card('A12', prepare('B2'), done) }
+    expect(the_handshake_at_a_distance.what_it_shows(made.state, { ...ready, ...shares })).toEqual({
+      shows: 'the_link',
+      ticket: her_ticket('B2'),
+      gesture: 'share',
+    })
+    // Where the phone has no share, she copies the link, and is told it is copied (WEB-18).
+    const copies = { ...ready, the_phone: 'copies' } as const
+    expect(the_handshake_at_a_distance.what_it_shows(made.state, copies)).toMatchObject({
+      gesture: 'copy',
+    })
+    const copied = the_handshake_at_a_distance.after(made.state, { happens: 'the_link_is_copied' })
+    expect(copied.asks).toEqual([])
+    expect(the_handshake_at_a_distance.what_it_shows(copied.state, copies)).toMatchObject({
+      gesture: 'copied',
+    })
     expect(make(made.state, 'A12_again', 'B2_again').asks).toEqual([])
     const cannot = how('cannot_be_done', 'a_ticket_cannot_be_prepared')
     const ended = the_handshake_at_a_distance.after(made.state, it_ended('A12', cannot)).state
     expect(
       the_handshake_at_a_distance.what_it_shows(ended, {
         activity: a_card('A12', prepare('B2'), cannot),
+        ...shares,
       }),
     ).toEqual({ shows: 'the_link_cannot_be_prepared', how: cannot })
     expect(make(ended, 'A13', 'B3').asks).toEqual([

@@ -24,6 +24,12 @@ export type AFrameServed = Extract<Fenced, { readonly fenced: 'served' }>
 /** An event of a leaf's flow, as her node gives it: a JSON object named by `event` (EXT-2). */
 export type AnEventOfALeaf = { readonly event: string } & Readonly<Record<string, unknown>>
 
+/** The relay her letters go through, as the screens show it (UI-5): its address, the configuration's, and how her node last met it. */
+export interface TheRelaySeen {
+  readonly address: string
+  readonly met: ui_value.the_relay_met
+}
+
 /** Her node, as the screens read it and ask of it. */
 export interface HerNode {
   /** Her faces (`my_faces`). */
@@ -40,6 +46,12 @@ export interface HerNode {
   readonly the_extensions: () => Promise<readonly ui_value.an_extension_seen[]>
   /** The bonds each extension is offered to (EXT-7). */
   readonly the_offers: () => Promise<ui_value.the_offers>
+  /** What came back of the last question she asked a bond about the extensions in common (`the_questions_asked_of_a_bond`, UI-5). */
+  readonly the_extensions_in_common_with: (
+    bond: string,
+  ) => Promise<ui_value.the_extensions_in_common>
+  /** The relay her letters go through, and how her node last met it (UI-5: the server's screen, the strip). */
+  readonly the_relay: () => Promise<TheRelaySeen>
   /** What her node offers a bond, with the majors it speaks (`the_extensions_offered_to_a_bond`, EXT-8). */
   readonly offered_to: (bond: string) => Promise<activities_value.offered>
   /** An activity, as `user` reads it. */
