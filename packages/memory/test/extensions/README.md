@@ -44,7 +44,7 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
 
 ## Proven by the earlier blocks
 
-- Composition faults (a boundary major not spoken, a port not offered, a leaf on `known` that waits, a refined input on `known`, an action's leaf, every fault in one message): `packages/adapters-common/test/extensions/composition.test.ts`; a `ready` that differs: `hosting.test.ts` there and `greetings.test.ts` here.
+- Composition faults (a boundary major not spoken, a port not offered, a leaf on `known` that waits, an input on `known` the kernel cannot check (a refinement, a lossy form, EXT-6), an action's leaf, every fault in one message): `packages/adapters-common/test/extensions/composition.test.ts`; a `ready` that differs: `hosting.test.ts` there and `greetings.test.ts` here.
 - zod's `fromJSONSchema` as the kernel's check of a peer's input: `composition.test.ts` ("zod’s fromJSONSchema …"); greetings' surfaces read whole: `greetings.test.ts`.
 - Two extensions' partitions never meet, a commit all or none: `greetings.test.ts` ("the extensions’ partitions on the oracle").
 - The ports typed by `touches` (a port not declared cannot be named, EXT-3): `packages/boundary/test/ports.test.ts`; an action whose leaf is no leaf of `self` does not compile: `packages/boundary/test/manifest.test.ts`, `packages/extensions/greetings/test/manifest.test.ts`.
