@@ -250,5 +250,23 @@ export const what_it_shows = (
       ),
     ],
     courses: state.asked.map((one) => ({ for: one.for, course: course_of(one) })),
+    in_common: the_answer_shown(given.in_common),
+  }
+}
+
+/** What came back of the last question, as the screen shows it: an empty list is none in common. */
+const the_answer_shown = (answer: _ui.value.the_extensions_in_common): value.the_answer_shown => {
+  switch (answer.answer) {
+    case 'not_asked':
+    case 'waiting':
+      return { answer: answer.answer }
+    case 'in_common': {
+      const [first, ...rest] = answer.extensions
+      return first === undefined
+        ? { answer: 'none_in_common' }
+        : { answer: 'in_common', extensions: [first, ...rest] }
+    }
+    case 'no_answer':
+      return { answer: 'no_answer', why: answer.why }
   }
 }

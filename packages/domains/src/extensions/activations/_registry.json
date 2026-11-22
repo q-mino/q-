@@ -1130,6 +1130,11 @@
                 },
                 "x-refined": true
               },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
               "progress": {
                 "oneOf": [
                   {
@@ -1180,7 +1185,7 @@
                 ]
               }
             },
-            "required": ["id", "bond", "offered", "progress"],
+            "required": ["id", "bond", "offered", "asked_at", "progress"],
             "additionalProperties": false
           }
         }
@@ -1516,6 +1521,11 @@
                     },
                     "x-refined": true
                   },
+                  "asked_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
                   "progress": {
                     "oneOf": [
                       {
@@ -1569,7 +1579,7 @@
                     ]
                   }
                 },
-                "required": ["id", "bond", "offered", "progress"],
+                "required": ["id", "bond", "offered", "asked_at", "progress"],
                 "additionalProperties": false
               }
             },
@@ -2155,6 +2165,20 @@
               }
             },
             "required": ["names"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/selection/question/the_question_was_asked_of_this_bond": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
             "additionalProperties": false
           }
         }
@@ -3291,6 +3315,21 @@
         }
       }
     },
+    "extensions/activations/query/the_questions_asked_of_a_bond": { "kind": "query" },
+    "extensions/activations/query/the_questions_asked_of_a_bond_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
     "extensions/activations/query/the_extensions_in_common": { "kind": "query" },
     "extensions/activations/query/the_extensions_in_common_input": {
       "kind": "query",
@@ -3338,6 +3377,7 @@
     "extensions/activations/usecase/learn_the_extensions_in_common": { "kind": "usecase" },
     "extensions/activations/usecase/an_extension": { "kind": "usecase" },
     "extensions/activations/usecase/the_extensions_offered_to_a_bond": { "kind": "usecase" },
+    "extensions/activations/usecase/the_questions_asked_of_a_bond": { "kind": "usecase" },
     "extensions/activations/usecase/the_extensions_in_common": { "kind": "usecase" },
     "extensions/activations/version/activations": { "kind": "version" }
   }

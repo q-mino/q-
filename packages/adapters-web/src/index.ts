@@ -50,6 +50,8 @@ export {
   type ARequest,
   type AnAnswer,
   type TheRelaysHttpWiring,
+  type TheRelayAsMet,
+  type TheRelayMet,
 } from './relay_client/index.ts'
 export {
   open_the_node_s_database,

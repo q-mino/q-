@@ -65,6 +65,13 @@ export const an_extension = usecase.an_extension
 export const the_extensions_offered_to_a_bond = usecase.the_extensions_offered_to_a_bond
 
 /**
+ * The questions asked of a bond about the extensions in common, the last first.
+ *
+ * @see {@link usecase.the_questions_asked_of_a_bond}
+ */
+export const the_questions_asked_of_a_bond = usecase.the_questions_asked_of_a_bond
+
+/**
  * The extensions in common with a bond, for what its face offers.
  *
  * @see {@link usecase.the_extensions_in_common}

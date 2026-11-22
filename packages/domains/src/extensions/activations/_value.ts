@@ -184,7 +184,7 @@ export const question_progress = value.question_progress
 export type question_progress = z.output<typeof question_progress>
 
 /**
- * A question the node asked a bond (EXT-8): what it offered it, and where it stands.
+ * A question the node asked a bond (EXT-8): what it offered it, when, and where it stands.
  *
  * @see {@link value.question}
  */

@@ -157,3 +157,24 @@ export const offered_extensions = z
     (offered) => new Set(offered.map((each) => each.extension)).size === offered.length,
     'an extension named twice',
   )
+
+/**
+ * What came back of a question she asked a bond about the extensions in
+ * common (EXT-8): nothing yet, the extensions in common (none, maybe), or no
+ * answer, with why.
+ */
+export const the_answer_about_the_extensions_in_common = z.discriminatedUnion('is', [
+  z.strictObject({ is: z.literal('waiting') }),
+  z.strictObject({ is: z.literal('learned'), in_common: z.array(offered_extension).max(64) }),
+  z.strictObject({
+    is: z.literal('not_answered'),
+    why: z.enum(['no_response', 'the_peer_cannot_answer']),
+  }),
+])
+
+/** A question she asked a bond about the extensions in common, when, and its answer (EXT-8, UI-5). */
+export const a_question_asked = z.strictObject({
+  question_id: activations.id.question_id,
+  asked_at: date_time,
+  answer: the_answer_about_the_extensions_in_common,
+})

@@ -158,12 +158,49 @@ type AnExchange =
   | { readonly came: 'an_abort'; readonly fault: unknown }
 
 /**
+ * The relay as the client last met it (UI-5's strip): not met yet; it
+ * answered; or it did not (`unreachable`: the request lost, the relay unheard
+ * in the longest wait, a status by which it gave no answer; no network and a
+ * relay silent are not told apart).
+ */
+export type TheRelayMet = 'not_met_yet' | 'answered' | 'did_not_answer'
+
+/** What the client tells of its meetings with the relay: the last, and whoever listens, told at each change. */
+export interface TheRelayAsMet {
+  readonly last: () => TheRelayMet
+  readonly when_it_changes: (tell: () => void) => () => void
+}
+
+/**
  * The relay's HTTP client (WEB-6): the post's mailbox port and the
- * collector's collect port over the relay's HTTP interface (MBX-9).
+ * collector's collect port over the relay's HTTP interface (MBX-9), and the
+ * relay as it last met it (UI-5).
  */
 export const the_relay_s_http_transports = (
   wiring: TheRelaysHttpWiring,
-): { readonly mailbox: MailboxPort; readonly collect: ACollect } => {
+): {
+  readonly mailbox: MailboxPort
+  readonly collect: ACollect
+  readonly the_relay: TheRelayAsMet
+} => {
+  let last: TheRelayMet = 'not_met_yet'
+  const listening = new Set<() => void>()
+  /** A meeting with the relay: kept, and told when it changes what she is shown. */
+  const met = (now: 'answered' | 'did_not_answer'): void => {
+    if (now === last) return
+    last = now
+    for (const tell of listening) tell()
+  }
+  const the_relay: TheRelayAsMet = {
+    last: () => last,
+    when_it_changes: (tell) => {
+      listening.add(tell)
+      return () => {
+        listening.delete(tell)
+      }
+    },
+  }
+
   /** A request posted to a relay, and its answer as it begins, each wait within the longest. */
   const posted = async (
     relay: string,
@@ -191,8 +228,12 @@ export const the_relay_s_http_transports = (
           signal: letting_go.signal,
         }),
       )
-      if (answer.heard === 'nothing') return { came: 'no_answer', because: 'the relay unheard' }
+      if (answer.heard === 'nothing') {
+        met('did_not_answer')
+        return { came: 'no_answer', because: 'the relay unheard' }
+      }
       const the_body = answer.value.body
+      met(is_no_answer(answer.value.status) || the_body === null ? 'did_not_answer' : 'answered')
       if (the_body === null) return { came: 'no_answer', because: 'an answer with no body' }
       return {
         came: 'an_answer',
@@ -200,9 +241,14 @@ export const the_relay_s_http_transports = (
         lines: the_lines_of(the_body, heard),
       }
     } catch (fault) {
-      if (is_the_network_s(fault)) return { came: 'no_answer', because: 'the request lost' }
-      if (is_an_abort(fault) && letting_go.signal.aborted)
+      if (is_the_network_s(fault)) {
+        met('did_not_answer')
+        return { came: 'no_answer', because: 'the request lost' }
+      }
+      if (is_an_abort(fault) && letting_go.signal.aborted) {
+        met('did_not_answer')
         return { came: 'no_answer', because: 'the relay unheard' }
+      }
       return { came: 'an_abort', fault }
     }
   }
@@ -305,5 +351,5 @@ export const the_relay_s_http_transports = (
     }
   }
 
-  return { mailbox, collect }
+  return { mailbox, collect, the_relay }
 }

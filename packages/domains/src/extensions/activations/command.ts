@@ -255,6 +255,7 @@ export const ask_a_bond_for_the_extensions_in_common = command({
             id: question_id,
             bond: input.bond,
             offered: input.offered,
+            asked_at: context.now,
             progress: { stage: 'waiting' },
           },
         },
