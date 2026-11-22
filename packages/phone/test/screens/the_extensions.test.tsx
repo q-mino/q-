@@ -107,12 +107,12 @@ const opens_the_extension = async (app: TheAppOpened, extension: string): Promis
 const the_notice = (app: TheAppOpened): string[] =>
   [...app.shown().querySelectorAll('ol li')].map((li) => li.textContent)
 
-/** The kernel's mark of the extension on the screen shown. */
-const the_mark = (app: TheAppOpened, extension: string): HTMLElement => {
+/** The kernel's mark of the extension on the screen shown, by the name its words give it. */
+const the_mark = (app: TheAppOpened, name: string): HTMLElement => {
   const found = [...app.shown().querySelectorAll<HTMLElement>('section')].find(
-    (section) => section.getAttribute('aria-label') === words.common.the_mark_of(extension),
+    (section) => section.getAttribute('aria-label') === words.common.the_mark_of(name),
   )
-  if (found === undefined) throw new Error(`no mark of ${extension}`)
+  if (found === undefined) throw new Error(`no mark of ${name}`)
   return found
 }
 
@@ -264,18 +264,18 @@ describe('the extensions', () => {
     const news = words.an_extension.the_news
     const the_silence = `${news.happened.a_request_met_silence}: ${news.the_silence_because.the_extension_is_not_offered_to_the_bond}`
     await until(() => {
-      expect(the_mark(app, 'ping_pong').textContent).toContain('Un ping a un contatto tolto')
+      expect(the_mark(app, 'Ping pong').textContent).toContain('Un ping a un contatto tolto')
     })
-    expect(the_mark(app, 'ping_pong').textContent).toContain(the_silence)
-    expect(the_mark(app, 'ping_pong').textContent).toContain(
+    expect(the_mark(app, 'Ping pong').textContent).toContain(the_silence)
+    expect(the_mark(app, 'Ping pong').textContent).toContain(
       news.why_it_is_held.it_could_not_be_delivered,
     )
-    expect(the_mark(app, 'ping_pong').textContent).toContain('il relay non risponde')
+    expect(the_mark(app, 'Ping pong').textContent).toContain('il relay non risponde')
     expect(the_words(app)).not.toContain('La conferma a Bruno')
     expect(the_words(app)).not.toContain(news.happened.a_letter_could_not_be_opened)
 
     // Sent again, once while in progress; then put aside with her reason.
-    const the_ping = () => the_letter(the_mark(app, 'ping_pong'), 'Un ping a un contatto tolto')
+    const the_ping = () => the_letter(the_mark(app, 'Ping pong'), 'Un ping a un contatto tolto')
     the_button(the_ping(), news.send_it_again).click()
     await until(() => {
       expect(the_button(the_ping(), news.send_it_again).disabled).toBe(true)
@@ -309,8 +309,8 @@ describe('the extensions', () => {
     await until(() => {
       expect(has_a_button(app.shown(), its.may.activate)).toBe(true)
     })
-    expect(the_mark(app, 'ping_pong').textContent).toContain('Un ping a un contatto tolto')
-    expect(the_mark(app, 'ping_pong').textContent).toContain(the_silence)
+    expect(the_mark(app, 'Ping pong').textContent).toContain('Un ping a un contatto tolto')
+    expect(the_mark(app, 'Ping pong').textContent).toContain(the_silence)
     anna_s.comes_to_hold((now) => ({ ...now, extensions: [] }))
     await until(() => {
       expect(the_words(app)).toContain(its.no_such_extension)

@@ -111,7 +111,7 @@ describe('what happened', () => {
     expect(the_kernel_s.textContent).toContain('il relay non risponde')
     expect(the_kernel_s.textContent).toContain(news.happened.a_letter_could_not_be_opened)
     expect(the_kernel_s.textContent).not.toContain('Un ping a un contatto tolto')
-    const ping_pong_s = the_section(app, words.common.the_mark_of('ping_pong'))
+    const ping_pong_s = the_section(app, words.common.the_mark_of('Ping pong'))
     expect(ping_pong_s.textContent).toContain('Un ping a un contatto tolto')
     expect(ping_pong_s.textContent).toContain(news.why_it_is_held.what_came_back_was_refused)
     expect(ping_pong_s.textContent).toContain(
@@ -122,7 +122,7 @@ describe('what happened', () => {
     // Sent again with A18; again while in progress, nothing.
     const the_ping = () =>
       the_letter(
-        the_section(app, words.common.the_mark_of('ping_pong')),
+        the_section(app, words.common.the_mark_of('Ping pong')),
         'Un ping a un contatto tolto',
       )
     the_button(the_ping(), news.send_it_again).click()

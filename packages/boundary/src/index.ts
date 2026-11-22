@@ -13,7 +13,8 @@
 // the mounted folders (EXT-5), the messages (EXT-2, EXT-15, EXT-16) and the
 // extension's side of them, which every extension's configurator speaks
 // through (`the_extensions_side`). Since part 22.2, the words of an
-// extension the kernel draws (EXT-16).
+// extension the kernel draws (EXT-16), and since 22 Nov 2026 their type by
+// the manifest (`Words`, WEB-22).
 
 export * from './contexts.ts'
 export * from './manifest.ts'

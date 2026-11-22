@@ -6,7 +6,12 @@ import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { For, Match, Show, Switch, type JSX } from 'solid-js'
 import { TheFrame } from './a_frame.tsx'
-import { the_app, the_words_of_an_actions_end, the_words_of_an_end } from './the_app.ts'
+import {
+  the_app,
+  the_word_or_its_fault,
+  the_words_of_an_actions_end,
+  the_words_of_an_end,
+} from './the_app.ts'
 
 /** The course of what a screen asked: nothing, in progress, or how it ended, in her words. */
 export const TheCourse = (props: { course: ui_value.a_course }) => {
@@ -41,12 +46,20 @@ export const Back = (props: { onBack: () => void }) => {
 /** The kernel's mark of an extension around what it holds (EXT-16): its name and a border. */
 export const the_marks_style = { border: '2px solid', padding: '0.5em', margin: '0.5em 0' }
 
-/** The kernel's mark of an extension (EXT-16): a section with its name and a border, around what it holds. */
+/**
+ * The kernel's mark of an extension (EXT-16): a section with its name, from
+ * its words, and a border, around what it holds; a name the app does not
+ * have, drawn as a fault (WEB-22).
+ */
 export const TheMark = (props: { extension: string; children: JSX.Element }) => {
   const app = the_app()
+  const title = () =>
+    app.common.the_mark_of(
+      the_word_or_its_fault(app.common, app.words(props.extension)?.name, props.extension),
+    )
   return (
-    <section aria-label={app.common.the_mark_of(props.extension)} style={the_marks_style}>
-      <h2>{app.common.the_mark_of(props.extension)}</h2>
+    <section aria-label={title()} style={the_marks_style}>
+      <h2>{title()}</h2>
       {props.children}
     </section>
   )
@@ -59,7 +72,9 @@ const an_end = (course: ui_value.a_course) => (course.course === 'ended' ? cours
  * The points a mark holds at its place (UI-4, EXT-16, WEB-22): each action,
  * a gesture the kernel draws with the extension's label, off while its
  * activity is in progress, and how it ended in the extension's words; each
- * slot, a frame told the place; each page, the gesture that opens it.
+ * slot, a frame told the place; each page, the gesture that opens it, by its
+ * label. A word the extension's words lack is drawn as a fault, never
+ * silently its name.
  */
 export const ThePoints = (props: {
   mark: ui_value.a_mark
@@ -84,7 +99,7 @@ export const ThePoints = (props: {
                 props.taps(action)
               }}
             >
-              {words()?.actions[action] ?? action}
+              {the_word_or_its_fault(app.common, words()?.actions[action], action)}
             </button>{' '}
             <Switch>
               <Match when={props.course_of(action).course === 'in_progress'}>
@@ -121,7 +136,9 @@ export const ThePoints = (props: {
                     props.opens(page)
                   }}
                 >
-                  {app.common.the_points.opens_the_page(page)}
+                  {app.common.the_points.opens_the_page(
+                    the_word_or_its_fault(app.common, words()?.pages[page], page),
+                  )}
                 </button>
               </li>
             )}

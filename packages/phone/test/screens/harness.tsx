@@ -7,6 +7,7 @@
 // bounded (two seconds).
 
 import type { TheKernelsTraced } from '@q-mino/adapters-common'
+import type * as boundary from '@q-mino/boundary'
 import {
   TheScreens,
   type AFrameServed,
@@ -229,6 +230,8 @@ export const opens_the_app = (wiring: {
   readonly a_link?: ui_value.what_it_holds
   /** The documents of the frames the app has (EXT-16); none by default. */
   readonly documents?: (frame: AFrameToPlace) => string | undefined
+  /** The words of the extensions the app carries (EXT-16, WEB-22); the phone's by default. */
+  readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
@@ -239,7 +242,11 @@ export const opens_the_app = (wiring: {
         device={wiring.device}
         {...(wiring.a_link === undefined ? {} : { a_link: wiring.a_link })}
         documents={wiring.documents ?? (() => undefined)}
-        texts={texts.screens}
+        texts={
+          wiring.words === undefined
+            ? texts.screens
+            : { ...texts.screens, extensions: wiring.words }
+        }
       />
     ),
     root,

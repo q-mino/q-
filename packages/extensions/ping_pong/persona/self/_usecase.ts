@@ -14,9 +14,12 @@ import * as usecase from './usecase.ts'
  * pong, no response within its time, a peer that cannot answer, or her
  * own calling off (ping pong deactivated or withdrawn from the bond while
  * it waited), each a fact the return records with the correlation of her
- * ping; or, after 70
- * seconds, the wait over, which records nothing (the ping's own 60 seconds
- * and the executor's delivery before them).
+ * ping; or, 70 seconds after her tap, the wait over, which records nothing
+ * (the ping's own 60 seconds and the executor's delivery before them).
+ * A flaw, declared (PNG-4): the ping's 60 seconds run from its delivery, so
+ * an outcome later than the 70 (a slow delivery, the app closed or asleep,
+ * with no push) is recorded but shown on no screen, until the slot of a
+ * bond's pings.
  *
  * @see {@link usecase.send_a_ping}
  */
