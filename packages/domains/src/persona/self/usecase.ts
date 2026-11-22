@@ -447,6 +447,25 @@ export const an_extension = read_use_case_over({
   }),
 })
 
+/**
+ * Anna's phone reads the questions it asked Bruno's about the extensions in
+ * common, the last first, with what came back: her screen of their bond
+ * shows the last one's answer beside the question (UI-5).
+ */
+export const the_questions_asked_of_a_bond = read_use_case_over({
+  use_case: activations.usecase.the_questions_asked_of_a_bond,
+  input: z.strictObject({
+    bond_id: address_book.id.bond_id,
+  }),
+  creator: () => (input) => ({ query: { bond: input.bond_id } }),
+  entry: value.a_question_asked,
+  projection: (entry) => ({
+    question_id: entry.id,
+    asked_at: entry.asked_at,
+    answer: dsl.the_answer_about_the_extensions_in_common(entry.progress),
+  }),
+})
+
 /** Anna's phone reads what it offers Bruno, before it asks him: greetings, at major 1. */
 export const the_extensions_offered_to_a_bond = read_use_case_over({
   use_case: activations.usecase.the_extensions_offered_to_a_bond,

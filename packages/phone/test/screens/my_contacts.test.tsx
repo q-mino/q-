@@ -120,6 +120,7 @@ describe('her contacts', () => {
       ['the_handshake_at_a_distance', words.the_handshake_at_a_distance.title],
       ['the_extensions', words.the_extensions.title],
       ['what_happened', words.what_happened.title],
+      ['the_server', words.the_server.title],
     ]
     for (const [entry, title] of entries) {
       opened?.closes()

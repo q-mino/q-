@@ -48,12 +48,24 @@ export const a_turn = value.a_turn
 export type a_turn = z.output<typeof a_turn>
 
 /**
- * What the screen is given: the card (none once removed), the extensions, those offered to the bond, the activities it asked.
+ * What the screen is given: the card (none once removed), the extensions,
+ * those offered to the bond, the activities it asked, and what came back of
+ * the last question about the extensions in common.
  *
  * @see {@link value.what_it_is_given}
  */
 export const what_it_is_given = value.what_it_is_given
 export type what_it_is_given = z.output<typeof what_it_is_given>
+
+/**
+ * What came back of the question, beside it (UI-5: a request's return is
+ * shown where its gesture is): none asked; waiting; the extensions in common,
+ * by name; none in common; no answer, with why.
+ *
+ * @see {@link value.the_answer_shown}
+ */
+export const the_answer_shown = value.the_answer_shown
+export type the_answer_shown = z.output<typeof the_answer_shown>
 
 /**
  * An extension on the contact: active, offered to it or not, and the gesture it allows.

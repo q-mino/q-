@@ -1,6 +1,6 @@
 import type { MyContactsTexts } from '@q-mino/adapters-web/screens'
 
-// Her contacts, the home (provisional, A to confirm).
+// Her contacts, the home (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 
 const how_many = (count: number, one: string, more: string): string =>
   count === 1 ? `1 ${one}` : `${String(count)} ${more}`
@@ -18,6 +18,7 @@ export const my_contacts = {
     the_handshake_at_a_distance: 'Stretta di mano a distanza',
     the_extensions: 'Estensioni',
     what_happened: 'Cosa è successo',
+    the_server: 'Il server',
   },
   something_happened: (held_letters, happened) =>
     [

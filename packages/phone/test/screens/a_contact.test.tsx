@@ -237,24 +237,70 @@ describe('a contact', () => {
     expect(anna_s.activities_asked()).toHaveLength(1)
   })
 
+  test('what came back of the last question is shown beside it: waiting, in common by name, none, no answer (UI-5)', async () => {
+    const anna_s = a_node_of_test(anna)
+    opened = opens_the_app({ node: anna_s.node, device: a_device_of_test([]) })
+    const app = opened
+    await opens_the_contact(app, 'Bruno')
+    const answered = (answer: ui_value.the_extensions_in_common): void => {
+      anna_s.comes_to_hold((now) => ({ ...now, in_common: [{ bond: 'L_b', answer }] }))
+    }
+    expect(the_words(app)).not.toContain(words.a_contact.the_answer.none_in_common)
+    answered({ answer: 'waiting' })
+    await until(() => {
+      expect(the_words(app)).toContain(words.a_contact.the_answer.waiting)
+    })
+    answered({ answer: 'in_common', extensions: ['ping_pong'] })
+    await until(() => {
+      expect(the_words(app)).toContain(words.a_contact.the_answer.in_common(['Ping pong']))
+    })
+    answered({ answer: 'in_common', extensions: [] })
+    await until(() => {
+      expect(the_words(app)).toContain(words.a_contact.the_answer.none_in_common)
+    })
+    answered({ answer: 'no_answer', why: 'no_response' })
+    await until(() => {
+      expect(the_words(app)).toContain(words.a_contact.the_answer.no_answer.no_response)
+    })
+  })
+
+  test('a strip over the screens while the relay does not answer, gone once it answers (UI-5)', async () => {
+    const anna_s = a_node_of_test(anna)
+    opened = opens_the_app({ node: anna_s.node, device: a_device_of_test([]) })
+    const app = opened
+    await opens_the_contact(app, 'Bruno')
+    expect(the_words(app)).not.toContain(words.common.the_relay_does_not_answer)
+    const met = (now: ui_value.the_relay_met): void => {
+      anna_s.comes_to_hold((held) => ({ ...held, the_relay: { ...held.the_relay, met: now } }))
+    }
+    met('did_not_answer')
+    await until(() => {
+      expect(app.root.textContent).toContain(words.common.the_relay_does_not_answer)
+    })
+    met('answered')
+    await until(() => {
+      expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
+    })
+  })
+
   test('an active extension is offered to the contact or withdrawn, once at a time; one not active is not listed', async () => {
     const anna_s = a_node_of_test(anna)
     opened = opens_the_app({ node: anna_s.node, device: a_device_of_test(['A5', 'A7', 'A6']) })
     const app = opened
     await opens_the_contact(app, 'Bruno')
     await until(() => {
-      expect(the_extension_s_entry(app, 'ping_pong').textContent).toContain(words.a_contact.offered)
+      expect(the_extension_s_entry(app, 'Ping pong').textContent).toContain(words.a_contact.offered)
     })
-    expect(the_extension_s_entry(app, 'ping_pong').textContent).not.toContain(
+    expect(the_extension_s_entry(app, 'Ping pong').textContent).not.toContain(
       words.a_contact.not_offered,
     )
     the_button(
-      the_extension_s_entry(app, 'ping_pong'),
+      the_extension_s_entry(app, 'Ping pong'),
       words.a_contact.the_offer.withdraw_the_offer,
     ).click()
     await until(() => {
       expect(
-        the_button(the_extension_s_entry(app, 'ping_pong'), words.a_contact.the_offer.wait)
+        the_button(the_extension_s_entry(app, 'Ping pong'), words.a_contact.the_offer.wait)
           .disabled,
       ).toBe(true)
     })
@@ -283,11 +329,11 @@ describe('a contact', () => {
     the_button(app.shown(), words.common.back).click()
     await opens_the_contact(app, 'Carla R.')
     await until(() => {
-      expect(the_extension_s_entry(app, 'ping_pong').textContent).toContain(
+      expect(the_extension_s_entry(app, 'Ping pong').textContent).toContain(
         words.a_contact.not_offered,
       )
     })
-    the_button(the_extension_s_entry(app, 'ping_pong'), words.a_contact.the_offer.offer).click()
+    the_button(the_extension_s_entry(app, 'Ping pong'), words.a_contact.the_offer.offer).click()
     await until(() => {
       expect(anna_s.activities_asked()).toContainEqual({
         activity: 'offer_an_extension_to_a_bond',
@@ -301,7 +347,7 @@ describe('a contact', () => {
     await until(() => {
       expect(the_words(app)).toContain(words.a_contact.no_extension_active)
     })
-    expect(() => the_extension_s_entry(app, 'ping_pong')).toThrow()
+    expect(() => the_extension_s_entry(app, 'Ping pong')).toThrow()
     expect(anna_s.activities_asked()).toHaveLength(3)
   })
 })

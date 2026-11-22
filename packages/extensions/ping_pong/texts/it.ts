@@ -3,7 +3,9 @@ import type { manifest } from '../manifest.ts'
 import type { registry } from '../persona/self/_registry.ts'
 
 // Ping pong's words in Italian (EXT-16, WEB-22; A, 22 Nov 2026), the texts
-// the kernel draws in its mark (provisional, A to confirm: words she reads):
+// the kernel draws in its mark (confirmed by Alessandro, 22 Nov 2026, the
+// label "Ping" and "ping annullato" with them; to be reviewed on the phones
+// at step 27):
 // its name, the label of its action, and words for each own event of the
 // leaf its action invokes on `self`, typed by its declaration and the
 // registry of `self`, so that a word missing does not compile. The events

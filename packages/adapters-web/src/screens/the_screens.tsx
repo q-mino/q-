@@ -6,7 +6,7 @@
 
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
-import { createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import { createResource, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
 import type { HerNode } from '../her_node/index.ts'
 import { AContact } from './a_contact.tsx'
 import { APage } from './a_page.tsx'
@@ -25,6 +25,7 @@ import { TheExtensions } from './the_extensions.tsx'
 import { TheFirstFace } from './the_first_face.tsx'
 import { TheHandshakeAtADistance } from './the_handshake_at_a_distance.tsx'
 import { TheHandshakeInPerson } from './the_handshake_in_person.tsx'
+import { TheServer } from './the_server.tsx'
 import { WhatHappened } from './what_happened.tsx'
 
 /** What the screens are wired to, by the composition root (step 25) or a test. */
@@ -90,6 +91,10 @@ export const TheScreens = (props: TheScreensWiring) => {
     words: (extension) => props.texts.extensions[extension],
     document_of: (frame) => props.documents(frame),
   }
+  // The strip over every screen (UI-5), read again at each change of her node: the relay that did not answer.
+  const [the_strip] = createResource(changes, async () =>
+    ui.the_strip((await props.node.the_relay()).met),
+  )
   onMount(() => {
     set_the_link(props.a_link)
     onCleanup(props.node.when_it_changes(changed))
@@ -117,11 +122,16 @@ export const TheScreens = (props: TheScreensWiring) => {
         return <APage texts={props.texts.a_page} screen={screen} />
       case 'what_happened':
         return <WhatHappened texts={props.texts.what_happened} />
+      case 'the_server':
+        return <TheServer texts={props.texts.the_server} />
     }
   }
   return (
     <TheAppContext.Provider value={app}>
       <main>
+        <Show when={the_strip()?.strip === 'the_relay_does_not_answer'}>
+          <p role="status">{props.texts.common.the_relay_does_not_answer}</p>
+        </Show>
         <Show when={way()} fallback={<p role="status">{props.texts.common.opening}</p>}>
           {(the_way) => (
             <For each={the_way()}>

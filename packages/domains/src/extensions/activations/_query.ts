@@ -58,6 +58,27 @@ export const it_is_offered_back = query.it_is_offered_back
 export type it_is_offered_back = z.output<typeof it_is_offered_back>
 
 /**
+ * The questions Anna's phone asked Bruno's about the extensions in common
+ * (EXT-8), the last first, each with what she offered him and where it
+ * stands: waiting, the extensions in common learned, or no answer. What her
+ * screen of the bond shows beside the question (UI-5): the last one's
+ * answer, as the office keeps it.
+ *
+ * @see {@link query.the_questions_asked_of_a_bond}
+ */
+export const the_questions_asked_of_a_bond = query.the_questions_asked_of_a_bond
+
+/**
+ * The input of `the_questions_asked_of_a_bond`, declared inline.
+ *
+ * @see {@link query.the_questions_asked_of_a_bond}
+ */
+export const the_questions_asked_of_a_bond_input = query.the_questions_asked_of_a_bond.input
+export type the_questions_asked_of_a_bond_input = z.output<
+  typeof the_questions_asked_of_a_bond_input
+>
+
+/**
  * The extensions in common, as Bruno's node answers Anna's question (EXT-8):
  * of those her phone says it offers him (a claim, F2), the ones his node
  * offers back to their bond, with the majors it serves. Each side tells only

@@ -1,5 +1,13 @@
 import { z } from 'zod'
-import { query, AND, extension_selection, address_book, id, value } from './_scope_query.ts'
+import {
+  query,
+  AND,
+  extension_selection,
+  question_selection,
+  address_book,
+  id,
+  value,
+} from './_scope_query.ts'
 
 /**
  * Greetings on Anna's phone (EXT-7): its manifest as installed, what she
@@ -47,6 +55,26 @@ export const the_extensions_offered_to_a_bond = query({
 export const it_is_offered_back = AND({
   it_is_offered_to_the_bond: extension_selection.the_extension_is_offered_to_this_bond,
   the_peer_named_it: extension_selection.the_extension_is_one_of_these,
+})
+
+/**
+ * The questions Anna's phone asked Bruno's about the extensions in common
+ * (EXT-8), the last first, each with what she offered him and where it
+ * stands: waiting, the extensions in common learned, or no answer. What her
+ * screen of the bond shows beside the question (UI-5): the last one's
+ * answer, as the office keeps it.
+ */
+export const the_questions_asked_of_a_bond = query({
+  input: z.strictObject({
+    bond: address_book.id.bond_id,
+  }),
+  fields: value.question,
+  identity: 'id',
+  selection: question_selection.the_question_was_asked_of_this_bond,
+  order: { asked_at: 'descending' },
+  creator: () => (input) => ({
+    selection: { bond: input.bond },
+  }),
 })
 
 /**

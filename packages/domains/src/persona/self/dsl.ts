@@ -85,3 +85,35 @@ export const the_state = (state: value.extension_state): value.extension_state =
       }
   }
 }
+
+/** Where a question about the extensions in common stands, as the office keeps it (EXT-8). */
+type AQuestionsProgress =
+  | { readonly stage: 'waiting' }
+  | {
+      readonly stage: 'learned'
+      readonly in_common: readonly {
+        readonly name: value.offered_extension['extension']
+        readonly majors: value.offered_extension['majors']
+      }[]
+    }
+  | { readonly stage: 'had_no_answer'; readonly why: 'no_response' | 'the_peer_cannot_answer' }
+
+/** What came back of a question about the extensions in common, as she reads it (EXT-8). */
+export const the_answer_about_the_extensions_in_common = (
+  progress: AQuestionsProgress,
+): value.the_answer_about_the_extensions_in_common => {
+  switch (progress.stage) {
+    case 'waiting':
+      return { is: 'waiting' }
+    case 'learned':
+      return {
+        is: 'learned',
+        in_common: progress.in_common.map((each) => ({
+          extension: each.name,
+          majors: each.majors,
+        })),
+      }
+    case 'had_no_answer':
+      return { is: 'not_answered', why: progress.why }
+  }
+}

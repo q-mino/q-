@@ -1,7 +1,7 @@
 import type { AnExtensionTexts } from '@q-mino/adapters-web/screens'
 import { the_news } from './what_happened.ts'
 
-// An extension's own screen (provisional, A to confirm).
+// An extension's own screen (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 
 /** Where a point is drawn, by its place's name; a place of no kernel's screen, by its name. */
 const the_places = new Map<string, string>([

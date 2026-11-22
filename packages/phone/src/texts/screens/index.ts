@@ -10,10 +10,12 @@ import { the_extensions } from './the_extensions.ts'
 import { the_first_face } from './the_first_face.ts'
 import { the_handshake_at_a_distance } from './the_handshake_at_a_distance.ts'
 import { the_handshake_in_person } from './the_handshake_in_person.ts'
+import { the_server } from './the_server.ts'
 import { what_happened } from './what_happened.ts'
 
-// The words of the screens in Italian, the first language (provisional, A to
-// confirm: the words she reads, UI-5), one file per screen.
+// The words of the screens in Italian, the first language (Alessandro, 22 Nov
+// 2026: the words she reads, UI-5, to be reviewed on the phones at step 27),
+// one file per screen.
 export const screens = {
   common,
   the_first_face,
@@ -26,5 +28,6 @@ export const screens = {
   an_extension,
   a_page,
   what_happened,
+  the_server,
   extensions,
 } satisfies TheScreensTexts

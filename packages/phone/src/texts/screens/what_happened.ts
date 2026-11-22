@@ -1,6 +1,6 @@
 import type { WhatHappenedTexts } from '@q-mino/adapters-web/screens'
 
-// What happened (provisional, A to confirm).
+// What happened (Alessandro, 22 Nov 2026 [Q, A, 22 Nov 2026]; to be reviewed on the phones at step 27).
 
 /** The letters held and what happened without a fact, told here and in an extension's mark. */
 export const the_news = {
@@ -46,7 +46,7 @@ export const what_happened = {
     prepare_a_ticket: 'Preparo un biglietto',
     open_their_ticket: 'Apro un biglietto ricevuto',
     rename_a_bond: 'Cambio il nome di un contatto',
-    remove_a_bond: 'Tolgo un contatto',
+    remove_a_bond: 'Elimino un contatto',
     activate_an_extension: 'Accendo un’estensione',
     deactivate_an_extension: 'Spengo un’estensione',
     withdraw_the_offer_from_a_bond: 'Ritiro un’estensione offerta a un contatto',

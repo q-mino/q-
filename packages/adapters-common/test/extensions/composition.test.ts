@@ -96,7 +96,7 @@ describe('an extension composed (EXT-4, EXT-6)', () => {
           }),
         ),
       ),
-    ).toEqual(['a_refined_input_on_known'])
+    ).toEqual(['an_input_on_known_the_kernel_cannot_check'])
     expect(
       faults_of(
         compose_an_extension(offer)(
@@ -152,14 +152,14 @@ describe('an extension composed (EXT-4, EXT-6)', () => {
       'a_name_not_unique',
       'a_port_not_offered',
       'a_leaf_on_known_that_does_not_answer_in_one_event',
-      'a_refined_input_on_known',
+      'an_input_on_known_the_kernel_cannot_check',
     ])
     expect(composition.composition === 'a_fault' && composition.message.split('\n')).toEqual([
       'waves: built with the boundary 1.0.0, a major the kernel does not speak (2) (EXT-9, EXT-4)',
       'waves: an extension of this name is installed already (EXT-3)',
       'waves: it touches the_port_of_requests, a port the kernel does not offer extensions (EXT-4)',
       'waves: its leaf usecase/wave on known, at major 1, does not answer in one event (F7, EXT-4)',
-      'waves: the input of its leaf usecase/wave on known, at major 1, holds a refinement JSON Schema cannot tell, at /properties/to (EXT-6, EXT-4)',
+      'waves: the input of its leaf usecase/wave on known, at major 1, holds a shape its JSON Schema does not tell whole (a refinement, a form with no JSON word, a form its reading loses), at /properties/to (EXT-6, EXT-4)',
     ])
   })
 
@@ -182,16 +182,16 @@ describe('an extension composed (EXT-4, EXT-6)', () => {
 
 /**
  * How a shape read back from its JSON Schema checks (EXT-6): `holds`, it
- * accepts and refuses as the original; `accepts_more`, lossy, it lets
- * through what the original refuses (unmarked: the kernel would let a
- * malformed input reach the extension, which parses again, PER-5);
- * `refuses_more`, it refuses what the original accepts; `marked`, the export
- * marks it (`x-refined`, `x-unrepresentable`), which the composition refuses
- * on `known`.
+ * accepts and refuses as the original; `accepts_more`, it lets through what
+ * the original refuses; `refuses_more`, it refuses what the original
+ * accepts. A shape whose reading does not hold is marked by the export
+ * (`x-refined`, `x-unrepresentable`, `x-lossy`), which the composition
+ * refuses on `known` (Alessandro, 22 Nov 2026): the kernel checks a peer's
+ * input whole before the node, or the extension refuses to compose.
  */
-type Verdict = 'holds' | 'accepts_more' | 'refuses_more' | 'marked'
+type Verdict = 'holds' | 'accepts_more' | 'refuses_more'
 
-/** A shape of the table: the original, values it accepts, values it refuses, and the verdict measured. */
+/** A shape of the table: the original, values it accepts, values it refuses, and how its reading was measured. */
 type Row = readonly [string, z.ZodType, readonly unknown[], readonly unknown[], Verdict]
 
 const recursive: z.ZodType = z.lazy(() => z.strictObject({ children: z.array(recursive) }))
@@ -293,8 +293,8 @@ const the_table: readonly Row[] = [
   ['a string trimmed', z.string().trim().min(1), ['a'], ['   '], 'accepts_more'],
   ['a pipe', z.string().pipe(z.string().min(2)), ['ab'], ['a'], 'accepts_more'],
   ['an emoji, a Unicode class', z.emoji(), ['😀'], ['a'], 'refuses_more'],
-  ['a refinement', z.string().refine((s) => s.startsWith('q')), ['q1'], ['a'], 'marked'],
-  ['a date', z.date(), [new Date(0)], ['1970'], 'marked'],
+  ['a refinement', z.string().refine((s) => s.startsWith('q')), ['q1'], ['a'], 'accepts_more'],
+  ['a date', z.date(), [new Date(0)], ['1970'], 'accepts_more'],
 ]
 
 /** A shape read back by the kernel: through a manifest's leaf on `self`, composed, as an extension's input is. */
@@ -318,14 +318,46 @@ describe('zod’s fromJSONSchema as the kernel’s check of a peer’s input (EX
     expect(refused.some((value) => shape.safeParse(value).success)).toBe(false)
     const accepts = accepted.every((value) => read.safeParse(value).success)
     const refuses = refused.every((value) => !read.safeParse(value).success)
-    const marked = the_marks_in(zz.json_schema_of(shape)).length > 0
-    const measured: Verdict = marked
-      ? 'marked'
-      : !accepts
-        ? 'refuses_more'
-        : !refuses
-          ? 'accepts_more'
-          : 'holds'
+    const measured: Verdict = !accepts ? 'refuses_more' : !refuses ? 'accepts_more' : 'holds'
     expect(measured).toBe(verdict)
+  })
+
+  test.each(the_table)(
+    '%s: marked exactly when its reading does not hold',
+    (_, shape, _accepted, _refused, verdict) => {
+      expect(the_marks_in(zz.json_schema_of(shape)).length > 0).toBe(verdict !== 'holds')
+    },
+  )
+})
+
+/** A lossy form (EXT-6, Alessandro, 22 Nov 2026): the shape, and what the export marks it lost. */
+type ALossyForm = readonly [string, z.ZodType, readonly string[]]
+
+const the_lossy_forms: readonly ALossyForm[] = [
+  ['a URL of a protocol', z.url({ protocol: /^https$/ }), ['url']],
+  ['a record with enum keys', z.record(z.enum(['a', 'b']), z.number()), ['record_keys']],
+  ['a string trimmed', z.string().trim().min(1), ['overwrite']],
+  ['a pipe', z.string().pipe(z.string().min(2)), ['pipe']],
+  ['an emoji, a Unicode class', z.emoji(), ['unicode_pattern']],
+]
+
+describe('the lossy forms, marked and refused on known at composition (EXT-6)', () => {
+  test.each(the_lossy_forms)('%s', (_, shape, lost) => {
+    expect(zz.json_schema_of(z.strictObject({ field: shape }))).toMatchObject({
+      properties: { field: { 'x-lossy': lost } },
+    })
+    const composition = compose_an_extension(offer)(
+      the_manifest_of_waves({
+        known: known_with(a_leaf(z.strictObject({ field: shape }), { waved })),
+      }),
+    )
+    expect(composition.composition === 'a_fault' && composition.faults).toEqual([
+      {
+        fault: 'an_input_on_known_the_kernel_cannot_check',
+        major: 1,
+        leaf: 'usecase/wave',
+        marks: ['/properties/field'],
+      },
+    ])
   })
 })

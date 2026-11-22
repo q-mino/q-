@@ -13,7 +13,7 @@ export const after = (state: value.the_state, happens: value.what_happens): valu
       return state.ticket !== undefined && !state.ticket.ended
         ? _ui.dsl.it_stays(state)
         : _ui.dsl.it_stays<value.the_state>(
-            { ticket: { bond: happens.bond, asked: happens.asked, ended: false } },
+            { ticket: { bond: happens.bond, asked: happens.asked, ended: false, copied: false } },
             [
               {
                 asks: 'an_activity',
@@ -22,6 +22,10 @@ export const after = (state: value.the_state, happens: value.what_happens): valu
               },
             ],
           )
+    case 'the_link_is_copied':
+      return _ui.dsl.it_stays(
+        state.ticket === undefined ? state : { ticket: { ...state.ticket, copied: true } },
+      )
     case 'she_goes_back':
       return _ui.dsl.it_goes(state, { goes: 'back' })
     case 'what_it_asked_ended':
@@ -41,6 +45,10 @@ export const what_it_shows = (
   if (course.course === 'ended' && course.how.ended !== 'done')
     return { shows: 'the_link_cannot_be_prepared', how: course.how }
   return given.ticket?.bond === state.ticket.bond
-    ? { shows: 'the_link', ticket: given.ticket }
+    ? {
+        shows: 'the_link',
+        ticket: given.ticket,
+        gesture: given.the_phone === 'shares' ? 'share' : state.ticket.copied ? 'copied' : 'copy',
+      }
     : { shows: 'getting_the_link_ready' }
 }

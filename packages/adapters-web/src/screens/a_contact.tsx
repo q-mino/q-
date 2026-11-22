@@ -6,6 +6,7 @@
 // extensions in common (EXT-8); since part 22.2 the marks of its place, the
 // points of each extension active and offered to it (WEB-22).
 
+import type * as boundary from '@q-mino/boundary'
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_contact from '@q-mino/domains/ui/a_contact/_dsl.ts'
@@ -14,7 +15,12 @@ import type * as activities_value from '@q-mino/domains/user/activities/_value.t
 import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
-import { the_app, what_it_asked_now } from './the_app.ts'
+import {
+  the_app,
+  the_word_or_its_fault,
+  what_it_asked_now,
+  type TheCommonTexts,
+} from './the_app.ts'
 
 type the_contact_shown = Extract<a_contact_value.what_it_shows, { shows: 'the_contact' }>
 
@@ -48,6 +54,36 @@ export interface AContactTexts {
   /** The gesture on an extension's offer, by its case. */
   readonly the_offer: Readonly<Record<a_contact_value.an_extension_on_the_contact['may'], string>>
   readonly ask_for_the_extensions_in_common: string
+  /** What came back of the last question, beside it (UI-5): the extensions in common by their names, in their words. */
+  readonly the_answer: {
+    readonly waiting: string
+    readonly in_common: (names: readonly string[]) => string
+    readonly none_in_common: string
+    readonly no_answer: Readonly<Record<'no_response' | 'the_peer_cannot_answer', string>>
+  }
+}
+
+/** What came back of the last question, in her words: nothing when none was asked. */
+const the_words_of_the_answer = (
+  texts: AContactTexts,
+  common: TheCommonTexts,
+  words: (extension: string) => boundary.the_words_of_an_extension | undefined,
+  answer: a_contact_value.the_answer_shown,
+): string | undefined => {
+  switch (answer.answer) {
+    case 'not_asked':
+      return undefined
+    case 'waiting':
+      return texts.the_answer.waiting
+    case 'in_common':
+      return texts.the_answer.in_common(
+        answer.extensions.map((one) => the_word_or_its_fault(common, words(one)?.name, one)),
+      )
+    case 'none_in_common':
+      return texts.the_answer.none_in_common
+    case 'no_answer':
+      return texts.the_answer.no_answer[answer.why]
+  }
 }
 
 const nothing_asked: ui_value.a_course = { course: 'nothing_asked' }
@@ -75,11 +111,12 @@ export const AContact = (props: {
     app,
     screen.state,
     async (state): Promise<a_contact_value.what_it_is_given> => {
-      const [card, extensions, offered, activities] = await Promise.all([
+      const [card, extensions, offered, activities, in_common] = await Promise.all([
         app.node.a_contact(bond),
         app.node.the_extensions(),
         app.node.offered_to(bond),
         Promise.all(state.asked.map((one) => app.node.an_activity(one.asked.activity_id))),
+        app.node.the_extensions_in_common_with(bond),
       ])
       return {
         card,
@@ -88,6 +125,7 @@ export const AContact = (props: {
         activities: activities.filter(
           (one): one is activities_value.activity_card => one !== undefined,
         ),
+        in_common,
       }
     },
   )
@@ -270,7 +308,11 @@ export const AContact = (props: {
                     <For each={it().the_extensions}>
                       {(one) => (
                         <li>
-                          {one.extension}{' '}
+                          {the_word_or_its_fault(
+                            app.common,
+                            app.words(one.extension)?.name,
+                            one.extension,
+                          )}{' '}
                           <small>
                             {one.offered ? props.texts.offered : props.texts.not_offered}
                           </small>{' '}
@@ -304,6 +346,11 @@ export const AContact = (props: {
                   {props.texts.ask_for_the_extensions_in_common}
                 </button>
                 <TheCourse course={the_course_for(it(), { for: 'the_extensions_in_common' })} />
+                <Show
+                  when={the_words_of_the_answer(props.texts, app.common, app.words, it().in_common)}
+                >
+                  {(said) => <p role="status">{said()}</p>}
+                </Show>
               </section>
               <For each={it().marks}>
                 {(mark) => (

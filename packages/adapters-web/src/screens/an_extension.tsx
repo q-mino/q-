@@ -6,6 +6,7 @@
 // and what happened to it, and since part 22.2 the points of its place
 // (WEB-22): its actions, its slots, the pages it opens.
 
+import type * as boundary from '@q-mino/boundary'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as an_extension from '@q-mino/domains/ui/an_extension/_dsl.ts'
 import type * as an_extension_value from '@q-mino/domains/ui/an_extension/_value.ts'
@@ -14,7 +15,13 @@ import type * as activities_value from '@q-mino/domains/user/activities/_value.t
 import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
-import { the_app, what_it_asked_now } from './the_app.ts'
+import {
+  in_its_words,
+  the_app,
+  the_word_or_its_fault,
+  what_it_asked_now,
+  type TheCommonTexts,
+} from './the_app.ts'
 import { TheNews, type TheNewsTexts } from './what_happened.tsx'
 
 type the_extension_shown = Extract<an_extension_value.what_it_shows, { shows: 'the_extension' }>
@@ -49,16 +56,30 @@ export interface AnExtensionTexts {
   readonly the_news: TheNewsTexts
 }
 
-/** What an extension asks, in her words. */
+/** The plural of a point, as an extension's words name its labels (EXT-16). */
+const the_labels_of = {
+  action: 'actions',
+  slot: 'slots',
+  page: 'pages',
+} as const satisfies Record<a_place_asked['point'], keyof boundary.the_words_of_an_extension>
+
+/** What an extension asks, in her words: a place by its label in the extension's words, or the fault of its missing (WEB-22). */
 const the_words_of_what_it_asks = (
   texts: AnExtensionTexts,
+  common: TheCommonTexts,
+  words: boundary.the_words_of_an_extension | undefined,
   asks: what_an_extension_asks,
 ): string => {
   switch (asks.asks) {
     case 'to_answer_your_bonds':
       return texts.to_answer_your_bonds(asks.leaves)
     case 'a_place_on_your_screens':
-      return texts.a_place_on_your_screens[asks.point](asks.name, asks.place)
+      return in_its_words(
+        common,
+        words?.[the_labels_of[asks.point]][asks.name],
+        asks.name,
+        (label) => texts.a_place_on_your_screens[asks.point](label, asks.place),
+      )
     case 'to_see_the_peers_key':
     case 'to_see_the_name_of_the_bond':
     case 'to_send_requests_on_your_bonds':
@@ -159,7 +180,9 @@ export const AnExtension = (props: {
         <Match when={the_extension()}>
           {(it) => (
             <>
-              <h2>{it().extension}</h2>
+              <h2>
+                {the_word_or_its_fault(app.common, app.words(it().extension)?.name, it().extension)}
+              </h2>
               <p>
                 <small>{props.texts.the_version(it().version)}</small>{' '}
                 <small>{props.texts.is[it().is]}</small>
@@ -179,12 +202,28 @@ export const AnExtension = (props: {
                   <section>
                     <Show when={the_manifest()}>
                       {(manifest) => (
-                        <h3>{props.texts.the_notice(manifest().name, manifest().version)}</h3>
+                        <h3>
+                          {in_its_words(
+                            app.common,
+                            app.words(manifest().name)?.name,
+                            manifest().name,
+                            (name) => props.texts.the_notice(name, manifest().version),
+                          )}
+                        </h3>
                       )}
                     </Show>
                     <ol>
                       <For each={notice()}>
-                        {(asks) => <li>{the_words_of_what_it_asks(props.texts, asks)}</li>}
+                        {(asks) => (
+                          <li>
+                            {the_words_of_what_it_asks(
+                              props.texts,
+                              app.common,
+                              app.words(it().extension),
+                              asks,
+                            )}
+                          </li>
+                        )}
                       </For>
                     </ol>
                     <button type="button" onClick={accepts}>

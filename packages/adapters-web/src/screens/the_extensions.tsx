@@ -7,7 +7,7 @@ import type * as the_extensions_value from '@q-mino/domains/ui/the_extensions/_v
 import { createMemo, For, Show } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back } from './parts.tsx'
-import { the_app } from './the_app.ts'
+import { the_app, the_word_or_its_fault } from './the_app.ts'
 
 /** The words of the extensions installed (provisional, A to confirm). */
 export interface TheExtensionsTexts {
@@ -56,7 +56,11 @@ export const TheExtensions = (props: { texts: TheExtensionsTexts }) => {
                         })
                       }}
                     >
-                      {one.extension}
+                      {the_word_or_its_fault(
+                        app.common,
+                        app.words(one.extension)?.name,
+                        one.extension,
+                      )}
                     </button>{' '}
                     <small>{props.texts.the_version(one.version)}</small>{' '}
                     <small>{props.texts.is[one.is]}</small>

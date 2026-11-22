@@ -22,6 +22,18 @@ export interface TheDevice {
   readonly clock: zz.Clock
   /** The rear camera, played in the screen's video, its QRs' texts read (`scan_with_the_rear_camera`, WEB-2). */
   readonly scans: (video: HTMLVideoElement) => Promise<AScan>
+  /** The phone's share and clipboard, by the parts the screens use: the page's `navigator`, given as it is (WEB-5). */
+  readonly the_navigator: TheNavigatorsSharing
+}
+
+/**
+ * The parts of the page's `navigator` a link is shared with (WEB-18): the
+ * phone's share (Web Share, missing where the browser has none), and the
+ * clipboard, where she copies it instead.
+ */
+export interface TheNavigatorsSharing {
+  readonly share?: (data: { readonly url: string }) => Promise<void>
+  readonly clipboard: { readonly writeText: (text: string) => Promise<void> }
 }
 
 /** The words every screen shares (provisional, A to confirm: the words she reads, UI-5). */
@@ -32,8 +44,16 @@ export interface TheCommonTexts {
   readonly opening: string
   /** What a screen asked, in progress. */
   readonly in_progress: string
-  /** How an activity ended, by its case (USR-3). */
-  readonly how_it_ended: Readonly<Record<activities_value.how_it_ended['ended'], string>>
+  /**
+   * How an activity ended, by its case (USR-3); an extension's end is told
+   * in its own words, never the kernel's (EXT-16, WEB-22).
+   */
+  readonly how_it_ended: Readonly<
+    Record<
+      Exclude<activities_value.how_it_ended['ended'], 'the_extension_told_how_it_ended'>,
+      string
+    >
+  >
   /** Why an extension cannot be reached (USR-3). */
   readonly cannot_be_reached: Readonly<
     Record<
@@ -53,9 +73,12 @@ export interface TheCommonTexts {
   /**
    * A word of an extension the app does not have (its name, a point's label,
    * an event's words), drawn as a fault by the name in the manifest it is
-   * for: never silently that name (WEB-22).
+   * for, in place of the whole text that would hold it: never silently that
+   * name (WEB-22).
    */
   readonly a_word_missing: (name: string) => string
+  /** Over every screen while the relay did not answer (UI-5's strip): her letters wait. */
+  readonly the_relay_does_not_answer: string
   /** The kernel's words around an extension's points in its mark (EXT-16, WEB-22). */
   readonly the_points: ThePointsTexts
 }
@@ -105,6 +128,8 @@ export const the_words_of_an_end = (
   common: TheCommonTexts,
   how: activities_value.how_it_ended,
 ): string => {
+  // An extension's end has no kernel's words: told here with none of its own, the fault of its missing word (WEB-22).
+  if (how.ended === 'the_extension_told_how_it_ended') return common.a_word_missing(how.said.event)
   const ended = common.how_it_ended[how.ended]
   if (how.ended === 'the_extension_cannot_be_reached')
     return `${ended}: ${common.cannot_be_reached[how.because]}`
@@ -121,6 +146,17 @@ export const the_word_or_its_fault = (
 ): string => word ?? common.a_word_missing(name)
 
 /**
+ * A text that holds a word of an extension: written with it, or, missing,
+ * the fault of its missing in place of the whole text (WEB-22).
+ */
+export const in_its_words = (
+  common: TheCommonTexts,
+  word: string | undefined,
+  name: string,
+  text: (word: string) => string,
+): string => (word === undefined ? common.a_word_missing(name) : text(word))
+
+/**
  * How an action of an extension ended, in her words (EXT-16): with what its
  * extension answered, its own words for its event, a fault when it has none
  * (WEB-22); else as any activity ends.
@@ -131,9 +167,7 @@ export const the_words_of_an_actions_end = (
   how: activities_value.how_it_ended,
 ): string => {
   if (how.ended !== 'the_extension_told_how_it_ended') return the_words_of_an_end(common, how)
-  const event = how.said.event
-  const said = words?.events[event]
-  return said ?? `${common.how_it_ended[how.ended]}: ${common.a_word_missing(event)}`
+  return the_word_or_its_fault(common, words?.events[how.said.event], how.said.event)
 }
 
 /** The app, given by the root to every screen (Solid's context: static wiring, read once at a screen's setup). */

@@ -53,7 +53,7 @@ describe('the first face', () => {
     expect(the_button(app.shown(), words.the_first_face.make_it).disabled).toBe(false)
   })
 
-  test('making the first face asks once, and once made the app starts again at her contacts', async () => {
+  test('making the first face asks once, and once made the server is told, then her contacts', async () => {
     const anna = a_node_of_test()
     opened = opens_the_app({ node: anna.node, device: a_device_of_test(['A1', 'F_a']) })
     const app = opened
@@ -72,6 +72,15 @@ describe('the first face', () => {
     })
     anna.comes_to_hold((now) => ({ ...now, faces: [{ face: 'F_a', name: 'Anna' }] }))
     anna.ends('A1', { ended: 'done', said: { event: 'your_face_is_being_made', payload: {} } })
+    // The server, once (1c, UI-5): the relay her letters go through, what it sees and what not.
+    await until(() => {
+      expect(the_title(app)).toBe(words.the_server.title)
+    })
+    expect(app.shown().textContent).toContain(
+      words.the_server.it_carries_your_letters('https://relay.cumino.test'),
+    )
+    expect(app.shown().textContent).toContain(words.the_server.it_does_not_see)
+    the_button(app.shown(), words.the_server.go_on).click()
     await until(() => {
       expect(the_title(app)).toBe(words.my_contacts.title)
     })
