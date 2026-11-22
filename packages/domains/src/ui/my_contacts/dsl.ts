@@ -3,12 +3,13 @@
 
 import { _ui, type value } from './_scope_dsl.ts'
 
-/** The menu, in its order: the two handshakes, the extensions, what happened. */
+/** The menu, in its order: the two handshakes, the extensions, what happened, and the server (read again, UI-5). */
 const the_menu: readonly value.an_entry[] = [
   'the_handshake_in_person',
   'the_handshake_at_a_distance',
   'the_extensions',
   'what_happened',
+  'the_server',
 ]
 
 /** The screen of an entry of the menu. */

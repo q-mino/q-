@@ -22,4 +22,4 @@ Each story is the test named after it (part 8.2), in [`packages/memory/test/rela
 
 ## Open
 
-- Closed by part 19 (MBX-8): the relay's storage forgets a deposit a day after its discard, its row and its facts with the log's prefix (the storage's tests, `packages/relay/test/relay.test.ts`: `it forgets a deposit a day after its discard: its retry is a new deposit`); it streams the collect composed, so that a phone reads its mailbox again after each pause.
+- Closed by part 19 (MBX-8): the relay's storage forgets a deposit a day after its discard, its row and its facts with the log's prefix (the storage's tests, `packages/relay/test/relay.test.ts`: `it forgets a deposit a day after its discard: its retry is a new deposit`); it streams the collect composed, so that a phone reads its mailbox again after each pause. Both confirmed by Alessandro (22 Nov 2026), to be measured at step 27 (a week of mailbox on 8 bonds).

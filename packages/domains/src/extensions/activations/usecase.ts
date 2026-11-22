@@ -44,5 +44,10 @@ export const the_extensions_offered_to_a_bond = read_use_case({
   query: query.the_extensions_offered_to_a_bond,
 })
 
+/** The questions asked of a bond about the extensions in common, the last first. */
+export const the_questions_asked_of_a_bond = read_use_case({
+  query: query.the_questions_asked_of_a_bond,
+})
+
 /** The extensions in common with a bond, for what its face offers. */
 export const the_extensions_in_common = read_use_case({ query: query.the_extensions_in_common })

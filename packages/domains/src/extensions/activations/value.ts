@@ -178,10 +178,11 @@ export const question_progress = z.discriminatedUnion('stage', [
   z.strictObject({ stage: z.literal('had_no_answer'), why: no_answer }),
 ])
 
-/** A question the node asked a bond (EXT-8): what it offered it, and where it stands. */
+/** A question the node asked a bond (EXT-8): what it offered it, when, and where it stands. */
 export const question = z.strictObject({
   id: id.question_id,
   bond: address_book.id.bond_id,
   offered: offered_extensions,
+  asked_at: date_time,
   progress: question_progress,
 })

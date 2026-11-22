@@ -12,6 +12,7 @@ import * as fact from './_fact.ts'
 import * as predicate from './_predicate.ts'
 import * as effect from './_effect.ts'
 import * as extension_selection from './_extension_selection.ts'
+import * as question_selection from './_question_selection.ts'
 import * as command from './_command.ts'
 import * as query from './_query.ts'
 import * as usecase from './_usecase.ts'
@@ -87,6 +88,8 @@ export const registry = {
     extension_selection.the_extension_is_offered_to_this_bond,
   'extensions/activations/selection/extension/the_extension_is_one_of_these':
     extension_selection.the_extension_is_one_of_these,
+  'extensions/activations/selection/question/the_question_was_asked_of_this_bond':
+    question_selection.the_question_was_asked_of_this_bond,
   'extensions/activations/command/the_manifest_shown_is_new': command.the_manifest_shown_is_new,
   'extensions/activations/command/the_manifest_shown_is_accepted_already':
     command.the_manifest_shown_is_accepted_already,
@@ -129,6 +132,9 @@ export const registry = {
   'extensions/activations/query/the_extensions_offered_to_a_bond_input':
     query.the_extensions_offered_to_a_bond_input,
   'extensions/activations/query/it_is_offered_back': query.it_is_offered_back,
+  'extensions/activations/query/the_questions_asked_of_a_bond': query.the_questions_asked_of_a_bond,
+  'extensions/activations/query/the_questions_asked_of_a_bond_input':
+    query.the_questions_asked_of_a_bond_input,
   'extensions/activations/query/the_extensions_in_common': query.the_extensions_in_common,
   'extensions/activations/query/the_extensions_in_common_input':
     query.the_extensions_in_common_input,
@@ -145,6 +151,8 @@ export const registry = {
   'extensions/activations/usecase/an_extension': usecase.an_extension,
   'extensions/activations/usecase/the_extensions_offered_to_a_bond':
     usecase.the_extensions_offered_to_a_bond,
+  'extensions/activations/usecase/the_questions_asked_of_a_bond':
+    usecase.the_questions_asked_of_a_bond,
   'extensions/activations/usecase/the_extensions_in_common': usecase.the_extensions_in_common,
   'extensions/activations/version/activations': version.activations,
 } satisfies zz.Registry
