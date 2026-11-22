@@ -226,6 +226,39 @@ describe("the relay's HTTP client: the post's mailbox port (WEB-6, PST-10)", () 
     ).toEqual({ outcome: 'unreachable' })
   })
 
+  test('the relay as last met: answered, or not, each change told, an abort none (UI-5)', async () => {
+    let answers: () => Promise<AnAnswer> = () => Promise.reject(new TypeError('fetch failed'))
+    const changing = a_fetch(() => answers())
+    const transports = the_relay_s_http_transports({ fetch: changing.fetch, elapsed: no_time })
+    const told: string[] = []
+    const stop = transports.the_relay.when_it_changes(() => {
+      told.push(transports.the_relay.last())
+    })
+    expect(transports.the_relay.last()).toBe('not_met_yet')
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'unreachable' })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'unreachable' })
+    answers = () =>
+      Promise.resolve({
+        status: 200,
+        body: a_body([ndjson({ event: 'the_envelope_is_kept', payload: {} })]).body,
+      })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'kept' })
+    answers = () => Promise.resolve({ status: 503, body: a_body([]).body })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'unreachable' })
+    answers = () => Promise.reject(new DOMException('the page let it go', 'AbortError'))
+    await expect(transports.mailbox.deposit(a_deposit())).rejects.toThrow('aborted')
+    expect(told).toEqual(['did_not_answer', 'answered', 'did_not_answer'])
+    stop()
+    answers = () =>
+      Promise.resolve({
+        status: 200,
+        body: a_body([ndjson({ event: 'the_envelope_is_kept', payload: {} })]).body,
+      })
+    await transports.mailbox.deposit(a_deposit())
+    expect(told).toHaveLength(3)
+    expect(transports.the_relay.last()).toBe('answered')
+  })
+
   test('an abort the client did not ask for is signalled: the deposit throws (ADP-4, PST-10, TST-4)', async () => {
     const aborted = a_fetch(() =>
       Promise.reject(new DOMException('the page let it go', 'AbortError')),
