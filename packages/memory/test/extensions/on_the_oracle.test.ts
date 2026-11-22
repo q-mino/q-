@@ -13,7 +13,7 @@ import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 // README of this folder lists each check with its test, those proven by
 // the earlier blocks, and those deferred to their step.
 
-/** Anna's words, and Bruno's greeting back (greetings' `dsl`, provisional texts). */
+/** Anna's words, and Bruno's greeting back (greetings' `dsl`, its texts). */
 const greeted_back = { event: 'greeted_back', payload: { words: 'ciao anche a te' } }
 
 /** Anna's node greets a bond, and its post deposits the request: the greeting. */
