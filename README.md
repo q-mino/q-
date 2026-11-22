@@ -31,7 +31,7 @@ pnpm --filter @q-mino/phone dev
 ## Where the app is published
 
 - `q-mino.github.io/q-/`: releases, from the tags `v*`.
-- `q-mino-prova.github.io/q-/`: test origin, from every merge on `main`.
+- `q-mino-prova.github.io/q-/`: test origin, from every push on `acceptance`, the branch where the work is merged before it goes to `main` in review.
 
 ## License
 
