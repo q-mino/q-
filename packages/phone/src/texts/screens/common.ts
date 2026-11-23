@@ -36,6 +36,14 @@ const the_kernels_events = new Map<string, string>([
 export const common = {
   back: 'Indietro',
   opening: 'Apro Cumino…',
+  // The start's fault, in A's words for the start [Q, A, 22 Nov 2026].
+  it_does_not_start: 'Cumino non parte.',
+  why: 'Perché',
+  // The data of an older test release (WEB-8) [Q, A, 23 Nov 2026].
+  the_data_of_an_older_test_release:
+    'I dati di questa app vengono da una versione di prova precedente che non so più leggere: cancellali per ripartire.',
+  // [Q, C, provisional: A to confirm]
+  clear_the_data_and_start_again: 'Cancella i dati e riparti',
   in_progress: 'In corso…',
   how_it_ended: {
     done: 'Fatto',

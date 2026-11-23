@@ -47,6 +47,14 @@ export interface TheCommonTexts {
   readonly back: string
   /** While the app reads her node at its start. */
   readonly opening: string
+  /** Her node's reads at the start failed (WEB-18): the fault told, never an endless wait. */
+  readonly it_does_not_start: string
+  /** Over the fault's message, whole. */
+  readonly why: string
+  /** A record the node keeps is out of its form (WEB-8): the data of an older test release, which she can clear. */
+  readonly the_data_of_an_older_test_release: string
+  /** Her gesture on those data, on the test channel only (WEB-8): the node's database deleted, the app opened again. */
+  readonly clear_the_data_and_start_again: string
   /** What a screen asked, in progress. */
   readonly in_progress: string
   /**
