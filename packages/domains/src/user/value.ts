@@ -170,6 +170,8 @@ export const what_happened_without_a_fact = z.discriminatedUnion('happened', [
   z.strictObject({ happened: z.literal('a_letter_was_refused'), leaf: z.string().max(256) }),
   /** A response of hers could not be sent (PST-9). */
   z.strictObject({ happened: z.literal('a_response_could_not_be_sent') }),
+  /** A request of her node's could not be sent: over what a letter carries (PST-12, EXT-8). */
+  z.strictObject({ happened: z.literal('a_request_could_not_be_sent') }),
   /** An extension did what its manifest does not declare (EXT-4): a call, an event, a frame's message. */
   z.strictObject({
     happened: z.literal('an_extension_did_what_it_does_not_declare'),

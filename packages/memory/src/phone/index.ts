@@ -391,7 +391,7 @@ export const phone =
     }
     const notices: ANotice[] = []
 
-    /** The kernel's own port of requests (F7, EXT-8): the phone's post, the hash, the address book's bond by its id. */
+    /** The kernel's own port of requests (F7, EXT-8): the phone's post, the hash, the address book's bond by its id, the kernel's trace. */
     const the_kernels_port = the_kernels_port_of_requests({
       clock,
       machine: { hash: the_hash },
@@ -401,6 +401,7 @@ export const phone =
         log: facts,
       },
       the_bond,
+      trace,
     })
 
     // The executors (DOM-14) and the reactions' consumers (DOM-16), wired.
