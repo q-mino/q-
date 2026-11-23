@@ -1,8 +1,8 @@
 // The handshake in person, rendered (UI-5, WEB-1, WEB-2; stories 14, 15 and
 // 27 of `ui`'s README): her ticket prepared and its QR shown, the camera on
 // while she scans, the front one by default, turned to the rear and back
-// where the device has more than one, what it reads opened or told, what
-// reaches her node.
+// where the device has more than one, what it reads opened or told, her QR
+// kept once she read theirs until she puts it away, what reaches her node.
 
 import { the_link_of_a_ticket } from '@q-mino/adapters-web'
 import { the_words_of_a_bond_made, type HerTicket } from '@q-mino/adapters-web/screens'
@@ -123,9 +123,11 @@ describe('the handshake in person', () => {
         },
       })
     })
+    // Her QR stays, the other phone may still be reading it; the camera off, its job done.
     await until(() => {
-      expect(the_words(app)).toContain(in_person.opening_their_ticket('Bruno'))
+      expect(the_words(app)).toContain(in_person.their_ticket_read)
     })
+    expect(app.shown().querySelector('img')?.getAttribute('alt')).toBe(in_person.the_qr)
     await until(() => {
       expect(camera.is_on()).toBe(false)
     })
@@ -133,9 +135,17 @@ describe('the handshake in person', () => {
     camera.shows(the_link_of(bruno_s_ticket))
 
     anna.ends('A11', { ended: 'done', said: { event: 'you_met_in_person', payload: {} } })
+    // Time for her node's change to reach the screen (real timers): nothing leaves on its own.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    // Opened, her QR still there until she leaves it.
+    expect(the_words(app)).toContain(in_person.their_ticket_read)
+    expect(app.shown().querySelector('img')?.getAttribute('alt')).toBe(in_person.the_qr)
+    expect(the_words(app)).not.toContain(in_person.bonded_in_person('Bruno'))
+    the_button(app.shown(), in_person.done).click()
     await until(() => {
       expect(the_words(app)).toContain(in_person.bonded_in_person('Bruno'))
     })
+    expect(app.shown().querySelector('img')).toBeNull()
     expect(anna.activities_asked()).toHaveLength(2)
     expect(camera.turned_on()).toBe(1)
     the_button(app.shown(), in_person.open_the_contact).click()
@@ -185,7 +195,7 @@ describe('the handshake in person', () => {
 
     camera.shows(the_link_of(bruno_s_ticket))
     await until(() => {
-      expect(the_words(app)).toContain(in_person.opening_their_ticket('Bruno'))
+      expect(the_words(app)).toContain(in_person.their_ticket_read)
     })
     anna.ends('A11', {
       ended: 'cannot_be_done',
@@ -213,6 +223,14 @@ describe('the handshake in person', () => {
           name: 'Bruno',
         },
       })
+    })
+    // She puts her QR away before it is opened: their ticket being opened, then bonded.
+    await until(() => {
+      expect(has_a_button(app.shown(), in_person.done)).toBe(true)
+    })
+    the_button(app.shown(), in_person.done).click()
+    await until(() => {
+      expect(the_words(app)).toContain(in_person.opening_their_ticket('Bruno'))
     })
     anna.ends('A12', {
       ended: 'done_already',

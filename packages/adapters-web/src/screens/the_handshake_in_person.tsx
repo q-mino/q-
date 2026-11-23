@@ -3,8 +3,10 @@
 // plays the camera in its video, each text it reads told as a scan: the
 // front camera by default (the two face each other, screen to screen),
 // turned to the rear and back by her gesture where the device has more than
-// one; the camera is on only while her QR is shown, off once it is not and
-// when the screen closes. Bonded, she opens the contact or shakes another hand.
+// one; the camera is on only while she scans, off once she does not and
+// when the screen closes. Once she scanned theirs, her QR stays shown, the
+// camera off, until her gesture puts it away (the other phone may still be
+// reading it); then bonded, she opens the contact or shakes another hand.
 
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as the_handshake_in_person from '@q-mino/domains/ui/the_handshake_in_person/_dsl.ts'
@@ -45,6 +47,10 @@ export interface TheHandshakeInPersonTexts {
       string
     >
   >
+  /** Once she scanned theirs, her QR still shown: the other phone may still be reading it. */
+  readonly their_ticket_read: string
+  /** The gesture that puts her QR away, once she scanned theirs. */
+  readonly done: string
   readonly opening_their_ticket: (name: string) => string
   /** Bonded, at a distance as her node measured it (BND-10): no word of the way. */
   readonly bonded: (name: string) => string
@@ -190,6 +196,10 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
     const it = shown()
     return it?.shows === 'ready' ? it : undefined
   }
+  const read = () => {
+    const it = shown()
+    return it?.shows === 'their_ticket_read' ? it : undefined
+  }
   const opening = () => {
     const it = shown()
     return it?.shows === 'opening_their_ticket' ? it : undefined
@@ -313,6 +323,18 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
                 </Show>
               </>
             )}
+          </Match>
+          <Match when={read()}>
+            <p role="status">{props.texts.their_ticket_read}</p>
+            <Show when={link()}>{(link) => <TheQr link={link()} texts={props.texts} />}</Show>
+            <button
+              type="button"
+              onClick={() => {
+                screen.happens({ happens: 'she_puts_her_qr_away' })
+              }}
+            >
+              {props.texts.done}
+            </button>
           </Match>
           <Match when={opening()}>
             {(it) => <p role="status">{props.texts.opening_their_ticket(it().introduced_as)}</p>}
