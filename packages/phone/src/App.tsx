@@ -18,6 +18,12 @@ import { UpdatePrompt } from './UpdatePrompt.tsx'
 
 const repository = 'https://github.com/q-mino/q-'
 
+// The commit's instant, told in the device's zone and the Italian way (A, 23 Nov 2026).
+const the_time_of = (instant: string): string =>
+  new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(
+    Date.parse(instant),
+  )
+
 /** What the app shows now: the start under way, or what it came to. */
 type TheAppNow =
   | { readonly now: 'opening' }
@@ -182,6 +188,10 @@ export const App = (props: TheAppsWiring) => {
           {texts.app.name} ({texts.app.reading}) · {texts.about.version}: {__Q_VERSION__} ·{' '}
           {texts.about.code}:{' '}
           <a href={`${repository}/commit/${__Q_COMMIT__}`}>{__Q_COMMIT__.slice(0, 7)}</a>
+          <Show when={__Q_COMMITTED_AT__ !== 'unknown'}>
+            {' '}
+            {texts.about.committed_on(the_time_of(__Q_COMMITTED_AT__))}
+          </Show>
         </p>
       </footer>
       <UpdatePrompt before_the_update={before_the_update} />

@@ -15,6 +15,11 @@ const git = (command: string): string => {
 // Where the files come from, shown in the update prompt and in "Informazioni".
 const version = process.env['Q_VERSION'] ?? git('describe --tags --always --dirty')
 const commit = process.env['GITHUB_SHA'] ?? git('rev-parse HEAD')
+// When that commit was made, an absolute instant (Z), shown in the device's zone (A, 23 Nov 2026).
+const committed = git('show -s --format=%cI HEAD')
+const committed_at = Number.isNaN(Date.parse(committed))
+  ? 'unknown'
+  : new Date(committed).toISOString()
 // 'release' on q-mino, 'test' on q-mino-prova, 'dev' locally.
 const channel = process.env['Q_CHANNEL'] ?? 'dev'
 // The relay the node's tickets declare (PWA-2): the release's; locally, an
@@ -27,6 +32,7 @@ export default defineConfig({
   define: {
     __Q_VERSION__: JSON.stringify(version),
     __Q_COMMIT__: JSON.stringify(commit),
+    __Q_COMMITTED_AT__: JSON.stringify(committed_at),
     __Q_CHANNEL__: JSON.stringify(channel),
     __Q_RELAY__: JSON.stringify(relay),
   },

@@ -59,6 +59,7 @@ export const texts = {
     title: 'Informazioni',
     version: 'Versione',
     code: 'Codice',
+    committed_on: (when: string) => `del ${when}`,
   },
   screens,
 } as const
