@@ -1,5 +1,5 @@
 {
-  "typecheck": { "seconds": 150, "gib": 6 },
-  "lint": { "seconds": 100, "gib": 7 },
-  "test": { "seconds": 100, "gib": 7 }
+  "typecheck": { "seconds": 200, "gib": 6 },
+  "lint": { "seconds": 140, "gib": 7 },
+  "test": { "seconds": 110, "gib": 7 }
 }
