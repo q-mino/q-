@@ -20,6 +20,7 @@ import {
   her_node_over,
   the_ticket_in_a_link,
   type HerNode,
+  the_device_s_network,
   type TheRelayMet,
 } from '@q-mino/adapters-web'
 import * as zz from '@q-mino/domains/library'
@@ -130,6 +131,12 @@ const annas_phone = async (story: Story) => {
     met = now
     for (const tell of told_of_the_relay) tell()
   }
+  // The device's network (UI-5): the source, over a page the story turns off and on.
+  const the_device = { navigator: { onLine: true }, listeners: new Set<() => void>() }
+  const the_network_goes = (now: 'online' | 'offline'): void => {
+    the_device.navigator.onLine = now === 'online'
+    for (const listener of the_device.listeners) listener()
+  }
   const her: HerNode = her_node_over({
     clock,
     draws_an_id: () => {
@@ -170,6 +177,13 @@ const annas_phone = async (story: Story) => {
         },
       },
     },
+    the_network: the_device_s_network({
+      navigator: the_device.navigator,
+      window: {
+        addEventListener: (_type, listener) => the_device.listeners.add(listener),
+        removeEventListener: (_type, listener) => the_device.listeners.delete(listener),
+      },
+    }),
   })
 
   /** The node runs until it is quiet (DOM-14, DOM-16): the reactions and the kernel's executors started, what is due delivered, then stopped. */
@@ -206,6 +220,7 @@ const annas_phone = async (story: Story) => {
     frames_traced: (): readonly TheKernelsTraced[] => frames_traced,
     /** The relay client meets the relay, as a collect would (UI-5). */
     the_relay_meets,
+    the_network_goes,
 
     how_it_ended,
     /** The ticket of a bond as the phone shows it (BND-9). */
@@ -450,6 +465,23 @@ describe('her node, over a phone of the stack', () => {
     stops()
     anna.the_relay_meets('answered')
     expect(told).toBe(1)
+  })
+
+  test('the device’s network, each change told: no network, else nothing told (UI-5)', async () => {
+    const anna = await annas_phone(await a_story())
+    expect(await anna.her.the_network()).toBe('not_told')
+    let told = 0
+    const stops = anna.her.when_it_changes(() => {
+      told += 1
+    })
+    anna.the_network_goes('offline')
+    expect(await anna.her.the_network()).toBe('offline')
+    anna.the_network_goes('online')
+    expect(await anna.her.the_network()).toBe('not_told')
+    expect(told).toBe(2)
+    stops()
+    anna.the_network_goes('offline')
+    expect(told).toBe(2)
   })
 
   test('a frame served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {

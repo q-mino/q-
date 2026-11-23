@@ -38,6 +38,7 @@ import type * as choices_usecase from '@q-mino/domains/user/choices/_usecase.ts'
 import type * as drafts_usecase from '@q-mino/domains/user/drafts/_usecase.ts'
 import type * as drafts_value from '@q-mino/domains/user/drafts/_value.ts'
 import { z } from 'zod'
+import type { TheDeviceSNetwork } from '../network/index.ts'
 import type { TheRelayAsMet } from '../relay_client/index.ts'
 import { the_link_of_a_ticket } from '../ticket_link/index.ts'
 import type { AFrameServed, AnEventOfALeaf, HerNode, HerTicket } from './her_node.ts'
@@ -100,7 +101,8 @@ export const the_scope_of_a_frame = 'self/a_frame'
  * with its secret (BND-9), and the address of the phone's page, where its
  * link points (WEB-1); the extensions installed, by name (the
  * composition's, EXT-4); the news; the node's fact log (DOM-17); the relay
- * of the configuration, and how the relay client last met it (UI-5).
+ * of the configuration, and how the relay client last met it (UI-5); the
+ * device's network (WEB-4, UI-5).
  */
 export interface HerNodesWiring {
   readonly clock: zz.Clock
@@ -114,6 +116,7 @@ export interface HerNodesWiring {
   readonly the_log: zz.FactLog
   readonly the_frames: TheFramesOfHerNode
   readonly the_relay: { readonly address: string; readonly as_met: TheRelayAsMet }
+  readonly the_network: TheDeviceSNetwork
 }
 
 // `self`'s words, as its read leaves declare their entries.
@@ -461,11 +464,13 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
     void follows().catch(told)
     const stop_the_news = wiring.the_news.when_written(told)
     const stop_the_relay = wiring.the_relay.as_met.when_it_changes(told)
+    const stop_the_network = wiring.the_network.when_it_changes(told)
     return () => {
       following = false
       stop_now()
       stop_the_news()
       stop_the_relay()
+      stop_the_network()
       void log.return?.().catch(() => undefined)
     }
   }
@@ -539,6 +544,7 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
         address: wiring.the_relay.address,
         met: the_relay_met(wiring.the_relay.as_met.last()),
       }),
+    the_network: () => Promise.resolve(wiring.the_network.now()),
     an_activity: async (activity_id) =>
       (await the_entries_of_user(wiring.user.an_activity(now(), { activity_id })))[0],
     the_activities_in_progress: () =>
