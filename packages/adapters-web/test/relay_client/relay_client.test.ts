@@ -99,7 +99,7 @@ describe("the relay's HTTP client: the post's mailbox port (WEB-6, PST-10)", () 
       200,
       ndjson({
         event: 'the_envelope_is_kept',
-        payload: { deposited_at: '2026-11-21T09:02:00+00:00' },
+        payload: { deposited_at: '2026-11-21T09:02:00.000Z' },
       }),
     )
     const { mailbox } = the_relay_s_http_transports({ fetch, elapsed: no_time })
@@ -329,8 +329,8 @@ describe("the relay's HTTP client: the collect port (WEB-6, STK-3)", () => {
   const a_snapshot = {
     event: 'snapshot',
     entries: [
-      { deposit_id: 'deposit-1', deposited_at: '2026-11-21T09:02:00+00:00', envelope: 'RTE' },
-      { deposit_id: 'deposit-2', deposited_at: '2026-11-21T09:20:00+00:00', envelope: 'RTI' },
+      { deposit_id: 'deposit-1', deposited_at: '2026-11-21T09:02:00.000Z', envelope: 'RTE' },
+      { deposit_id: 'deposit-2', deposited_at: '2026-11-21T09:20:00.000Z', envelope: 'RTI' },
     ],
     total: 2,
     position: '7',

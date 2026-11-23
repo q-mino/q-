@@ -18,7 +18,7 @@ const overdue = 'business/loans/fact/a_loan_has_become_overdue'
 const marta_borrows_the_drill = async (start: Start = {}) => {
   const shed = await oracle(start)
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -26,7 +26,7 @@ const marta_borrows_the_drill = async (start: Start = {}) => {
   )
   await first(
     shed.loans.borrow_a_tool(
-      shed.at('2026-11-02T10:00:00-05:00', { scope: 'member/M-12', operation: 'B1' }),
+      shed.at('2026-11-02T15:00:00.000Z', { scope: 'member/M-12', operation: 'B1' }),
       { loan_id: 'L7', tool_id: 'drill', member_id: 'M-12' },
     ),
   )
@@ -40,10 +40,10 @@ const paths = (facts: readonly { readonly parts: readonly { readonly path: strin
 describe('SC-36: the deadline as a fact, the overdue wait stamps the loan', () => {
   test('at the start of the 17th Marta still has the drill: the loan becomes overdue', async () => {
     const shed = await marta_borrows_the_drill()
-    shed.executor({ at: '2026-11-02T10:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-16T23:59:59-05:00')
+    shed.executor({ at: '2026-11-02T15:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-17T04:59:59.000Z')
     expect(paths(await shed.recorded())).not.toContainEqual([overdue])
-    await shed.pass('2026-11-17T00:00:00-05:00')
+    await shed.pass('2026-11-17T05:00:00.000Z')
     const facts = await shed.recorded()
     expect(facts.at(-1)).toMatchObject({
       parts: [
@@ -59,15 +59,15 @@ describe('SC-36: the deadline as a fact, the overdue wait stamps the loan', () =
 
   test('the drill back on the 16th: on the 17th the loan came back first, and nothing is stamped', async () => {
     const shed = await marta_borrows_the_drill()
-    shed.executor({ at: '2026-11-02T10:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
+    shed.executor({ at: '2026-11-02T15:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
     await first(
-      shed.loans.return_a_tool(shed.at('2026-11-16T18:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-16T23:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         condition: 'good',
       }),
     )
-    await shed.pass('2026-11-17T00:00:00-05:00')
+    await shed.pass('2026-11-17T05:00:00.000Z')
     expect(paths(await shed.recorded()).at(-1)).toEqual([
       'business/loans/fact/the_loan_was_returned_before_it_became_overdue',
     ])
@@ -75,8 +75,8 @@ describe('SC-36: the deadline as a fact, the overdue wait stamps the loan', () =
 
   test('every entry the outbox gives twice: the wait comes again, the duplicate branch, one stamp', async () => {
     const shed = await marta_borrows_the_drill({ redelivered: true })
-    shed.executor({ at: '2026-11-02T10:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-17T00:00:00-05:00')
+    shed.executor({ at: '2026-11-02T15:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-17T05:00:00.000Z')
     const facts = paths(await shed.recorded())
     expect(facts.filter((fact) => fact[0] === overdue)).toHaveLength(1)
     expect(shed.held(the_due_date)).toEqual([])
@@ -85,15 +85,15 @@ describe('SC-36: the deadline as a fact, the overdue wait stamps the loan', () =
   test('the executor falls before saving its position: started again, the wait comes again, one stamp', async () => {
     const shed = await marta_borrows_the_drill()
     const falling = shed.executor({
-      at: '2026-11-02T10:00:00-05:00',
+      at: '2026-11-02T15:00:00.000Z',
       phones: { 'M-12': '+1 416 555 0112' },
       saves_its_position: false,
     })
-    await shed.pass('2026-11-17T00:00:00-05:00')
+    await shed.pass('2026-11-17T05:00:00.000Z')
     await falling.stop()
     const before = await shed.recorded()
-    shed.executor({ at: '2026-11-17T00:05:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-17T00:05:00-05:00')
+    shed.executor({ at: '2026-11-17T05:05:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-17T05:05:00.000Z')
     const after = await shed.recorded()
     expect(after).toEqual(before)
     expect(paths(after).filter((fact) => fact[0] === overdue)).toHaveLength(1)

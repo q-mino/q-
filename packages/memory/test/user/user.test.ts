@@ -56,7 +56,7 @@ describe('user, on the dsl alone (part 15.2)', () => {
   })
 
   test('each reason of the kernel’s trace is told in her words', () => {
-    const now = '2026-11-20T10:00:00+00:00'
+    const now = '2026-11-20T10:00:00.000Z'
     const request = {
       invokes: {
         of: 'an_extension',

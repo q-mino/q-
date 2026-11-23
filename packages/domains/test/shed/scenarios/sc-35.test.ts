@@ -18,7 +18,7 @@ const the_reminder = 'business/loans/effect/send_the_due_date_reminder'
 const marta_borrows_the_drill = async () => {
   const shed = await oracle()
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -26,7 +26,7 @@ const marta_borrows_the_drill = async () => {
   )
   await first(
     shed.loans.borrow_a_tool(
-      shed.at('2026-11-02T10:00:00-05:00', { scope: 'member/M-12', operation: 'B1' }),
+      shed.at('2026-11-02T15:00:00.000Z', { scope: 'member/M-12', operation: 'B1' }),
       { loan_id: 'L7', tool_id: 'drill', member_id: 'M-12' },
     ),
   )
@@ -36,11 +36,11 @@ const marta_borrows_the_drill = async () => {
 describe('SC-35: the due-date reminder, a wait and a guarded return', () => {
   test('on the eve Marta still has the drill: reminded, the reminder on her phone', async () => {
     const shed = await marta_borrows_the_drill()
-    shed.executor({ at: '2026-11-02T10:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-14T23:59:59-05:00')
+    shed.executor({ at: '2026-11-02T15:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-15T04:59:59.000Z')
     expect(await shed.recorded()).toHaveLength(2)
     expect(shed.received()).toEqual([])
-    await shed.pass('2026-11-15T00:00:00-05:00')
+    await shed.pass('2026-11-15T05:00:00.000Z')
     const facts = await shed.recorded()
     expect(facts).toHaveLength(3)
     expect(facts[2]).toMatchObject({
@@ -69,14 +69,14 @@ describe('SC-35: the due-date reminder, a wait and a guarded return', () => {
   test('the drill back on the 13th: on the eve the loan came back first, and no reminder goes', async () => {
     const shed = await marta_borrows_the_drill()
     await first(
-      shed.loans.return_a_tool(shed.at('2026-11-13T17:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-13T22:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         condition: 'good',
       }),
     )
-    shed.executor({ at: '2026-11-13T17:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-15T00:00:00-05:00')
+    shed.executor({ at: '2026-11-13T22:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-15T05:00:00.000Z')
     const facts = await shed.recorded()
     expect(facts.at(-1)).toMatchObject({
       parts: [{ path: 'business/loans/fact/the_loan_was_returned_before_the_reminder' }],
@@ -88,12 +88,12 @@ describe('SC-35: the due-date reminder, a wait and a guarded return', () => {
   test('the network down: the reminder is transient, tried again after a pause, then delivered', async () => {
     const shed = await marta_borrows_the_drill()
     shed.network('is_down', 'is_down')
-    shed.executor({ at: '2026-11-02T10:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-15T00:00:00-05:00')
+    shed.executor({ at: '2026-11-02T15:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-15T05:00:00.000Z')
     expect(shed.received()).toEqual([])
-    await shed.pass('2026-11-15T00:01:00-05:00')
+    await shed.pass('2026-11-15T05:01:00.000Z')
     expect(shed.received()).toEqual([])
-    await shed.pass('2026-11-15T00:02:00-05:00')
+    await shed.pass('2026-11-15T05:02:00.000Z')
     expect(shed.received()).toMatchObject([{ key: `${the_reminder}/L7` }])
     expect(shed.held(the_reminder)).toEqual([])
   })
@@ -102,22 +102,22 @@ describe('SC-35: the due-date reminder, a wait and a guarded return', () => {
     const shed = await marta_borrows_the_drill()
     shed.network('falls')
     const fallen = shed.executor({
-      at: '2026-11-02T10:00:00-05:00',
+      at: '2026-11-02T15:00:00.000Z',
       phones: { 'M-12': '+1 416 555 0112' },
     })
-    await shed.pass('2026-11-15T00:00:00-05:00')
+    await shed.pass('2026-11-15T05:00:00.000Z')
     expect(shed.received()).toEqual([])
     await expect(fallen.stop()).rejects.toThrow(`the delivery of ${the_reminder} fell`)
-    shed.executor({ at: '2026-11-15T08:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-15T08:00:00-05:00')
+    shed.executor({ at: '2026-11-15T13:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-15T13:00:00.000Z')
     expect(shed.received()).toMatchObject([{ key: `${the_reminder}/L7` }])
     expect(await shed.recorded()).toHaveLength(3)
   })
 
   test('Marta has no phone: the reminder is exhausted, a dead letter shown, never a business fact', async () => {
     const shed = await marta_borrows_the_drill()
-    shed.executor({ at: '2026-11-02T10:00:00-05:00' })
-    await shed.pass('2026-11-15T00:00:00-05:00')
+    shed.executor({ at: '2026-11-02T15:00:00.000Z' })
+    await shed.pass('2026-11-15T05:00:00.000Z')
     expect(shed.held(the_reminder)).toMatchObject([
       {
         held: 'dead_letter',

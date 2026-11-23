@@ -382,7 +382,7 @@ export const phone =
     ])({ stored: kept.stored_versions })
     const clock = world.clock
     const when = (): zz.RootContext => ({
-      now: zz.in_zone(clock.time_zone)(clock.now()),
+      now: clock.now(),
       time_zone: clock.time_zone,
     })
     const safe = kept.safe(world.primitives)(versions)

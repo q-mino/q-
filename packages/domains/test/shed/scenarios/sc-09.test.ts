@@ -55,8 +55,10 @@ describe('SC-9, a past major deleted while the store keeps it', () => {
 
   test('a store written by a newer release (2.1.0), met at 2.0.0: the shed does not start', async () => {
     const lent = marta_s_loan_at_1({
-      lent: '2026-11-05T10:12:00-05:00',
-      due: '2026-11-19T10:12:00-05:00',
+      lent: '2026-11-05T15:12:00.000Z',
+      start_day: '2026-11-05',
+      due: '2026-11-19T15:12:00.000Z',
+      due_day: '2026-11-19',
     })
     const at_2_1 = {
       ...lent,

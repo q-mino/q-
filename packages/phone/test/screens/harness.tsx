@@ -65,8 +65,8 @@ export const nothing_held: WhatTheNodeHolds = {
   the_relay: { address: 'https://relay.cumino.test', met: 'answered' },
 }
 
-/** Saturday 21 November 2026, 10:00 in Rome. */
-export const ten_in_rome = zz.date_time.parse('2026-11-21T10:00:00+01:00')
+/** Saturday 21 November 2026, 10:00 in Rome, as the clock writes it (UTC). */
+export const ten_in_rome = zz.date_time.parse('2026-11-21T09:00:00.000Z')
 
 const the_same = (one: unknown, other: unknown): boolean =>
   JSON.stringify(one) === JSON.stringify(other)

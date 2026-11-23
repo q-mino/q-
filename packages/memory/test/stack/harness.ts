@@ -372,7 +372,7 @@ export interface Start {
  * faults met; `stops`, every consumer stopped at the story's end.
  */
 export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
-  const time = a_clock('2026-11-20T10:00:00Z')
+  const time = a_clock('2026-11-20T10:00:00.000Z')
   const relay_cell = cell<MailboxState>({ initial: no_deposit })
   const world: TheStacksWorld = {
     clock: time.clock,
@@ -420,7 +420,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         )(the_story_s_relay.transports(in_process)),
     })
     const when = (): zz.RootContext => ({
-      now: zz.in_zone(time_zone)(time.clock.now()),
+      now: time.clock.now(),
       time_zone,
     })
     /** Every event of a port's stream, until it ends. */
@@ -667,7 +667,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
     },
     /** The clock reads this time of Friday 20 November (10:00:15 is `at_the_time('10:00:15')`). */
     at_the_time: async (time_of_day: string): Promise<void> => {
-      time.at(`2026-11-20T${time_of_day}Z`)
+      time.at(`2026-11-20T${time_of_day}.000Z`)
       await settles()
     },
     /**

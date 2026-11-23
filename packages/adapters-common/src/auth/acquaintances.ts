@@ -106,7 +106,7 @@ const not_known: zz.Answer<never> = { answer: 'not_known' }
  */
 export const the_acquaintances = (wiring: TheAcquaintancesWiring): TheAcquaintances => {
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+    now: wiring.clock.now(),
     time_zone: wiring.clock.time_zone,
   })
   /** The bond kept at the mailbox, if its face is the one asked with. */

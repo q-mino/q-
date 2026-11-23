@@ -22,7 +22,7 @@ export const quiet = async (): Promise<void> => {
 }
 
 /** A relay started over a storage at a location, its clock at an instant. */
-export const a_relay = async (location = ':memory:', at = '2026-11-16T00:00:00Z') => {
+export const a_relay = async (location = ':memory:', at = '2026-11-16T00:00:00.000Z') => {
   const storage = the_relays_storage(location)
   let instant = zz.date_time.parse(at)
   const waits: (() => void)[] = []

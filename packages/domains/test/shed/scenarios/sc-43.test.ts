@@ -20,16 +20,16 @@ describe("SC-43: every Monday the week's summary, a wait whose return queues the
     const shed = await oracle()
     const asked = await first(
       shed.loans.begin_a_weekly_summary(
-        shed.at('2026-11-19T12:00:00-05:00', { scope: 'member/M-12', operation: 'W1' }),
+        shed.at('2026-11-19T17:00:00.000Z', { scope: 'member/M-12', operation: 'W1' }),
         { member_id: 'M-12' },
       ),
     )
     expect(asked).toMatchObject({ outcome: 'applied', position: '1' })
     const before = shed.executor({
-      at: '2026-11-19T12:00:00-05:00',
+      at: '2026-11-19T17:00:00.000Z',
       phones: { 'M-12': '+1 416 555 0112' },
     })
-    await shed.pass('2026-11-23T00:00:00-05:00')
+    await shed.pass('2026-11-23T05:00:00.000Z')
     expect((await shed.recorded()).at(-1)).toMatchObject({
       parts: [
         {
@@ -41,10 +41,10 @@ describe("SC-43: every Monday the week's summary, a wait whose return queues the
       correlation: 'correlation-W1',
     })
     expect(shed.received()).toMatchObject([{ message: 'weeks_summary', monday: '2026-11-23' }])
-    await shed.pass('2026-11-28T09:00:00-05:00')
+    await shed.pass('2026-11-28T14:00:00.000Z')
     await before.stop()
-    shed.executor({ at: '2026-12-09T09:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-12-09T09:00:00-05:00')
+    shed.executor({ at: '2026-12-09T14:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-12-09T14:00:00.000Z')
     const after = (await shed.recorded()).slice(2)
     expect(after.map((fact) => fact.parts.map((part) => [part.path, part.payload]))).toEqual([
       [
@@ -67,7 +67,7 @@ describe("SC-43: every Monday the week's summary, a wait whose return queues the
     expect(shed.received()).toMatchObject([{ monday: '2026-11-23' }, { monday: '2026-12-07' }])
     expect(shed.queued(monday).at(-1)).toMatchObject({
       payload: { monday: '2026-12-14' },
-      not_before: '2026-12-14T00:00:00-05:00',
+      not_before: '2026-12-14T05:00:00.000Z',
     })
   })
 })
