@@ -81,6 +81,7 @@ export {
   type TheRelayMet,
 } from './relay_client/index.ts'
 export {
+  delete_the_node_s_database,
   open_the_node_s_database,
   the_name_of,
   the_node_s_store,
@@ -119,6 +120,7 @@ export {
   the_range_of,
   type ARange,
   type ARead,
+  ARecordOutOfItsForm,
   deleted,
   every_parsed,
   on_a_record,

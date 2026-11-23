@@ -4,6 +4,7 @@ import {
   NotTheWriter,
   ask_to_be_the_writer,
   ask_to_keep_the_storage,
+  delete_the_node_s_database,
   open_the_node_s_database,
   the_partition_of,
   type ALockManager,
@@ -12,7 +13,7 @@ import {
 
 // The skeleton of step 21 (part 21.1, WEB-8..WEB-12), on fake-indexeddb in
 // Node and Node's Web Locks: the stores, the writer and "use here", a
-// partition. The domains' suites over it are part 21.2's.
+// partition, the database deleted (WEB-8). The domains' suites over it are part 21.2's.
 
 const a_node = async (indexed_db: AnIndexedDb, partition: string) =>
   open_the_node_s_database(indexed_db)('cumino', [
@@ -71,4 +72,21 @@ test('the storage kept: what the browser says, or not told', async () => {
   expect(await ask_to_keep_the_storage(undefined)).toBe('not_told')
   const asked = { persisted: () => Promise.resolve(false), persist: () => Promise.resolve(false) }
   expect(await ask_to_keep_the_storage(asked)).toBe('best_effort')
+})
+
+test('the node’s database deleted: closed here, closed in another tab at its versionchange, opened again empty (WEB-8)', async () => {
+  const indexed_db = new IDBFactory()
+  const here = await a_node(indexed_db, 'ping_pong')
+  const another = await a_node(indexed_db, 'ping_pong')
+  here.database.close()
+  await delete_the_node_s_database(indexed_db)('cumino')
+  expect(await another.closed).toBe('a_newer_release_opens_it')
+  expect((await indexed_db.databases()).map((each) => each.name)).toEqual([])
+  const again = await a_node(indexed_db, 'ping_pong')
+  expect([...again.database.objectStoreNames]).toEqual([
+    'domain bonds/address_book',
+    'extension ping_pong',
+    'node',
+  ])
+  again.database.close()
 })
