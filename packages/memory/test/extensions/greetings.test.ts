@@ -22,7 +22,7 @@ import { in_process, partitions } from '../../src/index.ts'
 // `on_the_oracle.test.ts`.
 
 const clock: zz.Clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00+01:00'),
+  now: () => zz.date_time.parse('2026-11-20T09:00:00.000Z'),
   time_zone: zz.time_zone.parse('Europe/Rome'),
 }
 

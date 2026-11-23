@@ -8,7 +8,9 @@ import { z } from 'zod'
 import * as value from './value.ts'
 
 /**
- * An instant, as the node's clock tells it to the office (ISO 8601, with its offset).
+ * An instant, as the node's clock tells it to the office: ISO 8601 in UTC,
+ * to the millisecond (`2026-11-20T09:00:00.000Z`), as the library's
+ * `date_time` (A, 23 Nov 2026): it tells no zone.
  *
  * @see {@link value.instant}
  */

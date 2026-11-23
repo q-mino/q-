@@ -24,7 +24,7 @@ import {
 describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
   test('the state rebuilt from the log: Marta extends her loan of 1.x as due on the 16th', async () => {
     const shed = await oracle({ kept: kept_before_2_0_0 })
-    const tuesday = shed.at('2026-11-10T18:00:00-05:00', { scope: 'member/M-12' })
+    const tuesday = shed.at('2026-11-10T23:00:00.000Z', { scope: 'member/M-12' })
     const extended = await first(
       shed.loans.extend_the_loan(tuesday, {
         loan_id: 'L1',
@@ -52,7 +52,7 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
     const shed = await oracle({ kept: kept_before_2_0_0 })
     const retried = await first(
       shed.loans.borrow_a_tool(
-        shed.at('2026-11-05T08:00:00-05:00', marta_s_operation),
+        shed.at('2026-11-05T13:00:00.000Z', marta_s_operation),
         marta_borrows_the_drill,
       ),
     )
@@ -69,7 +69,8 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
                 id: 'L1',
                 tool_id: 'drill',
                 member_id: 'M-12',
-                start_date: '2026-11-02T10:12:00-05:00',
+                start_date: '2026-11-02T15:12:00.000Z',
+                start_day: '2026-11-02',
                 due_day: '2026-11-16',
                 progress: { stage: 'ongoing', term: 'running' },
               },
@@ -94,7 +95,7 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
         effect: 'business/loans/effect/wait_until_the_eve_of_the_due_date',
         id: 'L1',
         payload: { loan_id: 'L1', tool_id: 'drill', member_id: 'M-12', due_day: '2026-11-16' },
-        not_before: '2026-11-15T10:12:00-05:00',
+        not_before: '2026-11-15T15:12:00.000Z',
         resources: [
           { path: 'business/loans/id/loan_id', value: 'L1' },
           { path: 'business/tools/id/tool_id', value: 'drill' },
@@ -104,15 +105,17 @@ describe('SC-8, a loan of loans 1.x read after 2.0.0', () => {
       },
     ])
     expect(shed.queued('business/loans/effect/wait_until_the_due_date')).toMatchObject([
-      { id: 'L1', payload: { loan_id: 'L1' }, not_before: '2026-11-16T10:12:00-05:00' },
+      { id: 'L1', payload: { loan_id: 'L1' }, not_before: '2026-11-16T15:12:00.000Z' },
     ])
   })
 
   test('the rebuild replays the facts the log had recorded when it began, each at the current shape', async () => {
     const shed = await oracle()
     const lent = marta_s_loan_at_1({
-      lent: '2026-11-02T10:12:00-05:00',
-      due: '2026-11-16T10:12:00-05:00',
+      lent: '2026-11-02T15:12:00.000Z',
+      start_day: '2026-11-02',
+      due: '2026-11-16T15:12:00.000Z',
+      due_day: '2026-11-16',
     })
     const after: zz.StoredEnvelope = {
       ...the_drill_added,

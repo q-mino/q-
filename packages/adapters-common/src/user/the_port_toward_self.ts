@@ -252,7 +252,7 @@ const by_the_user = (because: string) => ({
  */
 export const the_delivery_of_an_activity = (wiring: ThePortTowardSelf) => {
   const the_context = (activity_id: string, version: zz.Semver) => {
-    const now = zz.in_zone(wiring.clock.time_zone)(wiring.clock.now())
+    const now = wiring.clock.now()
     return {
       now,
       time_zone: wiring.clock.time_zone,
@@ -405,7 +405,7 @@ export type TheReadsOfSelf = Extract<
 export const the_reads_of_self =
   (wiring: Pick<ThePortTowardSelf, 'clock' | 'self' | 'speaks'>) =>
   (read: TheReadsOfSelf, input: unknown) => {
-    const now = zz.in_zone(wiring.clock.time_zone)(wiring.clock.now())
+    const now = wiring.clock.now()
     return wiring.self(
       {
         now,

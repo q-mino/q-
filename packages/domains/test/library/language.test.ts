@@ -170,7 +170,7 @@ describe('commands and queries', () => {
     expect(Object.keys(retire_a_tool[$Command].outcomes)).toEqual(['the_tool_is_retired'])
     expect(retire_a_tool[$Command].input).toBeUndefined()
     const context = {
-      now: date_time.parse('2026-11-19T10:00:00+01:00'),
+      now: date_time.parse('2026-11-19T09:00:00.000Z'),
       time_zone: time_zone.parse('Europe/Rome'),
       operation: { id: operation_id.parse('O-1'), scope: 'keeper/K-1' },
     }

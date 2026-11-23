@@ -141,7 +141,7 @@ const loans_fragments: zz.PredicateFragments<zz.PredicatesIn<typeof loans_predic
   'business/loans/predicate/the_loan_is_of_this_tool': (p) =>
     sql`exists (select 1 from loans where id = ${p.loan_id} and tool_id = ${p.tool_id})`,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) =>
-    sql`exists (select 1 from loans where id = ${p.loan_id} and due_day >= ${zz.day_of(p.now)})`,
+    sql`exists (select 1 from loans where id = ${p.loan_id} and due_day >= ${p.today})`,
   'business/loans/predicate/the_tool_is_on_loan': (p) =>
     sql`exists (select 1 from loans where tool_id = ${p.tool_id} and stage = 'ongoing')`,
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) =>
@@ -171,7 +171,7 @@ const loans_fragments: zz.PredicateFragments<zz.PredicatesIn<typeof loans_predic
   'business/loans/predicate/a_weekly_summary_goes_to_the_member': (p) =>
     sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id})`,
   'business/loans/predicate/the_week_of_the_summary_is_not_over': (p) =>
-    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id} and next_monday + 7 > ${zz.day_of(p.now)}::date)`,
+    sql`exists (select 1 from weekly_summaries where member_id = ${p.member_id} and next_monday + 7 > ${p.today}::date)`,
 }
 
 // The fragments of the selection predicates, grouped by subject (DOM-18): a
@@ -239,9 +239,9 @@ const loans_tool_calculation_fragments: zz.CalculationFragments<
   zz.CalculationsIn<typeof loans_tool_calculations>,
   sql
 > = {
-  // A loan's day is the day of its start as written (SC-12): the first ten characters.
+  // A loan's day is the day of its start the desk wrote, in the shed's calendar (SC-12).
   'business/loans/calculation/tool/the_loans_of_the_tool_between_these_days': (p) =>
-    sql`(select count(*) from loans where loans.tool_id = candidate.id and left(loans.start_date, 10) between ${p.first_day} and ${p.last_day})`,
+    sql`(select count(*) from loans where loans.tool_id = candidate.id and loans.start_day between ${p.first_day} and ${p.last_day})`,
 }
 
 const algebra = <fragments>(predicate: fragments) => ({
@@ -295,7 +295,7 @@ const tools_writes: zz.FactWrites<zz.FactsIn<typeof tools_fact>, readonly sql[]>
 
 const loans_writes: zz.FactWrites<zz.FactsIn<typeof loans_fact>, readonly sql[]> = {
   'business/loans/fact/a_tool_has_been_lent': ({ new_loan: l }) => [
-    sql`insert into loans (id, tool_id, member_id, start_date, due_day, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.due_day}, ${l.progress.stage}, ${l.progress.term})`,
+    sql`insert into loans (id, tool_id, member_id, start_date, start_day, due_day, stage, term) values (${l.id}, ${l.tool_id}, ${l.member_id}, ${l.start_date}, ${l.start_day}, ${l.due_day}, ${l.progress.stage}, ${l.progress.term})`,
   ],
   'business/loans/fact/a_tool_has_been_lent_again': () => [],
   'business/loans/fact/a_tool_has_been_returned': ({ returned_loan: l }) => [

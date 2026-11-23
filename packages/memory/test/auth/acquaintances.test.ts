@@ -143,7 +143,7 @@ describe('auth, the acquaintances (PER-22)', () => {
       not_known,
     )
     // Once L_d expired, its 48 hours over (BND-8).
-    story.at_the_instant('2026-11-22T10:00:01Z')
+    story.at_the_instant('2026-11-22T10:00:01.000Z')
     await anna.runs()
     expect(await anna.my_ticket('L_d')).toBeUndefined()
     expect(await lookups.the_ticket_a_face_presents_at_my_mailbox(a_face_at(K_d, D_md))).toEqual(
@@ -258,10 +258,10 @@ describe('auth, the acquaintances (PER-22)', () => {
       all(
         anna.personas().known(
           {
-            now: zz.in_zone(story.clock.time_zone)(story.clock.now()),
+            now: story.clock.now(),
             time_zone: story.clock.time_zone,
             caller: { is: 'a_face', key: face, to_my_mailbox: mailbox },
-            declared_at: zz.in_zone(story.clock.time_zone)(story.clock.now()),
+            declared_at: story.clock.now(),
             version: zz.semver.parse('1.0.0'),
           },
           { leaf: 'usecase/the_extensions_in_common', input: { offered: [] } },

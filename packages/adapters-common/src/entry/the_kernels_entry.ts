@@ -211,7 +211,7 @@ export const the_kernels_entry = (
 ): ((collected: AnEnvelopeCollected) => Promise<void>) => {
   const now = () => wiring.clock.now()
   const when = (): zz.RootContext => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+    now: wiring.clock.now(),
     time_zone: wiring.clock.time_zone,
   })
 

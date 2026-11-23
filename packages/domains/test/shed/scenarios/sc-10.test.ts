@@ -12,7 +12,7 @@ import { a_shed_with, drill } from './shed.ts'
 const the_drill_booked_for_thursday = async () => {
   const shed = await a_shed_with(drill)
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-16T12:00:00-05:00', { scope: 'member/M-7' }), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-16T17:00:00.000Z', { scope: 'member/M-7' }), {
       reservation_id: 'R8',
       tool_id: 'drill',
       member_id: 'M-7',
@@ -34,7 +34,7 @@ const taken_up = {
 describe('SC-10, Gianni takes the drill he booked', () => {
   test('one fact in two parts: the loan, then the reservation taken up, each with its resources', async () => {
     const shed = await the_drill_booked_for_thursday()
-    const thursday = shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-7' })
+    const thursday = shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-7' })
     expect(await first(shed.loans.lend_a_booked_tool(thursday, gianni_takes_it))).toEqual({
       outcome: 'applied',
       branch: 'the_member_booked_the_tool_for_today_so_it_is_lent',
@@ -48,7 +48,8 @@ describe('SC-10, Gianni takes the drill he booked', () => {
                 id: 'L5',
                 tool_id: 'drill',
                 member_id: 'M-7',
-                start_date: '2026-11-19T10:00:00-05:00',
+                start_date: '2026-11-19T15:00:00.000Z',
+                start_day: '2026-11-19',
                 due_day: '2026-12-03',
                 progress: { stage: 'ongoing', term: 'running' },
               },
@@ -79,11 +80,11 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     const shed = await the_drill_booked_for_thursday()
     const sent = { operation: 'gianni-L5', scope: 'member/M-7' }
     const applied = await first(
-      shed.loans.lend_a_booked_tool(shed.at('2026-11-19T10:00:00-05:00', sent), gianni_takes_it),
+      shed.loans.lend_a_booked_tool(shed.at('2026-11-19T15:00:00.000Z', sent), gianni_takes_it),
     )
     expect(
       await first(
-        shed.loans.lend_a_booked_tool(shed.at('2026-11-19T10:00:05-05:00', sent), gianni_takes_it),
+        shed.loans.lend_a_booked_tool(shed.at('2026-11-19T15:00:05.000Z', sent), gianni_takes_it),
       ),
     ).toEqual(applied)
   })
@@ -92,11 +93,11 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     const shed = await the_drill_booked_for_thursday()
     await first(
       shed.loans.lend_a_booked_tool(
-        shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-7' }),
+        shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-7' }),
         gianni_takes_it,
       ),
     )
-    const again = shed.at('2026-11-19T10:01:00-05:00', { scope: 'member/M-7' })
+    const again = shed.at('2026-11-19T15:01:00.000Z', { scope: 'member/M-7' })
     expect(await first(shed.loans.lend_a_booked_tool(again, gianni_takes_it))).toEqual({
       outcome: 'applied',
       branch: 'the_member_already_took_the_tool_so_nothing_changes',
@@ -122,7 +123,7 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     const shed = await the_drill_booked_for_thursday()
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-19T09:00:00-05:00', { scope: 'member/M-12' }), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-19T14:00:00.000Z', { scope: 'member/M-12' }), {
           loan_id: 'L7',
           tool_id: 'drill',
           member_id: 'M-12',
@@ -150,7 +151,7 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     expect(
       await first(
         shed.loans.lend_a_booked_tool(
-          shed.at('2026-11-19T09:00:00-05:00', { scope: 'member/M-12' }),
+          shed.at('2026-11-19T14:00:00.000Z', { scope: 'member/M-12' }),
           { loan_id: 'L7', reservation_id: 'R8', tool_id: 'drill', member_id: 'M-12' },
         ),
       ),
@@ -175,7 +176,7 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     })
     const gianni = await first(
       shed.loans.lend_a_booked_tool(
-        shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-7' }),
+        shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-7' }),
         gianni_takes_it,
       ),
     )
@@ -190,14 +191,14 @@ describe('SC-10, Gianni takes the drill he booked', () => {
     const shed = await the_drill_booked_for_thursday()
     await first(
       shed.loans.lend_a_booked_tool(
-        shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-7' }),
+        shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-7' }),
         gianni_takes_it,
       ),
     )
     expect(
       await first(
         shed.loans.lend_a_booked_tool(
-          shed.at('2026-11-19T11:00:00-05:00', { scope: 'member/M-12' }),
+          shed.at('2026-11-19T16:00:00.000Z', { scope: 'member/M-12' }),
           { loan_id: 'L7', reservation_id: 'R8', tool_id: 'drill', member_id: 'M-12' },
         ),
       ),
