@@ -13,10 +13,11 @@ import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
 // kernel's own, for the requests of the kernel's business (the extensions
 // in common, EXT-8). Both compose the request's identity, give the answer
 // `post` keeps under it, following a request that waits until it closes,
-// else send the request through `post/requests` under it; the extension's
-// port first refuses what it does not serve (sending nothing, keeping
-// nothing), the kernel's refuses nothing (F8, EXT-7: the kernel is never
-// inactive, and an offer is an extension's). Their wiring is functions: the
+// else send the request through `post/requests` under it; both first take
+// no input over what a letter carries (PST-12; A, 23 Nov 2026), each with its
+// own answer; the extension's port refuses what it does not serve too
+// (sending nothing, keeping nothing), the kernel's nothing else (F8, EXT-7:
+// the kernel is never inactive, and an offer is an extension's). Their wiring is functions: the
 // post's ports, the bonds' read, the machine's hash, the kernel's
 // `extensions`, so that the oracle and the phone wire them alike. Beside
 // them, the calling off (F7, EXT-7; A, 21 Nov 2026): the requests in flight
@@ -82,15 +83,16 @@ export interface ThePortOfRequestsWiring {
 /**
  * The wiring of the kernel's own port of requests (EXT-8): the clock, the
  * machine's hash and the post's ports, as the extensions' port takes them;
- * the bond by the address book's id (`bonds`). No `extensions`: the kernel
- * is never inactive, and an offer is an extension's (EXT-7); no trace:
- * nothing of it is refused.
+ * the bond by the address book's id (`bonds`); the kernel's trace, for a
+ * request too large for a letter (`a_request_not_sent`). No `extensions`:
+ * the kernel is never inactive, and an offer is an extension's (EXT-7).
  */
 export interface TheKernelsPortOfRequestsWiring {
   readonly clock: zz.Clock
   readonly machine: Pick<Machine, 'hash'>
   readonly post: ThePortOfRequestsWiring['post']
   readonly the_bond: (bond: string) => Promise<ABondToAskOn>
+  readonly trace: TheKernelsTrace
 }
 
 /**
@@ -117,12 +119,15 @@ export interface AKernelsRequest {
 /**
  * The answer of the kernel's port of requests, a closed ADT (F7): the peer
  * responded, with its event, a claim (F2) the delivery parses; no response
- * in the request's time; the bond gone. Never a refusal (F8, EXT-7).
+ * in the request's time; the bond gone; its input over what a letter
+ * carries (PST-12), nothing sent. Never a refusal of what the kernel does
+ * not serve (F8, EXT-7).
  */
 export type AnAnswerToTheKernelsRequest =
   | { readonly answer: 'responded'; readonly event: boundary.Json }
   | { readonly answer: 'no_response' }
   | { readonly answer: 'the_bond_is_gone' }
+  | { readonly answer: 'too_large_for_a_letter' }
 
 /** Whether a request not sent yet goes on to its bond (EXT-2, EXT-7): on, or refused with the port's answer. */
 type AGate<refused> =
@@ -174,8 +179,12 @@ const in_the_ports_words = (
 }
 
 /**
- * The path the two ports share (F7, PST-2, PST-5, PST-8), for a request
- * whose identity the port composes:
+ * The path the two ports share (F7, PST-2, PST-5, PST-8, PST-12), for a
+ * request whose identity the port composes:
+ * - an input over what a letter carries (`content` of the post, PST-12):
+ *   `too_large_for_a_letter`, nothing sent, nothing kept, checked before
+ *   the identity, which it does not need; each port answers it in its
+ *   words (A, 23 Nov 2026: one rule for both);
  * - the identity, `the_identity_of_a_request(machine)(whose)` (PST-2);
  * - the answer kept under it (PST-8), if the port sent it: followed until
  *   the request closes, never sent again (F7, "The port keeps the
@@ -190,8 +199,8 @@ const in_the_ports_words = (
  * - else `send_a_request` under the operation `{ id: identity, scope: the
  *   port's }`, from my face to theirs, what it invokes, the input and its
  *   time; then the answer kept, followed until it closes. A request `post`
- *   does not send otherwise is the kernel's fault, thrown (the extension's
- *   port refuses an input too large before).
+ *   does not send otherwise is the kernel's fault, thrown (an input too
+ *   large is answered before).
  */
 const a_request_through_post = (
   wiring: Pick<TheKernelsPortOfRequestsWiring, 'clock' | 'machine' | 'post'>,
@@ -244,6 +253,7 @@ const a_request_through_post = (
     readonly input: boundary.Json
     readonly waits: number
   }): Promise<AnAnswerToTheKernelsRequest | ACalledOff | refused> => {
+    if (!content.safeParse(request.input).success) return { answer: 'too_large_for_a_letter' }
     const identity = the_identity_of_a_request(wiring.machine)(request.whose)
     const already = await kept(identity)
     if (already.answer !== undefined) return until_it_closes(identity, already)
@@ -297,13 +307,13 @@ type ARefusal = Extract<boundary.an_answer_to_a_request, { readonly answer: 'ref
  * and its manifest's `touches`. In order:
  * - a call its manifest does not declare: `refused`, `not_declared`, in the
  *   kernel's trace (`a_call_not_declared`, EXT-4);
- * - an input over what a letter carries (`content` of the post, PST-12):
- *   `refused`, `too_large_for_a_letter` (A, 21 Nov 2026), so that the call
- *   is answered and its delivery exhausted, never thrown and left
- *   unanswered behind the executor's position (EXT-2, DOM-14);
  * - the shared path (`a_request_through_post`), the identity `{ of:
  *   'an_extension', extension, effect, id }`, the extension's name the
- *   kernel's; its gate, the extension not active, or not offered to the
+ *   kernel's; an input over what a letter carries (PST-12), `refused`,
+ *   `too_large_for_a_letter` (A, 21 Nov 2026), so that the call is answered
+ *   and its delivery exhausted, never thrown and left unanswered behind the
+ *   executor's position (EXT-2, DOM-14); its gate, the extension not
+ *   active, or not offered to the
  *   bond (an offer goes both ways, EXT-7): `refused`, `not_active`,
  *   `not_offered_to_the_bond`, checked after the answer kept, so that a
  *   delivery met again reads its request's answer; what it invokes, the
@@ -332,10 +342,7 @@ export const the_port_of_requests =
         })
         return { answer: 'refused', why: 'not_declared' }
       }
-      if (!content.safeParse(request.input).success) {
-        return { answer: 'refused', why: 'too_large_for_a_letter' }
-      }
-      return through_post({
+      const answer = await through_post({
         whose: {
           of: 'an_extension',
           extension: extension.name,
@@ -354,6 +361,9 @@ export const the_port_of_requests =
         input: request.input,
         waits: request.waits,
       })
+      return answer.answer === 'too_large_for_a_letter'
+        ? { answer: 'refused', why: 'too_large_for_a_letter' }
+        : answer
     }
   }
 
@@ -365,26 +375,38 @@ export const the_port_of_requests =
  * requests are always declared, the kernel is never inactive, and an offer
  * is an extension's (F8, EXT-7); what it sends invokes `{ of: 'the_kernel',
  * persona, use_case, version }` (EXT-5). Its answer is its own closed set:
- * `responded`, `no_response`, `the_bond_is_gone`. Never called off (the
+ * `responded`, `no_response`, `the_bond_is_gone`, and an input over what a
+ * letter carries `too_large_for_a_letter`, traced (`a_request_not_sent`),
+ * never thrown: a throw would hold the executor behind it (A, 23 Nov
+ * 2026, as for the extensions on 21 Nov). Never called off (the
  * calling off is an extension's, PST-14): a refusal kept under its
  * identity is a fault of the wiring, thrown.
  */
 export const the_kernels_port_of_requests = (wiring: TheKernelsPortOfRequestsWiring) => {
   const through_post = a_request_through_post(wiring)
   return async (request: AKernelsRequest): Promise<AnAnswerToTheKernelsRequest> => {
+    const invokes: post_value.invocation = {
+      of: 'the_kernel',
+      persona: request.invokes.persona,
+      use_case: request.invokes.use_case,
+      version: request.invokes.version,
+    }
     const answer = await through_post({
       whose: { of: 'the_kernel', effect: request.effect, id: request.id },
       gate: always_open,
       bond: () => wiring.the_bond(request.bond),
-      invokes: {
-        of: 'the_kernel',
-        persona: request.invokes.persona,
-        use_case: request.invokes.use_case,
-        version: request.invokes.version,
-      },
+      invokes,
       input: request.input,
       waits: request.waits,
     })
+    if (answer.answer === 'too_large_for_a_letter') {
+      wiring.trace({
+        why: 'a_request_not_sent',
+        request: { effect: request.effect, id: request.id, invokes },
+        now: wiring.clock.now(),
+        because: 'too_large_for_a_letter',
+      })
+    }
     if (answer.answer === 'refused') {
       throw new Error(`a request of the kernel's was called off (${answer.why}): never (PST-14)`)
     }

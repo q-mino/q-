@@ -54,10 +54,12 @@ export type AnEnvelopeNotOpened =
   | { readonly outcome: 're_addressed'; readonly letter: string; readonly signed_by: string }
 
 /**
- * Why a response was not deposited (PST-9, PST-10): their key takes no
- * seal; the relay refused it, with what it said; or no answer came.
+ * Why a response was not deposited (PST-9, PST-10, PST-12): its event over
+ * what a letter carries, never sealed; their key takes no seal; the relay
+ * refused it, with what it said; or no answer came.
  */
 export type AResponseNotDeposited =
+  | { readonly outcome: 'too_large_for_a_letter' }
   | { readonly outcome: 'not_sealed' }
   | { readonly outcome: 'refused'; readonly why: string }
   | { readonly outcome: 'unreachable' }
@@ -88,9 +90,14 @@ export type AResponseNotDeposited =
  *   has no surface on the persona it names, answered `invalid_request`,
  *   `not_a_leaf` (EXT-4), with the request as it came;
  * - `a_response_not_deposited`: a response the entry wrote and could not
- *   deposit (PST-9): not sealed for their key, refused by the relay (with
- *   what it said), or no answer came; the asker's sending again asks
- *   again (PST-6);
+ *   deposit (PST-9): its event over what a letter carries (PST-12), not
+ *   sealed for their key, refused by the relay (with what it said), or no
+ *   answer came; the asker's sending again asks again (PST-6);
+ * - `a_request_not_sent`: a request of the kernel's (EXT-8) whose input is
+ *   over what a letter carries (PST-12), never sent: its delivery reads
+ *   `too_large_for_a_letter`, which the office records as `no_response`
+ *   (A, 23 Nov 2026), so that the user learns why here (F6); an
+ *   extension's is refused to the extension, which tells it (EXT-2);
  * - `a_request_not_answered`: a request routed to an extension whose
  *   invocation threw (it fell while serving, or it is not running, EXT-15),
  *   with the request as it came and why: nothing goes back (F8), and the
@@ -157,6 +164,16 @@ export type TheKernelsTraced =
       readonly opened: AnEnvelopeNotOpened
     }
   | { readonly why: 'not_a_leaf_of_the_extension'; readonly request: ARequestAsItCame }
+  | {
+      readonly why: 'a_request_not_sent'
+      readonly request: {
+        readonly effect: string
+        readonly id: string
+        readonly invokes: post_value.invocation
+      }
+      readonly now: string
+      readonly because: 'too_large_for_a_letter'
+    }
   | {
       readonly why: 'a_request_not_answered'
       readonly request: ARequestAsItCame
