@@ -24,7 +24,7 @@ export const the_handshake_in_person = {
     no_ticket: 'Il QR inquadrato non porta un biglietto.',
     a_ticket_out_of_its_form: 'Il QR inquadrato porta un biglietto guasto.',
   },
-  // [Q, C, provisional: A to confirm]: her QR stays once she read theirs, until «Fatto» (UI-5, 23 Nov 2026).
+  // [Q, A, 23 Nov 2026]: her QR stays once she read theirs, until «Fatto» (UI-5, 23 Nov 2026).
   their_ticket_read:
     'Ho letto il suo codice. Tieni il telefono fermo finché anche l’altro non legge il tuo.',
   done: 'Fatto',
