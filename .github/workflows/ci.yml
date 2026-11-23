@@ -1,9 +1,18 @@
 name: Checks
 
+# A diff of Markdown only runs no checks (A, 23 Nov 2026: as `pnpm check` is
+# skipped locally for such a diff); Prettier still checks them on the next run.
 on:
   pull_request:
+    paths-ignore: ['**/*.md']
   push:
     branches: [main, acceptance]
+    paths-ignore: ['**/*.md']
+
+# A new push to the same pull request or branch stops the run it overtakes.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
