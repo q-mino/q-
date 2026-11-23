@@ -93,7 +93,7 @@ export const TheScreens = (props: TheScreensWiring) => {
   }
   // The strip over every screen (UI-5), read again at each change of her node: the relay that did not answer.
   const [the_strip] = createResource(changes, async () =>
-    ui.the_strip((await props.node.the_relay()).met),
+    ui.the_strip({ relay: (await props.node.the_relay()).met, network: 'not_told' }),
   )
   onMount(() => {
     set_the_link(props.a_link)

@@ -217,6 +217,17 @@ export const it_happened_to = (
   extension: string,
 ): boolean => 'extension' in happened && happened.extension === extension
 
-/** The strip over every screen (UI-5): the relay that did not answer when her node last met it; else none. */
-export const the_strip = (relay: value.the_relay_met): value.a_strip =>
-  relay === 'did_not_answer' ? { strip: 'the_relay_does_not_answer' } : { strip: 'none' }
+/**
+ * The strip over every screen (UI-5): no network, when her phone tells it,
+ * whatever the relay last did; else the relay that did not answer when her
+ * node last met it; else none.
+ */
+export const the_strip = (her_node: {
+  readonly relay: value.the_relay_met
+  readonly network: value.the_device_s_network
+}): value.a_strip =>
+  her_node.network === 'offline'
+    ? { strip: 'no_network' }
+    : her_node.relay === 'did_not_answer'
+      ? { strip: 'the_relay_does_not_answer' }
+      : { strip: 'none' }
