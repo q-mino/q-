@@ -10,7 +10,7 @@ import { the_collector, type ADeposit, type AnEnvelopeCollected } from '../../sr
 // it runs under every story of the node (`memory/test/node/harness.ts`).
 
 const clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00Z'),
+  now: () => zz.date_time.parse('2026-11-20T10:00:00.000Z'),
   time_zone: zz.time_zone.parse('UTC'),
 }
 

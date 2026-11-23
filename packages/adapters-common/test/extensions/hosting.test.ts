@@ -62,7 +62,7 @@ const all = async (events: AsyncIterable<unknown>): Promise<readonly unknown[]> 
 }
 
 const clock: zz.Clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00+01:00'),
+  now: () => zz.date_time.parse('2026-11-20T09:00:00.000Z'),
   time_zone: zz.time_zone.parse('Europe/Rome'),
 }
 
@@ -158,7 +158,7 @@ const a_node = (
 const a_peers_wave: zz.MountedInvocation = {
   leaf: 'usecase/wave',
   version: '1.0.0',
-  context: { bond_id: 'B-ANNA', caller: 'KEY-OF-ANNA', now: '2026-11-20T10:00:00+01:00' },
+  context: { bond_id: 'B-ANNA', caller: 'KEY-OF-ANNA', now: '2026-11-20T09:00:00.000Z' },
   operation: { id: zz.operation_id.parse('P1'), scope: 'known/KEY-OF-ANNA' },
   correlation: zz.correlation.parse('P1'),
   input: { to: 'Anna' },
@@ -255,7 +255,7 @@ describe('a leaf invoked through the boundary (EXT-2, EXT-3)', () => {
       {
         why: 'an_event_not_in_the_surface',
         extension: 'waves',
-        now: '2026-11-20T10:00:00+01:00',
+        now: '2026-11-20T09:00:00.000Z',
         persona: 'self',
         leaf: 'usecase/wave_to_a_bond',
         version: '1.0.0',

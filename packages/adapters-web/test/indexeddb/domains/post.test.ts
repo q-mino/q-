@@ -12,7 +12,7 @@ import { post_ports_on_indexeddb, the_node_s_storage } from '../../../src/index.
 // The suites of the stories over IndexedDB are another part's.
 
 const time_zone = zz.time_zone.parse('UTC')
-const now = zz.date_time.parse('2026-11-20T10:00:00Z')
+const now = zz.date_time.parse('2026-11-20T10:00:00.000Z')
 
 /** 32 bytes in base64url: a request's identity, a face's key. */
 const thirty_two_bytes = (letter: string): string => `${letter.repeat(42)}A`
@@ -47,7 +47,7 @@ const all = async <event>(events: AsyncIterable<event>): Promise<readonly event[
 
 /** The context of a command under an operation (DOM-11), its fingerprint over its path and its input. */
 const sent_as = (path: string, input: unknown, operation: string): zz.CommandRootContext => ({
-  now: zz.in_zone(time_zone)(now),
+  now: now,
   time_zone,
   operation: { id: zz.operation_id.parse(operation), scope: 'the_port_of_requests' },
   correlation: zz.correlation.parse(`correlation-${operation}`),

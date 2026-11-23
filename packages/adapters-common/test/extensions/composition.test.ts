@@ -226,8 +226,8 @@ const the_table: readonly Row[] = [
   [
     'an instant, zz.date_time',
     zz.date_time,
-    ['2026-11-20T10:00:00+01:00'],
-    ['2026-13-20T10:00:00+01:00', 'x'],
+    ['2026-11-20T09:00:00.000Z'],
+    ['2026-13-20T09:00:00.000Z', '2026-11-20T10:00:00.000+01:00', 'x'],
     'holds',
   ],
   ['a number, bounds', z.number().min(1).max(10), [1, 10], [0, 11], 'holds'],

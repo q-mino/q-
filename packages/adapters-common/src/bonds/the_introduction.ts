@@ -108,7 +108,7 @@ export const the_delivery_of_my_introduction =
     readonly payload: send_my_introduction
   }): Promise<zz.Delivered<never>> => {
     const now = (): zz.RootContext => ({
-      now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+      now: wiring.clock.now(),
       time_zone: wiring.clock.time_zone,
     })
     const my_side = async (): Promise<MySide> => {
@@ -188,7 +188,7 @@ export const the_ticket_shown =
     const [ticket] = await the_entries_of(
       wiring.address_book.my_ticket(
         {
-          now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+          now: wiring.clock.now(),
           time_zone: wiring.clock.time_zone,
         },
         { bond_id },

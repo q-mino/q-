@@ -20,13 +20,13 @@ const marta_s_weeks = async (start: Start = {}) => {
   const shed = await oracle(start)
   await first(
     shed.loans.begin_a_weekly_summary(
-      shed.at('2026-11-12T12:00:00-05:00', { scope: 'member/M-12', operation: 'W1' }),
+      shed.at('2026-11-12T17:00:00.000Z', { scope: 'member/M-12', operation: 'W1' }),
       { member_id: 'M-12' },
     ),
   )
-  const executor = shed.executor({ at: '2026-11-12T12:00:00-05:00', phones })
+  const executor = shed.executor({ at: '2026-11-12T17:00:00.000Z', phones })
   shed.network('gives_up')
-  await shed.pass('2026-11-16T00:00:00-05:00')
+  await shed.pass('2026-11-16T05:00:00.000Z')
   return { shed, executor }
 }
 
@@ -55,7 +55,7 @@ describe('SC-56: an effect that tolerates reordering', () => {
       },
     ])
     expect(shed.received()).toEqual([])
-    await shed.pass('2026-11-23T00:00:00-05:00')
+    await shed.pass('2026-11-23T05:00:00.000Z')
     expect(shed.held(the_summary)).toMatchObject([
       { held: 'dead_letter', entry: { payload: { monday: '2026-11-16' } } },
     ])
@@ -64,7 +64,7 @@ describe('SC-56: an effect that tolerates reordering', () => {
 
   test('the letter stays for the operator: redelivered, the 16th’s summary arrives after the 23rd’s', async () => {
     const { shed, executor } = await marta_s_weeks()
-    await shed.pass('2026-11-23T00:00:00-05:00')
+    await shed.pass('2026-11-23T05:00:00.000Z')
     expect(await executor.redeliver(the_letter(shed.held(the_summary)))).toEqual({
       outcome: 'delivered',
     })
@@ -76,8 +76,8 @@ describe('SC-56: an effect that tolerates reordering', () => {
   test('every entry given twice, and a fall: the letter is held once, nothing waits behind it', async () => {
     const { shed, executor } = await marta_s_weeks({ redelivered: true })
     await executor.stop()
-    shed.executor({ at: '2026-11-23T00:00:00-05:00', phones, saves_its_position: false })
-    await shed.pass('2026-11-23T00:00:00-05:00')
+    shed.executor({ at: '2026-11-23T05:00:00.000Z', phones, saves_its_position: false })
+    await shed.pass('2026-11-23T05:00:00.000Z')
     expect(shed.held(the_summary).map((each) => [each.held, each.entry.payload])).toEqual([
       ['dead_letter', { member_id: 'M-12', monday: '2026-11-16' }],
     ])
@@ -101,15 +101,15 @@ describe('SC-56: an effect that tolerates reordering', () => {
     ] as const) {
       await first(
         shed.loans.begin_a_weekly_summary(
-          shed.at('2026-11-12T12:00:00-05:00', { scope: `member/${member_id}`, operation }),
+          shed.at('2026-11-12T17:00:00.000Z', { scope: `member/${member_id}`, operation }),
           { member_id },
         ),
       )
     }
     const both = { 'M-12': '+1 416 555 0112', 'M-7': '+1 416 555 0107' }
-    const executor = shed.executor({ at: '2026-11-12T12:00:00-05:00', phones: both })
+    const executor = shed.executor({ at: '2026-11-12T17:00:00.000Z', phones: both })
     shed.network('hangs')
-    await shed.pass('2026-11-16T00:00:00-05:00')
+    await shed.pass('2026-11-16T05:00:00.000Z')
     return { shed, executor, both }
   }
 
@@ -133,8 +133,8 @@ describe('SC-56: an effect that tolerates reordering', () => {
   test('a stop abandons the delivery in flight: the position behind it, both delivered again when started again, the late answer unread', async () => {
     const { shed, executor, both } = await two_weeks_with_one_hanging()
     await executor.stop()
-    shed.executor({ at: '2026-11-16T00:05:00-05:00', phones: both })
-    await shed.pass('2026-11-16T00:05:00-05:00')
+    shed.executor({ at: '2026-11-16T05:05:00.000Z', phones: both })
+    await shed.pass('2026-11-16T05:05:00.000Z')
     // At least once: Gianni's again, handled above the position; Marta's,
     // met again, now delivered.
     expect(of_whom(shed.received())).toEqual([
@@ -147,7 +147,7 @@ describe('SC-56: an effect that tolerates reordering', () => {
     await shed.answer_the_hanging()
     expect(of_whom(shed.received()).at(-1)).toBe('+1 416 555 0112 2026-11-16')
     expect(shed.held(the_summary)).toEqual([])
-    await shed.pass('2026-11-23T00:00:00-05:00')
+    await shed.pass('2026-11-23T05:00:00.000Z')
     expect(of_whom(shed.received()).slice(-2).toSorted()).toEqual([
       '+1 416 555 0107 2026-11-23',
       '+1 416 555 0112 2026-11-23',

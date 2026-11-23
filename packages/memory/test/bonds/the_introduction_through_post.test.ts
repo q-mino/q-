@@ -102,7 +102,7 @@ describe('the introduction through post (BND-10, F7)', () => {
   test('her phone off for the ticket’s 48 hours: no response, his introduction a dead letter he is shown', async () => {
     const { story, anna, bruno } = await bruno_opens_annas_link()
     await deposited(bruno, anna)
-    story.at_the_instant('2026-11-22T10:00:01Z')
+    story.at_the_instant('2026-11-22T10:00:01.000Z')
     await until(async () => {
       await bruno.runs()
       return bruno.held_letters().length > 0
