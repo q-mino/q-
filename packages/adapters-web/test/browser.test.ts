@@ -5,6 +5,7 @@ import type {
   APageToSaveIn,
   AWindowOfTheNetwork,
   CryptographicRandomness,
+  TheMediaDevices,
   the_device_s_clock,
 } from '../src/index.ts'
 import type * as zz from '@q-mino/domains/library'
@@ -22,4 +23,5 @@ test("the browser's objects are what the adapters take", () => {
   expectTypeOf<ReturnType<typeof the_device_s_clock>>().toEqualTypeOf<zz.Clock>()
   expectTypeOf<Navigator>().toExtend<ANavigatorOnLine>()
   expectTypeOf<Window>().toExtend<AWindowOfTheNetwork>()
+  expectTypeOf<MediaDevices>().toExtend<TheMediaDevices<MediaStream>>()
 })

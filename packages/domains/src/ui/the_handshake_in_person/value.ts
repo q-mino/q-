@@ -25,10 +25,24 @@ export const what_she_scanned = z.discriminatedUnion('scanned', [
   z.strictObject({ scanned: z.literal('a_ticket_out_of_its_form') }),
 ])
 
-/** The screen's state: the ticket of hers it prepares, the camera as the browser says, what she scanned. */
+/**
+ * The camera's side: the front, facing her, by default (the two face each
+ * other, screen to screen), or the rear, facing away from her.
+ */
+export const the_camera_s_side = z.enum(['front', 'rear'])
+
+/** The device's cameras, as the browser counts them once one is on: one, or more than one, another to turn to. */
+export const the_cameras = z.enum(['one', 'more_than_one'])
+
+/** Where she may turn the camera: nowhere (one camera, or one being turned on), to the rear, to the front. */
+export const the_turn = z.enum(['none', 'to_the_rear', 'to_the_front'])
+
+/** The screen's state: the ticket of hers it prepares, the camera as the browser says, its side and the device's cameras, what she scanned. */
 export const the_state = z.strictObject({
   ticket: z.strictObject({ bond: user.value.a_bond, prepared: an_activity_asked }).optional(),
   camera: _ui.value.the_camera,
+  side: the_camera_s_side,
+  cameras: the_cameras,
   scanned: what_she_scanned.optional(),
 })
 
@@ -43,6 +57,10 @@ export const what_happens = z.discriminatedUnion('happens', [
   }),
   /** The camera, as the browser gives it (WEB-2). */
   z.strictObject({ happens: z.literal('the_camera_is'), camera: _ui.value.the_camera }),
+  /** The device's cameras, counted once the camera is on (WEB-2). */
+  z.strictObject({ happens: z.literal('the_cameras_are_counted'), cameras: the_cameras }),
+  /** She turns the camera to the other side. */
+  z.strictObject({ happens: z.literal('she_turns_the_camera') }),
   /** A text the camera read, as the link of a ticket holds it (WEB-1). */
   z.strictObject({
     happens: z.literal('she_scans'),
@@ -83,7 +101,8 @@ export const what_it_is_given = z.strictObject({
  * window of a crossing; at a distance, as her node measured it, when it
  * said `you_are_bonded` or `your_introduction_is_sent`: BND-10), or Anna
  * was a contact already; their ticket that cannot be opened, her QR still shown
- * and the camera on to scan again. The camera is wanted only while she scans.
+ * and the camera on to scan again. The camera is wanted only while she scans,
+ * on its side, with where she may turn it.
  */
 export const what_it_shows = z.discriminatedUnion('shows', [
   z.strictObject({ shows: z.literal('getting_the_ticket_ready') }),
@@ -95,6 +114,8 @@ export const what_it_shows = z.discriminatedUnion('shows', [
     shows: z.literal('ready'),
     ticket: _ui.value.a_ticket_ready,
     camera: _ui.value.the_camera,
+    side: the_camera_s_side,
+    turn: the_turn,
     scanned: z.enum(['nothing', 'no_ticket', 'a_ticket_out_of_its_form']),
   }),
   z.strictObject({ shows: z.literal('opening_their_ticket'), introduced_as: z.string().max(80) }),
@@ -110,5 +131,7 @@ export const what_it_shows = z.discriminatedUnion('shows', [
     how: activities.value.how_it_ended,
     ticket: _ui.value.a_ticket_ready,
     camera: _ui.value.the_camera,
+    side: the_camera_s_side,
+    turn: the_turn,
   }),
 ])
