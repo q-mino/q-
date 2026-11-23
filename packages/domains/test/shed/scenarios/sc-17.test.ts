@@ -25,21 +25,21 @@ const strategies = ['native', 'composed'] as const
 const the_shed = async (start: Start) => {
   const shed = await oracle(start)
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       reservation_id: 'R8',
       tool_id: 'drill',
       member_id: 'M-7',
       day: '2026-11-19',
     }),
   )
-  const tuesday = '2026-11-17T09:00:00-05:00'
+  const tuesday = '2026-11-17T14:00:00.000Z'
   const story = async () => {
     await first(shed.tools.send_a_tool_to_repair(shed.at(tuesday), { tool_id: 'drill' }))
     await first(
@@ -54,11 +54,11 @@ const the_shed = async (start: Start) => {
   }
   const my_reservations = () =>
     shed.loans
-      .the_reservations_of_a_member(shed.when('2026-11-17T08:00:00-05:00'), { member_id: 'M-7' })
+      .the_reservations_of_a_member(shed.when('2026-11-17T13:00:00.000Z'), { member_id: 'M-7' })
       [Symbol.asyncIterator]()
   const his_leaf = () =>
     shed.member
-      .my_reservations(shed.as(gianni, '2.0.0').when('2026-11-17T08:00:00-05:00'), {})
+      .my_reservations(shed.as(gianni, '2.0.0').when('2026-11-17T13:00:00.000Z'), {})
       [Symbol.asyncIterator]()
   /**
    * The same story by the desk's round (part 7.4): the drill to the

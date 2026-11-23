@@ -1,5 +1,5 @@
 import type { Clock, CommandRootContext } from './context.ts'
-import { in_zone, type date_time, type position } from './format.ts'
+import type { date_time, position } from './format.ts'
 import type { Resource, StoredEnvelope } from './envelope.ts'
 import { kind_of } from './kind.ts'
 import { $Versions, type Registry, type Versions } from './registry.ts'
@@ -178,7 +178,7 @@ export interface ReactionPorts {
  * fact's correlation (DOM-10: the workshop's fact is of Marta's chain), the
  * fingerprint over the use case's path and the input as translated
  * (LIB-11: the consumer is the retrier, D108.3), and the clock's `now`,
- * told in its zone; a part translated to `nothing` invokes nothing (D88.2).
+ * and its zone; a part translated to `nothing` invokes nothing (D88.2).
  * Applied (an exact duplicate too, the recorded fact), the next part;
  * rejected, `identity_already_used` or `invalid_request`, a dead letter
  * (DOM-21), then the next part; after the last part it advances. A dead
@@ -349,7 +349,7 @@ const runtime_consumers = (reactions: RuntimeReactions) => {
         const input = called(each.translation, versions.part(stored).payload)
         if (input === nothing) return 'handled'
         const context: CommandRootContext = {
-          now: in_zone(ports.clock.time_zone)(ports.clock.now()),
+          now: ports.clock.now(),
           time_zone: ports.clock.time_zone,
           operation: reaction_operation(each.reaction)({
             operation: part.fact.operation,
@@ -518,7 +518,7 @@ const runtime_consumers = (reactions: RuntimeReactions) => {
               letter: held,
               by: trace.by,
               reason: trace.reason,
-              at: in_zone(ports.clock.time_zone)(ports.clock.now()),
+              at: ports.clock.now(),
             })
           }) ?? Promise.resolve(),
       }

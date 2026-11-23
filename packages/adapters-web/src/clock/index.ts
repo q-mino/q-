@@ -6,19 +6,19 @@
 import * as zz from '@q-mino/domains/library'
 
 /**
- * The zone the device's calendar is in, as its runtime tells it (`Intl`).
- * Whether the node writes its instants in it or in UTC is its
- * configuration's choice (SC-12: the offset is information the record gives).
+ * The zone the device's calendar is in, as its runtime tells it (`Intl`):
+ * the node's days start and end there (SC-12). Its instants are in UTC and
+ * tell no zone (A, 23 Nov 2026).
  */
 export const the_device_s_zone = (): zz.time_zone =>
   zz.time_zone.parse(new Intl.DateTimeFormat().resolvedOptions().timeZone)
 
 /**
- * The device's clock: the instant its runtime reads (`Date`), told in the
- * zone the configuration gives, with its offset (SC-12).
+ * The device's clock: the instant its runtime reads (`Date`), as it writes
+ * it, in UTC (A, 23 Nov 2026), and the zone the configuration gives (SC-12).
  */
 export const the_device_s_clock = (time_zone: zz.time_zone): zz.Clock => ({
-  now: () => zz.in_zone(time_zone)(zz.date_time.parse(new Date().toISOString())),
+  now: () => zz.date_time.parse(new Date().toISOString()),
   time_zone,
 })
 

@@ -85,7 +85,7 @@ const a_retirement = (sent: Sent) =>
 const send =
   (sent: Sent) =>
   (shed: Shed): Promise<unknown> => {
-    const context = shed.at('2026-11-19T10:00:00-05:00', {
+    const context = shed.at('2026-11-19T15:00:00.000Z', {
       operation: sent.operation,
       scope: sent.scope,
     })
@@ -164,7 +164,7 @@ describe('the routing of commands, as properties (TST-9)', () => {
         const fresh = async () => {
           const shed = await oracle()
           await first(
-            shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00', { operation: 'O0' }), {
+            shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z', { operation: 'O0' }), {
               id: 'drill',
               name: 'The drill',
               category: 'power',

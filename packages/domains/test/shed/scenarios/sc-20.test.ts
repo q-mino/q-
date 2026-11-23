@@ -14,14 +14,14 @@ const strategies = ['native', 'composed'] as const
 const the_shed = async (start: Start) => {
   const shed = await oracle(start)
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       reservation_id: 'R8',
       tool_id: 'drill',
       member_id: 'M-7',
@@ -30,17 +30,17 @@ const the_shed = async (start: Start) => {
   )
   const story = async () => {
     await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T09:00:00-05:00'), { tool_id: 'drill' }),
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T14:00:00.000Z'), { tool_id: 'drill' }),
     )
     await first(
-      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-18T16:00:00-05:00'), {
+      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-18T21:00:00.000Z'), {
         tool_id: 'drill',
       }),
     )
   }
   const in_the_workshop = () =>
     shed.loans
-      .the_reservations_of_a_member_in_the_workshop(shed.when('2026-11-17T08:00:00-05:00'), {
+      .the_reservations_of_a_member_in_the_workshop(shed.when('2026-11-17T13:00:00.000Z'), {
         member_id: 'M-7',
       })
       [Symbol.asyncIterator]()
@@ -81,12 +81,12 @@ describe('SC-20: Gianni’s reservations in the workshop follow the state of `to
     await live.next()
     const entered = live.next()
     await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T09:00:00-05:00'), { tool_id: 'drill' }),
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T14:00:00.000Z'), { tool_id: 'drill' }),
     )
     expect((await entered).value).toMatchObject({ event: 'entered', position: '3', identity: 'R8' })
     const left = live.next()
     await first(
-      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-18T16:00:00-05:00'), {
+      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-18T21:00:00.000Z'), {
         tool_id: 'drill',
       }),
     )

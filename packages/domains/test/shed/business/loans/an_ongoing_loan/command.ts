@@ -51,7 +51,7 @@ export const extend_the_loan = command({
         it_is_a_loan_of_the_member: { loan_id: context.loan_id, member_id: input.member_id },
         it_is_of_the_tool_they_hold: { loan_id: context.loan_id, tool_id: input.tool_id },
         it_is_due_on_the_day_they_read: { loan_id: context.loan_id, due_day: input.due_day },
-        its_due_date_is_still_ahead: { loan_id: context.loan_id, now: context.now },
+        its_due_date_is_still_ahead: { loan_id: context.loan_id, today: _loans.dsl.today(context) },
         no_one_booked_the_tool_up_to_the_new_due_day: {
           tool_id: input.tool_id,
           day: _loans.dsl.the_due_day_after_an_extension_of(input.due_day),

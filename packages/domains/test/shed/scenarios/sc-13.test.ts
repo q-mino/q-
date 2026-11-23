@@ -21,10 +21,10 @@ const correction = {
 describe('SC-13, Luca lent the wrong tool', () => {
   test('the correction records its fact; the loan keeps its id; a second one changes nothing', async () => {
     const shed = await a_shed_with(drill, sander)
-    await first(shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00'), lent))
+    await first(shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z'), lent))
     expect(
       await first(
-        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T10:10:00-05:00'), correction),
+        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T15:10:00.000Z'), correction),
       ),
     ).toMatchObject({
       outcome: 'applied',
@@ -43,7 +43,7 @@ describe('SC-13, Luca lent the wrong tool', () => {
     })
     expect(
       await first(
-        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T10:20:00-05:00'), correction),
+        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T15:20:00.000Z'), correction),
       ),
     ).toMatchObject({
       outcome: 'applied',
@@ -54,7 +54,7 @@ describe('SC-13, Luca lent the wrong tool', () => {
     })
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-19T11:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-19T16:00:00.000Z'), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',
@@ -65,12 +65,12 @@ describe('SC-13, Luca lent the wrong tool', () => {
 
   test("once the loan is back, the node's requirement fails, named once with no branch", async () => {
     const shed = await a_shed_with(drill, sander)
-    await first(shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00'), lent))
+    await first(shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z'), lent))
     await first(
-      shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T10:10:00-05:00'), correction),
+      shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T15:10:00.000Z'), correction),
     )
     await first(
-      shed.loans.return_a_tool(shed.at('2026-11-24T18:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-24T23:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'sander',
         condition: 'good',
@@ -78,7 +78,7 @@ describe('SC-13, Luca lent the wrong tool', () => {
     )
     expect(
       await first(
-        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-25T09:00:00-05:00'), correction),
+        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-25T14:00:00.000Z'), correction),
       ),
     ).toEqual({
       outcome: 'rejected',
@@ -100,7 +100,7 @@ describe('SC-13, Luca lent the wrong tool', () => {
     const shed = await a_shed_with(drill, sander)
     expect(
       await first(
-        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T10:10:00-05:00'), {
+        shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-19T15:10:00.000Z'), {
           ...correction,
           loan_id: '',
         }),

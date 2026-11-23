@@ -31,9 +31,9 @@ import {
 // ticket is T_b; Carla's: F_c "Carla", L_a, its ticket T_c.
 
 /** An instant on Monday 16, Tuesday 17, Wednesday 18 November 2026, by the phones' clocks (UTC). */
-const monday = (time: string): string => `2026-11-16T${time}+00:00`
-const tuesday = (time: string): string => `2026-11-17T${time}+00:00`
-const wednesday = (time: string): string => `2026-11-18T${time}+00:00`
+const monday = (time: string): string => `2026-11-16T${time}.000Z`
+const tuesday = (time: string): string => `2026-11-17T${time}.000Z`
+const wednesday = (time: string): string => `2026-11-18T${time}.000Z`
 
 /** The same instant, however it is told. */
 const instant = (text: string | undefined): number => Date.parse(text ?? '')

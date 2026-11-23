@@ -16,7 +16,7 @@ import { ladder } from './shed.ts'
 // redelivery is the duplicate branch: F3 delivered again under its operation
 // gives F4 as recorded, and R5 is cancelled once (TST-4).
 
-const thursday = '2026-11-19T10:00:00-05:00'
+const thursday = '2026-11-19T15:00:00.000Z'
 
 /** The paths of each fact's parts, in the order of the log. */
 const paths = (facts: readonly { readonly parts: readonly { readonly path: string }[] }[]) =>
@@ -31,13 +31,13 @@ const key_of = (cursor: unknown): unknown =>
 /** The ladder in the shed; on Monday Marta (M-12) books it for Saturday (R3), Gianni (M-7) for Sunday (R5). */
 const the_shed = async (start: Start = {}) => {
   const shed = await oracle(start)
-  await first(shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), ladder))
+  await first(shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), ladder))
   for (const [reservation_id, member_id, day] of [
     ['R5', 'M-7', '2026-11-22'],
     ['R3', 'M-12', '2026-11-21'],
   ] as const) {
     await first(
-      shed.loans.reserve_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+      shed.loans.reserve_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
         reservation_id,
         tool_id: 'ladder',
         member_id,
@@ -83,7 +83,7 @@ describe('SC-39, the work sheet of a retired tool', () => {
     expect(opened?.parts[0]?.payload).toEqual({
       new_cancellation: {
         tool_id: 'ladder',
-        start_date: '2026-11-19T10:00:00-05:00',
+        start_date: '2026-11-19T15:00:00.000Z',
         progress: { stage: 'cancelling' },
       },
     })
@@ -95,7 +95,7 @@ describe('SC-39, the work sheet of a retired tool', () => {
       {
         cancelled_reservation: {
           id: 'R3',
-          progress: { stage: 'cancelled', cancellation_date: '2026-11-19T10:00:00-05:00' },
+          progress: { stage: 'cancelled', cancellation_date: '2026-11-19T15:00:00.000Z' },
         },
       },
     ])
@@ -184,7 +184,7 @@ describe('SC-39, the work sheet of a retired tool', () => {
             payload: {
               completed_cancellation: {
                 tool_id: 'ladder',
-                progress: { stage: 'complete', end_date: '2026-11-19T10:00:00-05:00' },
+                progress: { stage: 'complete', end_date: '2026-11-19T15:00:00.000Z' },
               },
             },
           },
@@ -268,7 +268,7 @@ describe('SC-39, the work sheet of a retired tool', () => {
 
   test('a tool with no reservation ahead: the first step closes the sheet', async () => {
     const shed = await oracle()
-    await first(shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), ladder))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), ladder))
     const consumers = shed.processes({ at: thursday })
     await first(shed.tools.retire_a_tool(shed.at(thursday), { id: 'ladder', reason: 'broken' }))
     await quiet()
