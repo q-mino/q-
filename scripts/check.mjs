@@ -1,12 +1,12 @@
 // `pnpm check`: the generated files first, then typecheck, lint, format and
-// graph in parallel, then the tests (TOOL-1). Each check is a script of package.json, run by pnpm, its output in
+// graph in parallel, then the tests (TST-11). Each check is a script of package.json, run by pnpm, its output in
 // `.check/<name>.log`; at the end one line per check (outcome, time, peak
 // memory) and the tail of the log of each red one. The exit code is 1 if one
 // is red. With GITHUB_STEP_SUMMARY set (the CI), the same lines go to the job
-// summary, with a warning for a check past its threshold (TOOL-2).
+// summary, with a warning for a check past its threshold (TST-13).
 //
 // With --package=<folder under packages/> (`pnpm check:package memory`), the
-// quick check of the writing loop (TOOL-3): the package's projects through
+// quick check of the writing loop (TST-12): the package's projects through
 // `tsc -b` (what they reference included), ESLint on its folder, its tests;
 // no generated files, format or graph. It does not see what breaks downstream:
 // the whole check stays before a commit.
@@ -189,8 +189,9 @@ const in_sequence = async (names) => {
 }
 
 const gib = (bytes) => (bytes === undefined ? '' : `${(bytes / 2 ** 30).toFixed(1)} GiB`)
+// The thresholds are of the whole check; a package's checks have none.
 const past = (result) => {
-  const limit = thresholds[result.name]
+  const limit = commands ? undefined : thresholds[result.name]
   if (!limit) return []
   return [
     ...(limit.seconds !== undefined && result.seconds > limit.seconds
@@ -211,7 +212,9 @@ const tail = (file, lines) =>
 
 const report = (results, seconds) => {
   for (const r of results.filter((r) => r.outcome === 'red')) {
-    console.log(`\n--- ${r.name} (exit ${r.code}), the last lines of ${r.log}:\n${tail(r.log, 40)}`)
+    // In the CI the whole log, which is not kept; here its last lines.
+    const lines = process.env.CI ? Infinity : 40
+    console.log(`\n--- ${r.name} (exit ${r.code}), ${r.log}:\n${tail(r.log, lines)}`)
   }
   console.log('')
   for (const r of results) console.log(line(r))

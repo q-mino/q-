@@ -32,17 +32,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Generated files (DOM-24, DOM-25)
-        run: pnpm generate:check
-      - name: Type check (domains without DOM or Node)
-        run: pnpm typecheck
-      - name: Lint
-        run: pnpm lint
-      - name: Format
-        run: pnpm format:check
-      - name: Architecture graph
-        run: pnpm graph
-      - name: Tests
-        run: pnpm test
+      # The checks in one step (TST-11): the generated files (DOM-24, DOM-25),
+      # then typecheck (domains without DOM or Node), lint, format and the
+      # architecture graph together, then the tests; each one's time and peak
+      # in the job summary, a warning past its threshold (TST-13).
+      - name: Checks
+        run: pnpm check
       - name: Build the PWA
         run: pnpm build
