@@ -122,6 +122,7 @@ export const registry = {
   'bonds/address_book/command/rename_a_bond_input': command.rename_a_bond_input,
   'bonds/address_book/command/remove_a_bond': command.remove_a_bond,
   'bonds/address_book/command/remove_a_bond_input': command.remove_a_bond_input,
+  'bonds/address_book/command/the_user_has_no_face': command.the_user_has_no_face,
   'bonds/address_book/command/make_my_first_face': command.make_my_first_face,
   'bonds/address_book/command/make_my_first_face_input': command.make_my_first_face_input,
   'bonds/address_book/command/keep_the_key_of_a_face': command.keep_the_key_of_a_face,
