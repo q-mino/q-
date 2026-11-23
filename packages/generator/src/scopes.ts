@@ -105,7 +105,7 @@ const point = (tree: Tree, folder: Folder, past: boolean): GeneratedFile => {
     path: at(folder, '_scope.ts'),
     text: file(
       wrap(
-        `The point of ${shown(folder)} (DOM-25): ${past ? 'the builders of a past major (DOM-22)' : 'every builder'}, bound to the context the nodes above give here (PER-6), ${node === undefined ? "the root's, with no node above" : `the node \`${node.name}\`'s`}. The authored files take them from the scope of their kind, never from this file.`,
+        `The point of ${shown(folder)} (DOM-25): ${past ? 'the builders of a past major (DOM-22)' : 'every builder'}, bound to the context the nodes above give here (PER-6), ${node === undefined ? "the root's, with no node above" : tree.mounted?.[node.segments.join('/')] === undefined ? `the node \`${node.name}\`'s` : `the mounted folder \`${node.name}\`'s, given from outside (EXT-11)`}. The authored files take them from the scope of their kind, never from this file.`,
       ),
       [
         [`import * as zz from '${library_from(tree, folder.segments)}'`, ...context.imports].join(

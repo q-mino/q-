@@ -20,23 +20,23 @@ const the_due_date = 'business/loans/effect/wait_until_the_due_date'
 describe("SC-38: Marta's waits queued at 1.x, delivered at 2.0.0", () => {
   test('the eve with the new shape; the overdue wait put off to the end of her due day', async () => {
     const shed = await oracle({ kept: kept_before_2_0_0 })
-    shed.executor({ at: '2026-11-05T09:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-15T10:12:00-05:00')
+    shed.executor({ at: '2026-11-05T14:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-15T15:12:00.000Z')
     expect((await shed.recorded()).at(-1)).toMatchObject({
       parts: [{ path: 'business/loans/fact/the_member_has_been_reminded_of_the_due_date' }],
       operation: { scope: the_eve, id: 'L1' },
       correlation: 'correlation-L1',
     })
     expect(shed.received()).toMatchObject([{ message: 'due_date_reminder', due_day: '2026-11-16' }])
-    await shed.pass('2026-11-16T10:12:00-05:00')
+    await shed.pass('2026-11-16T15:12:00.000Z')
     expect((await shed.recorded()).at(-1)).toMatchObject({
       parts: [{ path: 'business/loans/fact/the_overdue_check_has_been_put_off' }],
       operation: { scope: the_due_date, id: 'L1' },
     })
     const put_off = shed.queued(the_due_date).at(-1)
-    expect(put_off).toMatchObject({ not_before: '2026-11-17T00:00:00-05:00' })
+    expect(put_off).toMatchObject({ not_before: '2026-11-17T05:00:00.000Z' })
     expect(put_off?.id).not.toBe('L1')
-    await shed.pass('2026-11-17T00:00:00-05:00')
+    await shed.pass('2026-11-17T05:00:00.000Z')
     expect((await shed.recorded()).at(-1)).toMatchObject({
       parts: [
         {

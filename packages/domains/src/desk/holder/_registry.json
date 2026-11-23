@@ -1,0 +1,56 @@
+{
+  "domain": "desk/holder",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "desk/holder/value/envelope": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "desk/holder/node/holder": { "kind": "node" },
+    "desk/holder/usecase/collect_the_envelopes": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_id": { "type": "string", "minLength": 1 },
+              "deposited_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "envelope": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+            },
+            "required": ["deposit_id", "deposited_at", "envelope"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/holder/usecase/collect_the_envelopes_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" }
+            },
+            "required": ["deposit_address"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/holder/version/holder": { "kind": "version" }
+  }
+}

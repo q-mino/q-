@@ -22,7 +22,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -36,14 +36,14 @@ describe("SC-24, Marta's node", () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-19T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-19T15:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
       ),
     ).toMatchObject([{ event: 'you_have_the_tool', payload: { loan_id: 'L7', tool_id: 'drill' } }])
     const loans = await first(
-      shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-19T10:01:00-05:00'), {
+      shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-19T15:01:00.000Z'), {
         member_id: 'M-12',
       }),
     )
@@ -54,14 +54,14 @@ describe("SC-24, Marta's node", () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2027-04-01T10:00:00-04:00'), {
+        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2027-04-01T14:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
       ),
     ).toEqual([{ event: 'refused', reasons: ['the_member_card_is_valid_today'] }])
     expect(
-      await first(shed.tools.the_catalogue(shed.when('2027-04-01T10:01:00-04:00'), {})),
+      await first(shed.tools.the_catalogue(shed.when('2027-04-01T14:01:00.000Z'), {})),
     ).toMatchObject({ position: '1' })
   })
 
@@ -69,7 +69,7 @@ describe("SC-24, Marta's node", () => {
     const shed = await the_shed()
     const borrow = (who: Who) =>
       all(
-        shed.member.borrow_a_tool(shed.as(who, '2.0.0').at('2026-11-19T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(who, '2.0.0').at('2026-11-19T15:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
@@ -102,7 +102,7 @@ describe("SC-24, Marta's node", () => {
     const giorgio: Who = { identified_by: 'account', id: 'A-GIORGIO' }
     const at = shed
       .as(giorgio, '2.0.0')
-      .at('2026-11-19T10:00:00-05:00', { scope: 'member/A-GIORGIO' })
+      .at('2026-11-19T15:00:00.000Z', { scope: 'member/A-GIORGIO' })
     expect(await all(shed.member.borrow_a_tool(at, { loan_id: 'L7', tool_id: 'drill' }))).toEqual([
       { event: 'not_found' },
     ])
@@ -140,10 +140,10 @@ const the_members_shed = async (valid_until = '2027-03-31') => {
     ['drill', 'Cordless drill', 'power'],
     ['ladder', 'Ladder', 'ladder'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T14:00:00.000Z'), { id, name, category }))
   }
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -156,7 +156,7 @@ describe('SC-24, the reading half (part 6.3)', () => {
   test("Marta reads her loans through her card, given down by her node; Gianni's are not hers", async () => {
     const shed = await the_members_shed('2026-11-12')
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-02T11:00:00-05:00'), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-02T16:00:00.000Z'), {
         loan_id: 'L9',
         tool_id: 'ladder',
         member_id: 'M-7',
@@ -166,7 +166,7 @@ describe('SC-24, the reading half (part 6.3)', () => {
     // borrowing, and has no limit of the card (A, 13 Nov 2026 (2)).
     const [snapshot] = await pull(
       shed.member
-        .my_loans(shed.as(marta, '2.0.0').when('2026-11-13T09:00:00-05:00'), {})
+        .my_loans(shed.as(marta, '2.0.0').when('2026-11-13T14:00:00.000Z'), {})
         [Symbol.asyncIterator](),
       1,
     )

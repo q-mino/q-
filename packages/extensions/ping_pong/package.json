@@ -1,0 +1,21 @@
+{
+  "name": "@q-mino/ping_pong",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./configurator.ts",
+    "./manifest.json": "./manifest.json",
+    "./texts/it.json": "./texts/it.json"
+  },
+  "dependencies": {
+    "@q-mino/boundary": "workspace:*",
+    "@q-mino/domains": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "scripts": {
+    "manifest": "node scripts/manifest.ts",
+    "words": "node scripts/words.ts"
+  }
+}

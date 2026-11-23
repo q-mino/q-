@@ -1,0 +1,597 @@
+{
+  "domain": "business/greetings",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "business/greetings/id/bond": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/greetings/id/greeting_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/greetings/id/greeting_back_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/greetings/value/words": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 280 }
+        }
+      }
+    },
+    "business/greetings/value/waiting_time": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 604800 }
+        }
+      }
+    },
+    "business/greetings/value/outcome": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_greeting_came_back" },
+                  "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                },
+                "required": ["outcome", "words"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_greeting_had_no_response" }
+                },
+                "required": ["outcome"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                },
+                "required": ["outcome"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
+                },
+                "required": ["outcome"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/greetings/value/progress": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "waiting" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "closed" },
+                  "outcome": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "the_greeting_came_back" },
+                          "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                        },
+                        "required": ["outcome", "words"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "the_greeting_had_no_response" }
+                        },
+                        "required": ["outcome"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                        },
+                        "required": ["outcome"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
+                        },
+                        "required": ["outcome"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["stage", "outcome"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/greetings/value/greeting": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "words": { "type": "string", "minLength": 1, "maxLength": 280 },
+              "progress": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "stage": { "type": "string", "const": "waiting" } },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "closed" },
+                      "outcome": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "outcome": { "type": "string", "const": "the_greeting_came_back" },
+                              "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                            },
+                            "required": ["outcome", "words"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "outcome": {
+                                "type": "string",
+                                "const": "the_greeting_had_no_response"
+                              }
+                            },
+                            "required": ["outcome"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                            },
+                            "required": ["outcome"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "outcome": {
+                                "type": "string",
+                                "const": "the_greeting_was_called_off"
+                              }
+                            },
+                            "required": ["outcome"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["stage", "outcome"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "bond", "words", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/value/greeting_back": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "their_words": { "type": "string", "minLength": 1, "maxLength": 280 },
+              "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+            },
+            "required": ["id", "bond", "their_words", "words"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/fact/a_bond_has_been_greeted": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "greeting": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "words": { "type": "string", "minLength": 1, "maxLength": 280 },
+                  "progress": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "waiting" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "closed" },
+                          "outcome": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "outcome": {
+                                    "type": "string",
+                                    "const": "the_greeting_came_back"
+                                  },
+                                  "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                                },
+                                "required": ["outcome", "words"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "outcome": {
+                                    "type": "string",
+                                    "const": "the_greeting_had_no_response"
+                                  }
+                                },
+                                "required": ["outcome"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                                },
+                                "required": ["outcome"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "outcome": {
+                                    "type": "string",
+                                    "const": "the_greeting_was_called_off"
+                                  }
+                                },
+                                "required": ["outcome"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["stage", "outcome"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["id", "bond", "words", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["greeting"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/fact/a_greeting_has_been_closed": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "greeting_id": { "type": "string", "minLength": 1 },
+              "outcome": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_came_back" },
+                      "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                    },
+                    "required": ["outcome", "words"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_had_no_response" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["greeting_id", "outcome"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/fact/a_bond_has_been_greeted_back": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "greeting_back": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "their_words": { "type": "string", "minLength": 1, "maxLength": 280 },
+                  "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                },
+                "required": ["id", "bond", "their_words", "words"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["greeting_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/predicate/a_greeting_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/predicate/the_greeting_waits": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/predicate/a_greeting_back_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_back_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_back_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/effect/ask_for_a_greeting_back": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "greeting_id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "words": { "type": "string", "minLength": 1, "maxLength": 280 },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["greeting_id", "bond", "words", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/command/the_greeting_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/command/greet_a_bond": { "kind": "command" },
+    "business/greetings/command/greet_a_bond_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/command/close_a_greeting": { "kind": "command" },
+    "business/greetings/command/close_a_greeting_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "greeting_id": { "type": "string", "minLength": 1 },
+              "outcome": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_came_back" },
+                      "words": { "type": "string", "minLength": 1, "maxLength": 280 }
+                    },
+                    "required": ["outcome", "words"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_had_no_response" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_peer_cannot_answer" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "the_greeting_was_called_off" }
+                    },
+                    "required": ["outcome"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["greeting_id", "outcome"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/command/the_greeting_back_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_back_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_back_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/command/greet_a_bond_back": { "kind": "command" },
+    "business/greetings/command/greet_a_bond_back_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "their_words": { "type": "string", "minLength": 1, "maxLength": 280 }
+            },
+            "required": ["bond", "their_words"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/greetings/usecase/greet_a_bond": { "kind": "usecase" },
+    "business/greetings/usecase/close_a_greeting": { "kind": "usecase" },
+    "business/greetings/usecase/greet_a_bond_back": { "kind": "usecase" },
+    "business/greetings/version/greetings": { "kind": "version" }
+  }
+}

@@ -7,7 +7,6 @@ export {
   day_of,
   start_of,
   end_of,
-  in_zone,
   semver,
   cursor,
   position,
@@ -203,6 +202,7 @@ export type {
   ContextOf,
   ClosesOf,
   EntryOf,
+  Mounted,
   NodeLookup,
   NodeLookups,
   Found,
@@ -307,7 +307,17 @@ export type {
   Elapsed,
   TreePorts,
 } from './tree.ts'
-export { tree_ports } from './tree_port.ts'
+export { tree_ports, tree_ports_by_path, mounted_leaf_ports } from './tree_port.ts'
+export { the_surface_of } from './surface.ts'
+export type { Surface, SurfaceLeaf } from './surface.ts'
+export type {
+  MountedLeaf,
+  MountedSurface,
+  MountedInvocation,
+  EventByPath,
+  PortByPath,
+  OutsideTheSurface,
+} from './tree_port.ts'
 export type { Trace, Traced, TraceReason, TracedIssue, TracedFailure, NotKnown } from './trace.ts'
 export { lookup_ports } from './lookup_port.ts'
 export type {

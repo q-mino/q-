@@ -1,0 +1,3384 @@
+{
+  "domain": "extensions/activations",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "extensions/activations/id/extension_name": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          }
+        }
+      }
+    },
+    "extensions/activations/id/question_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "extensions/activations/value/a_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          }
+        }
+      }
+    },
+    "extensions/activations/value/extension_version": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+          }
+        }
+      }
+    },
+    "extensions/activations/value/major": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        }
+      }
+    },
+    "extensions/activations/value/a_leaf": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+          }
+        }
+      }
+    },
+    "extensions/activations/value/extension_point": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "point": { "type": "string", "enum": ["action", "slot", "page"] },
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "place": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["point", "name", "place"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/manifest": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+              },
+              "sees": {
+                "type": "object",
+                "properties": {
+                  "known": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  }
+                },
+                "required": ["known"],
+                "additionalProperties": false
+              },
+              "touches": {
+                "maxItems": 16,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                }
+              },
+              "extension_points": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "place": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "required": ["point", "name", "place"],
+                  "additionalProperties": false
+                }
+              },
+              "leaves_on_known": {
+                "maxItems": 256,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 256,
+                  "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                }
+              },
+              "majors": {
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                  },
+                  "known": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                  }
+                },
+                "required": ["self", "known"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "sees",
+              "touches",
+              "extension_points",
+              "leaves_on_known",
+              "majors"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/more_asked": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "to_see_on_known" },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["asks", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "to_touch" },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["asks", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "an_extension_point" },
+                  "extension_point": {
+                    "type": "object",
+                    "properties": {
+                      "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "place": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["point", "name", "place"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["asks", "extension_point"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "asks": { "type": "string", "const": "a_leaf_on_known" },
+                  "leaf": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": ["asks", "leaf"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions/activations/value/activated_extension": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "status": { "type": "string", "const": "activated" },
+              "accepted": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["name", "status", "accepted", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/deactivated_extension": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "status": { "type": "string", "const": "deactivated" },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["name", "status", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/activation": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "status": { "type": "string", "const": "activated" },
+                  "accepted": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["name", "status", "accepted", "at"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "status": { "type": "string", "const": "deactivated" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["name", "status", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions/activations/value/extension_state": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "is": { "type": "string", "const": "active" } },
+                "required": ["is"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "is": { "type": "string", "const": "not_active" } },
+                "required": ["is"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "waiting_for_the_new_manifest" },
+                  "asks_more": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "to_see_on_known" },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["asks", "name"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "to_touch" },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["asks", "name"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "an_extension_point" },
+                            "extension_point": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asks", "extension_point"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asks": { "type": "string", "const": "a_leaf_on_known" },
+                            "leaf": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "required": ["asks", "leaf"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": ["is", "asks_more"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions/activations/value/extension_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              },
+              "state": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "active" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": { "is": { "type": "string", "const": "not_active" } },
+                    "required": ["is"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "waiting_for_the_new_manifest" },
+                      "asks_more": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "to_see_on_known" },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["asks", "name"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "to_touch" },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["asks", "name"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "an_extension_point" },
+                                "extension_point": {
+                                  "type": "object",
+                                  "properties": {
+                                    "point": {
+                                      "type": "string",
+                                      "enum": ["action", "slot", "page"]
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    },
+                                    "place": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    }
+                                  },
+                                  "required": ["point", "name", "place"],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": ["asks", "extension_point"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asks": { "type": "string", "const": "a_leaf_on_known" },
+                                "leaf": {
+                                  "type": "string",
+                                  "maxLength": 256,
+                                  "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                                }
+                              },
+                              "required": ["asks", "leaf"],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": ["is", "asks_more"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["name", "manifest", "state"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/withdrawn_offer": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/offered_extension": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "majors": {
+                "maxItems": 64,
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            },
+            "required": ["name", "majors"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/value/offered_extensions": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                },
+                "majors": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                }
+              },
+              "required": ["name", "majors"],
+              "additionalProperties": false
+            },
+            "x-refined": true
+          }
+        }
+      }
+    },
+    "extensions/activations/value/waiting_time": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 604800 }
+        }
+      }
+    },
+    "extensions/activations/value/no_answer": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+        }
+      }
+    },
+    "extensions/activations/value/what_came_back": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "the_extensions_in_common_came_back" },
+                  "in_common": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["name", "majors"],
+                      "additionalProperties": false
+                    },
+                    "x-refined": true
+                  }
+                },
+                "required": ["outcome", "in_common"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outcome": { "type": "string", "const": "no_answer_came_back" },
+                  "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                },
+                "required": ["outcome", "why"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions/activations/value/question_progress": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "waiting" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "learned" },
+                  "in_common": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["name", "majors"],
+                      "additionalProperties": false
+                    },
+                    "x-refined": true
+                  }
+                },
+                "required": ["stage", "in_common"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "had_no_answer" },
+                  "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                },
+                "required": ["stage", "why"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions/activations/value/question": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "progress": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "stage": { "type": "string", "const": "waiting" } },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "learned" },
+                      "in_common": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["name", "majors"],
+                          "additionalProperties": false
+                        },
+                        "x-refined": true
+                      }
+                    },
+                    "required": ["stage", "in_common"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "had_no_answer" },
+                      "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                    },
+                    "required": ["stage", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "bond", "offered", "asked_at", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_activated": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activated_extension": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "status": { "type": "string", "const": "activated" },
+                  "accepted": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["name", "status", "accepted", "at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["activated_extension"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_activated_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_deactivated": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deactivated_extension": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "status": { "type": "string", "const": "deactivated" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["name", "status", "at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["deactivated_extension"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_deactivated_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/the_offer_of_an_extension_has_been_withdrawn_from_a_bond": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "withdrawn_offer": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "bond": { "type": "string", "minLength": 1 }
+                },
+                "required": ["name", "bond"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["withdrawn_offer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/the_offer_of_an_extension_has_been_withdrawn_from_a_bond_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_offered_to_a_bond": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/an_extension_has_been_offered_to_a_bond_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/a_bond_has_been_asked_for_the_extensions_in_common": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "offered": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["name", "majors"],
+                      "additionalProperties": false
+                    },
+                    "x-refined": true
+                  },
+                  "asked_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "progress": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "waiting" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "learned" },
+                          "in_common": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "majors": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                }
+                              },
+                              "required": ["name", "majors"],
+                              "additionalProperties": false
+                            },
+                            "x-refined": true
+                          }
+                        },
+                        "required": ["stage", "in_common"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "had_no_answer" },
+                          "why": {
+                            "type": "string",
+                            "enum": ["no_response", "the_peer_cannot_answer"]
+                          }
+                        },
+                        "required": ["stage", "why"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["id", "bond", "offered", "asked_at", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["question"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/the_extensions_in_common_with_a_bond_have_been_learned": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "in_common": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["question_id", "in_common"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/fact/a_question_about_the_extensions_in_common_had_no_answer": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+            },
+            "required": ["question_id", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_extension_is_installed": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_extension_is_installed_with_this_manifest": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["manifest"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_extension_is_activated": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_extension_is_activated_with_this_manifest": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["manifest"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_bond_exists": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_offer_is_withdrawn_from_the_bond": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/these_extensions_are_offered_to_the_bond": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["bond", "offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/a_question_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "question_id": { "type": "string", "minLength": 1 } },
+            "required": ["question_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_question_waits": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "question_id": { "type": "string", "minLength": 1 } },
+            "required": ["question_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/predicate/the_extensions_in_common_came_back": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "the_extensions_in_common_came_back"
+                      },
+                      "in_common": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["name", "majors"],
+                          "additionalProperties": false
+                        },
+                        "x-refined": true
+                      }
+                    },
+                    "required": ["outcome", "in_common"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "no_answer_came_back" },
+                      "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                    },
+                    "required": ["outcome", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/effect/ask_for_the_extensions_in_common": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["question_id", "bond", "offered", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/selection/extension/the_extension_has_this_name": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/selection/extension/the_extension_is_offered_to_this_bond": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/selection/extension/the_extension_is_one_of_these": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "names": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                }
+              }
+            },
+            "required": ["names"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/selection/question/the_question_was_asked_of_this_bond": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_manifest_shown_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_extension_is_installed_with_it": {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["manifest"],
+                "additionalProperties": false
+              },
+              "it_is_not_activated_with_it": {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["manifest"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_extension_is_installed_with_it", "it_is_not_activated_with_it"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_manifest_shown_is_accepted_already": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_extension_is_installed_with_it": {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["manifest"],
+                "additionalProperties": false
+              },
+              "it_is_activated_with_it": {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 256,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["manifest"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_extension_is_installed_with_it", "it_is_activated_with_it"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/activate_an_extension": { "kind": "command" },
+    "extensions/activations/command/activate_an_extension_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "manifest": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                  },
+                  "sees": {
+                    "type": "object",
+                    "properties": {
+                      "known": {
+                        "maxItems": 16,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      }
+                    },
+                    "required": ["known"],
+                    "additionalProperties": false
+                  },
+                  "touches": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  },
+                  "extension_points": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "place": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": ["point", "name", "place"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "leaves_on_known": {
+                    "maxItems": 256,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "majors": {
+                    "type": "object",
+                    "properties": {
+                      "self": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      },
+                      "known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                      }
+                    },
+                    "required": ["self", "known"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "sees",
+                  "touches",
+                  "extension_points",
+                  "leaves_on_known",
+                  "majors"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["manifest"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_extension_is_not_activated": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/deactivate_an_extension": { "kind": "command" },
+    "extensions/activations/command/deactivate_an_extension_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_extension_is_offered_to_the_bond": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_extension_is_installed": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              },
+              "the_bond_exists": {
+                "type": "object",
+                "properties": { "bond": { "type": "string", "minLength": 1 } },
+                "required": ["bond"],
+                "additionalProperties": false
+              },
+              "the_offer_is_not_withdrawn": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "bond": { "type": "string", "minLength": 1 }
+                },
+                "required": ["name", "bond"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "the_extension_is_installed",
+              "the_bond_exists",
+              "the_offer_is_not_withdrawn"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_offer_is_withdrawn_from_the_bond": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_extension_is_installed": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              },
+              "the_bond_exists": {
+                "type": "object",
+                "properties": { "bond": { "type": "string", "minLength": 1 } },
+                "required": ["bond"],
+                "additionalProperties": false
+              },
+              "the_offer_is_withdrawn": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "bond": { "type": "string", "minLength": 1 }
+                },
+                "required": ["name", "bond"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_extension_is_installed", "the_bond_exists", "the_offer_is_withdrawn"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/withdraw_the_offer_from_a_bond": { "kind": "command" },
+    "extensions/activations/command/withdraw_the_offer_from_a_bond_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/offer_an_extension_to_a_bond": { "kind": "command" },
+    "extensions/activations/command/offer_an_extension_to_a_bond_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "bond": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name", "bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_question_can_be_asked": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_question_is_new": {
+                "type": "object",
+                "properties": { "question_id": { "type": "string", "minLength": 1 } },
+                "required": ["question_id"],
+                "additionalProperties": false
+              },
+              "the_bond_exists": {
+                "type": "object",
+                "properties": { "bond": { "type": "string", "minLength": 1 } },
+                "required": ["bond"],
+                "additionalProperties": false
+              },
+              "what_it_tells_is_offered": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "offered": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["name", "majors"],
+                      "additionalProperties": false
+                    },
+                    "x-refined": true
+                  }
+                },
+                "required": ["bond", "offered"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_question_is_new", "the_bond_exists", "what_it_tells_is_offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/ask_a_bond_for_the_extensions_in_common": { "kind": "command" },
+    "extensions/activations/command/ask_a_bond_for_the_extensions_in_common_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["bond", "offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_question_waits_and_they_came_back": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_question_waits": {
+                "type": "object",
+                "properties": { "question_id": { "type": "string", "minLength": 1 } },
+                "required": ["question_id"],
+                "additionalProperties": false
+              },
+              "they_came_back": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": {
+                            "type": "string",
+                            "const": "the_extensions_in_common_came_back"
+                          },
+                          "in_common": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "majors": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                }
+                              },
+                              "required": ["name", "majors"],
+                              "additionalProperties": false
+                            },
+                            "x-refined": true
+                          }
+                        },
+                        "required": ["outcome", "in_common"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "no_answer_came_back" },
+                          "why": {
+                            "type": "string",
+                            "enum": ["no_response", "the_peer_cannot_answer"]
+                          }
+                        },
+                        "required": ["outcome", "why"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_question_waits", "they_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/the_question_waits_and_no_answer_came_back": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_question_waits": {
+                "type": "object",
+                "properties": { "question_id": { "type": "string", "minLength": 1 } },
+                "required": ["question_id"],
+                "additionalProperties": false
+              },
+              "no_answer_came_back": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": {
+                            "type": "string",
+                            "const": "the_extensions_in_common_came_back"
+                          },
+                          "in_common": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "majors": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                }
+                              },
+                              "required": ["name", "majors"],
+                              "additionalProperties": false
+                            },
+                            "x-refined": true
+                          }
+                        },
+                        "required": ["outcome", "in_common"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "outcome": { "type": "string", "const": "no_answer_came_back" },
+                          "why": {
+                            "type": "string",
+                            "enum": ["no_response", "the_peer_cannot_answer"]
+                          }
+                        },
+                        "required": ["outcome", "why"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_question_waits", "no_answer_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/command/learn_the_extensions_in_common": { "kind": "command" },
+    "extensions/activations/command/learn_the_extensions_in_common_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string", "minLength": 1 },
+              "what_came_back": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "the_extensions_in_common_came_back"
+                      },
+                      "in_common": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["name", "majors"],
+                          "additionalProperties": false
+                        },
+                        "x-refined": true
+                      }
+                    },
+                    "required": ["outcome", "in_common"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": { "type": "string", "const": "no_answer_came_back" },
+                      "why": { "type": "string", "enum": ["no_response", "the_peer_cannot_answer"] }
+                    },
+                    "required": ["outcome", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["question_id", "what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/query/an_extension": { "kind": "query" },
+    "extensions/activations/query/an_extension_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/query/the_extensions_offered_to_a_bond": { "kind": "query" },
+    "extensions/activations/query/the_extensions_offered_to_a_bond_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/query/it_is_offered_back": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "it_is_offered_to_the_bond": {
+                "type": "object",
+                "properties": { "bond": { "type": "string", "minLength": 1 } },
+                "required": ["bond"],
+                "additionalProperties": false
+              },
+              "the_peer_named_it": {
+                "type": "object",
+                "properties": {
+                  "names": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    }
+                  }
+                },
+                "required": ["names"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["it_is_offered_to_the_bond", "the_peer_named_it"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/query/the_questions_asked_of_a_bond": { "kind": "query" },
+    "extensions/activations/query/the_questions_asked_of_a_bond_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/query/the_extensions_in_common": { "kind": "query" },
+    "extensions/activations/query/the_extensions_in_common_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["name", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["bond", "offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "extensions/activations/usecase/activate_an_extension": { "kind": "usecase" },
+    "extensions/activations/usecase/deactivate_an_extension": { "kind": "usecase" },
+    "extensions/activations/usecase/withdraw_the_offer_from_a_bond": { "kind": "usecase" },
+    "extensions/activations/usecase/offer_an_extension_to_a_bond": { "kind": "usecase" },
+    "extensions/activations/usecase/ask_a_bond_for_the_extensions_in_common": { "kind": "usecase" },
+    "extensions/activations/usecase/learn_the_extensions_in_common": { "kind": "usecase" },
+    "extensions/activations/usecase/an_extension": { "kind": "usecase" },
+    "extensions/activations/usecase/the_extensions_offered_to_a_bond": { "kind": "usecase" },
+    "extensions/activations/usecase/the_questions_asked_of_a_bond": { "kind": "usecase" },
+    "extensions/activations/usecase/the_extensions_in_common": { "kind": "usecase" },
+    "extensions/activations/version/activations": { "kind": "version" }
+  }
+}

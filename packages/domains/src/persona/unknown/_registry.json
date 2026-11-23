@@ -1,0 +1,155 @@
+{
+  "domain": "persona/unknown",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/unknown/value/face_name": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 80 }
+        }
+      }
+    },
+    "persona/unknown/value/relay_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 2048, "format": "uri", "x-lossy": ["url"] }
+        }
+      }
+    },
+    "persona/unknown/value/relays": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "minItems": 1,
+            "maxItems": 1,
+            "type": "array",
+            "items": { "type": "string", "maxLength": 2048, "format": "uri", "x-lossy": ["url"] }
+          }
+        }
+      }
+    },
+    "persona/unknown/value/deposit_address": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "persona/unknown/value/mailbox": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
+              }
+            },
+            "required": ["deposit_address", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/unknown/value/ticket_secret": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{85}[AQgw]$" }
+        }
+      }
+    },
+    "persona/unknown/node/unknown": { "kind": "node" },
+    "persona/unknown/usecase/introduce_myself": {
+      "kind": "usecase",
+      "shapes": {
+        "event/you_are_bonded": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/you_met_in_person": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/the_bond_is_confirmed": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/you_introduced_yourself_already": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/the_ticket_cannot_be_used": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/unknown/usecase/introduce_myself_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "secret": { "type": "string", "pattern": "^[A-Za-z0-9_-]{85}[AQgw]$" },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["secret", "introduced_as", "mailbox"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/unknown/version/unknown": { "kind": "version" }
+  }
+}

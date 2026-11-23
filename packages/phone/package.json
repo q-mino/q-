@@ -12,13 +12,18 @@
   "dependencies": {
     "@q-mino/adapters-common": "workspace:*",
     "@q-mino/adapters-web": "workspace:*",
+    "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
+    "@q-mino/memory": "workspace:*",
+    "@q-mino/ping_pong": "workspace:*",
     "solid-js": "^1.9.18",
     "workbox-precaching": "^7.4.1",
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "fake-indexeddb": "6.2.7",
+    "happy-dom": "21.0.4",
     "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0",
     "vite-plugin-solid": "^2.11.15",

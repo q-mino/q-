@@ -1,0 +1,213 @@
+{
+  "name": "ping_pong",
+  "version": "0.1.0",
+  "boundary_version": "1.0.0",
+  "sees": { "known": [] },
+  "touches": ["the_port_of_requests", "its_storage"],
+  "actions": { "ping": { "on": "a_bond", "invokes": "usecase/send_a_ping" } },
+  "slots": {},
+  "pages": {},
+  "surfaces": {
+    "self": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/send_a_ping": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": { "bond": { "type": "string", "minLength": 1 } },
+              "required": ["bond"],
+              "additionalProperties": false
+            },
+            "events": {
+              "the_ping_is_sent": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_ping_is_sent" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                    "required": ["ping_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_ping_cannot_be_sent": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_ping_cannot_be_sent" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "pong": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "pong" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                    "required": ["ping_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "no_response": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "no_response" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                    "required": ["ping_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_peer_cannot_answer": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_peer_cannot_answer" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                    "required": ["ping_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "called_off": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "called_off" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                    "required": ["ping_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_wait_is_over": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_wait_is_over" },
+                  "position": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "position"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": false
+          }
+        }
+      }
+    },
+    "known": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/ping": {
+            "kind": "command",
+            "input": { "type": "object", "properties": {}, "additionalProperties": false },
+            "events": {
+              "pong": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "pong" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "no_pong": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "no_pong" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "not_found": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "not_found" } },
+                "required": ["event"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          }
+        }
+      }
+    }
+  }
+}

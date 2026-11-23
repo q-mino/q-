@@ -1,0 +1,30 @@
+{
+  "domain": "persona/known",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/known/usecase/ping": {
+      "kind": "usecase",
+      "shapes": {
+        "event/pong": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/no_pong": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/known/usecase/ping_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/known/version/known": { "kind": "version" }
+  }
+}

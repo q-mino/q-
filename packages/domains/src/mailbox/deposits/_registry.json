@@ -1,0 +1,398 @@
+{
+  "domain": "mailbox/deposits",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "mailbox/deposits/id/deposit_address": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" }
+        }
+      }
+    },
+    "mailbox/deposits/id/deposit_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "mailbox/deposits/value/envelope": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "mailbox/deposits/value/deposit_status": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["kept", "discarded"] }
+        }
+      }
+    },
+    "mailbox/deposits/value/kept_deposit": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+              "deposited_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "kept" },
+              "envelope": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" },
+              "discarded_at": { "not": {} }
+            },
+            "required": ["id", "deposit_address", "deposited_at", "status", "envelope"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/value/discarded_deposit": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+              "deposited_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "discarded" },
+              "envelope": { "not": {} },
+              "discarded_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "deposit_address", "deposited_at", "status", "discarded_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/value/deposit": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+                  "deposited_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "kept" },
+                  "envelope": {
+                    "type": "string",
+                    "maxLength": 87382,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "discarded_at": { "not": {} }
+                },
+                "required": ["id", "deposit_address", "deposited_at", "status", "envelope"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+                  "deposited_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "discarded" },
+                  "envelope": { "not": {} },
+                  "discarded_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "deposit_address", "deposited_at", "status", "discarded_at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mailbox/deposits/value/collected_envelope": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "deposited_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "envelope": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+            },
+            "required": ["id", "deposited_at", "envelope"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/fact/an_envelope_has_been_deposited": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_deposit": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+                  "deposited_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "kept" },
+                  "envelope": {
+                    "type": "string",
+                    "maxLength": 87382,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "discarded_at": { "not": {} }
+                },
+                "required": ["id", "deposit_address", "deposited_at", "status", "envelope"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_deposit"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/fact/an_envelope_has_been_discarded": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "discarded_deposit": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "discarded" },
+                  "discarded_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "status", "discarded_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["discarded_deposit"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/predicate/a_deposit_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "deposit_id": { "type": "string", "minLength": 1 } },
+            "required": ["deposit_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/predicate/the_envelope_is_kept": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "deposit_id": { "type": "string", "minLength": 1 } },
+            "required": ["deposit_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/effect/wait_seven_days_from_the_deposit": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "deposit_id": { "type": "string", "minLength": 1 } },
+            "required": ["deposit_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/selection/deposit/the_envelope_is_on_this_address": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" }
+            },
+            "required": ["deposit_address"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/selection/deposit/the_envelope_is_kept": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "mailbox/deposits/command/the_deposit_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "deposit_id": { "type": "string", "minLength": 1 } },
+            "required": ["deposit_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/command/deposit_an_envelope": { "kind": "command" },
+    "mailbox/deposits/command/deposit_an_envelope_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+              "envelope": { "type": "string", "maxLength": 87382, "pattern": "^[A-Za-z0-9_-]+$" }
+            },
+            "required": ["deposit_address", "envelope"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/command/discard_an_envelope": { "kind": "command" },
+    "mailbox/deposits/command/discard_an_envelope_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "deposit_id": { "type": "string", "minLength": 1 } },
+            "required": ["deposit_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/query/the_envelope_is_waiting_in_the_mailbox": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_envelope_is_on_the_address": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" }
+                },
+                "required": ["deposit_address"],
+                "additionalProperties": false
+              },
+              "the_envelope_is_kept": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_envelope_is_on_the_address", "the_envelope_is_kept"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/query/the_envelopes_in_a_mailbox": { "kind": "query" },
+    "mailbox/deposits/query/the_envelopes_in_a_mailbox_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deposit_address": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" }
+            },
+            "required": ["deposit_address"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "mailbox/deposits/usecase/deposit_an_envelope": { "kind": "usecase" },
+    "mailbox/deposits/usecase/discard_an_envelope": { "kind": "usecase" },
+    "mailbox/deposits/usecase/the_envelopes_in_a_mailbox": { "kind": "usecase" },
+    "mailbox/deposits/version/deposits": { "kind": "version" }
+  }
+}

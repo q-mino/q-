@@ -1,6 +1,6 @@
 import * as z from 'zod'
 import { position, semver, type Semver } from './format.ts'
-import { correlation, operation_id, type Operation } from './context.ts'
+import { correlation, operation_id, type Operation, type VersionContext } from './context.ts'
 import type { Majors, Registry, Versions } from './registry.ts'
 import type { FactLog, LogEvent } from './stream.ts'
 import type { Elapsed, Invoked, TreeLeaves, TreePorts } from './tree.ts'
@@ -207,7 +207,10 @@ const issues_of = (error: z.ZodError): readonly TracedIssue[] =>
  * (`Follows`), the majors of the persona (`persona/member/_majors.ts`,
  * generated from its folders, A, 17 Nov 2026), where it finds the leaf of a
  * past major at the message's version, the node at the top, which takes
- * what the entry gives, and the current leaves, command and read, one port
+ * what the entry gives, or a mounted folder's point (`Mounted`, EXT-11,
+ * PER-6, "A mounted folder"), whose context the entry gives, parsed by its
+ * schema, with no node to take it (then no node below it takes, since part
+ * 12.3), and the current leaves, command and read, one port
  * per name (`LeafPort`). Curried as `command_use_case_ports`: then the ports
  * the tree invokes, by the path of their folder, as the library built them
  * (each knows the use case or the lookup it serves, so that the library
@@ -455,7 +458,7 @@ const limits_of = (leaf: TreeLeaf, context: Context, input: unknown): Walked => 
 }
 
 /** The version a request carries (PER-17, D72.7): one that is no semver is a fault of the entry, thrown. */
-const version_of = (leaf: TreeLeaf, version: unknown): Semver => {
+const version_of = (leaf: Pick<TreeLeaf, 'path'>, version: unknown): Semver => {
   const parsed = semver.safeParse(version)
   if (!parsed.success) throw new Error(`${leaf.path}: the entry gives no version (PER-17)`)
   return parsed.data
@@ -467,38 +470,53 @@ const major_and_minor = (version: Semver): readonly [number, number] => {
   return [major ?? Number.NaN, minor ?? Number.NaN]
 }
 
+/** A request closed at the entry of the tree, before any node: the event its caller reads, and why, for the trace. */
+interface ClosedAtTheEntry {
+  readonly closed: true
+  readonly event: RuntimeLeafEvent
+  readonly why: TraceReason
+}
+
 /**
- * Where a request's version leads (PER-17, D72.7, A, 17 Nov 2026), at the
- * entry of the tree, before any node, so that no lookup runs: the gate,
- * `version_not_supported`, for a major the window has not (a `1.2.0` once
- * `1/` is deleted, a `3.0.0` on a tree at 2.0.0) or the current major at a
- * higher minor (a `2.1.0` on 2.0.0), the patch not counted, telling the
- * version the tree speaks and its oldest major; a major with no leaf at the
- * path, `not_a_leaf` (D106.3); else the steps from its leaf to the current.
+ * The gate (PER-17, D72.7, A, 17 Nov 2026), at the entry of the tree,
+ * before any node, so that no lookup runs: `version_not_supported`, for a
+ * major the window has not (a `1.2.0` once `1/` is deleted, a `3.0.0` on a
+ * tree at 2.0.0) or the current major at a higher minor (a `2.1.0` on
+ * 2.0.0), the patch not counted, telling the version the tree speaks and
+ * its oldest major; nothing for a version the window holds.
+ */
+const the_gate = (window: Window, version: Semver): ClosedAtTheEntry | undefined => {
+  const [major, minor] = major_and_minor(version)
+  return !window.majors.has(major) || (major === window.major && minor > window.minor)
+    ? {
+        closed: true,
+        event: { event: 'version_not_supported', current: window.current, oldest: window.oldest },
+        why: { closed_by: 'the_gate', current: window.current, oldest: window.oldest },
+      }
+    : undefined
+}
+
+/** A major with no leaf at the path a request names (D106.3): `not_a_leaf`. */
+const not_a_leaf_at = (major: number): ClosedAtTheEntry => ({
+  closed: true,
+  event: { event: 'invalid_request', reason: 'not_a_leaf' },
+  why: { closed_by: 'not_a_leaf', major },
+})
+
+/**
+ * Where a request's version leads (PER-17, D72.7): the gate; a major with
+ * no leaf at the path, `not_a_leaf` (D106.3); else the steps from its leaf
+ * to the current.
  */
 const picked = (
   leaf: TreeLeaf,
   version: Semver,
-):
-  | { readonly closed: true; readonly event: RuntimeLeafEvent; readonly why: TraceReason }
-  | { readonly closed: false; readonly past: readonly PastStep[] } => {
-  const { window } = leaf
-  const [major, minor] = major_and_minor(version)
-  if (!window.majors.has(major) || (major === window.major && minor > window.minor)) {
-    return {
-      closed: true,
-      event: { event: 'version_not_supported', current: window.current, oldest: window.oldest },
-      why: { closed_by: 'the_gate', current: window.current, oldest: window.oldest },
-    }
-  }
+): ClosedAtTheEntry | { readonly closed: false; readonly past: readonly PastStep[] } => {
+  const gated = the_gate(leaf.window, version)
+  if (gated !== undefined) return gated
+  const [major] = major_and_minor(version)
   const past = leaf.pasts.get(major)
-  return past === undefined
-    ? {
-        closed: true,
-        event: { event: 'invalid_request', reason: 'not_a_leaf' },
-        why: { closed_by: 'not_a_leaf', major },
-      }
-    : { closed: false, past }
+  return past === undefined ? not_a_leaf_at(major) : { closed: false, past }
 }
 
 /**
@@ -603,10 +621,10 @@ const failures_of = (failures: unknown): readonly TracedFailure[] =>
       })
     : []
 
-/** What a leaf's port hands the tree's trace for a request answered with no fact (F6). */
+/** What a leaf's port hands the tree's trace for a request answered with no fact (F6): the leaf by its path, or the path a request named where no leaf is. */
 interface Tracing {
   readonly trace: unknown
-  readonly leaf: TreeLeaf
+  readonly leaf: Pick<TreeLeaf, 'path'>
   readonly given: Context
   readonly version: Semver
   readonly sent: unknown
@@ -1610,22 +1628,101 @@ const pasts_of = (
   }
 }
 
+/** A node of a registry, by its path, with its declaration as a record. */
+interface RegisteredNode {
+  readonly path: string
+  readonly component: object
+  readonly declared: Context
+}
+
+/** The nodes of a registry (PER-6). */
+const nodes_in = (registry: Registry): readonly RegisteredNode[] =>
+  Object.entries(registry).flatMap(([path, component]) =>
+    typeof component === 'object' && $Node in component
+      ? [{ path, component, declared: declared_of(component, $Node) }]
+      : [],
+  )
+
+/**
+ * The ports a tree invokes, by the component each serves, and the faults of
+ * the wiring (CFG-2): a port the library did not build, or given in another
+ * folder than its own.
+ */
+const served_in = (
+  invoked: RuntimeWired['invoked'],
+): { readonly served: ReadonlyMap<unknown, unknown>; readonly unserved: readonly string[] } => {
+  const served = new Map<unknown, unknown>()
+  const unserved = Object.entries(invoked).flatMap(([folder, given]) =>
+    Object.entries(given).flatMap(([name, port]) => {
+      const serves = served_by(port)
+      if (serves === undefined) {
+        return [`${folder}: ${name} is a port the library did not build (CFG-2)`]
+      }
+      if (!is_at_or_above(folder, folder_of(serves.path))) {
+        return [`${folder}: ${name} serves ${serves.path}, of another folder (CFG-2)`]
+      }
+      served.set(serves.component, port)
+      return []
+    }),
+  )
+  return { served, unserved }
+}
+
+/** A node of the registry as a path meets it (PER-6): its parts as declared, its lookups with the ports that answer them. */
+const tree_node_of =
+  (served: ReadonlyMap<unknown, unknown>) =>
+  (node: RegisteredNode): TreeNode => {
+    const looks_up = conditions_of(node.declared['looks_up']).map(([name, declared]) => ({
+      name,
+      port: served.get(is_a_record(declared) ? declared['lookup'] : undefined),
+      of: is_a_record(declared) ? declared['of'] : undefined,
+    }))
+    const takes = node.declared['takes']
+    return {
+      path: node.path,
+      takes: takes instanceof z.ZodObject ? takes : undefined,
+      looks_up,
+      is_found_only_if: conditions_of(node.declared['is_found_only_if']),
+      is_refused_unless: conditions_of(node.declared['is_refused_unless']),
+      gives: node.declared['gives'],
+    }
+  }
+
+/**
+ * The top given as a mounted folder's point (EXT-11): a node of no
+ * declaration but what the entry gives, parsed by the context's schema, at
+ * the folder's path. Nothing for a node.
+ */
+const mounted_of = (top: unknown): TreeNode | undefined => {
+  if (!is_a_record(top) || $Node in top) return undefined
+  const { mounted, context } = top
+  if (typeof mounted !== 'string' || !(context instanceof z.ZodObject)) return undefined
+  return {
+    path: mounted,
+    takes: context,
+    looks_up: [],
+    is_found_only_if: [],
+    is_refused_unless: [],
+    gives: undefined,
+  }
+}
+
 const runtime_tree_ports = (
   ports: RuntimeTreePorts,
 ): ((wired: RuntimeWired) => Readonly<Record<string, unknown>>) => {
   const path_of = paths_in(ports.registry)
   const window = window_of(ports.majors)
-  const top = path_of(ports.top)
+  // The top: a node of the registry, or a mounted folder's point, given its
+  // context from outside (EXT-11), the first node of every path below it.
+  const mount = mounted_of(ports.top)
+  const top = mount === undefined ? path_of(ports.top) : undefined
+  const top_folder = mount === undefined ? folder_of(top ?? '') : mount.path
   const leaves = Object.entries(ports.use_cases).map(([name, use_case]) => ({
     name,
     use_case,
     path: path_of(use_case),
   }))
-  const nodes = Object.entries(ports.registry).flatMap(([path, component]) =>
-    typeof component === 'object' && $Node in component
-      ? [{ path, component, declared: declared_of(component, $Node) }]
-      : [],
-  )
+  const nodes = nodes_in(ports.registry)
   const pasts = new Map(
     leaves.flatMap(({ name, use_case, path }) =>
       path === undefined || typeof window === 'string'
@@ -1634,21 +1731,28 @@ const runtime_tree_ports = (
     ),
   )
   const faults = [
-    ...(top === undefined ? ['the top is not in the registry given (DOM-24)'] : []),
+    ...(top === undefined && mount === undefined
+      ? ['the top is not in the registry given (DOM-24)']
+      : []),
     ...(typeof window === 'string' ? [window] : []),
     ...leaves.flatMap(({ name, path }) => {
       if (path === undefined) return [`the leaf ${name} is not in the registry given (DOM-24)`]
       return [
         ...(path.endsWith(`/usecase/${name}`) ? [] : [`${path} is given as ${name} (DOM-24)`]),
-        ...(top === undefined || is_at_or_above(folder_of(top), folder_of(path))
+        ...((top === undefined && mount === undefined) ||
+        is_at_or_above(top_folder, folder_of(path))
           ? []
-          : [`${path} is not below the top, ${top} (PER-6)`]),
+          : [`${path} is not below the top, ${top ?? top_folder} (PER-6)`]),
         ...(pasts.get(name)?.faults ?? []),
       ]
     }),
     ...nodes.flatMap(({ path, component, declared }) => [
       ...(declared['takes'] !== undefined && component !== ports.top
-        ? [`${path} takes from the entry, which only the top does (PER-6)`]
+        ? [
+            mount === undefined
+              ? `${path} takes from the entry, which only the top does (PER-6)`
+              : `${path} takes from the entry, below the mounted folder ${mount.path}, whose context is given from outside (EXT-11, PER-6)`,
+          ]
         : []),
       ...(declared['binds'] !== undefined || declared['requires'] !== undefined
         ? [`${path} binds or requires, which its business's command port runs (D105)`]
@@ -1658,21 +1762,7 @@ const runtime_tree_ports = (
   if (faults.length > 0 || typeof window === 'string') throw new Error(faults.join('\n'))
 
   return (wired) => {
-    const served = new Map<unknown, unknown>()
-    const unserved = Object.entries(wired.invoked).flatMap(([folder, given]) =>
-      Object.entries(given).flatMap(([name, port]) => {
-        const serves = served_by(port)
-        if (serves === undefined) {
-          return [`${folder}: ${name} is a port the library did not build (CFG-2)`]
-        }
-        if (!is_at_or_above(folder, folder_of(serves.path))) {
-          return [`${folder}: ${name} serves ${serves.path}, of another folder (CFG-2)`]
-        }
-        served.set(serves.component, port)
-        return []
-      }),
-    )
-    const top_folder = folder_of(top ?? '')
+    const { served, unserved } = served_in(wired.invoked)
     const path_nodes = (path: string) =>
       nodes
         .filter(
@@ -1688,24 +1778,10 @@ const runtime_tree_ports = (
           ? Reflect.get(use_case, $UseCase)
           : undefined
       const invokes = is_a_record(own) ? own['use_case'] : undefined
-      const tree_nodes = path_nodes(path).map((node): TreeNode => {
-        const looks_up = conditions_of(node.declared['looks_up']).map(
-          ([lookup_name, declared]) => ({
-            name: lookup_name,
-            port: served.get(is_a_record(declared) ? declared['lookup'] : undefined),
-            of: is_a_record(declared) ? declared['of'] : undefined,
-          }),
-        )
-        const takes = node.declared['takes']
-        return {
-          path: node.path,
-          takes: takes instanceof z.ZodObject ? takes : undefined,
-          looks_up,
-          is_found_only_if: conditions_of(node.declared['is_found_only_if']),
-          is_refused_unless: conditions_of(node.declared['is_refused_unless']),
-          gives: node.declared['gives'],
-        }
-      })
+      const tree_nodes = [
+        ...(mount === undefined ? [] : [mount]),
+        ...path_nodes(path).map(tree_node_of(served)),
+      ]
       const port = served.get(invokes)
       const streaming = port === undefined ? undefined : streaming_of(path, parts, port)
       const actions = actions_of_leaf(own)
@@ -1781,5 +1857,378 @@ const runtime_tree_ports = (
         ]
       }),
     )
+  }
+}
+
+// The ports of a tree by path (EXT-5, PER-5, PER-6; part 13.2): one port
+// for every leaf of a tree, the leaf named by its path in its surface, as a
+// request that came by a letter names it (`usecase/the_extensions_in_common`
+// on the surface `persona/known`), and as the port of leaves mounted from
+// outside takes it, so that an entry serves a tree's leaves and the leaves
+// mounted below it alike. A leaf found is served by its named port, the
+// same code; a path no leaf has closes after the gate, traced. A tree with
+// no leaf (a persona anyone wears that offers nothing) is served so too.
+
+/**
+ * The folder of a tree's surface (EXT-5, PER-17): where its current major's
+ * `version.ts` stands, the folder its leaves' paths start from; one tree's
+ * majors hold one, which the window checks at wiring.
+ */
+const surface_folder_of = (majors: Majors, window: Window): string => {
+  const [path] = Object.entries(majors[window.major] ?? {}).flatMap(([at, entry]) =>
+    typeof entry === 'object' && $Version in entry ? [at] : [],
+  )
+  if (path === undefined) throw new Error('the current major declares no version (PER-17)')
+  return folder_of(path)
+}
+
+/**
+ * The ports of a tree by path (EXT-5, PER-6; part 13.2): the same
+ * declaration as `tree_ports`, the same wiring, and one port, a
+ * `PortByPath` as `mounted_leaf_ports`' is, which takes the leaf by its
+ * path in the surface, from the persona's segment
+ * (`usecase/the_extensions_in_common`), the surface's folder the one of its
+ * current major's `version.ts`. Every fault at wiring as `tree_ports`.
+ *
+ * Per request: the leaf at that path, among the current leaves given,
+ * served by its named port, the same code (the gate, the leaf of the
+ * version's major, the input, the nodes, the leaf: a command leaf takes the
+ * entry's operation, a read leaf none); a path no leaf has, the gate
+ * (`version_not_supported`), then `invalid_request`, `not_a_leaf`, each
+ * traced at that path under the surface's folder (`closed_by: 'not_a_leaf'`,
+ * with the version's major), as the named ports trace theirs. A tree given
+ * no leaf (only its `version.ts`) answers every request so.
+ */
+export function tree_ports_by_path<const top>(ports: {
+  readonly registry: Registry
+  readonly versions: Versions
+  readonly majors: Majors
+  readonly top: top
+  readonly use_cases: TreeLeaves
+}): (wired: {
+  readonly invoked: Invoked
+  readonly log: FactLog
+  readonly trace: Trace<EntryOf<top>>
+  readonly elapsed?: Elapsed
+}) => PortByPath<EntryOf<top>>
+
+// The body, typed by what it meets at runtime (DOM-25).
+export function tree_ports_by_path(ports: RuntimeTreePorts): unknown {
+  // Every fault at wiring, the window's included, named first as tree_ports names them.
+  const named = runtime_tree_ports(ports)
+  const window = window_of(ports.majors)
+  if (typeof window === 'string') throw new Error(window)
+  const folder = surface_folder_of(ports.majors, window)
+  const path_of = paths_in(ports.registry)
+  const names = new Map(
+    Object.entries(ports.use_cases).flatMap(([name, use_case]) => {
+      const path = path_of(use_case)
+      return path?.startsWith(`${folder}/`) === true
+        ? [[path.slice(folder.length + 1), name] as const]
+        : []
+    }),
+  )
+
+  return (wired: RuntimeWired) => {
+    const leaves = named(wired)
+    return async function* (context: unknown, request: unknown): AsyncIterable<unknown> {
+      if (!is_a_record(request) || typeof request['leaf'] !== 'string') {
+        throw new Error(`${folder}: the entry names no leaf (PER-6)`)
+      }
+      const at = request['leaf']
+      const sent = request['input']
+      const name = names.get(at)
+      const port = name === undefined ? undefined : leaves[name]
+      if (port !== undefined) {
+        yield* invoked_with(port, [context, sent])
+        return
+      }
+      // No leaf at the path: the gate first, then `not_a_leaf` (PER-5.2, PER-5.3).
+      const entry = entry_of(context)
+      const version = version_of({ path: `${folder}/${at}` }, entry.version)
+      const operation = operation_given.safeParse(entry.operation)
+      const origin = correlation.safeParse(entry.correlation)
+      const tracing: Tracing = {
+        trace: wired.trace,
+        leaf: { path: `${folder}/${at}` },
+        given: entry.given,
+        version,
+        sent,
+        ...(operation.success ? { operation: operation.data } : {}),
+        ...(origin.success ? { correlation: origin.data } : {}),
+      }
+      const closed = the_gate(window, version) ?? not_a_leaf_at(major_and_minor(version)[0])
+      yield traced(tracing, closed.event, closed.why)
+    }
+  }
+}
+
+// Leaves mounted from outside (PER-6, "A mounted folder"; EXT-6, part
+// 12.3): below a node of this tree hang the leaves of another release unit,
+// in no registry of this tree's, given at wiring as data (its surface: by
+// major, each leaf's input, its events, whether it takes an operation) with
+// the port that invokes them. Per request, in the order of PER-5: the gate
+// of their own surface (PER-17, EXT-5), the leaf and its input checked on
+// the surface before any node (PER-6: a caller outside the node's
+// perimeters learns nothing the public contract does not tell), this
+// tree's nodes from the top down to the folder they hang below, then the
+// invocation with the context the nodes give, each event it gives parsed by
+// the surface and given as it is; one the surface does not type goes to a
+// port of the wiring, never to the caller. A mechanism of no kind, no new
+// builder: the library knows no extension.
+
+/**
+ * A leaf mounted from outside, at a major of its surface: whether it takes
+ * the request's operation (a command) or none (a read), its input's schema,
+ * and its events, by name, each with the schema of the whole event (its
+ * own, its nodes' closings, the base events: what its unit answers).
+ */
+export interface MountedLeaf {
+  readonly kind: 'command' | 'read'
+  readonly input: z.ZodType
+  readonly events: Readonly<Record<string, z.ZodType>>
+}
+
+/**
+ * The surface of leaves mounted from outside (EXT-5, EXT-10, PER-17): the
+ * version it speaks, its current major's, and its leaves at each major of
+ * its window, by their path in the surface (`usecase/ping`). Its window is
+ * its own, apart from the tree's.
+ */
+export interface MountedSurface {
+  readonly version: Semver
+  readonly majors: Readonly<Record<number, Readonly<Record<string, MountedLeaf>>>>
+}
+
+/**
+ * An invocation of a leaf mounted from outside, as the library hands it to
+ * the port that reaches its unit (EXT-2): the leaf by its path in the
+ * surface, the version the request names, the context the nodes above it
+ * give (the root's included), for a command its operation, the correlation
+ * the entry gives, and the input, parsed by the surface.
+ */
+export interface MountedInvocation {
+  readonly leaf: string
+  readonly version: Semver
+  readonly context: Readonly<Record<string, unknown>>
+  readonly operation?: Operation
+  readonly correlation?: correlation
+  readonly input: unknown
+}
+
+/** An event a mounted leaf's unit gave that its surface does not type at the request's major (EXT-15): the unit's fault. */
+export interface OutsideTheSurface {
+  readonly leaf: string
+  readonly version: Semver
+  readonly event: unknown
+}
+
+/**
+ * An event of a leaf asked for by its path (`PortByPath`): its own, as its
+ * surface types it for a leaf mounted from outside; a closing of the nodes
+ * of its path; or a base event.
+ */
+export type EventByPath = { readonly event: string } & Readonly<Record<string, unknown>>
+
+/**
+ * A port by path (PER-6, "A mounted folder"; A, 21 Nov 2026: one type for
+ * every port that takes the leaf in the request): what the entry gives the
+ * top of the tree, with the version the request names and, for a command,
+ * its operation and correlation; the leaf, by its path (in the surface, for
+ * leaves mounted from outside), and its input; its events out. The type of
+ * `mounted_leaf_ports`' port.
+ */
+export type PortByPath<entry> = <const version extends Semver>(
+  context: entry &
+    VersionContext<version> & {
+      readonly operation?: Operation
+      readonly correlation?: correlation
+    },
+  request: { readonly leaf: string; readonly input: unknown },
+) => AsyncIterable<EventByPath>
+
+/**
+ * The port of leaves mounted from outside below a folder of a tree (PER-6,
+ * "A mounted folder"; EXT-6): the registry where the library finds the
+ * tree's nodes, the node at its top, the folder the leaves hang below, and
+ * the name they are mounted under, for the trace (`<at>/<name>/<leaf>`).
+ * Then, at wiring, the ports the nodes' lookups invoke, the tree's trace,
+ * the surface, the port that invokes a leaf, and the port that receives an
+ * event the surface does not type.
+ *
+ * At wiring (CFG-2), every fault in one message: the top not in the
+ * registry; the folder not at or below the top's; a node below the top that
+ * takes, binds or requires; a port the library did not build, or in
+ * another folder; a lookup no port given serves; a surface whose majors do
+ * not hold its version's.
+ *
+ * Per request, in the order of PER-5: the gate (`version_not_supported`,
+ * with the surface's version and its oldest major); the leaf at the
+ * request's major, or `not_a_leaf`; for a command, the operation the entry
+ * gives (none is the entry's fault, thrown); the input in the leaf's schema
+ * (`input_not_in_schema`); the nodes from the top down to the folder, as
+ * for any leaf (`not_found`, `refused`), each closing traced; then the
+ * invocation, whose events, in order, are given as the surface parses them.
+ */
+export function mounted_leaf_ports<const top>(ports: {
+  readonly registry: Registry
+  readonly top: top
+  readonly at: string
+  readonly name: string
+}): (wired: {
+  readonly invoked: Invoked
+  readonly trace: Trace<EntryOf<top>>
+  readonly surface: MountedSurface
+  readonly invokes: (invocation: MountedInvocation) => AsyncIterable<unknown>
+  readonly outside_the_surface: (event: OutsideTheSurface) => void
+}) => PortByPath<EntryOf<top>>
+
+// The body, typed by what it meets at runtime (DOM-25).
+export function mounted_leaf_ports(ports: {
+  readonly registry: Registry
+  readonly top: unknown
+  readonly at: string
+  readonly name: string
+}): unknown {
+  const top = paths_in(ports.registry)(ports.top)
+  const top_folder = folder_of(top ?? '')
+  const nodes = nodes_in(ports.registry).filter(
+    (node) =>
+      is_at_or_above(top_folder, folder_of(node.path)) &&
+      is_at_or_above(folder_of(node.path), ports.at),
+  )
+  const faults = [
+    ...(top === undefined ? ['the top is not in the registry given (DOM-24)'] : []),
+    ...(top === undefined || is_at_or_above(top_folder, ports.at)
+      ? []
+      : [`${ports.at} is not below the top, ${top} (PER-6)`]),
+    ...nodes.flatMap(({ path, component, declared }) => [
+      ...(declared['takes'] !== undefined && component !== ports.top
+        ? [`${path} takes from the entry, which only the top does (PER-6)`]
+        : []),
+      ...(declared['binds'] !== undefined || declared['requires'] !== undefined
+        ? [`${path} binds or requires, which its business's command port runs (D105)`]
+        : []),
+    ]),
+  ]
+  if (faults.length > 0) throw new Error(faults.join('\n'))
+  const path_nodes = nodes.toSorted((a, b) => a.path.split('/').length - b.path.split('/').length)
+
+  return (wired: {
+    readonly invoked: RuntimeWired['invoked']
+    readonly trace: unknown
+    readonly surface: MountedSurface
+    readonly invokes: (invocation: MountedInvocation) => AsyncIterable<unknown>
+    readonly outside_the_surface: (event: OutsideTheSurface) => void
+  }) => {
+    const { served, unserved } = served_in(wired.invoked)
+    const tree_nodes = path_nodes.map(tree_node_of(served))
+    const numbers = Object.keys(wired.surface.majors).map(Number)
+    const [major, minor] = major_and_minor(wired.surface.version)
+    const wiring = [
+      ...unserved,
+      ...tree_nodes.flatMap((node) =>
+        node.looks_up.flatMap((lookup) =>
+          lookup.port === undefined
+            ? [`${node.path} looks up ${lookup.name}, which no port given serves (CFG-2)`]
+            : [],
+        ),
+      ),
+      ...(numbers.includes(major)
+        ? []
+        : [
+            `${ports.at}/${ports.name}: the surface speaks ${wired.surface.version}, a major its leaves are not given at (PER-17, CFG-2)`,
+          ]),
+    ]
+    if (wiring.length > 0) throw new Error([...new Set(wiring)].join('\n'))
+    const oldest = Math.min(...numbers)
+
+    return async function* (context: unknown, request: unknown): AsyncIterable<EventByPath> {
+      const entered = entry_of(context)
+      const { given, operation, version } = entered
+      // The correlation the entry gives, if any: one that is none is not handed on.
+      const correlated = correlation.safeParse(entered.correlation)
+      const correlation_given = correlated.success ? { correlation: correlated.data } : {}
+      if (!is_a_record(request) || typeof request['leaf'] !== 'string') {
+        throw new Error(`${ports.at}/${ports.name}: the entry names no leaf (PER-6)`)
+      }
+      const path = request['leaf']
+      const sent = request['input']
+      const parsed_version = semver.safeParse(version)
+      if (!parsed_version.success) {
+        throw new Error(`${ports.at}/${ports.name}: the entry gives no version (PER-17)`)
+      }
+      const named = parsed_version.data
+      const closed = (
+        answered: RuntimeLeafEvent,
+        why: TraceReason,
+        traced_operation?: Operation,
+      ): RuntimeLeafEvent => {
+        const entry: Traced<Context> = {
+          path: `${ports.at}/${ports.name}/${path}`,
+          given,
+          version: named,
+          ...(traced_operation === undefined ? {} : { operation: traced_operation }),
+          ...correlation_given,
+          sent,
+          answered,
+          why,
+        }
+        called(wired.trace, entry)
+        return answered
+      }
+      const [asked_major, asked_minor] = major_and_minor(named)
+      if (!numbers.includes(asked_major) || (asked_major === major && asked_minor > minor)) {
+        yield closed(
+          { event: 'version_not_supported', current: wired.surface.version, oldest },
+          { closed_by: 'the_gate', current: wired.surface.version, oldest },
+        )
+        return
+      }
+      const leaf = wired.surface.majors[asked_major]?.[path]
+      if (leaf === undefined) {
+        yield closed(
+          { event: 'invalid_request', reason: 'not_a_leaf' },
+          { closed_by: 'not_a_leaf', major: asked_major },
+        )
+        return
+      }
+      const operated = leaf.kind === 'command' ? operation_given.safeParse(operation) : undefined
+      if (operated !== undefined && !operated.success) {
+        throw new Error(`${ports.at}/${ports.name}/${path}: the entry gives no operation (DOM-11)`)
+      }
+      const op = operated?.data
+      const input = leaf.input.safeParse(sent)
+      if (!input.success) {
+        yield closed(
+          input_not_in_schema,
+          { closed_by: 'the_input', issues: issues_of(input.error) },
+          op,
+        )
+        return
+      }
+      const walked = await walk(tree_nodes, given)
+      if (walked.closed) {
+        yield closed(walked.event, walked.why, op)
+        return
+      }
+      for await (const event of wired.invokes({
+        leaf: path,
+        version: named,
+        context: walked.context,
+        ...(op === undefined ? {} : { operation: op }),
+        ...correlation_given,
+        input: input.data,
+      })) {
+        const name = is_a_record(event) ? event['event'] : undefined
+        const schema = typeof name === 'string' ? leaf.events[name] : undefined
+        const typed = schema?.safeParse(event)
+        if (typed?.success === true && is_a_record(typed.data)) {
+          yield { ...typed.data, event: String(name) }
+        } else {
+          wired.outside_the_surface({ leaf: path, version: named, event })
+        }
+      }
+    }
   }
 }

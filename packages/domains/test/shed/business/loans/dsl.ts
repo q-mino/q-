@@ -1,7 +1,7 @@
 // The domain's pure functions over its values, added at need: usable by the
 // adapters, the interface and the client. Not concepts of the library. DOM-5
 
-import { date_time, day, day_of } from '../../../../src/library/index.ts'
+import { day, day_of, type RootContext, type time_zone } from '../../../../src/library/index.ts'
 import { id, tools, value } from './_scope_dsl.ts'
 
 const loan_period_in_days = 14
@@ -21,8 +21,8 @@ const days_after = (the_day: day, days: number): day =>
   )
 
 /** The day a loan is due: the tool comes back by the end of the loan period's last day (A, 16 Nov 2026 (7)). */
-export const the_due_date_of_a_loan_started_on = (start_date: date_time): day =>
-  days_after(day_of(start_date), loan_period_in_days)
+export const the_due_date_of_a_loan_started_on = (start_day: day): day =>
+  days_after(start_day, loan_period_in_days)
 
 /** The due day of a loan extended (SC-31): one loan period after the day it was due. */
 export const the_due_day_after_an_extension_of = (due_day: day): day =>
@@ -34,37 +34,43 @@ export const the_eve_of = (due_date: day): day => days_after(due_date, -1)
 /** The day after a due date, when a loan whose tool is still out becomes overdue. */
 export const the_day_after = (due_date: day): day => days_after(due_date, 1)
 
-/** The calendar day of an instant, as its writer told it: `now` is told in the shed's zone. */
-export const today = (now: date_time): day => day_of(now)
+/** Today, in the shed's calendar: the day of the context's `now` in its zone (SC-12, A, 23 Nov 2026). */
+export const today = (context: Pick<RootContext, 'now' | 'time_zone'>): day =>
+  day_of(context.time_zone)(context.now)
 
-/** The first day of the month of an instant, as its writer told it: `now` is told in the shed's zone. */
-export const the_first_day_of_the_month = (now: date_time): day =>
-  day.parse(`${today(now).slice(0, 7)}-01`)
+/** The first day of the month of a day. */
+export const the_first_day_of_the_month = (the_day: day): day =>
+  day.parse(`${the_day.slice(0, 7)}-01`)
 
 /**
- * The last day of the month of an instant: the day before the first of the
- * next month, on the calendar (day 0 of a month is the last of the one before).
+ * The last day of the month of a day: the day before the first of the next
+ * month, on the calendar (day 0 of a month is the last of the one before).
  */
-export const the_last_day_of_the_month = (now: date_time): day =>
+export const the_last_day_of_the_month = (the_day: day): day =>
   day.parse(
-    new Date(Date.UTC(Number(today(now).slice(0, 4)), Number(today(now).slice(5, 7)), 0))
+    new Date(Date.UTC(Number(the_day.slice(0, 4)), Number(the_day.slice(5, 7)), 0))
       .toISOString()
       .slice(0, 10),
   )
 
-/** The loan started between two days, both included, on its day as written (SC-12, SC-21). */
+/** The loan started between two days, both included, on its day as the desk wrote it (SC-12, SC-21). */
 export const the_loan_started_between =
   (days: { readonly first_day: day; readonly last_day: day }) =>
   (the_loan: value.loan): boolean =>
-    day_of(the_loan.start_date) >= days.first_day && day_of(the_loan.start_date) <= days.last_day
+    the_loan.start_day >= days.first_day && the_loan.start_day <= days.last_day
 
 /** A day can be booked after today and within the booking window, days of the shed. A static rule: validation. */
-export const the_day_is_within_the_booking_window = (the_day: string, now: date_time): boolean =>
-  the_day > today(now) && the_day <= days_after(today(now), booking_window_in_days)
+export const the_day_is_within_the_booking_window = (the_day: string, today: day): boolean =>
+  the_day > today && the_day <= days_after(today, booking_window_in_days)
 
-/** A loan returned after its due date, a day: on the due date itself it is on time. */
-export const the_loan_was_returned_late = (the_loan: value.returned_loan): boolean =>
-  day_of(the_loan.progress.return_date) > the_loan.due_day
+/**
+ * A loan returned after its due date, a day, in the shed's zone: on the due
+ * date itself it is on time. Only where a context gives the zone (SC-12).
+ */
+export const the_loan_was_returned_late =
+  (zone: time_zone) =>
+  (the_loan: value.returned_loan): boolean =>
+    day_of(zone)(the_loan.progress.return_date) > the_loan.due_day
 
 /** The member has the tool: the loan is ongoing, its term running or overdue. */
 export const the_loan_is_ongoing = (the_loan: value.loan | undefined): boolean =>
@@ -75,13 +81,13 @@ export const the_loan_is_returned = (the_loan: value.loan | undefined): boolean 
   the_loan?.progress.stage === 'returned'
 
 /**
- * The due date on the loan's card is still ahead at an instant: the day has
- * not ended, so on the due date itself it is; a loan that does not exist has none.
+ * The due date on the loan's card is still ahead on a day: the day has not
+ * ended, so on the due date itself it is; a loan that does not exist has none.
  */
 export const the_due_date_of_the_loan_is_still_ahead =
   (the_loan: value.loan | undefined) =>
-  (now: date_time): boolean =>
-    the_loan !== undefined && day_of(now) <= the_loan.due_day
+  (today: day): boolean =>
+    the_loan !== undefined && today <= the_loan.due_day
 
 /** Whether the due date of an ongoing loan has passed; a returned loan has no term. */
 export const the_term_of_the_loan = (the_loan: value.loan): value.loan_term | undefined =>

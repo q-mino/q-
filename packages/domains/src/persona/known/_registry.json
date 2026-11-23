@@ -1,0 +1,148 @@
+{
+  "domain": "persona/known",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/known/value/major": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        }
+      }
+    },
+    "persona/known/value/majors": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+          }
+        }
+      }
+    },
+    "persona/known/value/offered_extension": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "majors": {
+                "maxItems": 64,
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            },
+            "required": ["extension", "majors"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/known/value/offered_extensions": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "extension": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                },
+                "majors": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                }
+              },
+              "required": ["extension", "majors"],
+              "additionalProperties": false
+            },
+            "x-refined": true
+          }
+        }
+      }
+    },
+    "persona/known/node/known": { "kind": "node" },
+    "persona/known/usecase/the_extensions_in_common": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "extension": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "majors": {
+                "maxItems": 64,
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            },
+            "required": ["extension", "majors"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/known/usecase/the_extensions_in_common_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "offered": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "extension": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                    },
+                    "majors": {
+                      "maxItems": 64,
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                    }
+                  },
+                  "required": ["extension", "majors"],
+                  "additionalProperties": false
+                },
+                "x-refined": true
+              }
+            },
+            "required": ["offered"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/known/version/known": { "kind": "version" }
+  }
+}

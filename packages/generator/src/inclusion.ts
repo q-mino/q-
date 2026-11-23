@@ -24,8 +24,8 @@ const annotations: ReadonlySet<string> = new Set([
   'writeOnly',
 ])
 
-/** The marks of what the export cannot tell (`json_schema_of`): never decided, but by equality. */
-const marks: readonly string[] = ['x-refined', 'x-unrepresentable']
+/** The marks of what the export cannot tell, or its reading loses (`json_schema_of`): never decided, but by equality. */
+const marks: readonly string[] = ['x-refined', 'x-unrepresentable', 'x-lossy']
 
 const is_a_list = (json: Json | undefined): json is readonly Json[] => Array.isArray(json)
 

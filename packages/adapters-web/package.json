@@ -5,10 +5,19 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./screens": "./src/screens/index.ts"
   },
   "dependencies": {
+    "@q-mino/adapters-common": "workspace:*",
+    "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
-    "@q-mino/adapters-common": "workspace:*"
+    "qr": "0.7.2",
+    "solid-js": "^1.9.18",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.7",
+    "happy-dom": "21.0.4"
   }
 }

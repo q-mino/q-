@@ -1,0 +1,3184 @@
+{
+  "domain": "user/activities",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "user/activities/id/activity_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 64 }
+        }
+      }
+    },
+    "user/activities/value/their_ticket": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "mailbox": {
+                "type": "object",
+                "properties": {
+                  "deposit_address": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                  }
+                },
+                "required": ["deposit_address", "relays"],
+                "additionalProperties": false
+              },
+              "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+            },
+            "required": ["key", "introduced_as", "mailbox", "secret"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/value/offered": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "extension": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                },
+                "majors": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                }
+              },
+              "required": ["extension", "majors"],
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    },
+    "user/activities/value/the_place": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "place": { "type": "string", "const": "a_bond" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["place", "bond"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "place": { "type": "string", "const": "the_extension" } },
+                "required": ["place"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "user/activities/value/what_is_asked": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "make_my_first_face" },
+                  "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                },
+                "required": ["activity", "face", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "prepare_a_ticket" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["activity", "bond", "face"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "open_their_ticket" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "their_ticket": {
+                    "type": "object",
+                    "properties": {
+                      "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+                      "mailbox": {
+                        "type": "object",
+                        "properties": {
+                          "deposit_address": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "relays": {
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                          }
+                        },
+                        "required": ["deposit_address", "relays"],
+                        "additionalProperties": false
+                      },
+                      "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                    },
+                    "required": ["key", "introduced_as", "mailbox", "secret"],
+                    "additionalProperties": false
+                  },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                },
+                "required": ["activity", "bond", "their_ticket", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "rename_a_bond" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                },
+                "required": ["activity", "bond", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "remove_a_bond" },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["activity", "bond"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "activate_an_extension" },
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "version": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                      },
+                      "sees": {
+                        "type": "object",
+                        "properties": {
+                          "known": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": ["the_peer_key", "the_name_of_the_bond"]
+                            }
+                          }
+                        },
+                        "required": ["known"],
+                        "additionalProperties": false
+                      },
+                      "touches": {
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": ["the_port_of_requests", "its_storage"]
+                        }
+                      },
+                      "extension_points": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                            "name": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "place": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            }
+                          },
+                          "required": ["point", "name", "place"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "leaves_on_known": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                        }
+                      },
+                      "majors": {
+                        "type": "object",
+                        "properties": {
+                          "self": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          },
+                          "known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                          }
+                        },
+                        "required": ["self", "known"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "sees",
+                      "touches",
+                      "extension_points",
+                      "leaves_on_known",
+                      "majors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["activity", "manifest"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "deactivate_an_extension" },
+                  "extension": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  }
+                },
+                "required": ["activity", "extension"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "withdraw_the_offer_from_a_bond" },
+                  "extension": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["activity", "extension", "bond"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                  "extension": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                },
+                "required": ["activity", "extension", "bond"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": {
+                    "type": "string",
+                    "const": "ask_a_bond_for_the_extensions_in_common"
+                  },
+                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "offered": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "extension": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                        },
+                        "majors": {
+                          "maxItems": 64,
+                          "type": "array",
+                          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                        }
+                      },
+                      "required": ["extension", "majors"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": ["activity", "bond", "offered"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "use_an_action" },
+                  "extension": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "on": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "place": { "type": "string", "const": "a_bond" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["place", "bond"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": { "place": { "type": "string", "const": "the_extension" } },
+                        "required": ["place"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["activity", "extension", "action", "on"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                  "whose": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "the_kernel" },
+                          "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["of", "office"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "an_extension" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          }
+                        },
+                        "required": ["of", "extension"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                },
+                "required": ["activity", "whose", "letter"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                  "whose": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "the_kernel" },
+                          "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["of", "office"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "an_extension" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          }
+                        },
+                        "required": ["of", "extension"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                  "because": { "type": "string", "maxLength": 1024 }
+                },
+                "required": ["activity", "whose", "letter", "because"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "user/activities/value/how_it_ended": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "done" },
+                  "said": {
+                    "type": "object",
+                    "properties": {
+                      "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "payload": { "x-refined": true }
+                    },
+                    "required": ["event", "payload"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["ended", "said"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "done_already" },
+                  "said": {
+                    "type": "object",
+                    "properties": {
+                      "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "payload": { "x-refined": true }
+                    },
+                    "required": ["event", "payload"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["ended", "said"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "cannot_be_done" },
+                  "said": {
+                    "type": "object",
+                    "properties": {
+                      "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "payload": { "x-refined": true }
+                    },
+                    "required": ["event", "payload"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["ended", "said"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
+                  "said": {
+                    "type": "object",
+                    "properties": {
+                      "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "payload": { "x-refined": true }
+                    },
+                    "required": ["event", "payload"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["ended", "said"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "ended": { "type": "string", "const": "no_longer_followed" } },
+                "required": ["ended"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "the_extension_cannot_be_reached" },
+                  "because": { "type": "string", "enum": ["it_is_not_active", "it_has_stopped"] }
+                },
+                "required": ["ended", "because"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ended": { "type": "string", "const": "the_app_cannot_do_it" },
+                  "said": {
+                    "type": "object",
+                    "properties": {
+                      "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "payload": { "x-refined": true }
+                    },
+                    "required": ["event", "payload"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["ended", "said"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "user/activities/value/an_asked_activity": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "what": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "make_my_first_face" },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "face", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "prepare_a_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond", "face"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "open_their_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "their_ticket": {
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+                          "mailbox": {
+                            "type": "object",
+                            "properties": {
+                              "deposit_address": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128
+                              },
+                              "relays": {
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                              }
+                            },
+                            "required": ["deposit_address", "relays"],
+                            "additionalProperties": false
+                          },
+                          "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["key", "introduced_as", "mailbox", "secret"],
+                        "additionalProperties": false
+                      },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "their_ticket", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "rename_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "remove_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "activate_an_extension" },
+                      "manifest": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                          },
+                          "sees": {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": ["the_peer_key", "the_name_of_the_bond"]
+                                }
+                              }
+                            },
+                            "required": ["known"],
+                            "additionalProperties": false
+                          },
+                          "touches": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": ["the_port_of_requests", "its_storage"]
+                            }
+                          },
+                          "extension_points": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "leaves_on_known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "majors": {
+                            "type": "object",
+                            "properties": {
+                              "self": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              },
+                              "known": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              }
+                            },
+                            "required": ["self", "known"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "version",
+                          "sees",
+                          "touches",
+                          "extension_points",
+                          "leaves_on_known",
+                          "majors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["activity", "manifest"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "deactivate_an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["activity", "extension"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "withdraw_the_offer_from_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": {
+                        "type": "string",
+                        "const": "ask_a_bond_for_the_extensions_in_common"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "offered": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["activity", "bond", "offered"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "use_an_action" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "on": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "a_bond" },
+                              "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                            },
+                            "required": ["place", "bond"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "the_extension" }
+                            },
+                            "required": ["place"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["activity", "extension", "action", "on"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                    },
+                    "required": ["activity", "whose", "letter"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "because": { "type": "string", "maxLength": 1024 }
+                    },
+                    "required": ["activity", "whose", "letter", "because"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["activity_id", "what", "asked_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/value/stage": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "in_progress" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "ended" },
+                  "how_it_ended": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "done" },
+                          "said": {
+                            "type": "object",
+                            "properties": {
+                              "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "payload": { "x-refined": true }
+                            },
+                            "required": ["event", "payload"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["ended", "said"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "done_already" },
+                          "said": {
+                            "type": "object",
+                            "properties": {
+                              "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "payload": { "x-refined": true }
+                            },
+                            "required": ["event", "payload"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["ended", "said"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "cannot_be_done" },
+                          "said": {
+                            "type": "object",
+                            "properties": {
+                              "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "payload": { "x-refined": true }
+                            },
+                            "required": ["event", "payload"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["ended", "said"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
+                          "said": {
+                            "type": "object",
+                            "properties": {
+                              "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "payload": { "x-refined": true }
+                            },
+                            "required": ["event", "payload"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["ended", "said"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "no_longer_followed" }
+                        },
+                        "required": ["ended"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "the_extension_cannot_be_reached" },
+                          "because": {
+                            "type": "string",
+                            "enum": ["it_is_not_active", "it_has_stopped"]
+                          }
+                        },
+                        "required": ["ended", "because"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ended": { "type": "string", "const": "the_app_cannot_do_it" },
+                          "said": {
+                            "type": "object",
+                            "properties": {
+                              "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "payload": { "x-refined": true }
+                            },
+                            "required": ["event", "payload"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["ended", "said"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "ended_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "how_it_ended", "ended_at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "user/activities/value/activity_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "what": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "make_my_first_face" },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "face", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "prepare_a_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond", "face"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "open_their_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "their_ticket": {
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+                          "mailbox": {
+                            "type": "object",
+                            "properties": {
+                              "deposit_address": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128
+                              },
+                              "relays": {
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                              }
+                            },
+                            "required": ["deposit_address", "relays"],
+                            "additionalProperties": false
+                          },
+                          "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["key", "introduced_as", "mailbox", "secret"],
+                        "additionalProperties": false
+                      },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "their_ticket", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "rename_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "remove_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "activate_an_extension" },
+                      "manifest": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                          },
+                          "sees": {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": ["the_peer_key", "the_name_of_the_bond"]
+                                }
+                              }
+                            },
+                            "required": ["known"],
+                            "additionalProperties": false
+                          },
+                          "touches": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": ["the_port_of_requests", "its_storage"]
+                            }
+                          },
+                          "extension_points": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "leaves_on_known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "majors": {
+                            "type": "object",
+                            "properties": {
+                              "self": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              },
+                              "known": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              }
+                            },
+                            "required": ["self", "known"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "version",
+                          "sees",
+                          "touches",
+                          "extension_points",
+                          "leaves_on_known",
+                          "majors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["activity", "manifest"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "deactivate_an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["activity", "extension"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "withdraw_the_offer_from_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": {
+                        "type": "string",
+                        "const": "ask_a_bond_for_the_extensions_in_common"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "offered": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["activity", "bond", "offered"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "use_an_action" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "on": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "a_bond" },
+                              "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                            },
+                            "required": ["place", "bond"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "the_extension" }
+                            },
+                            "required": ["place"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["activity", "extension", "action", "on"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                    },
+                    "required": ["activity", "whose", "letter"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "because": { "type": "string", "maxLength": 1024 }
+                    },
+                    "required": ["activity", "whose", "letter", "because"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "asked_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "stage": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "stage": { "type": "string", "const": "in_progress" } },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "ended" },
+                      "how_it_ended": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": { "type": "string", "const": "done" },
+                              "said": {
+                                "type": "object",
+                                "properties": {
+                                  "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                                  "payload": { "x-refined": true }
+                                },
+                                "required": ["event", "payload"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": ["ended", "said"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": { "type": "string", "const": "done_already" },
+                              "said": {
+                                "type": "object",
+                                "properties": {
+                                  "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                                  "payload": { "x-refined": true }
+                                },
+                                "required": ["event", "payload"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": ["ended", "said"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": { "type": "string", "const": "cannot_be_done" },
+                              "said": {
+                                "type": "object",
+                                "properties": {
+                                  "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                                  "payload": { "x-refined": true }
+                                },
+                                "required": ["event", "payload"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": ["ended", "said"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": {
+                                "type": "string",
+                                "const": "the_extension_told_how_it_ended"
+                              },
+                              "said": {
+                                "type": "object",
+                                "properties": {
+                                  "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                                  "payload": { "x-refined": true }
+                                },
+                                "required": ["event", "payload"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": ["ended", "said"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": { "type": "string", "const": "no_longer_followed" }
+                            },
+                            "required": ["ended"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": {
+                                "type": "string",
+                                "const": "the_extension_cannot_be_reached"
+                              },
+                              "because": {
+                                "type": "string",
+                                "enum": ["it_is_not_active", "it_has_stopped"]
+                              }
+                            },
+                            "required": ["ended", "because"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ended": { "type": "string", "const": "the_app_cannot_do_it" },
+                              "said": {
+                                "type": "object",
+                                "properties": {
+                                  "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                                  "payload": { "x-refined": true }
+                                },
+                                "required": ["event", "payload"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": ["ended", "said"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "ended_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    },
+                    "required": ["stage", "how_it_ended", "ended_at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["activity_id", "what", "asked_at", "stage"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/fact/an_activity_has_been_asked": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity": {
+                "type": "object",
+                "properties": {
+                  "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+                  "what": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "make_my_first_face" },
+                          "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                        },
+                        "required": ["activity", "face", "name"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "prepare_a_ticket" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["activity", "bond", "face"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "open_their_ticket" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "their_ticket": {
+                            "type": "object",
+                            "properties": {
+                              "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                              "introduced_as": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              },
+                              "mailbox": {
+                                "type": "object",
+                                "properties": {
+                                  "deposit_address": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128
+                                  },
+                                  "relays": {
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "type": "array",
+                                    "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                                  }
+                                },
+                                "required": ["deposit_address", "relays"],
+                                "additionalProperties": false
+                              },
+                              "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["key", "introduced_as", "mailbox", "secret"],
+                            "additionalProperties": false
+                          },
+                          "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                        },
+                        "required": ["activity", "bond", "their_ticket", "name"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "rename_a_bond" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                        },
+                        "required": ["activity", "bond", "name"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "remove_a_bond" },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["activity", "bond"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "activate_an_extension" },
+                          "manifest": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              },
+                              "version": {
+                                "type": "string",
+                                "maxLength": 32,
+                                "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                              },
+                              "sees": {
+                                "type": "object",
+                                "properties": {
+                                  "known": {
+                                    "maxItems": 8,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": ["the_peer_key", "the_name_of_the_bond"]
+                                    }
+                                  }
+                                },
+                                "required": ["known"],
+                                "additionalProperties": false
+                              },
+                              "touches": {
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": ["the_port_of_requests", "its_storage"]
+                                }
+                              },
+                              "extension_points": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "point": {
+                                      "type": "string",
+                                      "enum": ["action", "slot", "page"]
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    },
+                                    "place": {
+                                      "type": "string",
+                                      "maxLength": 64,
+                                      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                    }
+                                  },
+                                  "required": ["point", "name", "place"],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "leaves_on_known": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 256,
+                                  "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                                }
+                              },
+                              "majors": {
+                                "type": "object",
+                                "properties": {
+                                  "self": {
+                                    "maxItems": 64,
+                                    "type": "array",
+                                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                  },
+                                  "known": {
+                                    "maxItems": 64,
+                                    "type": "array",
+                                    "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                  }
+                                },
+                                "required": ["self", "known"],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "version",
+                              "sees",
+                              "touches",
+                              "extension_points",
+                              "leaves_on_known",
+                              "majors"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["activity", "manifest"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "deactivate_an_extension" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          }
+                        },
+                        "required": ["activity", "extension"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": {
+                            "type": "string",
+                            "const": "withdraw_the_offer_from_a_bond"
+                          },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["activity", "extension", "bond"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                        },
+                        "required": ["activity", "extension", "bond"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": {
+                            "type": "string",
+                            "const": "ask_a_bond_for_the_extensions_in_common"
+                          },
+                          "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "offered": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "extension": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "majors": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                                }
+                              },
+                              "required": ["extension", "majors"],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": ["activity", "bond", "offered"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "use_an_action" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "action": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "on": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "place": { "type": "string", "const": "a_bond" },
+                                  "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                                },
+                                "required": ["place", "bond"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "place": { "type": "string", "const": "the_extension" }
+                                },
+                                "required": ["place"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["activity", "extension", "action", "on"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                          "whose": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                                },
+                                "required": ["of", "office"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                  }
+                                },
+                                "required": ["of", "extension"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                        },
+                        "required": ["activity", "whose", "letter"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                          "whose": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                                },
+                                "required": ["of", "office"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                  }
+                                },
+                                "required": ["of", "extension"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                          "because": { "type": "string", "maxLength": 1024 }
+                        },
+                        "required": ["activity", "whose", "letter", "because"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "asked_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["activity_id", "what", "asked_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["activity"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/fact/an_activity_has_been_asked_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/fact/an_activity_has_ended": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "how_it_ended": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "done" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "done_already" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "cannot_be_done" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": { "ended": { "type": "string", "const": "no_longer_followed" } },
+                    "required": ["ended"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_extension_cannot_be_reached" },
+                      "because": {
+                        "type": "string",
+                        "enum": ["it_is_not_active", "it_has_stopped"]
+                      }
+                    },
+                    "required": ["ended", "because"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_app_cannot_do_it" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["activity_id", "how_it_ended", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/predicate/an_activity_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/predicate/the_activity_is_in_progress": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/effect/carry_out_an_activity": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "what": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "make_my_first_face" },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "face", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "prepare_a_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond", "face"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "open_their_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "their_ticket": {
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+                          "mailbox": {
+                            "type": "object",
+                            "properties": {
+                              "deposit_address": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128
+                              },
+                              "relays": {
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                              }
+                            },
+                            "required": ["deposit_address", "relays"],
+                            "additionalProperties": false
+                          },
+                          "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["key", "introduced_as", "mailbox", "secret"],
+                        "additionalProperties": false
+                      },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "their_ticket", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "rename_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "remove_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "activate_an_extension" },
+                      "manifest": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                          },
+                          "sees": {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": ["the_peer_key", "the_name_of_the_bond"]
+                                }
+                              }
+                            },
+                            "required": ["known"],
+                            "additionalProperties": false
+                          },
+                          "touches": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": ["the_port_of_requests", "its_storage"]
+                            }
+                          },
+                          "extension_points": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "leaves_on_known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "majors": {
+                            "type": "object",
+                            "properties": {
+                              "self": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              },
+                              "known": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              }
+                            },
+                            "required": ["self", "known"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "version",
+                          "sees",
+                          "touches",
+                          "extension_points",
+                          "leaves_on_known",
+                          "majors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["activity", "manifest"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "deactivate_an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["activity", "extension"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "withdraw_the_offer_from_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": {
+                        "type": "string",
+                        "const": "ask_a_bond_for_the_extensions_in_common"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "offered": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["activity", "bond", "offered"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "use_an_action" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "on": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "a_bond" },
+                              "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                            },
+                            "required": ["place", "bond"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "the_extension" }
+                            },
+                            "required": ["place"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["activity", "extension", "action", "on"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                    },
+                    "required": ["activity", "whose", "letter"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "because": { "type": "string", "maxLength": 1024 }
+                    },
+                    "required": ["activity", "whose", "letter", "because"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["activity_id", "what"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/selection/activity/the_activity_has_this_id": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/selection/activity/the_activity_is_in_progress": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "user/activities/command/the_activity_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/command/ask_for_an_activity": { "kind": "command" },
+    "user/activities/command/ask_for_an_activity_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "what": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "make_my_first_face" },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "face", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "prepare_a_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "face": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond", "face"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "open_their_ticket" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "their_ticket": {
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "introduced_as": { "type": "string", "minLength": 1, "maxLength": 64 },
+                          "mailbox": {
+                            "type": "object",
+                            "properties": {
+                              "deposit_address": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128
+                              },
+                              "relays": {
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+                              }
+                            },
+                            "required": ["deposit_address", "relays"],
+                            "additionalProperties": false
+                          },
+                          "secret": { "type": "string", "minLength": 1, "maxLength": 256 }
+                        },
+                        "required": ["key", "introduced_as", "mailbox", "secret"],
+                        "additionalProperties": false
+                      },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "their_ticket", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "rename_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "name": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    },
+                    "required": ["activity", "bond", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "remove_a_bond" },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "activate_an_extension" },
+                      "manifest": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+                          },
+                          "sees": {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "maxItems": 8,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": ["the_peer_key", "the_name_of_the_bond"]
+                                }
+                              }
+                            },
+                            "required": ["known"],
+                            "additionalProperties": false
+                          },
+                          "touches": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": ["the_port_of_requests", "its_storage"]
+                            }
+                          },
+                          "extension_points": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "point": { "type": "string", "enum": ["action", "slot", "page"] },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                },
+                                "place": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                                }
+                              },
+                              "required": ["point", "name", "place"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "leaves_on_known": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^(?:[a-z0-9_]+\\/)*usecase\\/[a-z][a-z0-9_]*$"
+                            }
+                          },
+                          "majors": {
+                            "type": "object",
+                            "properties": {
+                              "self": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              },
+                              "known": {
+                                "maxItems": 64,
+                                "type": "array",
+                                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                              }
+                            },
+                            "required": ["self", "known"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "version",
+                          "sees",
+                          "touches",
+                          "extension_points",
+                          "leaves_on_known",
+                          "majors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["activity", "manifest"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "deactivate_an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      }
+                    },
+                    "required": ["activity", "extension"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "withdraw_the_offer_from_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "offer_an_extension_to_a_bond" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                    },
+                    "required": ["activity", "extension", "bond"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": {
+                        "type": "string",
+                        "const": "ask_a_bond_for_the_extensions_in_common"
+                      },
+                      "bond": { "type": "string", "minLength": 1, "maxLength": 128 },
+                      "offered": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "extension": {
+                              "type": "string",
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                            },
+                            "majors": {
+                              "maxItems": 64,
+                              "type": "array",
+                              "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+                            }
+                          },
+                          "required": ["extension", "majors"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["activity", "bond", "offered"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "use_an_action" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                      },
+                      "on": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "a_bond" },
+                              "bond": { "type": "string", "minLength": 1, "maxLength": 128 }
+                            },
+                            "required": ["place", "bond"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "place": { "type": "string", "const": "the_extension" }
+                            },
+                            "required": ["place"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["activity", "extension", "action", "on"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "send_a_held_letter_again" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 }
+                    },
+                    "required": ["activity", "whose", "letter"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "activity": { "type": "string", "const": "put_a_held_letter_aside" },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "office": { "type": "string", "minLength": 1, "maxLength": 256 }
+                            },
+                            "required": ["of", "office"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                              }
+                            },
+                            "required": ["of", "extension"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "letter": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "because": { "type": "string", "maxLength": 1024 }
+                    },
+                    "required": ["activity", "whose", "letter", "because"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["activity_id", "what"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/command/end_an_activity": { "kind": "command" },
+    "user/activities/command/end_an_activity_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "how_it_ended": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "done" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "done_already" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "cannot_be_done" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_extension_told_how_it_ended" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": { "ended": { "type": "string", "const": "no_longer_followed" } },
+                    "required": ["ended"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_extension_cannot_be_reached" },
+                      "because": {
+                        "type": "string",
+                        "enum": ["it_is_not_active", "it_has_stopped"]
+                      }
+                    },
+                    "required": ["ended", "because"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ended": { "type": "string", "const": "the_app_cannot_do_it" },
+                      "said": {
+                        "type": "object",
+                        "properties": {
+                          "event": { "type": "string", "minLength": 1, "maxLength": 128 },
+                          "payload": { "x-refined": true }
+                        },
+                        "required": ["event", "payload"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["ended", "said"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["activity_id", "how_it_ended"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/query/an_activity": { "kind": "query" },
+    "user/activities/query/an_activity_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "activity_id": { "type": "string", "minLength": 1, "maxLength": 64 } },
+            "required": ["activity_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "user/activities/query/the_activities_in_progress": { "kind": "query" },
+    "user/activities/query/the_activities_in_progress_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "user/activities/usecase/ask_for_an_activity": { "kind": "usecase" },
+    "user/activities/usecase/end_an_activity": { "kind": "usecase" },
+    "user/activities/usecase/an_activity": { "kind": "usecase" },
+    "user/activities/usecase/the_activities_in_progress": { "kind": "usecase" },
+    "user/activities/version/activities": { "kind": "version" }
+  }
+}

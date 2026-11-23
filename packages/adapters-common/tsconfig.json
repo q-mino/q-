@@ -7,5 +7,12 @@
     "outDir": ".tsbuild/src"
   },
   "include": ["src"],
-  "references": [{ "path": "../domains" }]
+  "references": [
+    {
+      "path": "../domains"
+    },
+    {
+      "path": "../boundary"
+    }
+  ]
 }

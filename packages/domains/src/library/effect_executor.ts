@@ -1,5 +1,4 @@
 import { operation_id, type Clock, type CommandRootContext } from './context.ts'
-import { in_zone } from './format.ts'
 import type { entry_id } from './command.ts'
 import { $Order, type DeliveryOrder } from './component.ts'
 import { kind_of } from './kind.ts'
@@ -73,7 +72,7 @@ export interface ExecutorPorts<returns extends CommandUseCases> {
  * entry's, so that a double report is the duplicate branch (DOM-11); the
  * fingerprint is over the return's path and what the world said, its input
  * as sent (D108.3, LIB-11); the correlation is the entry's, the fact's that
- * queued it (DOM-10); the context is the clock's, `now` told in its zone. A
+ * queued it (DOM-10); the context is the clock's, `now` and its zone. A
  * transient delivery is tried again after a pause, its effect's later
  * entries behind it; an exhausted one, and a return that refuses what the
  * world said, become a dead letter (DOM-15). A dead letter holds its
@@ -81,7 +80,11 @@ export interface ExecutorPorts<returns extends CommandUseCases> {
  * comes due touching one of them, while it is held, is not delivered and
  * waits behind it (`WaitingEntry`), holding its own in turn; another effect
  * is never held, and an effect that tolerates reordering (`order: 'any'`,
- * SC-56) holds nothing. An operator resolves a letter through the running
+ * SC-56) holds nothing, and its due entries are in flight together, none
+ * waiting for another's end (F7): its position stays behind the oldest
+ * delivery in flight, and a stop abandons those in flight, their answers
+ * unread, so that the executor started again meets them again (EXT-15: a
+ * request outlives a stop). An operator resolves a letter through the running
  * executor (`redeliver`, `discard`), served by its effect's unit between two
  * deliveries; then each entry that waited behind it and that nothing held
  * before it still holds goes on, in the order the state keeps them, as met
@@ -135,6 +138,14 @@ type Told =
   | { readonly outcome: 'delivered'; readonly said: { readonly returns: unknown } | undefined }
   | { readonly outcome: 'transient' }
   | { readonly outcome: 'exhausted'; readonly reason: string }
+
+/** A delivery in flight that landed (F7, DOM-14): its entry, and its outcome or what it threw. */
+type Landed =
+  | {
+      readonly landed: QueuedEntry
+      readonly outcome: EffectDeadLetter | 'handled' | 'stopped'
+    }
+  | { readonly landed: QueuedEntry; readonly threw: unknown }
 
 /** Why a return refused what the world said: the cause of its dead letter (DOM-15). */
 type Refused = Exclude<EffectDeadLetter['cause'], { readonly cause: 'exhausted' }>
@@ -269,14 +280,14 @@ const runtime_executor = (executor: RuntimeExecutor) => {
       })
       const fell: Error[] = []
 
-      /** The context of a return: the clock's `now`, told in its zone, the entry's operation, correlation and fingerprint. */
+      /** The context of a return: the clock's `now` and its zone, the entry's operation, correlation and fingerprint. */
       const context_of = (
         effect: string,
         returning: Return,
         fields: EntryFields,
         said: unknown,
       ): CommandRootContext => ({
-        now: in_zone(ports.clock.time_zone)(ports.clock.now()),
+        now: ports.clock.now(),
         time_zone: ports.clock.time_zone,
         operation: { scope: effect, id: operation_id.parse(fields.id) },
         correlation: fields.correlation,
@@ -324,6 +335,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
        */
       const delivered = async (
         queued: QueuedEntry,
+        in_flight = false,
       ): Promise<EffectDeadLetter | 'handled' | 'stopped'> => {
         const effect = queued.entry.effect
         const fields = executor.versions[$Versions].entry(queued.entry)
@@ -341,6 +353,10 @@ const runtime_executor = (executor: RuntimeExecutor) => {
               called_with(deliveries[effect], [{ id: fields.id, payload: fields.payload }]),
             ),
           )
+          // A delivery in flight that answers once its executor is stopping
+          // was abandoned (F7, DOM-14): its answer is not read, and the
+          // executor started again meets it again.
+          if (in_flight && stopping) return 'stopped'
           if (told.outcome === 'transient') {
             const woke = await Promise.race([
               stopped,
@@ -376,14 +392,32 @@ const runtime_executor = (executor: RuntimeExecutor) => {
        * every entry handled, delivered or held, before the first one not
        * yet handled. Between two deliveries it serves what an operator asks
        * of its letters, then delivers the entries waiting that go on, before
-       * those it meets.
+       * those it meets. An effect whose order is `any` delivers its entries
+       * in flight together, none waiting for another's end (F7, DOM-14):
+       * the position stays behind the oldest delivery in flight, and a stop
+       * abandons the deliveries in flight, which the executor started again
+       * meets again.
        */
       const run = async (effect: string, lane: Lane): Promise<void> => {
         const order = order_of(executor.registry[effect])
+        const together = order === 'any'
         const from = await ports.state.position(effect)
         const outbox = ports.outbox(effect)(from)[Symbol.asyncIterator]()
         let next: Promise<IteratorResult<QueuedEntry>> | undefined = outbox.next()
         let met: readonly { readonly queued: QueuedEntry; readonly handled: boolean }[] = []
+        // The deliveries in flight of an effect `any`, by their entry: each
+        // lands with its outcome, or with what it threw, never rejecting, so
+        // that one abandoned by a stop or a fall throws to no one.
+        const flights = new Map<QueuedEntry, Promise<Landed>>()
+        /** An entry handled: the position advanced past every entry handled before the first one not yet handled. */
+        const handled = async (queued: QueuedEntry): Promise<void> => {
+          met = met.map((each) => (each.queued === queued ? { ...each, handled: true } : each))
+          const open = met.findIndex((each) => !each.handled)
+          const passed = open === -1 ? met.length : open
+          const last = met[passed - 1]
+          met = met.slice(passed)
+          if (last !== undefined) await ports.state.advance(effect)(last.queued.position)
+        }
         while (!stopping) {
           const ask = lane.asked.shift()
           if (ask !== undefined) {
@@ -399,7 +433,12 @@ const runtime_executor = (executor: RuntimeExecutor) => {
             await (outcome === 'handled' ? ports.state.release(freed) : ports.state.hold(outcome))
             continue
           }
-          const due = met.find((each) => !each.handled && until(each.queued.entry.not_before) <= 0)
+          const due = met.find(
+            (each) =>
+              !each.handled &&
+              !flights.has(each.queued) &&
+              until(each.queued.entry.not_before) <= 0,
+          )
           if (due !== undefined) {
             const queued = due.queued
             // Met again after a fall, an entry the state holds is held once.
@@ -410,22 +449,28 @@ const runtime_executor = (executor: RuntimeExecutor) => {
                   entry: queued.entry,
                   held: 'waiting',
                 })
+              } else if (together) {
+                flights.set(
+                  queued,
+                  delivered(queued, true).then(
+                    (outcome): Landed => ({ landed: queued, outcome }),
+                    (error: unknown): Landed => ({ landed: queued, threw: error }),
+                  ),
+                )
+                continue
               } else {
                 const outcome = await delivered(queued)
                 if (outcome === 'stopped') return
                 if (outcome !== 'handled') await ports.state.hold(outcome)
               }
             }
-            met = met.map((each) => (each === due ? { ...each, handled: true } : each))
-            const open = met.findIndex((each) => !each.handled)
-            const passed = open === -1 ? met.length : open
-            const last = met[passed - 1]
-            met = met.slice(passed)
-            if (last !== undefined) await ports.state.advance(effect)(last.queued.position)
+            await handled(queued)
             continue
           }
           const waits = [
-            ...met.flatMap((each) => (each.handled ? [] : [each.queued.entry.not_before])),
+            ...met.flatMap((each) =>
+              each.handled || flights.has(each.queued) ? [] : [each.queued.entry.not_before],
+            ),
             ...going_on.map((each) => each.entry.not_before),
           ].map(until)
           // An operator who asked while the unit read its state is served first.
@@ -437,8 +482,17 @@ const runtime_executor = (executor: RuntimeExecutor) => {
               ? []
               : [ports.elapsed(Math.min(...waits)).then(() => 'woken' as const)]),
             ...(next === undefined ? [] : [next.then((arrived) => ({ arrived }))]),
+            ...flights.values(),
           ])
           if (woke === 'stopped' || woke === 'woken' || woke === 'asked') continue
+          if ('landed' in woke) {
+            flights.delete(woke.landed)
+            if ('threw' in woke) throw woke.threw
+            if (woke.outcome === 'stopped') return
+            if (woke.outcome !== 'handled') await ports.state.hold(woke.outcome)
+            await handled(woke.landed)
+            continue
+          }
           if (woke.arrived.done === true) {
             next = undefined
             continue
@@ -517,7 +571,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
               letter: held,
               by: trace.by,
               reason: trace.reason,
-              at: in_zone(ports.clock.time_zone)(ports.clock.now()),
+              at: ports.clock.now(),
             })
           }) ?? Promise.resolve(),
       }

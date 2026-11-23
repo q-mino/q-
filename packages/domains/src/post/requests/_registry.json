@@ -1,0 +1,2513 @@
+{
+  "domain": "post/requests",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "post/requests/id/request_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+        }
+      }
+    },
+    "post/requests/value/waiting_time": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 604800 }
+        }
+      }
+    },
+    "post/requests/value/deposit": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "letter": {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "a_request" },
+                  "schema": { "type": "number", "const": 1 },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "from": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                  "declared_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "invokes": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "the_kernel" },
+                          "persona": {
+                            "type": "string",
+                            "enum": ["self", "known", "unknown", "anonymous"]
+                          },
+                          "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                          "version": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                          }
+                        },
+                        "required": ["of", "persona", "use_case", "version"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "an_extension" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9_]*$"
+                          },
+                          "persona": {
+                            "type": "string",
+                            "enum": ["self", "known", "unknown", "anonymous"]
+                          },
+                          "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                          "version": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                          }
+                        },
+                        "required": ["of", "extension", "persona", "use_case", "version"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "input": { "x-refined": true }
+                },
+                "required": [
+                  "is",
+                  "schema",
+                  "identity",
+                  "from",
+                  "to",
+                  "declared_at",
+                  "invokes",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              "face_id": { "type": "string", "minLength": 1 },
+              "their_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
+              }
+            },
+            "required": ["letter", "face_id", "their_key", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/sending_again": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "attempt": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["request_id", "attempt", "until", "deposit"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/waiting_request": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "waiting" }
+            },
+            "required": ["id", "deposit", "until", "status"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/answered_request": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "answered" },
+              "event": { "x-refined": true }
+            },
+            "required": ["id", "deposit", "until", "status", "event"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/request_with_no_response": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "no_response" }
+            },
+            "required": ["id", "deposit", "until", "status"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/why_called_off": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+        }
+      }
+    },
+    "post/requests/value/called_off_request": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "called_off" },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["id", "deposit", "until", "status", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/request": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "waiting" }
+                },
+                "required": ["id", "deposit", "until", "status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "answered" },
+                  "event": { "x-refined": true }
+                },
+                "required": ["id", "deposit", "until", "status", "event"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "no_response" }
+                },
+                "required": ["id", "deposit", "until", "status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "called_off" },
+                  "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                },
+                "required": ["id", "deposit", "until", "status", "why"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "post/requests/value/answer": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "status": { "type": "string", "const": "waiting" } },
+                "required": ["status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "const": "answered" },
+                  "event": { "x-refined": true }
+                },
+                "required": ["status", "event"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "status": { "type": "string", "const": "no_response" } },
+                "required": ["status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "const": "called_off" },
+                  "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                },
+                "required": ["status", "why"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "post/requests/value/request_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "answer": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "status": { "type": "string", "const": "waiting" } },
+                    "required": ["status"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "answered" },
+                      "event": { "x-refined": true }
+                    },
+                    "required": ["status", "event"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": { "status": { "type": "string", "const": "no_response" } },
+                    "required": ["status"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "called_off" },
+                      "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+                    },
+                    "required": ["status", "why"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "answer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/value/waiting_request_card": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "invokes": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "the_kernel" },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "extension", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "face_id": { "type": "string", "minLength": 1 },
+              "their_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["id", "invokes", "face_id", "their_key"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/a_request_has_been_sent": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "sent_request": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "deposit": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "object",
+                        "properties": {
+                          "is": { "type": "string", "const": "a_request" },
+                          "schema": { "type": "number", "const": 1 },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "from": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9_-]+$"
+                          },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "invokes": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "the_kernel" },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "of": { "type": "string", "const": "an_extension" },
+                                  "extension": {
+                                    "type": "string",
+                                    "maxLength": 64,
+                                    "pattern": "^[a-z][a-z0-9_]*$"
+                                  },
+                                  "persona": {
+                                    "type": "string",
+                                    "enum": ["self", "known", "unknown", "anonymous"]
+                                  },
+                                  "use_case": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  },
+                                  "version": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                                  }
+                                },
+                                "required": ["of", "extension", "persona", "use_case", "version"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "input": { "x-refined": true }
+                        },
+                        "required": [
+                          "is",
+                          "schema",
+                          "identity",
+                          "from",
+                          "to",
+                          "declared_at",
+                          "invokes",
+                          "input"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "face_id": { "type": "string", "minLength": 1 },
+                      "their_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["letter", "face_id", "their_key", "relays"],
+                    "additionalProperties": false
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "waiting" }
+                },
+                "required": ["id", "deposit", "until", "status"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["sent_request"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/a_request_has_been_sent_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "attempt": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+            },
+            "required": ["request_id", "attempt"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/the_time_to_send_again_came_too_late": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/a_request_has_been_answered": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "event": { "x-refined": true }
+            },
+            "required": ["request_id", "event"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/a_request_had_no_response": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/a_request_has_been_called_off": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["request_id", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/the_call_off_came_before_the_time": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/fact/the_response_came_before_the_time": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/a_request_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_is_waiting": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_has_been_answered": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_has_been_called_off": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_time_of_the_request_is_not_over": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "now": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["request_id", "now"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/predicate/the_request_went_to_this_face": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id", "key"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/effect/deposit_a_letter": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "letter": {
+                "type": "object",
+                "properties": {
+                  "is": { "type": "string", "const": "a_request" },
+                  "schema": { "type": "number", "const": 1 },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "from": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                  "declared_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "invokes": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "the_kernel" },
+                          "persona": {
+                            "type": "string",
+                            "enum": ["self", "known", "unknown", "anonymous"]
+                          },
+                          "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                          "version": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                          }
+                        },
+                        "required": ["of", "persona", "use_case", "version"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "of": { "type": "string", "const": "an_extension" },
+                          "extension": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z][a-z0-9_]*$"
+                          },
+                          "persona": {
+                            "type": "string",
+                            "enum": ["self", "known", "unknown", "anonymous"]
+                          },
+                          "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                          "version": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                          }
+                        },
+                        "required": ["of", "extension", "persona", "use_case", "version"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "input": { "x-refined": true }
+                },
+                "required": [
+                  "is",
+                  "schema",
+                  "identity",
+                  "from",
+                  "to",
+                  "declared_at",
+                  "invokes",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              "face_id": { "type": "string", "minLength": 1 },
+              "their_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "relays": {
+                "minItems": 1,
+                "maxItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri",
+                  "x-lossy": ["url"]
+                }
+              }
+            },
+            "required": ["letter", "face_id", "their_key", "relays"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/effect/wait_to_send_again": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "attempt": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["request_id", "attempt", "until", "deposit"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/effect/wait_for_the_response": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/selection/request/the_request_has_this_id": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/selection/request/the_request_is_waiting": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "post/requests/command/the_request_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/send_a_request": { "kind": "command" },
+    "post/requests/command/send_a_request_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "from": {
+                "type": "object",
+                "properties": {
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+                },
+                "required": ["face_id", "key"],
+                "additionalProperties": false
+              },
+              "to": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+                  "mailbox": {
+                    "type": "object",
+                    "properties": {
+                      "deposit_address": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "relays": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri",
+                          "x-lossy": ["url"]
+                        }
+                      }
+                    },
+                    "required": ["deposit_address", "relays"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["key", "mailbox"],
+                "additionalProperties": false
+              },
+              "invokes": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "the_kernel" },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "of": { "type": "string", "const": "an_extension" },
+                      "extension": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "persona": {
+                        "type": "string",
+                        "enum": ["self", "known", "unknown", "anonymous"]
+                      },
+                      "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                      "version": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                      }
+                    },
+                    "required": ["of", "extension", "persona", "use_case", "version"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "input": { "x-refined": true },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["request_id", "from", "to", "invokes", "input", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/the_request_waits_within_its_time": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_request_is_waiting": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  }
+                },
+                "required": ["request_id"],
+                "additionalProperties": false
+              },
+              "its_time_is_not_over": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "now": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["request_id", "now"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_request_is_waiting", "its_time_is_not_over"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/the_request_waits_no_more": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_request_is_waiting": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  }
+                },
+                "required": ["request_id"],
+                "additionalProperties": false
+              },
+              "its_time_is_not_over": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "now": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["request_id", "now"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_request_is_waiting", "its_time_is_not_over"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/send_a_request_again": { "kind": "command" },
+    "post/requests/command/send_a_request_again_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "attempt": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "deposit": {
+                "type": "object",
+                "properties": {
+                  "letter": {
+                    "type": "object",
+                    "properties": {
+                      "is": { "type": "string", "const": "a_request" },
+                      "schema": { "type": "number", "const": 1 },
+                      "identity": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                      },
+                      "to": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "invokes": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "the_kernel" },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "of": { "type": "string", "const": "an_extension" },
+                              "extension": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "persona": {
+                                "type": "string",
+                                "enum": ["self", "known", "unknown", "anonymous"]
+                              },
+                              "use_case": { "type": "string", "minLength": 1, "maxLength": 512 },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": ["of", "extension", "persona", "use_case", "version"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "input": { "x-refined": true }
+                    },
+                    "required": [
+                      "is",
+                      "schema",
+                      "identity",
+                      "from",
+                      "to",
+                      "declared_at",
+                      "invokes",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "face_id": { "type": "string", "minLength": 1 },
+                  "their_key": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "relays": {
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri",
+                      "x-lossy": ["url"]
+                    }
+                  }
+                },
+                "required": ["letter", "face_id", "their_key", "relays"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["request_id", "attempt", "until", "deposit"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/close_a_request_with_no_response": { "kind": "command" },
+    "post/requests/command/close_a_request_with_no_response_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/call_off_a_request": { "kind": "command" },
+    "post/requests/command/call_off_a_request_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "why": { "type": "string", "enum": ["not_active", "not_offered_to_the_bond"] }
+            },
+            "required": ["request_id", "why"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/the_request_waits_for_this_face": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_request_is_waiting": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  }
+                },
+                "required": ["request_id"],
+                "additionalProperties": false
+              },
+              "it_went_to_this_face": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+                  },
+                  "key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+                },
+                "required": ["request_id", "key"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_request_is_waiting", "it_went_to_this_face"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/command/take_a_response": { "kind": "command" },
+    "post/requests/command/take_a_response_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+              },
+              "from": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
+              "event": { "x-refined": true }
+            },
+            "required": ["request_id", "from", "event"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/query/the_answer_to_a_request": { "kind": "query" },
+    "post/requests/query/the_answer_to_a_request_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "request_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" }
+            },
+            "required": ["request_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "post/requests/query/the_requests_waiting": { "kind": "query" },
+    "post/requests/query/the_requests_waiting_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "post/requests/usecase/send_a_request": { "kind": "usecase" },
+    "post/requests/usecase/send_a_request_again": { "kind": "usecase" },
+    "post/requests/usecase/close_a_request_with_no_response": { "kind": "usecase" },
+    "post/requests/usecase/take_a_response": { "kind": "usecase" },
+    "post/requests/usecase/call_off_a_request": { "kind": "usecase" },
+    "post/requests/usecase/the_requests_waiting": { "kind": "usecase" },
+    "post/requests/usecase/the_answer_to_a_request": { "kind": "usecase" },
+    "post/requests/version/requests": { "kind": "version" }
+  }
+}

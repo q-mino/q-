@@ -77,9 +77,10 @@ export const the_loan_is_due_on_this_day =
 export type the_loan_is_due_on_this_day = z.output<typeof the_loan_is_due_on_this_day>
 
 /**
- * The due date on the loan's card is still ahead at an instant: "bring it
- * back tomorrow" is still true. The instant is a parameter, the clock of
- * whoever asks (GR-8): time is not a fact (D92.4), the due date is.
+ * The due date on the loan's card is still ahead today: "bring it back
+ * tomorrow" is still true. Today is a parameter, the day of the clock of
+ * whoever asks in the shed's zone (GR-8, SC-12): time is not a fact (D92.4),
+ * the due date is.
  *
  * @see {@link predicate.the_due_date_of_the_loan_is_still_ahead}
  */
@@ -211,8 +212,8 @@ export type a_weekly_summary_goes_to_the_member = z.output<
 >
 
 /**
- * The week of the Monday the member's summary waits for is not over at this
- * instant: a summary sent in its week still tells the week (SC-43).
+ * The week of the Monday the member's summary waits for is not over today,
+ * in the shed's calendar: a summary sent in its week still tells the week (SC-43).
  *
  * @see {@link predicate.the_week_of_the_summary_is_not_over}
  */

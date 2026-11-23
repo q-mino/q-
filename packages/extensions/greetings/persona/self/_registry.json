@@ -1,0 +1,40 @@
+{
+  "domain": "persona/self",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "persona/self/usecase/greet_a_bond": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_greeting_is_sent": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "greeting_id": { "type": "string", "minLength": 1 } },
+            "required": ["greeting_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_greeting_cannot_be_sent": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "persona/self/usecase/greet_a_bond_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "persona/self/version/self": { "kind": "version" }
+  }
+}

@@ -62,18 +62,48 @@ export type AccumulatedOf<node> = node extends {
   ? accumulated
   : never
 
-/** The context a node gives, for the `_scope.ts` of its folder. */
+/**
+ * A folder mounted below a node of another tree (EXT-11, PER-6, "A mounted
+ * folder"): its path, and the schema of the context that node gives there,
+ * which the entry gives the tree's ports, parsed by it, with no node to take
+ * it: a tree whose top point is given its context from outside. Data, not a
+ * component: the generator writes it into the point's `_node.ts`, from the
+ * configuration's `mounted`, and the configurator gives it to the tree's
+ * ports as their top (`tree_ports`).
+ */
+export interface Mounted<context extends z.ZodObject = z.ZodObject> {
+  readonly mounted: string
+  readonly context: context
+}
+
+/**
+ * What a mounted folder's point gives, beside the root's context: its
+ * context's output; nothing for an empty one, whose output zod types as
+ * `Record<string, never>`, which no entry beside it could satisfy (the
+ * point of `self`, EXT-11; part 12.4).
+ */
+type MountedContext<context extends z.ZodObject> = [keyof context['shape']] extends [never]
+  ? unknown
+  : z.output<context>
+
+/** The context a node gives, or a mounted folder's point, for the `_scope.ts` of its folder. */
 export type ContextOf<node> = node extends {
   [$Node]: { gives?: infer context extends RootContext }
 }
   ? context
-  : never
+  : node extends Mounted<infer context>
+    ? RootContext & MountedContext<context>
+    : never
 
 /** How a node and the nodes above it may close a request, for the `_scope.ts` of its folder. */
 export type ClosesOf<node> = node extends { [$Node]: { closes?: infer closes } } ? closes : never
 
-/** What the entry gives the node at the top of a tree: the root's context and what the node takes. */
-export type EntryOf<node> = node extends { [$Node]: { takes?: infer taken } } ? taken : never
+/** What the entry gives the node at the top of a tree, the root's context and what the node takes; or a mounted folder's point, its context (EXT-11). */
+export type EntryOf<node> = node extends { [$Node]: { takes?: infer taken } }
+  ? taken
+  : node extends Mounted<infer context>
+    ? RootContext & MountedContext<context>
+    : never
 
 /**
  * A lookup a node runs: the lookup, the key it runs `of`, from the context

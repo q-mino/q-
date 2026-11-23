@@ -1,0 +1,70 @@
+import { z } from 'zod'
+import { command_use_case_over, pings } from './_scope_usecase.ts'
+
+// The use cases of `self`, the leaves ping pong adds to the local user's
+// persona (EXT-1, EXT-16), below the kernel's node, which gives the root's
+// context alone (EXT-11).
+
+/**
+ * Anna taps "Ping" on the screen of her bond with Bruno (PNG-4, EXT-16):
+ * the action invokes this leaf with the place's data, the bond, and her
+ * ping goes. Her screen follows it to what comes back (DOM-3, F7): Bruno's
+ * pong, no response within its time, a peer that cannot answer, or her
+ * own calling off (ping pong deactivated or withdrawn from the bond while
+ * it waited), each a fact the return records with the correlation of her
+ * ping; or, 70 seconds after her tap, the wait over, which records nothing
+ * (the ping's own 60 seconds and the executor's delivery before them).
+ * A flaw, declared (PNG-4): the ping's 60 seconds run from its delivery, so
+ * an outcome later than the 70 (a slow delivery, the app closed or asleep,
+ * with no push) is recorded but shown on no screen, until the slot of a
+ * bond's pings.
+ */
+export const send_a_ping = command_use_case_over({
+  use_case: pings.usecase.send_a_ping,
+  input: z.strictObject({ bond: pings.id.bond }),
+  creator: () => (input) => ({ bond: input.bond }),
+  events: {
+    the_ping_is_sent: z.strictObject({ ping_id: pings.id.ping_id }),
+    /** Never in ping pong: a ping is named by its operation; a leaf still names its rejection. */
+    the_ping_cannot_be_sent: z.strictObject({}),
+    pong: z.strictObject({ ping_id: pings.id.ping_id }),
+    no_response: z.strictObject({ ping_id: pings.id.ping_id }),
+    the_peer_cannot_answer: z.strictObject({ ping_id: pings.id.ping_id }),
+    called_off: z.strictObject({ ping_id: pings.id.ping_id }),
+  },
+  ends: ['the_ping_cannot_be_sent', 'pong', 'no_response', 'the_peer_cannot_answer', 'called_off'],
+  projection: {
+    the_ping_is_new_so_it_is_sent: (fact) => ({
+      event: 'the_ping_is_sent',
+      payload: { ping_id: fact.ping.id },
+    }),
+    rejected: () => ({ event: 'the_ping_cannot_be_sent', payload: {} }),
+  },
+  follows: {
+    facts: [
+      pings.fact.a_pong_has_been_received,
+      pings.fact.a_ping_has_had_no_response,
+      pings.fact.a_ping_could_not_be_answered,
+      pings.fact.a_ping_has_been_called_off,
+    ],
+    projection: {
+      a_pong_has_been_received: (fact) => ({
+        event: 'pong',
+        payload: { ping_id: fact.ping_id },
+      }),
+      a_ping_has_had_no_response: (fact) => ({
+        event: 'no_response',
+        payload: { ping_id: fact.ping_id },
+      }),
+      a_ping_could_not_be_answered: (fact) => ({
+        event: 'the_peer_cannot_answer',
+        payload: { ping_id: fact.ping_id },
+      }),
+      a_ping_has_been_called_off: (fact) => ({
+        event: 'called_off',
+        payload: { ping_id: fact.ping_id },
+      }),
+    },
+    at_most: 70_000,
+  },
+})

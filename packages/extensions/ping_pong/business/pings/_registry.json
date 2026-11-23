@@ -1,0 +1,748 @@
+{
+  "domain": "business/pings",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "business/pings/id/bond": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/pings/id/ping_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/pings/id/pong_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/pings/value/instant": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        }
+      }
+    },
+    "business/pings/value/waiting_time": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 604800 }
+        }
+      }
+    },
+    "business/pings/value/what_came_back": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "the_pong_came_back",
+              "the_ping_had_no_response",
+              "the_peer_cannot_answer",
+              "the_ping_was_called_off"
+            ]
+          }
+        }
+      }
+    },
+    "business/pings/value/progress": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "waiting" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "closed" },
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_pong_came_back",
+                      "the_ping_had_no_response",
+                      "the_peer_cannot_answer",
+                      "the_ping_was_called_off"
+                    ]
+                  },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "what_came_back", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/pings/value/ping": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "sent_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 },
+              "progress": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "stage": { "type": "string", "const": "waiting" } },
+                    "required": ["stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "stage": { "type": "string", "const": "closed" },
+                      "what_came_back": {
+                        "type": "string",
+                        "enum": [
+                          "the_pong_came_back",
+                          "the_ping_had_no_response",
+                          "the_peer_cannot_answer",
+                          "the_ping_was_called_off"
+                        ]
+                      },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    },
+                    "required": ["stage", "what_came_back", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["id", "bond", "sent_at", "waits", "progress"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/value/pong": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "bond", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_ping_has_been_sent": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "sent_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "waits": { "type": "integer", "minimum": 1, "maximum": 604800 },
+                  "progress": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "waiting" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "closed" },
+                          "what_came_back": {
+                            "type": "string",
+                            "enum": [
+                              "the_pong_came_back",
+                              "the_ping_had_no_response",
+                              "the_peer_cannot_answer",
+                              "the_ping_was_called_off"
+                            ]
+                          },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "what_came_back", "at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["id", "bond", "sent_at", "waits", "progress"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["ping"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_pong_has_been_received": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["ping_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_ping_has_had_no_response": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["ping_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_ping_could_not_be_answered": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["ping_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_ping_has_been_called_off": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["ping_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/fact/a_ping_has_been_answered": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "pong": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "bond", "at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["pong"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/a_ping_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/the_ping_waits": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/the_pong_came_back": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_pong_came_back",
+                  "the_ping_had_no_response",
+                  "the_peer_cannot_answer",
+                  "the_ping_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/the_ping_had_no_response": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_pong_came_back",
+                  "the_ping_had_no_response",
+                  "the_peer_cannot_answer",
+                  "the_ping_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/the_peer_cannot_answer": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_pong_came_back",
+                  "the_ping_had_no_response",
+                  "the_peer_cannot_answer",
+                  "the_ping_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/the_ping_was_called_off": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_pong_came_back",
+                  "the_ping_had_no_response",
+                  "the_peer_cannot_answer",
+                  "the_ping_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/predicate/a_pong_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "pong_id": { "type": "string", "minLength": 1 } },
+            "required": ["pong_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/effect/ask_for_a_pong": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["ping_id", "bond", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_ping_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+            "required": ["ping_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/send_a_ping": { "kind": "command" },
+    "business/pings/command/send_a_ping_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_ping_waits_and_its_pong_came_back": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_ping_waits": {
+                "type": "object",
+                "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                "required": ["ping_id"],
+                "additionalProperties": false
+              },
+              "the_pong_came_back": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_pong_came_back",
+                      "the_ping_had_no_response",
+                      "the_peer_cannot_answer",
+                      "the_ping_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_ping_waits", "the_pong_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_ping_waits_and_had_no_response": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_ping_waits": {
+                "type": "object",
+                "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                "required": ["ping_id"],
+                "additionalProperties": false
+              },
+              "it_had_no_response": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_pong_came_back",
+                      "the_ping_had_no_response",
+                      "the_peer_cannot_answer",
+                      "the_ping_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_ping_waits", "it_had_no_response"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_ping_waits_and_the_peer_cannot_answer": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_ping_waits": {
+                "type": "object",
+                "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                "required": ["ping_id"],
+                "additionalProperties": false
+              },
+              "the_peer_cannot_answer": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_pong_came_back",
+                      "the_ping_had_no_response",
+                      "the_peer_cannot_answer",
+                      "the_ping_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_ping_waits", "the_peer_cannot_answer"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_ping_waits_and_was_called_off": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_ping_waits": {
+                "type": "object",
+                "properties": { "ping_id": { "type": "string", "minLength": 1 } },
+                "required": ["ping_id"],
+                "additionalProperties": false
+              },
+              "it_was_called_off": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_pong_came_back",
+                      "the_ping_had_no_response",
+                      "the_peer_cannot_answer",
+                      "the_ping_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_ping_waits", "it_was_called_off"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/close_a_ping": { "kind": "command" },
+    "business/pings/command/close_a_ping_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ping_id": { "type": "string", "minLength": 1 },
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_pong_came_back",
+                  "the_ping_had_no_response",
+                  "the_peer_cannot_answer",
+                  "the_ping_was_called_off"
+                ]
+              }
+            },
+            "required": ["ping_id", "what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/the_pong_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "pong_id": { "type": "string", "minLength": 1 } },
+            "required": ["pong_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/command/answer_a_ping": { "kind": "command" },
+    "business/pings/command/answer_a_ping_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/pings/usecase/send_a_ping": { "kind": "usecase" },
+    "business/pings/usecase/close_a_ping": { "kind": "usecase" },
+    "business/pings/usecase/answer_a_ping": { "kind": "usecase" },
+    "business/pings/version/pings": { "kind": "version" }
+  }
+}

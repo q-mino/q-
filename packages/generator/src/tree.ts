@@ -48,7 +48,7 @@ export const node_of = (folder: Folder): NodeAbove | undefined =>
       parts:
         exported.value?.is === 'component' && exported.value.node !== undefined
           ? exported.value.node
-          : { closes: false, accumulates: false },
+          : { closes: false, accumulates: false, takes: false },
     }))[0]
 
 /**
@@ -64,10 +64,24 @@ export const nodes_above = (
   return Array.from({ length: Math.max(highest, 0) }, (_, index) =>
     segments.slice(0, highest - index),
   ).flatMap((at) => {
+    const mount = mount_at(tree, at)
+    if (mount !== undefined) return [mount]
     const folder = folder_at(tree, at)
     const node = folder === undefined ? undefined : node_of(folder)
     return node === undefined ? [] : [node]
   })
+}
+
+/**
+ * A folder mounted below a node of another tree (EXT-11), met as a node
+ * above the points below it, named by its last segment (`known`): its
+ * `_node.ts` gives their context, which no node of the tree takes.
+ */
+export const mount_at = (tree: Tree, segments: readonly string[]): NodeAbove | undefined => {
+  const name = segments.at(-1)
+  return name !== undefined && tree.mounted?.[segments.join('/')] !== undefined
+    ? { segments, name, parts: { closes: false, accumulates: false, takes: false } }
+    : undefined
 }
 
 /** The ancestors of a folder that hold authored files, outer first: each is seen through its door to the folders below (DOM-25). */
@@ -100,8 +114,12 @@ export const doors_of = (
   const seen = tree.sight[top] ?? {}
   return Object.entries(seen)
     .filter(([, kinds]) => carried(kinds))
-    .flatMap(([seen_top]) =>
-      [
+    .flatMap(([seen_top]) => [
+      // The top's own door first, under the domain's name (UI-2): its twins, when it holds a kind the map opens.
+      ...(is_a_prefix([seen_top], segments)
+        ? []
+        : [{ name: seen_top, segments: [seen_top], file: `_door_${top}.ts` }]),
+      ...[
         ...new Set(
           tree.folders
             .filter((folder) => folder.segments[0] === seen_top && folder.segments.length > 1)
@@ -111,7 +129,7 @@ export const doors_of = (
         .filter((name) => !is_a_prefix([seen_top, name], segments))
         .sort()
         .map((name) => ({ name, segments: [seen_top, name], file: `_door_${top}.ts` })),
-    )
+    ])
 }
 
 /** The path of a file of a folder, from another folder (`../loans/_door_business.ts`). */

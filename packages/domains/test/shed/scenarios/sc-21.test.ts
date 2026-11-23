@@ -39,7 +39,7 @@ const rake: Added = { id: 'rake', name: 'Rake', category: 'garden' }
 const the_shed = async (start: Start = {}) => {
   const shed = await oracle(start)
   for (const tool of [drill, sander, ladder, saw, rake]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-10-30T09:00:00-04:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-10-30T13:00:00.000Z'), tool))
   }
   const lent = async (instant: string, loan_id: string, tool_id: string, member_id: string) => {
     expect(
@@ -56,12 +56,12 @@ const the_shed = async (start: Start = {}) => {
       await first(shed.loans.return_a_tool(shed.at(instant), { loan_id, tool_id, condition })),
     ).toMatchObject({ outcome: 'applied', branch: 'the_loan_is_ongoing_so_it_is_closed' })
   }
-  await lent('2026-10-31T23:30:00-04:00', 'L1', 'drill', 'M-7')
-  await back('2026-11-01T10:00:00-05:00', 'L1', 'drill', 'good')
-  await lent('2026-11-02T10:00:00-05:00', 'L7', 'drill', 'M-12')
+  await lent('2026-11-01T03:30:00.000Z', 'L1', 'drill', 'M-7')
+  await back('2026-11-01T15:00:00.000Z', 'L1', 'drill', 'good')
+  await lent('2026-11-02T15:00:00.000Z', 'L7', 'drill', 'M-12')
   expect(
     await first(
-      shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-04T10:00:00-05:00'), {
+      shed.loans.correct_the_tool_of_a_loan(shed.at('2026-11-04T15:00:00.000Z'), {
         loan_id: 'L7',
         tool_written: 'drill',
         tool_handed: 'sander',
@@ -70,19 +70,19 @@ const the_shed = async (start: Start = {}) => {
       }),
     ),
   ).toMatchObject({ outcome: 'applied', branch: 'the_card_named_another_tool_so_it_is_corrected' })
-  await lent('2026-11-05T10:00:00-05:00', 'L10', 'rake', 'M-12')
-  await back('2026-11-06T10:00:00-05:00', 'L10', 'rake', 'good')
-  await lent('2026-11-10T10:00:00-05:00', 'L8', 'drill', 'M-7')
-  await lent('2026-11-12T10:00:00-05:00', 'L9', 'saw', 'M-3')
-  await back('2026-11-13T10:00:00-05:00', 'L9', 'saw', 'damaged')
+  await lent('2026-11-05T15:00:00.000Z', 'L10', 'rake', 'M-12')
+  await back('2026-11-06T15:00:00.000Z', 'L10', 'rake', 'good')
+  await lent('2026-11-10T15:00:00.000Z', 'L8', 'drill', 'M-7')
+  await lent('2026-11-12T15:00:00.000Z', 'L9', 'saw', 'M-3')
+  await back('2026-11-13T15:00:00.000Z', 'L9', 'saw', 'damaged')
   expect(
     await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-14T09:00:00-05:00'), { tool_id: 'saw' }),
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-14T14:00:00.000Z'), { tool_id: 'saw' }),
     ),
   ).toMatchObject({ outcome: 'applied' })
   expect(
     await first(
-      shed.tools.retire_a_tool(shed.at('2026-11-20T09:00:00-05:00'), {
+      shed.tools.retire_a_tool(shed.at('2026-11-20T14:00:00.000Z'), {
         id: 'rake',
         reason: 'broken',
       }),
@@ -96,7 +96,7 @@ describe('SC-21, the loans of each tool this month', () => {
     const shed = await the_shed()
     expect(
       await first(
-        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-11-30T18:00:00-05:00'), {}),
+        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-11-30T23:00:00.000Z'), {}),
       ),
     ).toEqual({
       event: 'snapshot',
@@ -119,7 +119,7 @@ describe('SC-21, the loans of each tool this month', () => {
     const shed = await the_shed()
     expect(
       await first(
-        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-12-01T00:30:00-05:00'), {}),
+        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-12-01T05:30:00.000Z'), {}),
       ),
     ).toMatchObject({
       entries: [
@@ -135,7 +135,7 @@ describe('SC-21, the loans of each tool this month', () => {
     const shed = await the_shed({ time_zone: 'UTC' })
     expect(
       await first(
-        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-11-30T18:00:00-05:00'), {}),
+        shed.loans.the_loans_of_each_tool_this_month(shed.when('2026-11-30T23:00:00.000Z'), {}),
       ),
     ).toMatchObject({
       entries: [
@@ -159,37 +159,37 @@ describe('SC-21, the loans of each tool this month', () => {
       ['ladder', 'Ladder', 'ladder'],
     ] as const) {
       await first(
-        shed.tools.add_a_tool(shed.at('2026-10-30T09:00:00-04:00'), { id, name, category }),
+        shed.tools.add_a_tool(shed.at('2026-10-30T13:00:00.000Z'), { id, name, category }),
       )
     }
     return followed(
       () =>
         shed.loans
-          .the_loans_of_each_tool_this_month(shed.when('2026-11-10T09:00:00-05:00'), {})
+          .the_loans_of_each_tool_this_month(shed.when('2026-11-10T14:00:00.000Z'), {})
           [Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.loans.borrow_a_tool(shed.at('2026-11-10T10:00:00-05:00'), {
+          shed.loans.borrow_a_tool(shed.at('2026-11-10T15:00:00.000Z'), {
             loan_id: 'L7',
             tool_id: 'drill',
             member_id: 'M-12',
           }),
         )
         await first(
-          shed.tools.add_a_tool(shed.at('2026-11-10T11:00:00-05:00'), {
+          shed.tools.add_a_tool(shed.at('2026-11-10T16:00:00.000Z'), {
             id: 'sander',
             name: 'Orbital sander',
             category: 'power',
           }),
         )
         await first(
-          shed.tools.rename_a_tool(shed.at('2026-11-10T12:00:00-05:00'), {
+          shed.tools.rename_a_tool(shed.at('2026-11-10T17:00:00.000Z'), {
             tool_id: 'drill',
             name: 'Drill, cordless',
           }),
         )
         await first(
-          shed.tools.retire_a_tool(shed.at('2026-11-10T13:00:00-05:00'), {
+          shed.tools.retire_a_tool(shed.at('2026-11-10T18:00:00.000Z'), {
             id: 'ladder',
             reason: 'broken',
           }),

@@ -6,16 +6,17 @@
   "license": "AGPL-3.0-only",
   "exports": {
     "./library": "./src/library/index.ts",
-    "./seals": "./src/seals/index.ts",
-    "./post": "./src/post/index.ts",
-    "./mailbox": "./src/mailbox/index.ts",
-    "./desk": "./src/desk/index.ts",
-    "./bonds": "./src/bonds/index.ts",
-    "./conversations": "./src/conversations/index.ts",
-    "./auth": "./src/auth/index.ts",
-    "./persona": "./src/persona/index.ts",
-    "./user": "./src/user/index.ts",
-    "./ui": "./src/ui/index.ts"
+    "./seals/*": "./src/seals/*",
+    "./post/*": "./src/post/*",
+    "./mailbox/*": "./src/mailbox/*",
+    "./desk/*": "./src/desk/*",
+    "./bonds/*": "./src/bonds/*",
+    "./reaction/*": "./src/reaction/*",
+    "./extensions/*": "./src/extensions/*",
+    "./auth/*": "./src/auth/*",
+    "./persona/*": "./src/persona/*",
+    "./user/*": "./src/user/*",
+    "./ui/*": "./src/ui/*"
   },
   "dependencies": {
     "zod": "^4.6.7"

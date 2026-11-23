@@ -10,14 +10,61 @@ const arrows = {
   mailbox: ['library'],
   desk: ['library', 'mailbox'],
   bonds: ['library'],
-  conversations: ['library'],
+  reaction: ['library', 'seals', 'bonds'],
+  extensions: ['library', 'bonds'],
   auth: ['library'],
-  persona: ['library', 'auth', 'bonds', 'conversations'],
+  persona: ['library', 'auth', 'bonds', 'extensions'],
   user: ['library', 'persona'],
   ui: ['library', 'user'],
 }
 
 const domain = (name) => `^packages/domains/src/${name}/`
+
+// The folders of q-'s tree, the ones its map names (MBX-4): inside them a folder is reached through the
+// doors and the scopes the map opens (DOM-25), kept by the tree's rules below, not through an index.ts.
+const tree_of_q = configuration.trees
+  .filter((tree) => tree.root === 'packages/domains/src')
+  .flatMap((tree) => Object.keys(tree.sight))
+  .map((top) => `${domain(top)}`)
+
+// What a folder outside q-'s tree reaches of it (MBX-5): its generated files (`_registry.ts`, `_fact.ts`, `_node.ts`…),
+// not its scopes and doors, which are the tree's inside; its authored files only through their twins, by its map's rules.
+const surface_of_q = tree_of_q.map((top) => `${top}(?:.*/|)_(?!scope_|door_)[^/]+\\.ts$`)
+
+// The packages of the extensions (GR-10, EXT-9): each imports its library, zod and `boundary`, nothing else of the
+// repository; `boundary` imports zod only; no package of the kernel imports an extension but the configurators that
+// compose it. Inside an extension's tree `boundary` is imported only by the generated point of a mounted folder
+// (`_node.ts`, EXT-11), from the generator's configuration; outside the tree, as by any file of the package.
+const extensions = configuration.trees.filter((tree) =>
+  tree.root.startsWith('packages/extensions/'),
+)
+const extension_rules = extensions.flatMap((tree) => {
+  const name = tree.root.split('/').at(-1)
+  const root = `^${tree.root}/`
+  const mounted = Object.keys(tree.mounted ?? {}).map((folder) => `${root}${folder}/_node\\.ts$`)
+  return [
+    {
+      name: `extension-${name}-imports`,
+      comment: `${name} imports of the repository its library, zod and boundary only: no domain of the kernel, no adapter, no configurator, no other extension (GR-10).`,
+      severity: 'error',
+      from: { path: root },
+      to: {
+        path: '^packages/',
+        pathNot: [root, '^packages/boundary/', '^packages/domains/src/library/'],
+      },
+    },
+    {
+      name: `extension-${name}-boundary-at-the-mounted-points`,
+      comment: `${name}: inside its tree boundary is imported only by the generated point of a mounted folder (_node.ts), never by an authored file, which imports its scope (GR-10, EXT-11, DOM-25).`,
+      severity: 'error',
+      from: {
+        path: `${root}(${Object.keys(tree.sight).join('|')})/`,
+        pathNot: mounted,
+      },
+      to: { path: '^packages/boundary/' },
+    },
+  ]
+})
 
 const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
   name: `arrows-of-${from}`,
@@ -33,6 +80,33 @@ const arrowRules = Object.entries(arrows).map(([from, allowed]) => ({
 export default {
   forbidden: [
     ...arrowRules,
+    ...extension_rules,
+    {
+      name: 'boundary-imports-zod-only',
+      comment:
+        'boundary imports zod only: schemas and types, no domain, no package of the repository (GR-10, EXT-9).',
+      severity: 'error',
+      from: { path: '^packages/boundary/' },
+      to: {
+        pathNot: ['^packages/boundary/', 'node_modules/zod/'],
+      },
+    },
+    {
+      name: 'the-kernel-composes-the-extensions',
+      comment:
+        "No package of the kernel imports an extension but the configurators that compose it: phone its bundle, memory its configurator (GR-10); the repository's configuration may.",
+      severity: 'error',
+      from: { path: '^packages/', pathNot: ['^packages/(phone|memory)/', '^packages/extensions/'] },
+      to: { path: '^packages/extensions/' },
+    },
+    {
+      name: 'the-generator-knows-no-boundary',
+      comment:
+        'The generator imports no boundary: it writes the module the configuration names (EXT-11, § 2).',
+      severity: 'error',
+      from: { path: '^packages/generator/' },
+      to: { path: '^packages/boundary/' },
+    },
     // The rules of each tree of the generator, from its map (DOM-25): the map is one source, read by
     // the generator, which writes it into the doors and the scopes, and by the cruiser through it.
     ...configuration.trees.flatMap(map_rules),
@@ -44,23 +118,24 @@ export default {
     },
     {
       name: 'only-through-index-inside',
-      comment: 'A folder of a package is reachable from another folder only through its index.ts.',
+      comment:
+        "A folder of a package is reachable from another folder only through its index.ts; in q-'s tree, through the doors of its map (DOM-25, MBX-4); q-'s tree from outside it, through its generated files (MBX-5).",
       severity: 'error',
-      from: { path: '^(packages/[^/]+/src/[^/]+)/' },
+      from: { path: '^(packages/[^/]+/src/[^/]+)/', pathNot: tree_of_q },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
-        pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$'],
+        pathNot: ['^$1/', '^packages/[^/]+/src/[^/]+/index\\.tsx?$', ...surface_of_q],
       },
     },
     {
       name: 'only-through-index-outside',
       comment:
-        'From outside any folder (tests, other packages) a folder is reachable only through its index.ts.',
+        "From outside any folder (tests, other packages) a folder is reachable only through its index.ts; q-'s tree through its generated files, but its scopes and doors, which are its inside (MBX-5).",
       severity: 'error',
       from: { pathNot: '^packages/[^/]+/src/[^/]+/' },
       to: {
         path: '^packages/[^/]+/src/[^/]+/',
-        pathNot: '^packages/[^/]+/src/[^/]+/index\\.tsx?$',
+        pathNot: ['^packages/[^/]+/src/[^/]+/index\\.tsx?$', ...surface_of_q],
       },
     },
     {
@@ -142,8 +217,9 @@ export default {
     },
   ],
   options: {
+    // npm modules are seen, never followed: the rules on npm imports read them (domains-npm-allowlist and the others).
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|\\.tsbuild|node_modules|\\.generated)/' },
+    exclude: { path: '(^|/)(dist|\\.tsbuild|\\.generated)/' },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ['exports'],
