@@ -31,7 +31,7 @@ const the_shed = async () => {
     ['ladder', 'Ladder'],
   ] as const) {
     await first(
-      shed.tools.add_a_tool(shed.at('2026-11-05T08:00:00-05:00'), {
+      shed.tools.add_a_tool(shed.at('2026-11-05T13:00:00.000Z'), {
         id,
         name,
         category: 'power',
@@ -46,7 +46,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(gianni, '2.0.0').at('2026-11-05T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(gianni, '2.0.0').at('2026-11-05T15:00:00.000Z'), {
           loan_id: 'L5',
           tool_id: 'ladder',
         }),
@@ -59,7 +59,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     ])
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T10:05:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T15:05:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
@@ -67,13 +67,13 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     ).toEqual([
       {
         event: 'you_have_the_tool',
-        payload: { loan_id: 'L7', tool_id: 'drill', due_date: '2026-11-19T23:59:59.999-05:00' },
+        payload: { loan_id: 'L7', tool_id: 'drill', due_date: '2026-11-20T04:59:59.999Z' },
       },
     ])
     // One business, one version: Marta's loan is due on a day, as Gianni's.
     expect(
       await first(
-        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-05T10:10:00-05:00'), {
+        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-05T15:10:00.000Z'), {
           member_id: 'M-12',
         }),
       ),
@@ -83,26 +83,26 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
   test('"my loans" each in its own words; the return, delegated, as 2.0.0 tells it', async () => {
     const shed = await the_shed()
     await all(
-      shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T10:05:00-05:00'), {
+      shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T15:05:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
       }),
     )
     expect(
       await first(
-        shed.member.my_loans(shed.as(marta, '1.4.0').when('2026-11-06T09:00:00-05:00'), {}),
+        shed.member.my_loans(shed.as(marta, '1.4.0').when('2026-11-06T14:00:00.000Z'), {}),
       ),
     ).toMatchObject({
       event: 'snapshot',
-      entries: [{ loan_id: 'L7', tool_id: 'drill', due_date: '2026-11-19T23:59:59.999-05:00' }],
+      entries: [{ loan_id: 'L7', tool_id: 'drill', due_date: '2026-11-20T04:59:59.999Z' }],
     })
     const at_2 = await first(
-      shed.member.my_loans(shed.as(marta, '2.0.0').when('2026-11-06T09:00:00-05:00'), {}),
+      shed.member.my_loans(shed.as(marta, '2.0.0').when('2026-11-06T14:00:00.000Z'), {}),
     )
     expect(at_2).toMatchObject({ entries: [{ loan_id: 'L7', due_day: '2026-11-19' }] })
     expect(
       await all(
-        shed.member.return_a_tool(shed.as(marta, '1.4.0').at('2026-11-06T10:00:00-05:00'), {
+        shed.member.return_a_tool(shed.as(marta, '1.4.0').at('2026-11-06T15:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
           condition: 'good',
@@ -111,7 +111,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     ).toEqual([{ event: 'you_returned_the_tool', payload: { tool_id: 'drill' } }])
     expect(
       await all(
-        shed.member.return_a_tool(shed.as(marta, '2.0.0').at('2026-11-06T10:01:00-05:00'), {
+        shed.member.return_a_tool(shed.as(marta, '2.0.0').at('2026-11-06T15:01:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
           condition: 'good',
@@ -124,7 +124,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     const shed = await the_shed()
     const sent = { operation: 'L7-borrow' }
     await all(
-      shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T10:05:00-05:00', sent), {
+      shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T15:05:00.000Z', sent), {
         loan_id: 'L7',
         tool_id: 'drill',
       }),
@@ -133,7 +133,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     // apart (LIB-11): the duplicate branch, in the words of the version.
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-05T10:06:00-05:00', sent), {
+        shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-05T15:06:00.000Z', sent), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
@@ -149,14 +149,14 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
   test('a rejection told in 1.x, a closing as it is, a leaf 1.x has not: `not_a_leaf`, each in the trace', async () => {
     const shed = await the_shed()
     await all(
-      shed.member.borrow_a_tool(shed.as(gianni, '2.0.0').at('2026-11-05T10:00:00-05:00'), {
+      shed.member.borrow_a_tool(shed.as(gianni, '2.0.0').at('2026-11-05T15:00:00.000Z'), {
         loan_id: 'L5',
         tool_id: 'ladder',
       }),
     )
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T10:05:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-05T15:05:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'ladder',
         }),
@@ -165,7 +165,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     // Luca keeps the shed and has no member card: the node closes as at 2.0.0.
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(luca, '1.4.0').at('2026-11-05T10:06:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(luca, '1.4.0').at('2026-11-05T15:06:00.000Z'), {
           loan_id: 'L8',
           tool_id: 'drill',
         }),
@@ -176,7 +176,7 @@ describe('SC-28: an old phone and a new one borrow by the same path', () => {
     const any_version = zz.semver.parse('1.4.0')
     expect(
       await all(
-        shed.member.extend_your_loan(shed.as(marta, any_version).at('2026-11-05T10:07:00-05:00'), {
+        shed.member.extend_your_loan(shed.as(marta, any_version).at('2026-11-05T15:07:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
           due_day: '2026-11-19',

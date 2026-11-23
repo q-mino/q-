@@ -9,7 +9,7 @@ import { z } from 'zod'
 import * as fact from './fact.ts'
 
 /**
- * The whole new loan, due at an instant; since 2.0.0 due on the day of that instant.
+ * The whole new loan, due at an instant; since 2.0.0 due on its day, the one the desk wrote.
  *
  * @see {@link fact.a_tool_has_been_lent}
  */

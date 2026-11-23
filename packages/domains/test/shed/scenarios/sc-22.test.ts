@@ -47,7 +47,7 @@ const the_catalogue: readonly Added[] = [
 const the_shed = async () => {
   const shed = await oracle()
   for (const tool of the_catalogue.toReversed()) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), tool))
   }
   return shed
 }
@@ -77,7 +77,7 @@ const page = async <event>(pages: AsyncIterator<event>): Promise<event> => {
   return next.value
 }
 
-const tuesday = '2026-11-17T18:00:00-05:00'
+const tuesday = '2026-11-17T23:00:00.000Z'
 
 describe('SC-22, the catalogue in pages (the business)', () => {
   test('2,000 tools, 50 at a time: each page pulled with its position, the total and the cursor of the next; two rakes across a boundary, neither repeated nor skipped', async () => {
@@ -110,7 +110,7 @@ describe('SC-22, the catalogue in pages (the business)', () => {
     expect(await page(pages)).toMatchObject({ position: '2000', total: 2000 })
     // Luca adds a bow saw to the garden shelf: `B` before every hoe.
     await first(
-      shed.tools.add_a_tool(shed.at('2026-11-17T18:01:00-05:00'), {
+      shed.tools.add_a_tool(shed.at('2026-11-17T23:01:00.000Z'), {
         id: 'bow-saw',
         name: 'Bow saw',
         category: 'garden',
@@ -134,7 +134,7 @@ describe('SC-22, the catalogue in pages (the business)', () => {
     expect(ids(first_page)[0]).toBe('hoe-001')
     // The first hoe becomes a weeder: `W` after every spade.
     await first(
-      shed.tools.rename_a_tool(shed.at('2026-11-17T18:01:00-05:00'), {
+      shed.tools.rename_a_tool(shed.at('2026-11-17T23:01:00.000Z'), {
         tool_id: 'hoe-001',
         name: 'Weeder',
       }),
@@ -174,7 +174,7 @@ describe('SC-22, the catalogue in pages (the business)', () => {
   test('a cursor that does not decode to the order key reads no page; one forged that decodes starts elsewhere, and the selection holds', async () => {
     const shed = await the_shed()
     await first(
-      shed.tools.retire_a_tool(shed.at('2026-11-17T17:00:00-05:00'), {
+      shed.tools.retire_a_tool(shed.at('2026-11-17T22:00:00.000Z'), {
         id: 'spade-001',
         reason: 'worn_out',
       }),

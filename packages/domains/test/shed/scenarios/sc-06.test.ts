@@ -6,7 +6,7 @@ import { a_shed_with, ladder } from './shed.ts'
 // request, a static rule over the input and `now`, in the schema the library
 // builds over the context before parsing (DOM-21).
 
-const thursday = '2026-11-19T10:00:00-05:00'
+const thursday = '2026-11-19T15:00:00.000Z'
 
 describe('SC-6, Gianni books the ladder for a day outside the window', () => {
   test.each([
@@ -35,7 +35,7 @@ describe('SC-6, Gianni books the ladder for a day outside the window', () => {
     })
     expect(
       await first(
-        shed.loans.reserve_a_tool(shed.at('2026-12-19T08:00:00-05:00'), {
+        shed.loans.reserve_a_tool(shed.at('2026-12-19T13:00:00.000Z'), {
           ...booking,
           reservation_id: 'R9',
         }),

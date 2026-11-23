@@ -92,7 +92,7 @@ export const loans_fragments: zz.PredicateFragments<
   'business/loans/predicate/the_loan_is_due_on_this_day': (p) => (state) =>
     state.loans.get(p.loan_id)?.due_day === p.due_day,
   'business/loans/predicate/the_due_date_of_the_loan_is_still_ahead': (p) => (state) =>
-    loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.now),
+    loans_dsl.the_due_date_of_the_loan_is_still_ahead(state.loans.get(p.loan_id))(p.today),
   'business/loans/predicate/the_tool_is_on_loan': (p) => (state) =>
     ongoing(state).some((the_loan) => the_loan.tool_id === p.tool_id),
   'business/loans/predicate/the_tool_is_on_loan_to_this_member': (p) => (state) =>
@@ -138,7 +138,7 @@ export const loans_fragments: zz.PredicateFragments<
     const the_summary = state.weekly_summaries.get(p.member_id)
     return (
       the_summary !== undefined &&
-      loans_dsl.the_week_is_not_over_on(loans_dsl.today(p.now))(the_summary.next_monday)
+      loans_dsl.the_week_is_not_over_on(p.today)(the_summary.next_monday)
     )
   },
 }

@@ -15,7 +15,7 @@ import { drill } from './shed.ts'
 // correlation (D58.2): 198 tools in, two lines left.
 
 const luca: Who = { identified_by: 'account', id: 'A-LUCA' }
-const wednesday = '2026-11-18T10:00:00-05:00'
+const wednesday = '2026-11-18T15:00:00.000Z'
 
 /** The 200 lines of the library's sheet: line 37 the shed's drill's id, line 120 line 12's. */
 const the_lines = Array.from({ length: 200 }, (_, i) => {
@@ -29,7 +29,7 @@ const the_lines = Array.from({ length: 200 }, (_, i) => {
 const the_shed = async () => {
   const shed = await oracle({ accounts: accounts({ hats: { 'A-LUCA': ['keeper'] } }) })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), { ...drill, id: 'drill-7' }),
+    shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), { ...drill, id: 'drill-7' }),
   )
   return shed
 }

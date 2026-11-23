@@ -30,21 +30,21 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-16T12:00:00-05:00', { scope: 'member/M-7' }), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-16T17:00:00.000Z', { scope: 'member/M-7' }), {
       reservation_id: 'R8',
       tool_id: 'drill',
       member_id: 'M-7',
       day: '2026-11-23',
     }),
   )
-  const tuesday = shed.at('2026-11-17T08:00:00-05:00', { scope: 'keeper/luca' })
+  const tuesday = shed.at('2026-11-17T13:00:00.000Z', { scope: 'keeper/luca' })
   await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
   return { shed, rp1: zz.identity_of(repair_id)(tuesday.operation) }
 }
@@ -58,18 +58,18 @@ describe("SC-34, Rossi's workshop closes a job", () => {
           member_id: 'M-7',
         }),
       )
-    expect(await in_the_workshop('2026-11-20T09:00:00-05:00')).toMatchObject({
+    expect(await in_the_workshop('2026-11-20T14:00:00.000Z')).toMatchObject({
       entries: [{ id: 'R8' }],
     })
     expect(
       await all(
         shed.workshop.close_a_job(
-          shed.as(rossi, '1.0.0').named('2026-11-20T10:00:00-05:00', the_scope),
+          shed.as(rossi, '1.0.0').named('2026-11-20T15:00:00.000Z', the_scope),
           { notification_id: 'N-88', job: { tool: 'drill', reference: rp1 } },
         ),
       ),
     ).toEqual([{ event: 'the_job_is_closed', payload: { tool: 'drill' } }])
-    expect(await in_the_workshop('2026-11-20T10:01:00-05:00')).toMatchObject({ entries: [] })
+    expect(await in_the_workshop('2026-11-20T15:01:00.000Z')).toMatchObject({ entries: [] })
     const log = shed.log(zz.position.parse('4'))[Symbol.asyncIterator]()
     expect((await log.next()).value).toMatchObject({
       event: 'fact',
@@ -91,16 +91,16 @@ describe("SC-34, Rossi's workshop closes a job", () => {
           job,
         }),
       )
-    await close('2026-11-20T10:00:00-05:00', { tool: 'drill', reference: rp1 })
+    await close('2026-11-20T15:00:00.000Z', { tool: 'drill', reference: rp1 })
     // The answer is lost, and the system sends N-88 again.
-    expect(await close('2026-11-20T10:05:00-05:00', { tool: 'drill', reference: rp1 })).toEqual([
+    expect(await close('2026-11-20T15:05:00.000Z', { tool: 'drill', reference: rp1 })).toEqual([
       { event: 'the_job_is_closed', payload: { tool: 'drill' } },
     ])
     expect(
-      await close('2026-11-20T10:10:00-05:00', { tool: 'drill', reference: 'RP-OTHER' }),
+      await close('2026-11-20T15:10:00.000Z', { tool: 'drill', reference: 'RP-OTHER' }),
     ).toEqual([{ event: 'identity_already_used' }])
     expect(
-      await first(shed.tools.the_catalogue(shed.when('2026-11-20T10:11:00-05:00'), {})),
+      await first(shed.tools.the_catalogue(shed.when('2026-11-20T15:11:00.000Z'), {})),
     ).toMatchObject({ position: '4' })
     expect(shed.traced()).toMatchObject([
       {
@@ -118,17 +118,17 @@ describe("SC-34, Rossi's workshop closes a job", () => {
   test('a late notice: the drill back by hand and broken again (RP2), N-88 for RP1 finds no such open job', async () => {
     const { shed, rp1 } = await the_shed()
     await first(
-      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T09:00:00-05:00'), {
+      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T14:00:00.000Z'), {
         tool_id: 'drill',
       }),
     )
     await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-21T08:00:00-05:00'), { tool_id: 'drill' }),
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-21T13:00:00.000Z'), { tool_id: 'drill' }),
     )
     expect(
       await all(
         shed.workshop.close_a_job(
-          shed.as(rossi, '1.0.0').named('2026-11-23T09:00:00-05:00', the_scope),
+          shed.as(rossi, '1.0.0').named('2026-11-23T14:00:00.000Z', the_scope),
           { notification_id: 'N-88', job: { tool: 'drill', reference: rp1 } },
         ),
       ),
@@ -159,7 +159,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
     expect(
       await all(
         shed.workshop.close_a_job(
-          shed.as(marta, '1.0.0').named('2026-11-20T10:00:00-05:00', { scope: 'workshop/A-MARTA' }),
+          shed.as(marta, '1.0.0').named('2026-11-20T15:00:00.000Z', { scope: 'workshop/A-MARTA' }),
           job,
         ),
       ),
@@ -167,7 +167,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
     expect(
       await all(
         shed.workshop.close_a_job(
-          shed.as(another_key, '1.0.0').named('2026-11-20T10:00:00-05:00', {
+          shed.as(another_key, '1.0.0').named('2026-11-20T15:00:00.000Z', {
             scope: 'workshop/K-SPARE',
           }),
           job,
@@ -177,7 +177,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
     expect(
       await all(
         shed.member.borrow_a_tool(
-          shed.as(rossi, '2.0.0').at('2026-11-20T10:00:00-05:00', { scope: 'member/K-ROSSI' }),
+          shed.as(rossi, '2.0.0').at('2026-11-20T15:00:00.000Z', { scope: 'member/K-ROSSI' }),
           { loan_id: 'L9', tool_id: 'drill' },
         ),
       ),
@@ -209,7 +209,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
     expect(
       await all(
         shed.workshop.close_a_job(
-          shed.as(rossi, '1.0.0').named('2026-11-20T10:00:00-05:00', the_scope),
+          shed.as(rossi, '1.0.0').named('2026-11-20T15:00:00.000Z', the_scope),
           // A notification whose id is empty, as a faulty system might send it.
           { notification_id: '', job: { tool: 'drill', reference: rp1 } },
         ),
@@ -232,7 +232,7 @@ describe("SC-34, Rossi's workshop closes a job", () => {
     await expect(
       all(
         shed.workshop.close_a_job(
-          shed.as(rossi, '1.0.0').at('2026-11-20T10:00:00-05:00', the_scope),
+          shed.as(rossi, '1.0.0').at('2026-11-20T15:00:00.000Z', the_scope),
           { notification_id: 'N-88', job: { tool: 'drill', reference: rp1 } },
         ),
       ),

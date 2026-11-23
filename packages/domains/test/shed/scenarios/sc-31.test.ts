@@ -31,7 +31,7 @@ const the_shed = async () => {
     ['drill', 'Cordless drill', 'power'],
     ['ladder', 'Ladder', 'ladder'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T14:00:00.000Z'), { id, name, category }))
   }
   for (const [loan_id, tool_id] of [
     ['L7', 'drill'],
@@ -39,13 +39,13 @@ const the_shed = async () => {
   ] as const) {
     await all(
       shed.member.borrow_a_tool(
-        shed.as(marta, '2.0.0').at('2026-11-02T10:00:00-05:00', { scope: 'member/A-MARTA' }),
+        shed.as(marta, '2.0.0').at('2026-11-02T15:00:00.000Z', { scope: 'member/A-MARTA' }),
         { loan_id, tool_id },
       ),
     )
   }
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-10T12:00:00-05:00', { scope: 'member/A-GIANNI' }), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-10T17:00:00.000Z', { scope: 'member/A-GIANNI' }), {
       reservation_id: 'R8',
       tool_id: 'ladder',
       member_id: 'M-7',
@@ -63,7 +63,7 @@ const extend = (
 ) =>
   all(
     shed.member.extend_your_loan(
-      shed.as(who, '2.0.0').at('2026-11-13T18:00:00-05:00', { scope: `member/${who.id}` }),
+      shed.as(who, '2.0.0').at('2026-11-13T23:00:00.000Z', { scope: `member/${who.id}` }),
       row,
     ),
   )
@@ -78,7 +78,7 @@ describe('SC-31, Marta keeps a tool longer under "an ongoing loan"', () => {
     ])
     expect(
       await first(
-        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-13T18:01:00-05:00'), {
+        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-13T23:01:00.000Z'), {
           member_id: 'M-12',
         }),
       ),
@@ -122,7 +122,7 @@ describe('SC-31, Marta keeps a tool longer under "an ongoing loan"', () => {
     // Whole, her return ends at once (SC-27).
     expect(
       await all(
-        shed.member.return_a_tool(shed.as(marta, '2.0.0').at('2026-11-12T18:00:00-05:00'), {
+        shed.member.return_a_tool(shed.as(marta, '2.0.0').at('2026-11-12T23:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
           condition: 'good',

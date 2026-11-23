@@ -46,10 +46,10 @@ const key_of = (repair_id: string, booking: Booking): string =>
 const the_shed = async (start: Start = {}) => {
   const shed = await oracle(start)
   for (const tool of [drill, ladder]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), tool))
   }
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-08T10:00:00-05:00', { scope: 'member/M-7' }), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-08T15:00:00.000Z', { scope: 'member/M-7' }), {
       loan_id: 'L5',
       tool_id: 'ladder',
       member_id: 'M-7',
@@ -58,7 +58,7 @@ const the_shed = async (start: Start = {}) => {
   for (const booking of [gianni, paolo]) {
     await first(
       shed.loans.reserve_a_tool(
-        shed.at('2026-11-16T12:00:00-05:00', { scope: `member/${booking.member_id}` }),
+        shed.at('2026-11-16T17:00:00.000Z', { scope: `member/${booking.member_id}` }),
         { ...booking, tool_id: 'drill' },
       ),
     )
@@ -89,16 +89,16 @@ const the_letter = (held: readonly zz.HeldEntry[]): zz.EffectDeadLetter => {
  */
 const up_to_saturday = async (start: Start = {}) => {
   const { shed, notify } = await the_shed(start)
-  const executor = shed.executor({ at: '2026-11-17T08:00:00-05:00', phones })
+  const executor = shed.executor({ at: '2026-11-17T13:00:00.000Z', phones })
   shed.network('is_down', 'gives_up')
-  await notify('2026-11-17T09:00:00-05:00', 'RP1', gianni)
-  await notify('2026-11-17T09:00:00-05:00', 'RP1', paolo)
+  await notify('2026-11-17T14:00:00.000Z', 'RP1', gianni)
+  await notify('2026-11-17T14:00:00.000Z', 'RP1', paolo)
   await quiet()
-  await shed.pass('2026-11-17T09:01:00-05:00')
-  await shed.pass('2026-11-21T00:00:00-05:00')
-  await notify('2026-11-21T10:00:00-05:00', 'RP2', gianni)
-  await notify('2026-11-21T10:00:00-05:00', 'RP2', paolo)
-  await shed.pass('2026-11-21T10:00:00-05:00')
+  await shed.pass('2026-11-17T14:01:00.000Z')
+  await shed.pass('2026-11-21T05:00:00.000Z')
+  await notify('2026-11-21T15:00:00.000Z', 'RP2', gianni)
+  await notify('2026-11-21T15:00:00.000Z', 'RP2', paolo)
+  await shed.pass('2026-11-21T15:00:00.000Z')
   return { shed, executor, notify }
 }
 
@@ -132,7 +132,7 @@ describe("SC-53: the executor's hold, an entry's resources", () => {
 
   test('on Monday the operator redelivers Gianni’s letter: RP1, then RP2, in the order of the outbox', async () => {
     const { shed, executor } = await up_to_saturday()
-    await shed.pass('2026-11-23T09:00:00-05:00')
+    await shed.pass('2026-11-23T14:00:00.000Z')
     const letter = the_letter(shed.held(the_notice))
     expect(await executor.redeliver(letter)).toEqual({ outcome: 'delivered' })
     await quiet()
@@ -150,7 +150,7 @@ describe("SC-53: the executor's hold, an entry's resources", () => {
 
   test('had the operator discarded the letter, the stay over, his notice of RP2 goes on as after a delivery', async () => {
     const { shed, executor } = await up_to_saturday()
-    await shed.pass('2026-11-23T09:00:00-05:00')
+    await shed.pass('2026-11-23T14:00:00.000Z')
     const letter = the_letter(shed.held(the_notice))
     await executor.discard(letter)({ by: 'keeper/luca', reason: 'the first stay is over' })
     await quiet()
@@ -160,7 +160,7 @@ describe("SC-53: the executor's hold, an entry's resources", () => {
         letter: { entry: { id: JSON.stringify(['RP1', 'R8']) } },
         by: 'keeper/luca',
         reason: 'the first stay is over',
-        at: '2026-11-23T09:00:00-05:00',
+        at: '2026-11-23T14:00:00.000Z',
       },
     ])
     expect(
@@ -189,11 +189,11 @@ describe("SC-53: the executor's hold, an entry's resources", () => {
     const { shed, executor } = await up_to_saturday()
     await executor.stop()
     const again = shed.executor({
-      at: '2026-11-23T09:00:00-05:00',
+      at: '2026-11-23T14:00:00.000Z',
       phones,
       saves_its_position: false,
     })
-    await shed.pass('2026-11-23T09:00:00-05:00')
+    await shed.pass('2026-11-23T14:00:00.000Z')
     expect(shed.held(the_notice).map((each) => each.held)).toEqual(['dead_letter', 'waiting'])
     expect(
       shed.received().filter((message) => message.key.startsWith(`${the_notice}/["RP1","R8"]`)),
@@ -221,8 +221,8 @@ describe("SC-53: the executor's hold, an entry's resources", () => {
     expect(shed.held(the_notice)).toMatchObject([
       { held: 'waiting', entry: { id: JSON.stringify(['RP2', 'R8']) } },
     ])
-    shed.executor({ at: '2026-11-23T10:00:00-05:00', phones })
-    await shed.pass('2026-11-23T10:00:00-05:00')
+    shed.executor({ at: '2026-11-23T15:00:00.000Z', phones })
+    await shed.pass('2026-11-23T15:00:00.000Z')
     expect(shed.held(the_notice)).toEqual([])
     expect(
       shed
@@ -261,24 +261,24 @@ describe('SC-53: a wait is never exhausted, but its return may refuse it, held t
   const marta_s_eves = async () => {
     const shed = await oracle()
     for (const tool of [drill, ladder]) {
-      await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), tool))
+      await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), tool))
     }
     await first(
       shed.loans.borrow_a_tool(
-        shed.at('2026-11-02T10:00:00-05:00', { scope: 'member/M-12', operation: 'B1' }),
+        shed.at('2026-11-02T15:00:00.000Z', { scope: 'member/M-12', operation: 'B1' }),
         { loan_id: 'L7', tool_id: 'drill', member_id: 'M-12' },
       ),
     )
     await first(
       shed.loans.borrow_a_tool(
-        shed.at('2026-11-03T10:00:00-05:00', { scope: 'member/M-12', operation: 'B2' }),
+        shed.at('2026-11-03T15:00:00.000Z', { scope: 'member/M-12', operation: 'B2' }),
         { loan_id: 'L8', tool_id: 'ladder', member_id: 'M-12' },
       ),
     )
     expect(
       await first(
         shed.loans.remind_the_member_of_the_due_date(
-          shed.at('2026-11-10T09:00:00-05:00', { scope: the_eve, operation: 'L7' }),
+          shed.at('2026-11-10T14:00:00.000Z', { scope: the_eve, operation: 'L7' }),
           { loan_id: 'L7', tool_id: 'drill', member_id: 'M-12', due_day: '2026-11-17' },
         ),
       ),
@@ -288,8 +288,8 @@ describe('SC-53: a wait is never exhausted, but its return may refuse it, held t
 
   test('the eve of L7 refused, a dead letter holding the part’s resources: the eve of L8, Marta’s too, waits', async () => {
     const shed = await marta_s_eves()
-    const executor = shed.executor({ at: '2026-11-10T09:00:00-05:00', phones })
-    await shed.pass('2026-11-16T00:00:00-05:00')
+    const executor = shed.executor({ at: '2026-11-10T14:00:00.000Z', phones })
+    await shed.pass('2026-11-16T05:00:00.000Z')
     expect(shed.held(the_eve)).toMatchObject([
       {
         held: 'dead_letter',

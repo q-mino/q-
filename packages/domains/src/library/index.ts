@@ -7,7 +7,6 @@ export {
   day_of,
   start_of,
   end_of,
-  in_zone,
   semver,
   cursor,
   position,
