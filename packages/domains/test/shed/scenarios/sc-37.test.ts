@@ -14,27 +14,27 @@ describe('SC-37: the executor down past the due date', () => {
   test('started again on the 18th: the reminder comes late and records that the due date came first', async () => {
     const shed = await oracle()
     await first(
-      shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), {
+      shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), {
         id: 'drill',
         name: 'Cordless drill',
         category: 'power',
       }),
     )
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00', { scope: 'member/M-12' }), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z', { scope: 'member/M-12' }), {
         loan_id: 'L7',
         tool_id: 'drill',
         member_id: 'M-12',
       }),
     )
     const before = shed.executor({
-      at: '2026-11-02T10:00:00-05:00',
+      at: '2026-11-02T15:00:00.000Z',
       phones: { 'M-12': '+1 416 555 0112' },
     })
-    await shed.pass('2026-11-14T09:00:00-05:00')
+    await shed.pass('2026-11-14T14:00:00.000Z')
     await before.stop()
-    shed.executor({ at: '2026-11-18T09:00:00-05:00', phones: { 'M-12': '+1 416 555 0112' } })
-    await shed.pass('2026-11-18T09:00:00-05:00')
+    shed.executor({ at: '2026-11-18T14:00:00.000Z', phones: { 'M-12': '+1 416 555 0112' } })
+    await shed.pass('2026-11-18T14:00:00.000Z')
     const facts = (await shed.recorded()).slice(2)
     expect(facts.map((fact) => [fact.operation.scope, fact.parts[0]?.path]).toSorted()).toEqual([
       [

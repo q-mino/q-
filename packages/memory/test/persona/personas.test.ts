@@ -538,7 +538,7 @@ describe('the personas (PER-1..PER-14, PER-25)', () => {
     // At the mailbox of a ticket expired, its 48 hours over (BND-8): no longer collected (BND-11), nothing comes to her node.
     await anna.prepares_a_ticket('L_e')
     const expired = await shown(anna, 'L_e')
-    story.at_the_instant('2026-11-22T10:00:01Z')
+    story.at_the_instant('2026-11-22T10:00:01.000Z')
     await anna.runs()
     const collected = anna.collected().length
     expect(

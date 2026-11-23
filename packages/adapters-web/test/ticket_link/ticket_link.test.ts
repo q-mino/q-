@@ -88,7 +88,7 @@ describe("the ticket's link", () => {
       a_link_carrying(json({})),
       a_link_carrying(json([lucas_ticket])),
       a_link_carrying(json(without_secret)),
-      a_link_carrying(json({ ...lucas_ticket, expires_at: '2026-11-22T10:00:00+01:00' })),
+      a_link_carrying(json({ ...lucas_ticket, expires_at: '2026-11-22T09:00:00.000Z' })),
       a_link_carrying(
         json({
           ...lucas_ticket,

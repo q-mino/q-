@@ -18,7 +18,7 @@ export const ladder: Tool = { id: 'ladder', name: 'Ladder', category: 'ladder' }
 export const a_shed_with = async (...tools: readonly Tool[]): Promise<Shed> => {
   const shed = await oracle()
   for (const tool of tools) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), tool))
   }
   return shed
 }

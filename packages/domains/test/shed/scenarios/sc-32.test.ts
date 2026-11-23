@@ -25,7 +25,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -39,7 +39,7 @@ describe('SC-32, a limit on a read', () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.the_shelf(shed.as(marta, '2.0.0').when('2027-04-01T10:00:00-04:00'), {}),
+        shed.member.the_shelf(shed.as(marta, '2.0.0').when('2027-04-01T14:00:00.000Z'), {}),
       ),
     ).toEqual([{ event: 'refused', reasons: ['the_member_card_is_valid_today'] }])
     expect(shed.traced()).toMatchObject([
@@ -60,9 +60,7 @@ describe('SC-32, a limit on a read', () => {
   test("the member's node first: Luca, no member, is not found before any limit", async () => {
     const shed = await the_shed()
     expect(
-      await all(
-        shed.member.the_shelf(shed.as(luca, '2.0.0').when('2027-04-01T10:00:00-04:00'), {}),
-      ),
+      await all(shed.member.the_shelf(shed.as(luca, '2.0.0').when('2027-04-01T14:00:00.000Z'), {})),
     ).toEqual([{ event: 'not_found' }])
     expect(shed.traced().map((each) => each.why.closed_by)).toEqual(['a_lookup'])
   })
@@ -72,18 +70,18 @@ describe('SC-32, a limit on a read', () => {
     const { snapshot, events } = await followed(
       () =>
         shed.member
-          .the_shelf(shed.as(marta, '2.0.0').when('2026-11-19T10:00:00-05:00'), {})
+          .the_shelf(shed.as(marta, '2.0.0').when('2026-11-19T15:00:00.000Z'), {})
           [Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.tools.add_a_tool(shed.at('2026-11-19T11:00:00-05:00'), {
+          shed.tools.add_a_tool(shed.at('2026-11-19T16:00:00.000Z'), {
             id: 'saw',
             name: 'Hand saw',
             category: 'hand',
           }),
         )
         await first(
-          shed.tools.send_a_tool_to_repair(shed.at('2026-11-19T12:00:00-05:00'), {
+          shed.tools.send_a_tool_to_repair(shed.at('2026-11-19T17:00:00.000Z'), {
             tool_id: 'drill',
           }),
         )
@@ -113,12 +111,12 @@ describe('SC-32, a limit on a read', () => {
   test('a stream opened on 31 March stays open past midnight; its resume on 1 April is refused before any read', async () => {
     const shed = await the_shed()
     const live = shed.member
-      .the_shelf(shed.as(marta, '2.0.0').when('2027-03-31T23:00:00-04:00'), {})
+      .the_shelf(shed.as(marta, '2.0.0').when('2027-04-01T03:00:00.000Z'), {})
       [Symbol.asyncIterator]()
     const [opened] = await pull(live, 1)
     expect(opened).toMatchObject({ event: 'snapshot', position: '1' })
     await first(
-      shed.tools.add_a_tool(shed.at('2027-04-01T00:10:00-04:00'), {
+      shed.tools.add_a_tool(shed.at('2027-04-01T04:10:00.000Z'), {
         id: 'saw',
         name: 'Hand saw',
         category: 'hand',
@@ -128,7 +126,7 @@ describe('SC-32, a limit on a read', () => {
     expect(
       await all(
         shed.member.the_shelf(
-          shed.as(marta, '2.0.0').when('2027-04-01T00:30:00-04:00'),
+          shed.as(marta, '2.0.0').when('2027-04-01T04:30:00.000Z'),
           {},
           zz.position.parse('2'),
         ),

@@ -54,7 +54,7 @@ export const the_reservations_of_a_member = query({
     selection: {
       the_reservation_is_booked: {},
       the_reservation_is_of_the_member: { member_id: input.member_id },
-      the_day_has_not_passed: { day: dsl.today(context.now) },
+      the_day_has_not_passed: { day: dsl.today(context) },
     },
   }),
 })
@@ -82,7 +82,7 @@ export const the_reservations_of_a_member_in_the_workshop = query({
       the_reservation_is_ahead: {
         the_reservation_is_booked: {},
         the_reservation_is_of_the_member: { member_id: input.member_id },
-        the_day_has_not_passed: { day: dsl.today(context.now) },
+        the_day_has_not_passed: { day: dsl.today(context) },
       },
       the_tool_is_in_the_workshop: {},
     },
@@ -105,8 +105,8 @@ export const the_loans_of_each_tool_this_month = query({
     selection: {},
     calculations: {
       loans: {
-        first_day: dsl.the_first_day_of_the_month(context.now),
-        last_day: dsl.the_last_day_of_the_month(context.now),
+        first_day: dsl.the_first_day_of_the_month(dsl.today(context)),
+        last_day: dsl.the_last_day_of_the_month(dsl.today(context)),
       },
     },
   }),
