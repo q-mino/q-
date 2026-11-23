@@ -43,6 +43,9 @@ export const texts = {
         `«${name}»: appena partita, si presenta diversa dal suo manifesto.`,
     } satisfies Record<ACompositionFault['fault'], (name: string) => string>,
     why: 'Perché',
+    // The data of an older test release (WEB-8), the screens' words, once.
+    the_data_of_an_older_test_release: screens.common.the_data_of_an_older_test_release,
+    clear_the_data_and_start_again: screens.common.clear_the_data_and_start_again,
   },
   the_storage: {
     best_effort: 'Il browser può cancellare i dati di Cumino se il telefono resta senza spazio.',

@@ -1,10 +1,11 @@
 import { createSignal, For, Match, onMount, Show, Switch, type JSX } from 'solid-js'
-import type {
-  ANodeRunning,
-  HowItAsks,
-  TheStart,
-  WhyItDoesNotStart,
-  WhyItStopped,
+import {
+  why_it_does_not_start,
+  type ANodeRunning,
+  type HowItAsks,
+  type TheStart,
+  type WhyItDoesNotStart,
+  type WhyItStopped,
 } from './node/index.ts'
 import { texts } from './texts/index.ts'
 import { UpdatePrompt } from './UpdatePrompt.tsx'
@@ -14,7 +15,10 @@ import { UpdatePrompt } from './UpdatePrompt.tsx'
 // (WEB-18); the storage the browser keeps or may clear, told (WEB-11, F6);
 // the update with notice; where the files come from. A node that stops by
 // itself (another tab took it, a new release closed it) says so and offers
-// to open it here again (WEB-10).
+// to open it here again (WEB-10). The data of an older test release (WEB-8),
+// met at the start or by the screens' first reads, can be cleared on the
+// test channel only: the node stopped, its database deleted, the app opened
+// again.
 
 const repository = 'https://github.com/q-mino/q-'
 
@@ -24,22 +28,29 @@ const the_time_of = (instant: string): string =>
     Date.parse(instant),
   )
 
-/** What the app shows now: the start under way, or what it came to. */
+/** What the app shows now: the start under way, or what it came to; the data being cleared (WEB-8). */
 type TheAppNow =
   | { readonly now: 'opening' }
+  | { readonly now: 'clearing_the_data' }
   | { readonly now: 'another_tab' }
   | { readonly now: 'it_does_not_start'; readonly why: WhyItDoesNotStart }
   | { readonly now: 'running'; readonly node: ANodeRunning }
   | { readonly now: 'stopped'; readonly why: WhyItStopped }
 
-/** The app's wiring: the node's start, the screens of a node running, the page opened again. */
+/**
+ * The app's wiring: the node's start; the screens of a node running, given
+ * her gesture on the data of an older test release on the test channel only
+ * (WEB-8, WEB-18); the page opened again; the node's database deleted.
+ */
 export interface TheAppsWiring {
   readonly starts: (how: HowItAsks) => Promise<TheStart>
-  readonly screens: (node: ANodeRunning) => JSX.Element
+  readonly screens: (
+    node: ANodeRunning,
+    clears_the_data_and_starts_again: (() => void) | undefined,
+  ) => JSX.Element
   readonly reopens: () => void
+  readonly clears_the_data: () => Promise<void>
 }
-
-const why_of = (fault: unknown): string => (fault instanceof Error ? fault.message : String(fault))
 
 export const App = (props: TheAppsWiring) => {
   const [now, set_now] = createSignal<TheAppNow>({ now: 'opening' })
@@ -57,16 +68,30 @@ export const App = (props: TheAppsWiring) => {
           case 'running':
             set_now({ now: 'running', node: start.node })
             void start.node.stopped.then((why) => {
-              set_now({ now: 'stopped', why })
+              // Stopped to clear the data, the node is not told as stopped by itself.
+              if (now().now !== 'clearing_the_data') set_now({ now: 'stopped', why })
             })
             return
         }
       },
       (fault: unknown) => {
-        set_now({ now: 'it_does_not_start', why: { why: 'a_fault', message: why_of(fault) } })
+        set_now({ now: 'it_does_not_start', why: why_it_does_not_start(fault) })
       },
     )
   }
+  /** Her gesture on the data of an older test release (WEB-8): the node stopped, if it runs, its database deleted, the app opened again. */
+  const clears_the_data_and_starts_again = (node: ANodeRunning | undefined): void => {
+    set_now({ now: 'clearing_the_data' })
+    void (async () => {
+      await node?.stops()
+      await props.clears_the_data()
+      props.reopens()
+    })().catch((fault: unknown) => {
+      set_now({ now: 'it_does_not_start', why: why_it_does_not_start(fault) })
+    })
+  }
+  /** The gesture, on the test channel only (WEB-8): on the release the sentence alone. */
+  const on_the_test_channel = __Q_CHANNEL__ !== 'release'
   onMount(() => {
     opens('if_no_tab_is')
   })
@@ -89,7 +114,7 @@ export const App = (props: TheAppsWiring) => {
   return (
     <main>
       <Switch>
-        <Match when={now().now === 'opening'}>
+        <Match when={now().now === 'opening' || now().now === 'clearing_the_data'}>
           <p>{texts.start.opening}</p>
         </Match>
         <Match when={now().now === 'another_tab'}>
@@ -125,6 +150,20 @@ export const App = (props: TheAppsWiring) => {
                       </ul>
                     </>
                   )}
+                </Match>
+                <Match when={why().why === 'the_data_of_an_older_test_release'}>
+                  <h1>{texts.start.it_does_not_start}</h1>
+                  <p>{texts.start.the_data_of_an_older_test_release}</p>
+                  <Show when={on_the_test_channel}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clears_the_data_and_starts_again(undefined)
+                      }}
+                    >
+                      {texts.start.clear_the_data_and_start_again}
+                    </button>
+                  </Show>
                 </Match>
                 <Match when={why().why === 'a_fault'}>
                   <h1>{texts.start.it_does_not_start}</h1>
@@ -172,7 +211,14 @@ export const App = (props: TheAppsWiring) => {
               <Show when={node().the_storage === 'not_told'}>
                 <p role="note">{texts.the_storage.not_told}</p>
               </Show>
-              {props.screens(node())}
+              {props.screens(
+                node(),
+                on_the_test_channel
+                  ? () => {
+                      clears_the_data_and_starts_again(node())
+                    }
+                  : undefined,
+              )}
             </>
           )}
         </Match>

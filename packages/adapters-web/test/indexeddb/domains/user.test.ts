@@ -4,13 +4,19 @@ import { majors as choices_majors } from '@q-mino/domains/user/choices/_majors.t
 import { majors as drafts_majors } from '@q-mino/domains/user/drafts/_majors.ts'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { afterEach, expect, test } from 'vitest'
-import { the_node_s_storage, user_ports_on_indexeddb } from '../../../src/index.ts'
+import {
+  ARecordOutOfItsForm,
+  the_node_s_storage,
+  the_store_of,
+  user_ports_on_indexeddb,
+} from '../../../src/index.ts'
 
 // The smoke test of `user` on IndexedDB (part 21.2, WEB-8, WEB-9), on
 // fake-indexeddb in Node: Anna's three offices in a node's database, each
 // its own store, in the node's one order. An activity asked and read back;
 // the same operation again, its recorded fact; an end refused, which writes
-// nothing; a draft and her face, beside the activities. The stories
+// nothing; a draft and her face, beside the activities; a record an older
+// test release wrote, out of its form, told as such (WEB-8). The stories
 // themselves are the oracle's (`memory/test/user`).
 
 const time_zone = zz.time_zone.parse('UTC')
@@ -202,4 +208,23 @@ test('a draft kept and dropped, her face changed: each office its store, one ord
     { event: 'snapshot', entries: [], total: 0 },
   ])
   expect(String(await opened.position())).toBe('5')
+})
+
+test('her face as an older test release kept it, its instant with an offset, is a record out of its form (WEB-8)', async () => {
+  const { opened, user, when } = await annas_node()
+  // The record as the build of 22 Nov 2026 wrote it: `date_time` then took an offset, now only `Z`.
+  const store = the_store_of('user/choices')
+  const transaction = opened.database.transaction(store, 'readwrite')
+  transaction
+    .objectStore(store)
+    .put({ choice: 'the_active_face', face: 'F_a', since: '2026-11-22T10:00:00.000+01:00' }, [
+      'state',
+      'active_face',
+    ])
+  await new Promise<void>((resolve) => {
+    transaction.oncomplete = () => {
+      resolve()
+    }
+  })
+  await expect(all(user.the_active_face(when(), {}))).rejects.toBeInstanceOf(ARecordOutOfItsForm)
 })

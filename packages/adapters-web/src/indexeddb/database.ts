@@ -1,7 +1,8 @@
 // The node's database (WEB-8): one IndexedDB database per node, a store for
 // each business domain of the kernel and for each extension's partition, and
 // the node's own store. The stores a release needs are created when it opens
-// the database; none is deleted in stage 1.
+// the database; none is deleted in stage 1. The whole database is deleted
+// when she clears the data of an older test release (WEB-8).
 
 /** A store of the node's database: a business domain's, or an extension's partition. */
 export type AStore =
@@ -24,7 +25,7 @@ export interface TheNodesDatabase {
 }
 
 /** The browser's `indexedDB`, given (WEB-5). */
-export type AnIndexedDb = Pick<IDBFactory, 'open'>
+export type AnIndexedDb = Pick<IDBFactory, 'open' | 'deleteDatabase'>
 
 const opened = (
   request: IDBOpenDBRequest,
@@ -73,3 +74,22 @@ export const open_the_node_s_database =
     })
     return { database, closed }
   }
+
+/**
+ * Deletes the node's database, every store in it (WEB-8, the data of an
+ * older test release): once the node has stopped and closed it here; another
+ * tab's connection closes on its `versionchange` (WEB-10), so the deletion
+ * waits for no one.
+ */
+export const delete_the_node_s_database =
+  (indexed_db: AnIndexedDb) =>
+  (name: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const request = indexed_db.deleteDatabase(name)
+      request.onsuccess = () => {
+        resolve()
+      }
+      request.onerror = () => {
+        reject(request.error ?? new Error('the database was not deleted'))
+      }
+    })
