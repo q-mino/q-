@@ -14,7 +14,13 @@ import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'j
 import { render } from 'solid-js/web'
 import { realms } from 'virtual:q-realms'
 import { App } from './App.tsx'
-import { the_start, type AnExtensionCarried } from './node/index.ts'
+import {
+  the_data_cleared,
+  the_start,
+  type AnExtensionCarried,
+  type TheBrowser,
+  type TheConfiguration,
+} from './node/index.ts'
 import { texts } from './texts/index.ts'
 
 // The PWA's main (CFG-1; step 25, PWA-1..PWA-5): the browser's objects,
@@ -48,26 +54,24 @@ const root = document.getElementById('root')
 if (root === null) throw new Error('missing #root')
 const clock = the_device_s_clock(the_device_s_zone())
 const page = new URL(import.meta.env.BASE_URL, location.origin).href
-const starts = the_start(
-  {
-    indexed_db: indexedDB,
-    key_range: IDBKeyRange,
-    locks: navigator.locks,
-    storage: navigator.storage,
-    fetch: (address, request) => fetch(address, request),
-    crypto,
-    document,
-    network: { navigator, window },
-  },
-  {
-    name: 'cumino',
-    relay: __Q_RELAY__,
-    page,
-    extensions: [carried('ping_pong', ping_pong_manifest)],
-    characters: 1_000_000,
-  },
-  { clock, elapsed: the_time_that_passes },
-)
+const browser: TheBrowser = {
+  indexed_db: indexedDB,
+  key_range: IDBKeyRange,
+  locks: navigator.locks,
+  storage: navigator.storage,
+  fetch: (address, request) => fetch(address, request),
+  crypto,
+  document,
+  network: { navigator, window },
+}
+const configuration: TheConfiguration = {
+  name: 'cumino',
+  relay: __Q_RELAY__,
+  page,
+  extensions: [carried('ping_pong', ping_pong_manifest)],
+  characters: 1_000_000,
+}
+const starts = the_start(browser, configuration, { clock, elapsed: the_time_that_passes })
 /** The device's camera, one at a time: the one opened before is turned off before the next opens (WEB-2). */
 const camera = the_camera(navigator.mediaDevices)
 const a_link = the_link_of(the_ticket_in_a_link(location.href))
@@ -81,7 +85,9 @@ render(
       reopens={() => {
         location.reload()
       }}
-      screens={(node) => (
+      // The data of an older test release (WEB-8): the node's database deleted.
+      clears_the_data={the_data_cleared(browser, configuration)}
+      screens={(node, clears_the_data_and_starts_again) => (
         <TheScreens
           node={node.her}
           device={{
@@ -94,6 +100,10 @@ render(
           }}
           texts={texts.screens}
           {...with_the_link}
+          // Her gesture on the data of an older test release, on the test channel only (WEB-8).
+          {...(clears_the_data_and_starts_again === undefined
+            ? {}
+            : { clears_the_data_and_starts_again })}
           // Ping pong shows no frame in stage 1 (no slot, no page): an
           // extension's documents, and their scripts' hashes in the app's
           // policy, come with the first that has one (PWA-4).

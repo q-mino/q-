@@ -1,7 +1,9 @@
 import { libsodium_primitives, the_reads_of_self } from '@q-mino/adapters-common'
 import {
+  ARecordOutOfItsForm,
   a_realm_in_a_frame,
   ask_to_keep_the_storage,
+  delete_the_node_s_database,
   her_node_over,
   ids_drawn_at_random,
   the_node_s_storage,
@@ -37,7 +39,9 @@ import { a_phone_s_storage, the_kernel_s_domains } from './storage.ts'
 // manifest (CFG-2, EXT-4) before any consumer runs and before the screens
 // ask anything; then its consumers started, and her node as the screens see
 // it (WEB-19). Each outcome is a case of the start, never an exception: a
-// composition fault tells why the node does not start (F6). The browser's
+// composition fault tells why the node does not start (F6), a record out of
+// its form as the data of an older test release (WEB-8), which she can
+// clear on the test channel (the node's database deleted). The browser's
 // objects are given (WEB-5).
 
 /** The browser's objects the start takes (WEB-5). */
@@ -85,7 +89,9 @@ export interface ANodeRunning {
 /**
  * Why the node does not start (PWA-2, PWA-5): an extension the app carries
  * does not compose, each fault by its extension's name and its case, told
- * in her words; or another fault. The message, whole, under "Perché".
+ * in her words; a record the node keeps is out of its form, the data of an
+ * older test release (WEB-8); or another fault. The message, whole, under
+ * "Perché".
  */
 export type WhyItDoesNotStart =
   | {
@@ -96,6 +102,7 @@ export type WhyItDoesNotStart =
       }[]
       readonly message: string
     }
+  | { readonly why: 'the_data_of_an_older_test_release'; readonly message: string }
   | { readonly why: 'a_fault'; readonly message: string }
 
 /** How the start went (PWA-2): another tab writes the node; the node does not start, and why; it runs. */
@@ -111,6 +118,30 @@ export type HowItAsks = 'if_no_tab_is' | 'use_here'
 export const a_collect_every = 5_000
 
 const why_of = (fault: unknown): string => (fault instanceof Error ? fault.message : String(fault))
+
+/** A fault of the start, by its case (PWA-2): a composition's, a record out of its form (WEB-8), another. */
+export const why_it_does_not_start = (fault: unknown): WhyItDoesNotStart =>
+  fault instanceof TheExtensionsDoNotCompose
+    ? {
+        why: 'an_extension_does_not_compose',
+        faults: fault.extensions.flatMap((each) =>
+          each.faults.map((one) => ({ extension: each.name, fault: one.fault })),
+        ),
+        message: fault.message,
+      }
+    : fault instanceof ARecordOutOfItsForm
+      ? { why: 'the_data_of_an_older_test_release', message: fault.message }
+      : { why: 'a_fault', message: why_of(fault) }
+
+/**
+ * The data of an older test release cleared (WEB-8): the node's database
+ * deleted, every store in it. Called once the node has stopped here (its
+ * writer let go, its database closed); the app is then opened again.
+ */
+export const the_data_cleared =
+  (browser: Pick<TheBrowser, 'indexed_db'>, configuration: Pick<TheConfiguration, 'name'>) =>
+  (): Promise<void> =>
+    delete_the_node_s_database(browser.indexed_db)(configuration.name)
 
 /** A consumer the node runs, stopped at its end: a fall it met is told by its stop, borne here (the node stops anyway). */
 interface Running {
@@ -243,19 +274,7 @@ export const the_start =
       // A composition fault (CFG-2, EXT-4): the node does not start, and lets the writer go.
       opened.let_go()
       opened.database.close()
-      return {
-        start: 'it_does_not_start',
-        why:
-          fault instanceof TheExtensionsDoNotCompose
-            ? {
-                why: 'an_extension_does_not_compose',
-                faults: fault.extensions.flatMap((each) =>
-                  each.faults.map((one) => ({ extension: each.name, fault: one.fault })),
-                ),
-                message: fault.message,
-              }
-            : { why: 'a_fault', message: why_of(fault) },
-      }
+      return { start: 'it_does_not_start', why: why_it_does_not_start(fault) }
     }
     const stops_running = the_node_runs(node, time, post.aborted)
     const draws_an_id = ids_drawn_at_random(browser.crypto)
