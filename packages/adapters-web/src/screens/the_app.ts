@@ -11,7 +11,7 @@ import type * as zz from '@q-mino/domains/library'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { createContext, useContext, type Accessor } from 'solid-js'
-import type { AScan } from '../camera/index.ts'
+import type { AFacing, AScan } from '../camera/index.ts'
 import type { HerNode } from '../her_node/index.ts'
 
 /** The device's sources the screens draw from at a gesture (WEB-4, WEB-5), given by the composition root as they are. */
@@ -20,8 +20,13 @@ export interface TheDevice {
   readonly draws_an_id: () => string
   /** The device's clock (`the_device_s_clock`). */
   readonly clock: zz.Clock
-  /** The rear camera, played in the screen's video, its QRs' texts read (`scan_with_the_rear_camera`, WEB-2). */
-  readonly scans: (video: HTMLVideoElement) => Promise<AScan>
+  /**
+   * The device's camera, facing where the screen asks (`user`, the front
+   * camera; `environment`, the rear one), played in the screen's video, its
+   * QRs' texts read, the one before turned off first (`the_camera`,
+   * `scan_with_a_camera`, WEB-2).
+   */
+  readonly scans: (video: HTMLVideoElement, facing: AFacing) => Promise<AScan>
   /** The phone's share and clipboard, by the parts the screens use: the page's `navigator`, given as it is (WEB-5). */
   readonly the_navigator: TheNavigatorsSharing
 }

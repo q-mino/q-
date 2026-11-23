@@ -6,6 +6,7 @@ import type {
   APageToSaveIn,
   AWindowOfTheNetwork,
   CryptographicRandomness,
+  TheMediaDevices,
   the_device_s_clock,
   ThePageOfTheRealms,
 } from '../src/index.ts'
@@ -27,4 +28,5 @@ test("the browser's objects are what the adapters take", () => {
   expectTypeOf<typeof fetch>().toExtend<AFetch>()
   expectTypeOf<Navigator>().toExtend<ANavigatorOnLine>()
   expectTypeOf<Window>().toExtend<AWindowOfTheNetwork>()
+  expectTypeOf<MediaDevices>().toExtend<TheMediaDevices<MediaStream>>()
 })

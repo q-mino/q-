@@ -50,12 +50,18 @@ export {
   type ALook,
 } from './qr/index.ts'
 export {
-  scan_with_the_rear_camera,
-  open_the_rear_camera,
+  scan_with_a_camera,
+  the_camera,
+  open_a_camera,
   why_not_on,
-  the_rear_camera_s_constraints,
+  the_constraints_of,
   type AScan,
   type AnOpenedCamera,
+  type AFacing,
+  type AStream,
+  type TheCamera,
+  type TheCameras,
+  type TheMediaDevices,
   type NotOn,
 } from './camera/index.ts'
 export {

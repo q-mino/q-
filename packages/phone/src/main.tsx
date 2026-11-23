@@ -1,5 +1,6 @@
 import {
-  scan_with_the_rear_camera,
+  scan_with_a_camera,
+  the_camera,
   the_device_s_clock,
   the_device_s_zone,
   the_ticket_in_a_link,
@@ -67,6 +68,8 @@ const starts = the_start(
   },
   { clock, elapsed: the_time_that_passes },
 )
+/** The device's camera, one at a time: the one opened before is turned off before the next opens (WEB-2). */
+const camera = the_camera(navigator.mediaDevices)
 const a_link = the_link_of(the_ticket_in_a_link(location.href))
 /** The link she opened the app with, given to the screens only when there is one. */
 const with_the_link = a_link === undefined ? {} : { a_link }
@@ -84,12 +87,8 @@ render(
           device={{
             draws_an_id: ids_drawn_at_random(crypto),
             clock,
-            scans: (video) =>
-              scan_with_the_rear_camera({
-                media_devices: navigator.mediaDevices,
-                video,
-                elapsed: the_time_that_passes,
-              }),
+            scans: (video, facing) =>
+              scan_with_a_camera({ camera, facing, video, elapsed: the_time_that_passes }),
             // The page's navigator, its share and its clipboard, as it is (WEB-5, WEB-18).
             the_navigator: navigator,
           }}
