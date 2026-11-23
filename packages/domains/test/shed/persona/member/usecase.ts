@@ -24,7 +24,7 @@ export const borrow_a_tool = command_use_case_over({
   is_refused_unless: {
     /** Card M-12 is valid until 31 March 2027: on 1 April Marta borrows no more. */
     the_member_card_is_valid_today: (context) => () =>
-      dsl.the_card_is_valid_on(context.now)(context.card),
+      dsl.the_card_is_valid_today(context)(context.card),
   },
   creator: (context) => (input) => ({
     loan_id: input.loan_id,
@@ -77,7 +77,7 @@ export const take_the_tool_you_booked = command_use_case_over({
   }),
   is_refused_unless: {
     the_member_card_is_valid_today: (context) => () =>
-      dsl.the_card_is_valid_on(context.now)(context.card),
+      dsl.the_card_is_valid_today(context)(context.card),
   },
   creator: (context) => (input) => ({
     loan_id: input.loan_id,
@@ -240,7 +240,7 @@ export const extend_your_loan = command_use_case_over({
   }),
   is_refused_unless: {
     the_member_card_is_valid_today: (context) => () =>
-      dsl.the_card_is_valid_on(context.now)(context.card),
+      dsl.the_card_is_valid_today(context)(context.card),
   },
   creator: (context) => (input) => ({
     loan_id: input.loan_id,
@@ -415,7 +415,7 @@ export const the_shelf = read_use_case_over({
   is_refused_unless: {
     /** Card M-12 is valid until 31 March 2027: on 1 April the shelf is no longer live for her. */
     the_member_card_is_valid_today: (context) => () =>
-      dsl.the_card_is_valid_on(context.now)(context.card),
+      dsl.the_card_is_valid_today(context)(context.card),
   },
   creator: () => () => ({ query: {} }),
   entry: z.strictObject({

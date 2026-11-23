@@ -14,7 +14,7 @@ import { the_node_s_storage, user_ports_on_indexeddb } from '../../../src/index.
 // themselves are the oracle's (`memory/test/user`).
 
 const time_zone = zz.time_zone.parse('UTC')
-const instant = zz.date_time.parse('2026-11-21T10:00:00Z')
+const instant = zz.date_time.parse('2026-11-21T10:00:00.000Z')
 const the_scope_of_the_user = 'self/the_user'
 
 /** Every event of a port, in order. */
@@ -51,7 +51,7 @@ const annas_node = async () => {
   const versions = await zz.versions([activities_majors, drafts_majors, choices_majors])({
     stored: opened.stored_versions,
   })
-  const when = (): zz.RootContext => ({ now: zz.in_zone(time_zone)(instant), time_zone })
+  const when = (): zz.RootContext => ({ now: instant, time_zone })
   /** The context of a command sent under an operation (DOM-11), its fingerprint over its use case's path and its input. */
   const sent_as =
     (path: string, input: unknown) =>
@@ -72,7 +72,7 @@ const rename = {
 const the_card_in_progress = {
   activity_id: 'A1',
   what: rename.what,
-  asked_at: '2026-11-21T10:00:00+00:00',
+  asked_at: '2026-11-21T10:00:00.000Z',
   stage: { stage: 'in_progress' },
 }
 
@@ -149,7 +149,7 @@ test('an end refused writes no fact; an end of one in progress ends it', async (
       entries: [
         {
           activity_id: 'A1',
-          stage: { stage: 'ended', how_it_ended, ended_at: '2026-11-21T10:00:00+00:00' },
+          stage: { stage: 'ended', how_it_ended, ended_at: '2026-11-21T10:00:00.000Z' },
         },
       ],
     },
@@ -186,7 +186,7 @@ test('a draft kept and dropped, her face changed: each office its store, one ord
   expect(await all(user.the_active_face(when(), {}))).toMatchObject([
     {
       event: 'snapshot',
-      entries: [{ choice: 'the_active_face', face: 'F_a', since: '2026-11-21T10:00:00+00:00' }],
+      entries: [{ choice: 'the_active_face', face: 'F_a', since: '2026-11-21T10:00:00.000Z' }],
     },
   ])
   const drop = { for: purpose }

@@ -23,14 +23,14 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-02T10:12:00-05:00'), {
+    shed.member.borrow_a_tool(shed.as(marta, '1.4.0').at('2026-11-02T15:12:00.000Z'), {
       loan_id: 'L1',
       tool_id: 'drill',
     }),
@@ -49,16 +49,16 @@ describe('SC-30: a past read leaf names its rows by the field it declares', () =
     const { snapshot, events } = await followed(
       () =>
         shed.member
-          .my_loans(shed.as(marta, '1.4.0').when('2026-11-16T09:00:00-05:00'), {})
+          .my_loans(shed.as(marta, '1.4.0').when('2026-11-16T14:00:00.000Z'), {})
           [Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T00:00:00-05:00'), {
+          shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T05:00:00.000Z'), {
             loan_id: 'L1',
           }),
         )
         await first(
-          shed.member.return_a_tool(shed.as(marta, '1.4.0').at('2026-11-18T10:00:00-05:00'), {
+          shed.member.return_a_tool(shed.as(marta, '1.4.0').at('2026-11-18T15:00:00.000Z'), {
             loan_id: 'L1',
             tool_id: 'drill',
             condition: 'good',
@@ -66,7 +66,7 @@ describe('SC-30: a past read leaf names its rows by the field it declares', () =
         )
       },
     )
-    const due_date = '2026-11-16T23:59:59.999-05:00'
+    const due_date = '2026-11-17T04:59:59.999Z'
     expect(snapshot).toMatchObject([
       {
         event: 'snapshot',

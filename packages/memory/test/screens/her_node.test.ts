@@ -103,7 +103,7 @@ const annas_phone = async (story: Story) => {
   const made = cell<PhoneState>({ initial: a_new_phone })
   const clock = story.clock
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(clock.time_zone)(clock.now()),
+    now: clock.now(),
     time_zone: clock.time_zone,
   })
   const node = await phone(on_the_cell(made), {
@@ -288,7 +288,7 @@ describe('her node, over a phone of the stack', () => {
     expect(await anna.her.an_activity('A1')).toEqual({
       activity_id: 'A1',
       what: { activity: 'make_my_first_face', face: 'F_a', name: 'Anna' },
-      asked_at: '2026-11-20T10:00:00+00:00',
+      asked_at: '2026-11-20T10:00:00.000Z',
       stage: { stage: 'in_progress' },
     })
     expect((await anna.her.the_activities_in_progress()).map((each) => each.activity_id)).toEqual([
@@ -357,15 +357,15 @@ describe('her node, over a phone of the stack', () => {
         bond: 'L_b',
         name: 'Bruno',
         introduced_as: 'Bruno',
-        confirmation: { state: 'received', at: '2026-11-20T10:00:00+00:00' },
+        confirmation: { state: 'received', at: '2026-11-20T10:00:00.000Z' },
       },
     ])
     expect(await anna.her.a_contact('L_b')).toEqual({
       bond: 'L_b',
       name: 'Bruno',
       introduced_as: 'Bruno',
-      confirmation: { state: 'received', at: '2026-11-20T10:00:00+00:00' },
-      handshake: { way: 'at_a_distance', at: '2026-11-20T10:00:00+00:00' },
+      confirmation: { state: 'received', at: '2026-11-20T10:00:00.000Z' },
+      handshake: { way: 'at_a_distance', at: '2026-11-20T10:00:00.000Z' },
       their_relays: [the_relay],
     })
     expect(await anna.her.a_contact('L_x')).toBeUndefined()
@@ -467,7 +467,7 @@ describe('her node, over a phone of the stack', () => {
         frame: { extension: 'ping_pong', shown: true },
         active: true,
         message,
-        now: '2026-11-21T10:00:00+01:00',
+        now: '2026-11-21T09:00:00.000Z',
       })
       if (fenced.fenced !== 'served') throw new Error('the fence refused it')
       return fenced
@@ -506,7 +506,7 @@ describe('her node, over a phone of the stack', () => {
         version: '1.0.0',
         input: {},
       },
-      now: '2026-11-21T10:00:00+01:00',
+      now: '2026-11-21T09:00:00.000Z',
     })
     if (refused.fenced !== 'refused') throw new Error('the fence served a frame not shown')
     anna.her.a_frame_is_fenced(refused.traced)

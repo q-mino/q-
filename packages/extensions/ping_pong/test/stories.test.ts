@@ -72,12 +72,12 @@ describe('the stories of ping pong, through the boundary', () => {
     expect(the_ping(partition, ping_id)).toEqual({
       id: ping_id,
       bond: 'B-BRUNO',
-      sent_at: '2026-11-20T10:00:00+01:00',
+      sent_at: '2026-11-20T09:00:00.000Z',
       waits: 60,
       progress: {
         stage: 'closed',
         what_came_back: 'the_pong_came_back',
-        at: '2026-11-20T10:00:00+01:00',
+        at: '2026-11-20T09:00:00.000Z',
       },
     })
     expect(the_facts(partition)).toEqual(['a_ping_has_been_sent', 'a_pong_has_been_received'])

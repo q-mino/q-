@@ -124,7 +124,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
   const world = a_world_of(story.primitives, start.phone)
   const clock = story.clock
   const when = (): zz.RootContext => ({
-    now: zz.in_zone(clock.time_zone)(clock.now()),
+    now: clock.now(),
     time_zone: clock.time_zone,
   })
   const transport = a_transport(story.relay, story.time.now)

@@ -127,7 +127,7 @@ export const configurator =
     return {
       invoke: (invocation) => {
         const entry = {
-          now: zz.in_zone(realm.clock.time_zone)(realm.clock.now()),
+          now: realm.clock.now(),
           time_zone: realm.clock.time_zone,
           version: invocation.version,
         }

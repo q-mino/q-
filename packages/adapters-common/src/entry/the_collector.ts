@@ -77,7 +77,7 @@ const the_mailboxes_of = async (
   faults: unknown[],
 ): Promise<readonly AMailboxToCollect[]> => {
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+    now: wiring.clock.now(),
     time_zone: wiring.clock.time_zone,
   })
   const mailboxes = await the_entries_of(wiring.address_book.the_mailboxes_i_collect(now(), {}))

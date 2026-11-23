@@ -92,7 +92,7 @@ const told_in_the_post_s_words = (events: readonly { readonly event: string }[])
 export const the_relay_s_transports = (desk: TheDesk, side: TheDesksSide): TheRelaysTransports => {
   const the_interface = the_desks_interface(side.hash)
   const now = () => ({
-    now: zz.in_zone(side.clock.time_zone)(side.clock.now()),
+    now: side.clock.now(),
     time_zone: side.clock.time_zone,
   })
   return {

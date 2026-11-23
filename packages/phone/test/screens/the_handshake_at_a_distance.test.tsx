@@ -31,7 +31,7 @@ afterEach(() => {
 
 /** Anna's ticket for a bond to be, ready, and its link. */
 const anna_s_ticket_for = (bond: string): HerTicket => ({
-  ready: ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T10:00:00+01:00' }),
+  ready: ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T09:00:00.000Z' }),
   link: the_link_of_a_ticket('https://cumino.example/q-/')(
     activities_value.their_ticket.parse({
       key: `${'a'.repeat(42)}A`,

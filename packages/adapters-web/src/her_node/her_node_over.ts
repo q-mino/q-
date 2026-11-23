@@ -313,7 +313,7 @@ const what_is_offered = (offers: readonly AnOffer[]): activities_value.offered =
 /** Her node, as the screens see it, over the phone's ports. */
 export const her_node_over = (wiring: HerNodesWiring): HerNode => {
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+    now: wiring.clock.now(),
     time_zone: wiring.clock.time_zone,
   })
   /** The context of a command of the user's (DOM-11): now, under an operation drawn for it, in the user's scope. */

@@ -46,7 +46,7 @@ const luca_s_link: ui_value.what_it_holds = { holds: 'a_ticket', ticket: luca_s_
 
 /** Anna's ticket for a bond to be, ready (its link is not drawn here). */
 const anna_s_ticket_for = (bond: string): HerTicket => ({
-  ready: ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-21T10:10:00+01:00' }),
+  ready: ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-21T09:10:00.000Z' }),
   link: 'https://cumino.example/q-/#ticket=',
 })
 

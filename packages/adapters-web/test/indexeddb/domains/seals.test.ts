@@ -27,7 +27,7 @@ const R1 = bytes_all(3)
 const C1 = told(ascii('Anna to Bruno: the first letter'))
 
 const time_zone = zz.time_zone.parse('UTC')
-const instant = zz.date_time.parse('2026-11-21T09:00:00Z')
+const instant = zz.date_time.parse('2026-11-21T09:00:00.000Z')
 
 /** The scope of the reaction that asks the safe: `bonds`' process (step 11). */
 const the_scope_of_a_reaction = 'bonds/reaction/a_face_for_a_bond'
@@ -91,13 +91,13 @@ const a_safe = async () => {
   const sent_as =
     (path: string, input: unknown) =>
     (operation: string, scope: string = the_scope_of_a_reaction): zz.CommandRootContext => ({
-      now: zz.in_zone(time_zone)(instant),
+      now: instant,
       time_zone,
       operation: { id: zz.operation_id.parse(operation), scope },
       correlation: zz.correlation.parse(`correlation-${operation}`),
       fingerprint: zz.fingerprint_of({ path, input }),
     })
-  const when = { now: zz.in_zone(time_zone)(instant), time_zone }
+  const when = { now: instant, time_zone }
   return {
     opened,
     primitives,

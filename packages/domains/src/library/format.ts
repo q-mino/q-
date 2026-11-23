@@ -6,14 +6,15 @@ import * as z from 'zod'
 // (`semver`, DOM-22), a cursor (DOM-20, SC-22) and a position (DOM-17).
 
 /**
- * An instant, ISO 8601, written in the time zone of its writer, with its
- * offset (`2026-11-02T23:30:00-05:00`): the wall clock of the node that wrote
- * it, so that its day is a property of the record (`day_of`), the same for
- * every reader, every peer and every version (SC-12, C, 17 Nov 2026). Two
- * instants compare by their value, never as text: two offsets, and the hour
- * that repeats in autumn, tell one moment in two ways.
+ * An instant, ISO 8601 in UTC, with milliseconds (`2026-11-03T04:30:00.000Z`):
+ * as a clock gives it (`new Date().toISOString()`), one text for one moment,
+ * so that two instants order as text as they do in time (LIB-9 needs no rule
+ * of its own) and an instant tells no zone of its writer. A, 23 Nov 2026
+ * (reopening SC-12 of C, 17 Nov 2026): the zone is data where the business
+ * needs it (`RootContext.time_zone`), never a format's hidden part; a day
+ * that matters is decided with it (`day_of(zone)`) and carried as a day.
  */
-export const date_time = z.iso.datetime({ offset: true }).brand<'date_time'>()
+export const date_time = z.iso.datetime({ precision: 3 }).brand<'date_time'>()
 
 export type date_time = z.output<typeof date_time>
 
@@ -46,20 +47,10 @@ export const time_zone = z
 
 export type time_zone = z.output<typeof time_zone>
 
-/**
- * The calendar day of an instant, the day of its writing: pure over the
- * instant alone, its date as its writer told it, so that a translation
- * between versions (`earlier`) can use it and never changes once published,
- * whatever the domain's `dsl` or the node's zone becomes (DOM-22). Marta took
- * the drill at 23:30 on 2 November in Toronto (`-05:00`): the 2nd, though it
- * was already the 3rd in UTC.
- */
-export const day_of = (instant: date_time): day => day.parse(instant.slice(0, 10))
-
-// From a day to an instant, and an instant told in a zone (SC-12): over the
-// zones of the runtime (`Intl`), the only place the library reads a zone's
-// rules. An instant is a number of milliseconds here, a wall clock the same
-// number read as if in UTC.
+// From an instant to its day and from a day to its instants, in a zone
+// (SC-12): over the zones of the runtime (`Intl`), the only place the library
+// reads a zone's rules. An instant is a number of milliseconds here, a wall
+// clock the same number read as if in UTC.
 
 const a_minute = 60_000
 
@@ -92,6 +83,19 @@ const wall_clock = (zone: time_zone): ((instant: number) => number) => {
   }
 }
 
+/**
+ * The calendar day of an instant in a zone (A, 23 Nov 2026): Marta took the
+ * drill at `2026-11-03T04:30:00.000Z`, 23:30 on 2 November in Toronto, the
+ * 2nd there, already the 3rd in UTC. Only where a context gives the zone (a
+ * creator, a leaf of a past major), never in a translation of a fact, whose
+ * payload has none: a day that matters there is a field of the fact, which
+ * its command decided (SC-12).
+ */
+export const day_of =
+  (zone: time_zone) =>
+  (instant: date_time): day =>
+    day.parse(new Date(wall_clock(zone)(Date.parse(instant))).toISOString().slice(0, 10))
+
 /** The offset of a zone at each instant: its wall clock less the instant, in whole minutes. */
 const offset_in = (zone: time_zone): ((instant: number) => number) => {
   const wall = wall_clock(zone)
@@ -99,18 +103,6 @@ const offset_in = (zone: time_zone): ((instant: number) => number) => {
     const second = instant - (((instant % 1000) + 1000) % 1000)
     return Math.round((wall(second) - second) / a_minute) * a_minute
   }
-}
-
-/** An instant told with an offset: its wall clock there, to the millisecond if it has one, and the offset. */
-const told = (instant: number, offset: number): date_time => {
-  const wall = new Date(instant + offset).toISOString()
-  const milliseconds = wall.slice(19, 23) === '.000' ? '' : wall.slice(19, 23)
-  const minutes = Math.abs(offset) / a_minute
-  const sign = offset < 0 ? '-' : '+'
-  const hours = String(Math.floor(minutes / 60)).padStart(2, '0')
-  return date_time.parse(
-    `${wall.slice(0, 19)}${milliseconds}${sign}${hours}:${String(minutes % 60).padStart(2, '0')}`,
-  )
 }
 
 /** The midnight of a day, read as if in UTC: the wall clock a day starts at. */
@@ -159,44 +151,30 @@ const jump = (offset: (instant: number) => number, from: number, to: number): nu
 const the_day_after = (the_day: day): day =>
   day.parse(new Date(midnight(the_day) + a_day).toISOString().slice(0, 10))
 
+/** An instant, as a clock writes it. */
+const instant_of = (moment: number): date_time => date_time.parse(new Date(moment).toISOString())
+
 /**
- * The first instant of a day in a zone, told in its offset that day: when a
- * wait for a day may go (`not_before`). From a day to an instant only with a
- * zone and its rules, so only where the context gives it (a creator, a leaf
- * of a past major), never in a translation of a fact, whose payload has none
- * (DOM-22). A, 17 Nov 2026 (SC-12): a body of the library, over the zones of
- * its runtime.
+ * The first instant of a day in a zone: when a wait for a day may go
+ * (`not_before`). From a day to an instant only with a zone and its rules, so
+ * only where the context gives it (a creator, a leaf of a past major), never
+ * in a translation of a fact, whose payload has none (DOM-22). A, 17 Nov 2026
+ * (SC-12): a body of the library, over the zones of its runtime.
  */
 export const start_of =
   (zone: time_zone) =>
-  (the_day: day): date_time => {
-    const instant = first_instant(zone, the_day)
-    return told(instant, offset_in(zone)(instant))
-  }
+  (the_day: day): date_time =>
+    instant_of(first_instant(zone, the_day))
 
 /**
- * The last instant of a day in a zone, told in its offset that day: a
- * deadline "by the end of the day" told as an instant (`2026-11-16T23:59:59.999-05:00`).
- * Only where the context gives the zone, as `start_of`.
+ * The last instant of a day in a zone: a deadline "by the end of the day"
+ * told as an instant (the 16th in Toronto, `2026-11-17T04:59:59.999Z`). Only
+ * where the context gives the zone, as `start_of`.
  */
 export const end_of =
   (zone: time_zone) =>
-  (the_day: day): date_time => {
-    const instant = first_instant(zone, the_day_after(the_day)) - 1
-    return told(instant, offset_in(zone)(instant))
-  }
-
-/**
- * An instant told in a zone: the same moment, in the offset the zone has at
- * it. The library tells the context's `now` in the context's zone at every
- * port, whatever offset the entry or the clock gave (SC-12).
- */
-export const in_zone =
-  (zone: time_zone) =>
-  (instant: date_time): date_time => {
-    const moment = Date.parse(instant)
-    return told(moment, offset_in(zone)(moment))
-  }
+  (the_day: day): date_time =>
+    instant_of(first_instant(zone, the_day_after(the_day)) - 1)
 
 /** A version of a domain, semver: major, minor, patch. */
 export const semver = z.templateLiteral([z.number(), '.', z.number(), '.', z.number()])

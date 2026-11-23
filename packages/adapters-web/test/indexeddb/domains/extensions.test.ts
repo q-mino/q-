@@ -16,7 +16,7 @@ import {
 // are the domain's suites', with both modules.
 
 const time_zone = zz.time_zone.parse('Europe/Rome')
-const friday = zz.date_time.parse('2026-11-20T10:00:00+01:00')
+const friday = zz.date_time.parse('2026-11-20T09:00:00.000Z')
 
 /** Greetings' manifest in the office's words, as the kernel's adapter translates it. */
 const greetings = manifest.parse({
@@ -31,14 +31,14 @@ const greetings = manifest.parse({
 
 /** A command's context under an operation (DOM-11), as the user's entry sends it. */
 const sent_as = (path: string, input: unknown, operation: string): zz.CommandRootContext => ({
-  now: zz.in_zone(time_zone)(friday),
+  now: friday,
   time_zone,
   operation: { id: zz.operation_id.parse(operation), scope: 'persona/self' },
   correlation: zz.correlation.parse(`correlation-${operation}`),
   fingerprint: zz.fingerprint_of({ path, input }),
 })
 
-const when = () => ({ now: zz.in_zone(time_zone)(friday), time_zone })
+const when = () => ({ now: friday, time_zone })
 
 const all = async <event>(events: AsyncIterable<event>): Promise<readonly event[]> => {
   const every: event[] = []
