@@ -15,6 +15,11 @@ export const the_handshake_in_person = {
     missing: 'Non trovo una fotocamera.',
     busy: 'La fotocamera è occupata da un’altra app.',
   },
+  // [Q, C, provisional: A to confirm] (23 Nov 2026): the gesture that turns the camera, shown only where the device has more than one.
+  turn_the_camera: {
+    to_the_rear: 'Usa la fotocamera posteriore',
+    to_the_front: 'Usa la fotocamera anteriore',
+  },
   scanned: {
     no_ticket: 'Il QR inquadrato non porta un biglietto.',
     a_ticket_out_of_its_form: 'Il QR inquadrato porta un biglietto guasto.',

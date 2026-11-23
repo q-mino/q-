@@ -1,6 +1,8 @@
-// The handshake in person, rendered (UI-5, WEB-1, WEB-2; stories 14 and 15
-// of `ui`'s README): her ticket prepared and its QR shown, the camera on
-// while she scans, what it reads opened or told, what reaches her node.
+// The handshake in person, rendered (UI-5, WEB-1, WEB-2; stories 14, 15 and
+// 27 of `ui`'s README): her ticket prepared and its QR shown, the camera on
+// while she scans, the front one by default, turned to the rear and back
+// where the device has more than one, what it reads opened or told, what
+// reaches her node.
 
 import { the_link_of_a_ticket } from '@q-mino/adapters-web'
 import { the_words_of_a_bond_made, type HerTicket } from '@q-mino/adapters-web/screens'
@@ -11,6 +13,7 @@ import { a_camera_of_test, a_camera_refused } from './camera_of_test.ts'
 import {
   a_device_of_test,
   a_node_of_test,
+  has_a_button,
   opens_the_app,
   texts,
   the_button,
@@ -103,6 +106,9 @@ describe('the handshake in person', () => {
     await until(() => {
       expect(the_words(app)).not.toContain(in_person.the_camera.off)
     })
+    // The front camera, and one only: nowhere to turn it.
+    expect(camera.facings()).toEqual(['user'])
+    expect(has_a_button(app.shown(), in_person.turn_the_camera.to_the_rear)).toBe(false)
 
     camera.shows(the_link_of(bruno_s_ticket))
     await until(() => {
@@ -243,6 +249,48 @@ describe('the handshake in person', () => {
     await her_ticket_is_ready(carla, refused, 'B2')
     await until(() => {
       expect(the_words(refused)).toContain(in_person.the_camera.refused)
+    })
+  })
+
+  test('the camera faces her at the start; with more than one she turns it to the rear and back', async () => {
+    const anna = anna_with_her_face()
+    const camera = a_camera_of_test('more_than_one')
+    opened = opens_the_app({
+      node: anna.node,
+      device: a_device_of_test(['A10', 'B1', 'A11'], camera.scans),
+    })
+    const app = opened
+    await opens_the_handshake(app)
+    await her_ticket_is_ready(anna, app, 'B1')
+    await until(() => {
+      expect(has_a_button(app.shown(), in_person.turn_the_camera.to_the_rear)).toBe(true)
+    })
+    expect(camera.facings()).toEqual(['user'])
+
+    the_button(app.shown(), in_person.turn_the_camera.to_the_rear).click()
+    await until(() => {
+      expect(has_a_button(app.shown(), in_person.turn_the_camera.to_the_front)).toBe(true)
+    })
+    expect(camera.facings()).toEqual(['user', 'environment'])
+    expect(camera.turned_on()).toBe(2)
+    expect(camera.is_on()).toBe(true)
+
+    the_button(app.shown(), in_person.turn_the_camera.to_the_front).click()
+    await until(() => {
+      expect(has_a_button(app.shown(), in_person.turn_the_camera.to_the_rear)).toBe(true)
+    })
+    expect(camera.facings()).toEqual(['user', 'environment', 'user'])
+    expect(camera.turned_on()).toBe(3)
+
+    // The camera turned scans as before.
+    camera.shows(the_link_of(bruno_s_ticket))
+    await until(() => {
+      expect(anna.activities_asked().at(-1)).toEqual({
+        activity: 'open_their_ticket',
+        bond: 'B1',
+        their_ticket: bruno_s_ticket,
+        name: 'Bruno',
+      })
     })
   })
 
