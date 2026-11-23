@@ -7,6 +7,8 @@ import { _ui, activities, user } from './_scope_value.ts'
 // ticket scanned is opened with the name it introduces itself with, which she
 // may change on the contact. Each phone knows only what it scanned: the other
 // side's confirmation comes with its first letter ("does she have you?").
+// Her QR stays shown after she scanned theirs, until her gesture puts it
+// away: the other phone may still be reading it (Alessandro, 23 Nov 2026).
 
 /** What the screen asked, and whether it ended. */
 export const an_activity_asked = z.strictObject({
@@ -14,12 +16,20 @@ export const an_activity_asked = z.strictObject({
   ended: z.boolean(),
 })
 
-/** What she scanned: a ticket, opened; or a text that holds none, or one out of its form. */
+/**
+ * Her QR once she scanned theirs: still shown, since the other phone may
+ * still be reading it; or put away by her gesture (Alessandro, 23 Nov 2026:
+ * no screen leaves it on its own).
+ */
+export const her_qr = z.enum(['still_shown', 'put_away'])
+
+/** What she scanned: a ticket, opened, with her QR still shown or put away; or a text that holds none, or one out of its form. */
 export const what_she_scanned = z.discriminatedUnion('scanned', [
   z.strictObject({
     scanned: z.literal('their_ticket'),
     ticket: activities.value.their_ticket,
     opened: an_activity_asked,
+    her_qr,
   }),
   z.strictObject({ scanned: z.literal('no_ticket') }),
   z.strictObject({ scanned: z.literal('a_ticket_out_of_its_form') }),
@@ -74,6 +84,8 @@ export const what_happens = z.discriminatedUnion('happens', [
     bond: user.value.a_bond,
     face: user.value.a_face,
   }),
+  /** She is done showing her QR, once she scanned theirs: she puts it away. */
+  z.strictObject({ happens: z.literal('she_puts_her_qr_away') }),
   /** She opens the contact she just made, to name it otherwise. */
   z.strictObject({ happens: z.literal('she_opens_the_contact') }),
   _ui.value.she_goes_back,
@@ -96,7 +108,9 @@ export const what_it_is_given = z.strictObject({
 /**
  * What the screen shows: the ticket being got ready; one that cannot be;
  * ready, its QR and the camera, with what she scanned that holds no ticket;
- * their ticket being opened; bonded, with what her node said of it ("in
+ * their ticket read, her QR still shown until she puts it away, the camera
+ * no longer wanted (the other phone may still be reading hers), while it
+ * opens or once opened; then their ticket being opened; bonded, with what her node said of it ("in
  * person" only when it said `you_met_in_person`, the QR crossed within the
  * window of a crossing; at a distance, as her node measured it, when it
  * said `you_are_bonded` or `your_introduction_is_sent`: BND-10), or Anna
@@ -117,6 +131,11 @@ export const what_it_shows = z.discriminatedUnion('shows', [
     side: the_camera_s_side,
     turn: the_turn,
     scanned: z.enum(['nothing', 'no_ticket', 'a_ticket_out_of_its_form']),
+  }),
+  z.strictObject({
+    shows: z.literal('their_ticket_read'),
+    ticket: _ui.value.a_ticket_ready,
+    introduced_as: z.string().max(80),
   }),
   z.strictObject({ shows: z.literal('opening_their_ticket'), introduced_as: z.string().max(80) }),
   z.strictObject({
