@@ -7,6 +7,7 @@
 // its facts' writes put in it only, and its reads read by range and select
 // in memory, as the oracle does: each office's ports over its own store.
 
+import type { TheUsersOfficesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry as activities_registry } from '@q-mino/domains/user/activities/_registry.ts'
 import { registry as drafts_registry } from '@q-mino/domains/user/drafts/_registry.ts'
@@ -293,7 +294,8 @@ const activities_command_use_cases = { ask_for_an_activity, end_an_activity }
  * (WEB-9), its reads a snapshot of it. No read streams, as the oracle.
  */
 export const user_ports_on_indexeddb =
-  (node: Pick<TheNodesStorage, 'domain'>) => (versions: zz.Versions) => {
+  (node: Pick<TheNodesStorage, 'domain'>) =>
+  (versions: zz.Versions): TheUsersOfficesPorts => {
     const activities = node.domain(activities_path)
     const drafts = node.domain(drafts_path)
     const choices = node.domain(choices_path)

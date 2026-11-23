@@ -5,6 +5,7 @@
 // `dsl` (DOM-5); its facts' writes; and each office's command and read
 // ports over a cell. On the model of `extensions.ts`.
 
+import type { TheUsersOfficesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry as activities_registry } from '@q-mino/domains/user/activities/_registry.ts'
 import { registry as drafts_registry } from '@q-mino/domains/user/drafts/_registry.ts'
@@ -287,7 +288,8 @@ export const activities_command_use_cases = { ask_for_an_activity, end_an_activi
  * them when they need them.
  */
 export const user_ports =
-  (cell: CommandCell<UserState> & ReadCell<UserState>) => (versions: zz.Versions) => {
+  (cell: CommandCell<UserState> & ReadCell<UserState>) =>
+  (versions: zz.Versions): TheUsersOfficesPorts => {
     const commands = { execute: execute(cell), recorded: recorded(cell) }
     return {
       ...zz.command_use_case_ports({
@@ -352,6 +354,3 @@ export const user_ports =
       }),
     }
   }
-
-/** The ports of `user`'s three offices, by name (WEB-16, CFG-5): what a phone's storage gives of them, the oracle's or another, its type written once. */
-export interface TheUsersOfficesPorts extends ReturnType<ReturnType<typeof user_ports>> {}

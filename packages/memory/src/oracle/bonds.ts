@@ -6,6 +6,7 @@
 // port the oracle is given, with the safe's pure function (BND-9, SEA-6):
 // the configurator's, a fake in the stories, libsodium from step 18.
 
+import type { TheAddressBooksPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
 import type * as address_book_fact from '@q-mino/domains/bonds/address_book/_fact.ts'
@@ -469,7 +470,7 @@ export const bonds_command_adapter = (cell: CommandCell<BondsState>, primitives:
  */
 export const bonds_ports =
   (cell: CommandCell<BondsState> & ReadCell<BondsState>, primitives: Primitives) =>
-  (versions: zz.Versions) => ({
+  (versions: zz.Versions): TheAddressBooksPorts => ({
     ...zz.command_use_case_ports({
       registry,
       versions,
@@ -509,6 +510,3 @@ export const bonds_ports =
       streams: {},
     }),
   })
-
-/** The address book's ports (`bonds/address_book`), by name (WEB-16, CFG-5): what a phone's storage gives of it, the oracle's or another, its type written once. */
-export interface TheAddressBooksPorts extends ReturnType<ReturnType<typeof bonds_ports>> {}

@@ -48,6 +48,11 @@ import {
   type Hosted,
   type TheFollowing,
   type TheKernelsTraced,
+  type TheAddressBooksPorts,
+  type TheOfficesPorts,
+  type ThePostsPorts,
+  type TheSafesPorts,
+  type TheUsersOfficesPorts,
   type Transport,
 } from '@q-mino/adapters-common'
 import * as boundary from '@q-mino/boundary'
@@ -132,11 +137,6 @@ import {
   type Partitions,
   type PostState,
   type SealsState,
-  type TheAddressBooksPorts,
-  type TheOfficesPorts,
-  type ThePostsPorts,
-  type TheSafesPorts,
-  type TheUsersOfficesPorts,
   type UserState,
 } from '../oracle/index.ts'
 
