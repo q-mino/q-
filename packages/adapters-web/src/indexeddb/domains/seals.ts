@@ -9,6 +9,7 @@
 // The meanings from the domain's `dsl` (DOM-5); the calculations over the
 // primitives port the configurator gives (SEA-5, SEA-6).
 
+import type { TheSafesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/seals/safe/_registry.ts'
 import type * as safe_fact from '@q-mino/domains/seals/safe/_fact.ts'
@@ -233,7 +234,7 @@ export const seals_ports_on_indexeddb = (
 ) => {
   const storage = node.domain(the_safe_s_path)
   const reads = reads_in(storage)
-  return (versions: zz.Versions) => ({
+  return (versions: zz.Versions): TheSafesPorts => ({
     ...zz.command_use_case_ports({
       registry,
       versions,

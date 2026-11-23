@@ -8,6 +8,7 @@
 // secret of a ticket is verified over the primitives port, with the safe's
 // pure function (BND-9, SEA-6), as the oracle does.
 
+import type { TheAddressBooksPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
 import type * as address_book_fact from '@q-mino/domains/bonds/address_book/_fact.ts'
@@ -442,7 +443,8 @@ const bonds_command_use_cases = {
  * (WEB-8). No read streams, as the oracle's.
  */
 export const bonds_ports_on_indexeddb =
-  (node: Pick<TheNodesStorage, 'domain'>, primitives: Primitives) => (versions: zz.Versions) => {
+  (node: Pick<TheNodesStorage, 'domain'>, primitives: Primitives) =>
+  (versions: zz.Versions): TheAddressBooksPorts => {
     const storage = node.domain('bonds/address_book')
     const { read, page } = reads_in(storage)
     return {

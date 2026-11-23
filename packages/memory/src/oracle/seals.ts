@@ -6,6 +6,7 @@
 // port the oracle is given (SEA-5, SEA-6): the safe's machine is the
 // configurator's, a fake in the stories, libsodium from step 18.
 
+import type { TheSafesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/seals/safe/_registry.ts'
 import type * as safe_fact from '@q-mino/domains/seals/safe/_fact.ts'
@@ -224,7 +225,7 @@ export const seals_command_adapter = (cell: CommandCell<SealsState>) => ({
  */
 export const seals_ports =
   (cell: CommandCell<SealsState> & ReadCell<SealsState>, primitives: Primitives) =>
-  (versions: zz.Versions) => ({
+  (versions: zz.Versions): TheSafesPorts => ({
     ...zz.command_use_case_ports({
       registry,
       versions,

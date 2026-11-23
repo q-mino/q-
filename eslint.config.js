@@ -80,6 +80,11 @@ export default defineConfig(
         'error',
         { allow: ['eslint-disable-next-line'] },
       ],
+      // A composed result exported has a type by name: an interface that extends the composition's own type, written once (CFG-5).
+      '@typescript-eslint/no-empty-object-type': [
+        'error',
+        { allowInterfaces: 'with-single-extends' },
+      ],
     },
   },
   {
