@@ -15,7 +15,7 @@ import { accounts, all, first, oracle, type Who } from '../shed/scenarios/oracle
 
 const marta: Who = { identified_by: 'account', id: 'A-MARTA' }
 const paolo: Who = { identified_by: 'session', id: 'S-PAOLO' }
-const at = '2026-11-19T10:00:00-05:00'
+const at = '2026-11-19T15:00:00.000Z'
 
 const the_shed = async () => {
   const shed = await oracle({
@@ -25,7 +25,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -64,7 +64,7 @@ describe('the ports of a tree by path (EXT-5, PER-6)', () => {
       ),
     ).toMatchObject([{ event: 'you_have_the_tool', payload: { loan_id: 'L7', tool_id: 'drill' } }])
     // Her loans stream: their first event, the snapshot, by path and by name.
-    const later = shed.as(marta, '2.0.0').when('2026-11-19T11:00:00-05:00')
+    const later = shed.as(marta, '2.0.0').when('2026-11-19T16:00:00.000Z')
     const read = await first(by_path(later, { leaf: 'usecase/my_loans', input: {} }))
     expect(read).toEqual(await first(by_name.my_loans(later, {})))
     expect(read).toMatchObject({ event: 'snapshot', entries: [{ loan_id: 'L7' }] })

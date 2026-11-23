@@ -21,7 +21,8 @@ import type { Semver, date_time, time_zone } from './format.ts'
  *
  * The node's calendar is part of it (SC-12, C, 17 Nov 2026): its zone
  * (`time_zone`), declared by the configuration of the node, not by a domain,
- * since one domain serves sheds in many towns; and `now` told in that zone.
+ * since one domain serves sheds in many towns; `now` is an instant in UTC,
+ * which tells no zone (A, 23 Nov 2026), its day `day_of(time_zone)(now)`.
  */
 export interface RootContext {
   readonly now: date_time
@@ -32,10 +33,11 @@ export interface RootContext {
 export type Now = Pick<RootContext, 'now'>
 
 /**
- * The clock of a node (SC-12, C, 17 Nov 2026): the instant, in any offset,
- * and the zone of the node's calendar, which its configuration declares. An
- * internal entry (the effect executor, the reaction consumers) builds its
- * context from it: `now` told in the zone (`in_zone`), and the zone.
+ * The clock of a node (SC-12, C, 17 Nov 2026): the instant, as a clock writes
+ * it (`new Date().toISOString()`, A, 23 Nov 2026), and the zone of the node's
+ * calendar, which its configuration declares. An internal entry (the effect
+ * executor, the reaction consumers) builds its context from it: `now` as the
+ * clock gives it, and the zone.
  */
 export interface Clock {
   readonly now: () => date_time

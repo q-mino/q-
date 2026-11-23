@@ -231,14 +231,14 @@ export const a_phone = async (start: Start) => {
       operations += 1
       const id = sent.operation ?? `op-${String(operations)}`
       return {
-        now: zz.in_zone(clock.time_zone)(clock.now()),
+        now: clock.now(),
         time_zone: clock.time_zone,
         operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = () => ({ now: zz.in_zone(clock.time_zone)(clock.now()), time_zone: clock.time_zone })
+  const when = () => ({ now: clock.now(), time_zone: clock.time_zone })
   const facts = log(made)
   const questions: AQuestion[] = []
   const answering: { current: Answering } = {

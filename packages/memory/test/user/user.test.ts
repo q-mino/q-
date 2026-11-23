@@ -66,7 +66,7 @@ describe('user, on q-’s oracle (part 15.2)', () => {
       {
         activity_id: 'A1',
         what: rename,
-        asked_at: '2026-11-20T10:00:00+00:00',
+        asked_at: '2026-11-20T10:00:00.000Z',
         stage: { stage: 'in_progress' },
       },
     ])
@@ -375,7 +375,7 @@ describe('user, on q-’s oracle (part 15.2)', () => {
       draft_id: 'the_name_i_give_a_bond/L_b',
       for: for_l_b,
       text: 'Bruno',
-      kept_at: '2026-11-20T10:00:00+00:00',
+      kept_at: '2026-11-20T10:00:00.000Z',
     })
     expect(the_facts_of(await anna.keeps_a_draft(for_l_b, 'Bruno'))).toEqual([
       'a_draft_has_been_kept_again',
@@ -410,7 +410,7 @@ describe('user, on q-’s oracle (part 15.2)', () => {
     expect(await anna.the_active_face()).toEqual({
       choice: 'the_active_face',
       face: 'F_a',
-      since: '2026-11-20T10:00:00+00:00',
+      since: '2026-11-20T10:00:00.000Z',
     })
     expect(the_facts_of(await anna.changes_face('F_a'))).toEqual([
       'the_active_face_has_been_changed_again',
@@ -535,7 +535,7 @@ describe('user, on q-’s oracle (part 15.2)', () => {
   })
 
   test('each reason of the kernel’s trace is told in her words', () => {
-    const now = '2026-11-20T10:00:00+00:00'
+    const now = '2026-11-20T10:00:00.000Z'
     const request = {
       invokes: {
         of: 'an_extension',

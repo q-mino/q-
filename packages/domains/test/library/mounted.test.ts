@@ -33,7 +33,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -58,7 +58,7 @@ describe('a tree whose top point is given its context from outside (EXT-11)', ()
       top: member_mounted,
       use_cases: { borrow_a_tool },
     })({ invoked: shed.invoked, log: shed.log, trace: shed.trace })
-    const at = '2026-11-19T10:00:00-05:00'
+    const at = '2026-11-19T15:00:00.000Z'
     expect(
       await all(
         mounted.borrow_a_tool(shed.as(marta, '2.0.0').at(at), { loan_id: 'L7', tool_id: 'drill' }),
@@ -159,7 +159,7 @@ const waving = async () => {
 }
 
 describe('leaves mounted from outside, below a node (PER-6, EXT-6)', () => {
-  const at = '2026-11-19T10:00:00-05:00'
+  const at = '2026-11-19T15:00:00.000Z'
 
   test('Marta waves: the invocation has the context the nodes give, her card; an event the surface does not type goes aside', async () => {
     const { shed, port, invocations, outside } = await waving()

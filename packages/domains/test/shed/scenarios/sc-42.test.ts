@@ -25,10 +25,10 @@ import { drill, sander } from './shed.ts'
 // Gianni's hands.
 
 const damage = 'reaction/damage/reaction/the_damaged_tool_goes_to_repair'
-const tuesday = '2026-11-17T09:00:00-05:00'
-const wednesday = '2026-11-18T09:00:00-05:00'
-const thursday = '2026-11-19T10:00:00-05:00'
-const friday = '2026-11-20T09:00:00-05:00'
+const tuesday = '2026-11-17T14:00:00.000Z'
+const wednesday = '2026-11-18T14:00:00.000Z'
+const thursday = '2026-11-19T15:00:00.000Z'
+const friday = '2026-11-20T14:00:00.000Z'
 
 /** The stay an operation opens, as `tools` names it (SC-7). */
 const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
@@ -49,10 +49,10 @@ const reacting_to = (operation: zz.Operation): zz.Operation =>
 const the_story = async (start: Start = {}, saves_its_position = true) => {
   const shed = await oracle(start)
   for (const tool of [drill, sander]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), tool))
   }
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-09T10:00:00-05:00', { scope: 'member/M-12' }), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-09T15:00:00.000Z', { scope: 'member/M-12' }), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -85,8 +85,8 @@ const the_story = async (start: Start = {}, saves_its_position = true) => {
   await first(
     shed.loans.return_a_tool(f2, { loan_id: 'L9', tool_id: 'drill', condition: 'damaged' }),
   )
-  await shed.pass('2026-11-19T15:00:00-05:00')
-  const f3 = shed.at('2026-11-19T15:00:00-05:00', { operation: 'F3', scope: 'member/M-7' })
+  await shed.pass('2026-11-19T20:00:00.000Z')
+  const f3 = shed.at('2026-11-19T20:00:00.000Z', { operation: 'F3', scope: 'member/M-7' })
   await first(
     shed.loans.return_a_tool(f3, { loan_id: 'L10', tool_id: 'sander', condition: 'damaged' }),
   )

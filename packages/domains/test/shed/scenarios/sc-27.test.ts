@@ -15,7 +15,7 @@ import { accounts, all, first, oracle, pull, quiet, settled, type Who } from './
 
 const marta: Who = { identified_by: 'account', id: 'A-MARTA' }
 
-const friday = '2026-11-20T10:00:00-05:00'
+const friday = '2026-11-20T15:00:00.000Z'
 
 /** The drill (1) and the sander (2) in the shed; Marta borrows the drill on Thursday (L7, 3). */
 const the_shed = async () => {
@@ -30,11 +30,11 @@ const the_shed = async () => {
     ['sander', 'Belt sander'],
   ] as const) {
     await first(
-      shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), { id, name, category: 'power' }),
+      shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), { id, name, category: 'power' }),
     )
   }
   await first(
-    shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-19T10:00:00-05:00'), {
+    shed.member.borrow_a_tool(shed.as(marta, '2.0.0').at('2026-11-19T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
     }),
@@ -51,7 +51,7 @@ const the_shed = async () => {
     )
   /** The consumers of the reactions start, a minute after her return: the workshop takes the drill in (`reaction/damage/`). */
   const taken_in = async () => {
-    const consumers = shed.reactions({ at: '2026-11-20T10:01:00-05:00' })
+    const consumers = shed.reactions({ at: '2026-11-20T15:01:00.000Z' })
     await quiet()
     return consumers
   }
