@@ -7,7 +7,7 @@ import { first, oracle } from './oracle.ts'
 describe('SC-1, Luca adds the drill to the catalogue', () => {
   test('the branch applied records its fact, in its envelope, with its resources', async () => {
     const shed = await oracle()
-    const thursday = shed.at('2026-11-19T10:00:00-05:00')
+    const thursday = shed.at('2026-11-19T15:00:00.000Z')
     expect(
       await first(
         shed.tools.add_a_tool(thursday, { id: 'drill', name: 'Cordless drill', category: 'power' }),
@@ -26,7 +26,7 @@ describe('SC-1, Luca adds the drill to the catalogue', () => {
                 name: 'Cordless drill',
                 category: 'power',
                 status: 'inService',
-                addDate: '2026-11-19T10:00:00-05:00',
+                addDate: '2026-11-19T15:00:00.000Z',
               },
             },
             resources: [{ path: 'business/tools/id/tool_id', value: 'drill' }],
@@ -41,7 +41,7 @@ describe('SC-1, Luca adds the drill to the catalogue', () => {
   test('the same tool again is rejected, naming the predicate that failed under NOT', async () => {
     const shed = await oracle()
     await first(
-      shed.tools.add_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+      shed.tools.add_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
         id: 'drill',
         name: 'Cordless drill',
         category: 'power',
@@ -49,7 +49,7 @@ describe('SC-1, Luca adds the drill to the catalogue', () => {
     )
     expect(
       await first(
-        shed.tools.add_a_tool(shed.at('2026-11-19T10:05:00-05:00'), {
+        shed.tools.add_a_tool(shed.at('2026-11-19T15:05:00.000Z'), {
           id: 'drill',
           name: 'Drill',
           category: 'power',
@@ -71,7 +71,7 @@ describe('SC-1, Luca adds the drill to the catalogue', () => {
     const shed = await oracle()
     expect(
       await first(
-        shed.tools.add_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+        shed.tools.add_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
           id: 'drill',
           name: '',
           category: 'power',

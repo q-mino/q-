@@ -18,7 +18,7 @@ const a_shed_with_the_drill = () => a_shed_with(drill)
 const asks_for_the_drill = (loan_id: string, member_id: string) => (shed: Shed) =>
   first(
     shed.loans.borrow_a_tool(
-      shed.at('2026-11-19T10:00:00-05:00', {
+      shed.at('2026-11-19T15:00:00.000Z', {
         operation: loan_id,
         scope: `member/${member_id}`,
       }),
@@ -68,7 +68,7 @@ describe('SC-11, Marta and Gianni ask for the last drill at the same instant', (
     const shed = await a_shed_with_the_drill()
     await Promise.all([marta(shed), gianni(shed)])
     expect(
-      await first(shed.tools.add_a_tool(shed.at('2026-11-19T10:05:00-05:00'), sander)),
+      await first(shed.tools.add_a_tool(shed.at('2026-11-19T15:05:00.000Z'), sander)),
     ).toMatchObject({ outcome: 'applied', position: '3' })
   })
 

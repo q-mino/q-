@@ -20,7 +20,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
       id: 'ladder',
       name: 'Ladder',
       category: 'ladder',
@@ -33,7 +33,7 @@ describe('SC-25, the visitor, worn by anyone', () => {
   test('a session, an account, a key: the same catalogue', async () => {
     const shed = await the_shed()
     const read = (who: Who) =>
-      all(shed.visitor.the_catalogue(shed.as(who, '1.0.0').when('2026-11-19T10:00:00-05:00'), {}))
+      all(shed.visitor.the_catalogue(shed.as(who, '1.0.0').when('2026-11-19T15:00:00.000Z'), {}))
     const expected = [
       {
         event: 'snapshot',
@@ -51,7 +51,7 @@ describe('SC-25, the visitor, worn by anyone', () => {
     const shed = await the_shed()
     const retire = (who: Who) =>
       all(
-        shed.keeper.retire_a_tool(shed.as(who, '1.0.0').at('2026-11-19T10:00:00-05:00'), {
+        shed.keeper.retire_a_tool(shed.as(who, '1.0.0').at('2026-11-19T15:00:00.000Z'), {
           tool_id: 'ladder',
           reason: 'broken',
         }),
@@ -61,7 +61,7 @@ describe('SC-25, the visitor, worn by anyone', () => {
     expect(await retire(rossi)).toEqual([{ event: 'not_found' }])
     // Nothing was recorded: the ladder is still in the catalogue.
     expect(
-      await first(shed.tools.the_catalogue(shed.when('2026-11-19T10:01:00-05:00'), {})),
+      await first(shed.tools.the_catalogue(shed.when('2026-11-19T15:01:00.000Z'), {})),
     ).toMatchObject({ entries: [{ id: 'ladder' }], position: '1' })
     expect(await retire(luca)).toMatchObject([{ event: 'the_tool_is_retired' }])
   })

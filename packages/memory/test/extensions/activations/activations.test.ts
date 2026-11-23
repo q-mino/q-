@@ -22,7 +22,8 @@ import {
 // phone: his face F_b; bond L_a with Anna. Friday 20 November 2026, 10:00
 // in Rome.
 
-const friday = (time: string): string => `2026-11-20T${time}+01:00`
+/** An instant on Friday 20 November 2026, at a time in Rome, as the clock writes it (UTC). */
+const friday = (time: string): string => new Date(`2026-11-20T${time}+01:00`).toISOString()
 
 /** Anna's phone, greetings installed (or what the story installs). */
 const annas_phone = (installed: readonly Manifest[] = [greetings]) =>

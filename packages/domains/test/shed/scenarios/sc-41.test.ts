@@ -16,7 +16,7 @@ import { drill } from './shed.ts'
 // step and retired it, the cancellation's sheet cancels R9, which leaves the
 // round's selection: Paolo gets no repair notice.
 
-const tuesday = '2026-11-17T09:00:00-05:00'
+const tuesday = '2026-11-17T14:00:00.000Z'
 const notice = 'business/loans/effect/send_the_repair_notice'
 
 /** The last segment of the paths of each fact's parts, in the order of the log. */
@@ -46,13 +46,13 @@ const stay_of = (payload: unknown): string => {
 /** The drill in the shed; on Monday Gianni (M-7) books it for Thursday (R8), Paolo (M-9) for 10 December (R9). */
 const the_shed = async (start: Start = {}) => {
   const shed = await oracle(start)
-  await first(shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), drill))
+  await first(shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), drill))
   for (const [reservation_id, member_id, day] of [
     ['R8', 'M-7', '2026-11-19'],
     ['R9', 'M-9', '2026-12-10'],
   ] as const) {
     await first(
-      shed.loans.reserve_a_tool(shed.at('2026-11-16T09:00:00-05:00'), {
+      shed.loans.reserve_a_tool(shed.at('2026-11-16T14:00:00.000Z'), {
         reservation_id,
         tool_id: 'drill',
         member_id,
@@ -135,12 +135,12 @@ describe('SC-41, the round of the notices of a repair', () => {
     const rp1 = await to_the_workshop(tuesday)
     await quiet()
     await first(
-      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T09:00:00-05:00'), {
+      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T14:00:00.000Z'), {
         tool_id: 'drill',
       }),
     )
-    await shed.pass('2026-11-24T09:00:00-05:00')
-    const rp2 = await to_the_workshop('2026-11-24T09:00:00-05:00')
+    await shed.pass('2026-11-24T14:00:00.000Z')
+    const rp2 = await to_the_workshop('2026-11-24T14:00:00.000Z')
     await quiet()
     await consumers.stop()
     expect(rp2).not.toBe(rp1)
@@ -168,7 +168,7 @@ describe('SC-41, the round of the notices of a repair', () => {
     const round = () =>
       first(shed.loans.continue_the_repair_notice_round(shed.at(tuesday), { repair_id: rp1 }))
     expect(await round()).toMatchObject({ outcome: 'applied', branch: 'advances' })
-    const wednesday = '2026-11-18T09:00:00-05:00'
+    const wednesday = '2026-11-18T14:00:00.000Z'
     await first(shed.tools.retire_a_tool(shed.at(wednesday), { id: 'drill', reason: 'broken' }))
     await first(
       shed.loans.cancel_the_reservations_of_a_tool(shed.at(wednesday), { tool_id: 'drill' }),

@@ -9,7 +9,7 @@ import { a_shed_with, drill } from './shed.ts'
 describe('SC-4, Marta borrows the drill', () => {
   test("the loan names the drill by the identity of tools, among the fact's resources", async () => {
     const shed = await a_shed_with(drill)
-    const thursday = shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-12' })
+    const thursday = shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-12' })
     expect(
       await first(
         shed.loans.borrow_a_tool(thursday, { loan_id: 'L7', tool_id: 'drill', member_id: 'M-12' }),
@@ -27,7 +27,8 @@ describe('SC-4, Marta borrows the drill', () => {
                 id: 'L7',
                 tool_id: 'drill',
                 member_id: 'M-12',
-                start_date: '2026-11-19T10:00:00-05:00',
+                start_date: '2026-11-19T15:00:00.000Z',
+                start_day: '2026-11-19',
                 due_day: '2026-12-03',
                 progress: { stage: 'ongoing', term: 'running' },
               },
@@ -49,7 +50,7 @@ describe('SC-4, Marta borrows the drill', () => {
     const shed = await a_shed_with(drill)
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'sander',
           member_id: 'M-12',
@@ -80,7 +81,7 @@ describe('SC-4, Marta borrows the drill', () => {
   test('the drill on loan to Marta: Gianni is refused by a predicate under NOT', async () => {
     const shed = await a_shed_with(drill)
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         member_id: 'M-12',
@@ -88,7 +89,7 @@ describe('SC-4, Marta borrows the drill', () => {
     )
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-19T11:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-19T16:00:00.000Z'), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',

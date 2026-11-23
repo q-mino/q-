@@ -23,7 +23,7 @@ const the_shed = async () => {
     { id: 'ladder', name: 'Ladder', category: 'ladder' as const },
     { id: 'drill', name: 'Cordless drill', category: 'power' as const },
   ]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), tool))
   }
   return shed
 }
@@ -31,7 +31,7 @@ const the_shed = async () => {
 describe('SC-26, the base events', () => {
   test('an input not in its schema: invalid_request, and nothing recorded', async () => {
     const shed = await the_shed()
-    const at = shed.as(luca, '1.0.0').at('2026-11-19T10:00:00-05:00')
+    const at = shed.as(luca, '1.0.0').at('2026-11-19T15:00:00.000Z')
     // A field the leaf does not declare, as a client may send it.
     const sent = { tool_id: 'ladder', reason: 'broken' as const, by: 'Luca' }
     expect(await all(shed.keeper.retire_a_tool(at, sent))).toEqual([
@@ -43,7 +43,7 @@ describe('SC-26, the base events', () => {
       { event: 'invalid_request', reason: 'input_not_in_schema' },
     ])
     expect(
-      await first(shed.tools.the_catalogue(shed.when('2026-11-19T10:01:00-05:00'), {})),
+      await first(shed.tools.the_catalogue(shed.when('2026-11-19T15:01:00.000Z'), {})),
     ).toMatchObject({ position: '2', total: 2 })
     // The caller reads a formal reason; the trace keeps which field and which rule (D106.3, part 6.2).
     expect(shed.traced()).toMatchObject([
@@ -73,7 +73,7 @@ describe('SC-26, the base events', () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.keeper.retire_a_tool(shed.as(marta, '1.0.0').at('2026-11-19T10:00:00-05:00'), {
+        shed.keeper.retire_a_tool(shed.as(marta, '1.0.0').at('2026-11-19T15:00:00.000Z'), {
           tool_id: 'ladder',
           reason: 'broken',
           notes: 'x'.repeat(501),
@@ -84,7 +84,7 @@ describe('SC-26, the base events', () => {
 
   test('a read: a page too long, or a cursor not of its order (the base64url of "not a cursor"), is invalid_request', async () => {
     const shed = await the_shed()
-    const when = shed.as(paolo, '1.0.0').when('2026-11-19T10:00:00-05:00')
+    const when = shed.as(paolo, '1.0.0').when('2026-11-19T15:00:00.000Z')
     expect(await all(shed.visitor.the_catalogue(when, { page_size: 101 }))).toEqual([
       { event: 'invalid_request', reason: 'input_not_in_schema' },
     ])
@@ -97,7 +97,7 @@ describe('SC-26, the base events', () => {
     const shed = await the_shed()
     const luca_at = shed.as(luca, '1.0.0')
     const first_try = await all(
-      shed.keeper.retire_a_tool(luca_at.at('2026-11-19T10:00:00-05:00', { operation: 'R-1' }), {
+      shed.keeper.retire_a_tool(luca_at.at('2026-11-19T15:00:00.000Z', { operation: 'R-1' }), {
         tool_id: 'ladder',
         reason: 'broken',
       }),
@@ -105,13 +105,13 @@ describe('SC-26, the base events', () => {
     expect(first_try).toEqual([
       {
         event: 'the_tool_is_retired',
-        payload: { tool_id: 'ladder', date: '2026-11-19T10:00:00-05:00' },
+        payload: { tool_id: 'ladder', date: '2026-11-19T15:00:00.000Z' },
       },
     ])
     // His screen got no answer: the retry, its fields in another order, an hour on.
     expect(
       await all(
-        shed.keeper.retire_a_tool(luca_at.at('2026-11-19T11:00:00-05:00', { operation: 'R-1' }), {
+        shed.keeper.retire_a_tool(luca_at.at('2026-11-19T16:00:00.000Z', { operation: 'R-1' }), {
           reason: 'broken',
           tool_id: 'ladder',
         }),
@@ -120,7 +120,7 @@ describe('SC-26, the base events', () => {
     // The same operation, another request.
     expect(
       await all(
-        shed.keeper.retire_a_tool(luca_at.at('2026-11-19T11:00:00-05:00', { operation: 'R-1' }), {
+        shed.keeper.retire_a_tool(luca_at.at('2026-11-19T16:00:00.000Z', { operation: 'R-1' }), {
           tool_id: 'drill',
           reason: 'broken',
         }),
