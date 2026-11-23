@@ -830,6 +830,41 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
     expect(invocations_on(anna)).toEqual([])
   })
 
+  test('a response over what a letter carries is traced and never deposited: the asker reads no response at its time', async () => {
+    // Anna's code changed (F2): greetings' greeting back carries 40 000 characters, over the 32 KiB of PST-12.
+    const { story, anna, bruno, K_b } = await annas_phone()
+    anna.tampers_with_its_responses(() => ({
+      event: 'greeted_back',
+      payload: { words: 'x'.repeat(40_000) },
+    }))
+    const greeting = await greets(bruno, 'L_a')
+    const request = bruno.the_request_of(greeting)
+    await anna.serves()
+    expect(anna.traced).toMatchObject([
+      {
+        why: 'a_response_not_deposited',
+        response: {
+          letter: anna.the_response_to(request),
+          answers: request,
+          caller: { is: 'a_face', key: K_b },
+        },
+        answered: { outcome: 'too_large_for_a_letter' },
+      },
+    ])
+    expect(carried_by(anna)).toEqual([])
+    // Each copy his post sends again meets the same: traced, nothing deposited (A, 23 Nov 2026).
+    await to_the_end_of_its_time(story, bruno, greeting, anna)
+    expect(bruno.the_greeting(greeting)).toMatchObject(
+      closed_with({ outcome: 'the_greeting_had_no_response' }),
+    )
+    expect(await bruno.the_answer_to(request)).toMatchObject([
+      { answer: { status: 'no_response' } },
+    ])
+    expect(anna.whys()).toEqual(Array.from({ length: 4 }, () => 'a_response_not_deposited'))
+    expect(carried_by(anna)).toEqual([])
+    expect(bruno.collected()).toEqual([])
+  })
+
   test('a response the relay refuses is traced, and asked again', async () => {
     const { story, anna, bruno, K_b, D_b } = await annas_phone()
     const greeting = await greets(bruno, 'L_a')

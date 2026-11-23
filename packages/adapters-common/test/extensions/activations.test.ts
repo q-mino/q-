@@ -269,6 +269,17 @@ describe('the delivery of the extensions in common (EXT-8, F7)', () => {
     })
   })
 
+  test('a question too large for a letter: recorded as no_response, the port traced why (PST-12)', async () => {
+    const { port } = a_port({ answer: 'too_large_for_a_letter' })
+    expect(await the_delivery_of_the_extensions_in_common(port)(q1)).toEqual({
+      outcome: 'delivered',
+      returns: {
+        question_id: 'Q1',
+        what_came_back: { outcome: 'no_answer_came_back', why: 'no_response' },
+      },
+    })
+  })
+
   test('the bond gone: the delivery exhausted, a dead letter (DOM-15)', async () => {
     const { port } = a_port({ answer: 'the_bond_is_gone' })
     expect(await the_delivery_of_the_extensions_in_common(port)(q1)).toEqual({
