@@ -32,6 +32,12 @@ q- (read _Cumino_) is a network of messages between real people, with no center.
 ## Working
 
 - One session per step of the [development plan](docs/plan.md), on its own branch, through a pull request. Never push to `main`; Alessandro reviews and merges. Releases (tags `v*`) are his.
-- "Done" means `pnpm check` and `pnpm build` pass locally.
+- "Done" means `pnpm check` and `pnpm build` pass locally (a diff with no code — Markdown, text, images — only `pnpm format:check`).
+- **While writing**, check the package you touch: `timeout 300 pnpm check:package <folder under packages/>` (its projects, its lint, its tests; TST-12). It does not see what breaks downstream.
+- **The whole check**, `timeout 900 pnpm check` (TST-11), at the end of each level of work, before every commit and before every push.
+- **One watch per checkout**: a `tsc -b --watch` on the package being written may run alongside (then `pnpm check:package <folder> --only=lint,test`); reuse the live one (`pgrep -af 'tsc -b'`), stop it before the whole check, a merge or a change of branch.
+- **Every heavy command inside `timeout`** (check, typecheck, lint, tests, build).
+- **One worktree per session that writes code**: two writers never share a checkout; heavy measures of two sessions at once are serialized by one lock outside the worktrees (`flock /tmp/q-heavy.lock <command>`).
+- **Three red runs on the same failure**: stop, write it down, go on with what does not depend on it.
 - The software informs, it does not guarantee: when you add a guarantee, ask "can it be tampered with?"; if yes, it becomes a declared feature, not a defense.
 - Decisions and the session log live in Alessandro's notes, outside this repository: see `CLAUDE.local.md` if present.
