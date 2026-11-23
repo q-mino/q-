@@ -3227,6 +3227,15 @@
         }
       }
     },
+    "bonds/address_book/command/the_user_has_no_face": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
     "bonds/address_book/command/make_my_first_face": { "kind": "command" },
     "bonds/address_book/command/make_my_first_face_input": {
       "kind": "command",
