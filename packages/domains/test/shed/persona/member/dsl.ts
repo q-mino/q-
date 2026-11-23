@@ -1,13 +1,13 @@
 // The pure functions of `member` over its values, added at need. DOM-5
 
-import { day_of, type date_time, type day, type Truth } from '../../../../src/library/index.ts'
+import { day_of, type RootContext, type day, type Truth } from '../../../../src/library/index.ts'
 import type { loans, value } from './_scope_dsl.ts'
 
-/** A card is valid up to its last day, included, on the calendar day of the instant, the shed's (SC-12). */
-export const the_card_is_valid_on =
-  (now: date_time) =>
+/** A card is valid up to its last day, included: today, the day of the context's `now` in the shed's zone (SC-12). */
+export const the_card_is_valid_today =
+  (context: Pick<RootContext, 'now' | 'time_zone'>) =>
   (card: { readonly valid_until: day }): boolean =>
-    day_of(now) <= card.valid_until
+    day_of(context.time_zone)(context.now) <= card.valid_until
 
 /** The member brought the tool back damaged: the workshop will take it in. */
 export const the_tool_came_back_damaged = (

@@ -40,16 +40,16 @@ const the_shed = async (start: Start) => {
     ['ladder', 'Ladder', 'ladder'],
     ['sander', 'Orbital sander', 'power'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), { id, name, category }))
   }
   const lent = (instant: string, loan_id: string, tool_id: string, member_id: string) =>
     first(shed.loans.borrow_a_tool(shed.at(instant), { loan_id, tool_id, member_id }))
   const morning = async () => {
-    await lent('2026-11-02T10:00:00-05:00', 'L7', 'drill', 'M-12')
-    await lent('2026-11-02T10:05:00-05:00', 'L9', 'sander', 'M-7')
-    await lent('2026-11-02T10:10:00-05:00', 'L8', 'ladder', 'M-12')
+    await lent('2026-11-02T15:00:00.000Z', 'L7', 'drill', 'M-12')
+    await lent('2026-11-02T15:05:00.000Z', 'L9', 'sander', 'M-7')
+    await lent('2026-11-02T15:10:00.000Z', 'L8', 'ladder', 'M-12')
     await first(
-      shed.loans.return_a_tool(shed.at('2026-11-02T18:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-02T23:00:00.000Z'), {
         loan_id: 'L8',
         tool_id: 'ladder',
         condition: 'good',
@@ -59,7 +59,7 @@ const the_shed = async (start: Start) => {
   const my_loans = (from?: zz.position) =>
     shed.loans
       .the_ongoing_loans_of_a_member(
-        shed.when('2026-11-02T09:00:00-05:00'),
+        shed.when('2026-11-02T14:00:00.000Z'),
         { member_id: 'M-12' },
         from,
       )
@@ -95,7 +95,7 @@ describe('SC-15: Marta follows her loans live', () => {
     expect(events[2]).toEqual({ event: 'left', position: '7', identity: 'L8' })
     // Live: the next fact as it is recorded.
     const next = live.next()
-    await lent('2026-11-02T19:00:00-05:00', 'L10', 'ladder', 'M-12')
+    await lent('2026-11-03T00:00:00.000Z', 'L10', 'ladder', 'M-12')
     expect((await next).value).toMatchObject({ event: 'fact', position: '8', identity: 'L10' })
   })
 
@@ -129,7 +129,7 @@ describe('SC-15: Marta follows her loans live', () => {
         { event: 'caught_up', position: '3' },
       ])
       const next = live.next()
-      await lent('2026-11-02T10:00:00-05:00', 'L7', 'drill', 'M-12')
+      await lent('2026-11-02T15:00:00.000Z', 'L7', 'drill', 'M-12')
       expect((await next).value).toMatchObject({ event: 'fact', position: '4', identity: 'L7' })
     })
   })
@@ -179,7 +179,7 @@ describe('SC-15: Marta follows her loans live', () => {
     const not_a_member = { member_id: '' }
     for (const from of [undefined, p(1)]) {
       const events = shed.loans.the_ongoing_loans_of_a_member(
-        shed.when('2026-11-02T09:00:00-05:00'),
+        shed.when('2026-11-02T14:00:00.000Z'),
         not_a_member,
         from,
       )
@@ -205,10 +205,10 @@ const the_members_shed = async (valid_until = '2027-03-31') => {
     ['drill', 'Cordless drill', 'power'],
     ['ladder', 'Ladder', 'ladder'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T14:00:00.000Z'), { id, name, category }))
   }
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -222,19 +222,19 @@ const marta_s: Who = { identified_by: 'account', id: 'A-MARTA' }
 describe("SC-15, the persona's side (part 6.3)", () => {
   test('Marta\'s "my loans" live: a loan appears as `fact`, a return takes one away as `left`; a resume is the stream alone, inclusive', async () => {
     const shed = await the_members_shed()
-    const her = shed.as(marta_s, '2.0.0').when('2026-11-03T09:00:00-05:00')
+    const her = shed.as(marta_s, '2.0.0').when('2026-11-03T14:00:00.000Z')
     const { snapshot, events } = await followed(
       () => shed.member.my_loans(her, {})[Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.loans.borrow_a_tool(shed.at('2026-11-03T10:00:00-05:00'), {
+          shed.loans.borrow_a_tool(shed.at('2026-11-03T15:00:00.000Z'), {
             loan_id: 'L8',
             tool_id: 'ladder',
             member_id: 'M-12',
           }),
         )
         await first(
-          shed.loans.return_a_tool(shed.at('2026-11-03T11:00:00-05:00'), {
+          shed.loans.return_a_tool(shed.at('2026-11-03T16:00:00.000Z'), {
             loan_id: 'L7',
             tool_id: 'drill',
             condition: 'good',
