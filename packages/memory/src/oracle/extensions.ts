@@ -8,6 +8,7 @@
 // domain's `dsl` (DOM-5); and the domain's command and read ports over a
 // cell (part 12.4). On the model of `bonds.ts` and `post.ts`.
 
+import type { TheOfficesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/extensions/activations/_registry.ts'
 import { registry as address_book_registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
@@ -371,7 +372,7 @@ export const extensions_command_adapter = (
  */
 export const extensions_ports =
   (cell: CommandCell<Read> & ReadCell<Read>, installed: readonly manifest[]) =>
-  (versions: zz.Versions) => ({
+  (versions: zz.Versions): TheOfficesPorts => ({
     ...zz.command_use_case_ports({
       registry,
       identities: address_book_registry,

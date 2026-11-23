@@ -11,6 +11,7 @@
 // the manifests installed with what the user chose of each, in memory, as
 // the oracle does (WEB-8). The meaning is the domain's `dsl` (DOM-5).
 
+import type { TheOfficesPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/extensions/activations/_registry.ts'
 import { registry as address_book_registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
@@ -365,7 +366,7 @@ const extensions_command_use_cases = {
  */
 export const extensions_ports_on_indexeddb =
   (node: Pick<TheNodesStorage, 'domain'>, installed: readonly manifest[]) =>
-  (versions: zz.Versions) => {
+  (versions: zz.Versions): TheOfficesPorts => {
     const storage = node.domain('extensions/activations')
     const reads = reads_in(storage)
     return {

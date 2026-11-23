@@ -7,6 +7,7 @@
 // reads the request it changes; the query reads every request by range and
 // selects in memory (WEB-8). The meaning from the domain's `dsl` (DOM-5).
 
+import type { ThePostsPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/post/requests/_registry.ts'
 import { registry as safe_registry } from '@q-mino/domains/seals/safe/_registry.ts'
@@ -202,7 +203,8 @@ const post_command_adapter = (storage: ADomainsStorage) => ({
  * log (PST-8, 12.4).
  */
 export const post_ports_on_indexeddb =
-  (node: Pick<TheNodesStorage, 'domain'>) => (versions: zz.Versions) => {
+  (node: Pick<TheNodesStorage, 'domain'>) =>
+  (versions: zz.Versions): ThePostsPorts => {
     const storage = node.domain(the_path)
     const reads = reads_in(storage)
     return {

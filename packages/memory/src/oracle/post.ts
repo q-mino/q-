@@ -5,6 +5,7 @@
 // ports over a cell (PST-5..PST-8). On the model of `bonds.ts`: a phone's
 // cell holds the requests beside the safe (part 10.2).
 
+import type { ThePostsPorts } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/post/requests/_registry.ts'
 import { registry as safe_registry } from '@q-mino/domains/seals/safe/_registry.ts'
@@ -191,7 +192,8 @@ export const post_command_adapter = (cell: CommandCell<PostState>) => ({
  * requests follows a request's facts on the log (PST-8, 12.4).
  */
 export const post_ports =
-  (cell: CommandCell<PostState> & ReadCell<PostState>) => (versions: zz.Versions) => ({
+  (cell: CommandCell<PostState> & ReadCell<PostState>) =>
+  (versions: zz.Versions): ThePostsPorts => ({
     ...zz.command_use_case_ports({
       registry,
       identities: safe_registry,
