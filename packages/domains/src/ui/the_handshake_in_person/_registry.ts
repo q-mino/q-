@@ -11,6 +11,9 @@ import * as value from './_value.ts'
 export const registry = {
   'ui/the_handshake_in_person/value/an_activity_asked': value.an_activity_asked,
   'ui/the_handshake_in_person/value/what_she_scanned': value.what_she_scanned,
+  'ui/the_handshake_in_person/value/the_camera_s_side': value.the_camera_s_side,
+  'ui/the_handshake_in_person/value/the_cameras': value.the_cameras,
+  'ui/the_handshake_in_person/value/the_turn': value.the_turn,
   'ui/the_handshake_in_person/value/the_state': value.the_state,
   'ui/the_handshake_in_person/value/what_happens': value.what_happens,
   'ui/the_handshake_in_person/value/a_turn': value.a_turn,
