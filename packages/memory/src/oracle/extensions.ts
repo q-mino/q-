@@ -403,3 +403,6 @@ export const extensions_ports =
       streams: {},
     }),
   })
+
+/** The office's ports (`extensions/activations`), by name (WEB-16, CFG-5): what a phone's storage gives of it, the oracle's or another, its type written once. */
+export interface TheOfficesPorts extends ReturnType<ReturnType<typeof extensions_ports>> {}

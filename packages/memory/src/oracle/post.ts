@@ -211,3 +211,6 @@ export const post_ports =
       streams: {},
     }),
   })
+
+/** The post's ports (`post/requests`), by name (WEB-16, CFG-5): what a phone's storage gives of it, the oracle's or another, its type written once. */
+export interface ThePostsPorts extends ReturnType<ReturnType<typeof post_ports>> {}

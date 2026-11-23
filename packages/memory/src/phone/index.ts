@@ -132,6 +132,11 @@ import {
   type Partitions,
   type PostState,
   type SealsState,
+  type TheAddressBooksPorts,
+  type TheOfficesPorts,
+  type ThePostsPorts,
+  type TheSafesPorts,
+  type TheUsersOfficesPorts,
   type UserState,
 } from '../oracle/index.ts'
 
@@ -169,17 +174,11 @@ export interface PhoneStorage<partitions extends APhonesPartitions = APhonesPart
   readonly executor: zz.ExecutorState
   readonly reactions: zz.ReactionState
   readonly held: () => Promise<readonly zz.HeldEntry[]>
-  readonly safe: (
-    primitives: Primitives,
-  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof seals_ports>>
-  readonly post: (versions: zz.Versions) => ReturnType<ReturnType<typeof post_ports>>
-  readonly address_book: (
-    primitives: Primitives,
-  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof bonds_ports>>
-  readonly office: (
-    installed: Installed,
-  ) => (versions: zz.Versions) => ReturnType<ReturnType<typeof extensions_ports>>
-  readonly user: (versions: zz.Versions) => ReturnType<ReturnType<typeof user_ports>>
+  readonly safe: (primitives: Primitives) => (versions: zz.Versions) => TheSafesPorts
+  readonly post: (versions: zz.Versions) => ThePostsPorts
+  readonly address_book: (primitives: Primitives) => (versions: zz.Versions) => TheAddressBooksPorts
+  readonly office: (installed: Installed) => (versions: zz.Versions) => TheOfficesPorts
+  readonly user: (versions: zz.Versions) => TheUsersOfficesPorts
   readonly partitions: (limit: { readonly characters: number }) => partitions
 }
 
@@ -189,22 +188,21 @@ export interface APhonesPartitions {
 }
 
 /** A phone's storage on the oracle's cell (TST-2): each domain's ports over it (`seen_by`), its partitions in memory. */
-export const on_the_cell = (cell: PhoneCell) =>
-  ({
-    stored_versions: cell.stored_versions,
-    log: log(cell),
-    outbox: cell.outbox,
-    executor: cell.executor,
-    reactions: cell.reactions,
-    held: () => Promise.resolve(cell.held()),
-    safe: (primitives) => seals_ports(seen_by<SealsState, PhoneState>(cell), primitives),
-    post: post_ports(seen_by<PostState, PhoneState>(cell)),
-    address_book: (primitives) => bonds_ports(seen_by<BondsState, PhoneState>(cell), primitives),
-    office: (installed) =>
-      extensions_ports(seen_by<ExtensionsState & BondsState, PhoneState>(cell), installed),
-    user: user_ports(seen_by<UserState, PhoneState>(cell)),
-    partitions,
-  }) satisfies PhoneStorage
+export const on_the_cell = (cell: PhoneCell): PhoneStorage<Partitions> => ({
+  stored_versions: cell.stored_versions,
+  log: log(cell),
+  outbox: cell.outbox,
+  executor: cell.executor,
+  reactions: cell.reactions,
+  held: () => Promise.resolve(cell.held()),
+  safe: (primitives) => seals_ports(seen_by<SealsState, PhoneState>(cell), primitives),
+  post: post_ports(seen_by<PostState, PhoneState>(cell)),
+  address_book: (primitives) => bonds_ports(seen_by<BondsState, PhoneState>(cell), primitives),
+  office: (installed) =>
+    extensions_ports(seen_by<ExtensionsState & BondsState, PhoneState>(cell), installed),
+  user: user_ports(seen_by<UserState, PhoneState>(cell)),
+  partitions,
+})
 
 /** What an extension's realm is given beside the boundary (EXT-13): its clock, the time that passes, how it speaks to the kernel. */
 export interface TheRealmsHost {
@@ -366,7 +364,8 @@ export class TheExtensionsDoNotCompose extends Error {
   }
 }
 
-export const phone =
+/** A phone wired over its storage, as `phone` starts it; its type is `Phone`, by name. */
+const a_phone_wired =
   <partitions extends APhonesPartitions>(kept: PhoneStorage<partitions>, release: Release = {}) =>
   async (world: World) => {
     // The versions of the cell, from the majors of the seven domains whose
@@ -1067,7 +1066,17 @@ export const phone =
     }
   }
 
-/** A phone, as the `memory` stack starts it: over the oracle's partitions unless its storage gives others. */
-export type Phone<partitions extends APhonesPartitions = Partitions> = Awaited<
-  ReturnType<ReturnType<typeof phone<partitions>>>
->
+/**
+ * A phone, as the `memory` stack starts it: over the oracle's partitions
+ * unless its storage gives others. By name (STK-1, CFG-5), its type the wiring's,
+ * written once.
+ */
+export interface Phone<partitions extends APhonesPartitions = Partitions> extends Awaited<
+  ReturnType<ReturnType<typeof a_phone_wired<partitions>>>
+> {}
+
+/** Starts a phone over its storage (STK-1, CFG-5): `a_phone_wired`, its result by name. */
+export const phone: <partitions extends APhonesPartitions>(
+  kept: PhoneStorage<partitions>,
+  release?: Release,
+) => (world: World) => Promise<Phone<partitions>> = a_phone_wired

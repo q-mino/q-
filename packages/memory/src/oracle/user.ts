@@ -352,3 +352,6 @@ export const user_ports =
       }),
     }
   }
+
+/** The ports of `user`'s three offices, by name (WEB-16, CFG-5): what a phone's storage gives of them, the oracle's or another, its type written once. */
+export interface TheUsersOfficesPorts extends ReturnType<ReturnType<typeof user_ports>> {}

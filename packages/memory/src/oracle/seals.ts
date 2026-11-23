@@ -254,3 +254,6 @@ export const seals_ports =
       streams: {},
     }),
   })
+
+/** The safe's ports (`seals/safe`), by name (WEB-16, CFG-5): what a phone's storage gives of it, the oracle's or another, its type written once. */
+export interface TheSafesPorts extends ReturnType<ReturnType<typeof seals_ports>> {}

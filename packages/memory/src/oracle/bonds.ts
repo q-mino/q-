@@ -509,3 +509,6 @@ export const bonds_ports =
       streams: {},
     }),
   })
+
+/** The address book's ports (`bonds/address_book`), by name (WEB-16, CFG-5): what a phone's storage gives of it, the oracle's or another, its type written once. */
+export interface TheAddressBooksPorts extends ReturnType<ReturnType<typeof bonds_ports>> {}
