@@ -51,8 +51,8 @@ jobs:
       - if: steps.diff.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
       # The checks in one step (TST-11): the generated files (DOM-24, DOM-25),
-      # then typecheck (domains without DOM or Node), lint, format and the
-      # architecture graph together, then the tests; each one's time and peak
+      # then typecheck (domains without DOM or Node), lint, format, the
+      # architecture graph and the tests together; each one's time and peak
       # in the job summary, a warning past its threshold (TST-13).
       - name: Checks
         if: steps.diff.outputs.code == 'true'

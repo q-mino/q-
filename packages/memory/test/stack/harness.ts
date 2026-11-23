@@ -99,6 +99,12 @@ export interface AStorageUnderTest {
   readonly position: () => Promise<zz.position>
   readonly held: () => Promise<readonly zz.HeldEntry[]>
   readonly held_parts: () => Promise<readonly zz.HeldPart[]>
+  /**
+   * Whether the storage is at work, a transaction of it not yet over
+   * (TST-11): what a harness's quiet waits for, beside its own timers. The
+   * oracle's cell never is: it waits on nothing but promises.
+   */
+  readonly at_work: () => boolean
 }
 
 /** An extension's partition as the phone's port reads it whole (EXT-14): its records, in its order. */
@@ -118,6 +124,7 @@ export const on_a_cell = (): Promise<AStorageUnderTest> => {
     position: () => Promise.resolve(made.position()),
     held: () => Promise.resolve(made.held()),
     held_parts: () => Promise.resolve(made.held_parts()),
+    at_work: () => false,
   })
 }
 

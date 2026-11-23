@@ -1,5 +1,5 @@
-// `pnpm check`: the generated files first, then typecheck, lint, format and
-// graph in parallel, then the tests (TST-11). Each check is a script of package.json, run by pnpm, its output in
+// `pnpm check`: the generated files first, then typecheck, lint, format,
+// graph and the tests in parallel (TST-11). Each check is a script of package.json, run by pnpm, its output in
 // `.check/<name>.log`; at the end one line per check (outcome, time, peak
 // memory) and the tail of the log of each red one. The exit code is 1 if one
 // is red. With GITHUB_STEP_SUMMARY set (the CI), the same lines go to the job
@@ -34,12 +34,11 @@ const logs = join(root, '.check')
 // others would report the staleness under another name, so it runs alone.
 const first = ['generate:check']
 // Typecheck and lint are the heavy ones (time and memory), and run together,
-// with format and graph, which are light.
-const together = ['typecheck', 'lint', 'format:check', 'graph']
-// The tests run last, alone: with typecheck and lint at the same time, two of
-// them failed in two runs out of three (23 Nov 2026, a harness that waits a
-// count of timer turns, a property test at the edge of its 5 s).
-const last = ['test']
+// with format, graph and the tests. The tests ran last, alone, until two of
+// them were fixed (24 Nov 2026): a harness that waited a count of timer turns,
+// now a condition, and a property test at the edge of its 5 s, now with a
+// time of its own; together, three realistic runs out of three green.
+const together = ['typecheck', 'lint', 'format:check', 'graph', 'test']
 
 const thresholds = JSON.parse(readFileSync(join(root, 'scripts', 'check-thresholds.json'), 'utf8'))
 
@@ -247,9 +246,9 @@ const report = (results, seconds) => {
 mkdirSync(logs, { recursive: true })
 const started = performance.now()
 const before = commands ? [] : await in_sequence(selected(first))
-// For a package, the same order: its typecheck and lint together, its tests after.
+// For a package, its typecheck and lint together, its tests after (TST-12).
 const stage_two = commands ? ['typecheck', 'lint'] : together
-const stage_three = commands ? ['test'] : last
+const stage_three = commands ? ['test'] : []
 const after = before.some((r) => r.outcome === 'red')
   ? []
   : serial
