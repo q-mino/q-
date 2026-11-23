@@ -19,14 +19,14 @@ const strategies = ['native', 'composed'] as const
 const the_shed = async (start: Start) => {
   const shed = await oracle(start)
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -35,7 +35,7 @@ const the_shed = async (start: Start) => {
   const story = async () => {
     expect(
       await first(
-        shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T00:00:00-05:00'), {
+        shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T05:00:00.000Z'), {
           loan_id: 'L7',
         }),
       ),
@@ -44,7 +44,7 @@ const the_shed = async (start: Start) => {
       branch: 'the_member_still_has_the_tool_after_the_due_day_so_the_loan_is_overdue',
     })
     await first(
-      shed.loans.return_a_tool(shed.at('2026-11-18T10:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-18T15:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         condition: 'good',
@@ -53,7 +53,7 @@ const the_shed = async (start: Start) => {
   }
   const my_loans = () =>
     shed.loans
-      .the_ongoing_loans_of_a_member(shed.when('2026-11-16T09:00:00-05:00'), {
+      .the_ongoing_loans_of_a_member(shed.when('2026-11-16T14:00:00.000Z'), {
         member_id: 'M-12',
       })
       [Symbol.asyncIterator]()
@@ -111,10 +111,10 @@ const the_members_shed = async (valid_until = '2027-03-31') => {
     ['drill', 'Cordless drill', 'power'],
     ['ladder', 'Ladder', 'ladder'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-01T09:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-01T14:00:00.000Z'), { id, name, category }))
   }
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -131,11 +131,11 @@ describe("SC-16, the persona's side (part 6.3)", () => {
     const { events } = await followed(
       () =>
         shed.member
-          .my_loans(shed.as(marta_s, '2.0.0').when('2026-11-16T09:00:00-05:00'), {})
+          .my_loans(shed.as(marta_s, '2.0.0').when('2026-11-16T14:00:00.000Z'), {})
           [Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T00:00:00-05:00'), {
+          shed.loans.declare_the_loan_overdue(shed.at('2026-11-17T05:00:00.000Z'), {
             loan_id: 'L7',
           }),
         )

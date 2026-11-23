@@ -29,10 +29,9 @@ const E1 = 'c2VhbGVkLWZvci1icnVuby0x'
 const E2 = 'c2VhbGVkLWZvci1icnVuby0y'
 const E3 = 'c2VhbGVkLWZvci1icnVuby0z'
 
-/** Monday 16 November 2026 by the relay's clock, and the next Monday, as the relay tells them. */
-const monday = (time: string) => `2026-11-16T${time}:00Z`
-const told_monday = (time: string) => `2026-11-16T${time}:00+00:00`
-const next_monday = (time: string) => `2026-11-23T${time}:00Z`
+/** Monday 16 November 2026 by the relay's clock, and the next Monday, as its clock writes them (UTC). */
+const monday = (time: string) => `2026-11-16T${time}:00.000Z`
+const next_monday = (time: string) => `2026-11-23T${time}:00.000Z`
 
 /** The largest envelope the relay keeps: 64 KiB once decoded, in base64url (MBX-1). */
 const the_largest = 'A'.repeat(87_382)
@@ -96,13 +95,13 @@ export const stories_of_the_relay = (
         const relay = await a_relay()
         const desk = at_the_desk(relay)
         expect(await desk.deposits(monday('09:02'), D_b, E1)).toEqual([
-          { event: 'the_envelope_is_kept', payload: { deposited_at: told_monday('09:02') } },
+          { event: 'the_envelope_is_kept', payload: { deposited_at: monday('09:02') } },
         ])
         const bruno = opened(await desk.collects(R_b, D_b))
         const [snapshot, caught_up] = await pull(bruno, 2)
         expect(snapshot).toMatchObject({
           event: 'snapshot',
-          entries: [{ deposited_at: told_monday('09:02'), envelope: E1 }],
+          entries: [{ deposited_at: monday('09:02'), envelope: E1 }],
           total: 1,
         })
         // The deposit's id, and the position the snapshot is at, as the relay gives them.
@@ -124,14 +123,14 @@ export const stories_of_the_relay = (
         // No answer reached Anna's phone: it sends the same deposit again,
         // under the same operation, and reads the recorded fact (DOM-11).
         expect(await desk.deposits(monday('09:07'), D_b, E1, 'anna-deposit-1')).toEqual([
-          { event: 'the_envelope_is_kept', payload: { deposited_at: told_monday('09:02') } },
+          { event: 'the_envelope_is_kept', payload: { deposited_at: monday('09:02') } },
         ])
         expect(await envelopes_of(await desk.collects(R_b, D_b))).toEqual([E1])
         expect(await relay.recorded()).toHaveLength(1)
         // Under another operation the same envelope is a second deposit: the
         // relay compares no envelopes (MBX-1).
         expect(await desk.deposits(monday('09:10'), D_b, E1, 'anna-deposit-2')).toEqual([
-          { event: 'the_envelope_is_kept', payload: { deposited_at: told_monday('09:10') } },
+          { event: 'the_envelope_is_kept', payload: { deposited_at: monday('09:10') } },
         ])
         expect(await envelopes_of(await desk.collects(R_b, D_b))).toEqual([E1, E1])
       })
@@ -170,8 +169,8 @@ export const stories_of_the_relay = (
           expect(again.entries[0]).toEqual(e1)
           expect(again.entries).toMatchObject([
             { envelope: E1 },
-            { deposited_at: told_monday('09:20'), envelope: E2 },
-            { deposited_at: told_monday('09:30'), envelope: E3 },
+            { deposited_at: monday('09:20'), envelope: E2 },
+            { deposited_at: monday('09:30'), envelope: E3 },
           ])
           return
         }
@@ -186,8 +185,8 @@ export const stories_of_the_relay = (
         })
         expect(resumed).toMatchObject([
           { event: 'fact' },
-          { event: 'fact', entry: { deposited_at: told_monday('09:20'), envelope: E2 } },
-          { event: 'fact', entry: { deposited_at: told_monday('09:30'), envelope: E3 } },
+          { event: 'fact', entry: { deposited_at: monday('09:20'), envelope: E2 } },
+          { event: 'fact', entry: { deposited_at: monday('09:30'), envelope: E3 } },
           { event: 'caught_up' },
         ])
         // Each event names its entry by the deposit's id (`stream.identity`).
@@ -212,7 +211,7 @@ export const stories_of_the_relay = (
         await desk.deposits(monday('09:20'), D_b, E2)
         expect((await next).value).toMatchObject({
           event: 'fact',
-          entry: { deposited_at: told_monday('09:20'), envelope: E2 },
+          entry: { deposited_at: monday('09:20'), envelope: E2 },
         })
       })
     })
@@ -241,7 +240,7 @@ export const stories_of_the_relay = (
         expect(discarded).toMatchObject({
           path: 'mailbox/deposits/fact/an_envelope_has_been_discarded',
           payload: {
-            discarded_deposit: { status: 'discarded', discarded_at: '2026-11-23T09:02:00+00:00' },
+            discarded_deposit: { status: 'discarded', discarded_at: '2026-11-23T09:02:00.000Z' },
           },
         })
         await executor.stop()
@@ -297,7 +296,7 @@ export const stories_of_the_relay = (
         const relay = await a_relay()
         const desk = at_the_desk(relay)
         expect(await desk.deposits(monday('09:02'), D_c, E2)).toEqual([
-          { event: 'the_envelope_is_kept', payload: { deposited_at: told_monday('09:02') } },
+          { event: 'the_envelope_is_kept', payload: { deposited_at: monday('09:02') } },
         ])
       })
     })
@@ -349,7 +348,7 @@ export const stories_of_the_relay = (
         expect(await relay.recorded()).toEqual([])
         // The largest envelope it keeps, at its limit.
         expect(await desk.deposits(monday('09:03'), D_b, the_largest)).toEqual([
-          { event: 'the_envelope_is_kept', payload: { deposited_at: told_monday('09:03') } },
+          { event: 'the_envelope_is_kept', payload: { deposited_at: monday('09:03') } },
         ])
       })
     })

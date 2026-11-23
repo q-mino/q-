@@ -157,14 +157,14 @@ export const a_phone = async (primitives: Primitives, start: Start) => {
       operations += 1
       const id = sent.operation ?? `op-${String(start.phone)}-${String(operations)}`
       return {
-        now: zz.in_zone(time_zone)(instant),
+        now: instant,
         time_zone,
         operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? the_scope_of_the_user },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = () => ({ now: zz.in_zone(time_zone)(instant), time_zone })
+  const when = () => ({ now: instant, time_zone })
   const facts = log(made)
   // The letters the address book hands to `post` (step 10): kept, in order,
   // each with the instant `post` would declare it at, the phone's clock then.
