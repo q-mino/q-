@@ -13,9 +13,14 @@
 //   `Authorization: Bearer <R>`, body `{ "version", "input": { "deposit_address" }, "from"? }`;
 // - the tree's events with 200, `application/x-ndjson`; a body not in this
 //   form, or an `Authorization` that is not a bearer credential, 400 and
-//   nothing else, since no tree heard it.
+//   nothing else, since no tree heard it;
+// - CORS open to every origin (MBX-9; A, 23 Nov 2026): the PWA is served
+//   from another origin, and a request with `Authorization` and JSON is
+//   preflighted by the browser. No gate: only a browser enforces an origin,
+//   and the relay is open to every depositor anyway.
 
 import { Hono, type Context } from 'hono'
+import { cors } from 'hono/cors'
 import * as z from 'zod'
 import * as zz from '@q-mino/domains/library'
 import type { desk } from '@q-mino/domains/desk/_node.ts'
@@ -114,6 +119,18 @@ const answered = (c: Context, events: AsyncIterable<unknown>): Response =>
 
 const not_a_request = (c: Context, fault: string): Response => c.json({ fault }, 400)
 
+/**
+ * CORS (MBX-9): every origin, the two paths' method, the headers a phone
+ * sends, a preflight kept a day by the browser, no credentials (R goes as a
+ * bearer credential the phone sets, never a cookie).
+ */
+const open_to_every_origin = cors({
+  origin: '*',
+  allowMethods: ['POST'],
+  allowHeaders: ['Authorization', 'Content-Type'],
+  maxAge: 86_400,
+})
+
 /** The JSON body of a request, or nothing when it is not JSON. */
 const body_of = async (c: Context): Promise<unknown> => {
   try {
@@ -142,6 +159,7 @@ export const the_desks_http_interface = (the_desk: TheDesk) => {
     time_zone: the_desk.clock.time_zone,
   })
   return new Hono()
+    .use(open_to_every_origin)
     .post('/depositor/deposit_an_envelope', async (c) => {
       const shown = shown_by(c.req.header('authorization'))
       const body = a_deposit.safeParse(await body_of(c))

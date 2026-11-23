@@ -123,6 +123,34 @@ describe('the HTTP interface, through the desk (MBX-9)', () => {
     relay.storage.close()
   })
 
+  test("the browser's preflight is answered, and a POST carries its origin: CORS open to every origin, no gate", async () => {
+    const relay = await a_relay()
+    const preflight = await relay.http.request('/holder/collect_the_envelopes', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://q-mino.github.io',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization, content-type',
+      },
+    })
+    expect(preflight.status).toBe(204)
+    expect(Object.fromEntries(preflight.headers)).toMatchObject({
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'POST',
+      'access-control-allow-headers': 'Authorization,Content-Type',
+      'access-control-max-age': '86400',
+    })
+    expect(preflight.headers.has('access-control-allow-credentials')).toBe(false)
+    const http = over_http(relay.http)
+    const deposited = await http.deposits(a_deposit('anna-deposit-1'), {
+      Origin: 'https://another.example',
+    })
+    expect(deposited.status).toBe(200)
+    expect(deposited.headers.get('access-control-allow-origin')).toBe('*')
+    await lines_of(deposited)
+    relay.storage.close()
+  })
+
   test('a collect from a position is read again (MBX-8)', async () => {
     const relay = await a_relay()
     const http = over_http(relay.http)
