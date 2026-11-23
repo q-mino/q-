@@ -8,6 +8,7 @@ import {
   type Machine,
 } from '@q-mino/domains/post/_dsl.ts'
 import type * as post_value from '@q-mino/domains/post/_value.ts'
+import { content } from '@q-mino/domains/post/_value.ts'
 import type { take_a_response } from '@q-mino/domains/post/requests/_usecase.ts'
 import type { persona } from '@q-mino/domains/persona/_node.ts'
 import type * as persona_value from '@q-mino/domains/persona/_value.ts'
@@ -195,11 +196,14 @@ const the_personas_caller = (
  *    fell, it is not running) answers nothing (F8, EXT-15), the request
  *    traced as not answered (F6), the fall the hosting's;
  * 4. the answer on the bond (F7, PST-9): only to a face; no bond with it at
- *    that mailbox, none; else the response written from my face to their
- *    mailbox, sealed for their key and deposited once under the
- *    operation of PST-11; not sealed, refused or unreachable, traced
- *    (`a_response_not_deposited`): the asker's sending again asks again
- *    (PST-6).
+ *    that mailbox, none; an event over what a letter carries (the post's
+ *    `content`, PST-12), never sealed nor deposited, traced
+ *    (`a_response_not_deposited`, `too_large_for_a_letter`): the asker
+ *    reads `no_response` at its time (A, 23 Nov 2026); else the response
+ *    written from my face to their mailbox, sealed for their key and
+ *    deposited once under the operation of PST-11; not sealed, refused or
+ *    unreachable, traced (`a_response_not_deposited`): the asker's sending
+ *    again asks again (PST-6).
  * A fault of a port, the kernel's trees included, throws.
  */
 export const the_kernels_entry = (
@@ -366,6 +370,15 @@ export const the_kernels_entry = (
       event,
     }
     const not_deposited = { letter: identity, answers: request.identity, caller, now: now() }
+    if (!content.safeParse(event).success) {
+      // PST-12: a letter the relay would keep and the asker could not open (`not_a_letter`).
+      wiring.trace({
+        why: 'a_response_not_deposited',
+        response: not_deposited,
+        answered: { outcome: 'too_large_for_a_letter' },
+      })
+      return
+    }
     const sealed = await a_letter_in_an_envelope(wiring.machine_of(bond.from.face_id))(
       response,
       bond.to.key,

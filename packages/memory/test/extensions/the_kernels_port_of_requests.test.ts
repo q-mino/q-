@@ -2,6 +2,7 @@ import {
   the_kernels_port_of_requests,
   type ABondToAskOn,
   type AKernelsRequest,
+  type TheKernelsTraced,
 } from '@q-mino/adapters-common'
 import { the_identity_of_a_request } from '@q-mino/domains/post/_dsl.ts'
 import { describe, expect, test } from 'vitest'
@@ -15,7 +16,8 @@ import { fake_primitives } from '../seals/primitives.ts'
 // with Bruno by the address book's id; Bruno's node played by the harness
 // as a peer that serves. No refusal: the kernel's requests are always
 // declared, and the kernel is never inactive nor its offers withdrawn (F8,
-// EXT-7). The question's delivery on two nodes: `../persona/personas.test.ts`.
+// EXT-7); an input over what a letter carries is answered, never sent, and
+// traced (PST-12; A, 23 Nov 2026). The question's delivery on two nodes: `../persona/personas.test.ts`.
 
 const ask_for_the_extensions_in_common =
   'extensions/activations/effect/ask_for_the_extensions_in_common'
@@ -38,6 +40,7 @@ const annas_port = async () => {
   const story = await a_story(fake_primitives)
   const { anna, bruno } = story
   const state = { bond: 'kept' as 'kept' | 'gone' }
+  const traced: TheKernelsTraced[] = []
   const the_bond = (bond: string): Promise<ABondToAskOn> =>
     Promise.resolve(
       bond === 'L_b' && state.bond === 'kept'
@@ -57,6 +60,9 @@ const annas_port = async () => {
       log: anna.log,
     },
     the_bond,
+    trace: (entry) => {
+      traced.push(entry)
+    },
   })
   /** The requests Anna's post recorded as sent, by their identity. */
   const sent = async (): Promise<readonly unknown[]> =>
@@ -69,7 +75,7 @@ const annas_port = async () => {
         }),
     )
   const machine = anna.machine_of(anna.face_id)
-  return { story, anna, bruno, state, port, sent, machine }
+  return { story, anna, bruno, state, traced, port, sent, machine }
 }
 
 describe('the kernel’s own port of requests (F7, EXT-8)', () => {
@@ -80,6 +86,37 @@ describe('the kernel’s own port of requests (F7, EXT-8)', () => {
     await anna.runs()
     expect(await sent()).toEqual([])
     expect(anna.carried()).toEqual([])
+  })
+
+  test('an input over what a letter carries: too_large_for_a_letter, traced, nothing sent, nothing kept, never thrown', async () => {
+    const { anna, traced, port, sent } = await annas_port()
+    const too_large = { ...a_question('Q1'), input: { offered: 'x'.repeat(32_760) } }
+    const answer = { answer: 'too_large_for_a_letter' }
+    expect(await port(too_large)).toEqual(answer)
+    expect(await port(too_large)).toEqual(answer)
+    await anna.runs()
+    expect(await sent()).toEqual([])
+    expect(anna.carried()).toEqual([])
+    const not_sent = {
+      why: 'a_request_not_sent',
+      request: {
+        effect: ask_for_the_extensions_in_common,
+        id: 'Q1',
+        invokes: {
+          of: 'the_kernel',
+          persona: 'known',
+          use_case: 'usecase/the_extensions_in_common',
+          version: '1.0.0',
+        },
+      },
+      because: 'too_large_for_a_letter',
+    }
+    expect(traced).toMatchObject([not_sent, not_sent])
+    // A question within the limit goes on, nothing more traced.
+    void port(a_question('Q2'))
+    await quiet()
+    expect(await sent()).toHaveLength(1)
+    expect(traced).toHaveLength(2)
   })
 
   test('the identity the kernel’s, never an extension’s of the same effect and id; what it sends invokes the kernel; no response at its time', async () => {
