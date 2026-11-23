@@ -571,6 +571,8 @@ Checks:
 | transport and consumer suites contain the injected deviations (TST-4)                                        | a fact translation that reads state or clock, or invents a value (DOM-22)                                                       |
 | conformance tests import no storage API (TST-3)                                                              | a reaction that reads changing state or invokes more than one command (DOM-16); `user` using a persona other than `self` (GR-7) |
 
+The cruiser's rules on npm imports [Q, A, 23 Nov 2026] (`domains-npm-allowlist`, the npm half of `generator-core-no-node`; `boundary-imports-zod-only` since part 12.3, GR-10): the cruiser sees the npm modules and does not follow them (`doNotFollow`, not `exclude`, which hid them from every rule, so that these never fired). A test proves they fire: `packages/domains/test/the_cruiser.test.ts` runs the repository's configuration over a fixture laid out as the repository (`test/cruiser/packages/...`), one import refused per rule and one allowed (`zod` in a domain), where no rule of the normal run reaches it. [Q, C, 23 Nov 2026] Rejected: a script of `pnpm check` reading the cruiser's output (a second runner beside the tests); the fixture at the real paths, excluded from the normal run (an exclusion that hides it from the rules it proves).
+
 ## 9. Divergences of q- from the paper
 
 - **V1** No trusted server: every node is the server of itself and the trusted level is my node (F1). The paper reasons on a trusted server side. [Q]
