@@ -23,6 +23,7 @@ const the_refusals = async (): Promise<readonly string[]> => {
 describe("the cruiser's rules on npm imports", () => {
   it('refuses the imports the fixture makes, and only those', async () => {
     expect(await the_refusals()).toEqual([
+      'packages/boundary/src/an_import_of_npm.js boundary-imports-zod-only',
       'packages/domains/src/an_import_of_npm.js domains-npm-allowlist',
       'packages/generator/src/an_import_of_npm.js generator-core-no-node',
     ])
