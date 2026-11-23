@@ -157,8 +157,9 @@ const the_extension_invoked = (request: ARequestAsItCame): string =>
  * An entry of the kernel's trace in her words (USR-8, EXT-6), one case per
  * reason, exhaustive: a request that met silence (with its case, F8), a
  * letter that could not be opened, a response that came unasked, a letter
- * refused, a response not sent, an extension doing what it does not
- * declare, an extension's fall, a request not answered.
+ * refused, a response not sent, a request of the node's not sent, an
+ * extension doing what it does not declare, an extension's fall, a request
+ * not answered.
  */
 export const what_happened_in_the_kernel = (
   traced: TheKernelsTraced,
@@ -183,6 +184,8 @@ export const what_happened_in_the_kernel = (
       }
     case 'a_response_not_deposited':
       return { happened: 'a_response_could_not_be_sent' }
+    case 'a_request_not_sent':
+      return { happened: 'a_request_could_not_be_sent' }
     case 'a_call_not_declared':
     case 'an_event_not_in_the_surface':
     case 'a_frame_fenced':

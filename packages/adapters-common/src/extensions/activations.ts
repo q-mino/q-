@@ -197,7 +197,9 @@ const what_came_back_of = (event: boundary.Json): activations_value.what_came_ba
  * the node speaks (its current, PER-17), what the node offers the bond
  * (the office's `name`, the persona's `extension`), and the time the
  * question waits. `responded` and `no_response` are delivered to the
- * return, as what came back; the bond gone is exhausted with its reason.
+ * return, as what came back; a question too large for a letter, as
+ * `no_response` (A, 23 Nov 2026: the port traced why, F6); the bond gone
+ * is exhausted with its reason.
  */
 export const the_delivery_of_the_extensions_in_common =
   (port: (request: AKernelsRequest) => Promise<AnAnswerToTheKernelsRequest>) =>
@@ -228,6 +230,7 @@ export const the_delivery_of_the_extensions_in_common =
       case 'responded':
         return returned(what_came_back_of(answer.event))
       case 'no_response':
+      case 'too_large_for_a_letter':
         return returned({ outcome: 'no_answer_came_back', why: 'no_response' })
       case 'the_bond_is_gone':
         return { outcome: 'exhausted', reason: 'the bond is gone' }

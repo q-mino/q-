@@ -586,6 +586,24 @@ describe('user, on q-’s oracle (part 15.2)', () => {
       ],
       [
         {
+          why: 'a_request_not_sent',
+          request: {
+            effect: 'extensions/activations/effect/ask_for_the_extensions_in_common',
+            id: 'Q1',
+            invokes: {
+              of: 'the_kernel',
+              persona: 'known',
+              use_case: 'usecase/the_extensions_in_common',
+              version: '1.0.0',
+            },
+          },
+          now,
+          because: 'too_large_for_a_letter',
+        },
+        { happened: 'a_request_could_not_be_sent' },
+      ],
+      [
+        {
           why: 'a_call_not_declared',
           extension,
           now,
