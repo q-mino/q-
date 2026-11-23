@@ -281,6 +281,8 @@ export const opens_the_app = (wiring: {
   readonly documents?: (frame: AFrameToPlace) => string | undefined
   /** The words of the extensions the app carries (EXT-16, WEB-22); the phone's by default. */
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
+  /** Her gesture on the data of an older test release (WEB-8), given on the test channel only; none by default. */
+  readonly clears_the_data_and_starts_again?: () => void
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
@@ -291,6 +293,9 @@ export const opens_the_app = (wiring: {
         device={wiring.device}
         {...(wiring.a_link === undefined ? {} : { a_link: wiring.a_link })}
         documents={wiring.documents ?? (() => undefined)}
+        {...(wiring.clears_the_data_and_starts_again === undefined
+          ? {}
+          : { clears_the_data_and_starts_again: wiring.clears_the_data_and_starts_again })}
         texts={
           wiring.words === undefined
             ? texts.screens

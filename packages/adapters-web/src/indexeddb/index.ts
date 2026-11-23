@@ -1,5 +1,6 @@
 // The node's storage on IndexedDB (step 21; WEB-8..WEB-12).
 export {
+  delete_the_node_s_database,
   open_the_node_s_database,
   the_name_of,
   the_node_s_store,
@@ -39,6 +40,7 @@ export {
 export { a_bell, the_node_s_log, type ABell, type TheNodesFacts } from './log.ts'
 export { read_in, the_range_of, type ARange, type ARead } from './command.ts'
 export {
+  ARecordOutOfItsForm,
   deleted,
   every_parsed,
   on_a_record,
