@@ -191,8 +191,8 @@ export type the_extensions_in_common = z.output<typeof the_extensions_in_common>
 
 /**
  * The relay, as her node last met it (UI-5): it answered, or it did not (the
- * relay client's `unreachable`: no network, or a relay silent, not told
- * apart). Before her node met it, as if it answered.
+ * relay client's `unreachable`: the request lost, or the relay unheard).
+ * Before her node met it, as if it answered.
  *
  * @see {@link value.the_relay_met}
  */
@@ -200,7 +200,17 @@ export const the_relay_met = value.the_relay_met
 export type the_relay_met = z.output<typeof the_relay_met>
 
 /**
- * The strip over every screen (UI-5): none, or the relay that does not answer (her letters wait).
+ * The device's network, as her phone tells it (UI-5): no network, for sure,
+ * or nothing told (a network says nothing of the relay).
+ *
+ * @see {@link value.the_device_s_network}
+ */
+export const the_device_s_network = value.the_device_s_network
+export type the_device_s_network = z.output<typeof the_device_s_network>
+
+/**
+ * The strip over every screen (UI-5): none; no network, when her phone tells
+ * it; else the relay that does not answer (her letters wait).
  *
  * @see {@link value.a_strip}
  */
