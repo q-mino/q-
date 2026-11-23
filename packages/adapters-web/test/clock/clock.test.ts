@@ -3,8 +3,8 @@ import * as zz from '@q-mino/domains/library'
 import { the_device_s_clock, the_device_s_zone, the_time_that_passes } from '../../src/index.ts'
 
 // The device's clock and the time that passes (WEB-4): the instant the
-// runtime reads, told in the zone the configuration gives (SC-12), and a
-// timer that resolves once its time has elapsed.
+// runtime reads, in UTC (A, 23 Nov 2026), with the zone the configuration
+// gives (SC-12), and a timer that resolves once its time has elapsed.
 
 const rome = zz.time_zone.parse('Europe/Rome')
 const toronto = zz.time_zone.parse('America/Toronto')
@@ -19,14 +19,10 @@ describe("the device's clock", () => {
     expect(Date.parse(now)).toBeLessThanOrEqual(after)
   })
 
-  test('tells it in the zone the configuration gives, with its offset', () => {
+  test('writes it in UTC, to the millisecond, whatever the zone: the instant tells no zone', () => {
     for (const zone of [rome, toronto, zz.time_zone.parse('UTC')]) {
-      const now = the_device_s_clock(zone).now()
-      expect(zz.in_zone(zone)(now)).toBe(now)
+      expect(the_device_s_clock(zone).now()).toMatch(/T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
     }
-    const in_rome = the_device_s_clock(rome).now()
-    const in_toronto = the_device_s_clock(toronto).now()
-    expect(in_rome.slice(-6)).not.toBe(in_toronto.slice(-6))
   })
 
   test('gives the zone it was given, for the context of an internal entry', () => {

@@ -164,7 +164,7 @@ describe('a stored entry at the current shape', () => {
         id: entry_id.parse('T1'),
         version: '1.0.0',
         payload: { id: 'T1', size: '12' },
-        not_before: date_time.parse('2026-11-15T10:12:00-05:00'),
+        not_before: date_time.parse('2026-11-15T15:12:00.000Z'),
         resources: [{ path: 'business/things/id/thing_id', value: 'T1' }],
         correlation: correlation.parse('C1'),
       }),
@@ -172,7 +172,7 @@ describe('a stored entry at the current shape', () => {
       effect: 'business/things/effect/make_a_thing',
       id: 'T1',
       payload: { id: 'T1', size: 12 },
-      not_before: '2026-11-15T10:12:00-05:00',
+      not_before: '2026-11-15T15:12:00.000Z',
       resources: [{ path: 'business/things/id/thing_id', value: 'T1' }],
       correlation: 'C1',
     })

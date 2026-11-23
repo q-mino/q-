@@ -250,7 +250,7 @@ export const the_hash_of_a_collect_secret =
  */
 export const a_story = async (primitives: Primitives = fake_primitives) => {
   const relay = await a_relay({ hash: the_hash_of_a_collect_secret(primitives) })
-  const time = a_clock('2026-11-20T10:00:00Z')
+  const time = a_clock('2026-11-20T10:00:00.000Z')
   return {
     primitives,
     relay,
@@ -259,7 +259,7 @@ export const a_story = async (primitives: Primitives = fake_primitives) => {
     clock: time.clock,
     /** The nodes' clock reads this time of Friday 20 November (10:00:15 is `at('10:00:15')`). */
     at: (time_of_day: string): void => {
-      time.at(`2026-11-20T${time_of_day}Z`)
+      time.at(`2026-11-20T${time_of_day}.000Z`)
     },
     /** The nodes' clock reads this instant, however far (a ticket's 48 hours). */
     at_the_instant: (instant: string): void => {
@@ -383,7 +383,7 @@ export const a_node = async (story: Story, start: Start) => {
   const user = user_ports(seen_by<UserState, NodeState>(made))(versions)
   const clock = story.clock
   const when = (): zz.RootContext => ({
-    now: zz.in_zone(clock.time_zone)(clock.now()),
+    now: clock.now(),
     time_zone: clock.time_zone,
   })
   const facts = log(made)

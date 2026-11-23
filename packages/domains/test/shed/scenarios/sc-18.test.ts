@@ -19,25 +19,25 @@ const the_shed = async (start: Start) => {
     ['drill', 'Cordless drill', 'power'],
     ['ladder', 'Ladder', 'ladder'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), { id, name, category }))
   }
   const story = async () => {
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-02T10:00:00-05:00'), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-02T15:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         member_id: 'M-12',
       }),
     )
     await first(
-      shed.tools.rename_a_tool(shed.at('2026-11-02T11:00:00-05:00'), {
+      shed.tools.rename_a_tool(shed.at('2026-11-02T16:00:00.000Z'), {
         tool_id: 'drill',
         name: 'Drill, cordless',
       }),
     )
   }
   const the_catalogue = () =>
-    shed.tools.the_catalogue(shed.when('2026-11-02T09:00:00-05:00'), {})[Symbol.asyncIterator]()
+    shed.tools.the_catalogue(shed.when('2026-11-02T14:00:00.000Z'), {})[Symbol.asyncIterator]()
   return { story, the_catalogue }
 }
 

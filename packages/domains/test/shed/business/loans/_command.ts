@@ -104,7 +104,7 @@ export const reserve_a_tool = command.reserve_a_tool
 /**
  * The input of `reserve_a_tool`, declared inline.
  *
- * The day is validated against the clock: the schema needs `now`, nothing else.
+ * The day is validated against the clock: the schema needs today, the context's `now` in its zone, nothing else.
  *
  * @see {@link command.reserve_a_tool}
  */
