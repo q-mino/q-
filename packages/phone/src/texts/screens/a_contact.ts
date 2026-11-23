@@ -37,11 +37,11 @@ export const a_contact = {
   the_offer: { offer: 'Offrila', withdraw_the_offer: 'Ritira l’offerta', wait: 'Un momento…' },
   ask_for_the_extensions_in_common: 'Chiedi le estensioni in comune',
   the_answer: {
-    // [Q, C, provisional: A to confirm] (UI-5): the answer waiting, and no answer, by why.
+    // [Q, A, 22 Nov 2026] (UI-5): the answer waiting, and no answer, by why.
     waiting: 'Aspetto la risposta…',
     in_common: (names) => `In comune: ${names.join(', ')}.`,
     none_in_common: 'Nessuna estensione in comune.',
-    // [Q, C, provisional: A to confirm] (UI-5).
+    // [Q, A, 22 Nov 2026] (UI-5).
     no_answer: { no_response: 'Nessuna risposta.', the_peer_cannot_answer: 'Non può rispondere.' },
   },
 } satisfies AContactTexts

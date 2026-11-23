@@ -23,7 +23,7 @@ export const the_handshake_in_person = {
   // "di persona" only when her node said so (BND-10, 21 Nov 2026).
   bonded: (name) => `Nuovo contatto: si presenta come ${name}.`,
   bonded_in_person: (name) => `Nuovo contatto: si presenta come ${name}, di persona.`,
-  // [Q, C, provisional: A to confirm]: as the bond made, no identity claimed (WEB-20).
+  // [Q, A, 22 Nov 2026]: as the bond made, no identity claimed (WEB-20).
   bonded_already: (name) => `Era già tra i tuoi contatti: si presenta come ${name}.`,
   open_the_contact: 'Apri il contatto',
   shake_another_hand: 'Stringi un’altra mano',

@@ -6,6 +6,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import configuration from './generator.config.ts'
 import { sight } from './packages/domains/test/shed/sight.ts'
+import { sight as the_sight_of_q } from './packages/domains/src/sight.ts'
 
 // The rules of a domains' tree (DOM-25, CLAUDE.md): a branch's condition and a query's selection are
 // named, never composed inline; a file imports one scope; no derogation: no cast but `as const`, no directive.
@@ -109,9 +110,13 @@ export default defineConfig(
     ...solid,
   },
   {
-    // The tree of Shed: the folders its map names (sight.ts), its `@` folders of service aside.
-    files: Object.keys(sight).map((top) => `packages/domains/test/shed/${top}/**/*.ts`),
-    ignores: ['packages/domains/test/shed/**/@*/**'],
+    // The trees of the domains: the folders Shed's map names (sight.ts), and q-'s
+    // (`packages/domains/src/sight.ts`, MBX-4), their `@` folders of service aside.
+    files: [
+      ...Object.keys(sight).map((top) => `packages/domains/test/shed/${top}/**/*.ts`),
+      ...Object.keys(the_sight_of_q).map((top) => `packages/domains/src/${top}/**/*.ts`),
+    ],
+    ignores: ['packages/domains/test/shed/**/@*/**', 'packages/domains/src/**/@*/**'],
     rules: tree_rules,
   },
   {
