@@ -427,7 +427,7 @@ export const a_node = async (story: Story, start: Start) => {
       return Promise.resolve({ outcome: 'delivered' })
     },
   })
-  /** The kernel's own port of requests (F7, EXT-8): the node's post and machine, the address book's bond by its id. */
+  /** The kernel's own port of requests (F7, EXT-8): the node's post and machine, the address book's bond by its id, the kernel's trace. */
   const the_kernels_port = the_kernels_port_of_requests({
     clock,
     machine,
@@ -437,6 +437,9 @@ export const a_node = async (story: Story, start: Start) => {
       log: facts,
     },
     the_bond,
+    trace: (entry) => {
+      trace(entry)
+    },
   })
   const the_office_s_executor = zz.effect_executor({
     registry: activations_registry,

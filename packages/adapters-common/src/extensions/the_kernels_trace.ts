@@ -93,6 +93,11 @@ export type AResponseNotDeposited =
  *   deposit (PST-9): its event over what a letter carries (PST-12), not
  *   sealed for their key, refused by the relay (with what it said), or no
  *   answer came; the asker's sending again asks again (PST-6);
+ * - `a_request_not_sent`: a request of the kernel's (EXT-8) whose input is
+ *   over what a letter carries (PST-12), never sent: its delivery reads
+ *   `too_large_for_a_letter`, which the office records as `no_response`
+ *   (A, 23 Nov 2026), so that the user learns why here (F6); an
+ *   extension's is refused to the extension, which tells it (EXT-2);
  * - `a_request_not_answered`: a request routed to an extension whose
  *   invocation threw (it fell while serving, or it is not running, EXT-15),
  *   with the request as it came and why: nothing goes back (F8), and the
@@ -159,6 +164,16 @@ export type TheKernelsTraced =
       readonly opened: AnEnvelopeNotOpened
     }
   | { readonly why: 'not_a_leaf_of_the_extension'; readonly request: ARequestAsItCame }
+  | {
+      readonly why: 'a_request_not_sent'
+      readonly request: {
+        readonly effect: string
+        readonly id: string
+        readonly invokes: post_value.invocation
+      }
+      readonly now: string
+      readonly because: 'too_large_for_a_letter'
+    }
   | {
       readonly why: 'a_request_not_answered'
       readonly request: ARequestAsItCame
