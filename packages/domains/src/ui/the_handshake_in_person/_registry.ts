@@ -10,6 +10,7 @@ import * as value from './_value.ts'
 
 export const registry = {
   'ui/the_handshake_in_person/value/an_activity_asked': value.an_activity_asked,
+  'ui/the_handshake_in_person/value/her_qr': value.her_qr,
   'ui/the_handshake_in_person/value/what_she_scanned': value.what_she_scanned,
   'ui/the_handshake_in_person/value/the_camera_s_side': value.the_camera_s_side,
   'ui/the_handshake_in_person/value/the_cameras': value.the_cameras,

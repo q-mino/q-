@@ -16,7 +16,17 @@ export const an_activity_asked = value.an_activity_asked
 export type an_activity_asked = z.output<typeof an_activity_asked>
 
 /**
- * What she scanned: a ticket, opened; or a text that holds none, or one out of its form.
+ * Her QR once she scanned theirs: still shown, since the other phone may
+ * still be reading it; or put away by her gesture (Alessandro, 23 Nov 2026:
+ * no screen leaves it on its own).
+ *
+ * @see {@link value.her_qr}
+ */
+export const her_qr = value.her_qr
+export type her_qr = z.output<typeof her_qr>
+
+/**
+ * What she scanned: a ticket, opened, with her QR still shown or put away; or a text that holds none, or one out of its form.
  *
  * @see {@link value.what_she_scanned}
  */
@@ -83,7 +93,9 @@ export type what_it_is_given = z.output<typeof what_it_is_given>
 /**
  * What the screen shows: the ticket being got ready; one that cannot be;
  * ready, its QR and the camera, with what she scanned that holds no ticket;
- * their ticket being opened; bonded, with what her node said of it ("in
+ * their ticket read, her QR still shown until she puts it away, the camera
+ * no longer wanted (the other phone may still be reading hers), while it
+ * opens or once opened; then their ticket being opened; bonded, with what her node said of it ("in
  * person" only when it said `you_met_in_person`, the QR crossed within the
  * window of a crossing; at a distance, as her node measured it, when it
  * said `you_are_bonded` or `your_introduction_is_sent`: BND-10), or Anna
