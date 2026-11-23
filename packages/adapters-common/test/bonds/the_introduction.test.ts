@@ -122,6 +122,10 @@ describe('the delivery of my introduction (BND-10, F7)', () => {
       outcome: 'exhausted',
       reason: 'no response in 48 hours',
     })
+    expect(await delivered_when({ answer: 'too_large_for_a_letter' })).toEqual({
+      outcome: 'exhausted',
+      reason: 'too large for a letter',
+    })
     expect(await delivered_when({ answer: 'the_bond_is_gone' })).toEqual({
       outcome: 'exhausted',
       reason: 'the bond is gone',

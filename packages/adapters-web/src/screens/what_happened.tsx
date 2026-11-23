@@ -70,6 +70,7 @@ const the_detail = (
     case 'a_letter_could_not_be_opened':
     case 'a_response_came_unasked':
     case 'a_response_could_not_be_sent':
+    case 'a_request_could_not_be_sent':
     case 'an_extension_did_what_it_does_not_declare':
     case 'a_request_was_not_answered':
       return undefined
