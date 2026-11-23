@@ -54,10 +54,12 @@ export type AnEnvelopeNotOpened =
   | { readonly outcome: 're_addressed'; readonly letter: string; readonly signed_by: string }
 
 /**
- * Why a response was not deposited (PST-9, PST-10): their key takes no
- * seal; the relay refused it, with what it said; or no answer came.
+ * Why a response was not deposited (PST-9, PST-10, PST-12): its event over
+ * what a letter carries, never sealed; their key takes no seal; the relay
+ * refused it, with what it said; or no answer came.
  */
 export type AResponseNotDeposited =
+  | { readonly outcome: 'too_large_for_a_letter' }
   | { readonly outcome: 'not_sealed' }
   | { readonly outcome: 'refused'; readonly why: string }
   | { readonly outcome: 'unreachable' }
@@ -88,9 +90,9 @@ export type AResponseNotDeposited =
  *   has no surface on the persona it names, answered `invalid_request`,
  *   `not_a_leaf` (EXT-4), with the request as it came;
  * - `a_response_not_deposited`: a response the entry wrote and could not
- *   deposit (PST-9): not sealed for their key, refused by the relay (with
- *   what it said), or no answer came; the asker's sending again asks
- *   again (PST-6);
+ *   deposit (PST-9): its event over what a letter carries (PST-12), not
+ *   sealed for their key, refused by the relay (with what it said), or no
+ *   answer came; the asker's sending again asks again (PST-6);
  * - `a_request_not_answered`: a request routed to an extension whose
  *   invocation threw (it fell while serving, or it is not running, EXT-15),
  *   with the request as it came and why: nothing goes back (F8), and the
