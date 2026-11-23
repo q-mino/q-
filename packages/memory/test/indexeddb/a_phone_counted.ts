@@ -194,7 +194,7 @@ export const everything_kept = async (
 
 /** The nodes' clock, at 10:00:00 UTC on Friday 20 November 2026; it does not move. */
 const clock: zz.Clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00Z'),
+  now: () => zz.date_time.parse('2026-11-20T10:00:00.000Z'),
   time_zone: zz.time_zone.parse('UTC'),
 }
 
@@ -231,7 +231,7 @@ export const a_phone_over = async (
     relays: [the_relay],
   })
   const when = (): zz.RootContext => ({
-    now: zz.in_zone(clock.time_zone)(clock.now()),
+    now: clock.now(),
     time_zone: clock.time_zone,
   })
 

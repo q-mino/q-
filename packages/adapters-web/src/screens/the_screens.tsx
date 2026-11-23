@@ -6,7 +6,17 @@
 
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
-import { createResource, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import {
+  createResource,
+  createSignal,
+  For,
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+  type JSX,
+} from 'solid-js'
 import type { HerNode } from '../her_node/index.ts'
 import { AContact } from './a_contact.tsx'
 import { APage } from './a_page.tsx'
@@ -91,9 +101,12 @@ export const TheScreens = (props: TheScreensWiring) => {
     words: (extension) => props.texts.extensions[extension],
     document_of: (frame) => props.documents(frame),
   }
-  // The strip over every screen (UI-5), read again at each change of her node: the relay that did not answer.
+  // The strip over every screen (UI-5), read again at each change of her node: no network, else the relay that did not answer.
   const [the_strip] = createResource(changes, async () =>
-    ui.the_strip((await props.node.the_relay()).met),
+    ui.the_strip({
+      relay: (await props.node.the_relay()).met,
+      network: await props.node.the_network(),
+    }),
   )
   onMount(() => {
     set_the_link(props.a_link)
@@ -129,9 +142,14 @@ export const TheScreens = (props: TheScreensWiring) => {
   return (
     <TheAppContext.Provider value={app}>
       <main>
-        <Show when={the_strip()?.strip === 'the_relay_does_not_answer'}>
-          <p role="status">{props.texts.common.the_relay_does_not_answer}</p>
-        </Show>
+        <Switch>
+          <Match when={the_strip()?.strip === 'no_network'}>
+            <p role="status">{props.texts.common.no_network}</p>
+          </Match>
+          <Match when={the_strip()?.strip === 'the_relay_does_not_answer'}>
+            <p role="status">{props.texts.common.the_relay_does_not_answer}</p>
+          </Match>
+        </Switch>
         <Show when={way()} fallback={<p role="status">{props.texts.common.opening}</p>}>
           {(the_way) => (
             <For each={the_way()}>

@@ -51,6 +51,8 @@ export const common = {
   the_mark_of: (name) => `Estensione «${name}»`,
   // A word an extension's words lack, drawn as a fault in place of the whole text (WEB-22).
   a_word_missing: (name) => `«${name}»: manca la parola dell’estensione`,
+  // The strip (UI-5): no network told apart from a relay silent [Q, A, 23 Nov 2026].
+  no_network: 'Sei senza rete.',
   the_relay_does_not_answer: 'Il server non risponde: le lettere aspettano e partono appena torna.',
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,

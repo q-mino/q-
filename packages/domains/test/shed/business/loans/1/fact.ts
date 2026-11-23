@@ -1,15 +1,18 @@
 import { z } from 'zod'
-import { date_time, day_of } from '../../../../../src/library/index.ts'
+import { date_time, day } from '../../../../../src/library/index.ts'
 import { earlier, delegate, next, id, tools } from './_scope_fact.ts'
 
 // The facts of `loans` 1.x, a past major (A, 16 Nov 2026 (7)): until 4
 // November 2026 a loan was due at an instant (`due_date`), since 2.0.0 on a
-// day (`due_day`). Every fact of 1.x is here: the one whose shape changed, at
+// day (`due_day`), the tool back by its end. Its days, in the shed's
+// calendar, the desk wrote beside the instants (`start_day`, `due_day`):
+// a translation reads the payload alone, with no zone, so it takes a day
+// written, never one derived from an instant (SC-12, A, 23 Nov 2026). Every fact of 1.x is here: the one whose shape changed, at
 // the last minor of 1.x, written whole, with its step to the next major;
 // every other delegated to it. When no fact kept has 1.x any more (D101), the
 // folder is deleted.
 
-/** The whole new loan, due at an instant; since 2.0.0 due on the day of that instant. */
+/** The whole new loan, due at an instant; since 2.0.0 due on its day, the one the desk wrote. */
 export const a_tool_has_been_lent = earlier(next.a_tool_has_been_lent)({
   payload: z.strictObject({
     new_loan: z.strictObject({
@@ -17,7 +20,9 @@ export const a_tool_has_been_lent = earlier(next.a_tool_has_been_lent)({
       tool_id: tools.id.tool_id,
       member_id: id.member_id,
       start_date: date_time,
+      start_day: day,
       due_date: date_time,
+      due_day: day,
       progress: z.strictObject({
         stage: z.literal('ongoing'),
         term: z.enum(['running', 'overdue']),
@@ -30,7 +35,8 @@ export const a_tool_has_been_lent = earlier(next.a_tool_has_been_lent)({
       tool_id: payload.new_loan.tool_id,
       member_id: payload.new_loan.member_id,
       start_date: payload.new_loan.start_date,
-      due_day: day_of(payload.new_loan.due_date),
+      start_day: payload.new_loan.start_day,
+      due_day: payload.new_loan.due_day,
       progress: payload.new_loan.progress,
     },
   }),

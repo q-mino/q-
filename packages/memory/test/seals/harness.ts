@@ -167,7 +167,7 @@ export const a_safe = async (
   const primitives = calls.primitives
   const versions = await zz.versions([majors])({ stored: made.stored_versions })
   const ports = made.safe(primitives)(versions)
-  const instant = zz.date_time.parse('2026-11-20T09:00:00Z')
+  const instant = zz.date_time.parse('2026-11-20T09:00:00.000Z')
   let operations = 0
   /** The context of a command sent under an operation (DOM-11), its fingerprint over its use case's path and its input. */
   const sent_as =
@@ -176,14 +176,14 @@ export const a_safe = async (
       operations += 1
       const id = sent.operation ?? `op-${String(operations)}`
       return {
-        now: zz.in_zone(time_zone)(instant),
+        now: instant,
         time_zone,
         operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? the_scope_of_a_reaction },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = { now: zz.in_zone(time_zone)(instant), time_zone }
+  const when = { now: instant, time_zone }
   const executor = zz.effect_executor({
     registry,
     versions,

@@ -1,14 +1,17 @@
 // The handshake in person, the crossed QR (UI-5, WEB-1, WEB-2): opened, the
 // screen prepares a ticket of hers; ready, it shows the QR of its link and
-// plays the rear camera in its video, each text it reads told as a scan;
-// the camera is on only while her QR is shown, off once it is not and when
-// the screen closes. Bonded, she opens the contact or shakes another hand.
+// plays the camera in its video, each text it reads told as a scan: the
+// front camera by default (the two face each other, screen to screen),
+// turned to the rear and back by her gesture where the device has more than
+// one; the camera is on only while her QR is shown, off once it is not and
+// when the screen closes. Bonded, she opens the contact or shakes another hand.
 
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as the_handshake_in_person from '@q-mino/domains/ui/the_handshake_in_person/_dsl.ts'
 import type * as the_handshake_in_person_value from '@q-mino/domains/ui/the_handshake_in_person/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch } from 'solid-js'
+import type { AFacing } from '../camera/index.ts'
 import { the_qr_of } from '../qr/index.ts'
 import { the_ticket_in_a_link } from '../ticket_link/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
@@ -28,6 +31,10 @@ export interface TheHandshakeInPersonTexts {
   readonly too_long_for_a_qr: string
   /** The camera when it is not on, by its case (WEB-2). */
   readonly the_camera: Readonly<Record<Exclude<ui_value.the_camera, 'on'>, string>>
+  /** The gesture that turns the camera, by where it turns it (only where the device has more than one). */
+  readonly turn_the_camera: Readonly<
+    Record<Exclude<the_handshake_in_person_value.the_turn, 'none'>, string>
+  >
   /** What she scanned that opens nothing, by its case. */
   readonly scanned: Readonly<
     Record<
@@ -89,18 +96,39 @@ const TheQr = (props: { link: string; texts: TheHandshakeInPersonTexts }) => {
   )
 }
 
-/** Her QR and the camera's words while she scans (her ticket ready, or theirs not opened). */
+/** Where the camera faces, by its side, in the browser's words (WEB-2): the front faces her. */
+const the_facing_of = {
+  front: 'user',
+  rear: 'environment',
+} as const satisfies Record<the_handshake_in_person_value.the_camera_s_side, AFacing>
+
+/** Her QR, the camera's words and the gesture that turns it while she scans (her ticket ready, or theirs not opened). */
 const WhileSheScans = (props: {
   link: string | undefined
   camera: ui_value.the_camera
+  turn: the_handshake_in_person_value.the_turn
+  onTurn: () => void
   texts: TheHandshakeInPersonTexts
 }) => {
   const not_on = () => (props.camera === 'on' ? undefined : props.camera)
+  const turn = () => (props.turn === 'none' ? undefined : props.turn)
   return (
     <>
       <p>{props.texts.show_and_scan}</p>
       <Show when={props.link}>{(link) => <TheQr link={link()} texts={props.texts} />}</Show>
       <Show when={not_on()}>{(why) => <p role="status">{props.texts.the_camera[why()]}</p>}</Show>
+      <Show when={turn()}>
+        {(where) => (
+          <button
+            type="button"
+            onClick={() => {
+              props.onTurn()
+            }}
+          >
+            {props.texts.turn_the_camera[where()]}
+          </button>
+        )}
+      </Show>
     </>
   )
 }
@@ -197,14 +225,25 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
     if (started()) a_new_ticket('the_screen_is_opened')
   })
 
-  // The camera, on while she scans; each text it reads told as a scan, with
-  // an activity drawn; off once she no longer scans, and when the screen closes.
+  // The camera, on while she scans, facing her side's way; each text it reads
+  // told as a scan, with an activity drawn, and the device's cameras counted
+  // once it is on; off once she no longer scans, when she turns it (the
+  // device's camera turns the one before off before it opens the next, WEB-2)
+  // and when the screen closes.
   const [video, set_video] = createSignal<HTMLVideoElement>()
   const scanning = createMemo(() => ready() !== undefined || cannot_be_opened() !== undefined)
+  const facing = createMemo((): AFacing | undefined => {
+    const side = (ready() ?? cannot_be_opened())?.side
+    return side === undefined ? undefined : the_facing_of[side]
+  })
+  const turns_the_camera = (): void => {
+    screen.happens({ happens: 'she_turns_the_camera' })
+  }
   createEffect(() => {
     const element = video()
-    if (element === undefined || !scanning()) return
-    const a_scan = app.device.scans(element)
+    const facing_now = facing()
+    if (element === undefined || facing_now === undefined) return
+    const a_scan = app.device.scans(element, facing_now)
     // This scan's run over (she no longer scans, or the screen closed): what it reads then is told no more.
     let over = false
     const is_over = (): boolean => over
@@ -218,6 +257,7 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
       if (is_over()) return
       screen.happens({ happens: 'the_camera_is', camera: scan.is })
       if (scan.is !== 'on') return
+      screen.happens({ happens: 'the_cameras_are_counted', cameras: scan.cameras })
       for await (const text of scan.texts) {
         if (is_over()) return
         screen.happens({
@@ -261,7 +301,13 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
           <Match when={ready()}>
             {(it) => (
               <>
-                <WhileSheScans link={link()} camera={it().camera} texts={props.texts} />
+                <WhileSheScans
+                  link={link()}
+                  camera={it().camera}
+                  turn={it().turn}
+                  onTurn={turns_the_camera}
+                  texts={props.texts}
+                />
                 <Show when={scanned_nothing_to_open()}>
                   {(scanned) => <p role="status">{props.texts.scanned[scanned()]}</p>}
                 </Show>
@@ -300,7 +346,13 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
                 <p role="status">{props.texts.their_ticket_cannot_be_opened(it().introduced_as)}</p>
                 <p>{the_words_of_an_end(app.common, it().how)}</p>
                 <p>{props.texts.scan_again}</p>
-                <WhileSheScans link={link()} camera={it().camera} texts={props.texts} />
+                <WhileSheScans
+                  link={link()}
+                  camera={it().camera}
+                  turn={it().turn}
+                  onTurn={turns_the_camera}
+                  texts={props.texts}
+                />
               </>
             )}
           </Match>

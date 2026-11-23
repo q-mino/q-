@@ -14,7 +14,7 @@ export const an_invitation = {
   on_its_way: (name) => `Stringo la mano a ${name}…`,
   it_waits_offline: 'Senza rete aspetta: parte da solo appena torna.',
   bonded: (name) => `Nuovo contatto: si presenta come ${name}, a distanza.`,
-  // [Q, C, provisional: A to confirm]: as the bond made, no identity claimed (WEB-20).
+  // [Q, A, 22 Nov 2026]: as the bond made, no identity claimed (WEB-20).
   bonded_already: (name) => `Era già tra i tuoi contatti: si presenta come ${name}.`,
   no_longer_holds: (name) => `L’invito di ${name} non vale più.`,
 } satisfies AnInvitationTexts

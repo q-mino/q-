@@ -18,7 +18,7 @@ import {
 // `memory/test/bonds/the_introduction_through_post.test.ts`.
 
 const clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00Z'),
+  now: () => zz.date_time.parse('2026-11-20T10:00:00.000Z'),
   time_zone: zz.time_zone.parse('UTC'),
 }
 
@@ -121,6 +121,10 @@ describe('the delivery of my introduction (BND-10, F7)', () => {
     expect(await delivered_when({ answer: 'no_response' })).toEqual({
       outcome: 'exhausted',
       reason: 'no response in 48 hours',
+    })
+    expect(await delivered_when({ answer: 'too_large_for_a_letter' })).toEqual({
+      outcome: 'exhausted',
+      reason: 'too large for a letter',
     })
     expect(await delivered_when({ answer: 'the_bond_is_gone' })).toEqual({
       outcome: 'exhausted',

@@ -20,6 +20,7 @@ import {
   her_node_over,
   the_ticket_in_a_link,
   type HerNode,
+  the_device_s_network,
   type TheRelayMet,
 } from '@q-mino/adapters-web'
 import * as zz from '@q-mino/domains/library'
@@ -103,7 +104,7 @@ const annas_phone = async (story: Story) => {
   const made = cell<PhoneState>({ initial: a_new_phone })
   const clock = story.clock
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(clock.time_zone)(clock.now()),
+    now: clock.now(),
     time_zone: clock.time_zone,
   })
   const node = await phone(on_the_cell(made), {
@@ -129,6 +130,12 @@ const annas_phone = async (story: Story) => {
   const the_relay_meets = (now: TheRelayMet): void => {
     met = now
     for (const tell of told_of_the_relay) tell()
+  }
+  // The device's network (UI-5): the source, over a page the story turns off and on.
+  const the_device = { navigator: { onLine: true }, listeners: new Set<() => void>() }
+  const the_network_goes = (now: 'online' | 'offline'): void => {
+    the_device.navigator.onLine = now === 'online'
+    for (const listener of the_device.listeners) listener()
   }
   const her: HerNode = her_node_over({
     clock,
@@ -170,6 +177,13 @@ const annas_phone = async (story: Story) => {
         },
       },
     },
+    the_network: the_device_s_network({
+      navigator: the_device.navigator,
+      window: {
+        addEventListener: (_type, listener) => the_device.listeners.add(listener),
+        removeEventListener: (_type, listener) => the_device.listeners.delete(listener),
+      },
+    }),
   })
 
   /** The node runs until it is quiet (DOM-14, DOM-16): the reactions and the kernel's executors started, what is due delivered, then stopped. */
@@ -206,6 +220,7 @@ const annas_phone = async (story: Story) => {
     frames_traced: (): readonly TheKernelsTraced[] => frames_traced,
     /** The relay client meets the relay, as a collect would (UI-5). */
     the_relay_meets,
+    the_network_goes,
 
     how_it_ended,
     /** The ticket of a bond as the phone shows it (BND-9). */
@@ -288,7 +303,7 @@ describe('her node, over a phone of the stack', () => {
     expect(await anna.her.an_activity('A1')).toEqual({
       activity_id: 'A1',
       what: { activity: 'make_my_first_face', face: 'F_a', name: 'Anna' },
-      asked_at: '2026-11-20T10:00:00+00:00',
+      asked_at: '2026-11-20T10:00:00.000Z',
       stage: { stage: 'in_progress' },
     })
     expect((await anna.her.the_activities_in_progress()).map((each) => each.activity_id)).toEqual([
@@ -357,15 +372,15 @@ describe('her node, over a phone of the stack', () => {
         bond: 'L_b',
         name: 'Bruno',
         introduced_as: 'Bruno',
-        confirmation: { state: 'received', at: '2026-11-20T10:00:00+00:00' },
+        confirmation: { state: 'received', at: '2026-11-20T10:00:00.000Z' },
       },
     ])
     expect(await anna.her.a_contact('L_b')).toEqual({
       bond: 'L_b',
       name: 'Bruno',
       introduced_as: 'Bruno',
-      confirmation: { state: 'received', at: '2026-11-20T10:00:00+00:00' },
-      handshake: { way: 'at_a_distance', at: '2026-11-20T10:00:00+00:00' },
+      confirmation: { state: 'received', at: '2026-11-20T10:00:00.000Z' },
+      handshake: { way: 'at_a_distance', at: '2026-11-20T10:00:00.000Z' },
       their_relays: [the_relay],
     })
     expect(await anna.her.a_contact('L_x')).toBeUndefined()
@@ -452,6 +467,23 @@ describe('her node, over a phone of the stack', () => {
     expect(told).toBe(1)
   })
 
+  test('the device’s network, each change told: no network, else nothing told (UI-5)', async () => {
+    const anna = await annas_phone(await a_story())
+    expect(await anna.her.the_network()).toBe('not_told')
+    let told = 0
+    const stops = anna.her.when_it_changes(() => {
+      told += 1
+    })
+    anna.the_network_goes('offline')
+    expect(await anna.her.the_network()).toBe('offline')
+    anna.the_network_goes('online')
+    expect(await anna.her.the_network()).toBe('not_told')
+    expect(told).toBe(2)
+    stops()
+    anna.the_network_goes('offline')
+    expect(told).toBe(2)
+  })
+
   test('a frame served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {
     const anna = await anna_with_her_face(await a_story())
     const [shown] = await anna.her.the_extensions()
@@ -467,7 +499,7 @@ describe('her node, over a phone of the stack', () => {
         frame: { extension: 'ping_pong', shown: true },
         active: true,
         message,
-        now: '2026-11-21T10:00:00+01:00',
+        now: '2026-11-21T09:00:00.000Z',
       })
       if (fenced.fenced !== 'served') throw new Error('the fence refused it')
       return fenced
@@ -506,7 +538,7 @@ describe('her node, over a phone of the stack', () => {
         version: '1.0.0',
         input: {},
       },
-      now: '2026-11-21T10:00:00+01:00',
+      now: '2026-11-21T09:00:00.000Z',
     })
     if (refused.fenced !== 'refused') throw new Error('the fence served a frame not shown')
     anna.her.a_frame_is_fenced(refused.traced)

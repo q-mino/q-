@@ -33,7 +33,8 @@ import * as user_value from '../../src/user/_value.ts'
 // `ping` on `a_bond`, offered to L_b and L_c. Saturday 21 November 2026, 10:00
 // in Rome.
 
-const ten = '2026-11-21T10:00:00+01:00'
+/** 10:00 in Rome, as the clock writes it (UTC). */
+const ten = '2026-11-21T09:00:00.000Z'
 const F_a = 'F_a'
 const L_b = 'L_b'
 const L_c = 'L_c'
@@ -137,7 +138,7 @@ const a_ticket_link = (introduced_as: string): ui_value.what_it_holds => ({
 
 /** A ticket of hers, ready, for a bond to be. */
 const her_ticket = (bond: string): ui_value.a_ticket_ready =>
-  ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T10:00:00+01:00' })
+  ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T09:00:00.000Z' })
 
 /** A contact, as her list and its card give it. */
 const a_contact_seen = (
@@ -620,6 +621,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       shows: 'ready',
       ticket: her_ticket('B1'),
       camera: 'on',
+      side: 'front',
+      turn: 'none',
       scanned: 'nothing',
     })
     const brunos = a_ticket_link('Bruno')
@@ -695,6 +698,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         shows: 'ready',
         ticket: her_ticket('B1'),
         camera: 'on',
+        side: 'front',
+        turn: 'none',
         scanned: holds,
       })
     }
@@ -718,6 +723,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       how: cannot,
       ticket: her_ticket('B1'),
       camera: 'on',
+      side: 'front',
+      turn: 'none',
     })
     expect(scan(not_opened, a_ticket_link('Bruno'), 'A12').asks).toEqual([
       { asks: 'an_activity', activity_id: 'A12', what: open },
@@ -745,8 +752,71 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       shows: 'ready',
       ticket: her_ticket('B1'),
       camera: 'refused',
+      side: 'front',
+      turn: 'none',
       scanned: 'nothing',
     })
+  })
+
+  test('the camera faces her at the start; with more than one she turns it to the rear and back', () => {
+    const prepare = { activity: 'prepare_a_ticket', bond: 'B1', face: F_a } as const
+    expect(the_handshake_in_person.at_the_start()).toEqual({
+      camera: 'off',
+      side: 'front',
+      cameras: 'one',
+    })
+    const opened = the_handshake_in_person.after(the_handshake_in_person.at_the_start(), {
+      happens: 'the_screen_is_opened',
+      asked: asked('A10'),
+      bond: 'B1',
+      face: F_a,
+    }).state
+    const ready = { ticket: her_ticket('B1'), activities: [a_card('A10', prepare, done)] }
+    const shows = (state: in_person_value.the_state) =>
+      the_handshake_in_person.what_it_shows(state, ready)
+    const on = the_handshake_in_person.after(opened, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(on)).toMatchObject({ shows: 'ready', camera: 'on', side: 'front', turn: 'none' })
+    // One camera: nowhere to turn, her gesture changes nothing.
+    const turn = (state: in_person_value.the_state) =>
+      the_handshake_in_person.after(state, { happens: 'she_turns_the_camera' })
+    expect(turn(on)).toEqual({ state: on, asks: [], goes: { goes: 'nowhere' } })
+    const counted = the_handshake_in_person.after(on, {
+      happens: 'the_cameras_are_counted',
+      cameras: 'more_than_one',
+    }).state
+    expect(shows(counted)).toMatchObject({ camera: 'on', side: 'front', turn: 'to_the_rear' })
+    // Turned: the camera off until the browser says it is on, nowhere to turn meanwhile.
+    const turned = turn(counted)
+    expect(turned.asks).toEqual([])
+    expect(shows(turned.state)).toMatchObject({ camera: 'off', side: 'rear', turn: 'none' })
+    expect(turn(turned.state).state).toEqual(turned.state)
+    const rear = the_handshake_in_person.after(turned.state, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(rear)).toMatchObject({ camera: 'on', side: 'rear', turn: 'to_the_front' })
+    const front = the_handshake_in_person.after(turn(rear).state, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(front)).toMatchObject({ camera: 'on', side: 'front', turn: 'to_the_rear' })
+    // The rear camera busy: she may still turn back to the front.
+    const busy = the_handshake_in_person.after(turned.state, {
+      happens: 'the_camera_is',
+      camera: 'busy',
+    }).state
+    expect(shows(busy)).toMatchObject({ camera: 'busy', side: 'rear', turn: 'to_the_front' })
+    // Another hand: a new ticket keeps the side she chose and the cameras counted.
+    const another = the_handshake_in_person.after(rear, {
+      happens: 'she_shakes_another_hand',
+      asked: asked('A12'),
+      bond: 'B2',
+      face: F_a,
+    }).state
+    expect(another).toMatchObject({ camera: 'off', side: 'rear', cameras: 'more_than_one' })
   })
 
   test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', () => {
@@ -1212,8 +1282,17 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
   })
 
   test('a strip over every screen while the relay does not answer, none once it answers', () => {
-    expect(ui.the_strip('did_not_answer')).toEqual({ strip: 'the_relay_does_not_answer' })
-    expect(ui.the_strip('answered')).toEqual({ strip: 'none' })
+    expect(ui.the_strip({ relay: 'did_not_answer', network: 'not_told' })).toEqual({
+      strip: 'the_relay_does_not_answer',
+    })
+    expect(ui.the_strip({ relay: 'answered', network: 'not_told' })).toEqual({ strip: 'none' })
+  })
+
+  test('no network, when her phone tells it, told apart from a relay silent, whatever the relay last did', () => {
+    expect(ui.the_strip({ relay: 'did_not_answer', network: 'offline' })).toEqual({
+      strip: 'no_network',
+    })
+    expect(ui.the_strip({ relay: 'answered', network: 'offline' })).toEqual({ strip: 'no_network' })
   })
 
   test('the answer of the extensions in common is shown beside its question, the last one asked', () => {

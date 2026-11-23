@@ -21,6 +21,8 @@ export const the_news = {
     a_response_came_unasked: 'È arrivata una risposta che non avevi chiesto, o in ritardo',
     a_letter_was_refused: 'Una lettera è stata rifiutata',
     a_response_could_not_be_sent: 'Una tua risposta non è partita',
+    // [Q, A, 23 Nov 2026]: a request of the kernel's over what a letter carries (PST-12).
+    a_request_could_not_be_sent: 'Una tua richiesta non è partita: troppo grande per una lettera',
     an_extension_did_what_it_does_not_declare:
       'Ha fatto qualcosa che il suo manifesto non dichiara',
     an_extension_fell: 'Si è fermata',

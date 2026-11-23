@@ -13,7 +13,7 @@ const time_zone = zz.time_zone.parse(new Intl.DateTimeFormat().resolvedOptions()
 a_realm_in_this_frame(window, (send) =>
   ping_pong({
     clock: {
-      now: () => zz.in_zone(time_zone)(zz.date_time.parse(new Date().toISOString())),
+      now: () => zz.date_time.parse(new Date().toISOString()),
       time_zone,
     },
     elapsed: (milliseconds) =>

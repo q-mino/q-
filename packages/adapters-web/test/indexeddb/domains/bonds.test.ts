@@ -15,7 +15,7 @@ import { bonds_ports_on_indexeddb, the_node_s_storage } from '../../../src/index
 
 const time_zone = zz.time_zone.parse('UTC')
 const the_relay = 'https://relay.q-mino.test'
-const at = zz.date_time.parse('2026-11-16T10:00:00+00:00')
+const at = zz.date_time.parse('2026-11-16T10:00:00.000Z')
 
 /** Every event of a stream, in order. */
 const all = async <event>(events: AsyncIterable<event>): Promise<readonly event[]> => {
@@ -61,14 +61,14 @@ const annas_phone = async () => {
       operations += 1
       const id = sent.operation ?? `op-${String(operations)}`
       return {
-        now: zz.in_zone(time_zone)(at),
+        now: at,
         time_zone,
         operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? 'persona/self' },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = () => ({ now: zz.in_zone(time_zone)(at), time_zone })
+  const when = () => ({ now: at, time_zone })
   return { opened, primitives, address_book, sent_as, when }
 }
 

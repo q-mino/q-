@@ -48,11 +48,12 @@ const DC = 'hash-of-carla-R'
 /** A key that takes no seal (SEA-5): 32 zero bytes, a point of small order. */
 const no_key = 'A'.repeat(43)
 
-/** Friday 20 November 2026, by the phones' clock, as a command's context tells it. */
-const told = (time_of_day: string) => `2026-11-20T${time_of_day}+00:00`
-
-/** The same instant, as the requests' times are computed (`dsl.the_end_of_a_time`). */
-const computed = (time_of_day: string) => `2026-11-20T${time_of_day}.000Z`
+/**
+ * Friday 20 November 2026, by the phones' clock, as it writes it (UTC): as a
+ * command's context tells it, and as the requests' times are computed
+ * (`dsl.the_end_of_a_time`).
+ */
+const told = (time_of_day: string) => `2026-11-20T${time_of_day}.000Z`
 
 /** The faces of the protocol's stories, by their private keys. */
 const the_faces = (primitives: Primitives) => ({
@@ -349,7 +350,7 @@ export const stories_of_the_post = (
                   sent_request: {
                     id: P1,
                     status: 'waiting',
-                    until: computed('10:01:00'),
+                    until: told('10:01:00'),
                     deposit: {
                       letter: {
                         is: 'a_request',
@@ -373,8 +374,8 @@ export const stories_of_the_post = (
         })
         expect(await queued_of(anna)).toEqual([
           { effect: 'deposit_a_letter', id: `${P1}/0`, not_before: undefined },
-          { effect: 'wait_to_send_again', id: `${P1}/1`, not_before: computed('10:00:15') },
-          { effect: 'wait_for_the_response', id: P1, not_before: computed('10:01:00') },
+          { effect: 'wait_to_send_again', id: `${P1}/1`, not_before: told('10:00:15') },
+          { effect: 'wait_for_the_response', id: P1, not_before: told('10:01:00') },
         ])
         await anna.runs()
         const came = await bruno.opens_what_came()

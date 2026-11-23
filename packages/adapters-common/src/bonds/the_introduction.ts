@@ -98,7 +98,8 @@ type MySide =
  * says the bond is made or confirmed delivers it; any other answer
  * exhausts it with its reason, a dead letter shown to the user (DOM-15,
  * F6): a ticket that cannot be used, a closing of the peer's node, no
- * response in time, the bond gone, my side not found.
+ * response in time, an introduction too large for a letter (PST-12), the
+ * bond gone, my side not found.
  */
 export const the_delivery_of_my_introduction =
   (wiring: TheIntroductionsWiring) =>
@@ -107,7 +108,7 @@ export const the_delivery_of_my_introduction =
     readonly payload: send_my_introduction
   }): Promise<zz.Delivered<never>> => {
     const now = (): zz.RootContext => ({
-      now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+      now: wiring.clock.now(),
       time_zone: wiring.clock.time_zone,
     })
     const my_side = async (): Promise<MySide> => {
@@ -149,6 +150,8 @@ export const the_delivery_of_my_introduction =
       }
       case 'no_response':
         return { outcome: 'exhausted', reason: 'no response in 48 hours' }
+      case 'too_large_for_a_letter':
+        return { outcome: 'exhausted', reason: 'too large for a letter' }
       case 'the_bond_is_gone':
         return { outcome: 'exhausted', reason: 'the bond is gone' }
     }
@@ -185,7 +188,7 @@ export const the_ticket_shown =
     const [ticket] = await the_entries_of(
       wiring.address_book.my_ticket(
         {
-          now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+          now: wiring.clock.now(),
           time_zone: wiring.clock.time_zone,
         },
         { bond_id },

@@ -52,6 +52,8 @@ export interface HerNode {
   ) => Promise<ui_value.the_extensions_in_common>
   /** The relay her letters go through, and how her node last met it (UI-5: the server's screen, the strip). */
   readonly the_relay: () => Promise<TheRelaySeen>
+  /** The device's network, as her phone tells it (UI-5's strip: no network told apart from a relay silent). */
+  readonly the_network: () => Promise<ui_value.the_device_s_network>
   /** What her node offers a bond, with the majors it speaks (`the_extensions_offered_to_a_bond`, EXT-8). */
   readonly offered_to: (bond: string) => Promise<activities_value.offered>
   /** An activity, as `user` reads it. */

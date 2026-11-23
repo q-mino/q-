@@ -277,6 +277,17 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 **27. Full-stack trial and release** — L · 160k
 
 - Goal: the scenarios on real phones against the deployed relay; fixes; release notes. The tag `v0.1` is Alessandro's.
+- **The measurement protocol** [Q, A, 23 Nov 2026] (the choices that wait for a measure: STK-3, MBX-8, DOM-11, PST-8): a week of mailbox on 8 bonds, on Chrome for Android, against the deployed relay. Measured:
+  - the start: from opening the app to her contacts shown, on a node with a week of mailbox;
+  - a collect pass at steady state, its bytes and its time: the collector reads each bond's whole mailbox at every pass (`a_collect_every`, 5 s), with no position, since the relay keeps every envelope seven days, collected or not (MBX-2), and its read is composed (MBX-8);
+  - the deposits redone at a restart: what the collector has seen is the runtime's (STK-3), so a week of envelopes goes again through the duplicate branch (DOM-11), and the responses are deposited again, `kept_already` (PST-11): how many, their bytes and their time;
+  - the two reads of the duplicate branch (DOM-11, "Where the duplicate branch runs": form (a), the two lookups, kept as built on WEB-17's measure), measured again on the phone;
+  - the answers kept for ever (PST-8, DOM-11): bytes per request × requests per day, so what a week and a year take;
+  - the relay's forgetting, a day after the discard, and the collect streamed by the library (MBX-8, both confirmed by Alessandro on 22 Nov 2026): the relay's storage over the week, and what a collect reads.
+- **The remedies, in order**, each opened only if the measure asks for it:
+  1. the holder discards what it took: a command of `holder`, with its R; the mailbox empty at steady state, and the relay forgets sooner, better for CFG-3; it changes MBX-2's "collected or not" and the protocol, so it is Alessandro's choice;
+  2. what the collector has seen kept in the node's storage (STK-3's rejected alternative);
+  3. positions over a native stream (MBX-8's rejected alternative).
 
 ## After stage 1
 

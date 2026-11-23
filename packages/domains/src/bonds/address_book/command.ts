@@ -63,6 +63,9 @@ export const remove_a_bond = command({
   }),
 })
 
+/** The user has no face yet, neither being made nor made: her phone's first start (BND-8). */
+export const the_user_has_no_face = NOT(predicate.the_user_has_a_face)
+
 /**
  * Anna's phone, at its first start, makes her face "Anna" (BND-8), at the
  * top of her tree: a process of the address book, whose step toward the
@@ -76,7 +79,7 @@ export const make_my_first_face = command({
   }),
   outcomes: {
     the_user_has_no_face_so_her_first_is_asked_for: [
-      NOT(predicate.the_user_has_a_face),
+      the_user_has_no_face,
       fact.a_first_face_has_been_asked_for,
     ],
   },

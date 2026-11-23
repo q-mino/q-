@@ -217,8 +217,9 @@ export default {
     },
   ],
   options: {
+    // npm modules are seen, never followed: the rules on npm imports read them (domains-npm-allowlist and the others).
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|\\.tsbuild|node_modules|\\.generated)/' },
+    exclude: { path: '(^|/)(dist|\\.tsbuild|\\.generated)/' },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ['exports'],

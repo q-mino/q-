@@ -5,8 +5,12 @@ import { id } from './_scope_value.ts'
 // waits for its pong, the closed set of what comes back, and the office's
 // records of the pings it sent and of the pongs it gave back.
 
-/** An instant, as the node's clock tells it to the office (ISO 8601, with its offset). */
-export const instant = z.iso.datetime({ offset: true })
+/**
+ * An instant, as the node's clock tells it to the office: ISO 8601 in UTC,
+ * to the millisecond (`2026-11-20T09:00:00.000Z`), as the library's
+ * `date_time` (A, 23 Nov 2026): it tells no zone.
+ */
+export const instant = z.iso.datetime({ precision: 3 })
 
 /**
  * How long a ping waits for its pong, in seconds (F7, EXT-12): a value of

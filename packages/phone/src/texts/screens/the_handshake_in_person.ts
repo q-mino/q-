@@ -15,6 +15,11 @@ export const the_handshake_in_person = {
     missing: 'Non trovo una fotocamera.',
     busy: 'La fotocamera è occupata da un’altra app.',
   },
+  // [Q, A, 23 Nov 2026]: the gesture that turns the camera, shown only where the device has more than one.
+  turn_the_camera: {
+    to_the_rear: 'Usa la fotocamera posteriore',
+    to_the_front: 'Usa la fotocamera anteriore',
+  },
   scanned: {
     no_ticket: 'Il QR inquadrato non porta un biglietto.',
     a_ticket_out_of_its_form: 'Il QR inquadrato porta un biglietto guasto.',
@@ -23,7 +28,7 @@ export const the_handshake_in_person = {
   // "di persona" only when her node said so (BND-10, 21 Nov 2026).
   bonded: (name) => `Nuovo contatto: si presenta come ${name}.`,
   bonded_in_person: (name) => `Nuovo contatto: si presenta come ${name}, di persona.`,
-  // [Q, C, provisional: A to confirm]: as the bond made, no identity claimed (WEB-20).
+  // [Q, A, 22 Nov 2026]: as the bond made, no identity claimed (WEB-20).
   bonded_already: (name) => `Era già tra i tuoi contatti: si presenta come ${name}.`,
   open_the_contact: 'Apri il contatto',
   shake_another_hand: 'Stringi un’altra mano',

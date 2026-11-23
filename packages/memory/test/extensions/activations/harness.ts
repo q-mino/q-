@@ -289,7 +289,7 @@ export const the_address_book_made_through_its_commands = async (
     const events = await all(
       port(
         {
-          now: zz.in_zone(time_zone)(zz.date_time.parse(start.at)),
+          now: zz.date_time.parse(start.at),
           time_zone,
           operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
           correlation: zz.correlation.parse(`correlation-${id}`),
@@ -363,14 +363,14 @@ export const a_phone = async (start: Start, factory: AFactory = on_a_cell) => {
       operations += 1
       const id = sent.operation ?? `op-${String(operations)}`
       return {
-        now: zz.in_zone(clock.time_zone)(clock.now()),
+        now: clock.now(),
         time_zone: clock.time_zone,
         operation: { id: zz.operation_id.parse(id), scope: the_scope_of_the_user },
         correlation: zz.correlation.parse(`correlation-${id}`),
         fingerprint: zz.fingerprint_of({ path, input }),
       }
     }
-  const when = () => ({ now: zz.in_zone(clock.time_zone)(clock.now()), time_zone: clock.time_zone })
+  const when = () => ({ now: clock.now(), time_zone: clock.time_zone })
   /** Every fact the log gives, each once by its position, up to where it is caught up (DOM-17). */
   const the_facts_logged = async (): Promise<ReadonlyMap<zz.position, zz.StoredEnvelope>> => {
     const kept = new Map<zz.position, zz.StoredEnvelope>()
