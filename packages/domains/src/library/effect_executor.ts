@@ -1,5 +1,4 @@
 import { operation_id, type Clock, type CommandRootContext } from './context.ts'
-import { in_zone } from './format.ts'
 import type { entry_id } from './command.ts'
 import { $Order, type DeliveryOrder } from './component.ts'
 import { kind_of } from './kind.ts'
@@ -73,7 +72,7 @@ export interface ExecutorPorts<returns extends CommandUseCases> {
  * entry's, so that a double report is the duplicate branch (DOM-11); the
  * fingerprint is over the return's path and what the world said, its input
  * as sent (D108.3, LIB-11); the correlation is the entry's, the fact's that
- * queued it (DOM-10); the context is the clock's, `now` told in its zone. A
+ * queued it (DOM-10); the context is the clock's, `now` and its zone. A
  * transient delivery is tried again after a pause, its effect's later
  * entries behind it; an exhausted one, and a return that refuses what the
  * world said, become a dead letter (DOM-15). A dead letter holds its
@@ -269,14 +268,14 @@ const runtime_executor = (executor: RuntimeExecutor) => {
       })
       const fell: Error[] = []
 
-      /** The context of a return: the clock's `now`, told in its zone, the entry's operation, correlation and fingerprint. */
+      /** The context of a return: the clock's `now` and its zone, the entry's operation, correlation and fingerprint. */
       const context_of = (
         effect: string,
         returning: Return,
         fields: EntryFields,
         said: unknown,
       ): CommandRootContext => ({
-        now: in_zone(ports.clock.time_zone)(ports.clock.now()),
+        now: ports.clock.now(),
         time_zone: ports.clock.time_zone,
         operation: { scope: effect, id: operation_id.parse(fields.id) },
         correlation: fields.correlation,
@@ -517,7 +516,7 @@ const runtime_executor = (executor: RuntimeExecutor) => {
               letter: held,
               by: trace.by,
               reason: trace.reason,
-              at: in_zone(ports.clock.time_zone)(ports.clock.now()),
+              at: ports.clock.now(),
             })
           }) ?? Promise.resolve(),
       }

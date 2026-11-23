@@ -39,13 +39,13 @@ const old_ladder: Added = { id: 'old-ladder', name: 'Old ladder', category: 'lad
 const the_shed = async () => {
   const shed = await oracle()
   for (const tool of [sander, a_rake, drill, ladder, saw, shovel, old_ladder, another_rake]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), tool))
   }
   await first(
-    shed.tools.send_a_tool_to_repair(shed.at('2026-11-16T10:00:00-05:00'), { tool_id: 'saw' }),
+    shed.tools.send_a_tool_to_repair(shed.at('2026-11-16T15:00:00.000Z'), { tool_id: 'saw' }),
   )
   await first(
-    shed.tools.retire_a_tool(shed.at('2026-11-16T10:30:00-05:00'), {
+    shed.tools.retire_a_tool(shed.at('2026-11-16T15:30:00.000Z'), {
       id: 'old-ladder',
       reason: 'worn_out',
     }),
@@ -65,7 +65,7 @@ describe('SC-14, the catalogue of the shed (the business)', () => {
   test('the tools in service, by category and name by code point, two of one name by id; read at a position', async () => {
     const shed = await the_shed()
     const snapshot = await first(
-      shed.tools.the_catalogue(shed.when('2026-11-16T11:00:00-05:00'), {}),
+      shed.tools.the_catalogue(shed.when('2026-11-16T16:00:00.000Z'), {}),
     )
     expect(snapshot).toEqual({
       event: 'snapshot',
@@ -83,7 +83,7 @@ describe('SC-14, the catalogue of the shed (the business)', () => {
     const shed = await the_shed()
     expect(
       await first(
-        shed.tools.the_catalogue(shed.when('2026-11-16T11:00:00-05:00'), {
+        shed.tools.the_catalogue(shed.when('2026-11-16T16:00:00.000Z'), {
           categories: ['power', 'garden'],
         }),
       ),
@@ -97,13 +97,13 @@ describe('SC-14, the catalogue of the shed (the business)', () => {
   test('a shed with nothing yet: no entry, at the position before any fact', async () => {
     const shed = await oracle()
     expect(
-      await first(shed.tools.the_catalogue(shed.when('2026-11-16T08:00:00-05:00'), {})),
+      await first(shed.tools.the_catalogue(shed.when('2026-11-16T13:00:00.000Z'), {})),
     ).toEqual({ event: 'snapshot', entries: [], position: '0', total: 0 })
   })
 
   test('an input not in its schema reads nothing: the first event and the last', async () => {
     const shed = await the_shed()
-    const at = shed.when('2026-11-16T11:00:00-05:00')
+    const at = shed.when('2026-11-16T16:00:00.000Z')
     const invalid = { event: 'invalid_request', reason: 'input_not_in_schema' }
     // No category chosen (at least one, or none for every one).
     expect(await all(shed.tools.the_catalogue(at, { categories: [] }))).toEqual([invalid])
@@ -125,7 +125,7 @@ describe("SC-14, the visitor's catalogue (the persona)", () => {
   test("in his words, field by field: no keeper's notes; a page of 50 by default", async () => {
     const shed = await the_shed()
     const events = await all(
-      shed.visitor.the_catalogue(shed.as(paolo, '1.0.0').when('2026-11-16T11:00:00-05:00'), {}),
+      shed.visitor.the_catalogue(shed.as(paolo, '1.0.0').when('2026-11-16T16:00:00.000Z'), {}),
     )
     expect(events).toEqual([
       {
@@ -143,7 +143,7 @@ describe("SC-14, the visitor's catalogue (the persona)", () => {
 
   test('his shelves, two tools a page: the next page from the cursor of the first', async () => {
     const shed = await the_shed()
-    const when = shed.as(paolo, '1.0.0').when('2026-11-16T11:00:00-05:00')
+    const when = shed.as(paolo, '1.0.0').when('2026-11-16T16:00:00.000Z')
     const pages = await all(
       shed.visitor.the_catalogue(when, { categories: ['power', 'garden'], page_size: 2 }),
     )

@@ -284,7 +284,7 @@ describe('fingerprint_of, what a retry sends again (DOM-11, D100, LIB-11)', () =
       Number.NaN,
       Number.POSITIVE_INFINITY,
       10n,
-      new Date('2026-11-19T10:00:00Z'),
+      new Date('2026-11-19T10:00:00.000Z'),
       new Map(),
       [undefined],
       { f: () => 1 },

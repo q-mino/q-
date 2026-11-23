@@ -60,7 +60,7 @@ export const a_relay = async (start: Start = {}) => {
   })
   // The world: the relay's clock, which a story sets (`pass`); the time that
   // passes, every wait asked for, ended when the story says (TST-3).
-  let instant = zz.date_time.parse('2026-11-16T00:00:00Z')
+  let instant = zz.date_time.parse('2026-11-16T00:00:00.000Z')
   const waits: (() => void)[] = []
   const world = {
     clock: { now: () => instant, time_zone },
@@ -90,7 +90,7 @@ export const a_relay = async (start: Start = {}) => {
         return {
           caller,
           version,
-          now: zz.in_zone(time_zone)(zz.date_time.parse(at)),
+          now: zz.date_time.parse(at),
           time_zone,
           operation: { id: zz.operation_id.parse(id), scope: the_scope_of_a_deposit },
           correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
@@ -99,7 +99,7 @@ export const a_relay = async (start: Start = {}) => {
       when: (at: string) => ({
         caller,
         version,
-        now: zz.in_zone(time_zone)(zz.date_time.parse(at)),
+        now: zz.date_time.parse(at),
         time_zone,
       }),
     }

@@ -19,7 +19,7 @@ const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string
 describe('SC-7, the drill goes to the workshop', () => {
   test('its stay is named from the operation that sends it', async () => {
     const shed = await a_shed_with(drill)
-    const tuesday = shed.at('2026-11-17T09:00:00-05:00', { operation: 'W1' })
+    const tuesday = shed.at('2026-11-17T14:00:00.000Z', { operation: 'W1' })
     const sent = await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
     expect(sent).toEqual({
       outcome: 'applied',
@@ -33,7 +33,7 @@ describe('SC-7, the drill goes to the workshop', () => {
               tool_under_repair: {
                 id: 'drill',
                 status: 'underRepair',
-                repair: { id: the_stay_of(tuesday.operation), since: '2026-11-17T09:00:00-05:00' },
+                repair: { id: the_stay_of(tuesday.operation), since: '2026-11-17T14:00:00.000Z' },
               },
             },
             resources: [
@@ -51,16 +51,15 @@ describe('SC-7, the drill goes to the workshop', () => {
   test('sent again under its operation, the same stay: the duplicate branch', async () => {
     const shed = await a_shed_with(drill)
     const sent = await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T09:00:00-05:00', { operation: 'W1' }), {
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T14:00:00.000Z', { operation: 'W1' }), {
         tool_id: 'drill',
       }),
     )
     expect(
       await first(
-        shed.tools.send_a_tool_to_repair(
-          shed.at('2026-11-17T09:10:00-05:00', { operation: 'W1' }),
-          { tool_id: 'drill' },
-        ),
+        shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T14:10:00.000Z', { operation: 'W1' }), {
+          tool_id: 'drill',
+        }),
       ),
     ).toEqual(sent)
   })
@@ -68,16 +67,15 @@ describe('SC-7, the drill goes to the workshop', () => {
   test('sent by another operation while in the workshop: nothing changes, the stay stands', async () => {
     const shed = await a_shed_with(drill)
     await first(
-      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T09:00:00-05:00', { operation: 'W1' }), {
+      shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T14:00:00.000Z', { operation: 'W1' }), {
         tool_id: 'drill',
       }),
     )
     expect(
       await first(
-        shed.tools.send_a_tool_to_repair(
-          shed.at('2026-11-17T10:00:00-05:00', { operation: 'W2' }),
-          { tool_id: 'drill' },
-        ),
+        shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T15:00:00.000Z', { operation: 'W2' }), {
+          tool_id: 'drill',
+        }),
       ),
     ).toMatchObject({
       outcome: 'applied',
@@ -95,14 +93,14 @@ describe('SC-7, the drill goes to the workshop', () => {
 
   test('back in service and in the workshop again: another operation, another stay', async () => {
     const shed = await a_shed_with(drill)
-    const tuesday = shed.at('2026-11-17T09:00:00-05:00', { operation: 'W1' })
+    const tuesday = shed.at('2026-11-17T14:00:00.000Z', { operation: 'W1' })
     await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
     await first(
-      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T09:00:00-05:00'), {
+      shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T14:00:00.000Z'), {
         tool_id: 'drill',
       }),
     )
-    const saturday = shed.at('2026-11-21T09:00:00-05:00', { operation: 'W3' })
+    const saturday = shed.at('2026-11-21T14:00:00.000Z', { operation: 'W3' })
     expect(
       await first(shed.tools.send_a_tool_to_repair(saturday, { tool_id: 'drill' })),
     ).toMatchObject({
@@ -122,14 +120,14 @@ describe('SC-7, the drill goes to the workshop', () => {
   test('sent by the reaction of a damaged return: the stay named by the reaction’s operation, derived from Marta’s return', async () => {
     const shed = await a_shed_with(drill)
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-16T10:00:00-05:00', { scope: 'member/M-12' }), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-16T15:00:00.000Z', { scope: 'member/M-12' }), {
         loan_id: 'L7',
         tool_id: 'drill',
         member_id: 'M-12',
       }),
     )
-    const consumers = shed.reactions({ at: '2026-11-17T09:00:00-05:00' })
-    const her_return = shed.at('2026-11-17T09:00:00-05:00', {
+    const consumers = shed.reactions({ at: '2026-11-17T14:00:00.000Z' })
+    const her_return = shed.at('2026-11-17T14:00:00.000Z', {
       operation: 'R-1',
       scope: 'member/M-12',
     })

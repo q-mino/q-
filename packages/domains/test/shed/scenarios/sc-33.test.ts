@@ -34,24 +34,24 @@ const the_shed = async (valid_until = '2027-03-31') => {
     ['ladder', 'Ladder', 'ladder'],
     ['sander', 'Belt sander', 'power'],
   ] as const) {
-    await first(shed.tools.add_a_tool(shed.at('2026-10-20T09:00:00-04:00'), { id, name, category }))
+    await first(shed.tools.add_a_tool(shed.at('2026-10-20T13:00:00.000Z'), { id, name, category }))
   }
   for (const [loan_id, tool_id, at] of [
-    ['L6', 'sander', '2026-10-26T10:00:00-04:00'],
-    ['L7', 'drill', '2026-11-02T10:00:00-05:00'],
-    ['L8', 'ladder', '2026-11-02T10:00:00-05:00'],
+    ['L6', 'sander', '2026-10-26T14:00:00.000Z'],
+    ['L7', 'drill', '2026-11-02T15:00:00.000Z'],
+    ['L8', 'ladder', '2026-11-02T15:00:00.000Z'],
   ] as const) {
     await first(shed.loans.borrow_a_tool(shed.at(at), { loan_id, tool_id, member_id: 'M-12' }))
   }
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-10T12:00:00-05:00'), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-10T17:00:00.000Z'), {
       reservation_id: 'R8',
       tool_id: 'ladder',
       member_id: 'M-7',
       day: '2026-11-19',
     }),
   )
-  const friday = shed.as(marta, '2.0.0').when('2026-11-13T18:00:00-05:00')
+  const friday = shed.as(marta, '2.0.0').when('2026-11-13T23:00:00.000Z')
   return { shed, friday }
 }
 
@@ -114,7 +114,7 @@ describe('SC-33, the buttons on the rows of "my loans"', () => {
       },
     })
     const [snapshot] = await pull(
-      read(shed.when('2026-11-13T18:00:00-05:00'), { member_id: 'M-12' })[Symbol.asyncIterator](),
+      read(shed.when('2026-11-13T23:00:00.000Z'), { member_id: 'M-12' })[Symbol.asyncIterator](),
       1,
     )
     const entries = snapshot?.event === 'snapshot' ? snapshot.entries : []
@@ -146,7 +146,7 @@ describe('SC-33, the buttons on the rows of "my loans"', () => {
       () => shed.member.my_loans(friday, {})[Symbol.asyncIterator](),
       async () => {
         await first(
-          shed.loans.reserve_a_tool(shed.at('2026-11-13T18:05:00-05:00'), {
+          shed.loans.reserve_a_tool(shed.at('2026-11-13T23:05:00.000Z'), {
             reservation_id: 'R9',
             tool_id: 'drill',
             member_id: 'M-7',
