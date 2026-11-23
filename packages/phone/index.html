@@ -6,6 +6,30 @@
     <meta name="theme-color" content="#8a5a2b" />
     <link rel="icon" href="/q-/icon-192.png" />
     <title>q-</title>
+    <!-- Static colours until the graphics block (A, 23 Nov 2026): a browser that darkens the page by itself
+         (Brave, Opera, Chrome's forced dark) left nothing readable; "only light" asks it not to. -->
+    <meta name="color-scheme" content="only light" />
+    <style>
+      :root {
+        color-scheme: only light;
+      }
+      html,
+      body {
+        background: #ffffff;
+        color: #1a1a1a;
+      }
+      a {
+        color: #0b57d0;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        background: #f2f2f2;
+        color: #1a1a1a;
+        border: 1px solid #767676;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
