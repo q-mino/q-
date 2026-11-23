@@ -42,6 +42,14 @@ export const remove_a_bond_input = command.remove_a_bond.input
 export type remove_a_bond_input = z.output<typeof remove_a_bond_input>
 
 /**
+ * The user has no face yet, neither being made nor made: her phone's first start (BND-8).
+ *
+ * @see {@link command.the_user_has_no_face}
+ */
+export const the_user_has_no_face = command.the_user_has_no_face
+export type the_user_has_no_face = z.output<typeof the_user_has_no_face>
+
+/**
  * Anna's phone, at its first start, makes her face "Anna" (BND-8), at the
  * top of her tree: a process of the address book, whose step toward the
  * safe is a reaction (`reaction/first_face`, GR-9, PER-21). In stage 1 one
