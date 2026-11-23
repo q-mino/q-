@@ -30,5 +30,6 @@ export const registry = {
   'ui/value/the_offers': value.the_offers,
   'ui/value/the_extensions_in_common': value.the_extensions_in_common,
   'ui/value/the_relay_met': value.the_relay_met,
+  'ui/value/the_device_s_network': value.the_device_s_network,
   'ui/value/a_strip': value.a_strip,
 } satisfies zz.Registry
