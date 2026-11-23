@@ -1,7 +1,8 @@
 // The handshake in person, as sentences (UI-5): the screen opened prepares a
 // ticket of hers; ready, she shows its QR and scans theirs; the first ticket
 // she scans is opened on her ticket's bond, by the name it introduces itself
-// with; then she may open the contact, or shake another hand.
+// with, her QR still shown until she puts it away (the other phone may still
+// be reading it); then she may open the contact, or shake another hand.
 
 import { _ui, type activities, type value } from './_scope_dsl.ts'
 
@@ -75,6 +76,12 @@ export const after = (state: value.the_state, happens: value.what_happens): valu
       return after_a_scan(state, happens.holds, happens.asked)
     case 'she_shakes_another_hand':
       return a_ticket(state, happens.asked, happens.bond, happens.face)
+    case 'she_puts_her_qr_away':
+      return _ui.dsl.it_stays(
+        state.scanned?.scanned === 'their_ticket'
+          ? { ...state, scanned: { ...state.scanned, her_qr: 'put_away' } }
+          : state,
+      )
     case 'she_opens_the_contact':
       return state.ticket === undefined
         ? _ui.dsl.it_stays(state)
@@ -89,7 +96,7 @@ export const after = (state: value.the_state, happens: value.what_happens): valu
   }
 }
 
-/** A scan: the first ticket opens on her ticket's bond, by its name; a text with no ticket is told, and she scans on. */
+/** A scan: the first ticket opens on her ticket's bond, by its name, her QR still shown; a text with no ticket is told, and she scans on. */
 const after_a_scan = (
   state: value.the_state,
   holds: _ui.value.what_it_holds,
@@ -101,7 +108,12 @@ const after_a_scan = (
   return _ui.dsl.it_stays(
     {
       ...state,
-      scanned: { scanned: 'their_ticket', ticket: holds.ticket, opened: { asked, ended: false } },
+      scanned: {
+        scanned: 'their_ticket',
+        ticket: holds.ticket,
+        opened: { asked, ended: false },
+        her_qr: 'still_shown',
+      },
     },
     [
       {
@@ -158,6 +170,10 @@ export const what_it_shows = (
     }
   const opened = _ui.dsl.the_course_of(scanned.opened.asked, card_of(scanned.opened.asked))
   const introduced_as = scanned.ticket.introduced_as
+  const not_opened =
+    opened.course === 'ended' && opened.how.ended !== 'done' && opened.how.ended !== 'done_already'
+  if (scanned.her_qr === 'still_shown' && !not_opened)
+    return { shows: 'their_ticket_read', ticket, introduced_as }
   if (opened.course !== 'ended') return { shows: 'opening_their_ticket', introduced_as }
   if (opened.how.ended === 'done' || opened.how.ended === 'done_already')
     return {

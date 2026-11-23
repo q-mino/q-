@@ -645,11 +645,20 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         asked: asked('A11_again'),
       }).asks,
     ).toEqual([])
+    // Her QR still shown, the other phone may still be reading it, until she puts it away.
     expect(the_handshake_in_person.what_it_shows(scanned.state, ready)).toEqual({
+      shows: 'their_ticket_read',
+      ticket: her_ticket('B1'),
+      introduced_as: 'Bruno',
+    })
+    const put_away = the_handshake_in_person.after(scanned.state, {
+      happens: 'she_puts_her_qr_away',
+    }).state
+    expect(the_handshake_in_person.what_it_shows(put_away, ready)).toEqual({
       shows: 'opening_their_ticket',
       introduced_as: 'Bruno',
     })
-    const bonded = the_handshake_in_person.after(scanned.state, it_ended('A11', done)).state
+    const bonded = the_handshake_in_person.after(put_away, it_ended('A11', done)).state
     expect(
       the_handshake_in_person.what_it_shows(bonded, {
         ...ready,
@@ -711,6 +720,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       name: 'Bruno',
     } as const
     const cannot = how('cannot_be_done', 'their_ticket_cannot_be_opened')
+    // Not opened: told, her QR shown and the camera on to scan again, whether she put her QR away or not.
     const not_opened = the_handshake_in_person.after(scanned, it_ended('A11', cannot)).state
     expect(
       the_handshake_in_person.what_it_shows(not_opened, {
@@ -730,7 +740,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       { asks: 'an_activity', activity_id: 'A12', what: open },
     ])
     const already = the_handshake_in_person.after(
-      scanned,
+      the_handshake_in_person.after(scanned, { happens: 'she_puts_her_qr_away' }).state,
       it_ended('A11', how('done_already')),
     ).state
     expect(
@@ -817,6 +827,65 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       face: F_a,
     }).state
     expect(another).toMatchObject({ camera: 'off', side: 'rear', cameras: 'more_than_one' })
+  })
+
+  test('after she scans theirs her QR stays shown until she puts it away', () => {
+    const prepare = { activity: 'prepare_a_ticket', bond: 'B1', face: F_a } as const
+    const opened = the_handshake_in_person.after(the_handshake_in_person.at_the_start(), {
+      happens: 'the_screen_is_opened',
+      asked: asked('A10'),
+      bond: 'B1',
+      face: F_a,
+    }).state
+    const on = the_handshake_in_person.after(opened, { happens: 'the_camera_is', camera: 'on' })
+    const scanned = the_handshake_in_person.after(on.state, {
+      happens: 'she_scans',
+      holds: a_ticket_link('Bruno'),
+      asked: asked('A11'),
+    })
+    const open = {
+      activity: 'open_their_ticket',
+      bond: 'B1',
+      their_ticket: their_ticket('Bruno'),
+      name: 'Bruno',
+    } as const
+    const ready = { ticket: her_ticket('B1'), activities: [a_card('A10', prepare, done)] }
+    const opened_done = { ...ready, activities: [...ready.activities, a_card('A11', open, done)] }
+    const read = {
+      shows: 'their_ticket_read',
+      ticket: her_ticket('B1'),
+      introduced_as: 'Bruno',
+    } as const
+    // A read goes nowhere: her QR stays, while their ticket opens and once it is opened.
+    expect(scanned.goes).toEqual({ goes: 'nowhere' })
+    expect(the_handshake_in_person.what_it_shows(scanned.state, ready)).toEqual(read)
+    const bonded = the_handshake_in_person.after(scanned.state, it_ended('A11', done))
+    expect(bonded.goes).toEqual({ goes: 'nowhere' })
+    expect(the_handshake_in_person.what_it_shows(bonded.state, opened_done)).toEqual(read)
+    // Her gesture puts it away: what the bond made says, then the contact or another hand.
+    const put_away = the_handshake_in_person.after(bonded.state, {
+      happens: 'she_puts_her_qr_away',
+    })
+    expect(put_away.asks).toEqual([])
+    expect(put_away.goes).toEqual({ goes: 'nowhere' })
+    expect(the_handshake_in_person.what_it_shows(put_away.state, opened_done)).toEqual({
+      shows: 'bonded',
+      introduced_as: 'Bruno',
+      already: false,
+      said: { event: 'it_is_done', payload: {} },
+    })
+    // Before any ticket of theirs, her gesture changes nothing.
+    expect(
+      the_handshake_in_person.after(on.state, { happens: 'she_puts_her_qr_away' }).state,
+    ).toEqual(on.state)
+    // Another hand: a new ticket, nothing scanned, her QR shown as ready.
+    const another = the_handshake_in_person.after(put_away.state, {
+      happens: 'she_shakes_another_hand',
+      asked: asked('A12'),
+      bond: 'B2',
+      face: F_a,
+    }).state
+    expect(another.scanned).toBeUndefined()
   })
 
   test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', () => {
