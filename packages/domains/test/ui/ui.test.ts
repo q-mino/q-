@@ -33,7 +33,8 @@ import * as user_value from '../../src/user/_value.ts'
 // `ping` on `a_bond`, offered to L_b and L_c. Saturday 21 November 2026, 10:00
 // in Rome.
 
-const ten = '2026-11-21T10:00:00+01:00'
+/** 10:00 in Rome, as the clock writes it (UTC). */
+const ten = '2026-11-21T09:00:00.000Z'
 const F_a = 'F_a'
 const L_b = 'L_b'
 const L_c = 'L_c'
@@ -137,7 +138,7 @@ const a_ticket_link = (introduced_as: string): ui_value.what_it_holds => ({
 
 /** A ticket of hers, ready, for a bond to be. */
 const her_ticket = (bond: string): ui_value.a_ticket_ready =>
-  ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T10:00:00+01:00' })
+  ui_value.a_ticket_ready.parse({ bond, expires_at: '2026-11-23T09:00:00.000Z' })
 
 /** A contact, as her list and its card give it. */
 const a_contact_seen = (

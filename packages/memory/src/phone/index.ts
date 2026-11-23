@@ -275,7 +275,7 @@ export const phone =
     ])({ stored: cell.stored_versions })
     const clock = world.clock
     const when = (): zz.RootContext => ({
-      now: zz.in_zone(clock.time_zone)(clock.now()),
+      now: clock.now(),
       time_zone: clock.time_zone,
     })
     const safe = seals_ports(seen_by<SealsState, PhoneState>(cell), world.primitives)(versions)

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import * as effect from './effect.ts'
 
 /**
- * The eve's wait of a loan due at an instant; since 2.0.0 due on the day of that instant.
+ * The eve's wait of a loan due at an instant; since 2.0.0 due on its day, the one the desk wrote.
  *
  * @see {@link effect.wait_until_the_eve_of_the_due_date}
  */
@@ -18,7 +18,7 @@ export const wait_until_the_eve_of_the_due_date =
 export type wait_until_the_eve_of_the_due_date = z.output<typeof wait_until_the_eve_of_the_due_date>
 
 /**
- * The reminder of a loan due at an instant; since 2.0.0 due on the day of that instant.
+ * The reminder of a loan due at an instant; since 2.0.0 due on its day, the one the desk wrote.
  *
  * @see {@link effect.send_the_due_date_reminder}
  */

@@ -15,7 +15,7 @@ import { a_shed_with, drill } from './shed.ts'
 const the_drill_booked_for_thursday = async () => {
   const shed = await a_shed_with(drill)
   await first(
-    shed.loans.reserve_a_tool(shed.at('2026-11-16T12:00:00-05:00', { scope: 'member/M-7' }), {
+    shed.loans.reserve_a_tool(shed.at('2026-11-16T17:00:00.000Z', { scope: 'member/M-7' }), {
       reservation_id: 'R8',
       tool_id: 'drill',
       member_id: 'M-7',
@@ -28,7 +28,7 @@ const the_drill_booked_for_thursday = async () => {
 describe("SC-55, a fact's narrower resources", () => {
   test('Gianni notified of the repair: the part holds his reservation alone, not the stay', async () => {
     const shed = await the_drill_booked_for_thursday()
-    const tuesday = shed.at('2026-11-17T09:00:00-05:00', { scope: 'reaction/repair' })
+    const tuesday = shed.at('2026-11-17T14:00:00.000Z', { scope: 'reaction/repair' })
     expect(
       await first(
         shed.alone.notify_a_member_of_the_repair(tuesday, {
@@ -61,7 +61,7 @@ describe("SC-55, a fact's narrower resources", () => {
     const shed = await the_drill_booked_for_thursday()
     expect(
       await first(
-        shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T08:00:00-05:00'), {
+        shed.tools.send_a_tool_to_repair(shed.at('2026-11-17T13:00:00.000Z'), {
           tool_id: 'drill',
         }),
       ),
@@ -82,7 +82,7 @@ describe("SC-55, a fact's narrower resources", () => {
   test("Gianni's notice exhausted holds R8 alone: Paolo's notice of the same stay goes", async () => {
     const shed = await the_drill_booked_for_thursday()
     await first(
-      shed.loans.reserve_a_tool(shed.at('2026-11-16T12:30:00-05:00', { scope: 'member/M-9' }), {
+      shed.loans.reserve_a_tool(shed.at('2026-11-16T17:30:00.000Z', { scope: 'member/M-9' }), {
         reservation_id: 'R9',
         tool_id: 'drill',
         member_id: 'M-9',
@@ -90,14 +90,14 @@ describe("SC-55, a fact's narrower resources", () => {
       }),
     )
     // Gianni has no phone the executor knows: his notice is exhausted.
-    shed.executor({ at: '2026-11-17T09:00:00-05:00', phones: { 'M-9': '+1 416 555 0109' } })
+    shed.executor({ at: '2026-11-17T14:00:00.000Z', phones: { 'M-9': '+1 416 555 0109' } })
     for (const [reservation_id, member_id, day] of [
       ['R8', 'M-7', '2026-11-19'],
       ['R9', 'M-9', '2026-12-10'],
     ] as const) {
       await first(
         shed.alone.notify_a_member_of_the_repair(
-          shed.at('2026-11-17T09:00:00-05:00', { scope: 'reaction/repair' }),
+          shed.at('2026-11-17T14:00:00.000Z', { scope: 'reaction/repair' }),
           { reservation_id, repair_id: 'RP1', member_id, tool_id: 'drill', day },
         ),
       )

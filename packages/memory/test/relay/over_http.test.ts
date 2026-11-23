@@ -21,7 +21,7 @@ const E2 = 'ZW52ZWxvcGUtMg'
 
 /** The relay's world: its clock at 09:02 of 21 November, the time that passes when the test says, R's hash told apart. */
 const a_world = () => ({
-  clock: { now: () => zz.date_time.parse('2026-11-21T09:02:00Z'), time_zone },
+  clock: { now: () => zz.date_time.parse('2026-11-21T09:02:00.000Z'), time_zone },
   elapsed: (): Promise<void> => new Promise<void>(() => undefined),
   hash: (secret: string): Promise<string> => Promise.resolve(`hash-of-${secret}`),
 })

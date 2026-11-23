@@ -492,7 +492,7 @@ export const oracle = async (start: Start = {}) => {
   // scenario sets (`pass`); the time that passes (DOM-3, DOM-14, TST-3),
   // every wait asked for, how long, ended when the scenario says (`elapse`,
   // `pass`).
-  let instant = zz.date_time.parse('2026-11-01T00:00:00-04:00')
+  let instant = zz.date_time.parse('2026-11-01T04:00:00.000Z')
   const waits: (() => void)[] = []
   const asked: number[] = []
   const answers: Network[] = []
@@ -606,7 +606,7 @@ export const oracle = async (start: Start = {}) => {
     operations += 1
     const id = sent.operation ?? `op-${String(operations)}`
     return {
-      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
+      now: zz.date_time.parse(instant),
       time_zone: zone,
       operation: { id: zz.operation_id.parse(id), scope: sent.scope ?? 'keeper/luca' },
       correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
@@ -663,7 +663,7 @@ export const oracle = async (start: Start = {}) => {
     when: (instant: string) => ({
       caller: caller.parse(who),
       version,
-      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
+      now: zz.date_time.parse(instant),
       time_zone: zone,
     }),
     named: (instant: string, sent: Omit<Sent, 'operation'> = {}) => {
@@ -740,9 +740,9 @@ export const oracle = async (start: Start = {}) => {
     },
     /** What the trees' trace holds, in the order handed (F6, PER-14): a request answered with no fact, with why. */
     traced: (): readonly zz.Traced<unknown>[] => [...trace],
-    /** The context of a read sent at an instant: its `now`, told in the shed's zone, and the zone (DOM-18); no operation. */
+    /** The context of a read sent at an instant: its `now` and the shed's zone (DOM-18); no operation. */
     when: (instant: string): zz.RootContext => ({
-      now: zz.in_zone(zone)(zz.date_time.parse(instant)),
+      now: zz.date_time.parse(instant),
       time_zone: zone,
     }),
     /**

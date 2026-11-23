@@ -57,7 +57,7 @@ export type Answering = (request: boundary.a_request) => boundary.an_answer_to_a
 
 /** The clock of the stories: 20 November 2026, 10:00 in Rome. */
 const clock: zz.Clock = {
-  now: () => zz.date_time.parse('2026-11-20T10:00:00+01:00'),
+  now: () => zz.date_time.parse('2026-11-20T09:00:00.000Z'),
   time_zone: zz.time_zone.parse('Europe/Rome'),
 }
 

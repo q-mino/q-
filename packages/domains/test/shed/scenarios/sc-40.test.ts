@@ -17,8 +17,8 @@ import { drill, ladder } from './shed.ts'
 // Friday Luca puts it back in service.
 
 const damage = 'reaction/damage/reaction/the_damaged_tool_goes_to_repair'
-const monday = '2026-11-16T09:00:00-05:00'
-const tuesday = '2026-11-17T09:00:00-05:00'
+const monday = '2026-11-16T14:00:00.000Z'
+const tuesday = '2026-11-17T14:00:00.000Z'
 
 /** The stay an operation opens, as `tools` names it (SC-7). */
 const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string())(operation)
@@ -30,7 +30,7 @@ const the_stay_of = (operation: zz.Operation): string => zz.identity_of(z.string
 const the_shed = async (start: Start = {}) => {
   const shed = await oracle(start)
   for (const tool of [drill, ladder]) {
-    await first(shed.tools.add_a_tool(shed.at('2026-11-02T08:00:00-05:00'), tool))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-02T13:00:00.000Z'), tool))
   }
   for (const [loan_id, tool_id, member_id] of [
     ['L3', 'ladder', 'M-9'],
@@ -38,7 +38,7 @@ const the_shed = async (start: Start = {}) => {
   ] as const) {
     await first(
       shed.loans.borrow_a_tool(
-        shed.at('2026-11-09T10:00:00-05:00', { scope: `member/${member_id}` }),
+        shed.at('2026-11-09T15:00:00.000Z', { scope: `member/${member_id}` }),
         { loan_id, tool_id, member_id },
       ),
     )
@@ -84,7 +84,7 @@ describe('SC-40, the reaction of a damaged return', () => {
     )
     await quiet()
     expect(await shed.recorded()).toHaveLength(5)
-    await shed.pass('2026-11-17T09:01:00-05:00')
+    await shed.pass('2026-11-17T14:01:00.000Z')
     await marta_returns_the_drill_damaged()
     await quiet()
     expect(await repairs()).toEqual([
@@ -99,7 +99,7 @@ describe('SC-40, the reaction of a damaged return', () => {
                 status: 'underRepair',
                 repair: {
                   id: the_stay_of(the_reactions_operation),
-                  since: '2026-11-17T09:01:00-05:00',
+                  since: '2026-11-17T14:01:00.000Z',
                 },
               },
             },
@@ -118,7 +118,7 @@ describe('SC-40, the reaction of a damaged return', () => {
     // On Thursday Gianni cannot borrow the drill, in the workshop.
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00', { scope: 'member/M-7' }), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z', { scope: 'member/M-7' }), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',
@@ -128,7 +128,7 @@ describe('SC-40, the reaction of a damaged return', () => {
     // On Friday Luca puts it back in service.
     expect(
       await first(
-        shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T09:00:00-05:00'), {
+        shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-20T14:00:00.000Z'), {
           tool_id: 'drill',
         }),
       ),
@@ -146,7 +146,7 @@ describe('SC-40, the reaction of a damaged return', () => {
     await falling.stop()
     const sent = await repairs()
     expect(sent).toHaveLength(1)
-    const again = shed.reactions({ at: '2026-11-17T09:30:00-05:00' })
+    const again = shed.reactions({ at: '2026-11-17T14:30:00.000Z' })
     await quiet()
     expect(await repairs()).toEqual(sent)
     expect(shed.held_parts(damage)).toEqual([])
@@ -176,7 +176,7 @@ describe('SC-40, the reaction of a damaged return', () => {
     await expect(consumers.stop()).rejects.toThrow(`the delivery of ${damage} fell`)
     expect(await repairs()).toEqual([])
     expect(shed.held_parts(damage)).toEqual([])
-    const again = shed.reactions({ at: '2026-11-17T10:00:00-05:00' })
+    const again = shed.reactions({ at: '2026-11-17T15:00:00.000Z' })
     await quiet()
     expect(await repairs()).toEqual([
       expect.objectContaining({ operation: the_reactions_operation, correlation: 'C-MARTA' }),

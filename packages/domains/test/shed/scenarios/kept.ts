@@ -23,7 +23,7 @@ export const the_drill_added: zz.StoredEnvelope = {
           name: drill.name,
           category: drill.category,
           status: 'inService',
-          addDate: '2026-11-01T09:00:00-05:00',
+          addDate: '2026-11-01T14:00:00.000Z',
         },
       },
       resources: [{ path: 'business/tools/id/tool_id', value: drill.id }],
@@ -51,11 +51,14 @@ const the_loan_s_resources: readonly zz.Resource[] = [
 
 /**
  * Marta's loan of the drill at `loans` 1.x, lent at an instant and due 14
- * days after it, at the same hour (`due_date`), as 1.x wrote it.
+ * days after it, at the same hour (`due_date`), with the days the desk wrote
+ * in the shed's calendar (`start_day`, `due_day`, SC-12), as 1.x wrote it.
  */
 export const marta_s_loan_at_1 = (loan: {
   readonly lent: string
+  readonly start_day: string
   readonly due: string
+  readonly due_day: string
 }): zz.StoredEnvelope => ({
   parts: [
     {
@@ -67,7 +70,9 @@ export const marta_s_loan_at_1 = (loan: {
           tool_id: drill.id,
           member_id: 'M-12',
           start_date: loan.lent,
+          start_day: loan.start_day,
           due_date: loan.due,
+          due_day: loan.due_day,
           progress: { stage: 'ongoing', term: 'running' },
         },
       },
@@ -89,19 +94,26 @@ export const marta_s_loan_at_1 = (loan: {
 
 /**
  * The waits queued at 1.x with Marta's loan: the eve's, at the instant a
- * day before the due date, its payload with the due date (a shape 2.0.0
- * changed, `earlier`); the overdue wait, at the due date, its payload the
- * loan alone (delegated).
+ * day before the due date, its payload with the due date and its day (a
+ * shape 2.0.0 changed, `earlier`); the overdue wait, at the due date, its
+ * payload the loan alone (delegated).
  */
 export const marta_s_waits_at_1 = (loan: {
   readonly eve: string
   readonly due: string
+  readonly due_day: string
 }): readonly zz.StoredEntry[] => [
   {
     effect: 'business/loans/effect/wait_until_the_eve_of_the_due_date',
     id: zz.entry_id.parse('L1'),
     version: loans_1,
-    payload: { loan_id: 'L1', tool_id: drill.id, member_id: 'M-12', due_date: loan.due },
+    payload: {
+      loan_id: 'L1',
+      tool_id: drill.id,
+      member_id: 'M-12',
+      due_date: loan.due,
+      due_day: loan.due_day,
+    },
     not_before: zz.date_time.parse(loan.eve),
     resources: the_loan_s_resources,
     correlation: zz.correlation.parse('correlation-L1'),
@@ -121,10 +133,16 @@ export const marta_s_waits_at_1 = (loan: {
 export const kept_before_2_0_0 = {
   facts: [
     the_drill_added,
-    marta_s_loan_at_1({ lent: '2026-11-02T10:12:00-05:00', due: '2026-11-16T10:12:00-05:00' }),
+    marta_s_loan_at_1({
+      lent: '2026-11-02T15:12:00.000Z',
+      start_day: '2026-11-02',
+      due: '2026-11-16T15:12:00.000Z',
+      due_day: '2026-11-16',
+    }),
   ],
   entries: marta_s_waits_at_1({
-    eve: '2026-11-15T10:12:00-05:00',
-    due: '2026-11-16T10:12:00-05:00',
+    eve: '2026-11-15T15:12:00.000Z',
+    due: '2026-11-16T15:12:00.000Z',
+    due_day: '2026-11-16',
   }),
 }
