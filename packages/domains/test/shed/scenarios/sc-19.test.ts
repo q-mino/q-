@@ -16,14 +16,14 @@ const strategies = ['native', 'composed'] as const
 const the_shed = async (start: Start) => {
   const shed = await oracle(start)
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-16T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-16T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
     }),
   )
   await first(
-    shed.loans.borrow_a_tool(shed.at('2026-11-16T10:00:00-05:00'), {
+    shed.loans.borrow_a_tool(shed.at('2026-11-16T15:00:00.000Z'), {
       loan_id: 'L7',
       tool_id: 'drill',
       member_id: 'M-12',
@@ -31,13 +31,13 @@ const the_shed = async (start: Start) => {
   )
   const story = async () => {
     await first(
-      shed.tools.rename_a_tool(shed.at('2026-11-17T09:00:00-05:00'), {
+      shed.tools.rename_a_tool(shed.at('2026-11-17T14:00:00.000Z'), {
         tool_id: 'drill',
         name: 'Drill, cordless',
       }),
     )
     await first(
-      shed.loans.reserve_a_tool(shed.at('2026-11-17T10:00:00-05:00'), {
+      shed.loans.reserve_a_tool(shed.at('2026-11-17T15:00:00.000Z'), {
         reservation_id: 'R8',
         tool_id: 'drill',
         member_id: 'M-7',
@@ -47,7 +47,7 @@ const the_shed = async (start: Start) => {
   }
   const my_loans = () =>
     shed.loans
-      .the_ongoing_loans_of_a_member(shed.when('2026-11-17T08:00:00-05:00'), {
+      .the_ongoing_loans_of_a_member(shed.when('2026-11-17T13:00:00.000Z'), {
         member_id: 'M-12',
       })
       [Symbol.asyncIterator]()

@@ -33,12 +33,12 @@ const pauls_sheet: Tool[] = [
 /** The shed with its own drill, which Luca added on Monday. */
 const the_shed = async () => {
   const shed = await oracle()
-  await first(shed.tools.add_a_tool(shed.at('2026-11-16T09:00:00-05:00'), the_sheds_drill))
+  await first(shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z'), the_sheds_drill))
   return shed
 }
 
 /** Thursday 19 November, when Luca loads Paolo's sheet. */
-const thursday = '2026-11-19T15:00:00-05:00'
+const thursday = '2026-11-19T20:00:00.000Z'
 
 /** The part a line records, and the branch it applied: the tool added, or the line left. */
 const the_line = (sheet: string, tool: Tool, number: number) => {
@@ -112,7 +112,7 @@ describe('SC-54, Luca loads a short sheet in one go', () => {
     )
     for (const tool of pauls_sheet) {
       expect(
-        await first(shed.tools.add_a_tool(shed.at('2026-11-19T16:00:00-05:00'), tool)),
+        await first(shed.tools.add_a_tool(shed.at('2026-11-19T21:00:00.000Z'), tool)),
       ).toMatchObject({
         outcome: 'rejected',
         failures: [{ predicate: 'business/tools/predicate/a_tool_has_this_id' }],
@@ -128,7 +128,7 @@ describe('SC-54, Luca loads a short sheet in one go', () => {
     )
     expect(
       await first(
-        shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T15:00:05-05:00', sent), {
+        shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T20:00:05.000Z', sent), {
           lines: pauls_sheet,
         }),
       ),
@@ -141,7 +141,7 @@ describe('SC-54, Luca loads a short sheet in one go', () => {
       shed.tools.load_the_tools_of_a_short_sheet(shed.at(thursday), { lines: pauls_sheet }),
     )
     const again = await first(
-      shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T15:30:00-05:00'), {
+      shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T20:30:00.000Z'), {
         lines: pauls_sheet,
       }),
     )
@@ -163,7 +163,7 @@ describe('SC-54, Luca loads a short sheet in one go', () => {
     ).toEqual({ outcome: 'invalid_request' })
     expect(
       await first(
-        shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T15:10:00-05:00'), {
+        shed.tools.load_the_tools_of_a_short_sheet(shed.at('2026-11-19T20:10:00.000Z'), {
           lines: pauls_sheet,
         }),
       ),

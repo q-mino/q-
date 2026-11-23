@@ -155,7 +155,7 @@ export const the_desks_http_interface = (the_desk: TheDesk) => {
           id: deposit_address.parse(await the_desk.hash(shown.secret)),
         })
   const now = () => ({
-    now: zz.in_zone(the_desk.clock.time_zone)(the_desk.clock.now()),
+    now: the_desk.clock.now(),
     time_zone: the_desk.clock.time_zone,
   })
   return new Hono()

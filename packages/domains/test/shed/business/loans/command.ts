@@ -51,7 +51,8 @@ const the_loan_lent =
       tool_id: loan.tool_id,
       member_id: loan.member_id,
       start_date: context.now,
-      due_day: dsl.the_due_date_of_a_loan_started_on(context.now),
+      start_day: dsl.today(context),
+      due_day: dsl.the_due_date_of_a_loan_started_on(dsl.today(context)),
       progress: { stage: 'ongoing', term: 'running' },
     },
   })
@@ -62,7 +63,7 @@ const the_loan_lent =
  * loan, one wait of each: the loan's id is each entry's.
  */
 const the_waits_of_the_loan = (context: zz.RootContext) => (loan: LoanRequest) => {
-  const due_day = dsl.the_due_date_of_a_loan_started_on(context.now)
+  const due_day = dsl.the_due_date_of_a_loan_started_on(dsl.today(context))
   return {
     wait_until_the_eve_of_the_due_date: {
       id: loan.loan_id,
@@ -121,7 +122,7 @@ export const borrow_a_tool = command({
         },
         no_one_booked_the_tool_for_today: {
           tool_id: input.tool_id,
-          day: dsl.today(context.now),
+          day: dsl.today(context),
         },
       },
       the_loan_lent(context)(input),
@@ -214,7 +215,7 @@ export const lend_a_booked_tool = command({
           reservation_id: input.reservation_id,
           tool_id: input.tool_id,
           member_id: input.member_id,
-          day: dsl.today(context.now),
+          day: dsl.today(context),
           loan_id: input.loan_id,
         },
       },
@@ -235,7 +236,7 @@ export const the_tool_can_be_booked = AND({
 })
 
 export const reserve_a_tool = command({
-  /** The day is validated against the clock: the schema needs `now`, nothing else. */
+  /** The day is validated against the clock: the schema needs today, the context's `now` in its zone, nothing else. */
   input: (context) =>
     z
       .strictObject({
@@ -244,7 +245,7 @@ export const reserve_a_tool = command({
         member_id: id.member_id,
         day: zz.day,
       })
-      .refine((input) => dsl.the_day_is_within_the_booking_window(input.day, context.now), {
+      .refine((input) => dsl.the_day_is_within_the_booking_window(input.day, dsl.today(context)), {
         path: ['day'],
       }),
   outcomes: {
@@ -442,7 +443,7 @@ export const remind_the_member_of_the_due_date = command({
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
         it_is_of_the_tool_reminded: { loan_id: input.loan_id, tool_id: input.tool_id },
         it_is_due_on_the_day_reminded: { loan_id: input.loan_id, due_day: input.due_day },
-        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, today: dsl.today(context) },
       },
       { loan_id: input.loan_id },
       {
@@ -468,7 +469,7 @@ export const remind_the_member_of_the_due_date = command({
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
-        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
+        its_due_date_has_passed: { loan_id: input.loan_id, today: dsl.today(context) },
       },
       { loan_id: input.loan_id },
     ],
@@ -532,7 +533,7 @@ export const declare_the_loan_overdue = command({
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
-        its_due_date_has_passed: { loan_id: input.loan_id, now: context.now },
+        its_due_date_has_passed: { loan_id: input.loan_id, today: dsl.today(context) },
       },
       {
         overdue_loan: {
@@ -552,17 +553,17 @@ export const declare_the_loan_overdue = command({
       {
         a_loan_has_the_requested_id: { loan_id: input.loan_id },
         the_requested_loan_is_ongoing: { loan_id: input.loan_id },
-        its_due_date_is_still_ahead: { loan_id: input.loan_id, now: context.now },
+        its_due_date_is_still_ahead: { loan_id: input.loan_id, today: dsl.today(context) },
       },
       { loan_id: input.loan_id },
       {
         wait_until_the_due_date: {
           id: dsl.the_wait_for_the_overdue_put_off_on_a_day({
             loan_id: input.loan_id,
-            day: dsl.today(context.now),
+            day: dsl.today(context),
           }),
           payload: { loan_id: input.loan_id },
-          not_before: zz.start_of(context.time_zone)(dsl.the_day_after(dsl.today(context.now))),
+          not_before: zz.start_of(context.time_zone)(dsl.the_day_after(dsl.today(context))),
         },
       },
     ],
@@ -674,7 +675,7 @@ export const continue_the_cancellation_of_reservations = cursor_step({
     selection: {
       the_reservation_is_booked: {},
       the_reservation_is_of_the_tool: { tool_id: sheet.tool_id },
-      the_day_has_not_passed: { day: dsl.today(sheet.start_date) },
+      the_day_has_not_passed: { day: zz.day_of(context.time_zone)(sheet.start_date) },
     },
     composes: (reservation) => ({ reservation_id: reservation.id }),
     advances: { tool_id: sheet.tool_id },
@@ -801,7 +802,7 @@ export const continue_the_repair_notice_round = cursor_step({
     selection: {
       the_reservation_is_booked: {},
       the_reservation_is_of_the_tool: { tool_id: round.tool_id },
-      the_day_has_not_passed: { day: dsl.today(round.start_date) },
+      the_day_has_not_passed: { day: zz.day_of(context.time_zone)(round.start_date) },
     },
     composes: (reservation) => ({
       reservation_id: reservation.id,
@@ -857,20 +858,20 @@ export const begin_a_weekly_summary = command({
       {
         new_summary: {
           member_id: input.member_id,
-          next_monday: dsl.the_monday_after(dsl.today(context.now)),
+          next_monday: dsl.the_monday_after(dsl.today(context)),
         },
       },
       {
         wait_until_monday: {
           id: dsl.the_summary_of_the_week_of_a_member({
             member_id: input.member_id,
-            monday: dsl.the_monday_after(dsl.today(context.now)),
+            monday: dsl.the_monday_after(dsl.today(context)),
           }),
           payload: {
             member_id: input.member_id,
-            monday: dsl.the_monday_after(dsl.today(context.now)),
+            monday: dsl.the_monday_after(dsl.today(context)),
           },
-          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context.now))),
+          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context))),
         },
       },
     ],
@@ -928,12 +929,12 @@ export const sum_up_the_week_for_the_member = command({
     the_week_is_on_so_the_summary_goes: [
       {
         a_summary_goes_to_the_requested_member: { member_id: input.member_id },
-        its_week_is_not_over: { member_id: input.member_id, now: context.now },
+        its_week_is_not_over: { member_id: input.member_id, today: dsl.today(context) },
       },
       {
         member_id: input.member_id,
         monday: input.monday,
-        next_monday: dsl.the_monday_after(dsl.today(context.now)),
+        next_monday: dsl.the_monday_after(dsl.today(context)),
       },
       {
         send_the_weeks_summary: {
@@ -943,38 +944,38 @@ export const sum_up_the_week_for_the_member = command({
         wait_until_monday: {
           id: dsl.the_summary_of_the_week_of_a_member({
             member_id: input.member_id,
-            monday: dsl.the_monday_after(dsl.today(context.now)),
+            monday: dsl.the_monday_after(dsl.today(context)),
           }),
           payload: {
             member_id: input.member_id,
-            monday: dsl.the_monday_after(dsl.today(context.now)),
+            monday: dsl.the_monday_after(dsl.today(context)),
           },
-          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context.now))),
+          not_before: zz.start_of(context.time_zone)(dsl.the_monday_after(dsl.today(context))),
         },
       },
     ],
     the_week_is_over_so_this_weeks_monday_is_awaited: [
       {
         a_summary_goes_to_the_requested_member: { member_id: input.member_id },
-        its_week_is_over: { member_id: input.member_id, now: context.now },
+        its_week_is_over: { member_id: input.member_id, today: dsl.today(context) },
       },
       {
         member_id: input.member_id,
         monday: input.monday,
-        next_monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+        next_monday: dsl.the_monday_of_the_week_of(dsl.today(context)),
       },
       {
         wait_until_monday: {
           id: dsl.the_summary_of_the_week_of_a_member({
             member_id: input.member_id,
-            monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+            monday: dsl.the_monday_of_the_week_of(dsl.today(context)),
           }),
           payload: {
             member_id: input.member_id,
-            monday: dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+            monday: dsl.the_monday_of_the_week_of(dsl.today(context)),
           },
           not_before: zz.start_of(context.time_zone)(
-            dsl.the_monday_of_the_week_of(dsl.today(context.now)),
+            dsl.the_monday_of_the_week_of(dsl.today(context)),
           ),
         },
       },
