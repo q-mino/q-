@@ -6,3 +6,4 @@ coverage/
 .DS_Store
 CLAUDE.local.md
 .generated/
+.check/

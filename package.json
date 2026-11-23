@@ -16,8 +16,10 @@
     "graph": "depcruise packages --config .dependency-cruiser.mjs",
     "generate": "node packages/generator/shell/main.ts",
     "generate:check": "node packages/generator/shell/main.ts --check",
-    "check": "pnpm generate:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm graph && pnpm test",
-    "build": "pnpm --filter @q-mino/phone build"
+    "check": "node scripts/check.mjs",
+    "build": "pnpm --filter @q-mino/phone build",
+    "check:serial": "node scripts/check.mjs --serial",
+    "check:package": "node scripts/check.mjs --package"
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",

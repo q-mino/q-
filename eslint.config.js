@@ -92,7 +92,7 @@ export default defineConfig(
       parserOptions: {
         // The root's TypeScript files are in a project of their own (`tsconfig.config.json`, EXT-11).
         projectService: {
-          allowDefaultProject: ['*.js', '*.cjs', '*.mjs'],
+          allowDefaultProject: ['*.js', '*.cjs', '*.mjs', 'scripts/*.mjs'],
         },
         tsconfigRootDir: import.meta.dirname,
       },

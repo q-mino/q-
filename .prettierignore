@@ -4,3 +4,4 @@ dist/
 coverage/
 LICENSE
 packages/generator/test/.generated/
+.check/
