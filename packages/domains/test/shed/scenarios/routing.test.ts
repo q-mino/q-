@@ -15,6 +15,16 @@ import { at_once, serially } from './serial.ts'
 
 type Shed = Awaited<ReturnType<typeof oracle>>
 
+/**
+ * The property of the serial orders' own time (TST-11): 60 cases of two to
+ * four requests, each case on a fresh shed for every serial order and one
+ * more for the requests at once: up to 4! + 1 = 25 sheds a case, 1 500 in
+ * all.
+ * Alone it takes about 1.3 s (24 Nov 2026); with typecheck and lint running
+ * beside it, it reached vitest's 5 s. Fifteen times the time alone.
+ */
+const the_time_of_the_orders = 20_000
+
 /** The branches of each command, in their order: what a rejection names (none held). */
 const branches = {
   add_a_tool: ['the_tool_is_new_so_it_is_added'],
@@ -157,25 +167,29 @@ describe('the routing of commands, as properties (TST-9)', () => {
     )
   })
 
-  test('requests at the same time give the outcomes of one of their serial orders (TST-5)', async () => {
-    await fc.assert(
-      fc.asyncProperty(fc.array(a_request, { minLength: 2, maxLength: 4 }), async (requests) => {
-        // A shed with the drill, so that the requests meet a tool in its life.
-        const fresh = async () => {
-          const shed = await oracle()
-          await first(
-            shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z', { operation: 'O0' }), {
-              id: 'drill',
-              name: 'The drill',
-              category: 'power',
-            }),
-          )
-          return shed
-        }
-        const sent = requests.map(send)
-        expect(await serially(fresh, sent)).toContainEqual(await at_once(fresh, sent))
-      }),
-      { numRuns: 60 },
-    )
-  })
+  test(
+    'requests at the same time give the outcomes of one of their serial orders (TST-5)',
+    async () => {
+      await fc.assert(
+        fc.asyncProperty(fc.array(a_request, { minLength: 2, maxLength: 4 }), async (requests) => {
+          // A shed with the drill, so that the requests meet a tool in its life.
+          const fresh = async () => {
+            const shed = await oracle()
+            await first(
+              shed.tools.add_a_tool(shed.at('2026-11-16T14:00:00.000Z', { operation: 'O0' }), {
+                id: 'drill',
+                name: 'The drill',
+                category: 'power',
+              }),
+            )
+            return shed
+          }
+          const sent = requests.map(send)
+          expect(await serially(fresh, sent)).toContainEqual(await at_once(fresh, sent))
+        }),
+        { numRuns: 60 },
+      )
+    },
+    the_time_of_the_orders,
+  )
 })

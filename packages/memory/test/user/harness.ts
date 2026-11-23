@@ -45,7 +45,6 @@ import {
   composed_from,
   entries_of,
   ping_pong_manifest,
-  quiet,
   the_hash_of_a_collect_secret,
   the_relay,
   the_scope_of_an_introduction,
@@ -143,15 +142,39 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
   // committed, or refused as a full partition refuses it, so that the
   // extension falls there (EXT-15); then as the partition answers.
   const commits: ('committed' | 'refused')[] = []
+  // The node's real timers running: the realm's short waits and the release's pauses.
+  let timers = 0
+  /** A real timer of the node's, counted while it runs: the node is not quiet before it rings. */
+  const a_timer_of_the_node = (milliseconds: number) => async (): Promise<void> => {
+    timers += 1
+    try {
+      await a_timer(milliseconds)()
+    } finally {
+      timers -= 1
+    }
+  }
+  /**
+   * The node is quiet (DOM-14, DOM-16): everything set going has run its
+   * course up to its next wait, on the log's bell, the story's clock or a
+   * stop. Seen from a turn of the event loop, when every promise settled:
+   * no transaction of its storage in flight and no timer of its own running.
+   * A condition, not a count of turns (TST-11): how much of IndexedDB's
+   * work fits in a turn depends on the machine's load.
+   */
+  const quiet = (): Promise<void> =>
+    until(async () => {
+      await a_timer(0)()
+      return !kept.at_work() && timers === 0
+    }, `${start.name}'s node quiet`)
   /** The time that passes in the extension's realm (DOM-3): at once over, or for a screen's time. */
   const the_screens_wait: zz.Elapsed =
     start.screens_follow === 'for_their_time'
       ? async (milliseconds) => {
-          if (milliseconds < 60_000) return a_timer(2)()
+          if (milliseconds < 60_000) return a_timer_of_the_node(2)()
           const from = Date.parse(clock.now())
           while (Date.parse(clock.now()) - from < milliseconds) await story.time.elapsed()
         }
-      : a_timer(2)
+      : a_timer_of_the_node(2)
 
   const node = await phone(kept.storage, {
     send_my_introduction: (entry: { readonly payload: Letter }) => {
@@ -160,7 +183,7 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
       return Promise.resolve({ outcome: 'delivered' as const })
     },
     the_realm_s_time: the_screens_wait,
-    a_while: a_timer(5),
+    a_while: a_timer_of_the_node(5),
     characters: 1_000_000,
     the_partition: (_, partition) => ({
       read: partition.read,
