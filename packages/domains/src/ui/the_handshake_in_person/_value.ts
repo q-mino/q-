@@ -24,7 +24,32 @@ export const what_she_scanned = value.what_she_scanned
 export type what_she_scanned = z.output<typeof what_she_scanned>
 
 /**
- * The screen's state: the ticket of hers it prepares, the camera as the browser says, what she scanned.
+ * The camera's side: the front, facing her, by default (the two face each
+ * other, screen to screen), or the rear, facing away from her.
+ *
+ * @see {@link value.the_camera_s_side}
+ */
+export const the_camera_s_side = value.the_camera_s_side
+export type the_camera_s_side = z.output<typeof the_camera_s_side>
+
+/**
+ * The device's cameras, as the browser counts them once one is on: one, or more than one, another to turn to.
+ *
+ * @see {@link value.the_cameras}
+ */
+export const the_cameras = value.the_cameras
+export type the_cameras = z.output<typeof the_cameras>
+
+/**
+ * Where she may turn the camera: nowhere (one camera, or one being turned on), to the rear, to the front.
+ *
+ * @see {@link value.the_turn}
+ */
+export const the_turn = value.the_turn
+export type the_turn = z.output<typeof the_turn>
+
+/**
+ * The screen's state: the ticket of hers it prepares, the camera as the browser says, its side and the device's cameras, what she scanned.
  *
  * @see {@link value.the_state}
  */
@@ -63,7 +88,8 @@ export type what_it_is_given = z.output<typeof what_it_is_given>
  * window of a crossing; at a distance, as her node measured it, when it
  * said `you_are_bonded` or `your_introduction_is_sent`: BND-10), or Anna
  * was a contact already; their ticket that cannot be opened, her QR still shown
- * and the camera on to scan again. The camera is wanted only while she scans.
+ * and the camera on to scan again. The camera is wanted only while she scans,
+ * on its side, with where she may turn it.
  *
  * @see {@link value.what_it_shows}
  */

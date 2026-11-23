@@ -65,7 +65,7 @@ const a_scan_on = (): AScanOn => {
       },
     }),
   }
-  return { gives, is_off: () => off, scan: { is: 'on', texts, turn_off } }
+  return { gives, is_off: () => off, scan: { is: 'on', texts, cameras: 'one', turn_off } }
 }
 
 export const a_camera_of_test = (): ACameraOfTest => {

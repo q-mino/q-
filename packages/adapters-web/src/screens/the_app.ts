@@ -20,7 +20,7 @@ export interface TheDevice {
   readonly draws_an_id: () => string
   /** The device's clock (`the_device_s_clock`). */
   readonly clock: zz.Clock
-  /** The rear camera, played in the screen's video, its QRs' texts read (`scan_with_the_rear_camera`, WEB-2). */
+  /** The rear camera, played in the screen's video, its QRs' texts read (`scan_with_a_camera`, WEB-2). */
   readonly scans: (video: HTMLVideoElement) => Promise<AScan>
   /** The phone's share and clipboard, by the parts the screens use: the page's `navigator`, given as it is (WEB-5). */
   readonly the_navigator: TheNavigatorsSharing
