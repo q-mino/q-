@@ -3,9 +3,9 @@ import { screens } from './screens/index.ts'
 
 // App texts. Italian is the first language: another language is a new file
 // with the same shape, without touching the code. The words of the start,
-// of the storage kept and of the update: Alessandro's (22 Nov 2026 [Q, A, 22
-// Nov 2026], to be reviewed on the phones at step 27), but the sentence of
-// each composition fault, Claude's [Q, C, provisional: A to confirm] (PWA-5).
+// of the storage kept and of the update, and the sentence of each
+// composition fault: Alessandro's (22 Nov 2026 [Q, A, 22 Nov 2026], to be
+// reviewed on the phones at step 27; PWA-5).
 export const texts = {
   app: {
     name: 'q-',
@@ -22,7 +22,7 @@ export const texts = {
     reload: 'Riapri',
     it_does_not_start: 'Cumino non parte.',
     an_extension_does_not_compose: 'Cumino non parte: un’estensione non si compone.',
-    /** Each case of a composition fault (EXT-4), by the name of the extension in its manifest [Q, C, provisional: A to confirm]. */
+    /** Each case of a composition fault (EXT-4), by the name of the extension in its manifest [Q, A, 22 Nov 2026]. */
     the_composition_faults: {
       the_manifest_does_not_parse: (name) => `«${name}»: il suo manifesto non si legge.`,
       a_boundary_major_not_spoken: (name) =>
