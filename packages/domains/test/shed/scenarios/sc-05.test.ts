@@ -14,14 +14,14 @@ describe('SC-5, a value with states', () => {
   test('a loan by stages: lent, returned, then the return again changes nothing', async () => {
     const shed = await a_shed_with(drill)
     await first(
-      shed.loans.borrow_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+      shed.loans.borrow_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         member_id: 'M-12',
       }),
     )
     const returned = await first(
-      shed.loans.return_a_tool(shed.at('2026-11-24T18:00:00-05:00'), {
+      shed.loans.return_a_tool(shed.at('2026-11-24T23:00:00.000Z'), {
         loan_id: 'L7',
         tool_id: 'drill',
         condition: 'good',
@@ -34,7 +34,7 @@ describe('SC-5, a value with states', () => {
     })
     expect(
       await first(
-        shed.loans.return_a_tool(shed.at('2026-11-24T18:05:00-05:00'), {
+        shed.loans.return_a_tool(shed.at('2026-11-24T23:05:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
           condition: 'good',
@@ -47,7 +47,7 @@ describe('SC-5, a value with states', () => {
     })
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-25T09:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-25T14:00:00.000Z'), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',
@@ -58,7 +58,7 @@ describe('SC-5, a value with states', () => {
 
   test('a tool under repair: its stay named from the operation, lent to no one until back in service', async () => {
     const shed = await a_shed_with(drill)
-    const tuesday = shed.at('2026-11-24T08:00:00-05:00', { scope: 'keeper/luca' })
+    const tuesday = shed.at('2026-11-24T13:00:00.000Z', { scope: 'keeper/luca' })
     const sent = await first(shed.tools.send_a_tool_to_repair(tuesday, { tool_id: 'drill' }))
     const stay = zz.identity_of(repair_id)(tuesday.operation)
     expect(sent).toMatchObject({
@@ -72,7 +72,7 @@ describe('SC-5, a value with states', () => {
               tool_under_repair: {
                 id: 'drill',
                 status: 'underRepair',
-                repair: { id: stay, since: '2026-11-24T08:00:00-05:00' },
+                repair: { id: stay, since: '2026-11-24T13:00:00.000Z' },
               },
             },
             resources: [
@@ -85,7 +85,7 @@ describe('SC-5, a value with states', () => {
     })
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-24T10:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-24T15:00:00.000Z'), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',
@@ -103,7 +103,7 @@ describe('SC-5, a value with states', () => {
     })
     expect(
       await first(
-        shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-27T16:00:00-05:00'), {
+        shed.tools.put_a_repaired_tool_back_in_service(shed.at('2026-11-27T21:00:00.000Z'), {
           tool_id: 'drill',
         }),
       ),
@@ -113,7 +113,7 @@ describe('SC-5, a value with states', () => {
     })
     expect(
       await first(
-        shed.loans.borrow_a_tool(shed.at('2026-11-28T10:00:00-05:00'), {
+        shed.loans.borrow_a_tool(shed.at('2026-11-28T15:00:00.000Z'), {
           loan_id: 'L9',
           tool_id: 'drill',
           member_id: 'M-7',

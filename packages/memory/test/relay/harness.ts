@@ -72,7 +72,7 @@ export interface Injected {
  * time that passes, every wait asked for, ended when the story says (TST-3).
  */
 export const a_world = () => {
-  let instant = zz.date_time.parse('2026-11-16T00:00:00Z')
+  let instant = zz.date_time.parse('2026-11-16T00:00:00.000Z')
   const waits: (() => void)[] = []
   return {
     clock: { now: () => instant, time_zone },
@@ -116,7 +116,7 @@ export const harnessed = (the_relay: Started, world: StoryWorld, injected: Injec
         return {
           caller,
           version,
-          now: zz.in_zone(time_zone)(zz.date_time.parse(at)),
+          now: zz.date_time.parse(at),
           time_zone,
           operation: { id: zz.operation_id.parse(id), scope: the_scope_of_a_deposit },
           correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
@@ -125,7 +125,7 @@ export const harnessed = (the_relay: Started, world: StoryWorld, injected: Injec
       when: (at: string) => ({
         caller,
         version,
-        now: zz.in_zone(time_zone)(zz.date_time.parse(at)),
+        now: zz.date_time.parse(at),
         time_zone,
       }),
     }

@@ -33,41 +33,41 @@ const kept_at = (instant: string) => ({
 
 describe('the HTTP interface, through the desk (MBX-9)', () => {
   test('a deposit is kept, and its holder collects it, live, until the phone lets it go', async () => {
-    const relay = await a_relay(':memory:', '2026-11-16T09:02:00Z')
+    const relay = await a_relay(':memory:', '2026-11-16T09:02:00.000Z')
     const http = over_http(relay.http)
     const deposited = await http.deposits(a_deposit('anna-deposit-1'))
     expect(deposited.status).toBe(200)
     expect(deposited.headers.get('content-type')).toBe('application/x-ndjson')
-    expect(await lines_of(deposited)).toEqual([kept_at('2026-11-16T09:02:00+00:00')])
+    expect(await lines_of(deposited)).toEqual([kept_at('2026-11-16T09:02:00.000Z')])
     const bruno = reading(await http.collects(a_collect(), R_b))
     expect(await bruno.next()).toMatchObject({
       event: 'snapshot',
-      entries: [{ deposited_at: '2026-11-16T09:02:00+00:00', envelope: E1 }],
+      entries: [{ deposited_at: '2026-11-16T09:02:00.000Z', envelope: E1 }],
       total: 1,
     })
     expect(await bruno.next()).toMatchObject({ event: 'caught_up' })
-    relay.at('2026-11-16T09:20:00Z')
+    relay.at('2026-11-16T09:20:00.000Z')
     const next = bruno.next()
     await lines_of(await http.deposits(a_deposit('anna-deposit-2', E2)))
     expect(await next).toMatchObject({
       event: 'fact',
-      entry: { deposited_at: '2026-11-16T09:20:00+00:00', envelope: E2 },
+      entry: { deposited_at: '2026-11-16T09:20:00.000Z', envelope: E2 },
     })
     await bruno.let_go()
     relay.storage.close()
   })
 
   test('a deposit sent again, at once or later, is the same deposit', async () => {
-    const relay = await a_relay(':memory:', '2026-11-16T09:02:00Z')
+    const relay = await a_relay(':memory:', '2026-11-16T09:02:00.000Z')
     const http = over_http(relay.http)
     const [first, again] = await Promise.all([
       http.deposits(a_deposit('anna-deposit-1')),
       http.deposits(a_deposit('anna-deposit-1')),
     ])
-    relay.at('2026-11-16T09:07:00Z')
+    relay.at('2026-11-16T09:07:00.000Z')
     const later = await http.deposits(a_deposit('anna-deposit-1'))
     for (const response of [first, again, later]) {
-      expect(await lines_of(response)).toEqual([kept_at('2026-11-16T09:02:00+00:00')])
+      expect(await lines_of(response)).toEqual([kept_at('2026-11-16T09:02:00.000Z')])
     }
     const snapshot = await reading(await http.collects(a_collect(), R_b)).next()
     expect(snapshot).toMatchObject({ event: 'snapshot', total: 1 })
@@ -178,13 +178,13 @@ describe("the relay's storage (MBX-8)", () => {
     const folder = mkdtempSync(join(tmpdir(), 'q-relay-'))
     folders.push(folder)
     const file = join(folder, 'relay.sqlite')
-    const before = await a_relay(file, '2026-11-16T09:02:00Z')
+    const before = await a_relay(file, '2026-11-16T09:02:00.000Z')
     await lines_of(await over_http(before.http).deposits(a_deposit('anna-deposit-1')))
     before.storage.close()
-    const after = await a_relay(file, '2026-11-16T10:00:00Z')
+    const after = await a_relay(file, '2026-11-16T10:00:00.000Z')
     const http = over_http(after.http)
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
-      kept_at('2026-11-16T09:02:00+00:00'),
+      kept_at('2026-11-16T09:02:00.000Z'),
     ])
     expect(await reading(await http.collects(a_collect(), R_b)).next()).toMatchObject({
       event: 'snapshot',
@@ -194,32 +194,32 @@ describe("the relay's storage (MBX-8)", () => {
   })
 
   test('it forgets a deposit a day after its discard: its retry is a new deposit', async () => {
-    const relay = await a_relay(':memory:', '2026-11-16T09:00:00Z')
+    const relay = await a_relay(':memory:', '2026-11-16T09:00:00.000Z')
     const http = over_http(relay.http)
     await lines_of(await http.deposits(a_deposit('anna-deposit-1')))
-    relay.at('2026-11-17T09:00:00Z')
+    relay.at('2026-11-17T09:00:00.000Z')
     await lines_of(await http.deposits(a_deposit('anna-deposit-2', E2)))
     const executor = relay.waits()
     // Monday, a week on: E1 is discarded, still remembered; its retry is the deposit.
-    await relay.pass('2026-11-23T09:00:00Z')
+    await relay.pass('2026-11-23T09:00:00.000Z')
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
-      kept_at('2026-11-16T09:00:00+00:00'),
+      kept_at('2026-11-16T09:00:00.000Z'),
     ])
     // Tuesday: E2 is discarded, a day after E1, which the relay forgets: its
     // facts and its row. The log keeps no position before E2's deposit.
-    await relay.pass('2026-11-24T09:00:00Z')
+    await relay.pass('2026-11-24T09:00:00.000Z')
     const log = relay.log(undefined)[Symbol.asyncIterator]()
     expect((await log.next()).value).toEqual({ event: 'position_unavailable' })
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-2', E2)))).toEqual([
-      kept_at('2026-11-17T09:00:00+00:00'),
+      kept_at('2026-11-17T09:00:00.000Z'),
     ])
-    relay.at('2026-11-24T10:00:00Z')
+    relay.at('2026-11-24T10:00:00.000Z')
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
-      kept_at('2026-11-24T10:00:00+00:00'),
+      kept_at('2026-11-24T10:00:00.000Z'),
     ])
     expect(await reading(await http.collects(a_collect(), R_b)).next()).toMatchObject({
       event: 'snapshot',
-      entries: [{ envelope: E1, deposited_at: '2026-11-24T10:00:00+00:00' }],
+      entries: [{ envelope: E1, deposited_at: '2026-11-24T10:00:00.000Z' }],
     })
     await executor.stop()
     relay.storage.close()
@@ -228,21 +228,21 @@ describe("the relay's storage (MBX-8)", () => {
 
 describe('a relay with nothing more to keep (MBX-8)', () => {
   test('it forgets all the same when its configurator asks', async () => {
-    const relay = await a_relay(':memory:', '2026-11-16T09:00:00Z')
+    const relay = await a_relay(':memory:', '2026-11-16T09:00:00.000Z')
     const http = over_http(relay.http)
     await lines_of(await http.deposits(a_deposit('anna-deposit-1')))
     const executor = relay.waits()
-    await relay.pass('2026-11-23T09:00:00Z')
-    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T08:59:00Z'))
+    await relay.pass('2026-11-23T09:00:00.000Z')
+    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T08:59:00.000Z'))
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
-      kept_at('2026-11-16T09:00:00+00:00'),
+      kept_at('2026-11-16T09:00:00.000Z'),
     ])
-    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T09:00:00Z'))
+    relay.storage.forget_what_is_past(zz.date_time.parse('2026-11-24T09:00:00.000Z'))
     const log = relay.log(undefined)[Symbol.asyncIterator]()
     expect((await log.next()).value).toEqual({ event: 'position_unavailable' })
-    relay.at('2026-11-24T09:30:00Z')
+    relay.at('2026-11-24T09:30:00.000Z')
     expect(await lines_of(await http.deposits(a_deposit('anna-deposit-1')))).toEqual([
-      kept_at('2026-11-24T09:30:00+00:00'),
+      kept_at('2026-11-24T09:30:00.000Z'),
     ])
     await executor.stop()
     relay.storage.close()
