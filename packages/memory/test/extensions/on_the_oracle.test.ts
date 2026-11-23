@@ -305,7 +305,7 @@ describe('2. the silence and the gate (F8, EXT-6)', () => {
     expect(bruno.to_the_extension.filter((message) => message.message === 'invoke')).toEqual([])
     // Carla, no bond of Bruno's, at the leaves below the kernel's node, as its entry would invoke them.
     const as_carla = (operation: string) => ({
-      now: zz.in_zone(story.clock.time_zone)(story.clock.now()),
+      now: story.clock.now(),
       time_zone: story.clock.time_zone,
       caller: { is: 'a_face' as const, key: carla.post.key },
       version: zz.semver.parse('1.0.0'),

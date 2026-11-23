@@ -295,7 +295,7 @@ export const a_phone = async (
   })
   const safe = seals_ports(seen_by<SealsState, PhoneState>(made), world)(versions)
   const post = post_ports(seen_by<PostState, PhoneState>(made))(versions)
-  const when = () => ({ now: zz.in_zone(time_zone)(time.now()), time_zone })
+  const when = () => ({ now: time.now(), time_zone })
   let operations = 0
   /** The context of a command sent under an operation and a scope (DOM-11), its fingerprint over its use case's path and its input. */
   const sent_as =
@@ -304,7 +304,7 @@ export const a_phone = async (
       operations += 1
       const id = sent.operation ?? `op-${String(start.phone)}-${String(operations)}`
       return {
-        now: zz.in_zone(time_zone)(time.now()),
+        now: time.now(),
         time_zone,
         operation: { id: zz.operation_id.parse(id), scope },
         correlation: zz.correlation.parse(`correlation-${id}`),
@@ -684,7 +684,7 @@ export const a_story = async (
   options: { readonly redelivered?: boolean } = {},
 ) => {
   const relay = await a_relay()
-  const time = a_clock('2026-11-20T10:00:00Z')
+  const time = a_clock('2026-11-20T10:00:00.000Z')
   const anna = await a_phone(primitives, relay, time, {
     phone: 1,
     face_id: 'F_a',
@@ -717,7 +717,7 @@ export const a_story = async (
     clock: time.clock,
     /** The phones' clock reads this instant (10:00:15 is `at('10:00:15')`). */
     at: (time_of_day: string) => {
-      time.at(`2026-11-20T${time_of_day}Z`)
+      time.at(`2026-11-20T${time_of_day}.000Z`)
     },
   }
 }

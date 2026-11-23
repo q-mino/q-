@@ -47,6 +47,13 @@ export const loan = z.strictObject({
   tool_id: tools.id.tool_id,
   member_id: id.member_id,
   start_date: date_time,
+  /**
+   * The day the loan started, in the shed's calendar, as the desk decided it
+   * with the shed's zone (SC-12, A, 23 Nov 2026): an instant tells no zone,
+   * so a day that matters where no zone is given (the month's count, SC-21;
+   * a translation) is written beside it.
+   */
+  start_day: day,
   /** The day the tool comes back by, to its end: a day, not an instant, since loans 2.0.0 (A, 16 Nov 2026 (7)). */
   due_day: day,
   progress: loan_progress,

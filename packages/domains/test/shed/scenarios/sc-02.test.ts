@@ -14,9 +14,9 @@ const the_drill: { readonly id: string; readonly name: string; readonly category
 describe('SC-2, Luca retires the drill, already retired', () => {
   test('nothing to do is a branch, and records its fact', async () => {
     const shed = await oracle()
-    await first(shed.tools.add_a_tool(shed.at('2026-11-19T09:00:00-05:00'), the_drill))
+    await first(shed.tools.add_a_tool(shed.at('2026-11-19T14:00:00.000Z'), the_drill))
     const retired = await first(
-      shed.tools.retire_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+      shed.tools.retire_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
         id: 'drill',
         reason: 'worn_out',
       }),
@@ -29,7 +29,7 @@ describe('SC-2, Luca retires the drill, already retired', () => {
     })
     expect(
       await first(
-        shed.tools.retire_a_tool(shed.at('2026-11-19T10:05:00-05:00'), {
+        shed.tools.retire_a_tool(shed.at('2026-11-19T15:05:00.000Z'), {
           id: 'drill',
           reason: 'worn_out',
         }),
@@ -54,7 +54,7 @@ describe('SC-2, Luca retires the drill, already retired', () => {
     const shed = await oracle()
     expect(
       await first(
-        shed.tools.retire_a_tool(shed.at('2026-11-19T10:00:00-05:00'), {
+        shed.tools.retire_a_tool(shed.at('2026-11-19T15:00:00.000Z'), {
           id: 'ladder',
           reason: 'lost',
         }),

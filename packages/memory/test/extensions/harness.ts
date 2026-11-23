@@ -369,7 +369,7 @@ export const a_node = async (
     const answered = await the_answer_of(
       kernel.on_known(
         {
-          now: zz.in_zone(clock.time_zone)(clock.now()),
+          now: clock.now(),
           time_zone: clock.time_zone,
           caller,
           version: zz.semver.parse(letter.invokes.version),

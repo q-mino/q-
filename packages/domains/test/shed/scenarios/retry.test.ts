@@ -18,11 +18,11 @@ import { registry as member_registry } from '../persona/member/_registry.ts'
 import { majors as member_majors } from '../persona/member/_majors.ts'
 import { borrow_a_tool } from '../persona/member/_usecase.ts'
 import { command_use_case_over } from '../persona/member/_scope.ts'
-import { the_card_is_valid_on } from '../persona/member/_dsl.ts'
+import { the_card_is_valid_today } from '../persona/member/_dsl.ts'
 import { reserve_a_tool } from '../business/loans/_usecase.ts'
 import { reservation_id } from '../business/loans/_id.ts'
 import { a_tool_has_been_booked } from '../business/loans/_fact.ts'
-import { the_day_is_within_the_booking_window } from '../business/loans/_dsl.ts'
+import { the_day_is_within_the_booking_window, today } from '../business/loans/_dsl.ts'
 import { tool_id } from '../business/tools/_id.ts'
 import { registry as accounts_registry } from '../auth/accounts/_registry.ts'
 import {
@@ -49,8 +49,8 @@ import { accounts_lookups, type AccountsState } from '../adapter/memory/accounts
 // reads its fact. No reaction of Shed books, so the test wires one of its
 // own over `reserve_a_tool` (`the_drill_goes_with_the_ladder`).
 
-const thursday = '2026-11-19T10:00:00-05:00'
-const friday = '2026-11-20T08:00:00-05:00'
+const thursday = '2026-11-19T15:00:00.000Z'
+const friday = '2026-11-20T13:00:00.000Z'
 const gianni: Who = { identified_by: 'account', id: 'A-GIANNI' }
 
 /** Gianni's request for the ladder: his operation, in his scope, the hat and his account. */
@@ -62,12 +62,12 @@ const book_a_tool = command_use_case_over({
   input: (context) =>
     z
       .strictObject({ reservation_id, tool_id, day: zz.day })
-      .refine((input) => the_day_is_within_the_booking_window(input.day, context.now), {
+      .refine((input) => the_day_is_within_the_booking_window(input.day, today(context)), {
         path: ['day'],
       }),
   is_refused_unless: {
     the_member_card_is_valid_today: (context) => () =>
-      the_card_is_valid_on(context.now)(context.card),
+      the_card_is_valid_today(context)(context.card),
   },
   creator: (context) => (input) => ({
     reservation_id: input.reservation_id,
@@ -116,14 +116,14 @@ const gianni_with = (hats: readonly string[], valid_until: string): AccountsStat
 const the_shed = async (account: AccountsState) => {
   const shed = await oracle()
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-05T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-05T13:00:00.000Z'), {
       id: 'ladder',
       name: 'Ladder',
       category: 'ladder',
     }),
   )
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-05T08:01:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-05T13:01:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -277,7 +277,7 @@ describe('PER-5, a retry after the input’s window over `now` moved', () => {
     const lent = [
       {
         event: 'you_have_the_tool',
-        payload: { ...the_drill, due_date: '2026-12-03T23:59:59.999-05:00' },
+        payload: { ...the_drill, due_date: '2026-12-04T04:59:59.999Z' },
       },
     ]
     // Thursday, from his old phone at 1.2.0: the drill, due at an instant.
@@ -459,7 +459,7 @@ const companion_consumers = (shed: Shed) => {
     started: (instant: string) =>
       wired({
         state,
-        clock: { now: () => zz.in_zone(time_zone)(zz.date_time.parse(instant)), time_zone },
+        clock: { now: () => zz.date_time.parse(instant), time_zone },
       }),
     /** The parts it holds, by why. */
     held: () => held.map((part) => (part.held === 'dead_letter' ? part.cause : part.held)),

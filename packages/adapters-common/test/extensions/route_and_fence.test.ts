@@ -53,7 +53,7 @@ describe('the routing of a request (EXT-6, F8)', () => {
 })
 
 describe('a frame’s fence (EXT-4)', () => {
-  const now = '2026-11-20T10:00:00+01:00'
+  const now = '2026-11-20T09:00:00.000Z'
   const an_invocation = {
     message: 'invoke',
     id: 'F1',

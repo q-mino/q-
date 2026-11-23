@@ -36,7 +36,7 @@ const the_shed = async () => {
     }),
   })
   await first(
-    shed.tools.add_a_tool(shed.at('2026-11-05T08:00:00-05:00'), {
+    shed.tools.add_a_tool(shed.at('2026-11-05T13:00:00.000Z'), {
       id: 'drill',
       name: 'Cordless drill',
       category: 'power',
@@ -52,7 +52,7 @@ describe('SC-29: the gate', () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(gianni, '2.1.0').at('2026-11-05T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(gianni, '2.1.0').at('2026-11-05T15:00:00.000Z'), {
           loan_id: 'L5',
           tool_id: 'drill',
         }),
@@ -60,7 +60,7 @@ describe('SC-29: the gate', () => {
     ).toEqual([stopped])
     // Luca, with no member card, is stopped by the gate too: no lookup ran.
     expect(
-      await all(shed.member.my_loans(shed.as(luca, '2.1.0').when('2026-11-05T10:01:00-05:00'), {})),
+      await all(shed.member.my_loans(shed.as(luca, '2.1.0').when('2026-11-05T15:01:00.000Z'), {})),
     ).toEqual([stopped])
     expect(
       shed.traced().map(({ path, version, answered, why }) => ({ path, version, answered, why })),
@@ -80,7 +80,7 @@ describe('SC-29: the gate', () => {
     ])
     expect(
       await first(
-        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-05T10:02:00-05:00'), {
+        shed.loans.the_ongoing_loans_of_a_member(shed.when('2026-11-05T15:02:00.000Z'), {
           member_id: 'M-7',
         }),
       ),
@@ -91,7 +91,7 @@ describe('SC-29: the gate', () => {
     const shed = await the_shed()
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(gianni, '2.0.7').at('2026-11-05T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(gianni, '2.0.7').at('2026-11-05T15:00:00.000Z'), {
           loan_id: 'L5',
           tool_id: 'drill',
         }),
@@ -111,7 +111,7 @@ describe('SC-29: the gate', () => {
     const newer = zz.semver.parse('3.0.0')
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(marta, newer).at('2026-11-05T10:00:00-05:00'), {
+        shed.member.borrow_a_tool(shed.as(marta, newer).at('2026-11-05T15:00:00.000Z'), {
           loan_id: 'L7',
           tool_id: 'drill',
         }),
@@ -126,10 +126,10 @@ describe('SC-29: the gate', () => {
     // Before: the leaf of 1.x answers in its words.
     expect(
       await all(
-        shed.member.borrow_a_tool(shed.as(paolo, older).at('2026-11-05T10:00:00-05:00'), sent),
+        shed.member.borrow_a_tool(shed.as(paolo, older).at('2026-11-05T15:00:00.000Z'), sent),
       ),
     ).toMatchObject([
-      { event: 'you_have_the_tool', payload: { due_date: '2026-11-19T23:59:59.999-05:00' } },
+      { event: 'you_have_the_tool', payload: { due_date: '2026-11-20T04:59:59.999Z' } },
     ])
     // After: a release whose `_majors.ts` lists 2.0.0 alone.
     const released = zz.tree_ports({
@@ -140,9 +140,7 @@ describe('SC-29: the gate', () => {
       use_cases: { borrow_a_tool },
     })({ invoked: shed.invoked, log: shed.log, trace: shed.trace })
     expect(
-      await all(
-        released.borrow_a_tool(shed.as(paolo, older).at('2027-03-01T10:00:00-05:00'), sent),
-      ),
+      await all(released.borrow_a_tool(shed.as(paolo, older).at('2027-03-01T15:00:00.000Z'), sent)),
     ).toEqual([{ event: 'version_not_supported', current: '2.0.0', oldest: 2 }])
   })
 })

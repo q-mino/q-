@@ -145,7 +145,7 @@ export const the_port_of_requests =
   (wiring: ThePortOfRequestsWiring) =>
   (extension: { readonly name: string; readonly touches: readonly boundary.port[] }) => {
     const when = (): zz.RootContext => ({
-      now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+      now: wiring.clock.now(),
       time_zone: wiring.clock.time_zone,
     })
     /** The answer kept under an identity, if any, and the position it was read at. */
@@ -324,7 +324,7 @@ const why_called_off = async (
 export const the_calling_off =
   (wiring: TheCallingOffWiring) => async (): Promise<readonly string[]> => {
     const now = (): zz.RootContext => ({
-      now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+      now: wiring.clock.now(),
       time_zone: wiring.clock.time_zone,
     })
     const read = await first_of(wiring.post.the_requests_waiting(now(), {}))

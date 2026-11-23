@@ -108,7 +108,7 @@ export const the_kernels_reads = (wiring: {
   readonly office: TheOfficesReads
 }): TheKernelsReads => {
   const now = (): zz.RootContext => ({
-    now: zz.in_zone(wiring.clock.time_zone)(wiring.clock.now()),
+    now: wiring.clock.now(),
     time_zone: wiring.clock.time_zone,
   })
   const is_active = async (extension: string): Promise<boolean> =>

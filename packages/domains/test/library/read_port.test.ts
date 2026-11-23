@@ -71,7 +71,7 @@ const the_things_at_hand = query({
     z.strictObject({
       kind: z.string(),
       // A static rule over the input and `now` (DOM-21): a day before today.
-      since: day.refine((since) => since < day_of(context.now)),
+      since: day.refine((since) => since < day_of(context.time_zone)(context.now)),
     }),
   fields: z.strictObject({ id: thing_id, name: z.string(), owner: owner_id.optional() }),
   calculations: { uses: the_uses_of_the_thing_since },
@@ -118,7 +118,7 @@ const owners_registry = { 'business/owners/id/owner_id': owner_id } satisfies Re
 const the_versions = await versions([])({ stored: () => Promise.resolve([]) })
 
 const context: RootContext = {
-  now: date_time.parse('2026-11-19T10:00:00-05:00'),
+  now: date_time.parse('2026-11-19T15:00:00.000Z'),
   time_zone: time_zone.parse('America/Toronto'),
 }
 
