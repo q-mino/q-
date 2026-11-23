@@ -232,13 +232,23 @@ export const the_extensions_in_common = z.discriminatedUnion('answer', [
 
 /**
  * The relay, as her node last met it (UI-5): it answered, or it did not (the
- * relay client's `unreachable`: no network, or a relay silent, not told
- * apart). Before her node met it, as if it answered.
+ * relay client's `unreachable`: the request lost, or the relay unheard).
+ * Before her node met it, as if it answered.
  */
 export const the_relay_met = z.enum(['answered', 'did_not_answer'])
 
-/** The strip over every screen (UI-5): none, or the relay that does not answer (her letters wait). */
+/**
+ * The device's network, as her phone tells it (UI-5): no network, for sure,
+ * or nothing told (a network says nothing of the relay).
+ */
+export const the_device_s_network = z.enum(['offline', 'not_told'])
+
+/**
+ * The strip over every screen (UI-5): none; no network, when her phone tells
+ * it; else the relay that does not answer (her letters wait).
+ */
 export const a_strip = z.discriminatedUnion('strip', [
   z.strictObject({ strip: z.literal('none') }),
+  z.strictObject({ strip: z.literal('no_network') }),
   z.strictObject({ strip: z.literal('the_relay_does_not_answer') }),
 ])
