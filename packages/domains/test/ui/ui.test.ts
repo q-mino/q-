@@ -621,6 +621,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       shows: 'ready',
       ticket: her_ticket('B1'),
       camera: 'on',
+      side: 'front',
+      turn: 'none',
       scanned: 'nothing',
     })
     const brunos = a_ticket_link('Bruno')
@@ -696,6 +698,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         shows: 'ready',
         ticket: her_ticket('B1'),
         camera: 'on',
+        side: 'front',
+        turn: 'none',
         scanned: holds,
       })
     }
@@ -719,6 +723,8 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       how: cannot,
       ticket: her_ticket('B1'),
       camera: 'on',
+      side: 'front',
+      turn: 'none',
     })
     expect(scan(not_opened, a_ticket_link('Bruno'), 'A12').asks).toEqual([
       { asks: 'an_activity', activity_id: 'A12', what: open },
@@ -746,8 +752,71 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       shows: 'ready',
       ticket: her_ticket('B1'),
       camera: 'refused',
+      side: 'front',
+      turn: 'none',
       scanned: 'nothing',
     })
+  })
+
+  test('the camera faces her at the start; with more than one she turns it to the rear and back', () => {
+    const prepare = { activity: 'prepare_a_ticket', bond: 'B1', face: F_a } as const
+    expect(the_handshake_in_person.at_the_start()).toEqual({
+      camera: 'off',
+      side: 'front',
+      cameras: 'one',
+    })
+    const opened = the_handshake_in_person.after(the_handshake_in_person.at_the_start(), {
+      happens: 'the_screen_is_opened',
+      asked: asked('A10'),
+      bond: 'B1',
+      face: F_a,
+    }).state
+    const ready = { ticket: her_ticket('B1'), activities: [a_card('A10', prepare, done)] }
+    const shows = (state: in_person_value.the_state) =>
+      the_handshake_in_person.what_it_shows(state, ready)
+    const on = the_handshake_in_person.after(opened, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(on)).toMatchObject({ shows: 'ready', camera: 'on', side: 'front', turn: 'none' })
+    // One camera: nowhere to turn, her gesture changes nothing.
+    const turn = (state: in_person_value.the_state) =>
+      the_handshake_in_person.after(state, { happens: 'she_turns_the_camera' })
+    expect(turn(on)).toEqual({ state: on, asks: [], goes: { goes: 'nowhere' } })
+    const counted = the_handshake_in_person.after(on, {
+      happens: 'the_cameras_are_counted',
+      cameras: 'more_than_one',
+    }).state
+    expect(shows(counted)).toMatchObject({ camera: 'on', side: 'front', turn: 'to_the_rear' })
+    // Turned: the camera off until the browser says it is on, nowhere to turn meanwhile.
+    const turned = turn(counted)
+    expect(turned.asks).toEqual([])
+    expect(shows(turned.state)).toMatchObject({ camera: 'off', side: 'rear', turn: 'none' })
+    expect(turn(turned.state).state).toEqual(turned.state)
+    const rear = the_handshake_in_person.after(turned.state, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(rear)).toMatchObject({ camera: 'on', side: 'rear', turn: 'to_the_front' })
+    const front = the_handshake_in_person.after(turn(rear).state, {
+      happens: 'the_camera_is',
+      camera: 'on',
+    }).state
+    expect(shows(front)).toMatchObject({ camera: 'on', side: 'front', turn: 'to_the_rear' })
+    // The rear camera busy: she may still turn back to the front.
+    const busy = the_handshake_in_person.after(turned.state, {
+      happens: 'the_camera_is',
+      camera: 'busy',
+    }).state
+    expect(shows(busy)).toMatchObject({ camera: 'busy', side: 'rear', turn: 'to_the_front' })
+    // Another hand: a new ticket keeps the side she chose and the cameras counted.
+    const another = the_handshake_in_person.after(rear, {
+      happens: 'she_shakes_another_hand',
+      asked: asked('A12'),
+      bond: 'B2',
+      face: F_a,
+    }).state
+    expect(another).toMatchObject({ camera: 'off', side: 'rear', cameras: 'more_than_one' })
   })
 
   test('the flaw is told first; making a link prepares a ticket, and once ready the link is shown', () => {
