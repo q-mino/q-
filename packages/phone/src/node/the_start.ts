@@ -5,10 +5,13 @@ import {
   her_node_over,
   ids_drawn_at_random,
   the_node_s_storage,
+  the_device_s_network,
   the_relay_s_http_transports,
   type AFetch,
+  type ANavigatorOnLine,
   type ARealmsDocument,
   type AStorageManager,
+  type AWindowOfTheNetwork,
   type CryptographicRandomness,
   type HerNode,
   type TheBrowsersStorage,
@@ -43,6 +46,8 @@ export interface TheBrowser extends TheBrowsersStorage {
   readonly fetch: AFetch
   readonly crypto: CryptographicRandomness
   readonly document: ARealmsDocument
+  /** The page's `navigator` and `window`, for the device's network (WEB-4, UI-5). */
+  readonly network: { readonly navigator: ANavigatorOnLine; readonly window: AWindowOfTheNetwork }
 }
 
 /** An extension the app carries (EXT-9, PWA-3): its manifest as its build wrote it, its realm's script as the phone's build bundled it. */
@@ -284,6 +289,8 @@ export const the_start =
       },
       // The relay of the configuration, as the server's screen tells it, and how the client last met it (UI-5).
       the_relay: { address: configuration.relay, as_met: transports.the_relay },
+      // The device's network, which tells no network apart from a relay silent (UI-5's strip).
+      the_network: the_device_s_network(browser.network),
     })
     let the_end: Promise<void> | undefined = undefined
     const stops = (): Promise<void> => {

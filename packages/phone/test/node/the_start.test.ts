@@ -38,6 +38,10 @@ const a_browser = (indexed_db = new IDBFactory()): TheBrowser => ({
   fetch: () => Promise.reject(new TypeError('no network in the test')),
   crypto,
   document: a_document_with_no_realm,
+  network: {
+    navigator: { onLine: true },
+    window: { addEventListener: () => undefined, removeEventListener: () => undefined },
+  },
 })
 
 const a_configuration = (extensions: readonly unknown[]) => ({

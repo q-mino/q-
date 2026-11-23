@@ -56,6 +56,7 @@ const starts = the_start(
     fetch: (address, request) => fetch(address, request),
     crypto,
     document,
+    network: { navigator, window },
   },
   {
     name: 'cumino',

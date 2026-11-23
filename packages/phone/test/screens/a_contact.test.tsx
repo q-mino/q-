@@ -283,6 +283,34 @@ describe('a contact', () => {
     })
   })
 
+  test('no network, while her phone tells it, told apart from a relay silent (UI-5)', async () => {
+    const anna_s = a_node_of_test(anna)
+    opened = opens_the_app({ node: anna_s.node, device: a_device_of_test([]) })
+    const app = opened
+    await opens_the_contact(app, 'Bruno')
+    const now = (met: ui_value.the_relay_met, network: ui_value.the_device_s_network): void => {
+      anna_s.comes_to_hold((held) => ({
+        ...held,
+        the_relay: { ...held.the_relay, met },
+        the_network: network,
+      }))
+    }
+    now('did_not_answer', 'offline')
+    await until(() => {
+      expect(app.root.textContent).toContain(words.common.no_network)
+    })
+    expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
+    now('did_not_answer', 'not_told')
+    await until(() => {
+      expect(app.root.textContent).toContain(words.common.the_relay_does_not_answer)
+    })
+    expect(app.root.textContent).not.toContain(words.common.no_network)
+    now('answered', 'not_told')
+    await until(() => {
+      expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
+    })
+  })
+
   test('an active extension is offered to the contact or withdrawn, once at a time; one not active is not listed', async () => {
     const anna_s = a_node_of_test(anna)
     opened = opens_the_app({ node: anna_s.node, device: a_device_of_test(['A5', 'A7', 'A6']) })

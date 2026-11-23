@@ -1213,8 +1213,17 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
   })
 
   test('a strip over every screen while the relay does not answer, none once it answers', () => {
-    expect(ui.the_strip('did_not_answer')).toEqual({ strip: 'the_relay_does_not_answer' })
-    expect(ui.the_strip('answered')).toEqual({ strip: 'none' })
+    expect(ui.the_strip({ relay: 'did_not_answer', network: 'not_told' })).toEqual({
+      strip: 'the_relay_does_not_answer',
+    })
+    expect(ui.the_strip({ relay: 'answered', network: 'not_told' })).toEqual({ strip: 'none' })
+  })
+
+  test('no network, when her phone tells it, told apart from a relay silent, whatever the relay last did', () => {
+    expect(ui.the_strip({ relay: 'did_not_answer', network: 'offline' })).toEqual({
+      strip: 'no_network',
+    })
+    expect(ui.the_strip({ relay: 'answered', network: 'offline' })).toEqual({ strip: 'no_network' })
   })
 
   test('the answer of the extensions in common is shown beside its question, the last one asked', () => {

@@ -77,6 +77,8 @@ export interface TheCommonTexts {
    * name (WEB-22).
    */
   readonly a_word_missing: (name: string) => string
+  /** Over every screen while her phone tells it has no network (UI-5's strip). */
+  readonly no_network: string
   /** Over every screen while the relay did not answer (UI-5's strip): her letters wait. */
   readonly the_relay_does_not_answer: string
   /** The kernel's words around an extension's points in its mark (EXT-16, WEB-22). */

@@ -46,6 +46,8 @@ export interface WhatTheNodeHolds {
   }[]
   /** The relay of the configuration, and how her node last met it (UI-5). */
   readonly the_relay: { readonly address: string; readonly met: ui_value.the_relay_met }
+  /** The device's network, as her phone tells it (UI-5). */
+  readonly the_network: ui_value.the_device_s_network
 }
 
 export const nothing_held: WhatTheNodeHolds = {
@@ -63,6 +65,7 @@ export const nothing_held: WhatTheNodeHolds = {
   happened: [],
   in_common: [],
   the_relay: { address: 'https://relay.cumino.test', met: 'answered' },
+  the_network: 'not_told',
 }
 
 /** Saturday 21 November 2026, 10:00 in Rome, as the clock writes it (UTC). */
@@ -156,6 +159,7 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
         held.in_common.find((one) => one.bond === bond)?.answer ?? { answer: 'not_asked' },
       ),
     the_relay: () => Promise.resolve(held.the_relay),
+    the_network: () => Promise.resolve(held.the_network),
     an_activity: (activity_id) =>
       Promise.resolve(held.activities.find((one) => one.activity_id === activity_id)),
     the_activities_in_progress: () =>
