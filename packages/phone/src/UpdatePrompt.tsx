@@ -57,36 +57,40 @@ export const UpdatePrompt = (props: { readonly before_the_update: () => Promise<
   }
 
   const worker = waiting.value
-  const later = (): void => {
-    waiting.value = undefined
-  }
   return worker === undefined ? null : (
-    <Question
-      kind="proposal"
-      title={texts.update.available}
-      declines={later}
-      answers={
-        <>
-          <Gesture
-            kind="secondary"
-            label={texts.update.later}
-            does={{ does: 'taps', taps: later }}
-          />
-          <Gesture
-            kind="primary"
-            label={texts.update.apply}
-            glyph="refresh_cw"
-            does={{
-              does: 'taps',
-              taps: () => {
-                void updates(worker)
-              },
-            }}
-          />
-        </>
-      }
-    >
-      <p>{texts.update.whatChanges}</p>
-    </Question>
+    <TheUpdateProposed
+      updates={() => {
+        void updates(worker)
+      }}
+      later={() => {
+        waiting.value = undefined
+      }}
+    />
   )
 }
+
+/** The update proposed, her two answers (its stories in the gallery, WEB-29). */
+export const TheUpdateProposed = (props: { updates: () => void; later: () => void }) => (
+  <Question
+    kind="proposal"
+    title={texts.update.available}
+    declines={props.later}
+    answers={
+      <>
+        <Gesture
+          kind="secondary"
+          label={texts.update.later}
+          does={{ does: 'taps', taps: props.later }}
+        />
+        <Gesture
+          kind="primary"
+          label={texts.update.apply}
+          glyph="refresh_cw"
+          does={{ does: 'taps', taps: props.updates }}
+        />
+      </>
+    }
+  >
+    <p>{texts.update.whatChanges}</p>
+  </Question>
+)
