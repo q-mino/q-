@@ -4,7 +4,7 @@
 
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
-import { For, Match, Show, Switch, type JSX } from 'solid-js'
+import type { ComponentChildren } from 'preact'
 import {
   in_its_words,
   the_app,
@@ -16,16 +16,22 @@ import {
 /** The course of what a screen asked: nothing, in progress, or how it ended, in her words. */
 export const TheCourse = (props: { course: ui_value.a_course }) => {
   const app = the_app()
-  return (
-    <Switch>
-      <Match when={props.course.course === 'in_progress'}>
-        <p role="status">{app.common.in_progress}</p>
-      </Match>
-      <Match when={props.course.course === 'ended' ? props.course : undefined}>
-        {(ended) => <p role="status">{the_words_of_an_end(app.common, ended().how)}</p>}
-      </Match>
-    </Switch>
-  )
+  switch (props.course.course) {
+    case 'nothing_asked':
+      return null
+    case 'in_progress':
+      return (
+        <p role="status" data-state="in_progress">
+          {app.common.in_progress}
+        </p>
+      )
+    case 'ended':
+      return (
+        <p role="status" data-state="ended">
+          {the_words_of_an_end(app.common, props.course.how)}
+        </p>
+      )
+  }
 }
 
 /** The gesture back. */
@@ -51,25 +57,42 @@ export const the_marks_style = { border: '2px solid', padding: '0.5em', margin: 
  * its words, and a border, around what it holds; a name the app does not
  * have, drawn as a fault (WEB-22).
  */
-export const TheMark = (props: { extension: string; children: JSX.Element }) => {
+export const TheMark = (props: { extension: string; children: ComponentChildren }) => {
   const app = the_app()
-  const title = () =>
-    in_its_words(
-      app.common,
-      app.words(props.extension)?.name,
-      props.extension,
-      app.common.the_mark_of,
-    )
+  const title = in_its_words(
+    app.common,
+    app.words(props.extension)?.name,
+    props.extension,
+    app.common.the_mark_of,
+  )
   return (
-    <section aria-label={title()} style={the_marks_style}>
-      <h2>{title()}</h2>
+    <section aria-label={title} style={the_marks_style}>
+      <h2>{title}</h2>
       {props.children}
     </section>
   )
 }
 
-/** A course ended, or none. */
-const an_end = (course: ui_value.a_course) => (course.course === 'ended' ? course : undefined)
+/** How an action's course is told beside it: in progress, or how it ended in its extension's words. */
+const TheCourseOfAnAction = (props: { extension: string; course: ui_value.a_course }) => {
+  const app = the_app()
+  switch (props.course.course) {
+    case 'nothing_asked':
+      return null
+    case 'in_progress':
+      return (
+        <small role="status" data-state="in_progress">
+          {app.common.in_progress}
+        </small>
+      )
+    case 'ended':
+      return (
+        <small role="status" data-state="ended">
+          {the_words_of_an_actions_end(app.common, app.words(props.extension), props.course.how)}
+        </small>
+      )
+  }
+}
 
 /**
  * The points a mark holds at its place (UI-4, EXT-16, WEB-22): each action,
@@ -87,60 +110,47 @@ export const ThePoints = (props: {
   opens: (page: string) => void
 }) => {
   const app = the_app()
-  const words = () => app.words(props.mark.extension)
+  const words = app.words(props.mark.extension)
   return (
     <>
-      <For each={props.mark.actions}>
-        {(action) => (
-          <p>
-            <button
-              type="button"
-              disabled={!ui.it_may_ask(props.course_of(action))}
-              onClick={() => {
-                props.taps(action)
-              }}
-            >
-              {the_word_or_its_fault(app.common, words()?.actions[action], action)}
-            </button>{' '}
-            <Switch>
-              <Match when={props.course_of(action).course === 'in_progress'}>
-                <small role="status">{app.common.in_progress}</small>
-              </Match>
-              <Match when={an_end(props.course_of(action))}>
-                {(ended) => (
-                  <small role="status">
-                    {the_words_of_an_actions_end(app.common, words(), ended().how)}
-                  </small>
-                )}
-              </Match>
-            </Switch>
-          </p>
-        )}
-      </For>
-      <For each={props.mark.slots}>{() => <APartNotDrawn />}</For>
-      <Show when={props.mark.pages.length > 0}>
+      {props.mark.actions.map((action) => (
+        <p key={action}>
+          <button
+            type="button"
+            disabled={!ui.it_may_ask(props.course_of(action))}
+            onClick={() => {
+              props.taps(action)
+            }}
+          >
+            {the_word_or_its_fault(app.common, words?.actions[action], action)}
+          </button>{' '}
+          <TheCourseOfAnAction extension={props.mark.extension} course={props.course_of(action)} />
+        </p>
+      ))}
+      {props.mark.slots.map((slot) => (
+        <APartNotDrawn key={slot} />
+      ))}
+      {props.mark.pages.length > 0 && (
         <ul>
-          <For each={props.mark.pages}>
-            {(page) => (
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    props.opens(page)
-                  }}
-                >
-                  {in_its_words(
-                    app.common,
-                    words()?.pages[page],
-                    page,
-                    app.common.the_points.opens_the_page,
-                  )}
-                </button>
-              </li>
-            )}
-          </For>
+          {props.mark.pages.map((page) => (
+            <li key={page}>
+              <button
+                type="button"
+                onClick={() => {
+                  props.opens(page)
+                }}
+              >
+                {in_its_words(
+                  app.common,
+                  words?.pages[page],
+                  page,
+                  app.common.the_points.opens_the_page,
+                )}
+              </button>
+            </li>
+          ))}
         </ul>
-      </Show>
+      )}
     </>
   )
 }

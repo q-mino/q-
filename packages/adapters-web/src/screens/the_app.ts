@@ -6,11 +6,13 @@
 // the kernel draws in its mark, and whether a screen is the one shown (a
 // part of an extension is served only then, EXT-4, when one comes).
 
+import { computed, type ReadonlySignal } from '@preact/signals'
 import type * as boundary from '@q-mino/boundary'
 import type * as zz from '@q-mino/domains/library'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { createContext, useContext, type Accessor } from 'solid-js'
+import { createContext } from 'preact'
+import { useContext } from 'preact/hooks'
 import type { AFacing, AScan } from '../camera/index.ts'
 import type { HerNode } from '../her_node/index.ts'
 
@@ -112,7 +114,7 @@ export interface TheApp {
   readonly device: TheDevice
   readonly common: TheCommonTexts
   /** How many times her node changed since the app opened: a screen reads it again at each. */
-  readonly changes: Accessor<number>
+  readonly changes: ReadonlySignal<number>
   /** What a turn asks (UI-3), handed to her node in the order asked. */
   readonly asks: (what: ui_value.what_it_asks) => void
   /** Where a turn goes (UI-1), on the way. */
@@ -172,14 +174,14 @@ export const the_words_of_an_actions_end = (
   return the_word_or_its_fault(common, words?.events[how.said.event], how.said.event)
 }
 
-/** The app, given by the root to every screen (Solid's context: static wiring, read once at a screen's setup). */
-export const TheAppContext = createContext<TheApp>()
+/** The app, given by the root to every screen (a context: static wiring, the same at every render). */
+export const TheAppContext = createContext<TheApp | undefined>(undefined)
 
 /** Whether the screen is the one shown, the last of the way (UI-1): told by the root to each screen it keeps. */
-export const TheScreenIsShown = createContext<Accessor<boolean>>(() => false)
+export const TheScreenIsShown = createContext<ReadonlySignal<boolean>>(computed(() => false))
 
 /** Whether this screen is the one shown. */
-export const the_screen_is_shown = (): Accessor<boolean> => useContext(TheScreenIsShown)
+export const the_screen_is_shown = (): ReadonlySignal<boolean> => useContext(TheScreenIsShown)
 
 /** The app the root gave this screen. */
 export const the_app = (): TheApp => {

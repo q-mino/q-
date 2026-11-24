@@ -23,9 +23,9 @@ const a_release: TheBuild = {
 
 let out = ''
 let composed: AComposition = { modules: 0, at_the_start: 0 }
-beforeAll(async () => {
+beforeAll(() => {
   out = mkdtempSync(join(tmpdir(), 'q-dist-'))
-  composed = await compose(out, a_release)
+  composed = compose(out, a_release)
 }, 120_000)
 afterAll(() => {
   rmSync(out, { recursive: true, force: true })

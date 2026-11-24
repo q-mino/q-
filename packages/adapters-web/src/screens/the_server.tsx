@@ -5,7 +5,6 @@
 
 import * as the_server from '@q-mino/domains/ui/the_server/_dsl.ts'
 import type * as the_server_value from '@q-mino/domains/ui/the_server/_value.ts'
-import { createMemo, Show } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { the_app } from './the_app.ts'
 
@@ -34,34 +33,31 @@ export const TheServer = (props: { texts: TheServerTexts }) => {
       relay: (await app.node.the_relay()).address,
     }),
   )
-  const shown = createMemo(() => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
+  const state = screen.state.value
+  const read = given.value
+  const it =
+    state === undefined || read === undefined
       ? undefined
       : the_server.what_it_shows(state, read.given)
-  })
   return (
     <section aria-label={props.texts.title}>
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        {(it) => (
-          <>
-            <p>{props.texts.it_carries_your_letters(it().relay)}</p>
-            <p>{props.texts.it_sees}</p>
-            <p>{props.texts.it_does_not_see}</p>
-            <p>{props.texts.it_is_told_not_guaranteed}</p>
-            <button
-              type="button"
-              onClick={() => {
-                screen.happens({ happens: 'she_goes_on' })
-              }}
-            >
-              {props.texts.go_on}
-            </button>
-          </>
-        )}
-      </Show>
+      {it !== undefined && (
+        <>
+          <p>{props.texts.it_carries_your_letters(it.relay)}</p>
+          <p>{props.texts.it_sees}</p>
+          <p>{props.texts.it_does_not_see}</p>
+          <p>{props.texts.it_is_told_not_guaranteed}</p>
+          <button
+            type="button"
+            onClick={() => {
+              screen.happens({ happens: 'she_goes_on' })
+            }}
+          >
+            {props.texts.go_on}
+          </button>
+        </>
+      )}
     </section>
   )
 }

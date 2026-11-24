@@ -1,7 +1,6 @@
 import comments from '@eslint-community/eslint-plugin-eslint-comments/configs'
 import js from '@eslint/js'
 import prettier from 'eslint-config-prettier'
-import solid from 'eslint-plugin-solid/configs/typescript'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import configuration from './generator.config.ts'
@@ -110,9 +109,44 @@ export default defineConfig(
     },
   },
   {
-    // Solid: components run once, props are reactive getters (no destructuring).
-    files: ['packages/phone/src/**/*.tsx', 'packages/adapters-web/src/**/*.tsx'],
-    ...solid,
+    // Preact (CLAUDE.md § Preact; WEB-19): no HTML written as a string, which would draw what a
+    // text holds as markup; of Preact's hooks only those the screens need (an effect and its
+    // cleanup, a ref, a context), the state in signals. [Q, C, 24 Nov 2026]
+    files: [
+      'packages/phone/{src,test}/**/*.{ts,tsx}',
+      'packages/adapters-web/{src,test}/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message: 'No HTML as a string (WEB-18): draw it with JSX, its texts as text.',
+        },
+        {
+          selector:
+            'AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]',
+          message: 'No HTML as a string (WEB-18): draw it with JSX, its texts as text.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'preact/hooks',
+              allowImportNames: ['useEffect', 'useRef', 'useContext'],
+              message:
+                'Of the hooks only useEffect, useRef, useContext (WEB-18): the state in signals (`@preact/signals`).',
+            },
+            {
+              name: 'preact/compat',
+              message: 'Preact, not its React layer (WEB-18).',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     // The trees of the domains: the folders Shed's map names (sight.ts), and q-'s

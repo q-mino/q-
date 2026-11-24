@@ -12,8 +12,7 @@ import * as an_extension from '@q-mino/domains/ui/an_extension/_dsl.ts'
 import type * as an_extension_value from '@q-mino/domains/ui/an_extension/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
-import { a_screen, what_it_is_given } from './a_screen.ts'
+import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
 import {
   in_its_words,
@@ -108,7 +107,7 @@ export const AnExtension = (props: {
   screen: Extract<ui_value.a_screen, { screen: 'an_extension' }>
 }) => {
   const app = the_app()
-  const extension = untrack(() => props.screen.extension)
+  const extension = kept(() => props.screen.extension)
   const screen = a_screen<an_extension_value.the_state, an_extension_value.what_happens>(app, {
     at_the_start: () => an_extension.at_the_start(extension),
     after: an_extension.after,
@@ -134,19 +133,7 @@ export const AnExtension = (props: {
       }
     },
   )
-  const shown = createMemo(() => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
-      ? undefined
-      : an_extension.what_it_shows(state, read.given)
-  })
-  const the_extension = () => {
-    const it = shown()
-    return it?.shows === 'the_extension' ? it : undefined
-  }
-  /** The manifest she is shown: the one of the extension read, whose notice the screen tells. */
-  const the_manifest = () => given()?.given.extension?.manifest
+  const the_manifest = () => given.value?.given.extension?.manifest
   const may = (it: the_extension_shown): void => {
     switch (it.may) {
       case 'activate':
@@ -165,131 +152,137 @@ export const AnExtension = (props: {
     if (manifest === undefined) return
     screen.happens({ happens: 'she_accepts', manifest, asked: what_it_asked_now(app.device) })
   }
+  const state = screen.state.value
+  const read = given.value
+  const shown =
+    state === undefined || read === undefined
+      ? undefined
+      : an_extension.what_it_shows(state, read.given)
+  const manifest = the_manifest()
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={shown?.shows}>
       <Back
         onBack={() => {
           screen.happens({ happens: 'she_goes_back' })
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Switch>
-        <Match when={shown()?.shows === 'no_such_extension'}>
-          <p>{props.texts.no_such_extension}</p>
-        </Match>
-        <Match when={the_extension()}>
-          {(it) => (
-            <>
-              <h2>
-                {the_word_or_its_fault(app.common, app.words(it().extension)?.name, it().extension)}
-              </h2>
-              <p>
-                <small>{props.texts.the_version(it().version)}</small>{' '}
-                <small>{props.texts.is[it().is]}</small>
-              </p>
+      {shown?.shows === 'no_such_extension' && <p>{props.texts.no_such_extension}</p>}
+      {shown?.shows === 'the_extension' && (
+        <>
+          <h2>
+            {the_word_or_its_fault(app.common, app.words(shown.extension)?.name, shown.extension)}
+          </h2>
+          <p data-state={shown.is}>
+            <small>{props.texts.the_version(shown.version)}</small>{' '}
+            <small>{props.texts.is[shown.is]}</small>
+          </p>
+          <button
+            type="button"
+            data-state={shown.may}
+            disabled={shown.may === 'wait'}
+            onClick={() => {
+              may(shown)
+            }}
+          >
+            {props.texts.may[shown.may]}
+          </button>
+          <TheCourse course={the_course_of_its_state(shown)} />
+          {shown.the_notice !== undefined && (
+            <section>
+              {manifest !== undefined && (
+                <h3>
+                  {in_its_words(app.common, app.words(manifest.name)?.name, manifest.name, (name) =>
+                    props.texts.the_notice(name, manifest.version),
+                  )}
+                </h3>
+              )}
+              <ol>
+                {shown.the_notice.map((asks, index) => (
+                  <li key={index}>
+                    {the_words_of_what_it_asks(
+                      props.texts,
+                      app.common,
+                      app.words(shown.extension),
+                      asks,
+                    )}
+                  </li>
+                ))}
+              </ol>
+              <button type="button" onClick={accepts}>
+                {props.texts.accept}
+              </button>
               <button
                 type="button"
-                disabled={it().may === 'wait'}
                 onClick={() => {
-                  may(it())
+                  screen.happens({ happens: 'she_does_not_accept' })
                 }}
               >
-                {props.texts.may[it().may]}
+                {props.texts.do_not_accept}
               </button>
-              <TheCourse course={the_course_of_its_state(it())} />
-              <Show when={it().the_notice}>
-                {(notice) => (
-                  <section>
-                    <Show when={the_manifest()}>
-                      {(manifest) => (
-                        <h3>
-                          {in_its_words(
-                            app.common,
-                            app.words(manifest().name)?.name,
-                            manifest().name,
-                            (name) => props.texts.the_notice(name, manifest().version),
-                          )}
-                        </h3>
-                      )}
-                    </Show>
-                    <ol>
-                      <For each={notice()}>
-                        {(asks) => (
-                          <li>
-                            {the_words_of_what_it_asks(
-                              props.texts,
-                              app.common,
-                              app.words(it().extension),
-                              asks,
-                            )}
-                          </li>
-                        )}
-                      </For>
-                    </ol>
-                    <button type="button" onClick={accepts}>
-                      {props.texts.accept}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        screen.happens({ happens: 'she_does_not_accept' })
-                      }}
-                    >
-                      {props.texts.do_not_accept}
-                    </button>
-                  </section>
-                )}
-              </Show>
-              <TheMark extension={it().extension}>
-                <Show when={it().mark.points}>
-                  {(points) => (
-                    <ThePoints
-                      mark={points()}
-                      course_of={(action) => the_course_of_an_action(it(), action)}
-                      taps={(action) => {
-                        screen.happens({
-                          happens: 'she_taps_an_action',
-                          mark: points(),
-                          action,
-                          asked: what_it_asked_now(app.device),
-                        })
-                      }}
-                      opens={(page) => {
-                        screen.happens({ happens: 'she_opens_a_page', mark: points(), page })
-                      }}
-                    />
-                  )}
-                </Show>
-                <Show
-                  when={it().mark.held_letters.length + it().mark.happened.length > 0}
-                  fallback={<p>{props.texts.no_news}</p>}
-                >
-                  <TheNews
-                    texts={props.texts.the_news}
-                    held_letters={it().mark.held_letters}
-                    happened={it().mark.happened}
-                    sends_again={(held) => {
-                      screen.happens({
-                        happens: 'she_sends_a_letter_again',
-                        held,
-                        asked: what_it_asked_now(app.device),
-                      })
-                    }}
-                    puts_aside={(held, because) => {
-                      screen.happens({
-                        happens: 'she_puts_a_letter_aside',
-                        held,
-                        because,
-                        asked: what_it_asked_now(app.device),
-                      })
-                    }}
-                  />
-                </Show>
-              </TheMark>
-            </>
+            </section>
           )}
-        </Match>
-      </Switch>
+          <TheMark extension={shown.extension}>
+            {shown.mark.points !== undefined && (
+              <ThePointsOfItsMark
+                shown={shown}
+                points={shown.mark.points}
+                happens={screen.happens}
+              />
+            )}
+            {shown.mark.held_letters.length + shown.mark.happened.length > 0 ? (
+              <TheNews
+                texts={props.texts.the_news}
+                held_letters={shown.mark.held_letters}
+                happened={shown.mark.happened}
+                sends_again={(held) => {
+                  screen.happens({
+                    happens: 'she_sends_a_letter_again',
+                    held,
+                    asked: what_it_asked_now(app.device),
+                  })
+                }}
+                puts_aside={(held, because) => {
+                  screen.happens({
+                    happens: 'she_puts_a_letter_aside',
+                    held,
+                    because,
+                    asked: what_it_asked_now(app.device),
+                  })
+                }}
+              />
+            ) : (
+              <p>{props.texts.no_news}</p>
+            )}
+          </TheMark>
+        </>
+      )}
     </section>
+  )
+}
+
+/** The points of its mark on its own screen, and her gestures on them. */
+const ThePointsOfItsMark = (props: {
+  shown: the_extension_shown
+  points: ui_value.a_mark
+  happens: (what: an_extension_value.what_happens) => void
+}) => {
+  const app = the_app()
+  return (
+    <ThePoints
+      mark={props.points}
+      course_of={(action) => the_course_of_an_action(props.shown, action)}
+      taps={(action) => {
+        props.happens({
+          happens: 'she_taps_an_action',
+          mark: props.points,
+          action,
+          asked: what_it_asked_now(app.device),
+        })
+      }}
+      opens={(page) => {
+        props.happens({ happens: 'she_opens_a_page', mark: props.points, page })
+      }}
+    />
   )
 }

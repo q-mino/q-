@@ -5,8 +5,8 @@
     "types": ["node"],
     "rootDir": ".",
     "outDir": "../.tsbuild/test",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js"
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
   "include": ["."],
   "references": [

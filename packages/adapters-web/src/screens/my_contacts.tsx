@@ -4,7 +4,6 @@
 
 import * as my_contacts from '@q-mino/domains/ui/my_contacts/_dsl.ts'
 import type * as my_contacts_value from '@q-mino/domains/ui/my_contacts/_value.ts'
-import { For, Match, Show, Switch } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { the_app } from './the_app.ts'
 
@@ -43,133 +42,106 @@ export const MyContacts = (props: { texts: MyContactsTexts }) => {
       }
     },
   )
-  const shown = () => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
+  const state = screen.state.value
+  const read = given.value
+  const it =
+    state === undefined || read === undefined
       ? undefined
       : my_contacts.what_it_shows(state, read.given)
-  }
-  const none_yet = () => {
-    const contacts = shown()?.contacts
-    return contacts?.are === 'none_yet' ? contacts : undefined
-  }
-  const some = () => {
-    const contacts = shown()?.contacts
-    return contacts?.are === 'some' ? contacts : undefined
-  }
   const chooses = (entry: my_contacts_value.an_entry) => {
     screen.happens({ happens: 'she_chooses', entry })
   }
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={it?.contacts.are}>
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        {(it) => (
-          <>
-            <Show
-              when={it().menu}
-              fallback={
+      {it !== undefined && (
+        <>
+          {it.menu === undefined ? (
+            <button
+              type="button"
+              onClick={() => {
+                screen.happens({ happens: 'she_opens_the_menu' })
+              }}
+            >
+              {props.texts.the_menu}
+            </button>
+          ) : (
+            <nav aria-label={props.texts.the_menu}>
+              {it.menu.map((entry) => (
                 <button
+                  key={entry}
                   type="button"
                   onClick={() => {
-                    screen.happens({ happens: 'she_opens_the_menu' })
+                    chooses(entry)
                   }}
                 >
-                  {props.texts.the_menu}
+                  {props.texts.the_entries[entry]}
                 </button>
-              }
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  screen.happens({ happens: 'she_closes_the_menu' })
+                }}
+              >
+                {props.texts.close_the_menu}
+              </button>
+            </nav>
+          )}
+          {it.something_happened !== undefined && (
+            <button
+              type="button"
+              onClick={() => {
+                screen.happens({ happens: 'she_opens_what_happened' })
+              }}
             >
-              {(menu) => (
-                <nav aria-label={props.texts.the_menu}>
-                  <For each={menu()}>
-                    {(entry) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          chooses(entry)
-                        }}
-                      >
-                        {props.texts.the_entries[entry]}
-                      </button>
-                    )}
-                  </For>
+              {props.texts.something_happened(
+                it.something_happened.held_letters,
+                it.something_happened.happened,
+              )}
+            </button>
+          )}
+          {it.contacts.are === 'none_yet' && (
+            <>
+              <p>{props.texts.none_yet}</p>
+              {it.contacts.ways.map((entry) => (
+                <button
+                  key={entry}
+                  type="button"
+                  onClick={() => {
+                    chooses(entry)
+                  }}
+                >
+                  {props.texts.the_entries[entry]}
+                </button>
+              ))}
+            </>
+          )}
+          {it.contacts.are === 'some' && (
+            <ul>
+              {it.contacts.list.map((contact) => (
+                <li key={contact.bond}>
                   <button
                     type="button"
                     onClick={() => {
-                      screen.happens({ happens: 'she_closes_the_menu' })
+                      screen.happens({ happens: 'she_opens_a_contact', bond: contact.bond })
                     }}
                   >
-                    {props.texts.close_the_menu}
+                    {contact.name}
                   </button>
-                </nav>
-              )}
-            </Show>
-            <Show when={it().something_happened}>
-              {(something) => (
-                <button
-                  type="button"
-                  onClick={() => {
-                    screen.happens({ happens: 'she_opens_what_happened' })
-                  }}
-                >
-                  {props.texts.something_happened(something().held_letters, something().happened)}
-                </button>
-              )}
-            </Show>
-            <Switch>
-              <Match when={none_yet()}>
-                {(none) => (
-                  <>
-                    <p>{props.texts.none_yet}</p>
-                    <For each={none().ways}>
-                      {(entry) => (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            chooses(entry)
-                          }}
-                        >
-                          {props.texts.the_entries[entry]}
-                        </button>
-                      )}
-                    </For>
-                  </>
-                )}
-              </Match>
-              <Match when={some()}>
-                {(contacts) => (
-                  <ul>
-                    <For each={contacts().list}>
-                      {(contact) => (
-                        <li>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              screen.happens({ happens: 'she_opens_a_contact', bond: contact.bond })
-                            }}
-                          >
-                            {contact.name}
-                          </button>
-                          <Show when={contact.introduced_as}>
-                            {(introduced) => (
-                              <small> {props.texts.introduced_as(introduced())}</small>
-                            )}
-                          </Show>
-                          <small>
-                            {' '}
-                            {contact.they_have_me ? props.texts.they_have_you : props.texts.not_yet}
-                          </small>
-                        </li>
-                      )}
-                    </For>
-                  </ul>
-                )}
-              </Match>
-            </Switch>
-          </>
-        )}
-      </Show>
+                  {contact.introduced_as !== undefined && (
+                    <small> {props.texts.introduced_as(contact.introduced_as)}</small>
+                  )}
+                  <small>
+                    {' '}
+                    {contact.they_have_me ? props.texts.they_have_you : props.texts.not_yet}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </section>
   )
 }

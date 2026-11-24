@@ -4,7 +4,6 @@
 
 import * as the_extensions from '@q-mino/domains/ui/the_extensions/_dsl.ts'
 import type * as the_extensions_value from '@q-mino/domains/ui/the_extensions/_value.ts'
-import { createMemo, For, Show } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back } from './parts.tsx'
 import { the_app, the_word_or_its_fault } from './the_app.ts'
@@ -25,13 +24,12 @@ export const TheExtensions = (props: { texts: TheExtensionsTexts }) => {
     after: the_extensions.after,
   })
   const given = what_it_is_given(app, screen.state, () => app.node.the_extensions())
-  const shown = createMemo(() => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
+  const state = screen.state.value
+  const read = given.value
+  const it =
+    state === undefined || read === undefined
       ? undefined
       : the_extensions.what_it_shows(state, read.given)
-  })
   return (
     <section aria-label={props.texts.title}>
       <Back
@@ -40,37 +38,30 @@ export const TheExtensions = (props: { texts: TheExtensionsTexts }) => {
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        {(it) => (
-          <Show when={it().extensions.length > 0} fallback={<p>{props.texts.none}</p>}>
-            <ul>
-              <For each={it().extensions}>
-                {(one) => (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        screen.happens({
-                          happens: 'she_opens_an_extension',
-                          extension: one.extension,
-                        })
-                      }}
-                    >
-                      {the_word_or_its_fault(
-                        app.common,
-                        app.words(one.extension)?.name,
-                        one.extension,
-                      )}
-                    </button>{' '}
-                    <small>{props.texts.the_version(one.version)}</small>{' '}
-                    <small>{props.texts.is[one.is]}</small>
-                  </li>
-                )}
-              </For>
-            </ul>
-          </Show>
-        )}
-      </Show>
+      {it !== undefined &&
+        (it.extensions.length > 0 ? (
+          <ul>
+            {it.extensions.map((one) => (
+              <li key={one.extension} data-state={one.is}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    screen.happens({
+                      happens: 'she_opens_an_extension',
+                      extension: one.extension,
+                    })
+                  }}
+                >
+                  {the_word_or_its_fault(app.common, app.words(one.extension)?.name, one.extension)}
+                </button>{' '}
+                <small>{props.texts.the_version(one.version)}</small>{' '}
+                <small>{props.texts.is[one.is]}</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>{props.texts.none}</p>
+        ))}
     </section>
   )
 }
