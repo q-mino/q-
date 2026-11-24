@@ -1,10 +1,12 @@
 // The server (UI-5; 1c of the notes on screens): informative, no choice. The
 // relay of the configuration her letters go through, what it declares, what
 // it sees and what it does not; shown once after her first face, read again
-// from the menu; she goes on, to the start.
+// from the menu; she goes on, to the start. Since the MVP's part 2 drawn with the
+// design's components (WEB-29).
 
 import * as the_server from '@q-mino/domains/ui/the_server/_dsl.ts'
 import type * as the_server_value from '@q-mino/domains/ui/the_server/_value.ts'
+import { Card, Flaw, Gesture, Screen } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { the_app } from './the_app.ts'
 
@@ -39,25 +41,34 @@ export const TheServer = (props: { texts: TheServerTexts }) => {
     state === undefined || read === undefined
       ? undefined
       : the_server.what_it_shows(state, read.given)
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
-    <section aria-label={props.texts.title}>
-      <h1>{props.texts.title}</h1>
+    <Screen
+      title={props.texts.title}
+      gestures={
+        it !== undefined && (
+          <Gesture
+            kind="primary"
+            label={props.texts.go_on}
+            does={taps(() => {
+              screen.happens({ happens: 'she_goes_on' })
+            })}
+          />
+        )
+      }
+    >
       {it !== undefined && (
         <>
-          <p>{props.texts.it_carries_your_letters(it.relay)}</p>
-          <p>{props.texts.it_sees}</p>
-          <p>{props.texts.it_does_not_see}</p>
-          <p>{props.texts.it_is_told_not_guaranteed}</p>
-          <button
-            type="button"
-            onClick={() => {
-              screen.happens({ happens: 'she_goes_on' })
-            }}
-          >
-            {props.texts.go_on}
-          </button>
+          <Card>
+            <p>{props.texts.it_carries_your_letters(it.relay)}</p>
+            <p>{props.texts.it_sees}</p>
+            <p>{props.texts.it_does_not_see}</p>
+          </Card>
+          <Flaw title={app.common.what_it_does_not_guarantee}>
+            {props.texts.it_is_told_not_guaranteed}
+          </Flaw>
         </>
       )}
-    </section>
+    </Screen>
   )
 }

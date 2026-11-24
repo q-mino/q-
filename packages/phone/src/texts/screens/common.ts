@@ -56,6 +56,8 @@ export const common = {
   cannot_be_reached: { it_is_not_active: 'è spenta', it_has_stopped: 'si è fermata' },
   the_kernels_events: (event) => the_kernels_events.get(event),
   something_went_wrong: 'Qualcosa non è arrivato al telefono: riprova.',
+  // A word of C's, the gallery's first [Q, C, 24 Nov 2026].
+  what_it_does_not_guarantee: 'Cosa Cumino non garantisce',
   the_mark_of: (name) => `Estensione «${name}»`,
   // A word an extension's words lack, drawn as a fault in place of the whole text (WEB-22).
   a_word_missing: (name) => `«${name}»: manca la parola dell’estensione`,

@@ -83,6 +83,8 @@ export interface TheCommonTexts {
   readonly the_kernels_events: (event: string) => string | undefined
   /** A gesture handed to her node that did not reach it (a fault of the app's, never hers). */
   readonly something_went_wrong: string
+  /** The title of a flaw told on a screen, the same everywhere (WEB-27's `Flaw`, WEB-29). */
+  readonly what_it_does_not_guarantee: string
   /** The kernel's mark of an extension: its name, from its words (EXT-16, WEB-22). */
   readonly the_mark_of: (name: string) => string
   /**

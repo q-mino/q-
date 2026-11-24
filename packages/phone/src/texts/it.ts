@@ -48,6 +48,8 @@ export const texts = {
     clear_the_data_and_start_again: screens.common.clear_the_data_and_start_again,
   },
   the_storage: {
+    /** The title of the flaw told (WEB-11), a word of C's [Q, C, 24 Nov 2026]. */
+    title: 'I dati sul telefono',
     best_effort: 'Il browser può cancellare i dati di Cumino se il telefono resta senza spazio.',
     not_told: 'Il browser non dice se terrà i dati di Cumino.',
   },

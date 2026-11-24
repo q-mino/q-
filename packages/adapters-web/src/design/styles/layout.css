@@ -37,6 +37,11 @@
     font-size: var(--text-xl);
   }
 
+  /* The title takes the focus when the screen opens (WEB-29), to be read, not to be tapped: no ring. */
+  .screen > header > h1:focus {
+    outline: none;
+  }
+
   .screen > [data-part='body'] {
     grid-area: body;
     display: grid;

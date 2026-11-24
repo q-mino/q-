@@ -1,5 +1,6 @@
 import { signal, type Signal } from '@preact/signals'
 import { useEffect, useRef } from 'preact/hooks'
+import { Gesture, Question } from '@q-mino/adapters-web/design'
 import { the_build } from './build_info.ts'
 import { texts } from './texts/index.ts'
 
@@ -8,7 +9,9 @@ import { texts } from './texts/index.ts'
 // nothing happens in silence. Before the switch the node stops (its
 // consumers, its extensions unloaded, the writer let go, WEB-10), so that
 // the new release opens the database alone. On the browser's own events
-// (`navigator.serviceWorker`), with no library. [Q, C, 24 Nov 2026]
+// (`navigator.serviceWorker`), with no library. [Q, C, 24 Nov 2026] Asked
+// as a proposal, a `<dialog>` at the bottom of the screen that leaves the
+// screen to her (WEB-29).
 
 /** The worker of a new release once it is installed and waits: there is one only if a release runs already. */
 const when_a_new_one_waits = (
@@ -55,20 +58,39 @@ export const UpdatePrompt = (props: { readonly before_the_update: () => Promise<
 
   const worker = waiting.value
   return worker === undefined ? null : (
-    <div role="alertdialog" aria-live="polite">
-      <p>{texts.update.available}</p>
-      <p>{texts.update.whatChanges}</p>
-      <button type="button" onClick={() => void updates(worker)}>
-        {texts.update.apply}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          waiting.value = undefined
-        }}
-      >
-        {texts.update.later}
-      </button>
-    </div>
+    <TheUpdateProposed
+      updates={() => {
+        void updates(worker)
+      }}
+      later={() => {
+        waiting.value = undefined
+      }}
+    />
   )
 }
+
+/** The update proposed, her two answers (its stories in the gallery, WEB-29). */
+export const TheUpdateProposed = (props: { updates: () => void; later: () => void }) => (
+  <Question
+    kind="proposal"
+    title={texts.update.available}
+    declines={props.later}
+    answers={
+      <>
+        <Gesture
+          kind="secondary"
+          label={texts.update.later}
+          does={{ does: 'taps', taps: props.later }}
+        />
+        <Gesture
+          kind="primary"
+          label={texts.update.apply}
+          glyph="refresh_cw"
+          does={{ does: 'taps', taps: props.updates }}
+        />
+      </>
+    }
+  >
+    <p>{texts.update.whatChanges}</p>
+  </Question>
+)

@@ -44,6 +44,8 @@ export const Row = (props: {
             {props.title}
           </button>
         )}
+        {/* A space between them, for what reads the row as one text; a grid draws none. */}
+        {props.detail !== undefined && ' '}
         {props.detail !== undefined && <small data-part="detail">{props.detail}</small>}
       </div>
       {props.trail !== undefined && <div data-part="trail">{props.trail}</div>}

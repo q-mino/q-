@@ -1,0 +1,114 @@
+/*
+ * The screens' look (WEB-29): the frame of the way (the strip over the
+ * screen shown, held at the top), the fault at the start, and what the
+ * screens hold that only they hold (the points of a mark, a form's
+ * gestures); everything else is the components' (WEB-27). By static classes
+ * and parts, never a class or a style chosen in code. [Q, C, 24 Nov 2026]
+ */
+@layer screens {
+  .screens {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    /* The page's height; a frame's in the gallery. */
+    min-block-size: var(--screen-height);
+  }
+
+  .screens > [data-part='strip'] {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+  }
+
+  /* The screen shown fills what the strip leaves. */
+  .screens > div:not([data-part]) {
+    display: grid;
+  }
+
+  .screens .screen {
+    --screen-height: auto;
+  }
+
+  .screens > [data-part='opening'],
+  .screens > [data-part='went-wrong'] {
+    padding: var(--space-4);
+  }
+
+  /* The fault at the start: sober, its reason folded under «Perché». */
+  .it-does-not-start {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+    inline-size: 100%;
+    max-inline-size: var(--measure);
+    margin-inline: auto;
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .it-does-not-start > h1 {
+    font-size: var(--text-xl);
+  }
+
+  /* The gesture of the menu, at the end of the head. */
+  .screen > header > [data-part='the-menu'] {
+    order: 1;
+    margin-inline-start: auto;
+  }
+
+  /* A form of a screen: its fields, then its gestures in a row. */
+  .screen form {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .screen form > [data-part='gestures'],
+  .screen [data-part='gestures'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* A held letter: its words, then her gestures and her reason under them, the row's full width. */
+  .screen .row:has(> [data-part='trail'] form) {
+    grid-template-areas:
+      'lead main'
+      'lead trail';
+    grid-template-columns: auto 1fr;
+    row-gap: var(--space-2);
+    padding-block: var(--space-3);
+  }
+
+  .screen .row:has(> [data-part='trail'] form) > [data-part='lead'] {
+    align-self: start;
+  }
+
+  .screen .row:has(> [data-part='trail'] form) > [data-part='trail'] {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+
+  /* An action of an extension and how it ended, beside it. */
+  .screen [data-part='action'] {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-2);
+  }
+}
+
+/*
+ * The kernel's mark of an extension (EXT-16), last of all the layers, so
+ * that no extension's style redraws it; its own look is the MVP's part 3's.
+ */
+@layer frame {
+  .mark {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 2px solid var(--roan-edge);
+    border-radius: var(--radius-l);
+  }
+
+  .mark > h2 {
+    font-size: var(--text-l);
+  }
+}

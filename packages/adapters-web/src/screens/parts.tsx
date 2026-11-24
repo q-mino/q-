@@ -1,9 +1,12 @@
 // The parts the screens share (UI-1, UI-3, UI-4): the course of what a
 // screen asked, told; the gesture back; since part 22.2 the kernel's mark of
-// an extension and the points it holds at a place (EXT-16, WEB-22).
+// an extension and the points it holds at a place (EXT-16, WEB-22); since
+// the MVP's part 2 drawn with the design's components (WEB-27, WEB-29).
 
+import { Gesture, List, Notice, Row, type ANoticeKind } from '../design/index.ts'
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
+import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import type { ComponentChildren } from 'preact'
 import {
   in_its_words,
@@ -13,6 +16,28 @@ import {
   the_words_of_an_end,
 } from './the_app.ts'
 
+/**
+ * How an end is told, by its case (WEB-29): done, or done already, is
+ * `done`; an answer that did not come, an end not followed, what cannot be
+ * done and what the extension told are `information`, the normal outcomes
+ * of a network of people (silence is one, never an error); what the app or
+ * an extension could not do is a `fault`. [Q, C, 24 Nov 2026]
+ */
+export const the_kind_of_an_end = (how: activities_value.how_it_ended): ANoticeKind => {
+  switch (how.ended) {
+    case 'done':
+    case 'done_already':
+      return 'done'
+    case 'cannot_be_done':
+    case 'no_longer_followed':
+    case 'the_extension_told_how_it_ended':
+      return 'information'
+    case 'the_extension_cannot_be_reached':
+    case 'the_app_cannot_do_it':
+      return 'fault'
+  }
+}
+
 /** The course of what a screen asked: nothing, in progress, or how it ended, in her words. */
 export const TheCourse = (props: { course: ui_value.a_course }) => {
   const app = the_app()
@@ -20,16 +45,12 @@ export const TheCourse = (props: { course: ui_value.a_course }) => {
     case 'nothing_asked':
       return null
     case 'in_progress':
-      return (
-        <p role="status" data-state="in_progress">
-          {app.common.in_progress}
-        </p>
-      )
+      return <Notice kind="waiting">{app.common.in_progress}</Notice>
     case 'ended':
       return (
-        <p role="status" data-state="ended">
+        <Notice kind={the_kind_of_an_end(props.course.how)}>
           {the_words_of_an_end(app.common, props.course.how)}
-        </p>
+        </Notice>
       )
   }
 }
@@ -38,24 +59,25 @@ export const TheCourse = (props: { course: ui_value.a_course }) => {
 export const Back = (props: { onBack: () => void }) => {
   const app = the_app()
   return (
-    <button
-      type="button"
-      onClick={() => {
-        props.onBack()
+    <Gesture
+      kind="quiet"
+      label={app.common.back}
+      glyph="arrow_left"
+      does={{
+        does: 'taps',
+        taps: () => {
+          props.onBack()
+        },
       }}
-    >
-      {app.common.back}
-    </button>
+    />
   )
 }
-
-/** The kernel's mark of an extension around what it holds (EXT-16): its name and a border. */
-export const the_marks_style = { border: '2px solid', padding: '0.5em', margin: '0.5em 0' }
 
 /**
  * The kernel's mark of an extension (EXT-16): a section with its name, from
  * its words, and a border, around what it holds; a name the app does not
- * have, drawn as a fault (WEB-22).
+ * have, drawn as a fault (WEB-22). Its look is the layer `frame`'s, last of
+ * all (WEB-26; redrawn by the MVP's part 3).
  */
 export const TheMark = (props: { extension: string; children: ComponentChildren }) => {
   const app = the_app()
@@ -66,7 +88,7 @@ export const TheMark = (props: { extension: string; children: ComponentChildren 
     app.common.the_mark_of,
   )
   return (
-    <section aria-label={title} style={the_marks_style}>
+    <section class="mark" aria-label={title}>
       <h2>{title}</h2>
       {props.children}
     </section>
@@ -80,16 +102,12 @@ const TheCourseOfAnAction = (props: { extension: string; course: ui_value.a_cour
     case 'nothing_asked':
       return null
     case 'in_progress':
-      return (
-        <small role="status" data-state="in_progress">
-          {app.common.in_progress}
-        </small>
-      )
+      return <Notice kind="waiting">{app.common.in_progress}</Notice>
     case 'ended':
       return (
-        <small role="status" data-state="ended">
+        <Notice kind={the_kind_of_an_end(props.course.how)}>
           {the_words_of_an_actions_end(app.common, app.words(props.extension), props.course.how)}
-        </small>
+        </Notice>
       )
   }
 }
@@ -114,42 +132,42 @@ export const ThePoints = (props: {
   return (
     <>
       {props.mark.actions.map((action) => (
-        <p key={action}>
-          <button
-            type="button"
-            disabled={!ui.it_may_ask(props.course_of(action))}
-            onClick={() => {
-              props.taps(action)
+        <div key={action} data-part="action">
+          <Gesture
+            kind="secondary"
+            label={the_word_or_its_fault(app.common, words?.actions[action], action)}
+            off={!ui.it_may_ask(props.course_of(action))}
+            does={{
+              does: 'taps',
+              taps: () => {
+                props.taps(action)
+              },
             }}
-          >
-            {the_word_or_its_fault(app.common, words?.actions[action], action)}
-          </button>{' '}
+          />
           <TheCourseOfAnAction extension={props.mark.extension} course={props.course_of(action)} />
-        </p>
+        </div>
       ))}
       {props.mark.slots.map((slot) => (
         <APartNotDrawn key={slot} />
       ))}
       {props.mark.pages.length > 0 && (
-        <ul>
+        <List>
           {props.mark.pages.map((page) => (
-            <li key={page}>
-              <button
-                type="button"
-                onClick={() => {
-                  props.opens(page)
-                }}
-              >
-                {in_its_words(
-                  app.common,
-                  words?.pages[page],
-                  page,
-                  app.common.the_points.opens_the_page,
-                )}
-              </button>
-            </li>
+            <Row
+              key={page}
+              glyph="chevron_right"
+              title={in_its_words(
+                app.common,
+                words?.pages[page],
+                page,
+                app.common.the_points.opens_the_page,
+              )}
+              opens={() => {
+                props.opens(page)
+              }}
+            />
           ))}
-        </ul>
+        </List>
       )}
     </>
   )
@@ -164,5 +182,5 @@ export const ThePoints = (props: {
  */
 export const APartNotDrawn = () => {
   const app = the_app()
-  return <p role="alert">{app.common.the_points.no_document}</p>
+  return <Notice kind="fault">{app.common.the_points.no_document}</Notice>
 }

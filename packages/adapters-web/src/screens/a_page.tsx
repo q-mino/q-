@@ -1,11 +1,13 @@
 // A page of an extension (UI-4, UI-5; EXT-16; story 22 of `ui`'s README):
 // its name in the kernel's mark of its extension, where its part is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
-// longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23).
+// longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23). Since the MVP's part 2 drawn with the design's
+// components (WEB-29).
 
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
+import { Notice, Screen } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { APartNotDrawn, Back, TheMark } from './parts.tsx'
 import { the_app } from './the_app.ts'
@@ -42,19 +44,25 @@ export const APage = (props: {
   const shown =
     state === undefined || read === undefined ? undefined : a_page.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title} data-state={shown?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
-      {shown?.shows === 'no_longer_there' && <p>{props.texts.no_longer_there}</p>}
+    <Screen
+      title={props.texts.title}
+      state={shown?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
+      {shown?.shows === 'no_longer_there' && (
+        <Notice kind="information">{props.texts.no_longer_there}</Notice>
+      )}
       {shown?.shows === 'the_part' && (
         <TheMark extension={shown.extension}>
           <APartNotDrawn />
         </TheMark>
       )}
-    </section>
+    </Screen>
   )
 }

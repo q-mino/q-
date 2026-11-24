@@ -9,6 +9,7 @@ import {
   type WhyItDoesNotStart,
   type WhyItStopped,
 } from './node/index.ts'
+import { Flaw, Gesture, Notice, Why } from '@q-mino/adapters-web/design'
 import { the_build } from './build_info.ts'
 import { texts } from './texts/index.ts'
 import { UpdatePrompt } from './UpdatePrompt.tsx'
@@ -69,24 +70,28 @@ export const App = (props: TheAppsWiring) => {
     if (at_the_update.now === 'running') await at_the_update.node.stops()
   }
 
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
-    <main data-state={it.now}>
-      {(it.now === 'opening' || it.now === 'clearing_the_data') && <p>{texts.start.opening}</p>}
+    <div class="app" data-state={it.now}>
+      {(it.now === 'opening' || it.now === 'clearing_the_data') && (
+        <div data-part="told">
+          <Notice kind="waiting">{texts.start.opening}</Notice>
+        </div>
+      )}
       {it.now === 'another_tab' && (
-        <>
-          <p>{texts.start.another_tab}</p>
-          <button
-            type="button"
-            onClick={() => {
+        <div data-part="told">
+          <Notice kind="information">{texts.start.another_tab}</Notice>
+          <Gesture
+            kind="primary"
+            label={texts.start.use_here}
+            does={taps(() => {
               opens('use_here')
-            }}
-          >
-            {texts.start.use_here}
-          </button>
-        </>
+            })}
+          />
+        </div>
       )}
       {it.now === 'it_does_not_start' && (
-        <section role="alert" data-state={it.why.why}>
+        <section role="alert" class="it-does-not-start" data-state={it.why.why}>
           {it.why.why === 'an_extension_does_not_compose' && (
             <>
               <h1>{texts.start.an_extension_does_not_compose}</h1>
@@ -104,47 +109,44 @@ export const App = (props: TheAppsWiring) => {
               <h1>{texts.start.it_does_not_start}</h1>
               <p>{texts.start.the_data_of_an_older_test_release}</p>
               {on_the_test_channel && (
-                <button
-                  type="button"
-                  onClick={() => {
+                <Gesture
+                  kind="dangerous"
+                  label={texts.start.clear_the_data_and_start_again}
+                  does={taps(() => {
                     clears_the_data_and_starts_again(undefined)
-                  }}
-                >
-                  {texts.start.clear_the_data_and_start_again}
-                </button>
+                  })}
+                />
               )}
             </>
           )}
           {it.why.why === 'a_fault' && <h1>{texts.start.it_does_not_start}</h1>}
-          <h2>{texts.start.why}</h2>
-          <pre>{it.why.message}</pre>
+          <Why title={texts.start.why} message={it.why.message} />
         </section>
       )}
       {it.now === 'stopped' && it.why === 'used_elsewhere' && (
-        <>
-          <p>{texts.start.used_elsewhere}</p>
-          <button
-            type="button"
-            onClick={() => {
+        <div data-part="told">
+          <Notice kind="information">{texts.start.used_elsewhere}</Notice>
+          <Gesture
+            kind="primary"
+            label={texts.start.use_here}
+            does={taps(() => {
               opens('use_here')
-            }}
-          >
-            {texts.start.use_here}
-          </button>
-        </>
+            })}
+          />
+        </div>
       )}
       {it.now === 'stopped' && it.why === 'closed_for_a_new_release' && (
-        <>
-          <p>{texts.start.closed_for_a_new_release}</p>
-          <button
-            type="button"
-            onClick={() => {
+        <div data-part="told">
+          <Notice kind="information">{texts.start.closed_for_a_new_release}</Notice>
+          <Gesture
+            kind="primary"
+            label={texts.start.reload}
+            glyph="refresh_cw"
+            does={taps(() => {
               props.reopens()
-            }}
-          >
-            {texts.start.reload}
-          </button>
-        </>
+            })}
+          />
+        </div>
       )}
       {it.now === 'running' && (
         <TheNodeRunning
@@ -155,9 +157,9 @@ export const App = (props: TheAppsWiring) => {
           }
         />
       )}
-      <footer>
+      <footer class="about">
         {the_build.channel !== 'release' && (
-          <p>
+          <p data-part="channel">
             <strong>{texts.app.testChannel}</strong>
           </p>
         )}
@@ -172,7 +174,7 @@ export const App = (props: TheAppsWiring) => {
         </p>
       </footer>
       <UpdatePrompt before_the_update={before_the_update} />
-    </main>
+    </div>
   )
 }
 
@@ -251,10 +253,15 @@ const TheNodeRunning = (props: {
     }
   return (
     <>
-      {props.node.the_storage === 'best_effort' && (
-        <p role="note">{texts.the_storage.best_effort}</p>
+      {props.node.the_storage !== 'persistent' && (
+        <div data-part="the-storage" data-state={props.node.the_storage}>
+          <Flaw title={texts.the_storage.title}>
+            {props.node.the_storage === 'best_effort'
+              ? texts.the_storage.best_effort
+              : texts.the_storage.not_told}
+          </Flaw>
+        </div>
       )}
-      {props.node.the_storage === 'not_told' && <p role="note">{texts.the_storage.not_told}</p>}
       {screens.current.drawn}
     </>
   )

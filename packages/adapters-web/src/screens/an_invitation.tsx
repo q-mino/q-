@@ -2,7 +2,8 @@
 // shake her hand, at a distance; the name she gives them, theirs by default;
 // she accepts or declines. Accepted, her ticket is prepared and, once it is
 // ready, the screen is told so once, and theirs is opened on it; offline,
-// it waits, and says so. A link out of its form is told, and opens nothing.
+// it waits, and says so. A link out of its form is told, and opens nothing. Since the MVP's part 2 drawn
+// with the design's components (WEB-29).
 
 import { computed } from '@preact/signals'
 import * as an_invitation from '@q-mino/domains/ui/an_invitation/_dsl.ts'
@@ -10,8 +11,9 @@ import type * as an_invitation_value from '@q-mino/domains/ui/an_invitation/_val
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { useEffect } from 'preact/hooks'
+import { Field, Gesture, Notice, Screen } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given } from './a_screen.ts'
-import { Back } from './parts.tsx'
+import { Back, the_kind_of_an_end } from './parts.tsx'
 import { the_app, the_words_of_an_end, what_it_asked_now } from './the_app.ts'
 
 /** The words of the screen (provisional, A to confirm). */
@@ -97,15 +99,22 @@ export const AnInvitation = (props: {
     state === undefined || read === undefined
       ? undefined
       : an_invitation.what_it_shows(state, read.given.model)
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
-    <section aria-label={props.texts.title} data-state={shown?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
-      {shown?.shows === 'not_an_invitation' && <p role="status">{props.texts.not_an_invitation}</p>}
+    <Screen
+      title={props.texts.title}
+      state={shown?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
+      {shown?.shows === 'not_an_invitation' && (
+        <Notice kind="information">{props.texts.not_an_invitation}</Notice>
+      )}
       {shown?.shows === 'the_invitation' && (
         <form
           onSubmit={(event) => {
@@ -115,51 +124,55 @@ export const AnInvitation = (props: {
         >
           <p>{props.texts.wants_to_shake_your_hand(shown.introduced_as)}</p>
           <p>{props.texts.if_you_accept}</p>
-          <label>
-            {props.texts.the_name_you_give}{' '}
-            <input
-              name="name"
-              value={shown.name}
-              onInput={(event) => {
-                screen.happens({
-                  happens: 'she_types_the_name',
-                  name: event.currentTarget.value,
-                })
-              }}
-            />
-          </label>
-          <button type="submit" disabled={shown.the_button !== 'on'}>
-            {props.texts.accept}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              screen.happens({ happens: 'she_declines' })
+          <Field
+            label={props.texts.the_name_you_give}
+            name="name"
+            holds={{
+              holds: 'the_screens',
+              value: shown.name,
+              types: (name) => {
+                screen.happens({ happens: 'she_types_the_name', name })
+              },
             }}
-          >
-            {props.texts.decline}
-          </button>
+          />
+          <div data-part="gestures">
+            <Gesture
+              kind="primary"
+              label={props.texts.accept}
+              off={shown.the_button !== 'on'}
+              does={{ does: 'submits' }}
+            />
+            <Gesture
+              kind="secondary"
+              label={props.texts.decline}
+              does={taps(() => {
+                screen.happens({ happens: 'she_declines' })
+              })}
+            />
+          </div>
         </form>
       )}
       {shown?.shows === 'on_its_way' && (
         <>
-          <p role="status">{props.texts.on_its_way(shown.introduced_as)}</p>
+          <Notice kind="waiting">{props.texts.on_its_way(shown.introduced_as)}</Notice>
           <p>{props.texts.it_waits_offline}</p>
         </>
       )}
       {shown?.shows === 'bonded' && (
-        <p role="status">
+        <Notice kind="done">
           {shown.already
             ? props.texts.bonded_already(shown.introduced_as)
             : props.texts.bonded(shown.introduced_as)}
-        </p>
+        </Notice>
       )}
       {shown?.shows === 'the_invitation_no_longer_holds' && (
         <>
-          <p role="status">{props.texts.no_longer_holds(shown.introduced_as)}</p>
-          <p>{the_words_of_an_end(app.common, shown.how)}</p>
+          <Notice kind="fault">{props.texts.no_longer_holds(shown.introduced_as)}</Notice>
+          <Notice kind={the_kind_of_an_end(shown.how)}>
+            {the_words_of_an_end(app.common, shown.how)}
+          </Notice>
         </>
       )}
-    </section>
+    </Screen>
   )
 }

@@ -129,8 +129,7 @@ describe('the components', () => {
         <Field
           label="Nome"
           name="name"
-          value=""
-          types={(value) => typed.push(value)}
+          holds={{ holds: 'the_screens', value: '', types: (value) => typed.push(value) }}
           tells={told}
         />,
       )

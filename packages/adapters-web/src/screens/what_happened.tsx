@@ -3,7 +3,8 @@
 // letters held and what happened without a fact, the kernel's by
 // themselves, each extension's in the kernel's mark of it (EXT-16). A held
 // letter she sends again, or puts aside with her reason. The news of a mark
-// are drawn by `TheNews`, which an extension's own screen draws too.
+// are drawn by `TheNews`, which an extension's own screen draws too. Since the MVP's
+// part 2 drawn with the design's components (WEB-29).
 
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
@@ -11,6 +12,7 @@ import * as what_happened from '@q-mino/domains/ui/what_happened/_dsl.ts'
 import type * as what_happened_value from '@q-mino/domains/ui/what_happened/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
+import { Card, Field, Gesture, List, Notice, Row, Screen } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark } from './parts.tsx'
 import { the_app, what_it_asked_now, type TheApp } from './the_app.ts'
@@ -111,59 +113,73 @@ export const TheNews = (props: {
   sends_again: (held: user_value.a_held_letter) => void
   puts_aside: (held: user_value.a_held_letter, because: string) => void
 }) => {
-  // Kept by the letters' names (`key`), so that her reason, typed, stays.
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
     <>
       {props.held_letters.length > 0 && (
         <>
           <h3>{props.texts.the_held_letters}</h3>
-          <ul>
+          <List label={props.texts.the_held_letters}>
             {props.held_letters.map((one) => (
-              <li key={one.held.letter} data-state={one.held.why.why}>
-                <p>{one.held.what}</p>
-                <p>
-                  <small>{props.texts.why_it_is_held[one.held.why.why]}</small>
-                  <TheWorldsWords held={one.held} />
-                </p>
-                <button
-                  type="button"
-                  disabled={!ui.it_may_ask(one.course)}
-                  onClick={() => {
-                    props.sends_again(one.held)
-                  }}
-                >
-                  {props.texts.send_it_again}
-                </button>
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault()
-                    const because = new FormData(event.currentTarget).get('because')
-                    props.puts_aside(one.held, typeof because === 'string' ? because : '')
-                  }}
-                >
-                  <label>
-                    {props.texts.why_aside} <input name="because" maxLength={1024} />
-                  </label>
-                  <button type="submit" disabled={!ui.it_may_ask(one.course)}>
-                    {props.texts.put_it_aside}
-                  </button>
-                </form>
-                <TheCourse course={one.course} />
-              </li>
+              <Row
+                key={one.held.letter}
+                glyph="clock"
+                title={one.held.what}
+                detail={
+                  <span data-part="why" data-state={one.held.why.why}>
+                    {props.texts.why_it_is_held[one.held.why.why]}
+                    <TheWorldsWords held={one.held} />
+                  </span>
+                }
+                trail={
+                  <>
+                    <Gesture
+                      kind="secondary"
+                      glyph="refresh_cw"
+                      label={props.texts.send_it_again}
+                      off={!ui.it_may_ask(one.course)}
+                      does={taps(() => {
+                        props.sends_again(one.held)
+                      })}
+                    />
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        const because = new FormData(event.currentTarget).get('because')
+                        props.puts_aside(one.held, typeof because === 'string' ? because : '')
+                      }}
+                    >
+                      <Field
+                        label={props.texts.why_aside}
+                        name="because"
+                        holds={{ holds: 'the_forms' }}
+                        max_length={1024}
+                      />
+                      <div data-part="gestures">
+                        <Gesture
+                          kind="secondary"
+                          label={props.texts.put_it_aside}
+                          off={!ui.it_may_ask(one.course)}
+                          does={{ does: 'submits' }}
+                        />
+                      </div>
+                    </form>
+                    <TheCourse course={one.course} />
+                  </>
+                }
+              />
             ))}
-          </ul>
+          </List>
         </>
       )}
       {props.happened.length > 0 && (
         <>
           <h3>{props.texts.what_happened}</h3>
-          <ul>
+          <List label={props.texts.what_happened}>
             {props.happened.map((one, index) => (
-              <li key={index} data-state={one.happened}>
-                {the_words_of_what_happened(props.texts, one)}
-              </li>
+              <Row key={index} glyph="info" title={the_words_of_what_happened(props.texts, one)} />
             ))}
-          </ul>
+          </List>
         </>
       )}
     </>
@@ -173,7 +189,7 @@ export const TheNews = (props: {
 /** The world's words beside a letter that could not be delivered, none otherwise. */
 const TheWorldsWords = (props: { held: user_value.a_held_letter }) => {
   const because = the_worlds_words(props.held)
-  return because === undefined ? null : <small> ({because})</small>
+  return because === undefined ? null : <span> ({because})</span>
 }
 
 /** The activities a screen asked, as `user` reads them (none not read yet). */
@@ -232,29 +248,37 @@ export const WhatHappened = (props: { texts: WhatHappenedTexts }) => {
       ? undefined
       : what_happened.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title} data-state={shown?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
-      {shown?.shows === 'nothing_happened' && <p>{props.texts.nothing_happened}</p>}
+    <Screen
+      title={props.texts.title}
+      state={shown?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
+      {shown?.shows === 'nothing_happened' && (
+        <Notice kind="information">{props.texts.nothing_happened}</Notice>
+      )}
       {shown?.shows === 'what_happened' && (
         <>
           {shown.in_progress.length > 0 && (
-            <>
-              <h2>{props.texts.in_progress}</h2>
-              <ul>
+            <Card title={props.texts.in_progress}>
+              <List>
                 {shown.in_progress.map((card) => (
-                  <li key={card.activity_id}>{props.texts.the_activities[card.what.activity]}</li>
+                  <Row
+                    key={card.activity_id}
+                    glyph="clock"
+                    title={props.texts.the_activities[card.what.activity]}
+                  />
                 ))}
-              </ul>
-            </>
+              </List>
+            </Card>
           )}
           {shown.the_kernels.held_letters.length + shown.the_kernels.happened.length > 0 && (
-            <section aria-label={props.texts.the_kernels}>
-              <h2>{props.texts.the_kernels}</h2>
+            <Card title={props.texts.the_kernels}>
               <TheNews
                 texts={props.texts.the_news}
                 held_letters={shown.the_kernels.held_letters}
@@ -262,7 +286,7 @@ export const WhatHappened = (props: { texts: WhatHappenedTexts }) => {
                 sends_again={sends_again}
                 puts_aside={puts_aside}
               />
-            </section>
+            </Card>
           )}
           {/* The marks kept by their extensions' names, as the letters by theirs. */}
           {shown.in_their_marks.map((mark) => (
@@ -278,6 +302,6 @@ export const WhatHappened = (props: { texts: WhatHappenedTexts }) => {
           ))}
         </>
       )}
-    </section>
+    </Screen>
   )
 }
