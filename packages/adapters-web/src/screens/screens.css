@@ -87,28 +87,18 @@
     justify-items: start;
   }
 
+  /* The corner of a page: who has the screen, held at its top end while she scrolls. */
+  .screen > [data-part='body'] > .corner {
+    position: sticky;
+    inset-block-start: var(--space-2);
+    z-index: 1;
+    justify-self: end;
+  }
+
   /* An action of an extension and how it ended, beside it. */
   .screen [data-part='action'] {
     display: grid;
     justify-items: start;
     gap: var(--space-2);
-  }
-}
-
-/*
- * The kernel's mark of an extension (EXT-16), last of all the layers, so
- * that no extension's style redraws it; its own look is the MVP's part 3's.
- */
-@layer frame {
-  .mark {
-    display: grid;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    border: 2px solid var(--roan-edge);
-    border-radius: var(--radius-l);
-  }
-
-  .mark > h2 {
-    font-size: var(--text-l);
   }
 }

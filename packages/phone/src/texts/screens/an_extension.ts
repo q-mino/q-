@@ -32,9 +32,10 @@ export const an_extension = {
     to_see_the_name_of_the_bond: 'Vedere il nome che dai ai tuoi contatti',
     to_send_requests_on_your_bonds: 'Mandare richieste ai tuoi contatti a nome tuo',
     a_storage_of_its_own: 'Uno spazio suo per i suoi dati, che legge solo lei',
-    // [Q, A, 24 Nov 2026] (USR-7; EXT-13: integrated means trusted).
+    // [Q, A, 24 Nov 2026] (USR-7; EXT-13: integrated means trusted); its last sentence, the mark's flaw
+    // (WEB-30, the MVP's part 3): [Q, C, 24 Nov 2026], provisional.
     all_that_cumino_reaches:
-      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare.',
+      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare. Gira dentro l’app e può ridisegnarne lo schermo, cornice compresa: la cornice dice da dove viene ciò che vedi solo se l’estensione la lascia stare.',
     its_parts_act_with_no_tap:
       'Falla: i suoi riquadri possono fare cose senza che tu tocchi niente, e Cumino non può impedirlo',
   },

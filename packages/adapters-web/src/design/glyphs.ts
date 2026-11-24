@@ -158,6 +158,18 @@ export const the_glyphs = {
     { shape: 'path', d: 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2' },
   ],
   chevron_right: [{ shape: 'path', d: 'm9 18 6-6-6-6' }],
+  maximize_2: [
+    { shape: 'path', d: 'M15 3h6v6' },
+    { shape: 'path', d: 'm21 3-7 7' },
+    { shape: 'path', d: 'm3 21 7-7' },
+    { shape: 'path', d: 'M9 21H3v-6' },
+  ],
+  minimize_2: [
+    { shape: 'path', d: 'm14 10 7-7' },
+    { shape: 'path', d: 'M20 10h-6V4' },
+    { shape: 'path', d: 'm3 21 7-7' },
+    { shape: 'path', d: 'M4 14h6v6' },
+  ],
   ellipsis_vertical: [
     { shape: 'circle', cx: '12', cy: '12', r: '1' },
     { shape: 'circle', cx: '12', cy: '5', r: '1' },
