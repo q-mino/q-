@@ -42,4 +42,4 @@ In `packages/memory/test/extensions/ping_pong.test.ts`, on the node of q-'s orac
 
 ## Open
 
-- The slot of a bond's pings (`the_pings_of_a_bond`, a frame that follows a read on `self`), the remedy, deferred, of PNG-4's declared flaw: the leaf follows a ping 70 seconds from the tap, the ping's 60 run from its delivery, so a later outcome is recorded but shown on no screen; an extension point that asks more at activation (EXT-10). The page of the extension, with it. The library's open scenario SC-57: a follow until what it follows closes.
+- The slot of a bond's pings (`the_pings_of_a_bond`, a part that follows a read on `self`), the remedy, deferred, of PNG-4's declared flaw: the leaf follows a ping 70 seconds from the tap, the ping's 60 run from its delivery, so a later outcome is recorded but shown on no screen; an extension point that asks more at activation (EXT-10). The page of the extension, with it. The library's open scenario SC-57: a follow until what it follows closes.
