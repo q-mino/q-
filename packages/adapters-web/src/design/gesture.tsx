@@ -5,7 +5,7 @@
 // cannot be undone; `extension`, an action of an extension's, its label
 // and what it does the extension's (EXT-16), drawn in the extension's hue
 // with its puzzle glyph, so that it never reads as a gesture of the kernel
-// («Ping» beside «Rinomina»; WEB-30). It taps, or submits the form it is
+// («Ping» beside «Cambia nome»; WEB-30). It taps, or submits the form it is
 // in. [Q, C, 24 Nov 2026]
 
 import type { AGlyph } from './glyphs.ts'
