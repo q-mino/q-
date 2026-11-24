@@ -104,8 +104,12 @@ export const what_an_extension_asks = z.discriminatedUnion('asks', [
     name: a_name,
     place: a_name,
   }),
-  /** A flaw the kernel cannot fence: the network, as far as the browser leaves it open (EXT-13). */
-  z.strictObject({ asks: z.literal('the_network_as_far_as_the_browser_leaves_it') }),
+  /**
+   * A flaw the kernel cannot fence: integrated, it runs inside Cumino and
+   * can reach all that Cumino reaches, the network included; what it
+   * declares informs, it does not fence (EXT-13). [Q, C, 24 Nov 2026]
+   */
+  z.strictObject({ asks: z.literal('all_that_cumino_reaches') }),
   /** A flaw the kernel cannot fence: its frames act with no tap of hers (EXT-16). */
   z.strictObject({ asks: z.literal('its_frames_act_with_no_tap') }),
 ])

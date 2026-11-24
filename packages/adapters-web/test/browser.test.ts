@@ -8,7 +8,6 @@ import type {
   CryptographicRandomness,
   TheMediaDevices,
   the_device_s_clock,
-  ThePageOfTheRealms,
 } from '../src/index.ts'
 import type * as zz from '@q-mino/domains/library'
 
@@ -22,7 +21,6 @@ test("the browser's objects are what the adapters take", () => {
   expectTypeOf<Document>().toExtend<APageToSaveIn['document']>()
   expectTypeOf<typeof URL>().toExtend<APageToSaveIn['urls']>()
   expectTypeOf<Document>().toExtend<APageToPickIn['document']>()
-  expectTypeOf<Document>().toExtend<ThePageOfTheRealms['document']>()
   expectTypeOf<Crypto>().toExtend<CryptographicRandomness>()
   expectTypeOf<ReturnType<typeof the_device_s_clock>>().toEqualTypeOf<zz.Clock>()
   expectTypeOf<typeof fetch>().toExtend<AFetch>()

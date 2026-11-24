@@ -5,7 +5,6 @@
 export { TheScreens, type TheScreensWiring } from './the_screens.tsx'
 export type { TheScreensTexts } from './texts.ts'
 export type {
-  AFrameToPlace,
   TheApp,
   TheCommonTexts,
   TheDevice,

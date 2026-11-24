@@ -27,6 +27,6 @@ Beside them: [`test/manifest.test.ts`](test/manifest.test.ts) (the committed `ma
 
 ## Open
 
-- Its slot and page (`frame/`), its texts (`texts/`, the label "Saluta"): steps 16 and 22.
-- A read leaf on `self` (the greetings of a bond, for a frame to follow) and the partition adapter's reads: with a frame (step 16).
+- Its slot and page (parts of its own, EXT-16: with the first extension that has one), its texts (`texts/`, the label "Saluta"): steps 16 and 22.
+- A read leaf on `self` (the greetings of a bond, for a part to follow) and the partition adapter's reads: with a part (step 16).
 - Hosted by the kernel's side and between two nodes on the oracle: [`packages/memory/test/extensions/`](../../memory/test/extensions/README.md) (part 12.4), the step's checks with two nodes.

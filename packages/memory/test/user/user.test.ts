@@ -26,7 +26,7 @@ describe('user, on the dsl alone (part 15.2)', () => {
       { asks: 'a_storage_of_its_own' },
       { asks: 'to_answer_your_bonds', leaves: ['usecase/ping'] },
       { asks: 'a_place_on_your_screens', point: 'action', name: 'ping', place: 'a_bond' },
-      { asks: 'the_network_as_far_as_the_browser_leaves_it' },
+      { asks: 'all_that_cumino_reaches' },
     ])
     const with_a_slot = a_manifest.parse({
       ...the_manifest_shown(),

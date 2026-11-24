@@ -1,15 +1,14 @@
 // A page of an extension (UI-4, UI-5; EXT-16; story 22 of `ui`'s README):
 // its name in the kernel's mark of its extension, where its frame is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
-// longer there. Since part 22.2 its frame (WEB-23).
+// longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23).
 
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
 import { createMemo, Match, Switch, untrack } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { TheFrame } from './a_frame.tsx'
-import { Back, TheMark } from './parts.tsx'
+import { APartNotDrawn, Back, TheMark } from './parts.tsx'
 import { the_app } from './the_app.ts'
 
 /** The words of a page (provisional, A to confirm). */
@@ -46,10 +45,6 @@ export const APage = (props: {
       ? undefined
       : a_page.what_it_shows(state, read.given)
   })
-  /** Whether its extension is active, as the screen read it (EXT-4). */
-  const is_active = (extension: string): boolean =>
-    given()?.given.extensions.some((one) => one.extension === extension && one.is === 'active') ??
-    false
   const the_frame = () => {
     const it = shown()
     return it?.shows === 'the_frame' ? it : undefined
@@ -69,11 +64,7 @@ export const APage = (props: {
         <Match when={the_frame()}>
           {(frame) => (
             <TheMark extension={frame().extension}>
-              <TheFrame
-                frame={{ extension: frame().extension, point: 'page', name: frame().page }}
-                told={frame().told}
-                active={is_active(frame().extension)}
-              />
+              <APartNotDrawn />
             </TheMark>
           )}
         </Match>

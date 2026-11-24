@@ -3,7 +3,6 @@ import {
   the_device_s_clock,
   the_device_s_zone,
   the_time_that_passes,
-  type ARealmsDocument,
 } from '@q-mino/adapters-web'
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
@@ -18,25 +17,16 @@ import {
 
 // The PWA's start (PWA-2) in Node: the browser's IndexedDB is fake-indexeddb's
 // (a new factory per test: a fresh browser), its locks Node's Web Locks, its
-// page a document with no window, by the parts a realm's frame uses (no realm
-// runs in Node: WEB-21), its network refusing every request (no relay before
+// network refusing every request (no relay before
 // step 24): the node composes, runs and stops; a second tab composes nothing until
 // it takes the node; a composition fault stops the start with every fault;
 // a node an older test release kept, out of its form, told as such and
 // cleared (WEB-8).
-// The realms run in a browser only (the preview, PWA-6): ping pong stays off.
+// Ping pong stays off: its realm, imported only when active (EXT-13), is never loaded here.
 
-/** A page's document where no realm is placed (ping pong stays off in Node): a frame made or held there is a fault of the test. */
-const a_document_with_no_realm: ARealmsDocument = {
-  defaultView: null,
-  createElement: () => {
-    throw new Error('no realm is placed in Node')
-  },
-  body: {
-    append: () => {
-      throw new Error('no realm is placed in Node')
-    },
-  },
+/** A realm that is never loaded (ping pong stays off): loaded, a fault of the test. */
+const a_realm_never_loaded = (): never => {
+  throw new Error('no extension is loaded in these stories')
 }
 
 const a_browser = (indexed_db = new IDBFactory()): TheBrowser => ({
@@ -46,7 +36,6 @@ const a_browser = (indexed_db = new IDBFactory()): TheBrowser => ({
   storage: undefined,
   fetch: () => Promise.reject(new TypeError('no network in the test')),
   crypto,
-  document: a_document_with_no_realm,
   network: {
     navigator: { onLine: true },
     window: { addEventListener: () => undefined, removeEventListener: () => undefined },
@@ -57,7 +46,7 @@ const a_configuration = (extensions: readonly unknown[]) => ({
   name: `cumino ${crypto.randomUUID()}`,
   relay: 'https://relay.cumino.test',
   page: 'https://cumino.test/q-/',
-  extensions: extensions.map((manifest) => ({ manifest, script: '' })),
+  extensions: extensions.map((manifest) => ({ manifest, realm: a_realm_never_loaded })),
   characters: 1_000_000,
 })
 
@@ -128,7 +117,7 @@ describe('the start of the PWA', () => {
       (
         await starts(browser, {
           ...configuration,
-          extensions: [{ manifest: ping_pong_manifest, script: '' }],
+          extensions: [{ manifest: ping_pong_manifest, realm: a_realm_never_loaded }],
         })
       ).start,
     ).toBe('running')

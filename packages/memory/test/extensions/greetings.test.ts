@@ -1,6 +1,7 @@
 import {
   a_hosted_extension,
   compose_an_extension,
+  in_process,
   the_kernels_offer,
   type ANotice,
   type Composed,
@@ -12,7 +13,7 @@ import * as zz from '@q-mino/domains/library'
 import { greetings } from '@q-mino/greetings'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
 import { describe, expect, test } from 'vitest'
-import { in_process, partitions } from '../../src/index.ts'
+import { partitions } from '../../src/index.ts'
 
 // The test extension hosted by the kernel's side on the oracle (EXT-2,
 // EXT-4, EXT-6, EXT-13, EXT-14, EXT-15; part 12.4): `greetings` composed

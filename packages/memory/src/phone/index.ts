@@ -20,6 +20,7 @@
 
 import {
   a_hosted_extension,
+  in_process,
   compose_an_extension,
   the_acquaintances,
   the_calling_off,
@@ -42,6 +43,7 @@ import {
   type ACollect,
   type AnEnvelopeCollected,
   type AnExtensionsLeaves,
+  type AnExtensionsSide,
   type ANotice,
   type Composed,
   type Composition,
@@ -118,7 +120,6 @@ import { z } from 'zod'
 import {
   bonds_ports,
   extensions_ports,
-  in_process,
   log,
   no_activation,
   no_bond,
@@ -213,22 +214,18 @@ export interface TheRealmsHost {
 
 /**
  * An extension the app carries (EXT-9, CFG-3): its manifest as its build
- * writes it (data, composed at the start, EXT-4), and how the kernel reaches
- * its realm, the configurator's (EXT-13): **in process**, its side of the
- * boundary as its package gives it, loaded in the kernel's realm (`memory`,
- * the oracle); or **isolated**, a transport to a realm of its own, which
- * keeps its clock and its time (`phone`, a sandboxed frame, PWA-3).
- * [Q, C, 21 Nov 2026] (step 25)
+ * writes it (data, composed at the start, EXT-4), and its realm, its side
+ * of the boundary as its package gives it, **integrated** in the kernel's
+ * process (EXT-13): given its host, now (`memory`, the oracle) or once the
+ * composition root has imported its package (`phone`, only when it is
+ * active, A's decision of 24 Nov 2026). An isolated realm, when it comes,
+ * is another case here, a transport of its own.
+ * [Q, C, 21 Nov 2026] (step 25); integrated only [Q, C, 24 Nov 2026]
  */
-export type AnExtensionOfTheApp =
-  | {
-      readonly manifest: unknown
-      readonly runs: 'in_process'
-      readonly realm: (host: TheRealmsHost) => {
-        readonly receive: (message: unknown) => Promise<void>
-      }
-    }
-  | { readonly manifest: unknown; readonly runs: 'isolated'; readonly transport: Transport }
+export interface AnExtensionOfTheApp {
+  readonly manifest: unknown
+  readonly realm: (host: TheRealmsHost) => AnExtensionsSide | Promise<AnExtensionsSide>
+}
 
 /**
  * The world outside the phone: its clock; the time that passes, which wakes
@@ -724,10 +721,9 @@ const a_phone_wired =
         carried: AnExtensionOfTheApp,
       ): AnExtensionHostedOnThePhone => {
         const name = extension.manifest.name
-        const in_its_realm =
-          carried.runs === 'isolated'
-            ? carried.transport
-            : in_process((send) => carried.realm({ clock, elapsed: the_realm_s_time, send }))
+        const in_its_realm = in_process((send) =>
+          carried.realm({ clock, elapsed: the_realm_s_time, send }),
+        )
         const hosted = a_hosted_extension({
           composed: extension,
           transport:

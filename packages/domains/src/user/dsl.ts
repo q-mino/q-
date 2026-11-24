@@ -15,9 +15,10 @@ const the_places_of = (manifest: value.a_manifest): readonly value.what_an_exten
 /**
  * What an extension asks, in the order the notice tells it: what it sees,
  * what it touches, the faces it answers, its places on her screens; then the
- * flaws the kernel cannot fence: the network, always (an isolated realm
- * reaches it as far as the browser leaves it open, EXT-13), and its frames'
- * invocations with no tap, when it has a slot or a page (EXT-16).
+ * flaws the kernel cannot fence: all that Cumino reaches, always (an
+ * extension the app ships runs integrated, in its process: what it declares
+ * informs, it does not fence, EXT-13), and its parts' invocations with no
+ * tap, when it has a slot or a page (EXT-16).
  */
 export const what_an_extension_asks = (
   manifest: value.a_manifest,
@@ -45,7 +46,7 @@ export const what_an_extension_asks = (
     ...touches,
     ...answers,
     ...the_places_of(manifest),
-    { asks: 'the_network_as_far_as_the_browser_leaves_it' },
+    { asks: 'all_that_cumino_reaches' },
     ...frames,
   ]
 }

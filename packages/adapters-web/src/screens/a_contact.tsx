@@ -140,10 +140,6 @@ export const AContact = (props: {
     const it = shown()
     return it?.shows === 'the_contact' ? it : undefined
   }
-  /** Whether an extension is active, as the screen read it (a frame is served only then, EXT-4). */
-  const is_active = (extension: string): boolean =>
-    given()?.given.extensions.some((one) => one.extension === extension && one.is === 'active') ??
-    false
   /** She starts renaming it: with her draft, if one is kept, or the name she gives it. */
   const starts_renaming = async (name: string): Promise<void> => {
     const draft = await app.node.a_draft({ for: 'the_name_i_give_a_bond', bond })
@@ -357,7 +353,6 @@ export const AContact = (props: {
                   <TheMark extension={mark.extension}>
                     <ThePoints
                       mark={mark}
-                      active={is_active(mark.extension)}
                       course_of={(action) =>
                         the_course_for(it(), {
                           for: 'an_action',

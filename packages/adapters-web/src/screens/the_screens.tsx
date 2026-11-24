@@ -28,13 +28,7 @@ import { AnExtension } from './an_extension.tsx'
 import { AnInvitation } from './an_invitation.tsx'
 import { MyContacts } from './my_contacts.tsx'
 import type { TheScreensTexts } from './texts.ts'
-import {
-  TheAppContext,
-  TheScreenIsShown,
-  type AFrameToPlace,
-  type TheApp,
-  type TheDevice,
-} from './the_app.ts'
+import { TheAppContext, TheScreenIsShown, type TheApp, type TheDevice } from './the_app.ts'
 import { TheExtensions } from './the_extensions.tsx'
 import { TheFirstFace } from './the_first_face.tsx'
 import { TheHandshakeAtADistance } from './the_handshake_at_a_distance.tsx'
@@ -49,8 +43,6 @@ export interface TheScreensWiring {
   readonly texts: TheScreensTexts
   /** The link she opened the app with (WEB-1), as the page's address holds it; none without one. */
   readonly a_link?: ui_value.what_it_holds
-  /** The documents of the frames, the files of the extensions' bundles their points `show` (EXT-16, WEB-23): the composition's. */
-  readonly documents: (frame: AFrameToPlace) => string | undefined
   /**
    * Her gesture on the data of an older test release (WEB-8): the node
    * stopped, its database deleted, the app opened again. The composition
@@ -126,7 +118,6 @@ export const TheScreens = (props: TheScreensWiring) => {
     asks,
     goes,
     words: (extension) => props.texts.extensions[extension],
-    document_of: (frame) => props.documents(frame),
   }
   // The strip over every screen (UI-5), read again at each change of her node: no network, else the relay that did not answer.
   const [the_strip] = createResource(changes, async () =>

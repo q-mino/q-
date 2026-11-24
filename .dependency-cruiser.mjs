@@ -94,7 +94,7 @@ export default {
     {
       name: 'the-kernel-composes-the-extensions',
       comment:
-        "No package of the kernel imports an extension but the configurators that compose it: phone its bundle, memory its configurator (GR-10); the repository's configuration may.",
+        "No package of the kernel imports an extension but the configurators that compose it: phone its configurator, imported when active (EXT-13), memory its configurator (GR-10); the repository's configuration may.",
       severity: 'error',
       from: { path: '^packages/', pathNot: ['^packages/(phone|memory)/', '^packages/extensions/'] },
       to: { path: '^packages/extensions/' },

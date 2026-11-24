@@ -50,7 +50,7 @@ const what_ping_pong_asks: user_value.what_an_extension_asks[] = [
   { asks: 'to_answer_your_bonds', leaves: ['usecase/ping'] },
   { asks: 'a_place_on_your_screens', point: 'action', name: 'ping', place: 'a_bond' },
   { asks: 'a_place_on_your_screens', point: 'page', name: 'the_scores', place: 'the_extension' },
-  { asks: 'the_network_as_far_as_the_browser_leaves_it' },
+  { asks: 'all_that_cumino_reaches' },
   { asks: 'its_frames_act_with_no_tap' },
 ]
 
@@ -61,7 +61,7 @@ const ping_pong_s_notice = [
   its.a_place_on_your_screens.action('Ping', 'a_bond'),
   // A page whose label ping pong's words lack: the fault, in place of the whole line (WEB-22).
   words.common.a_word_missing('the_scores'),
-  its.what_it_asks.the_network_as_far_as_the_browser_leaves_it,
+  its.what_it_asks.all_that_cumino_reaches,
   its.what_it_asks.its_frames_act_with_no_tap,
 ]
 

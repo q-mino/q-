@@ -1051,7 +1051,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       { asks: 'to_send_requests_on_your_bonds' },
       { asks: 'to_answer_your_bonds', leaves: ['usecase/ping'] },
       { asks: 'a_place_on_your_screens', point: 'action', name: 'ping', place: 'a_bond' },
-      { asks: 'the_network_as_far_as_the_browser_leaves_it' },
+      { asks: 'all_that_cumino_reaches' },
     ])
     const accepted = an_extension.after(asking, {
       happens: 'she_accepts',
