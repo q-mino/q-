@@ -22,12 +22,16 @@ q- (read _Cumino_) is a network of messages between real people, with no center.
 - `domains/src/library/` imports no domain and contains no word of q-.
 - Functional style: pure functions and immutable data; algebraic data types (discriminated unions) wherever a value has cases, states or outcomes.
 
-## Solid
+## Preact
 
-- A component runs once: it is setup, not a render function.
-- Never destructure props; use `props.x`, `splitProps`, `mergeProps`.
-- Read signals by calling them inside JSX, `createMemo` or `createEffect`; derived values are `createMemo`, not effects that set signals.
-- Control flow with `<Show>`, `<For>`, `<Switch>`; no early `return` on reactive values; lists with `<For>`, not `.map`.
+The screens are Preact with `@preact/signals`, JSX compiled by `tsc` (WEB-18).
+
+- A component is drawn again at each change of what it reads. State lives in signals made once (`kept`), read with `.value`: in the render it subscribes the component; in a handler use `.peek()`. Derived values are computed in the render, not effects that set signals.
+- An effect goes in `useEffect`, and its cleanup is what it returns: `signal.subscribe(...)`, or `while_it_is_open` for an effect with a cleanup of its own. Nothing outlives the component (a camera, a listener, a timer).
+- Only `useEffect`, `useRef`, `useContext` from `preact/hooks` (the lint keeps it). No `useState`, no `useMemo`.
+- Never HTML as a string: no `dangerouslySetInnerHTML`, no `innerHTML` (the lint keeps it).
+- A screen's case goes in `data-state` where it has an ADT; no class or style chosen in code by the case.
+- Lists get a `key` that follows the thing (a name, an id), not the index, where the item keeps state.
 
 ## Working
 

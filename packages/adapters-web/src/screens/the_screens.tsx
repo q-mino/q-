@@ -7,21 +7,14 @@
 // asks handed to her node in the order asked, and where it goes on the way;
 // her node's changes counted, so that each screen reads it again.
 
+import { signal } from '@preact/signals'
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
-import {
-  createResource,
-  createSignal,
-  For,
-  Match,
-  onCleanup,
-  onMount,
-  Show,
-  Switch,
-  type JSX,
-} from 'solid-js'
+import type { JSX } from 'preact'
+import { useEffect } from 'preact/hooks'
 import type { HerNode } from '../her_node/index.ts'
 import { ARecordOutOfItsForm } from '../indexeddb/index.ts'
+import { kept } from './a_screen.ts'
 import { AContact } from './a_contact.tsx'
 import { APage } from './a_page.tsx'
 import { AnExtension } from './an_extension.tsx'
@@ -62,75 +55,115 @@ const why_they_do_not_open = (fault: unknown): WhyTheyDoNotOpen =>
     ? { why: 'the_data_of_an_older_test_release', message: fault.message }
     : { why: 'a_fault', message: fault instanceof Error ? fault.message : String(fault) }
 
+/** A key for each screen of the way, by its object: a screen stays while its object does (the way after keeps the screens it does not change). */
+const a_key_for = (): ((screen: ui_value.a_screen) => number) => {
+  const keys = new WeakMap<ui_value.a_screen, number>()
+  let next = 0
+  return (screen) => {
+    const known = keys.get(screen)
+    if (known !== undefined) return known
+    next += 1
+    keys.set(screen, next)
+    return next
+  }
+}
+
 export const TheScreens = (props: TheScreensWiring) => {
-  const [way, set_way] = createSignal<ui_value.the_way | undefined>(undefined)
-  const [changes, set_changes] = createSignal(0)
-  const [went_wrong, set_went_wrong] = createSignal(false)
-  const [the_link, set_the_link] = createSignal<ui_value.what_it_holds | undefined>(undefined)
-  const [does_not_open, set_does_not_open] = createSignal<WhyTheyDoNotOpen | undefined>(undefined)
-  const changed = (): void => {
-    set_changes((count) => count + 1)
-  }
-  // What a turn asks, handed in the order asked: a draft kept as she types
-  // is kept in the order of her keys.
-  let handed: Promise<void> = Promise.resolve()
-  const asks = (what: ui_value.what_it_asks): void => {
-    handed = handed
-      .then(() => props.node.asks(what))
-      .then(changed, () => {
-        set_went_wrong(true)
-      })
-  }
-  const starts = async (): Promise<void> => {
-    const read = await Promise.all([props.node.her_faces(), props.node.the_active_face()]).then(
-      (both) => ({ read: 'done', both }) as const,
-      (fault: unknown) => ({ read: 'failed', why: why_they_do_not_open(fault) }) as const,
-    )
-    if (read.read === 'failed') {
-      set_does_not_open(read.why)
-      return
+  const root = kept(() => {
+    const way = signal<ui_value.the_way | undefined>(undefined)
+    const changes = signal(0)
+    const went_wrong = signal(false)
+    const the_link = signal<ui_value.what_it_holds | undefined>(undefined)
+    const does_not_open = signal<WhyTheyDoNotOpen | undefined>(undefined)
+    const the_strip = signal<ui_value.a_strip | undefined>(undefined)
+    const changed = (): void => {
+      changes.value = changes.peek() + 1
     }
-    const [faces, the_active_face] = read.both
-    const start = ui.the_start({ faces, the_active_face, a_link: the_link() })
-    // A link waits for her first face; once she has one, the start opens it, once.
-    if (faces.length > 0) set_the_link(undefined)
-    for (const one of start.asks) asks(one)
-    set_way(start.way)
-  }
-  const goes = (where: ui_value.where_it_goes): void => {
-    if (where.goes === 'to_the_start') {
-      void starts()
-      return
+    // What a turn asks, handed in the order asked: a draft kept as she types
+    // is kept in the order of her keys.
+    let handed: Promise<void> = Promise.resolve()
+    const asks = (what: ui_value.what_it_asks): void => {
+      handed = handed
+        .then(() => props.node.asks(what))
+        .then(changed, () => {
+          went_wrong.value = true
+        })
     }
-    set_way((now) => (now === undefined ? now : ui.the_way_after(now, where, now)))
-  }
-  const app: TheApp = {
-    get node() {
-      return props.node
-    },
-    get device() {
-      return props.device
-    },
-    get common() {
-      return props.texts.common
-    },
-    changes,
-    asks,
-    goes,
-    words: (extension) => props.texts.extensions[extension],
-  }
-  // The strip over every screen (UI-5), read again at each change of her node: no network, else the relay that did not answer.
-  const [the_strip] = createResource(changes, async () =>
-    ui.the_strip({
-      relay: (await props.node.the_relay()).met,
-      network: await props.node.the_network(),
-    }),
-  )
-  onMount(() => {
-    set_the_link(props.a_link)
-    onCleanup(props.node.when_it_changes(changed))
-    void starts()
+    const starts = async (): Promise<void> => {
+      const read = await Promise.all([props.node.her_faces(), props.node.the_active_face()]).then(
+        (both) => ({ read: 'done', both }) as const,
+        (fault: unknown) => ({ read: 'failed', why: why_they_do_not_open(fault) }) as const,
+      )
+      if (read.read === 'failed') {
+        does_not_open.value = read.why
+        return
+      }
+      const [faces, the_active_face] = read.both
+      const start = ui.the_start({ faces, the_active_face, a_link: the_link.peek() })
+      // A link waits for her first face; once she has one, the start opens it, once.
+      if (faces.length > 0) the_link.value = undefined
+      for (const one of start.asks) asks(one)
+      way.value = start.way
+    }
+    const goes = (where: ui_value.where_it_goes): void => {
+      if (where.goes === 'to_the_start') {
+        void starts()
+        return
+      }
+      const now = way.peek()
+      if (now !== undefined) way.value = ui.the_way_after(now, where, now)
+    }
+    const app: TheApp = {
+      get node() {
+        return props.node
+      },
+      get device() {
+        return props.device
+      },
+      get common() {
+        return props.texts.common
+      },
+      changes,
+      asks,
+      goes,
+      words: (extension) => props.texts.extensions[extension],
+    }
+    return {
+      way,
+      changes,
+      went_wrong,
+      the_link,
+      does_not_open,
+      the_strip,
+      changed,
+      starts,
+      app,
+      key_of: a_key_for(),
+    }
   })
+  // The strip over every screen (UI-5), read again at each change of her
+  // node: no network, else the relay that did not answer; only the last
+  // read started is kept.
+  useEffect(() => {
+    let latest = 0
+    return root.changes.subscribe(() => {
+      latest += 1
+      const this_read = latest
+      void (async () =>
+        ui.the_strip({
+          relay: (await props.node.the_relay()).met,
+          network: await props.node.the_network(),
+        }))().then((strip) => {
+        if (this_read === latest) root.the_strip.value = strip
+      })
+    })
+  }, [])
+  useEffect(() => {
+    root.the_link.value = props.a_link
+    const stops = props.node.when_it_changes(root.changed)
+    void root.starts()
+    return stops
+  }, [])
   const the_screen = (screen: ui_value.a_screen): JSX.Element => {
     switch (screen.screen) {
       case 'the_first_face':
@@ -157,63 +190,67 @@ export const TheScreens = (props: TheScreensWiring) => {
         return <TheServer texts={props.texts.the_server} />
     }
   }
+  const strip = root.the_strip.value?.strip
+  const why = root.does_not_open.value
+  const the_way = root.way.value
   return (
-    <TheAppContext.Provider value={app}>
+    <TheAppContext.Provider value={root.app}>
       <main>
-        <Switch>
-          <Match when={the_strip()?.strip === 'no_network'}>
-            <p role="status">{props.texts.common.no_network}</p>
-          </Match>
-          <Match when={the_strip()?.strip === 'the_relay_does_not_answer'}>
-            <p role="status">{props.texts.common.the_relay_does_not_answer}</p>
-          </Match>
-        </Switch>
-        <Show
-          when={does_not_open()}
-          fallback={
-            <Show when={way()} fallback={<p role="status">{props.texts.common.opening}</p>}>
-              {(the_way) => (
-                <For each={the_way()}>
-                  {(screen, index) => {
-                    const shown = () => index() === the_way().length - 1
-                    return (
-                      <TheScreenIsShown.Provider value={shown}>
-                        <div hidden={!shown()}>{the_screen(screen)}</div>
-                      </TheScreenIsShown.Provider>
-                    )
-                  }}
-                </For>
-              )}
-            </Show>
-          }
-        >
-          {(why) => (
-            <section role="alert">
-              <h1>{props.texts.common.it_does_not_start}</h1>
-              <Show when={why().why === 'the_data_of_an_older_test_release'}>
+        {strip === 'no_network' && (
+          <p role="status" data-state={strip}>
+            {props.texts.common.no_network}
+          </p>
+        )}
+        {strip === 'the_relay_does_not_answer' && (
+          <p role="status" data-state={strip}>
+            {props.texts.common.the_relay_does_not_answer}
+          </p>
+        )}
+        {why !== undefined ? (
+          <section role="alert" data-state={why.why}>
+            <h1>{props.texts.common.it_does_not_start}</h1>
+            {why.why === 'the_data_of_an_older_test_release' && (
+              <>
                 <p>{props.texts.common.the_data_of_an_older_test_release}</p>
-                <Show when={props.clears_the_data_and_starts_again}>
-                  {(clears) => (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        clears()()
-                      }}
-                    >
-                      {props.texts.common.clear_the_data_and_start_again}
-                    </button>
-                  )}
-                </Show>
-              </Show>
-              <h2>{props.texts.common.why}</h2>
-              <pre>{why().message}</pre>
-            </section>
-          )}
-        </Show>
-        <Show when={went_wrong()}>
-          <p role="alert">{props.texts.common.something_went_wrong}</p>
-        </Show>
+                {props.clears_the_data_and_starts_again !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      props.clears_the_data_and_starts_again?.()
+                    }}
+                  >
+                    {props.texts.common.clear_the_data_and_start_again}
+                  </button>
+                )}
+              </>
+            )}
+            <h2>{props.texts.common.why}</h2>
+            <pre>{why.message}</pre>
+          </section>
+        ) : the_way === undefined ? (
+          <p role="status">{props.texts.common.opening}</p>
+        ) : (
+          the_way.map((screen, index) => (
+            <AScreenOfTheWay key={root.key_of(screen)} shown={index === the_way.length - 1}>
+              {the_screen(screen)}
+            </AScreenOfTheWay>
+          ))
+        )}
+        {root.went_wrong.value && <p role="alert">{props.texts.common.something_went_wrong}</p>}
       </main>
     </TheAppContext.Provider>
+  )
+}
+
+/** A screen of the way, kept while it is open, hidden unless it is the one shown, told whether it is. */
+const AScreenOfTheWay = (props: { shown: boolean; children: JSX.Element }) => {
+  const shown = kept(() => signal(props.shown))
+  useEffect(() => {
+    shown.value = props.shown
+  }, [props.shown])
+  return (
+    <TheScreenIsShown.Provider value={shown}>
+      <div hidden={!props.shown}>{props.children}</div>
+    </TheScreenIsShown.Provider>
   )
 }

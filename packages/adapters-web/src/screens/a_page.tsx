@@ -6,8 +6,7 @@
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
-import { createMemo, Match, Switch, untrack } from 'solid-js'
-import { a_screen, what_it_is_given } from './a_screen.ts'
+import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { APartNotDrawn, Back, TheMark } from './parts.tsx'
 import { the_app } from './the_app.ts'
 
@@ -22,7 +21,7 @@ export const APage = (props: {
   screen: Extract<ui_value.a_screen, { screen: 'a_page' }>
 }) => {
   const app = the_app()
-  const opened = untrack(() => props.screen)
+  const opened = kept(() => props.screen)
   const screen = a_screen<a_page_value.the_state, a_page_value.what_happens>(app, {
     at_the_start: () => a_page.at_the_start(opened),
     after: a_page.after,
@@ -38,37 +37,24 @@ export const APage = (props: {
       return { extensions: [...extensions], offers }
     },
   )
-  const shown = createMemo(() => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
-      ? undefined
-      : a_page.what_it_shows(state, read.given)
-  })
-  const the_frame = () => {
-    const it = shown()
-    return it?.shows === 'the_frame' ? it : undefined
-  }
+  const state = screen.state.value
+  const read = given.value
+  const shown =
+    state === undefined || read === undefined ? undefined : a_page.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={shown?.shows}>
       <Back
         onBack={() => {
           screen.happens({ happens: 'she_goes_back' })
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Switch>
-        <Match when={shown()?.shows === 'no_longer_there'}>
-          <p>{props.texts.no_longer_there}</p>
-        </Match>
-        <Match when={the_frame()}>
-          {(frame) => (
-            <TheMark extension={frame().extension}>
-              <APartNotDrawn />
-            </TheMark>
-          )}
-        </Match>
-      </Switch>
+      {shown?.shows === 'no_longer_there' && <p>{props.texts.no_longer_there}</p>}
+      {shown?.shows === 'the_frame' && (
+        <TheMark extension={shown.extension}>
+          <APartNotDrawn />
+        </TheMark>
+      )}
     </section>
   )
 }

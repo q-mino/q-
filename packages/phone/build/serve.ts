@@ -62,14 +62,12 @@ createServer((request, response) => {
 if (process.argv.includes('--watch')) {
   let next: ReturnType<typeof setTimeout> | undefined
   const composes = (): void => {
-    compose(dist, the_release()).then(
-      (composed) => {
-        console.log(`composed: ${String(composed.modules)} modules`)
-      },
-      (fault: unknown) => {
-        console.error(fault)
-      },
-    )
+    try {
+      const composed = compose(dist, the_release())
+      console.log(`composed: ${String(composed.modules)} modules`)
+    } catch (fault: unknown) {
+      console.error(fault)
+    }
   }
   composes()
   for (const folder of [

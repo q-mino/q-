@@ -3,7 +3,6 @@
 
 import * as the_first_face from '@q-mino/domains/ui/the_first_face/_dsl.ts'
 import type * as the_first_face_value from '@q-mino/domains/ui/the_first_face/_value.ts'
-import { Show } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { TheCourse } from './parts.tsx'
 import { the_app, what_it_asked_now } from './the_app.ts'
@@ -27,45 +26,43 @@ export const TheFirstFace = (props: { texts: TheFirstFaceTexts }) => {
   const given = what_it_is_given(app, screen.state, async (state) =>
     state.asked === undefined ? undefined : app.node.an_activity(state.asked.asked.activity_id),
   )
-  const shown = () => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
+  const state = screen.state.value
+  const read = given.value
+  const it =
+    state === undefined || read === undefined
       ? undefined
       : the_first_face.what_it_shows(state, read.given)
-  }
   return (
     <section aria-label={props.texts.title}>
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        {(it) => (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              screen.happens({
-                happens: 'she_makes_the_face',
-                asked: what_it_asked_now(app.device),
-                face: app.device.draws_an_id(),
-              })
-            }}
-          >
-            <label>
-              {props.texts.your_name}{' '}
-              <input
-                name="name"
-                value={it().name}
-                onInput={(event) => {
-                  screen.happens({ happens: 'she_types_the_name', name: event.currentTarget.value })
-                }}
-              />
-            </label>
-            <button type="submit" disabled={it().the_button !== 'on'}>
-              {it().the_button === 'making' ? props.texts.making : props.texts.make_it}
-            </button>
-            <TheCourse course={it().course} />
-          </form>
-        )}
-      </Show>
+      {it !== undefined && (
+        <form
+          data-state={it.the_button}
+          onSubmit={(event) => {
+            event.preventDefault()
+            screen.happens({
+              happens: 'she_makes_the_face',
+              asked: what_it_asked_now(app.device),
+              face: app.device.draws_an_id(),
+            })
+          }}
+        >
+          <label>
+            {props.texts.your_name}{' '}
+            <input
+              name="name"
+              value={it.name}
+              onInput={(event) => {
+                screen.happens({ happens: 'she_types_the_name', name: event.currentTarget.value })
+              }}
+            />
+          </label>
+          <button type="submit" disabled={it.the_button !== 'on'}>
+            {it.the_button === 'making' ? props.texts.making : props.texts.make_it}
+          </button>
+          <TheCourse course={it.course} />
+        </form>
+      )}
     </section>
   )
 }

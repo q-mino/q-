@@ -5,8 +5,8 @@
     "types": [],
     "rootDir": "src",
     "outDir": ".tsbuild/src",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js"
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
   "include": ["src"],
   "references": [

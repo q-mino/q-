@@ -12,8 +12,7 @@ import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_contact from '@q-mino/domains/ui/a_contact/_dsl.ts'
 import type * as a_contact_value from '@q-mino/domains/ui/a_contact/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { createMemo, For, Match, Show, Switch, untrack } from 'solid-js'
-import { a_screen, what_it_is_given } from './a_screen.ts'
+import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
 import {
   the_app,
@@ -101,7 +100,7 @@ export const AContact = (props: {
   screen: Extract<ui_value.a_screen, { screen: 'a_contact' }>
 }) => {
   const app = the_app()
-  const bond = untrack(() => props.screen.bond)
+  const bond = kept(() => props.screen.bond)
   const screen = a_screen<a_contact_value.the_state, a_contact_value.what_happens>(app, {
     at_the_start: () => a_contact.at_the_start(bond),
     after: a_contact.after,
@@ -129,17 +128,6 @@ export const AContact = (props: {
       }
     },
   )
-  const shown = createMemo(() => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
-      ? undefined
-      : a_contact.what_it_shows(state, read.given)
-  })
-  const the_contact = () => {
-    const it = shown()
-    return it?.shows === 'the_contact' ? it : undefined
-  }
   /** She starts renaming it: with her draft, if one is kept, or the name she gives it. */
   const starts_renaming = async (name: string): Promise<void> => {
     const draft = await app.node.a_draft({ for: 'the_name_i_give_a_bond', bond })
@@ -167,7 +155,7 @@ export const AContact = (props: {
   }
   /** She asks it for the extensions in common, with those her node offers it, as read. */
   const asks_for_the_extensions_in_common = (): void => {
-    const read = given()
+    const read = given.value
     if (read === undefined) return
     screen.happens({
       happens: 'she_asks_for_the_extensions_in_common',
@@ -175,210 +163,223 @@ export const AContact = (props: {
       asked: what_it_asked_now(app.device),
     })
   }
+  const state = screen.state.value
+  const read = given.value
+  const shown =
+    state === undefined || read === undefined
+      ? undefined
+      : a_contact.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={shown?.shows}>
       <Back
         onBack={() => {
           screen.happens({ happens: 'she_goes_back' })
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Switch>
-        <Match when={shown()?.shows === 'no_such_contact'}>
-          <p>{props.texts.no_such_contact}</p>
-        </Match>
-        <Match when={the_contact()}>
-          {(it) => (
-            <>
-              <h2>{it().card.name}</h2>
-              <Show when={it().card.introduced_as !== it().card.name}>
-                <p>{props.texts.introduced_as(it().card.introduced_as)}</p>
-              </Show>
-              <p>
-                {props.texts.the_handshake[it().card.handshake.way](
-                  props.texts.when(it().card.handshake.at, app.device.clock.time_zone),
-                )}
-              </p>
-              <p>{props.texts.the_confirmation[it().card.confirmation.state]}</p>
-              <Show when={it().card.their_relays.length > 0}>
-                <p>{props.texts.their_relays}</p>
-                <ul>
-                  <For each={it().card.their_relays}>{(relay) => <li>{relay}</li>}</For>
-                </ul>
-              </Show>
-              <Show
-                when={it().renaming}
-                fallback={
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void starts_renaming(it().card.name)
-                    }}
-                  >
-                    {props.texts.rename_it}
-                  </button>
-                }
-              >
-                {(renaming) => (
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault()
-                      screen.happens({
-                        happens: 'she_renames_it',
-                        asked: what_it_asked_now(app.device),
-                      })
-                    }}
-                  >
-                    <label>
-                      {props.texts.the_name}{' '}
-                      <input
-                        name="name"
-                        value={renaming().name}
-                        onInput={(event) => {
-                          screen.happens({
-                            happens: 'she_types_the_name',
-                            name: event.currentTarget.value,
-                          })
-                        }}
-                      />
-                    </label>
-                    <button type="submit" disabled={renaming().the_button !== 'on'}>
-                      {renaming().the_button === 'renaming'
-                        ? props.texts.renaming
-                        : props.texts.give_the_name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        screen.happens({ happens: 'she_stops_renaming' })
-                      }}
-                    >
-                      {props.texts.stop_renaming}
-                    </button>
-                  </form>
-                )}
-              </Show>
-              <TheCourse course={the_course_for(it(), { for: 'the_name' })} />
-              <Switch>
-                <Match when={it().removing === 'not_asked'}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      screen.happens({ happens: 'she_asks_to_remove_it' })
-                    }}
-                  >
-                    {props.texts.remove_it}
-                  </button>
-                </Match>
-                <Match when={it().removing === 'to_confirm'}>
-                  <p>{props.texts.remove_it_really(it().card.name)}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      screen.happens({
-                        happens: 'she_removes_it',
-                        asked: what_it_asked_now(app.device),
-                      })
-                    }}
-                  >
-                    {props.texts.yes_remove_it}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      screen.happens({ happens: 'she_keeps_it' })
-                    }}
-                  >
-                    {props.texts.keep_it}
-                  </button>
-                </Match>
-              </Switch>
-              <TheCourse course={the_course_for(it(), { for: 'removing' })} />
-              <section aria-label={props.texts.the_extensions}>
-                <h2>{props.texts.the_extensions}</h2>
-                <Show
-                  when={it().the_extensions.length > 0}
-                  fallback={<p>{props.texts.no_extension_active}</p>}
-                >
-                  <ul>
-                    <For each={it().the_extensions}>
-                      {(one) => (
-                        <li>
-                          {the_word_or_its_fault(
-                            app.common,
-                            app.words(one.extension)?.name,
-                            one.extension,
-                          )}{' '}
-                          <small>
-                            {one.offered ? props.texts.offered : props.texts.not_offered}
-                          </small>{' '}
-                          <button
-                            type="button"
-                            disabled={one.may === 'wait'}
-                            onClick={() => {
-                              on_the_offer(one)
-                            }}
-                          >
-                            {props.texts.the_offer[one.may]}
-                          </button>
-                          <TheCourse
-                            course={the_course_for(it(), {
-                              for: 'the_offer',
-                              extension: one.extension,
-                            })}
-                          />
-                        </li>
-                      )}
-                    </For>
-                  </ul>
-                </Show>
+      {shown?.shows === 'no_such_contact' && <p>{props.texts.no_such_contact}</p>}
+      {shown?.shows === 'the_contact' && (
+        <TheContact
+          texts={props.texts}
+          it={shown}
+          happens={screen.happens}
+          starts_renaming={starts_renaming}
+          on_the_offer={on_the_offer}
+          asks_for_the_extensions_in_common={asks_for_the_extensions_in_common}
+        />
+      )}
+    </section>
+  )
+}
+
+/** The card of the contact, as `what_it_shows` tells it, and her gestures on it. */
+const TheContact = (props: {
+  texts: AContactTexts
+  it: the_contact_shown
+  happens: (what: a_contact_value.what_happens) => void
+  starts_renaming: (name: string) => Promise<void>
+  on_the_offer: (one: a_contact_value.an_extension_on_the_contact) => void
+  asks_for_the_extensions_in_common: () => void
+}) => {
+  const app = the_app()
+  const it = props.it
+  const said = the_words_of_the_answer(props.texts, app.common, app.words, it.in_common)
+  return (
+    <>
+      <h2>{it.card.name}</h2>
+      {it.card.introduced_as !== it.card.name && (
+        <p>{props.texts.introduced_as(it.card.introduced_as)}</p>
+      )}
+      <p>
+        {props.texts.the_handshake[it.card.handshake.way](
+          props.texts.when(it.card.handshake.at, app.device.clock.time_zone),
+        )}
+      </p>
+      <p data-state={it.card.confirmation.state}>
+        {props.texts.the_confirmation[it.card.confirmation.state]}
+      </p>
+      {it.card.their_relays.length > 0 && (
+        <>
+          <p>{props.texts.their_relays}</p>
+          <ul>
+            {it.card.their_relays.map((relay) => (
+              <li key={relay}>{relay}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {it.renaming === undefined ? (
+        <button
+          type="button"
+          onClick={() => {
+            void props.starts_renaming(it.card.name)
+          }}
+        >
+          {props.texts.rename_it}
+        </button>
+      ) : (
+        <form
+          data-state={it.renaming.the_button}
+          onSubmit={(event) => {
+            event.preventDefault()
+            props.happens({
+              happens: 'she_renames_it',
+              asked: what_it_asked_now(app.device),
+            })
+          }}
+        >
+          <label>
+            {props.texts.the_name}{' '}
+            <input
+              name="name"
+              value={it.renaming.name}
+              onInput={(event) => {
+                props.happens({
+                  happens: 'she_types_the_name',
+                  name: event.currentTarget.value,
+                })
+              }}
+            />
+          </label>
+          <button type="submit" disabled={it.renaming.the_button !== 'on'}>
+            {it.renaming.the_button === 'renaming'
+              ? props.texts.renaming
+              : props.texts.give_the_name}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.happens({ happens: 'she_stops_renaming' })
+            }}
+          >
+            {props.texts.stop_renaming}
+          </button>
+        </form>
+      )}
+      <TheCourse course={the_course_for(it, { for: 'the_name' })} />
+      {it.removing === 'not_asked' && (
+        <button
+          type="button"
+          onClick={() => {
+            props.happens({ happens: 'she_asks_to_remove_it' })
+          }}
+        >
+          {props.texts.remove_it}
+        </button>
+      )}
+      {it.removing === 'to_confirm' && (
+        <>
+          <p>{props.texts.remove_it_really(it.card.name)}</p>
+          <button
+            type="button"
+            onClick={() => {
+              props.happens({
+                happens: 'she_removes_it',
+                asked: what_it_asked_now(app.device),
+              })
+            }}
+          >
+            {props.texts.yes_remove_it}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.happens({ happens: 'she_keeps_it' })
+            }}
+          >
+            {props.texts.keep_it}
+          </button>
+        </>
+      )}
+      <TheCourse course={the_course_for(it, { for: 'removing' })} />
+      <section aria-label={props.texts.the_extensions}>
+        <h2>{props.texts.the_extensions}</h2>
+        {it.the_extensions.length > 0 ? (
+          <ul>
+            {it.the_extensions.map((one) => (
+              <li key={one.extension} data-state={one.may}>
+                {the_word_or_its_fault(app.common, app.words(one.extension)?.name, one.extension)}{' '}
+                <small>{one.offered ? props.texts.offered : props.texts.not_offered}</small>{' '}
                 <button
                   type="button"
-                  disabled={
-                    !ui.it_may_ask(the_course_for(it(), { for: 'the_extensions_in_common' }))
-                  }
-                  onClick={asks_for_the_extensions_in_common}
+                  disabled={one.may === 'wait'}
+                  onClick={() => {
+                    props.on_the_offer(one)
+                  }}
                 >
-                  {props.texts.ask_for_the_extensions_in_common}
+                  {props.texts.the_offer[one.may]}
                 </button>
-                <TheCourse course={the_course_for(it(), { for: 'the_extensions_in_common' })} />
-                <Show
-                  when={the_words_of_the_answer(props.texts, app.common, app.words, it().in_common)}
-                >
-                  {(said) => <p role="status">{said()}</p>}
-                </Show>
-              </section>
-              <For each={it().marks}>
-                {(mark) => (
-                  <TheMark extension={mark.extension}>
-                    <ThePoints
-                      mark={mark}
-                      course_of={(action) =>
-                        the_course_for(it(), {
-                          for: 'an_action',
-                          extension: mark.extension,
-                          action,
-                        })
-                      }
-                      taps={(action) => {
-                        screen.happens({
-                          happens: 'she_taps_an_action',
-                          mark,
-                          action,
-                          asked: what_it_asked_now(app.device),
-                        })
-                      }}
-                      opens={(page) => {
-                        screen.happens({ happens: 'she_opens_a_page', mark, page })
-                      }}
-                    />
-                  </TheMark>
-                )}
-              </For>
-            </>
-          )}
-        </Match>
-      </Switch>
-    </section>
+                <TheCourse
+                  course={the_course_for(it, {
+                    for: 'the_offer',
+                    extension: one.extension,
+                  })}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>{props.texts.no_extension_active}</p>
+        )}
+        <button
+          type="button"
+          disabled={!ui.it_may_ask(the_course_for(it, { for: 'the_extensions_in_common' }))}
+          onClick={props.asks_for_the_extensions_in_common}
+        >
+          {props.texts.ask_for_the_extensions_in_common}
+        </button>
+        <TheCourse course={the_course_for(it, { for: 'the_extensions_in_common' })} />
+        {said !== undefined && (
+          <p role="status" data-state={it.in_common.answer}>
+            {said}
+          </p>
+        )}
+      </section>
+      {it.marks.map((mark) => (
+        <TheMark key={mark.extension} extension={mark.extension}>
+          <ThePoints
+            mark={mark}
+            course_of={(action) =>
+              the_course_for(it, {
+                for: 'an_action',
+                extension: mark.extension,
+                action,
+              })
+            }
+            taps={(action) => {
+              props.happens({
+                happens: 'she_taps_an_action',
+                mark,
+                action,
+                asked: what_it_asked_now(app.device),
+              })
+            }}
+            opens={(page) => {
+              props.happens({ happens: 'she_opens_a_page', mark, page })
+            }}
+          />
+        </TheMark>
+      ))}
+    </>
   )
 }

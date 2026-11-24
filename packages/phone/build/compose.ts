@@ -10,17 +10,11 @@
 // the import map's hash its only one; `build_info.js`, the release's values;
 // the manifest, the icons, and the service worker with the precache, every
 // file but its own and its version, the hash of the files. A composition,
-// not a bundle: every file is the one `tsc` or its package wrote.
-// [Q, C, 24 Nov 2026]
-//
-// Until the screens are Preact's (step S3 of the plan), Solid's JSX is
-// compiled file by file after `tsc`, by Solid's Babel preset, the one of
-// its Vite plugin: `tsc` keeps the JSX (`.jsx`), the preset writes `.js`.
-// S3 deletes that step, `tsc` compiling Preact's JSX.
+// not a bundle: every file is the one `tsc` or its package wrote, Preact's
+// JSX too (`jsx: react-jsx`). [Q, C, 24 Nov 2026]
 //
 // Usage: node build/compose.ts [--out <dir>]
 
-import { transformAsync } from '@babel/core'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
@@ -35,7 +29,6 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, sep } from 'node:path'
 import ts from 'typescript'
@@ -65,18 +58,15 @@ const the_manifest = (base: string) => ({
   ],
 })
 
-// --- tsc and Solid's JSX -----------------------------------------------------
+// --- tsc ----------------------------------------------------------------------
 
 const files_under = (dir: string): string[] =>
   readdirSync(dir, { recursive: true, encoding: 'utf8' })
     .map((each) => join(dir, each))
     .filter((each) => statSync(each).isFile())
 
-/** The relative specifiers of a module ending in `.jsx`, the ones `tsc` rewrote from `.tsx`. */
-const a_jsx_specifier = /(["'])(\.{1,2}\/[^"'\n]*)\.jsx\1/g
-
-/** The browser's modules emitted by `tsc` into `emitted`, Solid's JSX compiled. */
-const emits = async (emitted: string): Promise<void> => {
+/** The browser's modules emitted by `tsc` into `emitted`, the JSX compiled. */
+const emits = (emitted: string): void => {
   execFileSync(
     join(the_repository, 'node_modules', '.bin', 'tsc'),
     // The types are the check's (`tsc -b`); this emits only. With the check,
@@ -85,27 +75,6 @@ const emits = async (emitted: string): Promise<void> => {
     ['-p', join(the_phone, 'build', 'tsconfig.emit.json'), '--noCheck', '--outDir', emitted],
     { stdio: 'inherit' },
   )
-  const solid = createRequire(import.meta.url).resolve('babel-preset-solid')
-  for (const file of files_under(emitted)) {
-    if (file.endsWith('.jsx')) {
-      const compiled = await transformAsync(readFileSync(file, 'utf8'), {
-        filename: file,
-        babelrc: false,
-        configFile: false,
-        presets: [[solid, { generate: 'dom' }]],
-      })
-      if (compiled?.code == null) throw new Error(`Solid's preset wrote nothing for ${file}`)
-      writeFileSync(file.replace(/\.jsx$/, '.js'), compiled.code)
-      rmSync(file)
-    }
-  }
-  for (const file of files_under(emitted)) {
-    if (file.endsWith('.js')) {
-      const text = readFileSync(file, 'utf8')
-      const rewritten = text.replace(a_jsx_specifier, '$1$2.js$1')
-      if (rewritten !== text) writeFileSync(file, rewritten)
-    }
-  }
 }
 
 // --- the modules' graph -------------------------------------------------------
@@ -216,17 +185,22 @@ const the_package = (from: string, name: string): string => {
   }
 }
 
-/** The name of the package a file of `node_modules` is in: the nearest package.json with a name. */
+/**
+ * The package a file of `node_modules` is in: the folder right under the
+ * last `node_modules` of its path (`@scope/name` or `name`), so that a
+ * subpath with a package.json of its own (`preact/hooks`) stays under its
+ * package's name.
+ */
 const the_vendored_name = (file: string): { readonly name: string; readonly folder: string } => {
-  for (let dir = dirname(file); dirname(dir) !== dir; dir = dirname(dir)) {
-    const manifest = join(dir, 'package.json')
-    if (existsSync(manifest)) {
-      const parsed: unknown = JSON.parse(readFileSync(manifest, 'utf8'))
-      if (a_record(parsed) && typeof parsed['name'] === 'string')
-        return { name: parsed['name'], folder: dir }
-    }
+  const parts = file.split(sep)
+  const at = parts.lastIndexOf('node_modules')
+  const first = parts[at + 1]
+  if (at < 0 || first === undefined) throw new Error(`no package for ${file}`)
+  const length = first.startsWith('@') ? 2 : 1
+  return {
+    name: parts.slice(at + 1, at + 1 + length).join('/'),
+    folder: parts.slice(0, at + 1 + length).join(sep),
   }
-  throw new Error(`no package for ${file}`)
 }
 
 /** A module of the page: the file it is read from, the path it is served at. */
@@ -403,10 +377,10 @@ export interface AComposition {
 }
 
 /** `dist/` composed, into `out`, for a release. */
-export const compose = async (out: string, build: TheBuild): Promise<AComposition> => {
+export const compose = (out: string, build: TheBuild): AComposition => {
   const emitted = mkdtempSync(join(tmpdir(), 'q-emit-'))
   try {
-    await emits(emitted)
+    emits(emitted)
     const graph = walks(emitted, join(emitted, 'phone', 'src', 'main.js'))
     rmSync(out, { recursive: true, force: true })
     for (const { file, path } of graph.modules.values()) {
@@ -469,7 +443,7 @@ if (import.meta.main) {
   const at = process.argv.indexOf('--out')
   const out = at >= 0 ? (process.argv[at + 1] ?? 'dist') : join(the_phone, 'dist')
   const started = performance.now()
-  const composed = await compose(out, the_release())
+  const composed = compose(out, the_release())
   const seconds = ((performance.now() - started) / 1000).toFixed(1)
   console.log(
     `dist/ composed in ${seconds} s: ${String(composed.modules)} modules, ${String(composed.at_the_start)} preloaded at the start`,

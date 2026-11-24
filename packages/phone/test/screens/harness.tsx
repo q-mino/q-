@@ -17,9 +17,25 @@ import * as zz from '@q-mino/domains/library'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { render } from 'solid-js/web'
+import { options, render } from 'preact'
 import { expect, vi } from 'vitest'
 import { texts } from '../../src/texts/index.ts'
+
+// Each turn drawn before the story's next gesture, as a browser draws
+// between two events: a story clicks right after it types, in the same
+// task, where Preact would draw at the next microtask. [Q, C, 24 Nov 2026]
+options.debounceRendering = (draws) => {
+  draws()
+}
+
+// A tap only on what is on the screen, as in a browser: a story that taps a
+// button it held after the screen took it away taps nothing (Preact's
+// listeners stay on a removed element). [Q, C, 24 Nov 2026]
+// eslint-disable-next-line @typescript-eslint/unbound-method -- the DOM's own tap, called below on its element
+const the_tap = HTMLElement.prototype.click
+HTMLElement.prototype.click = function (this: HTMLElement) {
+  if (this.isConnected) the_tap.call(this)
+}
 
 /** What the node of test reads, in the screens' words. */
 export interface WhatTheNodeHolds {
@@ -263,22 +279,18 @@ export const opens_the_app = (wiring: {
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
-  const dispose = render(
-    () => (
-      <TheScreens
-        node={wiring.node}
-        device={wiring.device}
-        {...(wiring.a_link === undefined ? {} : { a_link: wiring.a_link })}
-        {...(wiring.clears_the_data_and_starts_again === undefined
-          ? {}
-          : { clears_the_data_and_starts_again: wiring.clears_the_data_and_starts_again })}
-        texts={
-          wiring.words === undefined
-            ? texts.screens
-            : { ...texts.screens, extensions: wiring.words }
-        }
-      />
-    ),
+  render(
+    <TheScreens
+      node={wiring.node}
+      device={wiring.device}
+      {...(wiring.a_link === undefined ? {} : { a_link: wiring.a_link })}
+      {...(wiring.clears_the_data_and_starts_again === undefined
+        ? {}
+        : { clears_the_data_and_starts_again: wiring.clears_the_data_and_starts_again })}
+      texts={
+        wiring.words === undefined ? texts.screens : { ...texts.screens, extensions: wiring.words }
+      }
+    />,
     root,
   )
   const shown = (): HTMLElement => {
@@ -290,7 +302,7 @@ export const opens_the_app = (wiring: {
     root,
     shown,
     closes: () => {
-      dispose()
+      render(null, root)
       root.remove()
     },
   }

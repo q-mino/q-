@@ -6,7 +6,6 @@
 
 import * as the_handshake_at_a_distance from '@q-mino/domains/ui/the_handshake_at_a_distance/_dsl.ts'
 import type * as the_handshake_at_a_distance_value from '@q-mino/domains/ui/the_handshake_at_a_distance/_value.ts'
-import { Match, Show, Switch } from 'solid-js'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back } from './parts.tsx'
 import { the_app, the_words_of_an_end, what_it_asked_now } from './the_app.ts'
@@ -67,24 +66,6 @@ export const TheHandshakeAtADistance = (props: { texts: TheHandshakeAtADistanceT
     }
     return { model, link: her_ticket?.link }
   })
-  const shown = () => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
-      ? undefined
-      : the_handshake_at_a_distance.what_it_shows(state, read.given.model)
-  }
-  const cannot_be_prepared = () => {
-    const it = shown()
-    return it?.shows === 'the_link_cannot_be_prepared' ? it : undefined
-  }
-  const the_link = () => (shown()?.shows === 'the_link' ? given()?.given.link : undefined)
-  const the_gesture = () => {
-    const it = shown()
-    return it?.shows === 'the_link' ? it.gesture : undefined
-  }
-
-  /** The link handed to the phone: its share, or its clipboard, which tells the screen once it is copied. */
   const hands_on = (link: string): void => {
     const navigator = app.device.the_navigator
     if (navigator.share !== undefined) {
@@ -112,71 +93,68 @@ export const TheHandshakeAtADistance = (props: { texts: TheHandshakeAtADistanceT
       })
     })
   }
+  const state = screen.state.value
+  const read = given.value
+  const shown =
+    state === undefined || read === undefined
+      ? undefined
+      : the_handshake_at_a_distance.what_it_shows(state, read.given.model)
+  const link = shown?.shows === 'the_link' ? read?.given.link : undefined
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={shown?.shows}>
       <Back
         onBack={() => {
           screen.happens({ happens: 'she_goes_back' })
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        <Switch>
-          <Match when={shown()?.shows === 'the_flaw_told'}>
-            <p>{props.texts.the_flaw}</p>
-            <MakeALink words={props.texts.make_a_link} makes={makes_a_link} />
-          </Match>
-          <Match when={shown()?.shows === 'getting_the_link_ready'}>
-            <p role="status">{props.texts.getting_the_link_ready}</p>
-          </Match>
-          <Match when={cannot_be_prepared()}>
-            {(it) => (
-              <>
-                <p role="status">{props.texts.the_link_cannot_be_prepared}</p>
-                <p>{the_words_of_an_end(app.common, it().how)}</p>
-                <MakeALink words={props.texts.try_again} makes={makes_a_link} />
-              </>
-            )}
-          </Match>
-          <Match when={the_link()}>
-            {(link) => (
-              <>
-                <label>
-                  {props.texts.your_link}{' '}
-                  <input
-                    name="link"
-                    readonly
-                    value={link()}
-                    onFocus={(event) => {
-                      event.currentTarget.select()
-                    }}
-                  />
-                </label>
-                <Switch>
-                  <Match when={the_gesture() === 'copied'}>
-                    <p role="status">{props.texts.the_link_is_copied}</p>
-                  </Match>
-                  <Match when={the_gesture()}>
-                    {(gesture) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          hands_on(link())
-                        }}
-                      >
-                        {gesture() === 'share'
-                          ? props.texts.share_the_link
-                          : props.texts.copy_the_link}
-                      </button>
-                    )}
-                  </Match>
-                </Switch>
-                <MakeALink words={props.texts.make_another} makes={makes_a_link} />
-              </>
-            )}
-          </Match>
-        </Switch>
-      </Show>
+      {shown?.shows === 'the_flaw_told' && (
+        <>
+          <p>{props.texts.the_flaw}</p>
+          <MakeALink words={props.texts.make_a_link} makes={makes_a_link} />
+        </>
+      )}
+      {shown?.shows === 'getting_the_link_ready' && (
+        <p role="status">{props.texts.getting_the_link_ready}</p>
+      )}
+      {shown?.shows === 'the_link_cannot_be_prepared' && (
+        <>
+          <p role="status">{props.texts.the_link_cannot_be_prepared}</p>
+          <p>{the_words_of_an_end(app.common, shown.how)}</p>
+          <MakeALink words={props.texts.try_again} makes={makes_a_link} />
+        </>
+      )}
+      {shown?.shows === 'the_link' && link !== undefined && (
+        <>
+          <label>
+            {props.texts.your_link}{' '}
+            <input
+              name="link"
+              readOnly
+              value={link}
+              onFocus={(event) => {
+                event.currentTarget.select()
+              }}
+            />
+          </label>
+          {shown.gesture === 'copied' ? (
+            <p role="status" data-state={shown.gesture}>
+              {props.texts.the_link_is_copied}
+            </p>
+          ) : (
+            <button
+              type="button"
+              data-state={shown.gesture}
+              onClick={() => {
+                hands_on(link)
+              }}
+            >
+              {shown.gesture === 'share' ? props.texts.share_the_link : props.texts.copy_the_link}
+            </button>
+          )}
+          <MakeALink words={props.texts.make_another} makes={makes_a_link} />
+        </>
+      )}
     </section>
   )
 }

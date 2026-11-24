@@ -5,7 +5,7 @@
 // channel the sentence alone. The update's prompt is left out (no service
 // worker in a DOM of test).
 
-import { render } from 'solid-js/web'
+import { render } from 'preact'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { App } from '../../src/App.tsx'
 import type { TheStart } from '../../src/node/index.ts'
@@ -41,27 +41,25 @@ const opens = (start: TheStart) => {
   const given: { clears: (() => void) | undefined } = { clears: undefined }
   const root = document.createElement('div')
   document.body.append(root)
-  const dispose = render(
-    () => (
-      <App
-        starts={() => Promise.resolve(start)}
-        screens={(_node, clears) => {
-          given.clears = clears
-          return <p>the screens</p>
-        }}
-        reopens={() => {
-          asked.push('reopens')
-        }}
-        clears_the_data={() => {
-          asked.push('clears_the_data')
-          return Promise.resolve()
-        }}
-      />
-    ),
+  render(
+    <App
+      starts={() => Promise.resolve(start)}
+      screens={(_node, clears) => {
+        given.clears = clears
+        return <p>the screens</p>
+      }}
+      reopens={() => {
+        asked.push('reopens')
+      }}
+      clears_the_data={() => {
+        asked.push('clears_the_data')
+        return Promise.resolve()
+      }}
+    />,
     root,
   )
   closes = () => {
-    dispose()
+    render(null, root)
     root.remove()
   }
   return { root, asked, given }

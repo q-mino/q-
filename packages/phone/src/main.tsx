@@ -11,7 +11,7 @@ import {
 import { TheScreens } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
-import { render } from 'solid-js/web'
+import { render } from 'preact'
 import { App } from './App.tsx'
 import { the_build } from './build_info.ts'
 import {
@@ -82,34 +82,32 @@ const a_link = the_link_of(the_ticket_in_a_link(location.href))
 const with_the_link = a_link === undefined ? {} : { a_link }
 
 render(
-  () => (
-    <App
-      starts={starts}
-      reopens={() => {
-        location.reload()
-      }}
-      // The data of an older test release (WEB-8): the node's database deleted.
-      clears_the_data={the_data_cleared(browser, configuration)}
-      screens={(node, clears_the_data_and_starts_again) => (
-        <TheScreens
-          node={node.her}
-          device={{
-            draws_an_id: ids_drawn_at_random(crypto),
-            clock,
-            scans: (video, facing) =>
-              scan_with_a_camera({ camera, facing, video, elapsed: the_time_that_passes }),
-            // The page's navigator, its share and its clipboard, as it is (WEB-5, WEB-18).
-            the_navigator: navigator,
-          }}
-          texts={texts.screens}
-          {...with_the_link}
-          // Her gesture on the data of an older test release, on the test channel only (WEB-8).
-          {...(clears_the_data_and_starts_again === undefined
-            ? {}
-            : { clears_the_data_and_starts_again })}
-        />
-      )}
-    />
-  ),
+  <App
+    starts={starts}
+    reopens={() => {
+      location.reload()
+    }}
+    // The data of an older test release (WEB-8): the node's database deleted.
+    clears_the_data={the_data_cleared(browser, configuration)}
+    screens={(node, clears_the_data_and_starts_again) => (
+      <TheScreens
+        node={node.her}
+        device={{
+          draws_an_id: ids_drawn_at_random(crypto),
+          clock,
+          scans: (video, facing) =>
+            scan_with_a_camera({ camera, facing, video, elapsed: the_time_that_passes }),
+          // The page's navigator, its share and its clipboard, as it is (WEB-5, WEB-18).
+          the_navigator: navigator,
+        }}
+        texts={texts.screens}
+        {...with_the_link}
+        // Her gesture on the data of an older test release, on the test channel only (WEB-8).
+        {...(clears_the_data_and_starts_again === undefined
+          ? {}
+          : { clears_the_data_and_starts_again })}
+      />
+    )}
+  />,
   root,
 )

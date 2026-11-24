@@ -8,15 +8,16 @@
 // camera off, until her gesture puts it away (the other phone may still be
 // reading it); then bonded, she opens the contact or shakes another hand.
 
+import { computed, signal, untracked } from '@preact/signals'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as the_handshake_in_person from '@q-mino/domains/ui/the_handshake_in_person/_dsl.ts'
 import type * as the_handshake_in_person_value from '@q-mino/domains/ui/the_handshake_in_person/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch } from 'solid-js'
+import { useEffect, useRef } from 'preact/hooks'
 import type { AFacing } from '../camera/index.ts'
 import { the_qr_of } from '../qr/index.ts'
 import { the_ticket_in_a_link } from '../ticket_link/index.ts'
-import { a_screen, what_it_is_given } from './a_screen.ts'
+import { a_screen, kept, what_it_is_given, while_it_is_open } from './a_screen.ts'
 import { Back } from './parts.tsx'
 import { the_app, the_words_of_an_end, what_it_asked_now } from './the_app.ts'
 
@@ -78,27 +79,21 @@ const what_it_holds = (text: string): ui_value.what_it_holds => {
   }
 }
 
-/** The QR of her ticket's link, or the link alone when it is longer than a QR holds. */
+/** The QR of her ticket's link, or the link alone when it is longer than a QR holds; drawn again only when the link changes. */
 const TheQr = (props: { link: string; texts: TheHandshakeInPersonTexts }) => {
-  const qr = createMemo(() => the_qr_of(props.link))
-  const drawn = () => {
-    const it = qr()
-    return it.drawn === 'a_qr' ? it : undefined
-  }
-  return (
-    <Show
-      when={drawn()}
-      fallback={
-        <>
-          <p>{props.texts.too_long_for_a_qr}</p>
-          <p>{props.link}</p>
-        </>
-      }
-    >
-      {(it) => (
-        <img alt={props.texts.the_qr} src={`data:image/svg+xml,${encodeURIComponent(it().svg)}`} />
-      )}
-    </Show>
+  const drawn = useRef<{ readonly link: string; readonly qr: ReturnType<typeof the_qr_of> }>(
+    undefined,
+  )
+  if (drawn.current?.link !== props.link)
+    drawn.current = { link: props.link, qr: the_qr_of(props.link) }
+  const qr = drawn.current.qr
+  return qr.drawn === 'a_qr' ? (
+    <img alt={props.texts.the_qr} src={`data:image/svg+xml,${encodeURIComponent(qr.svg)}`} />
+  ) : (
+    <>
+      <p>{props.texts.too_long_for_a_qr}</p>
+      <p>{props.link}</p>
+    </>
   )
 }
 
@@ -116,25 +111,26 @@ const WhileSheScans = (props: {
   onTurn: () => void
   texts: TheHandshakeInPersonTexts
 }) => {
-  const not_on = () => (props.camera === 'on' ? undefined : props.camera)
-  const turn = () => (props.turn === 'none' ? undefined : props.turn)
   return (
     <>
       <p>{props.texts.show_and_scan}</p>
-      <Show when={props.link}>{(link) => <TheQr link={link()} texts={props.texts} />}</Show>
-      <Show when={not_on()}>{(why) => <p role="status">{props.texts.the_camera[why()]}</p>}</Show>
-      <Show when={turn()}>
-        {(where) => (
-          <button
-            type="button"
-            onClick={() => {
-              props.onTurn()
-            }}
-          >
-            {props.texts.turn_the_camera[where()]}
-          </button>
-        )}
-      </Show>
+      {props.link !== undefined && <TheQr link={props.link} texts={props.texts} />}
+      {props.camera !== 'on' && (
+        <p role="status" data-state={props.camera}>
+          {props.texts.the_camera[props.camera]}
+        </p>
+      )}
+      {props.turn !== 'none' && (
+        <button
+          type="button"
+          data-state={props.turn}
+          onClick={() => {
+            props.onTurn()
+          }}
+        >
+          {props.texts.turn_the_camera[props.turn]}
+        </button>
+      )}
     </>
   )
 }
@@ -180,44 +176,16 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
       her_ticket === undefined ? { activities } : { ticket: her_ticket.ready, activities }
     return { model, link: her_ticket?.link }
   })
-  const shown = () => {
-    const state = screen.state()
-    const read = given()
-    return state === undefined || read === undefined
-      ? undefined
-      : the_handshake_in_person.what_it_shows(state, read.given.model)
-  }
-  const link = () => given()?.given.link
-  const cannot_be_prepared = () => {
-    const it = shown()
-    return it?.shows === 'the_ticket_cannot_be_prepared' ? it : undefined
-  }
-  const ready = () => {
-    const it = shown()
-    return it?.shows === 'ready' ? it : undefined
-  }
-  const read = () => {
-    const it = shown()
-    return it?.shows === 'their_ticket_read' ? it : undefined
-  }
-  const opening = () => {
-    const it = shown()
-    return it?.shows === 'opening_their_ticket' ? it : undefined
-  }
-  const bonded = () => {
-    const it = shown()
-    return it?.shows === 'bonded' ? it : undefined
-  }
-  const cannot_be_opened = () => {
-    const it = shown()
-    return it?.shows === 'their_ticket_cannot_be_opened' ? it : undefined
-  }
-  const scanned_nothing_to_open = () => {
-    const scanned = ready()?.scanned
-    return scanned === undefined || scanned === 'nothing' ? undefined : scanned
-  }
+  const shown = kept(() =>
+    computed(() => {
+      const state = screen.state.value
+      const read = given.value
+      return state === undefined || read === undefined
+        ? undefined
+        : the_handshake_in_person.what_it_shows(state, read.given.model)
+    }),
+  )
 
-  /** A ticket of hers for a bond to be, by her active face (stage 1 has one): its ids drawn at the gesture. */
   const a_new_ticket = (happens: 'the_screen_is_opened' | 'she_shakes_another_hand'): void => {
     void app.node.the_active_face().then((face) => {
       if (face === undefined) return
@@ -230,164 +198,165 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
     })
   }
   // Opened: once its state is there, the screen is opened, once.
-  const started = createMemo(() => screen.state() !== undefined)
-  createEffect(() => {
-    if (started()) a_new_ticket('the_screen_is_opened')
-  })
+  const started = kept(() => computed(() => screen.state.value !== undefined))
+  useEffect(
+    () =>
+      started.subscribe((it) => {
+        if (it) a_new_ticket('the_screen_is_opened')
+      }),
+    [],
+  )
 
   // The camera, on while she scans, facing her side's way; each text it reads
   // told as a scan, with an activity drawn, and the device's cameras counted
   // once it is on; off once she no longer scans, when she turns it (the
   // device's camera turns the one before off before it opens the next, WEB-2)
   // and when the screen closes.
-  const [video, set_video] = createSignal<HTMLVideoElement>()
-  const scanning = createMemo(() => ready() !== undefined || cannot_be_opened() !== undefined)
-  const facing = createMemo((): AFacing | undefined => {
-    const side = (ready() ?? cannot_be_opened())?.side
-    return side === undefined ? undefined : the_facing_of[side]
-  })
+  const the_video = useRef<HTMLVideoElement>(null)
+  const video = kept(() => signal<HTMLVideoElement | undefined>(undefined))
+  useEffect(() => {
+    video.value = the_video.current ?? undefined
+  }, [])
+  const facing = kept(() =>
+    computed((): AFacing | undefined => {
+      const it = shown.value
+      const side =
+        it?.shows === 'ready' || it?.shows === 'their_ticket_cannot_be_opened' ? it.side : undefined
+      return side === undefined ? undefined : the_facing_of[side]
+    }),
+  )
   const turns_the_camera = (): void => {
     screen.happens({ happens: 'she_turns_the_camera' })
   }
-  createEffect(() => {
-    const element = video()
-    const facing_now = facing()
+  while_it_is_open(() => {
+    const element = video.value
+    const facing_now = facing.value
     if (element === undefined || facing_now === undefined) return
-    const a_scan = app.device.scans(element, facing_now)
-    // This scan's run over (she no longer scans, or the screen closed): what it reads then is told no more.
-    let over = false
-    const is_over = (): boolean => over
-    onCleanup(() => {
-      over = true
-      void a_scan.then((scan) => {
-        if (scan.is === 'on') scan.turn_off()
-      })
-    })
-    void a_scan.then(async (scan) => {
-      if (is_over()) return
-      screen.happens({ happens: 'the_camera_is', camera: scan.is })
-      if (scan.is !== 'on') return
-      screen.happens({ happens: 'the_cameras_are_counted', cameras: scan.cameras })
-      for await (const text of scan.texts) {
+    return untracked(() => {
+      const a_scan = app.device.scans(element, facing_now)
+      // This scan's run over (she no longer scans, or the screen closed): what it reads then is told no more.
+      let over = false
+      const is_over = (): boolean => over
+      void a_scan.then(async (scan) => {
         if (is_over()) return
-        screen.happens({
-          happens: 'she_scans',
-          holds: what_it_holds(text),
-          asked: what_it_asked_now(app.device),
+        screen.happens({ happens: 'the_camera_is', camera: scan.is })
+        if (scan.is !== 'on') return
+        screen.happens({ happens: 'the_cameras_are_counted', cameras: scan.cameras })
+        for await (const text of scan.texts) {
+          if (is_over()) return
+          screen.happens({
+            happens: 'she_scans',
+            holds: what_it_holds(text),
+            asked: what_it_asked_now(app.device),
+          })
+        }
+      })
+      return () => {
+        over = true
+        void a_scan.then((scan) => {
+          if (scan.is === 'on') scan.turn_off()
         })
       }
     })
   })
 
+  const it = shown.value
+  const link = given.value?.given.link
+  const scanning = it?.shows === 'ready' || it?.shows === 'their_ticket_cannot_be_opened'
   return (
-    <section aria-label={props.texts.title}>
+    <section aria-label={props.texts.title} data-state={it?.shows}>
       <Back
         onBack={() => {
           screen.happens({ happens: 'she_goes_back' })
         }}
       />
       <h1>{props.texts.title}</h1>
-      <Show when={shown()}>
-        <Switch>
-          <Match when={shown()?.shows === 'getting_the_ticket_ready'}>
-            <p role="status">{props.texts.getting_the_ticket_ready}</p>
-          </Match>
-          <Match when={cannot_be_prepared()}>
-            {(it) => (
-              <>
-                <p role="status">{props.texts.the_ticket_cannot_be_prepared}</p>
-                <p>{the_words_of_an_end(app.common, it().how)}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    a_new_ticket('she_shakes_another_hand')
-                  }}
-                >
-                  {props.texts.try_again}
-                </button>
-              </>
-            )}
-          </Match>
-          <Match when={ready()}>
-            {(it) => (
-              <>
-                <WhileSheScans
-                  link={link()}
-                  camera={it().camera}
-                  turn={it().turn}
-                  onTurn={turns_the_camera}
-                  texts={props.texts}
-                />
-                <Show when={scanned_nothing_to_open()}>
-                  {(scanned) => <p role="status">{props.texts.scanned[scanned()]}</p>}
-                </Show>
-              </>
-            )}
-          </Match>
-          <Match when={read()}>
-            <p role="status">{props.texts.their_ticket_read}</p>
-            <Show when={link()}>{(link) => <TheQr link={link()} texts={props.texts} />}</Show>
-            <button
-              type="button"
-              onClick={() => {
-                screen.happens({ happens: 'she_puts_her_qr_away' })
-              }}
-            >
-              {props.texts.done}
-            </button>
-          </Match>
-          <Match when={opening()}>
-            {(it) => <p role="status">{props.texts.opening_their_ticket(it().introduced_as)}</p>}
-          </Match>
-          <Match when={bonded()}>
-            {(it) => (
-              <>
-                <p role="status">{the_words_of_a_bond_made(props.texts, it())}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    screen.happens({ happens: 'she_opens_the_contact' })
-                  }}
-                >
-                  {props.texts.open_the_contact}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    a_new_ticket('she_shakes_another_hand')
-                  }}
-                >
-                  {props.texts.shake_another_hand}
-                </button>
-              </>
-            )}
-          </Match>
-          <Match when={cannot_be_opened()}>
-            {(it) => (
-              <>
-                <p role="status">{props.texts.their_ticket_cannot_be_opened(it().introduced_as)}</p>
-                <p>{the_words_of_an_end(app.common, it().how)}</p>
-                <p>{props.texts.scan_again}</p>
-                <WhileSheScans
-                  link={link()}
-                  camera={it().camera}
-                  turn={it().turn}
-                  onTurn={turns_the_camera}
-                  texts={props.texts}
-                />
-              </>
-            )}
-          </Match>
-        </Switch>
-      </Show>
-      <video
-        ref={(element) => {
-          set_video(() => element)
-        }}
-        muted
-        playsinline
-        hidden={!scanning()}
-      />
+      {it?.shows === 'getting_the_ticket_ready' && (
+        <p role="status">{props.texts.getting_the_ticket_ready}</p>
+      )}
+      {it?.shows === 'the_ticket_cannot_be_prepared' && (
+        <>
+          <p role="status">{props.texts.the_ticket_cannot_be_prepared}</p>
+          <p>{the_words_of_an_end(app.common, it.how)}</p>
+          <button
+            type="button"
+            onClick={() => {
+              a_new_ticket('she_shakes_another_hand')
+            }}
+          >
+            {props.texts.try_again}
+          </button>
+        </>
+      )}
+      {it?.shows === 'ready' && (
+        <>
+          <WhileSheScans
+            link={link}
+            camera={it.camera}
+            turn={it.turn}
+            onTurn={turns_the_camera}
+            texts={props.texts}
+          />
+          {it.scanned !== 'nothing' && (
+            <p role="status" data-state={it.scanned}>
+              {props.texts.scanned[it.scanned]}
+            </p>
+          )}
+        </>
+      )}
+      {it?.shows === 'their_ticket_read' && (
+        <>
+          <p role="status">{props.texts.their_ticket_read}</p>
+          {link !== undefined && <TheQr link={link} texts={props.texts} />}
+          <button
+            type="button"
+            onClick={() => {
+              screen.happens({ happens: 'she_puts_her_qr_away' })
+            }}
+          >
+            {props.texts.done}
+          </button>
+        </>
+      )}
+      {it?.shows === 'opening_their_ticket' && (
+        <p role="status">{props.texts.opening_their_ticket(it.introduced_as)}</p>
+      )}
+      {it?.shows === 'bonded' && (
+        <>
+          <p role="status">{the_words_of_a_bond_made(props.texts, it)}</p>
+          <button
+            type="button"
+            onClick={() => {
+              screen.happens({ happens: 'she_opens_the_contact' })
+            }}
+          >
+            {props.texts.open_the_contact}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              a_new_ticket('she_shakes_another_hand')
+            }}
+          >
+            {props.texts.shake_another_hand}
+          </button>
+        </>
+      )}
+      {it?.shows === 'their_ticket_cannot_be_opened' && (
+        <>
+          <p role="status">{props.texts.their_ticket_cannot_be_opened(it.introduced_as)}</p>
+          <p>{the_words_of_an_end(app.common, it.how)}</p>
+          <p>{props.texts.scan_again}</p>
+          <WhileSheScans
+            link={link}
+            camera={it.camera}
+            turn={it.turn}
+            onTurn={turns_the_camera}
+            texts={props.texts}
+          />
+        </>
+      )}
+      <video ref={the_video} muted playsInline hidden={!scanning} />
     </section>
   )
 }

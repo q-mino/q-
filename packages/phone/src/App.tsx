@@ -1,4 +1,6 @@
-import { createSignal, For, Match, onMount, Show, Switch, type JSX } from 'solid-js'
+import { signal } from '@preact/signals'
+import type { JSX } from 'preact'
+import { useEffect, useRef } from 'preact/hooks'
 import {
   why_it_does_not_start,
   type ANodeRunning,
@@ -54,71 +56,24 @@ export interface TheAppsWiring {
 }
 
 export const App = (props: TheAppsWiring) => {
-  const [now, set_now] = createSignal<TheAppNow>({ now: 'opening' })
-  const opens = (how: HowItAsks): void => {
-    set_now({ now: 'opening' })
-    props.starts(how).then(
-      (start) => {
-        switch (start.start) {
-          case 'another_tab':
-            set_now({ now: 'another_tab' })
-            return
-          case 'it_does_not_start':
-            set_now({ now: 'it_does_not_start', why: start.why })
-            return
-          case 'running':
-            set_now({ now: 'running', node: start.node })
-            void start.node.stopped.then((why) => {
-              // Stopped to clear the data, the node is not told as stopped by itself.
-              if (now().now !== 'clearing_the_data') set_now({ now: 'stopped', why })
-            })
-            return
-        }
-      },
-      (fault: unknown) => {
-        set_now({ now: 'it_does_not_start', why: why_it_does_not_start(fault) })
-      },
-    )
-  }
-  /** Her gesture on the data of an older test release (WEB-8): the node stopped, if it runs, its database deleted, the app opened again. */
-  const clears_the_data_and_starts_again = (node: ANodeRunning | undefined): void => {
-    set_now({ now: 'clearing_the_data' })
-    void (async () => {
-      await node?.stops()
-      await props.clears_the_data()
-      props.reopens()
-    })().catch((fault: unknown) => {
-      set_now({ now: 'it_does_not_start', why: why_it_does_not_start(fault) })
-    })
-  }
-  /** The gesture, on the test channel only (WEB-8): on the release the sentence alone. */
-  const on_the_test_channel = the_build.channel !== 'release'
-  onMount(() => {
+  // The app's state, made at its first render, the same at every render after.
+  const made = useRef<ReturnType<typeof the_app_s_state> | undefined>(undefined)
+  made.current ??= the_app_s_state(props)
+  const { now, opens, clears_the_data_and_starts_again, on_the_test_channel } = made.current
+  useEffect(() => {
     opens('if_no_tab_is')
-  })
-  const running = (): ANodeRunning | undefined => {
-    const it = now()
-    return it.now === 'running' ? it.node : undefined
-  }
-  const does_not_start = (): WhyItDoesNotStart | undefined => {
-    const it = now()
-    return it.now === 'it_does_not_start' ? it.why : undefined
-  }
-  const stopped = (): WhyItStopped | undefined => {
-    const it = now()
-    return it.now === 'stopped' ? it.why : undefined
-  }
+  }, [])
+  const it = now.value
   const before_the_update = async (): Promise<void> => {
-    await running()?.stops()
+    const at_the_update = now.peek()
+    if (at_the_update.now === 'running') await at_the_update.node.stops()
   }
 
   return (
-    <main>
-      <Switch>
-        <Match when={now().now === 'opening' || now().now === 'clearing_the_data'}>
-          <p>{texts.start.opening}</p>
-        </Match>
-        <Match when={now().now === 'another_tab'}>
+    <main data-state={it.now}>
+      {(it.now === 'opening' || it.now === 'clearing_the_data') && <p>{texts.start.opening}</p>}
+      {it.now === 'another_tab' && (
+        <>
           <p>{texts.start.another_tab}</p>
           <button
             type="button"
@@ -128,120 +83,179 @@ export const App = (props: TheAppsWiring) => {
           >
             {texts.start.use_here}
           </button>
-        </Match>
-        <Match when={does_not_start()}>
-          {(why) => (
-            <section role="alert">
-              <Switch>
-                <Match
-                  when={(() => {
-                    const it = why()
-                    return it.why === 'an_extension_does_not_compose' ? it : undefined
-                  })()}
-                >
-                  {(composing) => (
-                    <>
-                      <h1>{texts.start.an_extension_does_not_compose}</h1>
-                      <ul>
-                        <For each={composing().faults}>
-                          {(one) => (
-                            <li>{texts.start.the_composition_faults[one.fault](one.extension)}</li>
-                          )}
-                        </For>
-                      </ul>
-                    </>
-                  )}
-                </Match>
-                <Match when={why().why === 'the_data_of_an_older_test_release'}>
-                  <h1>{texts.start.it_does_not_start}</h1>
-                  <p>{texts.start.the_data_of_an_older_test_release}</p>
-                  <Show when={on_the_test_channel}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        clears_the_data_and_starts_again(undefined)
-                      }}
-                    >
-                      {texts.start.clear_the_data_and_start_again}
-                    </button>
-                  </Show>
-                </Match>
-                <Match when={why().why === 'a_fault'}>
-                  <h1>{texts.start.it_does_not_start}</h1>
-                </Match>
-              </Switch>
-              <h2>{texts.start.why}</h2>
-              <pre>{why().message}</pre>
-            </section>
-          )}
-        </Match>
-        <Match when={stopped()}>
-          {(why) => (
-            <Switch>
-              <Match when={why() === 'used_elsewhere'}>
-                <p>{texts.start.used_elsewhere}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    opens('use_here')
-                  }}
-                >
-                  {texts.start.use_here}
-                </button>
-              </Match>
-              <Match when={why() === 'closed_for_a_new_release'}>
-                <p>{texts.start.closed_for_a_new_release}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    props.reopens()
-                  }}
-                >
-                  {texts.start.reload}
-                </button>
-              </Match>
-            </Switch>
-          )}
-        </Match>
-        <Match when={running()}>
-          {(node) => (
+        </>
+      )}
+      {it.now === 'it_does_not_start' && (
+        <section role="alert" data-state={it.why.why}>
+          {it.why.why === 'an_extension_does_not_compose' && (
             <>
-              <Show when={node().the_storage === 'best_effort'}>
-                <p role="note">{texts.the_storage.best_effort}</p>
-              </Show>
-              <Show when={node().the_storage === 'not_told'}>
-                <p role="note">{texts.the_storage.not_told}</p>
-              </Show>
-              {props.screens(
-                node(),
-                on_the_test_channel
-                  ? () => {
-                      clears_the_data_and_starts_again(node())
-                    }
-                  : undefined,
+              <h1>{texts.start.an_extension_does_not_compose}</h1>
+              <ul>
+                {it.why.faults.map((one, index) => (
+                  <li key={index}>
+                    {texts.start.the_composition_faults[one.fault](one.extension)}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {it.why.why === 'the_data_of_an_older_test_release' && (
+            <>
+              <h1>{texts.start.it_does_not_start}</h1>
+              <p>{texts.start.the_data_of_an_older_test_release}</p>
+              {on_the_test_channel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clears_the_data_and_starts_again(undefined)
+                  }}
+                >
+                  {texts.start.clear_the_data_and_start_again}
+                </button>
               )}
             </>
           )}
-        </Match>
-      </Switch>
+          {it.why.why === 'a_fault' && <h1>{texts.start.it_does_not_start}</h1>}
+          <h2>{texts.start.why}</h2>
+          <pre>{it.why.message}</pre>
+        </section>
+      )}
+      {it.now === 'stopped' && it.why === 'used_elsewhere' && (
+        <>
+          <p>{texts.start.used_elsewhere}</p>
+          <button
+            type="button"
+            onClick={() => {
+              opens('use_here')
+            }}
+          >
+            {texts.start.use_here}
+          </button>
+        </>
+      )}
+      {it.now === 'stopped' && it.why === 'closed_for_a_new_release' && (
+        <>
+          <p>{texts.start.closed_for_a_new_release}</p>
+          <button
+            type="button"
+            onClick={() => {
+              props.reopens()
+            }}
+          >
+            {texts.start.reload}
+          </button>
+        </>
+      )}
+      {it.now === 'running' && (
+        <TheNodeRunning
+          node={it.node}
+          screens={props.screens}
+          clears_the_data_and_starts_again={
+            on_the_test_channel ? clears_the_data_and_starts_again : undefined
+          }
+        />
+      )}
       <footer>
-        <Show when={the_build.channel !== 'release'}>
+        {the_build.channel !== 'release' && (
           <p>
             <strong>{texts.app.testChannel}</strong>
           </p>
-        </Show>
+        )}
         <h2>{texts.about.title}</h2>
         <p>
           {texts.app.name} ({texts.app.reading}) · {texts.about.version}: {the_build.version} ·{' '}
           {texts.about.code}:{' '}
           <a href={`${repository}/commit/${the_build.commit}`}>{the_build.commit.slice(0, 7)}</a>
-          <Show when={the_build.committed_at !== 'unknown'}>
-            {' '}
-            {texts.about.committed_on(the_time_of(the_build.committed_at))}
-          </Show>
+          {the_build.committed_at !== 'unknown' && (
+            <> {texts.about.committed_on(the_time_of(the_build.committed_at))}</>
+          )}
         </p>
       </footer>
       <UpdatePrompt before_the_update={before_the_update} />
     </main>
+  )
+}
+
+/** The app's state and its gestures: the node's start, what it came to, the data cleared. */
+const the_app_s_state = (props: TheAppsWiring) => {
+  const now = signal<TheAppNow>({ now: 'opening' })
+  /** The gesture, on the test channel only (WEB-8): on the release the sentence alone. */
+  const on_the_test_channel = the_build.channel !== 'release'
+  const opens = (how: HowItAsks): void => {
+    now.value = { now: 'opening' }
+    props.starts(how).then(
+      (start) => {
+        switch (start.start) {
+          case 'another_tab':
+            now.value = { now: 'another_tab' }
+            return
+          case 'it_does_not_start':
+            now.value = { now: 'it_does_not_start', why: start.why }
+            return
+          case 'running':
+            now.value = { now: 'running', node: start.node }
+            void start.node.stopped.then((why) => {
+              // Stopped to clear the data, the node is not told as stopped by itself.
+              if (now.peek().now !== 'clearing_the_data') now.value = { now: 'stopped', why }
+            })
+            return
+        }
+      },
+      (fault: unknown) => {
+        now.value = { now: 'it_does_not_start', why: why_it_does_not_start(fault) }
+      },
+    )
+  }
+  /** Her gesture on the data of an older test release (WEB-8): the node stopped, if it runs, its database deleted, the app opened again. */
+  const clears_the_data_and_starts_again = (node: ANodeRunning | undefined): void => {
+    now.value = { now: 'clearing_the_data' }
+    void (async () => {
+      await node?.stops()
+      await props.clears_the_data()
+      props.reopens()
+    })().catch((fault: unknown) => {
+      now.value = { now: 'it_does_not_start', why: why_it_does_not_start(fault) }
+    })
+  }
+  return { now, opens, clears_the_data_and_starts_again, on_the_test_channel }
+}
+
+/** The gesture on the data for this node, when the channel gives it. */
+const the_gesture_on = (
+  node: ANodeRunning,
+  clears: ((node: ANodeRunning | undefined) => void) | undefined,
+): (() => void) | undefined =>
+  clears === undefined
+    ? undefined
+    : () => {
+        clears(node)
+      }
+
+/** A node running: the storage told (WEB-11), and its screens, made once for it. */
+const TheNodeRunning = (props: {
+  node: ANodeRunning
+  screens: TheAppsWiring['screens']
+  /** Her gesture on the data of an older test release, on the test channel only (WEB-8). */
+  clears_the_data_and_starts_again: ((node: ANodeRunning | undefined) => void) | undefined
+}) => {
+  const screens = useRef<{ readonly node: ANodeRunning; readonly drawn: JSX.Element } | undefined>(
+    undefined,
+  )
+  if (screens.current?.node !== props.node)
+    screens.current = {
+      node: props.node,
+      drawn: props.screens(
+        props.node,
+        the_gesture_on(props.node, props.clears_the_data_and_starts_again),
+      ),
+    }
+  return (
+    <>
+      {props.node.the_storage === 'best_effort' && (
+        <p role="note">{texts.the_storage.best_effort}</p>
+      )}
+      {props.node.the_storage === 'not_told' && <p role="note">{texts.the_storage.not_told}</p>}
+      {screens.current.drawn}
+    </>
   )
 }

@@ -3,8 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": [],
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
     "composite": false,
     "declaration": false,
     "emitDeclarationOnly": false,

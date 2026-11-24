@@ -1,4 +1,5 @@
-import { createSignal, onMount, Show } from 'solid-js'
+import { signal, type Signal } from '@preact/signals'
+import { useEffect, useRef } from 'preact/hooks'
 import { the_build } from './build_info.ts'
 import { texts } from './texts/index.ts'
 
@@ -25,19 +26,23 @@ const when_a_new_one_waits = (
 }
 
 export const UpdatePrompt = (props: { readonly before_the_update: () => Promise<void> }) => {
-  const [waiting, set_waiting] = createSignal<ServiceWorker | undefined>()
+  const made = useRef<Signal<ServiceWorker | undefined> | undefined>(undefined)
+  made.current ??= signal<ServiceWorker | undefined>(undefined)
+  const waiting = made.current
 
-  onMount(() => {
+  useEffect(() => {
     // No service worker out of a secure context (a page over plain http, not localhost).
     if (!('serviceWorker' in navigator)) return
     navigator.serviceWorker
       .register(`${the_build.base}sw.js`, { scope: the_build.base, updateViaCache: 'none' })
       .then((registration) => {
-        when_a_new_one_waits(registration, set_waiting)
+        when_a_new_one_waits(registration, (worker) => {
+          waiting.value = worker
+        })
       })
       // Not registered, the app works online only: nothing to tell before an update.
       .catch(() => undefined)
-  })
+  }, [])
 
   const updates = async (worker: ServiceWorker): Promise<void> => {
     await props.before_the_update()
@@ -48,25 +53,22 @@ export const UpdatePrompt = (props: { readonly before_the_update: () => Promise<
     worker.postMessage({ type: 'SKIP_WAITING' })
   }
 
-  return (
-    <Show when={waiting()}>
-      {(worker) => (
-        <div role="alertdialog" aria-live="polite">
-          <p>{texts.update.available}</p>
-          <p>{texts.update.whatChanges}</p>
-          <button type="button" onClick={() => void updates(worker())}>
-            {texts.update.apply}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              set_waiting(undefined)
-            }}
-          >
-            {texts.update.later}
-          </button>
-        </div>
-      )}
-    </Show>
+  const worker = waiting.value
+  return worker === undefined ? null : (
+    <div role="alertdialog" aria-live="polite">
+      <p>{texts.update.available}</p>
+      <p>{texts.update.whatChanges}</p>
+      <button type="button" onClick={() => void updates(worker)}>
+        {texts.update.apply}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          waiting.value = undefined
+        }}
+      >
+        {texts.update.later}
+      </button>
+    </div>
   )
 }
