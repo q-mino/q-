@@ -4,7 +4,8 @@
 // the manifest she was shown accepted or not; a new manifest accepted the
 // same way; deactivating it. In the kernel's mark of it, its letters held
 // and what happened to it, and since part 22.2 the points of its place
-// (WEB-22): its actions, its slots, the pages it opens.
+// (WEB-22): its actions, its slots, the pages it opens. Since the MVP's part 2
+// drawn with the design's components (WEB-29).
 
 import type * as boundary from '@q-mino/boundary'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
@@ -12,6 +13,7 @@ import * as an_extension from '@q-mino/domains/ui/an_extension/_dsl.ts'
 import type * as an_extension_value from '@q-mino/domains/ui/an_extension/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
+import { Card, Gesture, Notice, Screen, type AGestureKind } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { Back, TheCourse, TheMark, ThePoints } from './parts.tsx'
 import {
@@ -89,6 +91,10 @@ const the_words_of_what_it_asks = (
   }
 }
 
+/** How much the gesture the screen allows weighs: the one that leads on is the primary; deactivating, or waiting, steps aside. */
+const the_weight_of = (may: the_extension_shown['may']): AGestureKind =>
+  may === 'activate' || may === 'accept_the_new_manifest' ? 'primary' : 'secondary'
+
 const nothing_asked: ui_value.a_course = { course: 'nothing_asked' }
 
 /** The course of its activation or deactivation, the last she asked. */
@@ -159,44 +165,57 @@ export const AnExtension = (props: {
       ? undefined
       : an_extension.what_it_shows(state, read.given)
   const manifest = the_manifest()
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
+  const the_notice_title =
+    manifest === undefined
+      ? undefined
+      : in_its_words(app.common, app.words(manifest.name)?.name, manifest.name, (name) =>
+          props.texts.the_notice(name, manifest.version),
+        )
   return (
-    <section aria-label={props.texts.title} data-state={shown?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
-      {shown?.shows === 'no_such_extension' && <p>{props.texts.no_such_extension}</p>}
+    <Screen
+      title={props.texts.title}
+      state={shown?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
+      {shown?.shows === 'no_such_extension' && (
+        <Notice kind="information">{props.texts.no_such_extension}</Notice>
+      )}
       {shown?.shows === 'the_extension' && (
         <>
-          <h2>
-            {the_word_or_its_fault(app.common, app.words(shown.extension)?.name, shown.extension)}
-          </h2>
-          <p data-state={shown.is}>
-            <small>{props.texts.the_version(shown.version)}</small>{' '}
-            <small>{props.texts.is[shown.is]}</small>
-          </p>
-          <button
-            type="button"
-            data-state={shown.may}
-            disabled={shown.may === 'wait'}
-            onClick={() => {
-              may(shown)
-            }}
+          <Card
+            title={the_word_or_its_fault(
+              app.common,
+              app.words(shown.extension)?.name,
+              shown.extension,
+            )}
           >
-            {props.texts.may[shown.may]}
-          </button>
-          <TheCourse course={the_course_of_its_state(shown)} />
+            <p data-part="the-state" data-state={shown.is}>
+              <small>{props.texts.the_version(shown.version)}</small>{' '}
+              <small>{props.texts.is[shown.is]}</small>
+            </p>
+            <div data-part="gestures">
+              <div data-part="may" data-state={shown.may}>
+                <Gesture
+                  kind={the_weight_of(shown.may)}
+                  label={props.texts.may[shown.may]}
+                  off={shown.may === 'wait'}
+                  does={taps(() => {
+                    may(shown)
+                  })}
+                />
+              </div>
+            </div>
+            <TheCourse course={the_course_of_its_state(shown)} />
+          </Card>
           {shown.the_notice !== undefined && (
-            <section>
-              {manifest !== undefined && (
-                <h3>
-                  {in_its_words(app.common, app.words(manifest.name)?.name, manifest.name, (name) =>
-                    props.texts.the_notice(name, manifest.version),
-                  )}
-                </h3>
-              )}
+            <Card {...(the_notice_title === undefined ? {} : { title: the_notice_title })}>
               <ol>
                 {shown.the_notice.map((asks, index) => (
                   <li key={index}>
@@ -209,18 +228,17 @@ export const AnExtension = (props: {
                   </li>
                 ))}
               </ol>
-              <button type="button" onClick={accepts}>
-                {props.texts.accept}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  screen.happens({ happens: 'she_does_not_accept' })
-                }}
-              >
-                {props.texts.do_not_accept}
-              </button>
-            </section>
+              <div data-part="gestures">
+                <Gesture kind="primary" label={props.texts.accept} does={taps(accepts)} />
+                <Gesture
+                  kind="secondary"
+                  label={props.texts.do_not_accept}
+                  does={taps(() => {
+                    screen.happens({ happens: 'she_does_not_accept' })
+                  })}
+                />
+              </div>
+            </Card>
           )}
           <TheMark extension={shown.extension}>
             {shown.mark.points !== undefined && (
@@ -257,7 +275,7 @@ export const AnExtension = (props: {
           </TheMark>
         </>
       )}
-    </section>
+    </Screen>
   )
 }
 

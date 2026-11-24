@@ -1,9 +1,11 @@
 // The extensions installed (UI-5; EXT-7, EXT-10): each by its name, with its
 // version and whether it is active, not active, or waiting for her to
-// accept a new manifest; each opens its own screen.
+// accept a new manifest; each opens its own screen. Since the MVP's part 2 drawn
+// with the design's components (WEB-29).
 
 import * as the_extensions from '@q-mino/domains/ui/the_extensions/_dsl.ts'
 import type * as the_extensions_value from '@q-mino/domains/ui/the_extensions/_value.ts'
+import { List, Row, Screen } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { Back } from './parts.tsx'
 import { the_app, the_word_or_its_fault } from './the_app.ts'
@@ -31,37 +33,45 @@ export const TheExtensions = (props: { texts: TheExtensionsTexts }) => {
       ? undefined
       : the_extensions.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
+    <Screen
+      title={props.texts.title}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
       {it !== undefined &&
         (it.extensions.length > 0 ? (
-          <ul>
+          <List label={props.texts.title}>
             {it.extensions.map((one) => (
-              <li key={one.extension} data-state={one.is}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    screen.happens({
-                      happens: 'she_opens_an_extension',
-                      extension: one.extension,
-                    })
-                  }}
-                >
-                  {the_word_or_its_fault(app.common, app.words(one.extension)?.name, one.extension)}
-                </button>{' '}
-                <small>{props.texts.the_version(one.version)}</small>{' '}
-                <small>{props.texts.is[one.is]}</small>
-              </li>
+              <Row
+                key={one.extension}
+                glyph="puzzle"
+                title={the_word_or_its_fault(
+                  app.common,
+                  app.words(one.extension)?.name,
+                  one.extension,
+                )}
+                detail={
+                  <span data-part="the-extension" data-state={one.is}>
+                    {props.texts.the_version(one.version)} {props.texts.is[one.is]}
+                  </span>
+                }
+                opens={() => {
+                  screen.happens({
+                    happens: 'she_opens_an_extension',
+                    extension: one.extension,
+                  })
+                }}
+              />
             ))}
-          </ul>
+          </List>
         ) : (
           <p>{props.texts.none}</p>
         ))}
-    </section>
+    </Screen>
   )
 }

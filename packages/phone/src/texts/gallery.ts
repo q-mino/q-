@@ -31,7 +31,7 @@ export const the_gallery = {
     the_storage: texts.the_storage.best_effort,
     a_name_hint: 'Lo vedono i contatti a cui lo dai.',
     a_name_fault: 'Scrivi almeno una lettera.',
-    a_flaw_title: 'Cosa Cumino non garantisce',
+    a_flaw_title: texts.screens.common.what_it_does_not_guarantee,
     contacts: 'I miei contatti',
     a_long_name: 'Bartolomeo Maria Giovanni della Rovere di Montefeltro',
     names: ['Anna', 'Bruno', 'Carla'],

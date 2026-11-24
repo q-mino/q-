@@ -2,12 +2,14 @@
 // first; she makes a link, a ticket of hers for a bond to be; ready, the link,
 // shared with the phone's share, or copied where the phone has none (WEB-18);
 // one that cannot be prepared told, with how; again, another link, for
-// another bond.
+// another bond. Since the MVP's part 2 drawn with the design's components
+// (WEB-29).
 
 import * as the_handshake_at_a_distance from '@q-mino/domains/ui/the_handshake_at_a_distance/_dsl.ts'
 import type * as the_handshake_at_a_distance_value from '@q-mino/domains/ui/the_handshake_at_a_distance/_value.ts'
+import { Field, Flaw, Gesture, Notice, Screen, type AGestureKind } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
-import { Back } from './parts.tsx'
+import { Back, the_kind_of_an_end } from './parts.tsx'
 import { the_app, the_words_of_an_end, what_it_asked_now } from './the_app.ts'
 
 /** The words of the screen (provisional, A to confirm). */
@@ -30,15 +32,18 @@ export interface TheHandshakeAtADistanceTexts {
 }
 
 /** The gesture that makes a link, in the words of where it is. */
-const MakeALink = (props: { words: string; makes: () => void }) => (
-  <button
-    type="button"
-    onClick={() => {
-      props.makes()
+const MakeALink = (props: { kind: AGestureKind; words: string; makes: () => void }) => (
+  <Gesture
+    kind={props.kind}
+    glyph="link"
+    label={props.words}
+    does={{
+      does: 'taps',
+      taps: () => {
+        props.makes()
+      },
     }}
-  >
-    {props.words}
-  </button>
+  />
 )
 
 export const TheHandshakeAtADistance = (props: { texts: TheHandshakeAtADistanceTexts }) => {
@@ -100,61 +105,73 @@ export const TheHandshakeAtADistance = (props: { texts: TheHandshakeAtADistanceT
       ? undefined
       : the_handshake_at_a_distance.what_it_shows(state, read.given.model)
   const link = shown?.shows === 'the_link' ? read?.given.link : undefined
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
-    <section aria-label={props.texts.title} data-state={shown?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
+    <Screen
+      title={props.texts.title}
+      state={shown?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
       {shown?.shows === 'the_flaw_told' && (
         <>
-          <p>{props.texts.the_flaw}</p>
-          <MakeALink words={props.texts.make_a_link} makes={makes_a_link} />
+          <Flaw title={app.common.what_it_does_not_guarantee}>{props.texts.the_flaw}</Flaw>
+          <div data-part="gestures">
+            <MakeALink kind="primary" words={props.texts.make_a_link} makes={makes_a_link} />
+          </div>
         </>
       )}
       {shown?.shows === 'getting_the_link_ready' && (
-        <p role="status">{props.texts.getting_the_link_ready}</p>
+        <Notice kind="waiting">{props.texts.getting_the_link_ready}</Notice>
       )}
       {shown?.shows === 'the_link_cannot_be_prepared' && (
         <>
-          <p role="status">{props.texts.the_link_cannot_be_prepared}</p>
-          <p>{the_words_of_an_end(app.common, shown.how)}</p>
-          <MakeALink words={props.texts.try_again} makes={makes_a_link} />
+          <Notice kind="fault">{props.texts.the_link_cannot_be_prepared}</Notice>
+          <Notice kind={the_kind_of_an_end(shown.how)}>
+            {the_words_of_an_end(app.common, shown.how)}
+          </Notice>
+          <div data-part="gestures">
+            <MakeALink kind="primary" words={props.texts.try_again} makes={makes_a_link} />
+          </div>
         </>
       )}
       {shown?.shows === 'the_link' && link !== undefined && (
         <>
-          <label>
-            {props.texts.your_link}{' '}
-            <input
-              name="link"
-              readOnly
-              value={link}
-              onFocus={(event) => {
-                event.currentTarget.select()
-              }}
-            />
-          </label>
-          {shown.gesture === 'copied' ? (
-            <p role="status" data-state={shown.gesture}>
-              {props.texts.the_link_is_copied}
-            </p>
-          ) : (
-            <button
-              type="button"
-              data-state={shown.gesture}
-              onClick={() => {
-                hands_on(link)
-              }}
-            >
-              {shown.gesture === 'share' ? props.texts.share_the_link : props.texts.copy_the_link}
-            </button>
-          )}
-          <MakeALink words={props.texts.make_another} makes={makes_a_link} />
+          <Field
+            label={props.texts.your_link}
+            name="link"
+            holds={{ holds: 'a_text_to_copy', value: link }}
+          />
+          <div data-part="gestures">
+            {shown.gesture === 'copied' ? (
+              <div data-part="the-gesture" data-state={shown.gesture}>
+                <Notice kind="done">{props.texts.the_link_is_copied}</Notice>
+              </div>
+            ) : (
+              <div data-part="the-gesture" data-state={shown.gesture}>
+                <Gesture
+                  kind="primary"
+                  glyph={shown.gesture === 'share' ? 'share_2' : 'copy'}
+                  label={
+                    shown.gesture === 'share'
+                      ? props.texts.share_the_link
+                      : props.texts.copy_the_link
+                  }
+                  does={taps(() => {
+                    hands_on(link)
+                  })}
+                />
+              </div>
+            )}
+            <MakeALink kind="secondary" words={props.texts.make_another} makes={makes_a_link} />
+          </div>
         </>
       )}
-    </section>
+    </Screen>
   )
 }

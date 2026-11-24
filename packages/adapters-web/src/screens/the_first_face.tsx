@@ -1,8 +1,10 @@
 // The first face (UI-5, 1a): her name, kept as a draft as she types it; the
-// button off with no name, making while the face is made.
+// button off with no name, making while the face is made. Since the MVP's part 2
+// drawn with the design's components (WEB-29).
 
 import * as the_first_face from '@q-mino/domains/ui/the_first_face/_dsl.ts'
 import type * as the_first_face_value from '@q-mino/domains/ui/the_first_face/_value.ts'
+import { Field, Gesture, Screen } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
 import { TheCourse } from './parts.tsx'
 import { the_app, what_it_asked_now } from './the_app.ts'
@@ -33,11 +35,9 @@ export const TheFirstFace = (props: { texts: TheFirstFaceTexts }) => {
       ? undefined
       : the_first_face.what_it_shows(state, read.given)
   return (
-    <section aria-label={props.texts.title}>
-      <h1>{props.texts.title}</h1>
+    <Screen title={props.texts.title} state={it?.the_button}>
       {it !== undefined && (
         <form
-          data-state={it.the_button}
           onSubmit={(event) => {
             event.preventDefault()
             screen.happens({
@@ -47,22 +47,28 @@ export const TheFirstFace = (props: { texts: TheFirstFaceTexts }) => {
             })
           }}
         >
-          <label>
-            {props.texts.your_name}{' '}
-            <input
-              name="name"
-              value={it.name}
-              onInput={(event) => {
-                screen.happens({ happens: 'she_types_the_name', name: event.currentTarget.value })
-              }}
+          <Field
+            label={props.texts.your_name}
+            name="name"
+            holds={{
+              holds: 'the_screens',
+              value: it.name,
+              types: (name) => {
+                screen.happens({ happens: 'she_types_the_name', name })
+              },
+            }}
+          />
+          <div data-part="gestures">
+            <Gesture
+              kind="primary"
+              label={it.the_button === 'making' ? props.texts.making : props.texts.make_it}
+              off={it.the_button !== 'on'}
+              does={{ does: 'submits' }}
             />
-          </label>
-          <button type="submit" disabled={it.the_button !== 'on'}>
-            {it.the_button === 'making' ? props.texts.making : props.texts.make_it}
-          </button>
+          </div>
           <TheCourse course={it.course} />
         </form>
       )}
-    </section>
+    </Screen>
   )
 }

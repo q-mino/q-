@@ -6,6 +6,7 @@
 
 import { render } from 'preact'
 import { the_gallery } from '../texts/index.ts'
+import { the_plays_end } from './the_plays.ts'
 import { the_files } from './the_stories.ts'
 import { TheGallery, type ATheme, type WhatItShows } from './the_gallery.tsx'
 
@@ -28,4 +29,7 @@ render(
   />,
   root,
 )
-document.documentElement.dataset['ready'] = 'yes'
+// Ready once the stories of the screens have played to their cases (WEB-29).
+void the_plays_end().then(() => {
+  document.documentElement.dataset['ready'] = 'yes'
+})

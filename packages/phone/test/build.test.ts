@@ -121,6 +121,8 @@ describe('the pages and their look (WEB-26, WEB-28)', () => {
       'adapters-web/src/design/styles/tokens.css',
       'adapters-web/src/design/styles/layout.css',
       'adapters-web/src/design/styles/components.css',
+      'adapters-web/src/screens/screens.css',
+      'phone/src/app.css',
     ])
     for (const path of linked) expect(existsSync(join(out, path))).toBe(true)
     expect(page).toContain('<meta name="color-scheme" content="light dark" />')

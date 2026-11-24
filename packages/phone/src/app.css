@@ -1,0 +1,47 @@
+/*
+ * The app's own look (WEB-29): what it tells before her screens open (the
+ * start under way, another tab, a stop) and its foot, the about, with the
+ * mark of the test channel. In the layer `screens`. [Q, C, 24 Nov 2026]
+ */
+@layer screens {
+  .app > [data-part='told'] {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: var(--space-4);
+    min-block-size: 60dvh;
+    max-inline-size: var(--measure);
+    margin-inline: auto;
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .app > [data-part='the-storage'] {
+    max-inline-size: var(--measure);
+    margin-inline: auto;
+    padding: var(--space-3) var(--space-4) 0;
+  }
+
+  .about {
+    display: grid;
+    gap: var(--space-1);
+    max-inline-size: var(--measure);
+    margin-inline: auto;
+    padding: var(--space-5) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+    border-block-start: 1px solid var(--roan-line);
+    color: var(--ink-soft);
+    font-size: var(--text-s);
+  }
+
+  .about > h2 {
+    font-size: var(--text-s);
+    font-weight: var(--weight-strong);
+  }
+
+  .about > [data-part='channel'] {
+    justify-self: start;
+    padding: var(--space-1) var(--space-3);
+    border: 1px dashed var(--cumin-ink);
+    border-radius: var(--radius-round);
+    color: var(--cumin-ink);
+  }
+}

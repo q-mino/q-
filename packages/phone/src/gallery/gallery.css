@@ -67,7 +67,8 @@
   }
 
   /* A screen fills its frame, as it fills a phone. */
-  .gallery-story [data-part='theme']:has(> .screen) {
+  .gallery-story [data-part='theme']:has(> .screen),
+  .gallery-story [data-part='theme']:has(> .a-screen-story) {
     padding: 0;
     overflow: clip;
   }
@@ -130,5 +131,11 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
+  }
+
+  /* A story of a screen whose play failed: told on its frame. */
+  .a-screen-story[data-state='its_play_failed'] {
+    outline: 3px dashed var(--fault);
+    outline-offset: -3px;
   }
 }

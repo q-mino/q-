@@ -9,7 +9,8 @@
   .screens {
     display: grid;
     grid-template-rows: auto 1fr;
-    min-block-size: 100dvh;
+    /* The page's height; a frame's in the gallery. */
+    min-block-size: var(--screen-height);
   }
 
   .screens > [data-part='strip'] {

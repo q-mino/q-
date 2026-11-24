@@ -6,7 +6,8 @@
 // one; the camera is on only while she scans, off once she does not and
 // when the screen closes. Once she scanned theirs, her QR stays shown, the
 // camera off, until her gesture puts it away (the other phone may still be
-// reading it); then bonded, she opens the contact or shakes another hand.
+// reading it); then bonded, she opens the contact or shakes another hand. Since the MVP's part 2
+// drawn with the design's components (WEB-29).
 
 import { computed, signal, untracked } from '@preact/signals'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
@@ -17,8 +18,9 @@ import { useEffect, useRef } from 'preact/hooks'
 import type { AFacing } from '../camera/index.ts'
 import { the_qr_of } from '../qr/index.ts'
 import { the_ticket_in_a_link } from '../ticket_link/index.ts'
+import { Gesture, Notice, Qr, Screen, Viewfinder, type ANoticeKind } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given, while_it_is_open } from './a_screen.ts'
-import { Back } from './parts.tsx'
+import { Back, the_kind_of_an_end } from './parts.tsx'
 import { the_app, the_words_of_an_end, what_it_asked_now } from './the_app.ts'
 
 /** The words of the screen (provisional, A to confirm). */
@@ -88,7 +90,7 @@ const TheQr = (props: { link: string; texts: TheHandshakeInPersonTexts }) => {
     drawn.current = { link: props.link, qr: the_qr_of(props.link) }
   const qr = drawn.current.qr
   return qr.drawn === 'a_qr' ? (
-    <img alt={props.texts.the_qr} src={`data:image/svg+xml,${encodeURIComponent(qr.svg)}`} />
+    <Qr label={props.texts.the_qr} svg={qr.svg} />
   ) : (
     <>
       <p>{props.texts.too_long_for_a_qr}</p>
@@ -96,6 +98,14 @@ const TheQr = (props: { link: string; texts: TheHandshakeInPersonTexts }) => {
     </>
   )
 }
+
+/** How the camera, when it is not on, is told (WEB-29): getting ready is a wait; refused, missing or busy are faults of the place. */
+const the_kind_of_the_camera = (camera: Exclude<ui_value.the_camera, 'on'>): ANoticeKind =>
+  camera === 'off' ? 'waiting' : 'fault'
+
+/** How what she scanned that opens nothing is told: no ticket is information, one out of its form a fault. */
+const the_kind_of_a_scan = (scanned: 'no_ticket' | 'a_ticket_out_of_its_form'): ANoticeKind =>
+  scanned === 'no_ticket' ? 'information' : 'fault'
 
 /** Where the camera faces, by its side, in the browser's words (WEB-2): the front faces her. */
 const the_facing_of = {
@@ -116,20 +126,26 @@ const WhileSheScans = (props: {
       <p>{props.texts.show_and_scan}</p>
       {props.link !== undefined && <TheQr link={props.link} texts={props.texts} />}
       {props.camera !== 'on' && (
-        <p role="status" data-state={props.camera}>
-          {props.texts.the_camera[props.camera]}
-        </p>
+        <div data-part="the-camera" data-state={props.camera}>
+          <Notice kind={the_kind_of_the_camera(props.camera)}>
+            {props.texts.the_camera[props.camera]}
+          </Notice>
+        </div>
       )}
       {props.turn !== 'none' && (
-        <button
-          type="button"
-          data-state={props.turn}
-          onClick={() => {
-            props.onTurn()
-          }}
-        >
-          {props.texts.turn_the_camera[props.turn]}
-        </button>
+        <div data-part="the-turn" data-state={props.turn}>
+          <Gesture
+            kind="quiet"
+            glyph="refresh_cw"
+            label={props.texts.turn_the_camera[props.turn]}
+            does={{
+              does: 'taps',
+              taps: () => {
+                props.onTurn()
+              },
+            }}
+          />
+        </div>
       )}
     </>
   )
@@ -263,29 +279,37 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
   const it = shown.value
   const link = given.value?.given.link
   const scanning = it?.shows === 'ready' || it?.shows === 'their_ticket_cannot_be_opened'
+  const taps = (does: () => void) => ({ does: 'taps', taps: does }) as const
   return (
-    <section aria-label={props.texts.title} data-state={it?.shows}>
-      <Back
-        onBack={() => {
-          screen.happens({ happens: 'she_goes_back' })
-        }}
-      />
-      <h1>{props.texts.title}</h1>
+    <Screen
+      title={props.texts.title}
+      state={it?.shows}
+      back={
+        <Back
+          onBack={() => {
+            screen.happens({ happens: 'she_goes_back' })
+          }}
+        />
+      }
+    >
       {it?.shows === 'getting_the_ticket_ready' && (
-        <p role="status">{props.texts.getting_the_ticket_ready}</p>
+        <Notice kind="waiting">{props.texts.getting_the_ticket_ready}</Notice>
       )}
       {it?.shows === 'the_ticket_cannot_be_prepared' && (
         <>
-          <p role="status">{props.texts.the_ticket_cannot_be_prepared}</p>
-          <p>{the_words_of_an_end(app.common, it.how)}</p>
-          <button
-            type="button"
-            onClick={() => {
-              a_new_ticket('she_shakes_another_hand')
-            }}
-          >
-            {props.texts.try_again}
-          </button>
+          <Notice kind="fault">{props.texts.the_ticket_cannot_be_prepared}</Notice>
+          <Notice kind={the_kind_of_an_end(it.how)}>
+            {the_words_of_an_end(app.common, it.how)}
+          </Notice>
+          <div data-part="gestures">
+            <Gesture
+              kind="primary"
+              label={props.texts.try_again}
+              does={taps(() => {
+                a_new_ticket('she_shakes_another_hand')
+              })}
+            />
+          </div>
         </>
       )}
       {it?.shows === 'ready' && (
@@ -298,54 +322,61 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
             texts={props.texts}
           />
           {it.scanned !== 'nothing' && (
-            <p role="status" data-state={it.scanned}>
-              {props.texts.scanned[it.scanned]}
-            </p>
+            <div data-part="scanned" data-state={it.scanned}>
+              <Notice kind={the_kind_of_a_scan(it.scanned)}>
+                {props.texts.scanned[it.scanned]}
+              </Notice>
+            </div>
           )}
         </>
       )}
       {it?.shows === 'their_ticket_read' && (
         <>
-          <p role="status">{props.texts.their_ticket_read}</p>
+          <Notice kind="done">{props.texts.their_ticket_read}</Notice>
           {link !== undefined && <TheQr link={link} texts={props.texts} />}
-          <button
-            type="button"
-            onClick={() => {
-              screen.happens({ happens: 'she_puts_her_qr_away' })
-            }}
-          >
-            {props.texts.done}
-          </button>
+          <div data-part="gestures">
+            <Gesture
+              kind="primary"
+              label={props.texts.done}
+              does={taps(() => {
+                screen.happens({ happens: 'she_puts_her_qr_away' })
+              })}
+            />
+          </div>
         </>
       )}
       {it?.shows === 'opening_their_ticket' && (
-        <p role="status">{props.texts.opening_their_ticket(it.introduced_as)}</p>
+        <Notice kind="waiting">{props.texts.opening_their_ticket(it.introduced_as)}</Notice>
       )}
       {it?.shows === 'bonded' && (
         <>
-          <p role="status">{the_words_of_a_bond_made(props.texts, it)}</p>
-          <button
-            type="button"
-            onClick={() => {
-              screen.happens({ happens: 'she_opens_the_contact' })
-            }}
-          >
-            {props.texts.open_the_contact}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              a_new_ticket('she_shakes_another_hand')
-            }}
-          >
-            {props.texts.shake_another_hand}
-          </button>
+          <Notice kind="done">{the_words_of_a_bond_made(props.texts, it)}</Notice>
+          <div data-part="gestures">
+            <Gesture
+              kind="primary"
+              label={props.texts.open_the_contact}
+              does={taps(() => {
+                screen.happens({ happens: 'she_opens_the_contact' })
+              })}
+            />
+            <Gesture
+              kind="secondary"
+              label={props.texts.shake_another_hand}
+              does={taps(() => {
+                a_new_ticket('she_shakes_another_hand')
+              })}
+            />
+          </div>
         </>
       )}
       {it?.shows === 'their_ticket_cannot_be_opened' && (
         <>
-          <p role="status">{props.texts.their_ticket_cannot_be_opened(it.introduced_as)}</p>
-          <p>{the_words_of_an_end(app.common, it.how)}</p>
+          <Notice kind="fault">
+            {props.texts.their_ticket_cannot_be_opened(it.introduced_as)}
+          </Notice>
+          <Notice kind={the_kind_of_an_end(it.how)}>
+            {the_words_of_an_end(app.common, it.how)}
+          </Notice>
           <p>{props.texts.scan_again}</p>
           <WhileSheScans
             link={link}
@@ -356,7 +387,9 @@ export const TheHandshakeInPerson = (props: { texts: TheHandshakeInPersonTexts }
           />
         </>
       )}
-      <video ref={the_video} muted playsInline hidden={!scanning} />
-    </section>
+      <Viewfinder hidden={!scanning}>
+        <video ref={the_video} muted playsInline hidden={!scanning} />
+      </Viewfinder>
+    </Screen>
   )
 }
