@@ -15,6 +15,18 @@ import { useEffect } from 'preact/hooks'
 import type { HerNode } from '../her_node/index.ts'
 import { ARecordOutOfItsForm } from '../indexeddb/index.ts'
 import { kept } from './a_screen.ts'
+import {
+  lets_go,
+  pushes,
+  replaces,
+  the_addresses_of,
+  the_depth_of,
+  the_entry,
+  the_view_shown,
+  the_way_of_an_entry,
+  writes_the_way,
+  type TheBrowsersHistory,
+} from './the_history.ts'
 import { AContact } from './a_contact.tsx'
 import { APage } from './a_page.tsx'
 import { AnExtension } from './an_extension.tsx'
@@ -43,6 +55,20 @@ export interface TheScreensWiring {
    * data and offer nothing.
    */
   readonly clears_the_data_and_starts_again?: () => void
+  /**
+   * The page's session history, where the way is written (WEB-25): a
+   * refresh opens the same way, the browser's back goes to the screen
+   * before. The composition root gives `window`; without it the way is in
+   * memory only.
+   */
+  readonly the_history?: TheBrowsersHistory
+  /**
+   * The link an address holds (WEB-1), read by the composition root as it
+   * reads the one the app is opened with: a link followed while the app is
+   * open moves the browser to it on the same page (its fragment only
+   * differs), and its invitation opens as at a start.
+   */
+  readonly the_link_in?: (address: string) => ui_value.what_it_holds | undefined
 }
 
 /** Why the screens do not open (WEB-18): her node's opening reads failed, a record out of its form told apart (WEB-8); the message, whole, under "Perché". */
@@ -89,6 +115,39 @@ export const TheScreens = (props: TheScreensWiring) => {
           went_wrong.value = true
         })
     }
+    const page = props.the_history
+    const words = props.texts.views
+    // To the start from a screen after the first entry of the way: the
+    // browser goes back to that entry first, and the start is read there.
+    let a_start_asked = false
+    /**
+     * The way of the start in the history (WEB-25): the first face leaves
+     * the address as it is (a link waiting, a view asked for after her
+     * face); an entry of the way, at a refresh or back at the way's first
+     * entry, opens its way again; else the start's, with the view the
+     * address asks above the home, written as entries from this one.
+     */
+    const the_way_in_the_history = (
+      history: TheBrowsersHistory,
+      start: ui_value.the_way,
+    ): ui_value.the_way => {
+      const [home] = start
+      if (home === undefined || home.screen === 'the_first_face') {
+        lets_go(history)
+        return start
+      }
+      const entry = the_entry(history)
+      const kept =
+        start.length === 1 && entry.entry === 'of_the_way'
+          ? the_way_of_an_entry(words, way.peek(), entry.addresses)
+          : undefined
+      if (kept !== undefined) return kept
+      const asked =
+        start.length === 1 ? the_view_shown(words, new URL(history.location.href).hash) : undefined
+      const opened: ui_value.the_way = asked === undefined ? start : [home, ...asked.slice(1)]
+      writes_the_way(history, words, opened)
+      return opened
+    }
     const starts = async (): Promise<void> => {
       const read = await Promise.all([props.node.her_faces(), props.node.the_active_face()]).then(
         (both) => ({ read: 'done', both }) as const,
@@ -103,15 +162,77 @@ export const TheScreens = (props: TheScreensWiring) => {
       // A link waits for her first face; once she has one, the start opens it, once.
       if (faces.length > 0) the_link.value = undefined
       for (const one of start.asks) asks(one)
-      way.value = start.way
+      way.value = page === undefined ? start.way : the_way_in_the_history(page, start.way)
     }
     const goes = (where: ui_value.where_it_goes): void => {
       if (where.goes === 'to_the_start') {
+        const depth = page === undefined ? 0 : the_depth_of(the_entry(page))
+        if (page !== undefined && depth > 0) {
+          a_start_asked = true
+          page.history.go(-depth)
+          return
+        }
         void starts()
         return
       }
       const now = way.peek()
-      if (now !== undefined) way.value = ui.the_way_after(now, where, now)
+      if (now === undefined) return
+      // Back through the browser's history, which then moves the way.
+      if (
+        page !== undefined &&
+        where.goes === 'back' &&
+        now.length > 1 &&
+        the_depth_of(the_entry(page)) > 0
+      ) {
+        page.history.go(-1)
+        return
+      }
+      const after = ui.the_way_after(now, where, now)
+      if (after === now) return
+      way.value = after
+      if (page === undefined) return
+      const addresses = the_addresses_of(words)(after)
+      if (where.goes === 'to_a_screen') pushes(page, addresses)
+      else replaces(page, addresses)
+    }
+    /**
+     * The browser moved in its history (WEB-25: back, forward, an address
+     * typed): to the start asked, read there; an entry of the way opens its
+     * way; one opened with a link's ticket, its invitation on top; another
+     * opened (an address typed, the first face's) is a start; an
+     * invitation whose ticket the way no longer holds is passed over, back.
+     */
+    const moves = (): void => {
+      if (page === undefined) return
+      if (a_start_asked) {
+        a_start_asked = false
+        void starts()
+        return
+      }
+      const entry = the_entry(page)
+      if (entry.entry === 'opened') {
+        const link = props.the_link_in?.(page.location.href)
+        const now = way.peek()
+        // A link followed while she has a face: its invitation on top of
+        // where she is, its entry in place of the ticket's.
+        if (link !== undefined && now !== undefined && now[0]?.screen !== 'the_first_face') {
+          const after = ui.the_way_after(
+            now,
+            { goes: 'to_a_screen', screen: { screen: 'an_invitation', link } },
+            now,
+          )
+          way.value = after
+          replaces(page, the_addresses_of(words)(after))
+          return
+        }
+        if (link !== undefined) the_link.value = link
+        void starts()
+        return
+      }
+      const after = the_way_of_an_entry(words, way.peek(), entry.addresses)
+      if (after !== undefined) way.value = after
+      else if (the_depth_of(entry) > 0) page.history.go(-1)
+      else void starts()
     }
     const app: TheApp = {
       get node() {
@@ -137,6 +258,7 @@ export const TheScreens = (props: TheScreensWiring) => {
       the_strip,
       changed,
       starts,
+      moves,
       app,
       key_of: a_key_for(),
     }
@@ -161,8 +283,12 @@ export const TheScreens = (props: TheScreensWiring) => {
   useEffect(() => {
     root.the_link.value = props.a_link
     const stops = props.node.when_it_changes(root.changed)
+    props.the_history?.addEventListener('popstate', root.moves)
     void root.starts()
-    return stops
+    return () => {
+      stops()
+      props.the_history?.removeEventListener('popstate', root.moves)
+    }
   }, [])
   const the_screen = (screen: ui_value.a_screen): JSX.Element => {
     switch (screen.screen) {

@@ -11,6 +11,7 @@ import { the_first_face } from './the_first_face.ts'
 import { the_handshake_at_a_distance } from './the_handshake_at_a_distance.ts'
 import { the_handshake_in_person } from './the_handshake_in_person.ts'
 import { the_server } from './the_server.ts'
+import { views } from './views.ts'
 import { what_happened } from './what_happened.ts'
 
 // The words of the screens in Italian, the first language (Alessandro, 22 Nov
@@ -29,5 +30,6 @@ export const screens = {
   a_page,
   what_happened,
   the_server,
+  views,
   extensions,
 } satisfies TheScreensTexts

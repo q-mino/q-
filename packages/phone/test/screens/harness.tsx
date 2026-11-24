@@ -9,6 +9,7 @@
 import type * as boundary from '@q-mino/boundary'
 import {
   TheScreens,
+  type TheBrowsersHistory,
   type HerNode,
   type HerTicket,
   type TheDevice,
@@ -260,6 +261,116 @@ export const a_device_of_test = (
   }
 }
 
+/** The page of the test site, where the app is served (PWA-4). */
+export const the_page = 'https://q-mino-prova.github.io/q-/'
+
+/** An entry of a history of test: its address and its state, as the browser keeps them (a structured copy). */
+interface AnEntryOfTest {
+  readonly url: string
+  readonly state: unknown
+}
+
+/**
+ * A page's session history of test (WEB-25), as a browser keeps it: the
+ * app's entries, each with its address and its state; a move (back, forward, an address typed) told at
+ * the next task, as `popstate` is; back from the app's first entry leaves
+ * the app. Kept across a refresh: the same history given to the app opened
+ * again.
+ */
+export interface AHistoryOfTest extends TheBrowsersHistory {
+  /** The fragment of the entry she is on. */
+  readonly the_address: () => string
+  /** The app's entries, from its first. */
+  readonly the_entries: () => readonly AnEntryOfTest[]
+  /** Which of the app's entries she is on, from 0. */
+  readonly at: () => number
+  /** Whether back took her out of the app. */
+  readonly left: () => boolean
+  /** The browser's back, or Android's. */
+  readonly back: () => void
+  /** The browser's forward. */
+  readonly forward: () => void
+  /** An address typed in the bar, on the same page: a new entry with no state. */
+  readonly types: (address: string) => void
+}
+
+export const a_history_of_test = (opened_at: string = the_page): AHistoryOfTest => {
+  let entries: readonly AnEntryOfTest[] = [{ url: new URL(opened_at, the_page).href, state: null }]
+  let at = 0
+  let left = false
+  let listeners: readonly (() => void)[] = []
+  const copy = (state: unknown): unknown =>
+    state === null || state === undefined ? null : JSON.parse(JSON.stringify(state))
+  const shown = (): AnEntryOfTest => {
+    const entry = entries[at]
+    if (entry === undefined) throw new Error('no entry')
+    return entry
+  }
+  const tells = (): void => {
+    setTimeout(() => {
+      for (const listener of listeners) listener()
+    }, 0)
+  }
+  const writes = (at_this: number, state: unknown, url: string | undefined): void => {
+    const entry = { url: new URL(url ?? shown().url, shown().url).href, state: copy(state) }
+    entries = [...entries.slice(0, at_this), entry]
+    at = at_this
+  }
+  const go = (delta = 0): void => {
+    const to = at + delta
+    if (to < 0) {
+      left = true
+      return
+    }
+    if (to >= entries.length || delta === 0) return
+    at = to
+    tells()
+  }
+  return {
+    history: {
+      get state() {
+        return shown().state
+      },
+      pushState: (state, _, url) => {
+        writes(at + 1, state, url)
+      },
+      replaceState: (state, _, url) => {
+        entries = [
+          ...entries.slice(0, at),
+          { url: new URL(url ?? shown().url, shown().url).href, state: copy(state) },
+          ...entries.slice(at + 1),
+        ]
+      },
+      go,
+    },
+    location: {
+      get href() {
+        return shown().url
+      },
+    },
+    addEventListener: (_, listener) => {
+      listeners = [...listeners, listener]
+    },
+    removeEventListener: (_, listener) => {
+      listeners = listeners.filter((one) => one !== listener)
+    },
+    the_address: () => new URL(shown().url).hash,
+    the_entries: () => entries,
+    at: () => at,
+    left: () => left,
+    back: () => {
+      go(-1)
+    },
+    forward: () => {
+      go(1)
+    },
+    types: (address) => {
+      writes(at + 1, null, address)
+      tells()
+    },
+  }
+}
+
 /** The app opened in a DOM of test, with the Italian texts. */
 export interface TheAppOpened {
   readonly root: HTMLElement
@@ -276,6 +387,10 @@ export const opens_the_app = (wiring: {
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
   /** Her gesture on the data of an older test release (WEB-8), given on the test channel only; none by default. */
   readonly clears_the_data_and_starts_again?: () => void
+  /** The page's session history (WEB-25); none by default, the way in memory only. */
+  readonly the_history?: AHistoryOfTest
+  /** The link an address holds (WEB-1), as the composition root reads it; none by default. */
+  readonly the_link_in?: (address: string) => ui_value.what_it_holds | undefined
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
@@ -287,6 +402,8 @@ export const opens_the_app = (wiring: {
       {...(wiring.clears_the_data_and_starts_again === undefined
         ? {}
         : { clears_the_data_and_starts_again: wiring.clears_the_data_and_starts_again })}
+      {...(wiring.the_history === undefined ? {} : { the_history: wiring.the_history })}
+      {...(wiring.the_link_in === undefined ? {} : { the_link_in: wiring.the_link_in })}
       texts={
         wiring.words === undefined ? texts.screens : { ...texts.screens, extensions: wiring.words }
       }
