@@ -55,7 +55,9 @@ const anna_with_her_face = (): ANodeOfTest =>
 
 /** The screens of the way, the shown one last, by their titles. */
 const the_way = (app: TheAppOpened): readonly string[] =>
-  [...app.root.querySelectorAll('main > div > section > h1')].map((title) => title.textContent)
+  [...app.root.querySelectorAll('main > div > section > header > h1')].map(
+    (title) => title.textContent,
+  )
 
 /** The activities handed with their ids, in order. */
 const the_activities_handed = (

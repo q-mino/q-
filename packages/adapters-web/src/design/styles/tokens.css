@@ -37,6 +37,13 @@
     --waiting: light-dark(#6b5a1f, #d9c27a);
     --focus: light-dark(#1f5fbf, #8cb4ff);
 
+    /* A QR's own paper and ink, the same in both themes: a camera reads it dark on light. */
+    --qr-paper: #ffffff;
+    --qr-ink: #000000;
+
+    /* What lies under a question that holds the screen. */
+    --veil: light-dark(rgb(39 34 30 / 0.45), rgb(0 0 0 / 0.6));
+
     /* The speckle of the roan coat: the motif of what Cumino tells and does not guarantee. */
     --speckle: radial-gradient(circle, var(--roan-edge) 0.09rem, transparent 0.11rem);
     --speckle-step: 0.5rem;

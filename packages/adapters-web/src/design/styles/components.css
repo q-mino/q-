@@ -181,6 +181,11 @@
     font-size: var(--text-s);
   }
 
+  /* The parts of a detail, apart by a dot drawn, not read. */
+  .row [data-part='detail'] > span + span::before {
+    content: '· ';
+  }
+
   /* A row she opens: its title a button, its target the whole row. */
   .row button[data-part='title'] {
     padding: 0;
@@ -233,5 +238,162 @@
 
   .field[data-state='faulty'] > input {
     border-color: var(--fault);
+  }
+
+  /* Card: a part of a screen with its title, on a raised paper. */
+  .card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--roan-line);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-raised);
+    container: card / inline-size;
+  }
+
+  .card > h2 {
+    font-size: var(--text-l);
+  }
+
+  /* Menu: entries drawn over the screen, by its top end. */
+  .menu {
+    inset: auto;
+    inset-block-start: var(--space-5);
+    inset-inline-end: var(--space-4);
+    display: grid;
+    min-inline-size: 14rem;
+    max-inline-size: calc(100vw - 2 * var(--space-4));
+    margin: 0;
+    padding: var(--space-2);
+    border: 1px solid var(--roan-line);
+    border-radius: var(--radius-m);
+    background: var(--paper-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .menu > .gesture {
+    justify-content: start;
+    border-radius: var(--radius-s);
+  }
+
+  /* Question: what the app asks before it goes on; a confirmation holds the screen, a proposal stands at its bottom. */
+  .question {
+    display: grid;
+    gap: var(--space-3);
+    inline-size: min(100vw - 2 * var(--space-4), 26rem);
+    padding: var(--space-5) var(--space-4) var(--space-4);
+    border: 1px solid var(--roan-line);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .question:not([open]) {
+    display: none;
+  }
+
+  .question > h2 {
+    font-size: var(--text-l);
+  }
+
+  .question::backdrop {
+    background: var(--veil);
+  }
+
+  .question[data-kind='proposal'] {
+    position: fixed;
+    inset-block: auto calc(var(--space-4) + env(safe-area-inset-bottom));
+    inset-inline: 0;
+    z-index: 10;
+    margin-inline: auto;
+  }
+
+  .question > [data-part='answers'] {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  @container (inline-size >= 22rem) {
+    .question > [data-part='answers'] {
+      grid-auto-flow: column;
+      justify-content: end;
+    }
+  }
+
+  /* Qr: large and centred, on its own paper with its quiet zone. */
+  .qr {
+    justify-self: center;
+    inline-size: min(100%, 20rem);
+    padding: var(--space-3);
+    border-radius: var(--radius-m);
+    background: var(--qr-paper);
+    color: var(--qr-ink);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .qr > img {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 1;
+    image-rendering: pixelated;
+  }
+
+  /* Viewfinder: the camera's video, its corners drawn over it. */
+  .viewfinder {
+    position: relative;
+    justify-self: center;
+    inline-size: min(100%, 20rem);
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--radius-m);
+    background: var(--paper-sunken);
+  }
+
+  .viewfinder > video {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .viewfinder > [data-part='corners'] {
+    position: absolute;
+    inset: 12%;
+    border-radius: var(--radius-s);
+    background:
+      linear-gradient(var(--cumin), var(--cumin)) top left / 1.5rem 0.25rem,
+      linear-gradient(var(--cumin), var(--cumin)) top left / 0.25rem 1.5rem,
+      linear-gradient(var(--cumin), var(--cumin)) top right / 1.5rem 0.25rem,
+      linear-gradient(var(--cumin), var(--cumin)) top right / 0.25rem 1.5rem,
+      linear-gradient(var(--cumin), var(--cumin)) bottom left / 1.5rem 0.25rem,
+      linear-gradient(var(--cumin), var(--cumin)) bottom left / 0.25rem 1.5rem,
+      linear-gradient(var(--cumin), var(--cumin)) bottom right / 1.5rem 0.25rem,
+      linear-gradient(var(--cumin), var(--cumin)) bottom right / 0.25rem 1.5rem;
+    background-repeat: no-repeat;
+  }
+
+  /* Why: the reason of a fault, folded under its title. */
+  .why > summary {
+    display: flex;
+    align-items: center;
+    min-block-size: var(--tap);
+    color: var(--cumin-ink);
+    cursor: pointer;
+  }
+
+  .why > summary > h2 {
+    font-size: var(--text-m);
+  }
+
+  .why > pre {
+    overflow-x: auto;
+    padding: var(--space-3);
+    border-radius: var(--radius-s);
+    background: var(--paper-sunken);
+    font-size: var(--text-s);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 }

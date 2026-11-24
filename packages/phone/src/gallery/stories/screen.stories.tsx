@@ -38,7 +38,11 @@ export const a_screen_with_the_strip = {
         </>
       }
     >
-      <Field label={words.the_name} name="name" value="Bruno" types={nothing} />
+      <Field
+        label={words.the_name}
+        name="name"
+        holds={{ holds: 'the_screens', value: 'Bruno', types: nothing }}
+      />
       <Notice kind="waiting">{words.waiting}</Notice>
     </Screen>
   ),

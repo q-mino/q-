@@ -11,7 +11,8 @@ import { signal } from '@preact/signals'
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type { JSX } from 'preact'
-import { useEffect } from 'preact/hooks'
+import { useEffect, useRef } from 'preact/hooks'
+import { Gesture, Notice, Strip, Why } from '../design/index.ts'
 import type { HerNode } from '../her_node/index.ts'
 import { ARecordOutOfItsForm } from '../indexeddb/index.ts'
 import { kept } from './a_screen.ts'
@@ -316,45 +317,66 @@ export const TheScreens = (props: TheScreensWiring) => {
         return <TheServer texts={props.texts.the_server} />
     }
   }
+  // The focus to the title of the screen shown, at each move of the way
+  // after the first (WEB-29): a screen reader says where she is, the tab
+  // key starts there; the first screen keeps the page's own start.
+  const the_main = useRef<HTMLElement>(null)
+  useEffect(() => {
+    let drawn: ui_value.the_way | undefined
+    return root.way.subscribe((way) => {
+      const before = drawn
+      drawn = way
+      if (before === undefined || way === undefined || way === before) return
+      // After the draw of the way: the screen shown is the new one.
+      requestAnimationFrame(() => {
+        the_main.current
+          ?.querySelector<HTMLElement>(':scope > div:not([hidden]) > section h1')
+          ?.focus()
+      })
+    })
+  }, [])
   const strip = root.the_strip.value?.strip
   const why = root.does_not_open.value
   const the_way = root.way.value
   return (
     <TheAppContext.Provider value={root.app}>
-      <main>
+      <main class="screens" ref={the_main}>
         {strip === 'no_network' && (
-          <p role="status" data-state={strip}>
-            {props.texts.common.no_network}
-          </p>
+          <div data-part="strip" data-state={strip}>
+            <Strip glyph="wifi_off">{props.texts.common.no_network}</Strip>
+          </div>
         )}
         {strip === 'the_relay_does_not_answer' && (
-          <p role="status" data-state={strip}>
-            {props.texts.common.the_relay_does_not_answer}
-          </p>
+          <div data-part="strip" data-state={strip}>
+            <Strip glyph="clock">{props.texts.common.the_relay_does_not_answer}</Strip>
+          </div>
         )}
         {why !== undefined ? (
-          <section role="alert" data-state={why.why}>
+          <section role="alert" class="it-does-not-start" data-state={why.why}>
             <h1>{props.texts.common.it_does_not_start}</h1>
             {why.why === 'the_data_of_an_older_test_release' && (
               <>
                 <p>{props.texts.common.the_data_of_an_older_test_release}</p>
                 {props.clears_the_data_and_starts_again !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      props.clears_the_data_and_starts_again?.()
+                  <Gesture
+                    kind="dangerous"
+                    label={props.texts.common.clear_the_data_and_start_again}
+                    does={{
+                      does: 'taps',
+                      taps: () => {
+                        props.clears_the_data_and_starts_again?.()
+                      },
                     }}
-                  >
-                    {props.texts.common.clear_the_data_and_start_again}
-                  </button>
+                  />
                 )}
               </>
             )}
-            <h2>{props.texts.common.why}</h2>
-            <pre>{why.message}</pre>
+            <Why title={props.texts.common.why} message={why.message} />
           </section>
         ) : the_way === undefined ? (
-          <p role="status">{props.texts.common.opening}</p>
+          <div data-part="opening">
+            <Notice kind="waiting">{props.texts.common.opening}</Notice>
+          </div>
         ) : (
           the_way.map((screen, index) => (
             <AScreenOfTheWay key={root.key_of(screen)} shown={index === the_way.length - 1}>
@@ -362,7 +384,11 @@ export const TheScreens = (props: TheScreensWiring) => {
             </AScreenOfTheWay>
           ))
         )}
-        {root.went_wrong.value && <p role="alert">{props.texts.common.something_went_wrong}</p>}
+        {root.went_wrong.value && (
+          <div data-part="went-wrong">
+            <Notice kind="fault">{props.texts.common.something_went_wrong}</Notice>
+          </div>
+        )}
       </main>
     </TheAppContext.Provider>
   )
