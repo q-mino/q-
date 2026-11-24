@@ -64,9 +64,6 @@ export const common = {
   the_relay_does_not_answer: 'Il server non risponde: le lettere aspettano e partono appena torna.',
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,
-    the_frame: (label) => `Riquadro «${label}» dell’estensione`,
     no_document: 'L’app non ha il riquadro di questa estensione.',
-    it_did: (use_case, at, time_zone) =>
-      `Il riquadro ha chiesto ${use_case} alle ${new Intl.DateTimeFormat('it-IT', { timeStyle: 'short', timeZone: time_zone }).format(new Date(at))}, da sé: non è un tuo gesto.`,
   },
 } satisfies TheCommonTexts

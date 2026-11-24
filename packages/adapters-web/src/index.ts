@@ -13,16 +13,6 @@ export {
   type CryptographicRandomness,
 } from './randomness/index.ts'
 export {
-  a_realm_in_a_frame,
-  the_document_of_a_frame,
-  the_document_of_a_realm,
-  the_policy_of_a_frame,
-  the_sandbox_of_a_frame,
-  the_script_inline,
-  type ARealmsDocument,
-  type ThePageOfTheRealms,
-} from './frames/index.ts'
-export {
   her_node_over,
   type HerNode,
   type HerNodesWiring,

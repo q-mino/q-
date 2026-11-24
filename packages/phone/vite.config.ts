@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import solid from 'vite-plugin-solid'
-import { the_realms } from './build/the_realms.ts'
+import { the_app_s_policy } from './build/the_policy.ts'
 
 const git = (command: string): string => {
   try {
@@ -38,8 +38,8 @@ export default defineConfig({
   },
   plugins: [
     solid(),
-    // The extensions the app carries, each its realm bundled, and the app's policy (PWA-3, PWA-4).
-    ...the_realms([{ name: 'ping_pong', entry: 'src/realms/ping_pong.ts' }], relay),
+    // The app's policy (PWA-4).
+    the_app_s_policy(relay),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src/sw',

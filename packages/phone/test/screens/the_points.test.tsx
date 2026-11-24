@@ -2,17 +2,13 @@
 // 13, 21 and 22 of `ui`'s README; part 22.2): on a bond, ping pong's mark
 // with its action, labelled in its own words, drawn only while active and
 // offered; tapped, an activity on the place, once at a time, its pong told in
-// ping pong's words; a slot's frame in the same mark, sandboxed, its
-// document after the kernel's policy; a page opened from the extension's own
-// screen, its frame in the mark, no longer there once deactivated. And the
-// frame's transport: told its place, its messages heard from its window
-// only, through the fence (served only while active and shown, the
-// extension's name added by the kernel), the events posted back by the
-// exchange's id, what it did told in the mark; what the fence refuses traced.
+// ping pong's words; a slot in the same mark and a page opened from the
+// extension's own screen, not drawn yet (components of the extension's in
+// the kernel's frame, deferred until one has them, WEB-23): told as the
+// app's fault; the page no longer there once deactivated.
 
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as user_value from '@q-mino/domains/user/_value.ts'
-import { the_policy_of_a_frame } from '@q-mino/adapters-web'
 import { afterEach, describe, expect, test } from 'vitest'
 import {
   a_device_of_test,
@@ -133,35 +129,6 @@ const opens_ping_pong = async (app: TheAppOpened): Promise<void> => {
   })
 }
 
-const the_frame_in = (within: HTMLElement): HTMLIFrameElement => {
-  const frame = within.querySelector('iframe')
-  if (frame === null) throw new Error('no frame')
-  return frame
-}
-
-/** The frame's window, as the kernel hears it and posts to it. */
-const the_window_of = (frame: HTMLIFrameElement): Window => {
-  const view = frame.contentWindow
-  if (view === null) throw new Error('the frame has no window')
-  return view
-}
-
-/** What the kernel posted to a frame, in order. */
-const posted_to = (frame: HTMLIFrameElement): unknown[] => {
-  const posted: unknown[] = []
-  the_window_of(frame).addEventListener('message', (event) => {
-    posted.push(event.data)
-  })
-  return posted
-}
-
-/** The frame's window posts a message to the kernel. */
-const the_frame_posts = (frame: HTMLIFrameElement, data: unknown): void => {
-  window.dispatchEvent(new MessageEvent('message', { data, source: the_window_of(frame) }))
-}
-
-const a_document = '<!doctype html><p>the pings of a bond</p>'
-
 describe('the extension points', () => {
   test('an extension’s points are drawn on a bond in its mark only while active and offered to it; a slot in the same mark', async () => {
     const anna_s = a_node_of_test(anna())
@@ -190,7 +157,7 @@ describe('the extension points', () => {
     })
     expect(the_mark_shown(app)).toBeNull()
 
-    // A slot on a bond too: its frame in the same mark, sandboxed, after the kernel's policy.
+    // A slot on a bond too: in the same mark, not drawn yet (WEB-23).
     the_button(app.shown(), words.common.back).click()
     anna_s.comes_to_hold((now) => ({
       ...now,
@@ -205,7 +172,7 @@ describe('the extension points', () => {
     const with_a_slot = the_mark_shown(app)
     if (with_a_slot === null) throw new Error('no mark')
     expect(has_a_button(with_a_slot, 'Ping')).toBe(true)
-    // The app has no document for it: no frame, told as the app's fault.
+    // The app does not draw it: told as the app's fault, never a blank.
     expect(with_a_slot.querySelector('iframe')).toBeNull()
   })
 
@@ -305,7 +272,7 @@ describe('the extension points', () => {
     })
   })
 
-  test('the extension’s own screen holds its page; opened, its frame in the mark, no longer there once deactivated', async () => {
+  test('the extension’s own screen holds its page; opened, in the mark, not drawn yet, no longer there once deactivated', async () => {
     const with_a_page = ping_pong('active', [
       { point: 'page', name: 'the_scores', place: 'the_extension' },
     ])
@@ -313,10 +280,6 @@ describe('the extension points', () => {
     opened = opens_the_app({
       node: anna_s.node,
       device: a_device_of_test([]),
-      documents: (frame) =>
-        frame.extension === 'ping_pong' && frame.point === 'page' && frame.name === 'the_scores'
-          ? a_document
-          : undefined,
       words: with_the_scores_labelled,
     })
     const app = opened
@@ -329,19 +292,8 @@ describe('the extension points', () => {
     the_button(app.shown(), words.common.the_points.opens_the_page('I punteggi')).click()
     await until(() => {
       expect(the_title(app)).toBe(words.a_page.title)
-      expect(the_mark_shown(app)?.querySelector('iframe')).toBeTruthy()
+      expect(the_mark_shown(app)?.textContent).toContain(words.common.the_points.no_document)
     })
-    const mark = the_mark_shown(app)
-    if (mark === null) throw new Error('no mark')
-    const frame = the_frame_in(mark)
-    expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
-    expect(frame.getAttribute('title')).toBe(words.common.the_points.the_frame('I punteggi'))
-    const document_given = frame.getAttribute('srcdoc') ?? ''
-    expect(
-      document_given.startsWith('<!doctype html><meta http-equiv="Content-Security-Policy"'),
-    ).toBe(true)
-    expect(document_given).toContain(the_policy_of_a_frame)
-    expect(document_given.endsWith(a_document)).toBe(true)
 
     anna_s.comes_to_hold((now) => ({
       ...now,
@@ -350,152 +302,6 @@ describe('the extension points', () => {
     await until(() => {
       expect(the_words(app)).toContain(words.a_page.no_longer_there)
     })
-    expect(app.shown().querySelector('iframe')).toBeNull()
-  })
-
-  test('a frame is told its place; its messages are fenced, served on its own extension, answered by id, and what it did is told in the mark', async () => {
-    const anna_s = a_node_of_test(
-      anna(ping_pong('active', [{ point: 'slot', name: 'the_pings_of_a_bond', place: 'a_bond' }])),
-    )
-    anna_s.answers_frames(() => [
-      { event: 'snapshot', entries: [{ ping_id: 'P1' }] },
-      { event: 'pong', payload: { ping_id: 'P1' } },
-    ])
-    opened = opens_the_app({
-      node: anna_s.node,
-      device: a_device_of_test([]),
-      documents: (frame) => (frame.name === 'the_pings_of_a_bond' ? a_document : undefined),
-    })
-    const app = opened
-    await opens_the_contact(app, 'Bruno')
-    await until(() => {
-      expect(the_mark_shown(app)?.querySelector('iframe')).toBeTruthy()
-    })
-    const mark = the_mark_shown(app)
-    if (mark === null) throw new Error('no mark')
-    const frame = the_frame_in(mark)
-    const its_window = the_window_of(frame)
-    const posted = posted_to(frame)
-
-    // Loaded, it is told its place: the bond.
-    frame.dispatchEvent(new Event('load'))
-    await until(() => {
-      expect(posted).toContainEqual({ message: 'placed', place: 'a_bond', data: { bond: 'L_b' } })
-    })
-
-    // It invokes its leaf: served with ping pong's name added, its events back by its id, then done.
-    the_frame_posts(frame, {
-      message: 'follow',
-      id: 'f1',
-      use_case: 'usecase/the_pings_of_a_bond',
-      version: '1.0.0',
-      input: { bond: 'L_b' },
-    })
-    await until(() => {
-      expect(posted).toContainEqual({ message: 'done', id: 'f1' })
-    })
-    expect(anna_s.frames_asked()).toEqual([
-      {
-        fenced: 'served',
-        exchange: 'follow',
-        id: 'f1',
-        invokes: {
-          of: 'an_extension',
-          extension: 'ping_pong',
-          persona: 'self',
-          use_case: 'usecase/the_pings_of_a_bond',
-          version: '1.0.0',
-        },
-        input: { bond: 'L_b' },
-      },
-    ])
-    expect(posted.filter((one) => JSON.stringify(one).includes('"event"'))).toEqual([
-      { message: 'event', id: 'f1', event: { event: 'snapshot', entries: [{ ping_id: 'P1' }] } },
-      { message: 'event', id: 'f1', event: { event: 'pong', payload: { ping_id: 'P1' } } },
-    ])
-    expect(mark.textContent).toContain(
-      words.common.the_points.it_did('usecase/the_pings_of_a_bond', ten_in_rome, 'Europe/Rome'),
-    )
-
-    // A message from another window is not heard; one that is no frame's message is refused, traced.
-    window.dispatchEvent(
-      new MessageEvent('message', { data: { message: 'invoke' }, source: window }),
-    )
-    the_frame_posts(frame, { message: 'invoke', id: 'f2', extension: 'greetings' })
-    await until(() => {
-      expect(anna_s.frames_fenced()).toHaveLength(1)
-    })
-    expect(anna_s.frames_fenced()[0]).toMatchObject({
-      why: 'a_frame_fenced',
-      extension: 'ping_pong',
-      fence: 'not_a_frames_message',
-    })
-    expect(anna_s.frames_asked()).toHaveLength(1)
-
-    // Its screen closed: the frame removed hears nothing more.
-    the_button(app.shown(), words.common.back).click()
-    await until(() => {
-      expect(the_title(app)).toBe(words.my_contacts.title)
-    })
-    window.dispatchEvent(
-      new MessageEvent('message', {
-        data: {
-          message: 'invoke',
-          id: 'f3',
-          use_case: 'usecase/send_a_ping',
-          version: '1.0.0',
-          input: {},
-        },
-        source: its_window,
-      }),
-    )
-    expect(anna_s.frames_asked()).toHaveLength(1)
-    expect(anna_s.frames_fenced()).toHaveLength(1)
-  })
-
-  test('a frame of a screen hidden under another is not shown: refused, traced, and its flows stopped', async () => {
-    const anna_s = a_node_of_test(
-      anna(
-        ping_pong('active', [
-          { point: 'slot', name: 'the_board', place: 'the_extension' },
-          { point: 'page', name: 'the_scores', place: 'the_extension' },
-        ]),
-      ),
-    )
-    opened = opens_the_app({
-      node: anna_s.node,
-      device: a_device_of_test([]),
-      documents: () => a_document,
-    })
-    const app = opened
-    await opens_ping_pong(app)
-    await until(() => {
-      expect(the_mark_shown(app)?.querySelector('iframe')).toBeTruthy()
-    })
-    const mark = the_mark_shown(app)
-    if (mark === null) throw new Error('no mark')
-    const the_board = the_frame_in(mark)
-    // Ping pong's words label neither: each drawn as a fault, by its name (WEB-22).
-    expect(the_board.getAttribute('title')).toBe(words.common.a_word_missing('the_board'))
-    the_button(app.shown(), words.common.a_word_missing('the_scores')).click()
-    await until(() => {
-      expect(the_title(app)).toBe(words.a_page.title)
-    })
-    the_frame_posts(the_board, {
-      message: 'invoke',
-      id: 'b1',
-      use_case: 'usecase/send_a_ping',
-      version: '1.0.0',
-      input: {},
-    })
-    await until(() => {
-      expect(anna_s.frames_fenced()).toHaveLength(1)
-    })
-    expect(anna_s.frames_fenced()[0]).toMatchObject({
-      why: 'a_frame_fenced',
-      extension: 'ping_pong',
-      fence: 'the_frame_is_not_shown',
-    })
-    expect(anna_s.frames_asked()).toEqual([])
+    expect(the_mark_shown(app)).toBeNull()
   })
 })

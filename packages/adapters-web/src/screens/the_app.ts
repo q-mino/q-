@@ -3,8 +3,8 @@
 // count of her node's changes, which the screens follow to read it again,
 // and the two hands of a turn: what it asks, handed to `user` in order, and
 // where it goes, on the way. Since part 22.2 the words of each extension
-// the kernel draws in its mark, the documents of the frames it places, and
-// whether a screen is the one shown (a frame is served only then, EXT-4).
+// the kernel draws in its mark, and whether a screen is the one shown (a
+// part of an extension is served only then, EXT-4, when one comes).
 
 import type * as boundary from '@q-mino/boundary'
 import type * as zz from '@q-mino/domains/library'
@@ -102,19 +102,8 @@ export interface TheCommonTexts {
 export interface ThePointsTexts {
   /** The gesture that opens a page, by its label in the extension's words. */
   readonly opens_the_page: (label: string) => string
-  /** A frame, by its label in the extension's words (its title, for who cannot see it). */
-  readonly the_frame: (label: string) => string
-  /** A frame whose document the app does not have: a fault of the app's composition. */
+  /** A slot or a page the app does not draw yet (WEB-23): a fault of the app's composition. */
   readonly no_document: string
-  /** What a frame did, told as its extension's activity (EXT-16): the leaf it invoked, when. */
-  readonly it_did: (use_case: string, at: string, time_zone: string) => string
-}
-
-/** A frame the kernel places (EXT-16): whose, a slot or a page, by its name in the manifest. */
-export interface AFrameToPlace {
-  readonly extension: string
-  readonly point: 'slot' | 'page'
-  readonly name: string
 }
 
 /** What every screen is given by the rendering. */
@@ -130,8 +119,6 @@ export interface TheApp {
   readonly goes: (where: ui_value.where_it_goes) => void
   /** The words of an extension in the app's language (EXT-16), none if the app has none for it. */
   readonly words: (extension: string) => boundary.the_words_of_an_extension | undefined
-  /** The document of a frame, the file of its extension's bundle its point `shows` (EXT-16), none if the app does not have it. */
-  readonly document_of: (frame: AFrameToPlace) => string | undefined
 }
 
 /** What a screen asked, drawn now: a new activity's id and the time (UI-3, WEB-4). */

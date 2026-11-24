@@ -12,7 +12,6 @@ import { TheScreens } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { render } from 'solid-js/web'
-import { realms } from 'virtual:q-realms'
 import { App } from './App.tsx'
 import {
   the_data_cleared,
@@ -26,14 +25,18 @@ import { texts } from './texts/index.ts'
 // The PWA's main (CFG-1; step 25, PWA-1..PWA-5): the browser's objects,
 // given (WEB-5), the release's configuration, the extensions it carries
 // (ping pong, preinstalled and off, PNG-1: its manifest as its build wrote
-// it, its realm as the phone's build bundled it), the device, the link the
-// page was opened with (WEB-1), and the app.
+// it, its configurator integrated, EXT-13), the device, the link the page
+// was opened with (WEB-1), and the app.
 
-/** An extension carried: its manifest, and its realm's script, which the build made (PWA-3). */
-const carried = (name: string, manifest: unknown): AnExtensionCarried => {
-  const script = realms[name]
-  if (script === undefined) throw new Error(`the build made no realm for ${name}`)
-  return { manifest, script }
+/**
+ * Ping pong, carried (EXT-9, EXT-13): its manifest, composed at the start;
+ * its configurator imported only when the kernel loads it, at its
+ * activation or at a start where it is active, so that off its files are
+ * not loaded (A, 24 Nov 2026). Its realm's clock and time are the kernel's.
+ */
+const ping_pong: AnExtensionCarried = {
+  manifest: ping_pong_manifest,
+  realm: async (host) => (await import('@q-mino/ping_pong')).ping_pong(host),
 }
 
 /** The link's ticket in `ui`'s words (WEB-1, UI-1): one whose ticket `user` would not take is out of its form. */
@@ -61,14 +64,13 @@ const browser: TheBrowser = {
   storage: navigator.storage,
   fetch: (address, request) => fetch(address, request),
   crypto,
-  document,
   network: { navigator, window },
 }
 const configuration: TheConfiguration = {
   name: 'cumino',
   relay: __Q_RELAY__,
   page,
-  extensions: [carried('ping_pong', ping_pong_manifest)],
+  extensions: [ping_pong],
   characters: 1_000_000,
 }
 const starts = the_start(browser, configuration, { clock, elapsed: the_time_that_passes })
@@ -104,10 +106,6 @@ render(
           {...(clears_the_data_and_starts_again === undefined
             ? {}
             : { clears_the_data_and_starts_again })}
-          // Ping pong shows no frame in stage 1 (no slot, no page): an
-          // extension's documents, and their scripts' hashes in the app's
-          // policy, come with the first that has one (PWA-4).
-          documents={() => undefined}
         />
       )}
     />

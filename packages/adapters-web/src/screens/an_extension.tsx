@@ -245,7 +245,6 @@ export const AnExtension = (props: {
                   {(points) => (
                     <ThePoints
                       mark={points()}
-                      active={it().is === 'active'}
                       course_of={(action) => the_course_of_an_action(it(), action)}
                       taps={(action) => {
                         screen.happens({

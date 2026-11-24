@@ -119,7 +119,7 @@ const annas_phone = async (story: Story) => {
       clock,
       hash: the_hash_of_a_collect_secret(story.primitives),
     }).collect,
-    extensions: [{ manifest: ping_pong_manifest, runs: 'in_process', realm: ping_pong }],
+    extensions: [{ manifest: ping_pong_manifest, realm: ping_pong }],
     relays: [the_relay],
   })
   let operations = 0

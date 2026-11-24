@@ -5,7 +5,6 @@
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { For, Match, Show, Switch, type JSX } from 'solid-js'
-import { TheFrame } from './a_frame.tsx'
 import {
   in_its_words,
   the_app,
@@ -76,14 +75,12 @@ const an_end = (course: ui_value.a_course) => (course.course === 'ended' ? cours
  * The points a mark holds at its place (UI-4, EXT-16, WEB-22): each action,
  * a gesture the kernel draws with the extension's label, off while its
  * activity is in progress, and how it ended in the extension's words; each
- * slot, a frame told the place; each page, the gesture that opens it, by its
- * label. A word the extension's words lack is drawn as a fault, never
- * silently its name.
+ * slot, what the app does not draw yet (`APartNotDrawn`); each page, the
+ * gesture that opens it, by its label. A word the extension's words lack is
+ * drawn as a fault, never silently its name.
  */
 export const ThePoints = (props: {
   mark: ui_value.a_mark
-  /** Whether the extension is active, as the screen read it: a frame is served only then (EXT-4). */
-  active: boolean
   /** The course of the last activity of an action. */
   course_of: (action: string) => ui_value.a_course
   taps: (action: string) => void
@@ -120,15 +117,7 @@ export const ThePoints = (props: {
           </p>
         )}
       </For>
-      <For each={props.mark.slots}>
-        {(slot) => (
-          <TheFrame
-            frame={{ extension: props.mark.extension, point: 'slot', name: slot }}
-            told={props.mark.told}
-            active={props.active}
-          />
-        )}
-      </For>
+      <For each={props.mark.slots}>{() => <APartNotDrawn />}</For>
       <Show when={props.mark.pages.length > 0}>
         <ul>
           <For each={props.mark.pages}>
@@ -154,4 +143,16 @@ export const ThePoints = (props: {
       </Show>
     </>
   )
+}
+
+/**
+ * A slot or a page of an extension, in its mark (EXT-16, WEB-23): a
+ * component of the extension's in the kernel's frame, deferred until an
+ * extension the app carries has one (ping pong has none). Until then the
+ * app tells it does not have it, a fault of its composition, never a blank.
+ * [Q, C, 24 Nov 2026]
+ */
+export const APartNotDrawn = () => {
+  const app = the_app()
+  return <p role="alert">{app.common.the_points.no_document}</p>
 }
