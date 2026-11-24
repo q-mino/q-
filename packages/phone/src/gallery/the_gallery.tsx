@@ -4,6 +4,7 @@
 // story and one theme (`?story=<id>&theme=light`), it shows that one alone,
 // as the screenshots' script asks (`scripts/screens.mjs`). [Q, C, 24 Nov 2026]
 
+import { QuestionsHoldThePage } from '@q-mino/adapters-web/design'
 import type { the_gallery } from '../texts/index.ts'
 import type { AFileShown, AStoryShown } from './a_story.ts'
 
@@ -30,7 +31,9 @@ const AStory = (props: {
       {props.themes.map((theme) => (
         <div key={theme} data-part="theme" data-theme={theme}>
           <small data-part="theme-name">{props.texts.themes[theme]}</small>
-          {props.story.render()}
+          <QuestionsHoldThePage.Provider value={props.themes.length === 1}>
+            {props.story.render()}
+          </QuestionsHoldThePage.Provider>
         </div>
       ))}
     </div>

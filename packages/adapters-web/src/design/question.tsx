@@ -6,8 +6,15 @@
 // Asked while it is drawn: the screen's state says whether it is (UI-1).
 // [Q, C, 24 Nov 2026]
 
-import type { ComponentChildren } from 'preact'
-import { useEffect, useRef } from 'preact/hooks'
+import { createContext, type ComponentChildren } from 'preact'
+import { useContext, useEffect, useRef } from 'preact/hooks'
+
+/**
+ * Whether a confirmation holds the whole page: it does in the app; in the
+ * gallery, where many stories share a page, only a story shown alone
+ * (WEB-28), so that one asked does not make the gallery inert.
+ */
+export const QuestionsHoldThePage = createContext(true)
 
 /** How a question holds the screen. */
 export type AQuestionKind = 'confirmation' | 'proposal'
@@ -24,6 +31,7 @@ export const Question = (props: {
   const the_dialog = useRef<HTMLDialogElement>(null)
   const declines = useRef(props.declines)
   declines.current = props.declines
+  const holds = useContext(QuestionsHoldThePage)
   const kind = props.kind
   useEffect(() => {
     const dialog = the_dialog.current
@@ -33,7 +41,7 @@ export const Question = (props: {
       declines.current()
     }
     dialog.addEventListener('cancel', cancelled)
-    if (kind === 'confirmation') dialog.showModal()
+    if (kind === 'confirmation' && holds) dialog.showModal()
     else dialog.show()
     return () => {
       dialog.removeEventListener('cancel', cancelled)
