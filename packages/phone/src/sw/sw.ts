@@ -8,6 +8,13 @@
 // The app's files come from the cache, then from the network; a page of the
 // app (a navigation, with its link) is the cached `index.html`.
 // [Q, C, 24 Nov 2026]
+// Where the browser has the Static Routing API, the worker gives it, at its
+// install, the rule for the app's files: the browser answers them from the
+// worker's cache by itself, with no fetch event, so a start of ~760 modules
+// does not wait for the worker once per module (measured, a start three
+// times as slow on a phone's CPU); a page of the app stays the worker's. A
+// file the cache misses goes to the network, as with the fetch event.
+// [Q, C, 24 Nov 2026]
 
 declare let self: ServiceWorkerGlobalScope
 /** Written by the build before this code (`build/compose.ts`). */
@@ -19,7 +26,51 @@ const the_cache = `${the_prefix}${the_precache.version}`
 const the_address = (file: string): string => new URL(file, self.registration.scope).href
 const the_page = the_address('index.html')
 
+/**
+ * The Static Routing API (WICG, Chrome 123; a source by its cache's name,
+ * Chrome 131), not yet in TypeScript's lib: what the worker gives it.
+ */
+interface ARule {
+  readonly condition: {
+    readonly requestMode?: RequestMode
+    readonly requestMethod?: string
+    readonly urlPattern?: URLPattern
+  }
+  readonly source: 'fetch-event' | { readonly cacheName: string }
+}
+/** An install where the browser takes routes. */
+interface AnInstallWithRoutes extends ExtendableEvent {
+  readonly addRoutes: (rules: readonly ARule[]) => Promise<void>
+}
+const takes_routes = (event: ExtendableEvent): event is AnInstallWithRoutes =>
+  'addRoutes' in event && typeof event.addRoutes === 'function'
+
+const the_scope = new URL(self.registration.scope)
+/**
+ * The rules, the first that matches wins: a page of the app to the worker
+ * (its `index.html`, a link's ticket in the address); then a file of the
+ * app's, with no query, to the cache of this version. The rest, as a query
+ * the cache would not match, to the fetch event.
+ */
+const the_routes: readonly ARule[] = [
+  { condition: { requestMode: 'navigate' }, source: 'fetch-event' },
+  {
+    condition: {
+      requestMethod: 'GET',
+      urlPattern: new URLPattern({
+        protocol: the_scope.protocol.slice(0, -1),
+        hostname: the_scope.hostname,
+        port: the_scope.port,
+        pathname: `${the_scope.pathname}*`,
+        search: '',
+      }),
+    },
+    source: { cacheName: the_cache },
+  },
+]
+
 self.addEventListener('install', (event: ExtendableEvent) => {
+  if (takes_routes(event)) event.waitUntil(event.addRoutes(the_routes))
   event.waitUntil(
     caches
       .open(the_cache)
@@ -53,6 +104,7 @@ const the_cached = async (request: Request): Promise<Response | undefined> => {
     : cache.match(request, { ignoreSearch: true })
 }
 
+// A browser with no routes, a page of the app, a request with a query.
 self.addEventListener('fetch', (event: FetchEvent) => {
   const request = event.request
   if (request.method !== 'GET' || !request.url.startsWith(self.registration.scope)) return
