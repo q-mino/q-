@@ -16,7 +16,8 @@
 // [Q, C, 24 Nov 2026]
 
 import { createContext, type ComponentChildren } from 'preact'
-import { useContext, useEffect, useRef, useState } from 'preact/hooks'
+import { useSignal } from '@preact/signals'
+import { useContext, useEffect, useRef } from 'preact/hooks'
 import { Corner } from './corner.tsx'
 import { Gesture } from './gesture.tsx'
 import { TheMarksAround } from './mark.tsx'
@@ -75,7 +76,11 @@ export const Slot = <Subject,>(props: {
   /** Its part, told its subject. */
   children: (subject: Subject) => ComponentChildren
 }) => {
-  const [where, moves] = useState<WhereASlotIs>(props.at_first ?? 'in_its_place')
+  const at = useSignal<WhereASlotIs>(props.at_first ?? 'in_its_place')
+  const moves = (to: WhereASlotIs): void => {
+    at.value = to
+  }
+  const where = at.value
   const the_slot = useRef<HTMLDivElement>(null)
   const takes = useContext(SlotsTakeTheScreen)
   const around = useContext(TheMarksAround)

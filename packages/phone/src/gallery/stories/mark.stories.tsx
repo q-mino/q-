@@ -12,7 +12,7 @@ const nothing = { does: 'taps', taps: () => undefined } as const
 
 export default { title: 'Design/Mark', component: Mark }
 
-/** On a contact: «Rinomina» is the kernel's, «Ping» is in ping pong's mark, in its kind. */
+/** On a contact: «Cambia nome» is the kernel's, «Ping» is in ping pong's mark, in its kind. */
 export const a_mark_on_a_contact = {
   render: () => (
     <>
@@ -34,7 +34,7 @@ export const a_mark_on_a_contact = {
 export const two_marks_one_inside_the_other = {
   render: () => (
     <Mark name={theirs.messages.name} title={words.the_mark_of(theirs.messages.name)}>
-      <p>{theirs.messages.said[0]?.words}</p>
+      <p>{theirs.messages.said[0].words}</p>
       <Mark name={theirs.dice.name} title={words.the_mark_of(theirs.dice.name)}>
         <div data-part="action">
           <Gesture kind="extension" label={theirs.dice.throw_them} does={nothing} />

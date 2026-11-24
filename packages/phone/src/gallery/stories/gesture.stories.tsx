@@ -29,7 +29,7 @@ export const an_action_of_an_extension = {
   render: () => <Gesture kind="extension" label="Ping" does={nothing} />,
 }
 
-/** «Ping», an extension's, never read as «Rinomina», the kernel's (the MVP's part 3). */
+/** «Ping», an extension's, never read as «Cambia nome», the kernel's (the MVP's part 3). */
 export const an_action_beside_a_gesture_of_the_kernel = {
   render: () => (
     <p class="gallery-row">
