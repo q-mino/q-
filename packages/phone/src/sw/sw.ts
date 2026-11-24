@@ -15,6 +15,9 @@
 // times as slow on a phone's CPU); a page of the app stays the worker's. A
 // file the cache misses goes to the network, as with the fetch event.
 // [Q, C, 24 Nov 2026]
+// A navigation to another page of the precache (the gallery's, off the
+// release, WEB-28) is that page, of the same version as the files it
+// loads; any other is the app's. [Q, C, 24 Nov 2026]
 
 declare let self: ServiceWorkerGlobalScope
 /** Written by the build before this code (`build/compose.ts`). */
@@ -25,6 +28,17 @@ const the_prefix = 'q-precache-'
 const the_cache = `${the_prefix}${the_precache.version}`
 const the_address = (file: string): string => new URL(file, self.registration.scope).href
 const the_page = the_address('index.html')
+/** The pages of the precache, by their address: the app's, and the gallery's off the release. */
+const the_pages = new Set(
+  the_precache.files.filter((file) => file.endsWith('.html')).map(the_address),
+)
+/** The page a navigation opens: its own, if the precache has it; else the app's, a link's ticket or a view in its fragment. */
+const the_page_of = (request: Request): string => {
+  const address = new URL(request.url)
+  address.search = ''
+  address.hash = ''
+  return the_pages.has(address.href) ? address.href : the_page
+}
 
 /**
  * The Static Routing API (WICG, Chrome 123; a source by its cache's name,
@@ -96,11 +110,11 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
   )
 })
 
-/** What the cache answers for a request of the app's: a page of the app is its `index.html`. */
+/** What the cache answers for a request of the app's: a navigation is its page (`the_page_of`). */
 const the_cached = async (request: Request): Promise<Response | undefined> => {
   const cache = await caches.open(the_cache)
   return request.mode === 'navigate'
-    ? cache.match(the_page)
+    ? cache.match(the_page_of(request))
     : cache.match(request, { ignoreSearch: true })
 }
 

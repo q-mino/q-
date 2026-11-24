@@ -12,6 +12,11 @@
 // file but its own and its version, the hash of the files. A composition,
 // not a bundle: every file is the one `tsc` or its package wrote, Preact's
 // JSX too (`jsx: react-jsx`). [Q, C, 24 Nov 2026]
+// The pages (WEB-26, WEB-28): the app's, `index.html`, and, on every channel
+// but the release, the gallery's, `galleria.html`, from its own main; one
+// import map for both (one walk from the two mains), each page preloading
+// its own start; the stylesheets a page links copied from their source
+// under `packages/`, at the same path, as the modules are. [Q, C, 24 Nov 2026]
 //
 // Usage: node build/compose.ts [--out <dir>]
 
@@ -241,18 +246,18 @@ const the_emitted_of = (emitted: string, source: string): string => {
 const the_folder_of_the_source = (emitted: string, file: string): string =>
   dirname(join(the_packages, relative(emitted, file)))
 
-/** The modules of the page from its main, the import map that finds the bare ones, those of the start. */
+/** The modules of the pages from their mains, the import map that finds the bare ones, what each module imports statically. */
 interface TheGraph {
   readonly modules: ReadonlyMap<string, AModule>
   readonly imports: ReadonlyMap<string, string>
-  readonly at_the_start: readonly string[]
+  readonly statics: ReadonlyMap<string, readonly string[]>
 }
 
-const walks = (emitted: string, main: string): TheGraph => {
+const walks = (emitted: string, mains: readonly string[]): TheGraph => {
   const modules = new Map<string, AModule>()
   const imports = new Map<string, string>()
   const statics = new Map<string, string[]>()
-  const pending = [main]
+  const pending = [...mains]
   for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
     if (modules.has(file)) continue
     const path = the_path_of(emitted, file)
@@ -296,25 +301,40 @@ const walks = (emitted: string, main: string): TheGraph => {
       pending.push(target)
     }
   }
+  const paths = new Set([...modules.values()].map((each) => each.path))
+  if (paths.size !== modules.size)
+    throw new Error('two files at one path: two versions of a dependency')
+  return { modules, imports, statics }
+}
+
+/** The paths of the modules a page's main reaches statically: its start, which it preloads. */
+const the_start_of = (graph: TheGraph, main: string): readonly string[] => {
   const at_the_start = new Set<string>()
   const from_main = [main]
   for (let file = from_main.pop(); file !== undefined; file = from_main.pop()) {
     if (at_the_start.has(file)) continue
     at_the_start.add(file)
-    from_main.push(...(statics.get(file) ?? []))
+    from_main.push(...(graph.statics.get(file) ?? []))
   }
-  const paths = new Set([...modules.values()].map((each) => each.path))
-  if (paths.size !== modules.size)
-    throw new Error('two files at one path: two versions of a dependency')
-  return {
-    modules,
-    imports,
-    at_the_start: [...at_the_start].flatMap((file) => {
-      const module = modules.get(file)
-      return module === undefined || file.endsWith('.json') ? [] : [module.path]
-    }),
-  }
+  return [...at_the_start].flatMap((file) => {
+    const module = graph.modules.get(file)
+    return module === undefined || file.endsWith('.json') ? [] : [module.path]
+  })
 }
+
+/** A page of `dist/`: its template in the phone's folder, its main as `tsc` emits it. */
+interface APage {
+  readonly template: string
+  readonly main: string
+}
+
+/** The app's page, and, but on the release's channel, the gallery's (WEB-28). */
+const the_pages_of = (build: TheBuild): readonly APage[] => [
+  { template: 'index.html', main: 'phone/src/main.js' },
+  ...(build.channel === 'release'
+    ? []
+    : [{ template: 'galleria.html', main: 'phone/src/gallery/main.js' }]),
+]
 
 // --- the page and the worker ---------------------------------------------------
 
@@ -324,9 +344,14 @@ const sha256 = (text: string | Buffer) => createHash('sha256').update(text)
 /** The marker of the page's template where the build puts the policy, the import map and the preloads. */
 const the_marker = '<!-- composed by build/compose.ts -->'
 
-const the_page = (build: TheBuild, graph: TheGraph): string => {
-  const template = readFileSync(join(the_phone, 'index.html'), 'utf8')
-  if (!template.includes(the_marker)) throw new Error(`index.html has no ${the_marker}`)
+const the_page = (
+  name: string,
+  build: TheBuild,
+  graph: TheGraph,
+  at_the_start: readonly string[],
+): string => {
+  const template = readFileSync(join(the_phone, name), 'utf8')
+  if (!template.includes(the_marker)) throw new Error(`${name} has no ${the_marker}`)
   const map = JSON.stringify(
     { imports: Object.fromEntries([...graph.imports].sort(([a], [b]) => a.localeCompare(b))) },
     null,
@@ -339,12 +364,22 @@ const the_page = (build: TheBuild, graph: TheGraph): string => {
     [
       `<meta http-equiv="Content-Security-Policy" content="${policy}" />`,
       `<script type="importmap">${map}</script>`,
-      ...[...graph.at_the_start]
-        .sort()
-        .map((path) => `<link rel="modulepreload" href="./${path}" />`),
+      ...[...at_the_start].sort().map((path) => `<link rel="modulepreload" href="./${path}" />`),
     ].join('\n    '),
   )
 }
+
+/**
+ * The stylesheets a page links (`<link rel="stylesheet" href="./…">`), by
+ * their path in `dist/`, which is their source's under `packages/` (WEB-26).
+ */
+const the_stylesheets_of = (page: string): readonly string[] =>
+  [...page.matchAll(/<link rel="stylesheet" href="\.\/([^"]+)"/g)].map(([, path]) => {
+    if (path === undefined || path.split('/').includes('..')) {
+      throw new Error(`a stylesheet out of packages/: ${String(path)}`)
+    }
+    return path
+  })
 
 /** The service worker, a classic script: the precache, then `src/sw/sw.ts` compiled, with no import or export. */
 const the_worker = (precache: { readonly version: string; readonly files: readonly string[] }) => {
@@ -370,10 +405,11 @@ export const the_precache_of = (out: string) => {
   return { version: all.digest('hex').slice(0, 16), files }
 }
 
-/** What a composition wrote: the module count, and how many of them the start preloads. */
+/** What a composition wrote: the module count, how many of them the app's start preloads, its pages. */
 export interface AComposition {
   readonly modules: number
   readonly at_the_start: number
+  readonly pages: readonly string[]
 }
 
 /** `dist/` composed, into `out`, for a release. */
@@ -381,7 +417,11 @@ export const compose = (out: string, build: TheBuild): AComposition => {
   const emitted = mkdtempSync(join(tmpdir(), 'q-emit-'))
   try {
     emits(emitted)
-    const graph = walks(emitted, join(emitted, 'phone', 'src', 'main.js'))
+    const pages = the_pages_of(build).map((page) => ({ ...page, main: join(emitted, page.main) }))
+    const graph = walks(
+      emitted,
+      pages.map((page) => page.main),
+    )
     rmSync(out, { recursive: true, force: true })
     for (const { file, path } of graph.modules.values()) {
       mkdirSync(dirname(join(out, path)), { recursive: true })
@@ -397,10 +437,24 @@ export const compose = (out: string, build: TheBuild): AComposition => {
       join(out, 'manifest.webmanifest'),
       JSON.stringify(the_manifest(build.base), null, 2),
     )
-    writeFileSync(join(out, 'index.html'), the_page(build, graph))
+    const starts = pages.map((page) => the_start_of(graph, page.main))
+    pages.forEach((page, at) => {
+      const written = the_page(page.template, build, graph, starts[at] ?? [])
+      for (const path of the_stylesheets_of(written)) {
+        const source = join(the_packages, path)
+        if (!existsSync(source)) throw new Error(`${page.template} links ${path}: not in packages/`)
+        mkdirSync(dirname(join(out, path)), { recursive: true })
+        copyFileSync(source, join(out, path))
+      }
+      writeFileSync(join(out, page.template), written)
+    })
     writeFileSync(join(out, 'sw.js'), the_worker(the_precache_of(out)))
     const modules = [...graph.modules.keys()].filter((file) => !file.endsWith('.json')).length
-    return { modules, at_the_start: graph.at_the_start.length }
+    return {
+      modules,
+      at_the_start: starts[0]?.length ?? 0,
+      pages: pages.map((page) => page.template),
+    }
   } finally {
     rmSync(emitted, { recursive: true, force: true })
   }

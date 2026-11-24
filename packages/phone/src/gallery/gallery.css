@@ -1,0 +1,134 @@
+/*
+ * The gallery's own look (WEB-28), in the layer of the screens: it is a
+ * screen of its own. Each frame of a story has its theme's `color-scheme`,
+ * so that the tokens' `light-dark()` draw it in Roano or in Lavagna; a
+ * screen in a frame is as tall as a phone's, not as the page.
+ * [Q, C, 24 Nov 2026]
+ */
+@layer screens {
+  .gallery {
+    display: grid;
+    gap: var(--space-6);
+    max-inline-size: 72rem;
+    margin-inline: auto;
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .gallery > header {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .gallery > header ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery > section {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .gallery > section > h2 {
+    font-size: var(--text-xl);
+    border-block-end: 1px solid var(--roan-line);
+    padding-block-end: var(--space-2);
+  }
+
+  .gallery-story {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .gallery-story > h3 {
+    font-size: var(--text-m);
+  }
+
+  .gallery-story > [data-part='themes'] {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-3);
+  }
+
+  .gallery-story [data-part='theme'] {
+    --screen-height: 36rem;
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--roan-line);
+    border-radius: var(--radius-m);
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  /* A screen fills its frame, as it fills a phone. */
+  .gallery-story [data-part='theme']:has(> .screen) {
+    padding: 0;
+    overflow: clip;
+  }
+
+  .gallery-story [data-theme='light'] {
+    color-scheme: light;
+  }
+
+  .gallery-story [data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  .gallery-story [data-part='theme-name'] {
+    color: var(--ink-soft);
+  }
+
+  /* One story asked alone (the screenshots): the phone's width, its frame the page. */
+  .gallery[data-state='a_story'] {
+    padding: 0;
+    gap: 0;
+  }
+
+  .gallery[data-state='a_story'] .gallery-story > h3,
+  .gallery[data-state='a_story'] [data-part='theme-name'],
+  .gallery[data-state='a_story'] > [data-part='all'] {
+    display: none;
+  }
+
+  .gallery[data-state='a_story'] .gallery-story [data-part='theme'] {
+    --screen-height: 100dvh;
+    min-block-size: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /* The tokens' story: a swatch per colour. */
+  .gallery-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery-swatches > li {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--text-s);
+  }
+
+  .gallery-swatches [data-part='swatch'] {
+    block-size: 2.5rem;
+    border: 1px solid var(--roan-line);
+    border-radius: var(--radius-s);
+  }
+
+  .gallery-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
