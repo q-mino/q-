@@ -7,4 +7,4 @@ coverage/
 CLAUDE.local.md
 .generated/
 .check/
-screens/
+/screens/
