@@ -34,43 +34,55 @@ const the_shed = async () => {
   return shed
 }
 
+/**
+ * The time of the loading's story: 198 lines, each a transition of its own.
+ * Alone about 0.9 s (24 Nov 2026); in the CI's whole check, on a runner
+ * slower by half, it reached vitest's 5 s, on `acceptance` and on the
+ * pull request after it. Twenty times the time alone, as the serial orders'.
+ */
+const the_time_of_the_loading = 20_000
+
 describe('SC-44, a sheet of tools loaded line by line', () => {
-  test('Luca follows the loading: 198 tools in the catalogue, lines 37 and 120 left, the sheet loaded', async () => {
-    const shed = await the_shed()
-    const consumers = shed.processes({ at: wednesday })
-    const events = await all(
-      shed.keeper.load_tools_from_a_sheet(
-        shed.as(luca, '1.0.0').at(wednesday, { operation: 'S-1' }),
-        {
-          lines: the_lines,
-        },
-      ),
-    )
-    await consumers.stop()
-    expect(events[0]).toEqual({ event: 'the_sheet_is_being_loaded', payload: { lines: 200 } })
-    expect(events.at(-1)).toEqual({ event: 'the_sheet_is_loaded', payload: {} })
-    const left = events.filter((event) => event.event === 'the_id_of_the_line_is_taken')
-    expect(left).toEqual([
-      { event: 'the_id_of_the_line_is_taken', payload: { line: 37, tool_id: 'drill-7' } },
-      { event: 'the_id_of_the_line_is_taken', payload: { line: 120, tool_id: 'library-12' } },
-    ])
-    const added = events.filter((event) => event.event === 'the_tool_is_in_the_catalogue')
-    expect(added).toHaveLength(198)
-    expect(added[0]).toEqual({
-      event: 'the_tool_is_in_the_catalogue',
-      payload: { tool_id: 'library-1' },
-    })
-    // One step a line, in the order of the sheet, then the closing: 202 facts
-    // after the drill, the opening first.
-    const facts = (await shed.recorded()).slice(1)
-    expect(facts).toHaveLength(202)
-    expect(facts[0]?.parts[0]?.path).toBe('business/tools/fact/the_loading_of_a_sheet_has_begun')
-    expect(facts.slice(1, 201).every((fact) => fact.parts.length === 2)).toBe(true)
-    expect(facts[201]?.parts[0]?.path).toBe('business/tools/fact/the_sheet_has_been_loaded')
-    // The catalogue: the shed's drill, and the 198 tools of the library.
-    const catalogue = await first(shed.tools.the_catalogue(shed.when(wednesday), {}))
-    expect(catalogue).toMatchObject({ event: 'snapshot', total: 199 })
-  })
+  test(
+    'Luca follows the loading: 198 tools in the catalogue, lines 37 and 120 left, the sheet loaded',
+    async () => {
+      const shed = await the_shed()
+      const consumers = shed.processes({ at: wednesday })
+      const events = await all(
+        shed.keeper.load_tools_from_a_sheet(
+          shed.as(luca, '1.0.0').at(wednesday, { operation: 'S-1' }),
+          {
+            lines: the_lines,
+          },
+        ),
+      )
+      await consumers.stop()
+      expect(events[0]).toEqual({ event: 'the_sheet_is_being_loaded', payload: { lines: 200 } })
+      expect(events.at(-1)).toEqual({ event: 'the_sheet_is_loaded', payload: {} })
+      const left = events.filter((event) => event.event === 'the_id_of_the_line_is_taken')
+      expect(left).toEqual([
+        { event: 'the_id_of_the_line_is_taken', payload: { line: 37, tool_id: 'drill-7' } },
+        { event: 'the_id_of_the_line_is_taken', payload: { line: 120, tool_id: 'library-12' } },
+      ])
+      const added = events.filter((event) => event.event === 'the_tool_is_in_the_catalogue')
+      expect(added).toHaveLength(198)
+      expect(added[0]).toEqual({
+        event: 'the_tool_is_in_the_catalogue',
+        payload: { tool_id: 'library-1' },
+      })
+      // One step a line, in the order of the sheet, then the closing: 202 facts
+      // after the drill, the opening first.
+      const facts = (await shed.recorded()).slice(1)
+      expect(facts).toHaveLength(202)
+      expect(facts[0]?.parts[0]?.path).toBe('business/tools/fact/the_loading_of_a_sheet_has_begun')
+      expect(facts.slice(1, 201).every((fact) => fact.parts.length === 2)).toBe(true)
+      expect(facts[201]?.parts[0]?.path).toBe('business/tools/fact/the_sheet_has_been_loaded')
+      // The catalogue: the shed's drill, and the 198 tools of the library.
+      const catalogue = await first(shed.tools.the_catalogue(shed.when(wednesday), {}))
+      expect(catalogue).toMatchObject({ event: 'snapshot', total: 199 })
+    },
+    the_time_of_the_loading,
+  )
 
   test('Luca’s request retried is the duplicate branch: the same sheet, no second one', async () => {
     const shed = await the_shed()
