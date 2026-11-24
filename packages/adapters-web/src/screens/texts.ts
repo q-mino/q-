@@ -5,6 +5,7 @@
 // phone gives by the extension's name.
 
 import type * as boundary from '@q-mino/boundary'
+import type { TheViewsWords } from '../view_link/index.ts'
 import type { AContactTexts } from './a_contact.tsx'
 import type { APageTexts } from './a_page.tsx'
 import type { AnExtensionTexts } from './an_extension.tsx'
@@ -32,6 +33,8 @@ export interface TheScreensTexts {
   readonly a_page: APageTexts
   readonly what_happened: WhatHappenedTexts
   readonly the_server: TheServerTexts
+  /** The words of the views in the page's address (WEB-25), which she reads in the browser's bar. */
+  readonly views: TheViewsWords
   /** The words of each extension the app carries, by its name (EXT-16, WEB-22). */
   readonly extensions: Readonly<Record<string, boundary.the_words_of_an_extension>>
 }

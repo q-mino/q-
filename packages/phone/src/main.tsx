@@ -101,6 +101,10 @@ render(
           the_navigator: navigator,
         }}
         texts={texts.screens}
+        // The page's session history, where the way is written (WEB-25): `window`, as it is (WEB-5).
+        the_history={window}
+        // A link followed while the app is open, read as the one it opened with (WEB-1, WEB-25).
+        the_link_in={(address) => the_link_of(the_ticket_in_a_link(address))}
         {...with_the_link}
         // Her gesture on the data of an older test release, on the test channel only (WEB-8).
         {...(clears_the_data_and_starts_again === undefined

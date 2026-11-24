@@ -28,6 +28,15 @@ export {
   type ALinksTicket,
 } from './ticket_link/index.ts'
 export {
+  the_fragment_of_a_view,
+  the_mark_of_a_view,
+  the_view_in_a_fragment,
+  the_view_in_a_link,
+  the_way_to_a_view,
+  type AViewsLink,
+  type TheViewsWords,
+} from './view_link/index.ts'
+export {
   the_qr_of,
   the_svg_of,
   the_texts_seen,

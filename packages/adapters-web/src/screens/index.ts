@@ -4,6 +4,8 @@
 // load no DOM rendering.
 export { TheScreens, type TheScreensWiring } from './the_screens.tsx'
 export type { TheScreensTexts } from './texts.ts'
+export type { TheBrowsersHistory } from './the_history.ts'
+export type { TheViewsWords } from '../view_link/index.ts'
 export type {
   TheApp,
   TheCommonTexts,

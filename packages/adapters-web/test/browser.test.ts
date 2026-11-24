@@ -9,6 +9,7 @@ import type {
   TheMediaDevices,
   the_device_s_clock,
 } from '../src/index.ts'
+import type { TheBrowsersHistory } from '../src/screens/index.ts'
 import type * as zz from '@q-mino/domains/library'
 
 // The browser's own objects are what the adapters take (WEB-5): the
@@ -26,5 +27,6 @@ test("the browser's objects are what the adapters take", () => {
   expectTypeOf<typeof fetch>().toExtend<AFetch>()
   expectTypeOf<Navigator>().toExtend<ANavigatorOnLine>()
   expectTypeOf<Window>().toExtend<AWindowOfTheNetwork>()
+  expectTypeOf<Window>().toExtend<TheBrowsersHistory>()
   expectTypeOf<MediaDevices>().toExtend<TheMediaDevices<MediaStream>>()
 })
