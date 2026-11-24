@@ -1,0 +1,90 @@
+/*
+ * The tokens of Cumino's look (WEB-26): every colour, size, radius, shadow
+ * and duration the pages use, by name; no colour outside them. Two themes,
+ * one set of names: Roano, the light one (paper, ink, the roan greys of
+ * Cumino's coat, its speckle as the motif), and Lavagna, the dark one
+ * (slate and chalk); one accent for both, the colour of cumin. Each colour
+ * is `light-dark(Roano, Lavagna)`, chosen by the element's `color-scheme`:
+ * the system's (`light dark`), or a frame's own (the gallery shows both).
+ * Every text pair is at least AA (4.5:1), a graphic edge 3:1.
+ * [Q, C, 24 Nov 2026]
+ */
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* The grounds. */
+    --paper: light-dark(#fbf8f3, #1b2023);
+    --paper-raised: light-dark(#ffffff, #242a2e);
+    --paper-sunken: light-dark(#f0ebe3, #151a1c);
+
+    /* The inks. */
+    --ink: light-dark(#27221e, #ebe9e3);
+    --ink-soft: light-dark(#5f5751, #b3b7b8);
+
+    /* The roan greys: a line between parts, an edge a hand finds (3:1). */
+    --roan-line: light-dark(#d6cec4, #384147);
+    --roan-edge: light-dark(#8e857c, #738087);
+
+    /* Cumin, the accent: the primary gesture, a link, the kernel's own. */
+    --cumin: light-dark(#8a5a2b, #dba56b);
+    --on-cumin: light-dark(#fffaf3, #1d150d);
+    --cumin-ink: light-dark(#7a4e24, #e3b27c);
+
+    /* What she reads to be careful: a gesture that deletes, a fault, a wait. */
+    --danger: light-dark(#a3321e, #f0907b);
+    --fault: light-dark(#9e2f1c, #f29c88);
+    --waiting: light-dark(#6b5a1f, #d9c27a);
+    --focus: light-dark(#1f5fbf, #8cb4ff);
+
+    /* The speckle of the roan coat: the motif of what Cumino tells and does not guarantee. */
+    --speckle: radial-gradient(circle, var(--roan-edge) 0.09rem, transparent 0.11rem);
+    --speckle-step: 0.5rem;
+
+    /* The type: the system's own faces, no file to load (the first visit on a slow network). */
+    --font:
+      system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+    --text-s: 0.875rem;
+    --text-m: 1rem;
+    --text-l: clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem);
+    --text-xl: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);
+    --line: 1.5;
+    --line-tight: 1.25;
+    --weight-strong: 600;
+
+    /* The spaces. */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+    --space-5: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+    --space-6: clamp(2rem, 1.5rem + 2vw, 3rem);
+
+    /* A finger's target, the width a text is read at, a screen's height (a frame's in the gallery). */
+    --tap: 3rem;
+    --measure: 40rem;
+    --screen-height: 100dvh;
+
+    /* The radii. */
+    --radius-s: 0.375rem;
+    --radius-m: 0.75rem;
+    --radius-l: 1.25rem;
+    --radius-round: 999rem;
+
+    /* The shadows. */
+    --shadow-raised:
+      0 1px 2px light-dark(rgb(39 34 30 / 0.08), rgb(0 0 0 / 0.45)),
+      0 0.25rem 0.75rem light-dark(rgb(39 34 30 / 0.06), rgb(0 0 0 / 0.3));
+
+    /* The durations. */
+    --duration-short: 120ms;
+    --duration-medium: 220ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --duration-short: 0ms;
+      --duration-medium: 0ms;
+    }
+  }
+}

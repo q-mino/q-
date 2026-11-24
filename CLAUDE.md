@@ -6,7 +6,7 @@ q- (read _Cumino_) is a network of messages between real people, with no center.
 
 - Read [`docs/architecture.md`](docs/architecture.md): it derives the rules of this code from the architecture paper. Until it exists, write no domain code.
 - Use the words of [`docs/glossary.md`](docs/glossary.md). A new domain term goes there first.
-- If the architecture does not answer a question, stop and ask. Never invent an architecture rule in the code.
+- If the architecture does not answer a question, decide with your judgement and go on: mark the choice `[Q, C, high impact: A to discuss]` where it lives (the code, `docs/architecture.md`), and note the scenario, the case, the decision and the alternatives set aside in the pull request ("High impact, for A") and in the session's log. Alessandro discusses it afterwards, in a session of its own (A, 24 Nov 2026). Never leave a rule unwritten in the code: the rule goes to `docs/architecture.md`, marked.
 
 ## Language
 

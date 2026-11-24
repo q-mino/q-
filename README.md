@@ -28,6 +28,30 @@ pnpm check            # type check, lint, format, architecture graph, tests
 pnpm --filter @q-mino/phone dev
 ```
 
+### The gallery
+
+Every component of the app's look, in every case, in Roano (light) and Lavagna (dark) side by side: the page `galleria.html`, composed on every channel but the release.
+
+- **On the test origin**: [q-mino-prova.github.io/q-/galleria.html](https://q-mino-prova.github.io/q-/galleria.html), from the phone or the computer. If the test app is installed in that browser, its worker serves the gallery of the version it holds: accept the update in the app first (or open the link in a private window).
+- **On your computer**, from the project's folder:
+
+  ```sh
+  pnpm gallery            # composes dist/, serves it, prints the gallery's address
+  pnpm gallery --watch    # composes it again at each change (reload the page by hand)
+  ```
+
+  One story alone, in one theme: `galleria.html?story=design-gesture--a-primary-gesture&theme=dark`.
+
+- **Screenshots** as an Android phone (headless Chrome over CDP, light and dark), into `screens/`:
+
+  ```sh
+  pnpm screens                       # every story
+  pnpm screens --only design-screen  # the stories whose id holds it
+  pnpm screens --forced-dark         # also with Chrome's "darken websites"
+  ```
+
+The stories are in the Component Story Format (`packages/phone/src/gallery/stories/*.stories.tsx`), so they move to Storybook as they are if it is ever wanted.
+
 ## Where the app is published
 
 - `q-mino.github.io/q-/`: releases, from the tags `v*`.

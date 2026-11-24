@@ -1,0 +1,82 @@
+/*
+ * The look of Cumino (WEB-26): the order of its layers, then the reset.
+ * One order for every page (the app, the gallery): the later layer wins,
+ * whatever its specificity; `frame` last, so that no style of an
+ * extension redraws the kernel's mark (EXT-16, WEB-22). [Q, C, 24 Nov 2026]
+ */
+@layer reset, tokens, layout, components, screens, extensions, frame;
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-block-size: 100dvh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: var(--text-m);
+    line-height: var(--line);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  figure,
+  blockquote {
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: var(--line-tight);
+  }
+
+  ul[class],
+  ol[class] {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  a {
+    color: var(--cumin-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* A screen kept on the way but not shown (UI-1): hidden over any layout of a later layer. */
+  [hidden] {
+    display: none !important;
+  }
+}

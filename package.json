@@ -18,6 +18,8 @@
     "generate:check": "node packages/generator/shell/main.ts --check",
     "check": "node scripts/check.mjs",
     "build": "pnpm --filter @q-mino/phone build",
+    "gallery": "pnpm --filter @q-mino/phone gallery",
+    "screens": "node scripts/screens.mjs",
     "check:serial": "node scripts/check.mjs --serial",
     "check:package": "node scripts/check.mjs --package"
   },

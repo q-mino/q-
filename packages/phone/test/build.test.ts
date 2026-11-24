@@ -22,7 +22,7 @@ const a_release: TheBuild = {
 }
 
 let out = ''
-let composed: AComposition = { modules: 0, at_the_start: 0 }
+let composed: AComposition = { modules: 0, at_the_start: 0, pages: [] }
 beforeAll(() => {
   out = mkdtempSync(join(tmpdir(), 'q-dist-'))
   composed = compose(out, a_release)
@@ -107,4 +107,51 @@ describe('the build', () => {
     )
     expect(the_precache_of(out).files).toContain('ext/ping_pong/configurator.js')
   })
+})
+
+describe('the pages and their look (WEB-26, WEB-28)', () => {
+  const the_stylesheets = (page: string): string[] =>
+    [...page.matchAll(/<link rel="stylesheet" href="\.\/([^"]+)"/g)].map(([, path]) => path ?? '')
+
+  test('the app’s page links the stylesheets, copied at their source’s path, and declares both schemes', () => {
+    const page = the_page()
+    const linked = the_stylesheets(page)
+    expect(linked).toEqual([
+      'adapters-web/src/design/styles/reset.css',
+      'adapters-web/src/design/styles/tokens.css',
+      'adapters-web/src/design/styles/layout.css',
+      'adapters-web/src/design/styles/components.css',
+    ])
+    for (const path of linked) expect(existsSync(join(out, path))).toBe(true)
+    expect(page).toContain('<meta name="color-scheme" content="light dark" />')
+    expect(page).not.toContain('<style>')
+    expect(readFileSync(join(out, linked[0] ?? ''), 'utf8')).toContain(
+      '@layer reset, tokens, layout, components, screens, extensions, frame;',
+    )
+  })
+
+  test('off the release, the gallery: its own start, the same import map, precached', () => {
+    expect(composed.pages).toEqual(['index.html', 'galleria.html'])
+    const gallery = readFileSync(join(out, 'galleria.html'), 'utf8')
+    const preloaded = [...gallery.matchAll(/<link rel="modulepreload" href="\.\/([^"]+)"/g)].map(
+      ([, path]) => path ?? '',
+    )
+    expect(preloaded).toContain('phone/src/gallery/main.js')
+    expect(preloaded).not.toContain('phone/src/main.js')
+    expect(gallery).toContain(`<script type="importmap">${the_import_map().text}</script>`)
+    for (const path of the_stylesheets(gallery)) expect(existsSync(join(out, path))).toBe(true)
+    expect(the_precache_of(out).files).toContain('galleria.html')
+  })
+
+  test('on the release, no gallery', () => {
+    const release = mkdtempSync(join(tmpdir(), 'q-release-'))
+    try {
+      const composition = compose(release, { ...a_release, channel: 'release' })
+      expect(composition.pages).toEqual(['index.html'])
+      expect(existsSync(join(release, 'galleria.html'))).toBe(false)
+      expect(existsSync(join(release, 'phone', 'src', 'gallery'))).toBe(false)
+    } finally {
+      rmSync(release, { recursive: true, force: true })
+    }
+  }, 120_000)
 })

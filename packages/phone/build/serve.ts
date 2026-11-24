@@ -3,8 +3,11 @@
 // `--watch` composes it again when a source changes. No module replaced in
 // place: the page is reloaded by hand. Local only, on 127.0.0.1.
 // [Q, C, 24 Nov 2026]
+// With `--gallery` (`pnpm gallery`, WEB-28) it composes `dist/` before it
+// serves it, so that a clean checkout opens the gallery with one command,
+// and tells the gallery's address. [Q, C, 24 Nov 2026]
 //
-// Usage: node build/serve.ts [--watch] [--port <n>] [--dir <dist>]
+// Usage: node build/serve.ts [--gallery] [--watch] [--port <n>] [--dir <dist>]
 
 import { watch } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
@@ -41,7 +44,7 @@ const the_file = (path: string): string | undefined => {
   return file.startsWith(dist + sep) ? file : undefined
 }
 
-createServer((request, response) => {
+const server = createServer((request, response) => {
   const file = the_file(new URL(request.url ?? '/', 'http://localhost').pathname)
   void (async () => {
     if (file === undefined || !(await stat(file).catch(() => undefined))?.isFile()) {
@@ -55,21 +58,27 @@ createServer((request, response) => {
       })
       .end(await readFile(file))
   })()
-}).listen(port, '127.0.0.1', () => {
-  console.log(`http://localhost:${String(port)}${base}`)
 })
 
-if (process.argv.includes('--watch')) {
-  let next: ReturnType<typeof setTimeout> | undefined
-  const composes = (): void => {
-    try {
-      const composed = compose(dist, the_release())
-      console.log(`composed: ${String(composed.modules)} modules`)
-    } catch (fault: unknown) {
-      console.error(fault)
-    }
+const the_gallery = process.argv.includes('--gallery')
+const watches = process.argv.includes('--watch')
+const composes = (): void => {
+  try {
+    const composed = compose(dist, the_release())
+    console.log(`composed: ${String(composed.modules)} modules`)
+  } catch (fault: unknown) {
+    console.error(fault)
   }
-  composes()
+}
+if (the_gallery || watches) composes()
+
+server.listen(port, '127.0.0.1', () => {
+  const address = `http://localhost:${String(port)}${base}`
+  console.log(the_gallery ? `${address}galleria.html` : address)
+})
+
+if (watches) {
+  let next: ReturnType<typeof setTimeout> | undefined
   for (const folder of [
     'adapters-common',
     'adapters-web',
