@@ -42,7 +42,7 @@ export {
   ten_in_rome,
   type ANodeOfTest,
   type WhatTheNodeHolds,
-} from '../../src/gallery/a_node_of_a_story.ts'
+} from '../../src/the_node_of_a_story/index.ts'
 
 /** The page of the test site, where the app is served (PWA-4). */
 export const the_page = 'https://q-mino-prova.github.io/q-/'

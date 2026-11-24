@@ -5,7 +5,7 @@ import { TheScreens } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { texts } from '../../../texts/index.ts'
 import { AScreenStory } from '../../a_screen_story.tsx'
-import { ten_in_rome, type WhatTheNodeHolds } from '../../a_node_of_a_story.ts'
+import { ten_in_rome, type WhatTheNodeHolds } from '../../../the_node_of_a_story/index.ts'
 
 const words = texts.screens
 

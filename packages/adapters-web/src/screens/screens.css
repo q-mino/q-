@@ -67,6 +67,26 @@
     gap: var(--space-2);
   }
 
+  /* A held letter: its words, then her gestures and her reason under them, the row's full width. */
+  .screen .row:has(> [data-part='trail'] form) {
+    grid-template-areas:
+      'lead main'
+      'lead trail';
+    grid-template-columns: auto 1fr;
+    row-gap: var(--space-2);
+    padding-block: var(--space-3);
+  }
+
+  .screen .row:has(> [data-part='trail'] form) > [data-part='lead'] {
+    align-self: start;
+  }
+
+  .screen .row:has(> [data-part='trail'] form) > [data-part='trail'] {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+
   /* An action of an extension and how it ended, beside it. */
   .screen [data-part='action'] {
     display: grid;

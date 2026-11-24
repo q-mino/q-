@@ -4,19 +4,21 @@
 // `phone/test/screens` play them. Each frame of the gallery (Roano,
 // Lavagna) its own node, its own play. [Q, C, 24 Nov 2026]
 
-import { TheScreens } from '@q-mino/adapters-web/screens'
+import type { TheCameras } from '@q-mino/adapters-web'
+import { TheScreens, type TheDevice } from '@q-mino/adapters-web/screens'
 import type * as boundary from '@q-mino/boundary'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { useRef } from 'preact/hooks'
 import { texts } from '../texts/index.ts'
-import { a_camera_of_test, type ACameraOfTest } from './a_camera_of_a_story.ts'
 import {
+  a_camera_of_test,
   a_device_of_test,
   a_node_of_test,
   a_sharing_of_test,
+  type ACameraOfTest,
   type ANodeOfTest,
   type WhatTheNodeHolds,
-} from './a_node_of_a_story.ts'
+} from '../the_node_of_a_story/index.ts'
 import { a_play_starts } from './the_plays.ts'
 
 /** The story's hand on the screens while it plays. */
@@ -33,6 +35,8 @@ export interface TheStorysHand {
   readonly until: (check: () => boolean) => Promise<void>
   /** Until the screen shown has these words. */
   readonly until_it_says: (words: string) => Promise<void>
+  /** Until the app has these words, over the screen shown too (the strip). */
+  readonly until_the_app_says: (words: string) => Promise<void>
 }
 
 /** What a story of a screen opens. */
@@ -45,6 +49,10 @@ export interface AScreenStorysSetting {
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
   /** Whether her phone shares (Web Share); it does by default. */
   readonly shares?: boolean
+  /** How many cameras her phone has; one by default. */
+  readonly cameras?: TheCameras
+  /** A camera of her phone that is not the story's own (off, refused, missing, busy); its `camera` is then of no use. */
+  readonly scans?: TheDevice['scans']
   /** Her gestures, until the screen shows the story's case. */
   readonly plays?: (hand: TheStorysHand) => Promise<void>
 }
@@ -98,6 +106,8 @@ const a_hand = (
     until,
     until_it_says: (words) =>
       until(() => (the_screen_shown(the_root.current)?.textContent ?? '').includes(words)),
+    until_the_app_says: (words) =>
+      until(() => (the_root.current?.textContent ?? '').includes(words)),
   }
 }
 
@@ -108,7 +118,7 @@ export const AScreenStory = (props: AScreenStorysSetting) => {
   )
   if (made.current === undefined) {
     const node = a_node_of_test(props.holds)
-    const camera = a_camera_of_test()
+    const camera = a_camera_of_test(props.cameras)
     made.current = { node, camera }
     const hand = a_hand(the_root, node, camera)
     a_play_starts(
@@ -128,7 +138,11 @@ export const AScreenStory = (props: AScreenStorysSetting) => {
     <div class="a-screen-story" ref={the_root}>
       <TheScreens
         node={node.node}
-        device={a_device_of_test(the_ids, camera.scans, a_sharing_of_test(props.shares ?? true))}
+        device={a_device_of_test(
+          the_ids,
+          props.scans ?? camera.scans,
+          a_sharing_of_test(props.shares ?? true),
+        )}
         texts={
           props.words === undefined ? texts.screens : { ...texts.screens, extensions: props.words }
         }

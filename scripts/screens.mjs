@@ -23,7 +23,7 @@
 // declares `color-scheme: light dark` is spoiled by that setting.
 //
 // Every wait is bounded, so the run always ends. The exit code is 1 if any
-// shot failed.
+// shot failed, or any story of a screen whose play failed (WEB-29).
 //
 // Usage: node scripts/screens.mjs [--url <gallery url>] [--out <dir>]
 //   [--only <substring>] [--forced-dark]
@@ -266,6 +266,9 @@ const shoot = async (page, gallery, story, theme, media, file) => {
     clip: { x: 0, y: 0, width: phone.width, height: Math.ceil(contentSize.height), scale: 1 },
   })
   writeFileSync(file, Buffer.from(data, 'base64'))
+  // A story of a screen whose play did not reach its case (WEB-29): shot, and failed.
+  if (await evaluate(page, `document.querySelector('[data-state="its_play_failed"]') !== null`))
+    throw new Error('its play failed: the story does not show its case')
 }
 
 const stories_of = async (page, gallery) => {
