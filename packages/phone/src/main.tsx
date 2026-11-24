@@ -13,6 +13,7 @@ import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { render } from 'solid-js/web'
 import { App } from './App.tsx'
+import { the_build } from './build_info.ts'
 import {
   the_data_cleared,
   the_start,
@@ -56,7 +57,7 @@ const the_link_of = (link: ALinksTicket): ui_value.what_it_holds | undefined => 
 const root = document.getElementById('root')
 if (root === null) throw new Error('missing #root')
 const clock = the_device_s_clock(the_device_s_zone())
-const page = new URL(import.meta.env.BASE_URL, location.origin).href
+const page = new URL(the_build.base, location.origin).href
 const browser: TheBrowser = {
   indexed_db: indexedDB,
   key_range: IDBKeyRange,
@@ -68,7 +69,7 @@ const browser: TheBrowser = {
 }
 const configuration: TheConfiguration = {
   name: 'cumino',
-  relay: __Q_RELAY__,
+  relay: the_build.relay,
   page,
   extensions: [ping_pong],
   characters: 1_000_000,

@@ -14,18 +14,25 @@ import { a_node_of_test, has_a_button, the_button, until } from './harness.tsx'
 
 vi.mock('../../src/UpdatePrompt.tsx', () => ({ UpdatePrompt: () => undefined }))
 
+// The release of the test, its channel chosen by each test (the build writes it, `build_info.ts`).
+const the_release = vi.hoisted(() => ({
+  version: '0.0.0',
+  commit: '0000000000000000000000000000000000000000',
+  committed_at: 'unknown',
+  channel: 'dev',
+  relay: 'https://relay.cumino.test',
+  base: '/q-/',
+}))
+vi.mock('../../src/build_info.ts', () => ({ the_build: the_release }))
+
 const the_build = (channel: 'release' | 'test'): void => {
-  vi.stubGlobal('__Q_CHANNEL__', channel)
-  vi.stubGlobal('__Q_VERSION__', '0.0.0')
-  vi.stubGlobal('__Q_COMMIT__', '0000000000000000000000000000000000000000')
-  vi.stubGlobal('__Q_COMMITTED_AT__', 'unknown')
+  the_release.channel = channel
 }
 
 let closes: (() => void) | undefined
 afterEach(() => {
   closes?.()
   closes = undefined
-  vi.unstubAllGlobals()
 })
 
 /** The app opened over a start of test, recording, in order, what its wiring was asked. */

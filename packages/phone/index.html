@@ -2,9 +2,11 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
+    <!-- composed by build/compose.ts -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#8a5a2b" />
-    <link rel="icon" href="/q-/icon-192.png" />
+    <link rel="icon" href="./icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>q-</title>
     <!-- Static colours until the graphics block (A, 23 Nov 2026): a browser that darkens the page by itself
          (Brave, Opera, Chrome's forced dark) left nothing readable; "only light" asks it not to. -->
@@ -33,6 +35,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./phone/src/main.js"></script>
   </body>
 </html>
