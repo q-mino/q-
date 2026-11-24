@@ -84,7 +84,7 @@ const the_words_of_what_it_asks = (
     case 'to_send_requests_on_your_bonds':
     case 'a_storage_of_its_own':
     case 'all_that_cumino_reaches':
-    case 'its_frames_act_with_no_tap':
+    case 'its_parts_act_with_no_tap':
       return texts.what_it_asks[asks.asks]
   }
 }

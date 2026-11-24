@@ -47,7 +47,7 @@ export const a_screen = z.discriminatedUnion('screen', [
   z.strictObject({ screen: z.literal('the_extensions') }),
   /** An extension's own screen: its manifest, its activation, its places and its news (EXT-16). */
   z.strictObject({ screen: z.literal('an_extension'), extension: user.value.an_extension }),
-  /** A page of an extension: a screen whose content is the extension's frame, in its mark (EXT-16). */
+  /** A page of an extension: a screen whose content is the extension's part, in its mark (EXT-16). */
   z.strictObject({
     screen: z.literal('a_page'),
     extension: user.value.an_extension,
@@ -120,7 +120,7 @@ export const a_course = z.discriminatedUnion('course', [
 /**
  * The kernel's mark of an extension on a screen (EXT-16, UI-4): its name and a
  * border, and what it holds there: its actions, data the kernel draws; its
- * slots, frames placed in it; its pages, each opened as a screen; on its own
+ * slots, parts placed in it; its pages, each opened as a screen; on its own
  * screen, its letters held and what happened to it without a fact (USR-8).
  */
 export const a_mark = z.strictObject({

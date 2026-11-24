@@ -1,5 +1,5 @@
 import { bonds_ports_on_indexeddb, extensions_ports_on_indexeddb } from '@q-mino/adapters-web'
-import { a_node_on_indexeddb } from '../../indexeddb/storage.ts'
+import { a_node_on_indexeddb, an_indexeddb_that_knows_its_work } from '../../indexeddb/storage.ts'
 import { fake_primitives } from '../../seals/primitives.ts'
 import {
   the_address_book_made_through_its_commands,
@@ -19,7 +19,8 @@ import { stories_of_the_extensions_office } from './stories.ts'
 
 /** A phone's storage on a new node's database on IndexedDB, with the story's address book. */
 const on_indexeddb: AFactory = async (start) => {
-  const node = await a_node_on_indexeddb()
+  const browser = an_indexeddb_that_knows_its_work()
+  const node = await a_node_on_indexeddb(browser.indexed_db)
   const storage: AStorageUnderTest = {
     stored_versions: node.stored_versions,
     log: node.log,
@@ -28,6 +29,7 @@ const on_indexeddb: AFactory = async (start) => {
     held: node.held,
     office: (installed) => extensions_ports_on_indexeddb(node, installed),
     address_book: bonds_ports_on_indexeddb(node, fake_primitives),
+    at_work: browser.at_work,
   }
   await the_address_book_made_through_its_commands(storage, start)
   return storage

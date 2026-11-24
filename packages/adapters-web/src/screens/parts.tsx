@@ -157,7 +157,7 @@ export const ThePoints = (props: {
 
 /**
  * A slot or a page of an extension, in its mark (EXT-16, WEB-23): a
- * component of the extension's in the kernel's frame, deferred until an
+ * component of the extension's in the kernel's mark, deferred until an
  * extension the app carries has one (ping pong has none). Until then the
  * app tells it does not have it, a fault of its composition, never a blank.
  * [Q, C, 24 Nov 2026]

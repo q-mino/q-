@@ -1,4 +1,4 @@
-// A page of an extension, as sentences (UI-5): the frame is there while the
+// A page of an extension, as sentences (UI-5): the part is there while the
 // place still draws the page; she goes back.
 
 import { _ui, type value } from './_scope_dsl.ts'
@@ -28,7 +28,7 @@ const where_it_goes: Readonly<Record<value.what_happens['happens'], _ui.value.wh
 export const after = (state: value.the_state, happens: value.what_happens): value.a_turn =>
   _ui.dsl.it_goes(state, where_it_goes[happens.happens])
 
-/** What the screen shows: the frame while its place still draws the page (the extension active, on a bond offered to it). */
+/** What the screen shows: the part while its place still draws the page (the extension active, on a bond offered to it). */
 export const what_it_shows = (
   state: value.the_state,
   given: value.what_it_is_given,
@@ -38,7 +38,7 @@ export const what_it_shows = (
     .some((mark) => mark.extension === state.mark.extension && mark.pages.includes(state.page))
   return still
     ? {
-        shows: 'the_frame',
+        shows: 'the_part',
         extension: state.mark.extension,
         page: state.page,
         told: state.mark.told,

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { route, through_a_frames_fence } from '../../src/index.ts'
+import { route, through_a_parts_fence } from '../../src/index.ts'
 
-// The routing of a request by what it invokes (EXT-6, F8) and a frame's
+// The routing of a request by what it invokes (EXT-6, F8) and a part's
 // fence (EXT-4, EXT-16; part 12.4): pure functions the kernel's entry
-// (step 13) and the frames (steps 16, 22) are wired through.
+// (step 13) and the parts (steps 16, 22) are wired through.
 
 const a_ping = {
   of: 'an_extension',
@@ -52,7 +52,7 @@ describe('the routing of a request (EXT-6, F8)', () => {
   })
 })
 
-describe('a frame’s fence (EXT-4)', () => {
+describe('a part’s fence (EXT-4)', () => {
   const now = '2026-11-20T09:00:00.000Z'
   const an_invocation = {
     message: 'invoke',
@@ -64,8 +64,8 @@ describe('a frame’s fence (EXT-4)', () => {
 
   test('served: its own extension’s leaf on self, the name the kernel’s', () => {
     expect(
-      through_a_frames_fence({
-        frame: { extension: 'ping_pong', shown: true },
+      through_a_parts_fence({
+        part: { extension: 'ping_pong', shown: true },
         active: true,
         message: an_invocation,
         now,
@@ -87,21 +87,21 @@ describe('a frame’s fence (EXT-4)', () => {
 
   test('refused and traced: not active, not shown, another extension named, a persona named', () => {
     const fenced = (message: unknown, active: boolean, shown: boolean) => {
-      const through = through_a_frames_fence({
-        frame: { extension: 'ping_pong', shown },
+      const through = through_a_parts_fence({
+        part: { extension: 'ping_pong', shown },
         active,
         message,
         now,
       })
-      return through.fenced === 'refused' && through.traced.why === 'a_frame_fenced'
+      return through.fenced === 'refused' && through.traced.why === 'a_part_fenced'
         ? through.traced.fence
         : through.fenced
     }
     expect(fenced(an_invocation, false, true)).toBe('the_extension_is_not_active')
-    expect(fenced(an_invocation, true, false)).toBe('the_frame_is_not_shown')
+    expect(fenced(an_invocation, true, false)).toBe('the_part_is_not_shown')
     expect(fenced({ ...an_invocation, extension: 'greetings' }, true, true)).toBe(
-      'not_a_frames_message',
+      'not_a_parts_message',
     )
-    expect(fenced({ ...an_invocation, persona: 'known' }, true, true)).toBe('not_a_frames_message')
+    expect(fenced({ ...an_invocation, persona: 'known' }, true, true)).toBe('not_a_parts_message')
   })
 })

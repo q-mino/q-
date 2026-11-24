@@ -4,7 +4,7 @@
 // offered; tapped, an activity on the place, once at a time, its pong told in
 // ping pong's words; a slot in the same mark and a page opened from the
 // extension's own screen, not drawn yet (components of the extension's in
-// the kernel's frame, deferred until one has them, WEB-23): told as the
+// the kernel's mark, deferred until one has them, WEB-23): told as the
 // app's fault; the page no longer there once deactivated.
 
 import * as ui_value from '@q-mino/domains/ui/_value.ts'

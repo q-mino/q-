@@ -73,6 +73,7 @@ import {
 } from '../../src/index.ts'
 import { a_relay, hash, type RelayUnderTest } from '../relay/harness.ts'
 import { the_safe_s_machine, type AKernelsStorage } from '../seals/harness.ts'
+import { until_quiet } from '../quiet.ts'
 
 /** The zone of the phones' clock, in the stories. */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -116,18 +117,13 @@ export const last_of = <event>(events: readonly event[]): event => {
 }
 
 /**
- * Everything already set going has run its course, up to its next wait: the
- * oracle and the harness wait on nothing but promises; a delivery of a
- * deposit goes through the safe's reads and the relay's tree, so it takes
- * more turns than a story of one domain.
+ * Everything already set going has run its course, up to its next wait
+ * (TST-11, `../quiet.ts`): the oracle and the harness wait on nothing but
+ * promises (a delivery of a deposit through the safe's reads and the
+ * relay's tree too), so a turn comes after them all. IndexedDB's storage
+ * counts its own work (`../seals/kernel_on_indexeddb.ts`).
  */
-export const quiet = async (): Promise<void> => {
-  for (let turn = 0; turn < 25; turn += 1) {
-    await new Promise<void>((done) => {
-      setTimeout(done, 0)
-    })
-  }
-}
+export const quiet = (): Promise<void> => until_quiet(() => false, "the post's phone quiet")
 
 /** The hash of the post's machine (PST-3): BLAKE2b-256 of bytes in base64url, told in base64url. */
 const the_hash_over = (primitives: Primitives) => (content: string) =>

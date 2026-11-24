@@ -4,7 +4,7 @@ import * as boundary from '../src/index.ts'
 // The messages of the boundary (EXT-2, EXT-15, EXT-16; part 12.4): one ADT
 // per direction, every message a JSON value.
 
-/** A message as it crosses a frame's boundary: copied as JSON (EXT-13). */
+/** A message as it crosses an isolated realm's frame: copied as JSON (EXT-13). */
 const copied = (message: unknown): unknown => JSON.parse(JSON.stringify(message))
 
 const invocation = {
@@ -160,18 +160,18 @@ describe('from an extension to the kernel', () => {
   })
 })
 
-describe('between a frame and the kernel (EXT-16)', () => {
-  test('to the frame: its place with its data, the events of what it invoked or follows', () => {
+describe('between a part and the kernel (EXT-16)', () => {
+  test('to the part: its place with its data, the events of what it invoked or follows', () => {
     for (const message of [
       { message: 'placed', place: 'a_bond', data: { bond: 'B-1' } },
       { message: 'placed', place: 'the_extension', data: {} },
       { message: 'event', id: 'F-1', event: { event: 'snapshot', entries: [] } },
       { message: 'done', id: 'F-1' },
     ]) {
-      expect(boundary.a_message_to_a_frame.parse(copied(message))).toEqual(message)
+      expect(boundary.a_message_to_a_part.parse(copied(message))).toEqual(message)
     }
     expect(
-      boundary.a_message_to_a_frame.safeParse({
+      boundary.a_message_to_a_part.safeParse({
         message: 'placed',
         place: 'the_extension',
         data: { bond: 'B-1' },
@@ -179,7 +179,7 @@ describe('between a frame and the kernel (EXT-16)', () => {
     ).toBe(false)
   })
 
-  test('from the frame: its own extension’s leaves on self, no extension named, no persona', () => {
+  test('from the part: its own extension’s leaves on self, no extension named, no persona', () => {
     for (const message of [
       {
         message: 'invoke',
@@ -196,7 +196,7 @@ describe('between a frame and the kernel (EXT-16)', () => {
         input: {},
       },
     ]) {
-      expect(boundary.a_message_from_a_frame.parse(copied(message))).toEqual(message)
+      expect(boundary.a_message_from_a_part.parse(copied(message))).toEqual(message)
     }
     const invoke = {
       message: 'invoke',
@@ -206,13 +206,13 @@ describe('between a frame and the kernel (EXT-16)', () => {
       input: {},
     }
     expect(
-      boundary.a_message_from_a_frame.safeParse({ ...invoke, extension: 'ping_pong' }).success,
+      boundary.a_message_from_a_part.safeParse({ ...invoke, extension: 'ping_pong' }).success,
     ).toBe(false)
-    expect(boundary.a_message_from_a_frame.safeParse({ ...invoke, persona: 'known' }).success).toBe(
+    expect(boundary.a_message_from_a_part.safeParse({ ...invoke, persona: 'known' }).success).toBe(
       false,
     )
     expect(
-      boundary.a_message_from_a_frame.safeParse({ ...invoke, input: { at: 10n } }).success,
+      boundary.a_message_from_a_part.safeParse({ ...invoke, input: { at: 10n } }).success,
     ).toBe(false)
   })
 })

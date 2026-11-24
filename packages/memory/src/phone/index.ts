@@ -1009,7 +1009,7 @@ const a_phone_wired =
       partitions: storage,
       /** The kernel's trace (EXT-6), the trees' (PER-14), the extensions' notices (EXT-2), in order. */
       traced: a_view_of(traced),
-      /** Writes an entry of the kernel's trace (EXT-6): a frame's fence's, which the screens' door refuses (EXT-4, WEB-23). */
+      /** Writes an entry of the kernel's trace (EXT-6): a part's fence's, which the screens' door refuses (EXT-4, WEB-23). */
       trace,
       tree_traced: a_view_of(tree_traced),
       notices: a_view_of(notices),

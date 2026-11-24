@@ -1,5 +1,4 @@
 import { fake_primitives } from '../seals/primitives.ts'
-import { quiet } from '../seals/harness.ts'
 import { the_kernel_on_indexeddb } from '../seals/kernel_on_indexeddb.ts'
 import { stories_of_the_address_book } from './stories.ts'
 
@@ -14,5 +13,5 @@ import { stories_of_the_address_book } from './stories.ts'
 stories_of_the_address_book(
   'on IndexedDB, over the fake primitives port',
   fake_primitives,
-  the_kernel_on_indexeddb(quiet),
+  the_kernel_on_indexeddb,
 )

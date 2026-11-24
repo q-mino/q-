@@ -18,10 +18,10 @@ import { version } from './version.ts'
 /** An action (EXT-16): data the kernel draws in a place, which invokes a leaf of the extension on `self` with the place's data. */
 const an_action = z.strictObject({ on: place, invokes: a_leaf })
 
-/** A slot (EXT-16): a frame the kernel places in a screen of its own, with a document of the extension's bundle. */
+/** A slot (EXT-16): a part the kernel places in a screen of its own, with a document of the extension's bundle. */
 const a_slot = z.strictObject({ on: place, shows: a_file })
 
-/** A page (EXT-16): a frame the kernel places as a screen, from the extension's own screen. */
+/** A page (EXT-16): a part the kernel places as a screen, from the extension's own screen. */
 const a_page = z.strictObject({ on: z.literal('the_extension'), shows: a_file })
 
 /**

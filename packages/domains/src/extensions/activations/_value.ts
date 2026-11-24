@@ -54,7 +54,7 @@ export type extension_point = z.output<typeof extension_point>
  * points; its leaves on `known`, by path, at any major, the ways a bond
  * reaches the node through it; and the majors its surfaces speak on each
  * persona (none where it adds no leaf). Each list a set, in no order. The
- * office's own view (GR-3): what is shown and accepted, not the frames'
+ * office's own view (GR-3): what is shown and accepted, not the parts'
  * files nor the leaves' schemas, which are the kernel's to enforce (EXT-4).
  *
  * @see {@link value.manifest}
@@ -67,7 +67,7 @@ export type manifest = z.output<typeof manifest>
  * added to what it sees on `known`, or to what it touches; an extension
  * point added (by its kind, name and place: one moved to another place is
  * a new way to appear); a leaf added on `known` (a new way for a bond to
- * reach the node). A leaf on `self`, a new major, a new version or a frame's
+ * reach the node). A leaf on `self`, a new major, a new version or a part's
  * file ask no more.
  *
  * @see {@link value.more_asked}

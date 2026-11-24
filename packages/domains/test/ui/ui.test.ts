@@ -1107,7 +1107,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       user_dsl.what_an_extension_asks(the_new_one),
     )
     expect(its_notice.shows === 'the_extension' && its_notice.the_notice).toContainEqual({
-      asks: 'its_frames_act_with_no_tap',
+      asks: 'its_parts_act_with_no_tap',
     })
     const active = an_extension.what_it_shows(start, given('active'))
     expect(active.shows === 'the_extension' && active.may).toBe('deactivate')
@@ -1245,7 +1245,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
         extensions: [ping_pong_seen('active', with_a_page)],
         offers: offered_to(L_b, L_c),
       }),
-    ).toEqual({ shows: 'the_frame', extension: ping_pong, page: 'the_scores', told: its_own })
+    ).toEqual({ shows: 'the_part', extension: ping_pong, page: 'the_scores', told: its_own })
     expect(
       a_page.what_it_shows(the_page, {
         extensions: [ping_pong_seen('not_active', with_a_page)],

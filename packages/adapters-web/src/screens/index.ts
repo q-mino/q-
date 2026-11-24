@@ -25,4 +25,4 @@ export {
   type TheHandshakeInPersonTexts,
 } from './the_handshake_in_person.tsx'
 export type { WhatHappenedTexts } from './what_happened.tsx'
-export type { AFrameServed, AnEventOfALeaf, HerNode, HerTicket } from '../her_node/index.ts'
+export type { APartServed, AnEventOfALeaf, HerNode, HerTicket } from '../her_node/index.ts'

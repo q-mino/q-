@@ -1,5 +1,4 @@
 import { fake_primitives } from './primitives.ts'
-import { quiet } from './harness.ts'
 import { the_kernel_on_indexeddb } from './kernel_on_indexeddb.ts'
 import { stories_of_the_safe } from './stories.ts'
 
@@ -14,5 +13,5 @@ import { stories_of_the_safe } from './stories.ts'
 stories_of_the_safe(
   'on IndexedDB, over the fake primitives port',
   fake_primitives,
-  the_kernel_on_indexeddb(quiet),
+  the_kernel_on_indexeddb,
 )

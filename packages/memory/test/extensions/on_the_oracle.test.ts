@@ -1,7 +1,8 @@
 import * as zz from '@q-mino/domains/library'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
 import { describe, expect, test } from 'vitest'
-import { all, quiet } from '../post/harness.ts'
+import { quiet } from '../node/harness.ts'
+import { all } from '../post/harness.ts'
 import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 
 // The checks of step 12 (plan.md, "Checks"), on q-'s oracle with two nodes

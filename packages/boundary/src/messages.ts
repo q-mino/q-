@@ -12,7 +12,7 @@ import { a_leaf, a_name, json, json_object, semver } from './values.ts'
 // The messages of the boundary (EXT-2, EXT-15, EXT-16): one ADT per
 // direction, by `message`, so that how an extension is loaded (with the app,
 // in process, isolated: EXT-13) changes without changing what crosses it.
-// Every message is a JSON value (a frame passes it as it is); the boundary
+// Every message is a JSON value (an isolated realm's frame passes it as it is); the boundary
 // carries, never translates (ADP-4). An exchange is paired by its `id`: an
 // invocation and its events, a call and its answer; the side that opens it
 // names it, unique among its exchanges in flight, so that several are in
@@ -148,9 +148,9 @@ export const a_message_from_an_extension = z.discriminatedUnion('message', [
 ])
 export type a_message_from_an_extension = z.output<typeof a_message_from_an_extension>
 
-// Between a frame and the kernel (EXT-2 "Its frames' messages", EXT-16).
+// Between a part and the kernel (EXT-2 "Its parts' messages", EXT-16).
 
-/** Where the kernel placed a frame, with the place's data (EXT-16), an ADT by place. */
+/** Where the kernel placed a part, with the place's data (EXT-16), an ADT by place. */
 const placed = z.discriminatedUnion('place', [
   z.strictObject({
     message: z.literal('placed'),
@@ -164,17 +164,17 @@ const placed = z.discriminatedUnion('place', [
   }),
 ])
 
-/** The messages from the kernel to a frame: its place's data; the events of what it invoked or follows, and their end. */
-export const a_message_to_a_frame = z.discriminatedUnion('message', [placed, event, done])
-export type a_message_to_a_frame = z.output<typeof a_message_to_a_frame>
+/** The messages from the kernel to a part: its place's data; the events of what it invoked or follows, and their end. */
+export const a_message_to_a_part = z.discriminatedUnion('message', [placed, event, done])
+export type a_message_to_a_part = z.output<typeof a_message_to_a_part>
 
 /**
- * The messages from a frame to the kernel (EXT-16): an invocation of a leaf
+ * The messages from a part to the kernel (EXT-16): an invocation of a leaf
  * on `self`, and a read it follows there, each by its path and the version
- * the frame speaks; its own extension's only, with no extension's name in
- * it: the kernel adds it (EXT-4, a frame's fence).
+ * the part speaks; its own extension's only, with no extension's name in
+ * it: the kernel adds it (EXT-4, a part's fence).
  */
-export const a_message_from_a_frame = z.discriminatedUnion('message', [
+export const a_message_from_a_part = z.discriminatedUnion('message', [
   z.strictObject({
     message: z.literal('invoke'),
     id: an_id,
@@ -190,4 +190,4 @@ export const a_message_from_a_frame = z.discriminatedUnion('message', [
     input: json,
   }),
 ])
-export type a_message_from_a_frame = z.output<typeof a_message_from_a_frame>
+export type a_message_from_a_part = z.output<typeof a_message_from_a_part>

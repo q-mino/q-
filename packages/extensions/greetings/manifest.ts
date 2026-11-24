@@ -11,7 +11,7 @@ import type { registry } from './persona/self/_registry.ts'
 // on `known` the bond alone; it calls the port of requests, toward its own
 // leaf `greet` on a bond's node, and its storage; on a bond's screen, the
 // action `greet` (the label "Saluta", its `texts/` with step 16) invokes
-// its leaf on `self` with the bond (EXT-16). No slot, no page: a frame's
+// its leaf on `self` with the bond (EXT-16). No slot, no page: a part's
 // document comes with steps 16 and 22.
 
 export const manifest = boundary.manifest({
