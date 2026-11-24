@@ -41,6 +41,27 @@ export interface TheWordsOfASlot {
   readonly who_has_the_screen: string
 }
 
+/**
+ * A slot to the top layer, after the slot around it on the whole screen if
+ * there is one (a story opens both at once: the inner one first, it would
+ * close as the outer one opens, a popover not inside the last one shown).
+ */
+const on_the_top_layer = (slot: HTMLElement): void => {
+  const around = slot.parentElement?.closest<HTMLElement>('.slot[data-state="on_the_whole_screen"]')
+  if (around !== null && around !== undefined && !around.matches(':popover-open')) {
+    around.addEventListener(
+      'toggle',
+      () => {
+        if (slot.isConnected && slot.dataset['state'] === 'on_the_whole_screen')
+          on_the_top_layer(slot)
+      },
+      { once: true },
+    )
+    return
+  }
+  slot.showPopover()
+}
+
 export const Slot = <Subject,>(props: {
   /** The place of the kernel's screens it sits in (`a_bond`, `the_extension`). */
   place: string
@@ -80,7 +101,7 @@ export const Slot = <Subject,>(props: {
     const whole = where === 'on_the_whole_screen'
     if (whole === shown.current) return
     if (popover !== undefined && 'showPopover' in slot) {
-      if (whole) slot.showPopover()
+      if (whole) on_the_top_layer(slot)
       else if (shown.current === true) slot.hidePopover()
     }
     if (shown.current !== undefined)

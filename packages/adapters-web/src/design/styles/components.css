@@ -502,6 +502,7 @@
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
+    align-content: start;
     gap: var(--space-2);
     min-inline-size: 0;
   }
@@ -542,6 +543,7 @@
   /* Corner: who has the screen, the chain of the names, and the gesture that gives it back. */
   .corner {
     display: inline-flex;
+    justify-self: end;
     align-items: center;
     gap: var(--space-2);
     padding-inline-start: var(--space-3);

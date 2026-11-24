@@ -92,7 +92,6 @@
     position: sticky;
     inset-block-start: var(--space-2);
     z-index: 1;
-    justify-self: end;
   }
 
   /* An action of an extension and how it ended, beside it. */
