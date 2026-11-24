@@ -6,7 +6,8 @@
   "license": "AGPL-3.0-only",
   "exports": {
     ".": "./src/index.ts",
-    "./screens": "./src/screens/index.ts"
+    "./screens": "./src/screens/index.ts",
+    "./design": "./src/design/index.ts"
   },
   "dependencies": {
     "@preact/signals": "2.11.4",
