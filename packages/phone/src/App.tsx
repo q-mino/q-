@@ -7,6 +7,7 @@ import {
   type WhyItDoesNotStart,
   type WhyItStopped,
 } from './node/index.ts'
+import { the_build } from './build_info.ts'
 import { texts } from './texts/index.ts'
 import { UpdatePrompt } from './UpdatePrompt.tsx'
 
@@ -91,7 +92,7 @@ export const App = (props: TheAppsWiring) => {
     })
   }
   /** The gesture, on the test channel only (WEB-8): on the release the sentence alone. */
-  const on_the_test_channel = __Q_CHANNEL__ !== 'release'
+  const on_the_test_channel = the_build.channel !== 'release'
   onMount(() => {
     opens('if_no_tab_is')
   })
@@ -224,19 +225,19 @@ export const App = (props: TheAppsWiring) => {
         </Match>
       </Switch>
       <footer>
-        <Show when={__Q_CHANNEL__ !== 'release'}>
+        <Show when={the_build.channel !== 'release'}>
           <p>
             <strong>{texts.app.testChannel}</strong>
           </p>
         </Show>
         <h2>{texts.about.title}</h2>
         <p>
-          {texts.app.name} ({texts.app.reading}) · {texts.about.version}: {__Q_VERSION__} ·{' '}
+          {texts.app.name} ({texts.app.reading}) · {texts.about.version}: {the_build.version} ·{' '}
           {texts.about.code}:{' '}
-          <a href={`${repository}/commit/${__Q_COMMIT__}`}>{__Q_COMMIT__.slice(0, 7)}</a>
-          <Show when={__Q_COMMITTED_AT__ !== 'unknown'}>
+          <a href={`${repository}/commit/${the_build.commit}`}>{the_build.commit.slice(0, 7)}</a>
+          <Show when={the_build.committed_at !== 'unknown'}>
             {' '}
-            {texts.about.committed_on(the_time_of(__Q_COMMITTED_AT__))}
+            {texts.about.committed_on(the_time_of(the_build.committed_at))}
           </Show>
         </p>
       </footer>

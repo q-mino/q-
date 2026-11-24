@@ -1,0 +1,32 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": [],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "composite": false,
+    "declaration": false,
+    "emitDeclarationOnly": false,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "noEmitOnError": true,
+    "rootDir": "../..",
+    "outDir": "../.emit"
+  },
+  "include": [
+    "../src",
+    "../../domains/src",
+    "../../boundary/src",
+    "../../adapters-common/src",
+    "../../adapters-web/src",
+    "../../memory/src",
+    "../../extensions/ping_pong"
+  ],
+  "exclude": [
+    "../src/sw",
+    "../../extensions/ping_pong/test",
+    "../../extensions/ping_pong/scripts",
+    "../../extensions/ping_pong/node_modules"
+  ]
+}

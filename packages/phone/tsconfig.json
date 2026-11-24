@@ -5,7 +5,7 @@
     "rootDir": ".",
     "outDir": ".tsbuild/config"
   },
-  "include": ["vite.config.ts", "build"],
+  "include": ["build"],
   "references": [
     {
       "path": "./src"
