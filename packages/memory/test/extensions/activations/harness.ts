@@ -44,6 +44,7 @@ import {
   type ExtensionsState,
 } from '../../../src/index.ts'
 import { fake_primitives } from '../../seals/primitives.ts'
+import { until_quiet } from '../../quiet.ts'
 
 /** The zone of the phone's clock, in the stories. */
 export const time_zone = zz.time_zone.parse('Europe/Rome')
@@ -103,19 +104,6 @@ export const entries_of = <entry>(
   const first = events[0]
   if (first?.event !== 'snapshot') throw new Error('a read began with no snapshot')
   return first.entries
-}
-
-/**
- * Everything already set going has run its course, up to its next wait: a
- * delivery of a question reads the other phone's office, so it takes some
- * turns of the event loop, each a real timer.
- */
-export const quiet = async (): Promise<void> => {
-  for (let turn = 0; turn < 25; turn += 1) {
-    await new Promise<void>((done) => {
-      setTimeout(done, 0)
-    })
-  }
 }
 
 /** A question as the office asks it: the payload of `ask_for_the_extensions_in_common`. */
@@ -233,6 +221,8 @@ export interface AStorageUnderTest {
   readonly held: () => Promise<readonly zz.HeldEntry[]>
   readonly office: (installed: Installed) => (versions: zz.Versions) => TheOffice
   readonly address_book: (versions: zz.Versions) => TheAddressBook
+  /** Whether the storage is at work, a transaction of it not yet over (TST-11); the oracle's cell never is. */
+  readonly at_work: () => boolean
 }
 
 /** How the phone of a story is kept (TST-1): a storage that starts with the story's address book. */
@@ -251,6 +241,7 @@ export const on_a_cell: AFactory = (start) => {
     held: () => Promise.resolve(made.held()),
     office: (installed) => extensions_ports(made, installed),
     address_book: bonds_ports(seen_by<BondsState, PhoneState>(made), fake_primitives),
+    at_work: () => false,
   })
 }
 
@@ -387,6 +378,15 @@ export const a_phone = async (start: Start, factory: AFactory = on_a_cell) => {
   const answering: { current: Answering } = {
     current: () => Promise.resolve({ outcome: 'no_answer_came_back', why: 'no_response' }),
   }
+  // The questions being answered: an answer may read the other phone's office (its storage at work, not this one's).
+  let answers_in_flight = 0
+  /**
+   * Everything already set going has run its course, up to its next wait
+   * (TST-11, `../../quiet.ts`): no transaction of its storage in flight, no
+   * question of its being answered.
+   */
+  const quiet = (): Promise<void> =>
+    until_quiet(() => made.at_work() || answers_in_flight > 0, `${start.face}'s phone quiet`)
   const executor = zz.effect_executor({
     registry: activations_registry,
     versions,
@@ -394,7 +394,10 @@ export const a_phone = async (start: Start, factory: AFactory = on_a_cell) => {
   })({
     'extensions/activations/effect/ask_for_the_extensions_in_common': async (entry) => {
       questions.push(entry.payload)
-      const answered = await answering.current(entry.payload)
+      answers_in_flight += 1
+      const answered = await answering.current(entry.payload).finally(() => {
+        answers_in_flight -= 1
+      })
       return 'exhausted' in answered
         ? { outcome: 'exhausted', reason: answered.exhausted }
         : {

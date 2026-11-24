@@ -35,7 +35,7 @@ describe('user, on the dsl alone (part 15.2)', () => {
     })
     const asks = what_an_extension_asks(with_a_slot)
     expect(asks[0]).toEqual({ asks: 'to_see_the_name_of_the_bond' })
-    expect(asks.at(-1)).toEqual({ asks: 'its_frames_act_with_no_tap' })
+    expect(asks.at(-1)).toEqual({ asks: 'its_parts_act_with_no_tap' })
   })
 
   test('how a closing ends: the wait over, the base events and the node’s closings', () => {
@@ -147,10 +147,10 @@ describe('user, on the dsl alone (part 15.2)', () => {
       ],
       [
         {
-          why: 'a_frame_fenced',
+          why: 'a_part_fenced',
           extension,
           now,
-          fence: 'the_frame_is_not_shown',
+          fence: 'the_part_is_not_shown',
           message: {},
         },
         { happened: 'an_extension_did_what_it_does_not_declare', extension },

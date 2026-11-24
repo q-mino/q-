@@ -11,7 +11,7 @@
 // operation of its own, drawn before the first attempt (DOM-12); what `user`
 // does not take is thrown, so that the screens tell it. A change is told at
 // each fact the node's log records after it caught up (DOM-17), and at each
-// news written beside it (F6). A frame's message the kernel's fence served
+// news written beside it (F6). A part's message the kernel's fence served
 // is invoked on its extension's leaves mounted on `self`, as the user, under
 // an operation the kernel draws (WEB-23); one it refused is traced. The
 // phone's composition root gives it the phone it composed (step 25); the
@@ -41,7 +41,7 @@ import { z } from 'zod'
 import type { TheDeviceSNetwork } from '../network/index.ts'
 import type { TheRelayAsMet } from '../relay_client/index.ts'
 import { the_link_of_a_ticket } from '../ticket_link/index.ts'
-import type { AFrameServed, AnEventOfALeaf, HerNode, HerTicket } from './her_node.ts'
+import type { APartServed, AnEventOfALeaf, HerNode, HerTicket } from './her_node.ts'
 
 /** A command of `user`'s, as its use case types it (USR-1). */
 type ACommand<use_case> = zz.CommandUseCasePort<use_case>
@@ -81,17 +81,17 @@ export interface TheNewsOfHerNode {
 }
 
 /**
- * What the frames reach of the phone (EXT-16, WEB-23): an extension's
+ * What the parts reach of the phone (EXT-16, WEB-23): an extension's
  * leaves mounted on `self`, as the phone hosts it (none if the app does not
  * carry it), and the kernel's trace (EXT-6).
  */
-export interface TheFramesOfHerNode {
+export interface ThePartsOfHerNode {
   readonly on_self: (extension: string) => zz.PortByPath<zz.EntryOf<typeof persona>> | undefined
   readonly traces: (entry: TheKernelsTraced) => void
 }
 
-/** The scope of a frame's commands on `self` (WEB-23): the persona, and who asks through it. */
-export const the_scope_of_a_frame = 'self/a_frame'
+/** The scope of a part's commands on `self` (WEB-23): the persona, and who asks through it. */
+export const the_scope_of_a_part = 'self/a_part'
 
 /**
  * What the composition root gives the link, from the phone it composed: the
@@ -114,7 +114,7 @@ export interface HerNodesWiring {
   readonly the_extensions_installed: () => readonly string[]
   readonly the_news: TheNewsOfHerNode
   readonly the_log: zz.FactLog
-  readonly the_frames: TheFramesOfHerNode
+  readonly the_parts: ThePartsOfHerNode
   readonly the_relay: { readonly address: string; readonly as_met: TheRelayAsMet }
   readonly the_network: TheDeviceSNetwork
 }
@@ -476,15 +476,15 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
   }
 
   /**
-   * What a frame asks (EXT-16, WEB-23): its extension's leaf on `self`,
-   * invoked as the user (`self` is her persona: the frame acts on her node,
+   * What a part asks (EXT-16, WEB-23): its extension's leaf on `self`,
+   * invoked as the user (`self` is her persona: the part acts on her node,
    * shown in the mark as its extension's activity), a command under an
-   * operation the kernel draws in the frames' scope, never the frame's id,
+   * operation the kernel draws in the parts' scope, never the part's id,
    * which pairs its exchange only; a read with none. An extension the app
    * does not carry gives nothing.
    */
-  const a_frame_asks = async function* (served: AFrameServed): AsyncGenerator<AnEventOfALeaf> {
-    const on_self = wiring.the_frames.on_self(served.invokes.extension)
+  const a_part_asks = async function* (served: APartServed): AsyncGenerator<AnEventOfALeaf> {
+    const on_self = wiring.the_parts.on_self(served.invokes.extension)
     if (on_self === undefined) return
     const version = zz.semver.parse(served.invokes.version)
     const at = now()
@@ -492,14 +492,14 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
       {
         ...at,
         caller: { is: 'the_user' },
-        // Declared by her node, at its instant (PER-23): the frame acts as the user.
+        // Declared by her node, at its instant (PER-23): the part acts as the user.
         declared_at: at.now,
         version,
         ...(served.exchange === 'invoke'
           ? {
               operation: {
                 id: zz.operation_id.parse(wiring.draws_an_id()),
-                scope: the_scope_of_a_frame,
+                scope: the_scope_of_a_part,
               },
             }
           : {}),
@@ -559,8 +559,8 @@ export const her_node_over = (wiring: HerNodesWiring): HerNode => {
         ...wiring.the_news.tree_traced().flatMap((entry) => what_happened_in_a_tree(entry) ?? []),
       ]),
     asks,
-    a_frame_asks,
-    a_frame_is_fenced: wiring.the_frames.traces,
+    a_part_asks,
+    a_part_is_fenced: wiring.the_parts.traces,
     when_it_changes,
   }
 }

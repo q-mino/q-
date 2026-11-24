@@ -17,7 +17,7 @@ export {
   type HerNode,
   type HerNodesWiring,
   type HerTicket,
-  type TheFramesOfHerNode,
+  type ThePartsOfHerNode,
   type TheNewsOfHerNode,
   type TheUsersPorts,
 } from './her_node/index.ts'

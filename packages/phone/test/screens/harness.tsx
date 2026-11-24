@@ -176,12 +176,12 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
       return Promise.resolve()
     },
     // No part of an extension is drawn yet (WEB-23): none asks, none is fenced.
-    a_frame_asks: () => ({
+    a_part_asks: () => ({
       [Symbol.asyncIterator]: () => ({
         next: () => Promise.resolve({ done: true, value: undefined }),
       }),
     }),
-    a_frame_is_fenced: () => undefined,
+    a_part_is_fenced: () => undefined,
     when_it_changes: (listener) => {
       listeners = [...listeners, listener]
       return () => {

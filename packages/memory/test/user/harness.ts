@@ -56,6 +56,7 @@ import {
   type Story,
 } from '../node/harness.ts'
 import { a_transport } from '../post/harness.ts'
+import { the_timers_of_a_node, until_quiet } from '../quiet.ts'
 import type { AStorageUnderTest } from '../stack/harness.ts'
 
 export { composed_from, ping_pong_manifest, until } from '../node/harness.ts'
@@ -67,12 +68,6 @@ export type AFactory = () => Promise<AStorageUnderTest>
 /** Ping pong's manifest as she is shown it (EXT-7): the office's words. */
 export const the_manifest_shown = (): user_value.a_manifest =>
   a_manifest.parse(the_manifest_to_accept(composed_from(ping_pong_manifest).manifest))
-
-/** A real timer of so many milliseconds. */
-const a_timer = (milliseconds: number) => (): Promise<void> =>
-  new Promise<void>((done) => {
-    setTimeout(done, milliseconds)
-  })
 
 /**
  * The world's random bytes for a node: each draw new, of the length asked,
@@ -142,30 +137,19 @@ const a_node = async (story: Story, start: Start, factory: AFactory) => {
   // committed, or refused as a full partition refuses it, so that the
   // extension falls there (EXT-15); then as the partition answers.
   const commits: ('committed' | 'refused')[] = []
-  // The node's real timers running: the realm's short waits and the release's pauses.
-  let timers = 0
-  /** A real timer of the node's, counted while it runs: the node is not quiet before it rings. */
-  const a_timer_of_the_node = (milliseconds: number) => async (): Promise<void> => {
-    timers += 1
-    try {
-      await a_timer(milliseconds)()
-    } finally {
-      timers -= 1
-    }
-  }
+  // The node's real timers, counted while they run: the realm's short waits and the release's pauses.
+  const timers = the_timers_of_a_node()
+  const a_timer_of_the_node = timers.a_timer
   /**
    * The node is quiet (DOM-14, DOM-16): everything set going has run its
    * course up to its next wait, on the log's bell, the story's clock or a
    * stop. Seen from a turn of the event loop, when every promise settled:
    * no transaction of its storage in flight and no timer of its own running.
-   * A condition, not a count of turns (TST-11): how much of IndexedDB's
-   * work fits in a turn depends on the machine's load.
+   * A condition, not a count of turns (TST-11, `../quiet.ts`): how much of
+   * IndexedDB's work fits in a turn depends on the machine's load.
    */
   const quiet = (): Promise<void> =>
-    until(async () => {
-      await a_timer(0)()
-      return !kept.at_work() && timers === 0
-    }, `${start.name}'s node quiet`)
+    until_quiet(() => kept.at_work() || timers.running(), `${start.name}'s node quiet`)
   /** The time that passes in the extension's realm (DOM-3): at once over, or for a screen's time. */
   const the_screens_wait: zz.Elapsed =
     start.screens_follow === 'for_their_time'

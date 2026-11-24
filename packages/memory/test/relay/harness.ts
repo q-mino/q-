@@ -27,6 +27,7 @@ import {
   type Shown,
   type Strategy,
 } from '../../src/index.ts'
+import { until_quiet } from '../quiet.ts'
 
 /** The zone of the relay's clock: it keeps time, not a calendar (MBX-1). */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -200,17 +201,11 @@ export const a_relay = async (start: Start = {}) => {
 export type RelayUnderTest = Awaited<ReturnType<typeof a_relay>>
 
 /**
- * Everything already set going has run its course, up to its next wait: the
- * oracle and the harness wait on nothing but promises, so a turn of the
- * runtime's timers comes after them all.
+ * Everything already set going has run its course, up to its next wait
+ * (TST-11, `../quiet.ts`): the oracle, SQLite's store and the harness wait
+ * on nothing but promises, so a turn comes after them all.
  */
-export const quiet = async (): Promise<void> => {
-  for (let turn = 0; turn < 3; turn += 1) {
-    await new Promise<void>((done) => {
-      setTimeout(done, 0)
-    })
-  }
-}
+export const quiet = (): Promise<void> => until_quiet(() => false, "the relay's quiet")
 
 /** Every event of a port's stream, until it ends. */
 export const all = async <event>(events: AsyncIterable<event>): Promise<readonly event[]> => {

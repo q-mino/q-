@@ -6,7 +6,7 @@ import type * as post_value from '@q-mino/domains/post/_value.ts'
 // since what it traces stands before every tree or around an extension,
 // with no leaf of the kernel's read. Its entries are the kernel's type,
 // never the library's (`zz.Traced` knows no extension, § 3): each tells
-// what came (a request as it came, a call, an event, a frame's message) and
+// what came (a request as it came, a call, an event, a part's message) and
 // why, a closed set. A port required at wiring; eventual and without
 // guarantees (D54): the fact counts, never the trace. Its reader is the
 // user (F6), on the screens of step 15, what concerns an extension in its
@@ -33,12 +33,11 @@ export type ASilence =
   | 'the_extension_is_not_offered_to_the_bond'
 
 /**
- * Why a frame's message was not served (EXT-4, "A frame's fence"): its
- * extension not active, the frame not shown (placed in no screen the user
- * has open), or no message of a frame's (EXT-2).
+ * Why a part's message was not served (EXT-4, "A part's fence"): its
+ * extension not active, the part not shown (placed in no screen the user
+ * has open), or no message of a part's (EXT-2).
  */
-export type AFence =
-  'the_extension_is_not_active' | 'the_frame_is_not_shown' | 'not_a_frames_message'
+export type AFence = 'the_extension_is_not_active' | 'the_part_is_not_shown' | 'not_a_parts_message'
 
 /**
  * Why an envelope collected at a mailbox of mine went no further (PST-4):
@@ -79,7 +78,7 @@ export type AResponseNotDeposited =
  * - `a_response_not_awaited`: a response F7 annotates (a second, a late, a
  *   malformed one, one to no request of the node's or from another face),
  *   with what `post` answered (PST-7; step 13);
- * - `a_frame_fenced`: a frame's message the fence refused (EXT-4);
+ * - `a_part_fenced`: a part's message the fence refused (EXT-4);
  * - `a_message_not_in_the_boundary`: a message of the extension's that does
  *   not parse, or that pairs no exchange in flight (EXT-2);
  * - `an_envelope_not_opened`: an envelope collected at a mailbox of mine
@@ -144,7 +143,7 @@ export type TheKernelsTraced =
       readonly answered: boundary.Json
     }
   | {
-      readonly why: 'a_frame_fenced'
+      readonly why: 'a_part_fenced'
       readonly extension: string
       readonly now: string
       readonly fence: AFence

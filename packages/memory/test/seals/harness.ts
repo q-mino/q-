@@ -15,7 +15,8 @@
 // safe over its storage, its versions, its log, its outbox and its
 // executor's state, and what a story reads of it, each as a function: the
 // entries queued, those held, and the time its storage takes to run its
-// course (`quiet`), the oracle's turns of the event loop or more.
+// course (`quiet`): on the oracle a turn of the event loop, on IndexedDB
+// until no transaction of it is in flight (TST-11).
 
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/seals/safe/_registry.ts'
@@ -39,6 +40,7 @@ import {
   type SealsState,
 } from '../../src/index.ts'
 import { drawn_from, recording } from './primitives.ts'
+import { until_quiet } from '../quiet.ts'
 
 /** The zone of the phone's clock: the safe reads no time, its context has one all the same. */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -126,16 +128,11 @@ export const all = async <event>(events: AsyncIterable<event>): Promise<readonly
 }
 
 /**
- * Everything already set going has run its course, up to its next wait: the
- * oracle and the harness wait on nothing but promises.
+ * Everything already set going has run its course, up to its next wait
+ * (TST-11, `../quiet.ts`): the oracle and the harness wait on nothing but
+ * promises, so a turn comes after them all.
  */
-export const quiet = async (): Promise<void> => {
-  for (let turn = 0; turn < 5; turn += 1) {
-    await new Promise<void>((done) => {
-      setTimeout(done, 0)
-    })
-  }
-}
+export const quiet = (): Promise<void> => until_quiet(() => false, "the safe's phone quiet")
 
 /** A safe's storage on a new cell of the oracle, which gives every fact and every entry twice if asked (TST-4). */
 export const the_safe_on_a_cell: ASafesFactory = (start) => {

@@ -3,7 +3,7 @@
 // `ui`'s values), what a gesture asks of it, and when it may have changed,
 // so that the screens read it again. The rendering (`screens/`) takes it;
 // the phone's composition root gives it over the node's ports (step 25),
-// the tests a node of their own. Since part 22.2 a frame reaches it too,
+// the tests a node of their own. Since part 22.2 a part reaches it too,
 // through the kernel's fence (EXT-4, EXT-16, WEB-23): what the fence serves
 // it asks of her node, what it refuses goes to the kernel's trace.
 
@@ -18,8 +18,8 @@ export interface HerTicket {
   readonly link: string
 }
 
-/** A frame's message the kernel's fence served (EXT-4): an invocation, or a read it follows, of its own extension's leaf on `self`, with the name the kernel added. */
-export type AFrameServed = Extract<Fenced, { readonly fenced: 'served' }>
+/** A part's message the kernel's fence served (EXT-4): an invocation, or a read it follows, of its own extension's leaf on `self`, with the name the kernel added. */
+export type APartServed = Extract<Fenced, { readonly fenced: 'served' }>
 
 /** An event of a leaf's flow, as her node gives it: a JSON object named by `event` (EXT-2). */
 export type AnEventOfALeaf = { readonly event: string } & Readonly<Record<string, unknown>>
@@ -68,10 +68,10 @@ export interface HerNode {
   readonly what_happened: () => Promise<readonly user_value.what_happened_without_a_fact[]>
   /** What a gesture asks (UI-3), handed to the use case of `user` of its name; resolved once `user` has it. */
   readonly asks: (what: ui_value.what_it_asks) => Promise<void>
-  /** What a frame asks, as the fence served it (EXT-16, WEB-23): its extension's leaf on `self`, invoked or followed, its events in order until its flow ends or the frame stops it. */
-  readonly a_frame_asks: (served: AFrameServed) => AsyncIterable<AnEventOfALeaf>
-  /** A frame's message the fence refused (`a_frame_fenced`), to the kernel's trace (EXT-4, F6). */
-  readonly a_frame_is_fenced: (traced: TheKernelsTraced) => void
+  /** What a part asks, as the fence served it (EXT-16, WEB-23): its extension's leaf on `self`, invoked or followed, its events in order until its flow ends or the part stops it. */
+  readonly a_part_asks: (served: APartServed) => AsyncIterable<AnEventOfALeaf>
+  /** A part's message the fence refused (`a_part_fenced`), to the kernel's trace (EXT-4, F6). */
+  readonly a_part_is_fenced: (traced: TheKernelsTraced) => void
   /** Tell each time her node may have changed (a fact recorded, a letter held, a trace written); the function returned stops telling. */
   readonly when_it_changes: (tell: () => void) => () => void
 }

@@ -32,10 +32,10 @@ export const an_extension = {
     to_see_the_name_of_the_bond: 'Vedere il nome che dai ai tuoi contatti',
     to_send_requests_on_your_bonds: 'Mandare richieste ai tuoi contatti a nome tuo',
     a_storage_of_its_own: 'Uno spazio suo per i suoi dati, che legge solo lei',
-    // [Q, C, provisional: A to confirm] (EXT-13: integrated means trusted).
+    // [Q, A, 24 Nov 2026] (USR-7; EXT-13: integrated means trusted).
     all_that_cumino_reaches:
-      'Falla: gira dentro Cumino e può arrivare a tutto ciò a cui arriva Cumino, rete compresa: questo elenco dice cosa dichiara, e Cumino non può impedirle il resto',
-    its_frames_act_with_no_tap:
+      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare.',
+    its_parts_act_with_no_tap:
       'Falla: i suoi riquadri possono fare cose senza che tu tocchi niente, e Cumino non può impedirlo',
   },
   to_answer_your_bonds: (leaves) => `Rispondere ai tuoi contatti (${leaves.join(', ')})`,

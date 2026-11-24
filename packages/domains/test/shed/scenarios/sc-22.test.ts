@@ -79,28 +79,40 @@ const page = async <event>(pages: AsyncIterator<event>): Promise<event> => {
 
 const tuesday = '2026-11-17T23:00:00.000Z'
 
+/**
+ * The time of the 2,000 tools' story: forty pages and two rakes. Alone
+ * about 0.7 s (24 Nov 2026); in the CI's whole check, on a runner slower by
+ * half, it reached vitest's 5 s (#55's first run). Twenty times the time
+ * alone, as SC-44's and the serial orders'.
+ */
+const the_time_of_the_2000_tools = 20_000
+
 describe('SC-22, the catalogue in pages (the business)', () => {
-  test('2,000 tools, 50 at a time: each page pulled with its position, the total and the cursor of the next; two rakes across a boundary, neither repeated nor skipped', async () => {
-    const shed = await the_shed()
-    const pages = shed.tools.the_catalogue
-      .pages(shed.when(tuesday), {}, { size: 50 })
-      [Symbol.asyncIterator]()
-    const first_page = await page(pages)
-    expect(first_page).toMatchObject({ event: 'snapshot', position: '2000', total: 2000 })
-    expect(first_page).toHaveProperty('next')
-    // The garden shelf's first 50: the 49 hoes, then the first rake by id.
-    expect(ids(first_page)).toEqual(the_catalogue.slice(0, 50).map((tool) => tool.id))
-    expect(ids(first_page).at(-1)).toBe('rake-1')
-    const second_page = await page(pages)
-    expect(ids(second_page)[0]).toBe('rake-2')
-    const rest = await the_rest(pages)
-    // 40 pages of 50; the last says no next.
-    expect(rest).toHaveLength(38)
-    expect(rest.at(-1)).not.toHaveProperty('next')
-    expect([first_page, second_page, ...rest].flatMap(ids)).toEqual(
-      the_catalogue.map((tool) => tool.id),
-    )
-  })
+  test(
+    '2,000 tools, 50 at a time: each page pulled with its position, the total and the cursor of the next; two rakes across a boundary, neither repeated nor skipped',
+    async () => {
+      const shed = await the_shed()
+      const pages = shed.tools.the_catalogue
+        .pages(shed.when(tuesday), {}, { size: 50 })
+        [Symbol.asyncIterator]()
+      const first_page = await page(pages)
+      expect(first_page).toMatchObject({ event: 'snapshot', position: '2000', total: 2000 })
+      expect(first_page).toHaveProperty('next')
+      // The garden shelf's first 50: the 49 hoes, then the first rake by id.
+      expect(ids(first_page)).toEqual(the_catalogue.slice(0, 50).map((tool) => tool.id))
+      expect(ids(first_page).at(-1)).toBe('rake-1')
+      const second_page = await page(pages)
+      expect(ids(second_page)[0]).toBe('rake-2')
+      const rest = await the_rest(pages)
+      // 40 pages of 50; the last says no next.
+      expect(rest).toHaveLength(38)
+      expect(rest.at(-1)).not.toHaveProperty('next')
+      expect([first_page, second_page, ...rest].flatMap(ids)).toEqual(
+        the_catalogue.map((tool) => tool.id),
+      )
+    },
+    the_time_of_the_2000_tools,
+  )
 
   test('a tool added before the cursor between two pages is not met going on; the next page counts it, read where it says', async () => {
     const shed = await the_shed()

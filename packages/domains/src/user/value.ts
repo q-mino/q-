@@ -110,8 +110,8 @@ export const what_an_extension_asks = z.discriminatedUnion('asks', [
    * declares informs, it does not fence (EXT-13). [Q, C, 24 Nov 2026]
    */
   z.strictObject({ asks: z.literal('all_that_cumino_reaches') }),
-  /** A flaw the kernel cannot fence: its frames act with no tap of hers (EXT-16). */
-  z.strictObject({ asks: z.literal('its_frames_act_with_no_tap') }),
+  /** A flaw the kernel cannot fence: its parts act with no tap of hers (EXT-16). */
+  z.strictObject({ asks: z.literal('its_parts_act_with_no_tap') }),
 ])
 
 /** Whose a held letter is: an office of the kernel's, or an extension (EXT-2, DOM-15). */
@@ -176,7 +176,7 @@ export const what_happened_without_a_fact = z.discriminatedUnion('happened', [
   z.strictObject({ happened: z.literal('a_response_could_not_be_sent') }),
   /** A request of her node's could not be sent: over what a letter carries (PST-12, EXT-8). */
   z.strictObject({ happened: z.literal('a_request_could_not_be_sent') }),
-  /** An extension did what its manifest does not declare (EXT-4): a call, an event, a frame's message. */
+  /** An extension did what its manifest does not declare (EXT-4): a call, an event, a part's message. */
   z.strictObject({
     happened: z.literal('an_extension_did_what_it_does_not_declare'),
     extension: an_extension,

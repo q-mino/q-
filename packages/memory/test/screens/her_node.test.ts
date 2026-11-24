@@ -13,7 +13,7 @@
 import {
   the_manifest_to_accept,
   the_reads_of_self,
-  through_a_frames_fence,
+  through_a_parts_fence,
   type TheKernelsTraced,
 } from '@q-mino/adapters-common'
 import {
@@ -46,7 +46,6 @@ import {
   composed_from,
   entries_of,
   ping_pong_manifest,
-  quiet,
   the_hash_of_a_collect_secret,
   the_relay,
   the_scope_of_an_introduction,
@@ -55,15 +54,17 @@ import {
   type Story,
 } from '../node/harness.ts'
 import { a_transport } from '../post/harness.ts'
+import { a_timer, the_timers_of_a_node, until_quiet } from '../quiet.ts'
 
 /** The address of the phone's page, where her tickets' links point (WEB-1). */
 const the_page = 'https://cumino.test/'
 
-/** A real timer of so many milliseconds. */
-const a_timer = (milliseconds: number) => (): Promise<void> =>
-  new Promise<void>((done) => {
-    setTimeout(done, milliseconds)
-  })
+/** The real timers of the phones' (their realms' short waits, their releases' pauses), counted while they run (TST-11). */
+const the_phones_timers = the_timers_of_a_node()
+
+/** Everything already set going has run its course, up to its next wait (TST-11, `../quiet.ts`): no real timer of a phone's running. */
+const quiet = (): Promise<void> =>
+  until_quiet(() => the_phones_timers.running(), "the phones' quiet")
 
 /** The world's random bytes for a phone: each draw new, from the phone's number (TST-3). */
 const a_world_of = (primitives: Primitives, phone_number: number): Primitives => {
@@ -108,8 +109,8 @@ const annas_phone = async (story: Story) => {
     time_zone: clock.time_zone,
   })
   const node = await phone(on_the_cell(made), {
-    the_realm_s_time: a_timer(2),
-    a_while: a_timer(5),
+    the_realm_s_time: the_phones_timers.a_timer(2),
+    a_while: the_phones_timers.a_timer(5),
   })({
     clock,
     elapsed: story.time.elapsed,
@@ -123,7 +124,7 @@ const annas_phone = async (story: Story) => {
     relays: [the_relay],
   })
   let operations = 0
-  const frames_traced: TheKernelsTraced[] = []
+  const parts_traced: TheKernelsTraced[] = []
   // How the relay client last met the relay (UI-5): the story sets it, as the phone's collects would.
   let met: TheRelayMet = 'not_met_yet'
   let told_of_the_relay: readonly (() => void)[] = []
@@ -159,10 +160,10 @@ const annas_phone = async (story: Story) => {
       when_written: () => () => undefined,
     },
     the_log: node.log,
-    the_frames: {
+    the_parts: {
       on_self: (extension) => node.the_extension(extension)?.on_self,
       traces: (entry) => {
-        frames_traced.push(entry)
+        parts_traced.push(entry)
       },
     },
     the_relay: {
@@ -216,8 +217,8 @@ const annas_phone = async (story: Story) => {
     follows_the_office: () => node.the_extensions_follow_the_office(),
     /** The life of an extension the phone hosts (EXT-15). */
     the_life_of: (extension: string) => node.the_extension(extension)?.hosted.life().life,
-    /** What the frames' fence traced, through her node (EXT-4). */
-    frames_traced: (): readonly TheKernelsTraced[] => frames_traced,
+    /** What the parts' fence traced, through her node (EXT-4). */
+    parts_traced: (): readonly TheKernelsTraced[] => parts_traced,
     /** The relay client meets the relay, as a collect would (UI-5). */
     the_relay_meets,
     the_network_goes,
@@ -484,7 +485,7 @@ describe('her node, over a phone of the stack', () => {
     expect(told).toBe(2)
   })
 
-  test('a frame served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {
+  test('a part served reaches its extension’s leaves on self, a ping sent as she would; one fenced is traced', async () => {
     const anna = await anna_with_her_face(await a_story())
     const [shown] = await anna.her.the_extensions()
     if (shown === undefined) throw new Error('no extension shown')
@@ -495,8 +496,8 @@ describe('her node, over a phone of the stack', () => {
     const following = anna.follows_the_office()
     await until(() => anna.the_life_of('ping_pong') === 'running', 'ping pong loaded')
     const served = (message: unknown) => {
-      const fenced = through_a_frames_fence({
-        frame: { extension: 'ping_pong', shown: true },
+      const fenced = through_a_parts_fence({
+        part: { extension: 'ping_pong', shown: true },
         active: true,
         message,
         now: '2026-11-21T09:00:00.000Z',
@@ -505,7 +506,7 @@ describe('her node, over a phone of the stack', () => {
       return fenced
     }
     const the_first_event_of = async (message: unknown) => {
-      const flow = anna.her.a_frame_asks(served(message))[Symbol.asyncIterator]()
+      const flow = anna.her.a_part_asks(served(message))[Symbol.asyncIterator]()
       const first = await flow.next()
       await flow.return?.(undefined)
       return first.done === true ? undefined : first.value
@@ -528,8 +529,8 @@ describe('her node, over a phone of the stack', () => {
         input: {},
       }),
     ).toMatchObject({ event: 'invalid_request', reason: 'not_a_leaf' })
-    const refused = through_a_frames_fence({
-      frame: { extension: 'ping_pong', shown: false },
+    const refused = through_a_parts_fence({
+      part: { extension: 'ping_pong', shown: false },
       active: true,
       message: {
         message: 'invoke',
@@ -540,9 +541,9 @@ describe('her node, over a phone of the stack', () => {
       },
       now: '2026-11-21T09:00:00.000Z',
     })
-    if (refused.fenced !== 'refused') throw new Error('the fence served a frame not shown')
-    anna.her.a_frame_is_fenced(refused.traced)
-    expect(anna.frames_traced()).toEqual([refused.traced])
+    if (refused.fenced !== 'refused') throw new Error('the fence served a part not shown')
+    anna.her.a_part_is_fenced(refused.traced)
+    expect(anna.parts_traced()).toEqual([refused.traced])
     await following.stop()
   })
 })

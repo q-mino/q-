@@ -1,5 +1,5 @@
 // A page of an extension (UI-4, UI-5; EXT-16; story 22 of `ui`'s README):
-// its name in the kernel's mark of its extension, where its frame is placed
+// its name in the kernel's mark of its extension, where its part is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
 // longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23).
 
@@ -50,7 +50,7 @@ export const APage = (props: {
       />
       <h1>{props.texts.title}</h1>
       {shown?.shows === 'no_longer_there' && <p>{props.texts.no_longer_there}</p>}
-      {shown?.shows === 'the_frame' && (
+      {shown?.shows === 'the_part' && (
         <TheMark extension={shown.extension}>
           <APartNotDrawn />
         </TheMark>

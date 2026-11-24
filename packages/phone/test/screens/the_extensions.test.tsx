@@ -51,7 +51,7 @@ const what_ping_pong_asks: user_value.what_an_extension_asks[] = [
   { asks: 'a_place_on_your_screens', point: 'action', name: 'ping', place: 'a_bond' },
   { asks: 'a_place_on_your_screens', point: 'page', name: 'the_scores', place: 'the_extension' },
   { asks: 'all_that_cumino_reaches' },
-  { asks: 'its_frames_act_with_no_tap' },
+  { asks: 'its_parts_act_with_no_tap' },
 ]
 
 /** The same, in her words. */
@@ -62,7 +62,7 @@ const ping_pong_s_notice = [
   // A page whose label ping pong's words lack: the fault, in place of the whole line (WEB-22).
   words.common.a_word_missing('the_scores'),
   its.what_it_asks.all_that_cumino_reaches,
-  its.what_it_asks.its_frames_act_with_no_tap,
+  its.what_it_asks.its_parts_act_with_no_tap,
 ]
 
 const ping_pong = (
@@ -154,6 +154,10 @@ describe('the extensions', () => {
       expect(the_notice(app)).toEqual(ping_pong_s_notice)
     })
     expect(the_words(app)).toContain(its.the_notice('Ping pong', '0.1.0'))
+    // The flaw of an integrated extension, in A's words (USR-7, A, 24 Nov 2026).
+    expect(the_notice(app)).toContain(
+      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare.',
+    )
     the_button(app.shown(), its.do_not_accept).click()
     await until(() => {
       expect(the_notice(app)).toEqual([])

@@ -87,7 +87,7 @@ export type a_course = z.output<typeof a_course>
 /**
  * The kernel's mark of an extension on a screen (EXT-16, UI-4): its name and a
  * border, and what it holds there: its actions, data the kernel draws; its
- * slots, frames placed in it; its pages, each opened as a screen; on its own
+ * slots, parts placed in it; its pages, each opened as a screen; on its own
  * screen, its letters held and what happened to it without a fact (USR-8).
  *
  * @see {@link value.a_mark}

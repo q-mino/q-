@@ -188,7 +188,7 @@ export const what_happened_in_the_kernel = (
       return { happened: 'a_request_could_not_be_sent' }
     case 'a_call_not_declared':
     case 'an_event_not_in_the_surface':
-    case 'a_frame_fenced':
+    case 'a_part_fenced':
     case 'a_message_not_in_the_boundary':
       return { happened: 'an_extension_did_what_it_does_not_declare', extension: traced.extension }
     case 'the_extension_has_fallen':

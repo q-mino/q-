@@ -6,8 +6,8 @@ import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
 // The kernel hosting an extension (EXT-2, EXT-13, EXT-15; part 12.4): its
 // side of the boundary's messages, speaking with the extension's side
 // (`boundary.the_extensions_side`) through a transport given at wiring (in
-// process on the oracle, each message copied as JSON; a frame on the phone,
-// step 22). It loads the extension only while active and checks its `ready`
+// process on the oracle and the phone, each message copied as JSON; an
+// isolated realm's frame, a future mode, EXT-13). It loads the extension only while active and checks its `ready`
 // against the composed manifest; starts and stops its consumers; serves its
 // calls (the port of requests, its partition); invokes its leaves for the
 // library's mounted ports (`zz.mounted_leaf_ports`, the `invokes` port),
@@ -17,9 +17,9 @@ import { as_traced, type TheKernelsTrace } from './the_kernels_trace.ts'
 /**
  * A transport to an extension's realm (EXT-13): given how the realm speaks
  * to the kernel, it loads the extension there, and gives how the kernel
- * speaks to it and how the realm is unloaded. On the oracle, in process,
- * each message a JSON value copied (`memory`); on the phone, a frame
- * (step 22). A fault of the realm (an exception) comes as `fallen`.
+ * speaks to it and how the realm is unloaded. In process on the oracle and
+ * the phone, each message a JSON value copied (`memory`, `in_process`); an
+ * isolated realm's frame in a future mode (EXT-13). A fault of the realm (an exception) comes as `fallen`.
  */
 export type Transport = (to_the_kernel: (message: unknown) => void) => {
   readonly to_the_extension: (message: boundary.a_message_to_an_extension) => void

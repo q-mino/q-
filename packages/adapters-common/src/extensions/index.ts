@@ -8,14 +8,14 @@
 // `phone` on IndexedDB). And the consumer that loads and unloads them as the
 // office says (EXT-15, step 17).
 
-export { through_a_frames_fence } from './a_frames_fence.ts'
+export { through_a_parts_fence } from './a_parts_fence.ts'
 export {
   the_delivery_of_the_extensions_in_common,
   the_kernels_reads,
   the_manifest_to_accept,
 } from './activations.ts'
 export type { TheKernelsReads, TheOfficesReads } from './activations.ts'
-export type { AFrame, Fenced } from './a_frames_fence.ts'
+export type { APart, Fenced } from './a_parts_fence.ts'
 export {
   a_composition_fault,
   compose_an_extension,

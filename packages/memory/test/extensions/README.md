@@ -50,7 +50,7 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
 - The ports typed by `touches` (a port not declared cannot be named, EXT-3): `packages/boundary/test/ports.test.ts`; an action whose leaf is no leaf of `self` does not compile: `packages/boundary/test/manifest.test.ts`, `packages/extensions/greetings/test/manifest.test.ts`.
 - The cruiser's rules of GR-10 (an authored file of an extension's tree importing `boundary`, an extension importing a domain of the kernel): checked by hand in part 12.3, and `pnpm graph` on every check; the generator's `mounted` and a `takes` below it refused: `packages/generator/test/mounts.test.ts`.
 - An undeclared call refused and traced; not active; two effects keyed by one value, or two extensions, never meet as one request; the bond gone: `the_port_of_requests.test.ts`; its storage undeclared or not active: `hosting.test.ts`.
-- A request names its own extension's leaf only, the name the kernel's: `the_port_of_requests.test.ts` (the identity), `route_and_fence.test.ts` (a frame's).
+- A request names its own extension's leaf only, the name the kernel's: `the_port_of_requests.test.ts` (the identity), `route_and_fence.test.ts` (a part's).
 - On `known` one event, the rest traced; the context and the scope a leaf is given: `hosting.test.ts`.
 - An event added to `greet` fails to compile in the delivery: by construction (`adapter/delivery.ts` of greetings, its record mapped over `greet`'s events); greetings' stories: `packages/extensions/greetings/test/stories.test.ts`.
 - The office's side of an update that asks more, a withdrawal, the extensions in common empty after the offer is withdrawn: `activations/activations.test.ts`; what asks more: `packages/adapters-common/test/extensions/activations.test.ts`.
@@ -59,7 +59,7 @@ Each check by the name of its test in `on_the_oracle.test.ts`.
 ## Deferred, each to its step
 
 - The extensions in common asked of a peer (EXT-8): proven in part 13.3, end to end on the node of q-'s oracle (`../persona/personas.test.ts`, story 5; `../entry/the_kernels_entry.test.ts`, story 3: the kernel never silent while an extension is). That an asker tells a silence from a node off by them (F8, "Another") has no test with the peer off: with `user`'s screens (step 15) or the stack (step 17).
-- A frame reaching only its extension's leaves on `self` while active and shown, its invocations in the mark (EXT-4, EXT-16); an action drawn on a bond's screen, and none on a bond whose offer is withdrawn (EXT-7); an action invoking its leaf with its place's bond: steps 15 and 16 (the fence as a function: `route_and_fence.test.ts`).
+- A part reaching only its extension's leaves on `self` while active and shown, its invocations in the mark (EXT-4, EXT-16); an action drawn on a bond's screen, and none on a bond whose offer is withdrawn (EXT-7); an action invoking its leaf with its place's bond: steps 15 and 16 (the fence as a function: `route_and_fence.test.ts`).
 - A dead letter shown in the extension's mark and redelivered by the user (EXT-2): steps 15 and 16 (at the host's level: `greetings.test.ts`, "its dead letter shown with its name; the user redelivers it").
 - The browser's checks (a frame reaches no storage of the app's origin, no `fetch`, opens no window; `frame-src`): step 22.
 - Ping pong in place of greetings: proven in part 14.2, below.

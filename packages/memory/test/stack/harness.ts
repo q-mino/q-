@@ -62,6 +62,7 @@ import {
   type TheRelaysTransports,
   type TheStacksWorld,
 } from '../../src/index.ts'
+import { a_timer, the_timers_of_a_node, until_quiet } from '../quiet.ts'
 
 /** The zone of the story's clock. */
 export const time_zone = zz.time_zone.parse('UTC')
@@ -253,21 +254,6 @@ const under_the_plan = (
   })
 }
 
-/** A real timer of so many milliseconds. */
-const a_timer = (milliseconds: number) => (): Promise<void> =>
-  new Promise<void>((done) => {
-    setTimeout(done, milliseconds)
-  })
-
-/**
- * Everything already set going has run its course, up to its next wait: a
- * delivery goes through the safe's reads, the relay's tree and the
- * extension's realm, so it takes many turns of the runtime's timers.
- */
-const quiet = async (): Promise<void> => {
-  for (let turn = 0; turn < 25; turn += 1) await a_timer(0)()
-}
-
 /** Turns of the event loop, each a real timer, until a condition holds: at most about two seconds, else the story fails. */
 export const until = async (
   holds: () => boolean | Promise<boolean>,
@@ -315,9 +301,9 @@ type AClock = ReturnType<typeof a_clock>
  * timer of 2 ms.
  */
 const the_realm_s_time =
-  (time: AClock): zz.Elapsed =>
+  (time: AClock, a_real_timer: typeof a_timer): zz.Elapsed =>
   async (milliseconds) => {
-    if (milliseconds < 60_000) return a_timer(2)()
+    if (milliseconds < 60_000) return a_real_timer(2)()
     const from = Date.parse(time.clock.now())
     while (Date.parse(time.clock.now()) - from < milliseconds) await time.elapsed()
   }
@@ -392,10 +378,25 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   const in_flight = { count: 0 }
   const met: AFaultMet[] = []
   const phones: APhoneInTheRounds[] = []
+  // What the story's nodes are at work on, beside the calls in flight: their storages, their real timers.
+  const storages: AStorageUnderTest[] = []
+  const timers = the_timers_of_a_node()
+  /**
+   * Everything already set going has run its course, up to its next wait
+   * (TST-11, `../quiet.ts`): no storage of a phone at work, no real timer
+   * of a node's running, every call of the transports answered (a request
+   * over HTTP takes turns of the network, step 20).
+   */
+  const quiet = (): Promise<void> =>
+    until_quiet(
+      () => storages.some((each) => each.at_work()) || timers.running() || in_flight.count > 0,
+      "the story's nodes quiet",
+    )
 
   /** A phone of the story over the stack, on, with no face yet: what it gives a story is below. */
   const a_phone = async (start: Start) => {
     const made = await (factory.storage ?? on_a_cell)()
+    storages.push(made)
     const carried: ACarriedDeposit[] = []
     const phase = { deposits: 0 }
     let aborted = false
@@ -408,7 +409,10 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         extensions: [{ manifest: ping_pong_manifest, realm: ping_pong }],
         relays: [the_relay],
       },
-      release: { the_realm_s_time: the_realm_s_time(time), a_while: a_timer(5) },
+      release: {
+        the_realm_s_time: the_realm_s_time(time, timers.a_timer),
+        a_while: timers.a_timer(5),
+      },
       transports: (in_process) =>
         under_the_plan(
           plan,
@@ -642,9 +646,8 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
 
   /**
    * Time passes and the clock stays (DOM-14, DOM-17): rounds of the
-   * executors' pauses over, every phone on collecting once, then the event
-   * loop quiet and every call of the transports answered (a request over
-   * HTTP takes turns of the network, step 20); over when two rounds in a
+   * executors' pauses over, every phone on collecting once, then the
+   * story's nodes quiet, every call of the transports answered; over when two rounds in a
    * row change nothing the ports show (a deposit asked for, lost or not, is
    * a change: it is tried again after the next pause), else the story
    * fails after 60 rounds.
@@ -656,7 +659,6 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       time.pauses_over()
       for (const each of phones) await each.a_round()
       await quiet()
-      await until(() => in_flight.count === 0, "the transports' calls in flight")
       still = (await shows()) === before ? still + 1 : 0
       if (still >= 2) return
     }

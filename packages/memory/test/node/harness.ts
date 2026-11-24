@@ -75,19 +75,12 @@ import {
   the_relay_s_transports,
   type PhoneState,
 } from '../../src/index.ts'
-import {
-  a_clock,
-  a_transport,
-  all,
-  entries_of,
-  quiet,
-  the_relay,
-  type Fault,
-} from '../post/harness.ts'
+import { a_clock, a_transport, all, entries_of, the_relay, type Fault } from '../post/harness.ts'
+import { the_timers_of_a_node, until_quiet } from '../quiet.ts'
 import { a_relay, type RelayUnderTest } from '../relay/harness.ts'
 import { fake_primitives } from '../seals/primitives.ts'
 
-export { all, entries_of, quiet, the_relay } from '../post/harness.ts'
+export { all, entries_of, the_relay } from '../post/harness.ts'
 
 /** Greetings' manifest as its build writes it (EXT-10): what a node installs. */
 export const greetings_manifest: unknown = manifest_json
@@ -150,11 +143,17 @@ export const until = async (
   throw new Error(`${what}: it did not come to pass`)
 }
 
-/** A real timer of so many milliseconds. */
-const a_timer = (milliseconds: number) => (): Promise<void> =>
-  new Promise<void>((done) => {
-    setTimeout(done, milliseconds)
-  })
+/** The real timers of the nodes' (their realms' short waits, their releases' pauses), counted while they run (TST-11). */
+const the_nodes_timers = the_timers_of_a_node()
+const a_timer = the_nodes_timers.a_timer
+
+/**
+ * Everything already set going has run its course, up to its next wait
+ * (TST-11, `../quiet.ts`): the oracle's cells wait on nothing but
+ * promises, so no real timer of a node's running, seen from a turn.
+ */
+export const quiet = (): Promise<void> =>
+  until_quiet(() => the_nodes_timers.running(), "the nodes' quiet")
 
 /** The hash a node's safe draws a mailbox's D with (SEA-4): BLAKE2b-256 of R; the relay's desk hashes R so too. */
 export const the_hash_of_a_collect_secret =

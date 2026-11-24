@@ -1,6 +1,5 @@
 import { fake_primitives } from '../seals/primitives.ts'
 import { the_kernel_on_indexeddb } from '../seals/kernel_on_indexeddb.ts'
-import { quiet } from './harness.ts'
 import { stories_of_the_post } from './stories.ts'
 
 // The post's stories on IndexedDB (TST-1, PST-13, WEB-13; part 21.2): the
@@ -16,5 +15,5 @@ import { stories_of_the_post } from './stories.ts'
 stories_of_the_post(
   'on IndexedDB, over the fake primitives port',
   fake_primitives,
-  the_kernel_on_indexeddb(quiet),
+  the_kernel_on_indexeddb,
 )
