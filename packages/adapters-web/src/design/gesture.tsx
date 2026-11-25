@@ -2,13 +2,17 @@
 // glyph. Its kind says how much it weighs: `primary`, the one a screen
 // leads to (one per screen); `secondary`, another she may do; `quiet`, one
 // that steps aside (back, a detail); `dangerous`, one that deletes or
-// cannot be undone. It taps, or submits the form it is in. [Q, C, 24 Nov 2026]
+// cannot be undone; `extension`, an action of an extension's, its label
+// and what it does the extension's (EXT-16), drawn in the extension's hue
+// with its puzzle glyph, so that it never reads as a gesture of the kernel
+// («Ping» beside «Cambia nome»; WEB-30). It taps, or submits the form it is
+// in. [Q, C, 24 Nov 2026]
 
 import type { AGlyph } from './glyphs.ts'
 import { Icon } from './icon.tsx'
 
 /** How much a gesture weighs. */
-export type AGestureKind = 'primary' | 'secondary' | 'quiet' | 'dangerous'
+export type AGestureKind = 'primary' | 'secondary' | 'quiet' | 'dangerous' | 'extension'
 
 /** What a gesture does: a tap handled here, or the submission of its form. */
 export type WhatAGestureDoes =
@@ -37,7 +41,11 @@ export const Gesture = (props: {
           : undefined
       }
     >
-      {props.glyph !== undefined && <Icon glyph={props.glyph} />}
+      {props.kind === 'extension' ? (
+        <Icon glyph="puzzle" />
+      ) : (
+        props.glyph !== undefined && <Icon glyph={props.glyph} />
+      )}
       {props.label}
     </button>
   )

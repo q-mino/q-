@@ -31,6 +31,17 @@
     --on-cumin: light-dark(#fffaf3, #1d150d);
     --cumin-ink: light-dark(#7a4e24, #e3b27c);
 
+    /*
+     * What an extension brings (EXT-16, WEB-30): the ground of the kernel's
+     * mark of it, its edge, its ink, and the ground of its actions; another
+     * hue than cumin, the kernel's own, so that an extension's gesture never
+     * reads as the kernel's.
+     */
+    --extension-paper: light-dark(#eef3f0, #1e2a28);
+    --extension-raised: light-dark(#dfeae5, #27403a);
+    --extension-edge: light-dark(#5b7f76, #6f9d91);
+    --extension-ink: light-dark(#2e5a50, #a5d3c6);
+
     /* What she reads to be careful: a gesture that deletes, a fault, a wait. */
     --danger: light-dark(#a3321e, #f0907b);
     --fault: light-dark(#9e2f1c, #f29c88);

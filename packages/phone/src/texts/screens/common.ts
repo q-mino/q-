@@ -67,5 +67,11 @@ export const common = {
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,
     no_document: 'L’app non ha il riquadro di questa estensione.',
+    // WEB-30 (provisional, C's, 24 Nov 2026).
+    the_slot: {
+      takes_the_screen: 'A tutto schermo',
+      gives_it_back: 'Riduci',
+      who_has_the_screen: 'Chi ha lo schermo',
+    },
   },
 } satisfies TheCommonTexts

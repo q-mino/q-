@@ -2,15 +2,16 @@
 // its name in the kernel's mark of its extension, where its part is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
 // longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23). Since the MVP's part 2 drawn with the design's
-// components (WEB-29).
+// components (WEB-29); since its part 3 the extension holds the screen, so
+// its name is in the corner, as a slot's on the whole screen (WEB-30).
 
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
-import { Notice, Screen } from '../design/index.ts'
+import { Corner, Notice, Screen } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given } from './a_screen.ts'
 import { APartNotDrawn, Back, TheMark } from './parts.tsx'
-import { the_app } from './the_app.ts'
+import { the_app, the_word_or_its_fault } from './the_app.ts'
 
 /** The words of a page (provisional, A to confirm). */
 export interface APageTexts {
@@ -59,9 +60,17 @@ export const APage = (props: {
         <Notice kind="information">{props.texts.no_longer_there}</Notice>
       )}
       {shown?.shows === 'the_part' && (
-        <TheMark extension={shown.extension}>
-          <APartNotDrawn />
-        </TheMark>
+        <>
+          <Corner
+            label={app.common.the_points.the_slot.who_has_the_screen}
+            chain={[
+              the_word_or_its_fault(app.common, app.words(shown.extension)?.name, shown.extension),
+            ]}
+          />
+          <TheMark extension={shown.extension}>
+            <APartNotDrawn />
+          </TheMark>
+        </>
       )}
     </Screen>
   )

@@ -397,3 +397,179 @@
     overflow-wrap: anywhere;
   }
 }
+
+/*
+ * The kernel's own around what comes from an extension (EXT-16, WEB-30):
+ * its mark, an action of it, a slot and the corner of the screen it holds.
+ * Last of all the layers, so that no style of the layer `extensions`
+ * redraws it (WEB-26). It is a convention of the page, not a wall: an
+ * integrated extension runs in the app's page and reaches its DOM and its
+ * styles, the mark too (the flaw its activation tells, USR-7).
+ * [Q, C, 24 Nov 2026]
+ */
+@layer frame {
+  /* Mark: a frame of the extension's hue, its tag on its edge; the columns its slots line up with. */
+  .mark {
+    display: grid;
+    grid-template-columns: [lead-start] auto [lead-end main-start] 1fr [main-end trail-start] auto [trail-end];
+    gap: var(--space-3);
+    margin-block-start: var(--space-3);
+    padding: var(--space-4);
+    padding-block-start: var(--space-5);
+    border: 2px solid var(--extension-edge);
+    border-radius: var(--radius-l);
+    background: var(--extension-paper);
+    color: var(--ink);
+  }
+
+  .mark > * {
+    grid-column: 1 / -1;
+  }
+
+  /* A mark inside another reads as inside: the ground alternates, the edge and the tag stay. */
+  .mark .mark {
+    background: var(--paper-raised);
+  }
+
+  .mark .mark .mark {
+    background: var(--extension-paper);
+  }
+
+  .mark > [data-part='tag'] {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    justify-self: start;
+    /* On the mark's edge, as a tag sewn on it. */
+    margin-block-start: calc(-1 * var(--space-5) - 1.1rem);
+    padding: var(--space-1) var(--space-3);
+    border: 2px solid var(--extension-edge);
+    border-radius: var(--radius-round);
+    background: inherit;
+    color: var(--extension-ink);
+    font-size: var(--text-m);
+    line-height: var(--line-tight);
+  }
+
+  /* An action of an extension: its hue and the puzzle glyph, never a gesture of the kernel's. */
+  .gesture[data-kind='extension'] {
+    border-color: var(--extension-edge);
+    background: var(--extension-raised);
+    color: var(--extension-ink);
+  }
+
+  /* Slot: in its place, a grid of its mark's columns; its head, then its part. */
+  .slot {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-areas:
+      'head head head'
+      'part part part';
+    gap: var(--space-2);
+    /* What the browser gives a popover not shown, undone: in its place it is drawn as any part. */
+    position: static;
+    inset: auto;
+    inline-size: auto;
+    block-size: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    color: inherit;
+  }
+
+  .slot > [data-part='head'] {
+    grid-area: head;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    border-block-end: 1px solid var(--roan-line);
+    color: var(--extension-ink);
+    font-weight: var(--weight-strong);
+  }
+
+  .slot > [data-part='corner'] {
+    grid-area: head;
+    display: grid;
+    justify-items: end;
+  }
+
+  .slot > [data-part='part'] {
+    grid-area: part;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-content: start;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+
+  .slot > [data-part='part'] > * {
+    grid-column: 1 / -1;
+  }
+
+  /* On the whole screen: the same part, the corner at the top end, the columns its own. */
+  .slot[data-state='on_the_whole_screen'] {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    grid-template-columns: [lead-start] auto [lead-end main-start] 1fr [main-end trail-start] auto [trail-end];
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    padding: var(--space-4);
+    padding-block: calc(var(--space-3) + env(safe-area-inset-top))
+      calc(var(--space-4) + env(safe-area-inset-bottom));
+    overflow: auto;
+    border: 2px solid var(--extension-edge);
+    background: var(--extension-paper);
+  }
+
+  .slot:popover-open {
+    position: fixed;
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    max-block-size: none;
+    border-radius: 0;
+  }
+
+  .slot::backdrop {
+    background: transparent;
+  }
+
+  /* Corner: who has the screen, the chain of the names, and the gesture that gives it back. */
+  .corner {
+    display: inline-flex;
+    justify-self: end;
+    align-items: center;
+    gap: var(--space-2);
+    padding-inline-start: var(--space-3);
+    border: 2px solid var(--extension-edge);
+    border-radius: var(--radius-round);
+    background: var(--extension-paper);
+    color: var(--extension-ink);
+    font-size: var(--text-s);
+    font-weight: var(--weight-strong);
+  }
+
+  .corner:not(:has(.gesture)) {
+    padding-inline-end: var(--space-3);
+    min-block-size: var(--tap);
+  }
+
+  .corner > [data-part='chain'] {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .corner > [data-part='chain'] > li + li::before {
+    content: '›';
+    padding-inline: var(--space-1);
+  }
+}

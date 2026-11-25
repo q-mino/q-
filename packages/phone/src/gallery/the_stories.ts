@@ -17,6 +17,8 @@ import * as menu from './stories/menu.stories.tsx'
 import * as question from './stories/question.stories.tsx'
 import * as qr from './stories/qr.stories.tsx'
 import * as why from './stories/why.stories.tsx'
+import * as mark from './stories/mark.stories.tsx'
+import * as slot from './stories/slot.stories.tsx'
 import * as the_app from './stories/screens/the_app.stories.tsx'
 import * as the_first_face from './stories/screens/the_first_face.stories.tsx'
 import * as the_server from './stories/screens/the_server.stories.tsx'
@@ -62,6 +64,8 @@ export const the_files = [
   question,
   qr,
   why,
+  mark,
+  slot,
   screen,
   ...the_screens,
 ].map(the_file_of)

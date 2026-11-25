@@ -3,7 +3,7 @@
 // an extension and the points it holds at a place (EXT-16, WEB-22); since
 // the MVP's part 2 drawn with the design's components (WEB-27, WEB-29).
 
-import { Gesture, List, Notice, Row, type ANoticeKind } from '../design/index.ts'
+import { Gesture, List, Mark, Notice, Row, Slot, type ANoticeKind } from '../design/index.ts'
 import * as ui from '@q-mino/domains/ui/_dsl.ts'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
@@ -74,24 +74,19 @@ export const Back = (props: { onBack: () => void }) => {
 }
 
 /**
- * The kernel's mark of an extension (EXT-16): a section with its name, from
- * its words, and a border, around what it holds; a name the app does not
- * have, drawn as a fault (WEB-22). Its look is the layer `frame`'s, last of
- * all (WEB-26; redrawn by the MVP's part 3).
+ * The kernel's mark of an extension (EXT-16, WEB-30): the design's `Mark`,
+ * its title and its name from the extension's words; a name the app does
+ * not have, drawn as a fault (WEB-22), in the title and in the chain of a
+ * corner.
  */
 export const TheMark = (props: { extension: string; children: ComponentChildren }) => {
   const app = the_app()
-  const title = in_its_words(
-    app.common,
-    app.words(props.extension)?.name,
-    props.extension,
-    app.common.the_mark_of,
-  )
+  const words = app.words(props.extension)
+  const title = in_its_words(app.common, words?.name, props.extension, app.common.the_mark_of)
   return (
-    <section class="mark" aria-label={title}>
-      <h2>{title}</h2>
+    <Mark name={the_word_or_its_fault(app.common, words?.name, props.extension)} title={title}>
       {props.children}
-    </section>
+    </Mark>
   )
 }
 
@@ -113,10 +108,12 @@ const TheCourseOfAnAction = (props: { extension: string; course: ui_value.a_cour
 }
 
 /**
- * The points a mark holds at its place (UI-4, EXT-16, WEB-22): each action,
- * a gesture the kernel draws with the extension's label, off while its
- * activity is in progress, and how it ended in the extension's words; each
- * slot, what the app does not draw yet (`APartNotDrawn`); each page, the
+ * The points a mark holds at its place (UI-4, EXT-16, WEB-22, WEB-30): each
+ * action, a gesture of the kind `extension` the kernel draws with the
+ * extension's label, off while its activity is in progress, and how it
+ * ended in the extension's words; each slot, a `Slot` told the place and
+ * its subject, the place's data, holding what the app does not draw yet
+ * (`APartNotDrawn`, WEB-23), which she may take to the whole screen; each page, the
  * gesture that opens it, by its label. A word the extension's words lack is
  * drawn as a fault, never silently its name.
  */
@@ -134,7 +131,7 @@ export const ThePoints = (props: {
       {props.mark.actions.map((action) => (
         <div key={action} data-part="action">
           <Gesture
-            kind="secondary"
+            kind="extension"
             label={the_word_or_its_fault(app.common, words?.actions[action], action)}
             off={!ui.it_may_ask(props.course_of(action))}
             does={{
@@ -148,7 +145,15 @@ export const ThePoints = (props: {
         </div>
       ))}
       {props.mark.slots.map((slot) => (
-        <APartNotDrawn key={slot} />
+        <Slot
+          key={slot}
+          place={props.mark.told.place}
+          subject={props.mark.told}
+          label={the_word_or_its_fault(app.common, words?.slots[slot], slot)}
+          words={app.common.the_points.the_slot}
+        >
+          {() => <APartNotDrawn />}
+        </Slot>
       ))}
       {props.mark.pages.length > 0 && (
         <List>

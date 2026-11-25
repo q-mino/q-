@@ -156,7 +156,7 @@ describe('the extensions', () => {
     expect(the_words(app)).toContain(its.the_notice('Ping pong', '0.1.0'))
     // The flaw of an integrated extension, in A's words (USR-7, A, 24 Nov 2026).
     expect(the_notice(app)).toContain(
-      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare.',
+      'Falla: è integrata, quindi fidata: arriva a tutto ciò a cui arriva Cumino, rete compresa. L’elenco dice cosa dichiara, non cosa può fare. Gira dentro l’app e può ridisegnarne lo schermo, cornice compresa: la cornice dice da dove viene ciò che vedi solo se l’estensione la lascia stare.',
     )
     the_button(app.shown(), its.do_not_accept).click()
     await until(() => {

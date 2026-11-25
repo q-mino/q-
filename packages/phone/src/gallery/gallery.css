@@ -64,6 +64,12 @@
     border-radius: var(--radius-m);
     background: var(--paper);
     color: var(--ink);
+    /* A slot on the whole screen covers its frame (WEB-30), not the gallery. */
+    position: relative;
+  }
+
+  .gallery-story [data-part='theme']:has(.slot[data-state='on_the_whole_screen']) {
+    min-block-size: var(--screen-height);
   }
 
   /* A screen fills its frame, as it fills a phone. */
@@ -137,5 +143,41 @@
   .a-screen-story[data-state='its_play_failed'] {
     outline: 3px dashed var(--fault);
     outline-offset: -3px;
+  }
+}
+
+/*
+ * The parts of the gallery's two extensions (WEB-30): their own look, in
+ * the layer of the extensions, as an extension's would be, under the
+ * kernel's mark. [Q, C, 24 Nov 2026]
+ */
+@layer extensions {
+  .a-conversation-of-a-story {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .a-conversation-of-a-story > li {
+    justify-self: start;
+    max-inline-size: 80%;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-m);
+    background: var(--paper-raised);
+  }
+
+  .a-conversation-of-a-story > li[data-by='me'] {
+    justify-self: end;
+    background: var(--paper-sunken);
+  }
+
+  .a-throw-of-a-story {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
   }
 }

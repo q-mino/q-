@@ -5,7 +5,8 @@
 // ping pong's words; a slot in the same mark and a page opened from the
 // extension's own screen, not drawn yet (components of the extension's in
 // the kernel's mark, deferred until one has them, WEB-23): told as the
-// app's fault; the page no longer there once deactivated.
+// app's fault; the page no longer there once deactivated. Since the MVP's
+// part 3 the action in its own kind and the slot in a `Slot` (WEB-30).
 
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import * as user_value from '@q-mino/domains/user/_value.ts'
@@ -142,6 +143,9 @@ describe('the extension points', () => {
     if (mark === null) throw new Error('no mark')
     expect(mark.querySelector('h2')?.textContent).toBe(the_mark)
     expect(has_a_button(mark, 'Ping')).toBe(true)
+    // An action of the extension's, in its own kind: never read as a gesture of the kernel's (WEB-30).
+    expect(the_button(mark, 'Ping').dataset['kind']).toBe('extension')
+    expect(the_button(app.shown(), words.a_contact.rename_it).dataset['kind']).not.toBe('extension')
 
     // Carla: not offered, no mark.
     the_button(app.shown(), words.common.back).click()
@@ -174,6 +178,11 @@ describe('the extension points', () => {
     expect(has_a_button(with_a_slot, 'Ping')).toBe(true)
     // The app does not draw it: told as the app's fault, never a blank.
     expect(with_a_slot.querySelector('iframe')).toBeNull()
+    // In a slot told its place, which she may take to the whole screen (WEB-30).
+    const slot = with_a_slot.querySelector<HTMLElement>('.slot')
+    expect(slot?.dataset['place']).toBe('a_bond')
+    expect(slot?.textContent).toContain(words.common.the_points.no_document)
+    expect(has_a_button(with_a_slot, words.common.the_points.the_slot.takes_the_screen)).toBe(true)
   })
 
   test('tapping ping asks to use it on the bond, once while in progress; its pong is told in ping pong’s words', async () => {

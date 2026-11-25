@@ -14,6 +14,7 @@ import type * as activities_value from '@q-mino/domains/user/activities/_value.t
 import { createContext } from 'preact'
 import { useContext } from 'preact/hooks'
 import type { AFacing, AScan } from '../camera/index.ts'
+import type { TheWordsOfASlot } from '../design/index.ts'
 import type { HerNode } from '../her_node/index.ts'
 
 /** The device's sources the screens draw from at a gesture (WEB-4, WEB-5), given by the composition root as they are. */
@@ -108,6 +109,8 @@ export interface ThePointsTexts {
   readonly opens_the_page: (label: string) => string
   /** A slot or a page the app does not draw yet (WEB-23): a fault of the app's composition. */
   readonly no_document: string
+  /** The kernel's words around a slot (WEB-30): its gestures to the whole screen and back, its corner. */
+  readonly the_slot: TheWordsOfASlot
 }
 
 /** What every screen is given by the rendering. */

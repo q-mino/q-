@@ -1,4 +1,5 @@
-// Gesture (WEB-27): each kind, with a glyph, off, and the gestures of a screen together.
+// Gesture (WEB-27): each kind, with a glyph, off, and the gestures of a screen together;
+// an action of an extension beside a gesture of the kernel's (WEB-30).
 
 import { Gesture } from '@q-mino/adapters-web/design'
 import { the_gallery } from '../../texts/index.ts'
@@ -22,6 +23,20 @@ export const a_quiet_gesture = {
 
 export const a_dangerous_gesture = {
   render: () => <Gesture kind="dangerous" label={words.remove_it} glyph="trash_2" does={nothing} />,
+}
+
+export const an_action_of_an_extension = {
+  render: () => <Gesture kind="extension" label="Ping" does={nothing} />,
+}
+
+/** «Ping», an extension's, never read as «Cambia nome», the kernel's (the MVP's part 3). */
+export const an_action_beside_a_gesture_of_the_kernel = {
+  render: () => (
+    <p class="gallery-row">
+      <Gesture kind="secondary" label={words.rename_it} glyph="pencil" does={nothing} />
+      <Gesture kind="extension" label="Ping" does={nothing} />
+    </p>
+  ),
 }
 
 export const a_gesture_off = {
