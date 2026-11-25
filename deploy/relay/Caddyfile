@@ -1,0 +1,19 @@
+# Caddy before Cumino's relay (REL-7): HTTPS for relay.cumino.aleclofabbro.it,
+# its certificate from the ACME CAs, renewed by Caddy; every request passed to
+# the relay on 127.0.0.1:8080, a collect's NDJSON flushed as it comes
+# (`flush_interval -1`, MBX-9). No `log` directive anywhere: Caddy writes no
+# access log (CFG-3), only its own faults and its certificates' news, to the
+# journal. HTTP/1.1 and HTTP/2 only: no HTTP/3 offered on a UDP port the
+# firewall keeps closed. Installed by provision.sh. [Q, C, 25 Nov 2026]
+
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
+relay.cumino.aleclofabbro.it {
+	reverse_proxy 127.0.0.1:8080 {
+		flush_interval -1
+	}
+}

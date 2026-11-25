@@ -1,0 +1,3 @@
+# deploy's sudo (REL-7): the relay's restart, and the reset of a unit that
+# failed too often, nothing else. [Q, C, 25 Nov 2026]
+deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart cumino-relay.service, /usr/bin/systemctl reset-failed cumino-relay.service

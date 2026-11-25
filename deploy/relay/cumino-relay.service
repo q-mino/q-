@@ -1,0 +1,67 @@
+# Cumino's relay under systemd (REL-7): one release, /opt/cumino-relay/current
+# (a link to releases/<commit>, deploy.sh's), run by Node 24 from /opt/node,
+# on 127.0.0.1:8080 behind Caddy. A user made for the process at each start
+# (DynamicUser), its database in the state directory systemd gives it
+# (/var/lib/cumino-relay, REL-1), nothing else of the machine writable, no
+# address but loopback. A start with settings out of form (exit 78, REL-1) is
+# not tried again. Installed by provision.sh. [Q, C, 25 Nov 2026]
+
+[Unit]
+Description=Cumino's relay
+Documentation=https://github.com/q-mino/q-/blob/main/docs/relay.md
+After=network.target
+ConditionPathExists=/opt/cumino-relay/current/relay.mjs
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+Type=simple
+ExecStart=/opt/node/bin/node --enable-source-maps --disable-warning=ExperimentalWarning /opt/cumino-relay/current/relay.mjs
+Environment=CUMINO_RELAY_PORT=8080
+Environment=NODE_ENV=production
+Restart=on-failure
+RestartSec=2
+RestartPreventExitStatus=78
+TimeoutStopSec=15
+MemoryMax=320M
+
+# Who it runs as, and what it may write.
+DynamicUser=yes
+StateDirectory=cumino-relay
+StateDirectoryMode=0700
+UMask=0077
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateUsers=yes
+
+# What it may reach: loopback only (Caddy before it).
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressAllow=localhost
+IPAddressDeny=any
+
+# What else it may not do.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RemoveIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target
