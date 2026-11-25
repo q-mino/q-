@@ -145,15 +145,54 @@ describe('the pages and their look (WEB-26, WEB-28)', () => {
     expect(the_precache_of(out).files).toContain('galleria.html')
   })
 
-  test('on the release, no gallery', () => {
+  test('on the release, no gallery, and the name under the icon «Cumino»', () => {
     const release = mkdtempSync(join(tmpdir(), 'q-release-'))
     try {
       const composition = compose(release, { ...a_release, channel: 'release' })
       expect(composition.pages).toEqual(['index.html'])
+      const manifest: unknown = JSON.parse(
+        readFileSync(join(release, 'manifest.webmanifest'), 'utf8'),
+      )
+      expect(manifest).toMatchObject({ name: 'Cumino', short_name: 'Cumino' })
       expect(existsSync(join(release, 'galleria.html'))).toBe(false)
       expect(existsSync(join(release, 'phone', 'src', 'gallery'))).toBe(false)
     } finally {
       rmSync(release, { recursive: true, force: true })
     }
   }, 120_000)
+})
+
+describe('the installed app (PWA-7)', () => {
+  test('the manifest: the test channel’s name, the icons, a maskable one of its own, all in dist/ and precached', () => {
+    const manifest: unknown = JSON.parse(readFileSync(join(out, 'manifest.webmanifest'), 'utf8'))
+    expect(manifest).toMatchObject({
+      name: 'Cumino prova',
+      short_name: 'Cumino prova',
+      background_color: '#fbf8f3',
+      theme_color: '#fbf8f3',
+      display: 'standalone',
+      icons: [
+        { src: 'icon-192.png', sizes: '192x192', purpose: 'any' },
+        { src: 'icon-512.png', sizes: '512x512', purpose: 'any' },
+        { src: 'icon-maskable-512.png', sizes: '512x512', purpose: 'maskable' },
+        { src: 'favicon.svg', sizes: 'any', purpose: 'any' },
+      ],
+    })
+    for (const icon of ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'favicon.svg']) {
+      expect(the_files()).toContain(icon)
+      expect(the_precache_of(out).files).toContain(icon)
+    }
+  })
+
+  test('the page: the bar’s colour by theme, the logo as its icon', () => {
+    const page = the_page()
+    expect(page).toContain(
+      '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf8f3" />',
+    )
+    expect(page).toContain(
+      '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2023" />',
+    )
+    expect(page).toContain('<link rel="icon" href="./favicon.svg" type="image/svg+xml" />')
+    expect(page).toContain('<title>Cumino</title>')
+  })
 })

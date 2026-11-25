@@ -52,6 +52,18 @@ Every component of the app's look, in every case, in Roano (light) and Lavagna (
 
 The stories are in the Component Story Format (`packages/phone/src/gallery/stories/*.stories.tsx`), so they move to Storybook as they are if it is ever wanted.
 
+- **The contrast** of the design's tokens, every text and graphic on its grounds in both themes, AA (it runs with the tests too):
+
+  ```sh
+  pnpm contrast
+  ```
+
+- **The icons** of the installed app, drawn from the logo (`packages/phone/assets/logo.svg`) into `packages/phone/public/` by headless Chrome; run it again when the logo changes, and commit what it writes:
+
+  ```sh
+  pnpm icons
+  ```
+
 ## Where the app is published
 
 - `q-mino.github.io/q-/`: releases, from the tags `v*`.
