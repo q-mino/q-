@@ -10,7 +10,7 @@ export const the_introduction = {
       title: 'Una rete di mani strette',
       says: [
         'Cumino è una rete di lettere fra persone vere, senza un centro: nessuno la possiede, ogni telefono è un nodo.',
-        'Un contatto è una mano stretta. Vi scambiate i segni di persona, inquadrando l’uno il QR dell’altra, o a distanza, con un link. Nessuno ti scrive se non vi siete stretti la mano.',
+        'Un contatto è una mano stretta. Vi scambiate i segni di persona, inquadrando a vicenda i vostri QR, o a distanza, con un link. Nessuno ti scrive se non vi siete stretti la mano.',
       ],
     },
     how_the_letters_travel: {
@@ -24,7 +24,7 @@ export const the_introduction = {
       title: 'Il resto lo accendi tu',
       says: [
         'Da solo Cumino fa poco: tiene i tuoi contatti e porta le lettere. Ogni altra cosa è un’estensione, che accendi tu e offri ai contatti che vuoi.',
-        'La prima è il ping pong: accendila da Estensioni, offrila a un contatto e mandagli un ping. Se anche lui l’ha accesa, ti risponde.',
+        'La prima è il ping pong: accendila da Estensioni, offrila a un contatto e manda un ping. Se dall’altra parte è accesa anche lì, torna un pong.',
       ],
     },
   },
