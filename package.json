@@ -20,6 +20,7 @@
     "build": "pnpm --filter @q-mino/phone --filter @q-mino/relay build",
     "gallery": "pnpm --filter @q-mino/phone gallery",
     "screens": "node scripts/screens.mjs",
+    "end-to-end": "node scripts/end_to_end.mjs",
     "contrast": "vitest run packages/adapters-web/test/design/the_contrast.test.ts --reporter=verbose",
     "icons": "node scripts/icons.mjs",
     "check:serial": "node scripts/check.mjs --serial",
