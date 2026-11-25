@@ -2,7 +2,8 @@
 // relay of the configuration her letters go through, what it declares, what
 // it sees and what it does not; shown once after her first face, read again
 // from the menu; she goes on, to the start. Since the MVP's part 2 drawn with the
-// design's components (WEB-29).
+// design's components (WEB-29). Since step 24's part 3, a link to the relay's
+// public configuration, when the composition root gives it (REL-8).
 
 import * as the_server from '@q-mino/domains/ui/the_server/_dsl.ts'
 import type * as the_server_value from '@q-mino/domains/ui/the_server/_value.ts'
@@ -19,10 +20,16 @@ export interface TheServerTexts {
   readonly it_does_not_see: string
   /** What a relay declares, Cumino tells: it cannot verify it. */
   readonly it_is_told_not_guaranteed: string
+  /** The link to what its operator declares of it, when the app knows it (REL-8). */
+  readonly its_public_configuration: string
   readonly go_on: string
 }
 
-export const TheServer = (props: { texts: TheServerTexts }) => {
+export const TheServer = (props: {
+  texts: TheServerTexts
+  /** The address of the relay's public configuration (REL-8); none, no link. */
+  its_public_configuration?: string
+}) => {
   const app = the_app()
   const screen = a_screen<the_server_value.the_state, the_server_value.what_happens>(app, {
     at_the_start: the_server.at_the_start,
@@ -63,6 +70,11 @@ export const TheServer = (props: { texts: TheServerTexts }) => {
             <p>{props.texts.it_carries_your_letters(it.relay)}</p>
             <p>{props.texts.it_sees}</p>
             <p>{props.texts.it_does_not_see}</p>
+            {props.its_public_configuration !== undefined && (
+              <p>
+                <a href={props.its_public_configuration}>{props.texts.its_public_configuration}</a>
+              </p>
+            )}
           </Card>
           <Flaw title={app.common.what_it_does_not_guarantee}>
             {props.texts.it_is_told_not_guaranteed}

@@ -71,6 +71,13 @@ export interface TheScreensWiring {
    * differs), and its invitation opens as at a start.
    */
   readonly the_link_in?: (address: string) => ui_value.what_it_holds | undefined
+  /**
+   * The address of her relay's public configuration (REL-8), what its
+   * operator declares of it, which the server's screen points to. The
+   * composition root gives it for the project's relay only; without it the
+   * screen points to nothing.
+   */
+  readonly the_relay_s_public_configuration?: string
 }
 
 /** Why the screens do not open (WEB-18): her node's opening reads failed, a record out of its form told apart (WEB-8); the message, whole, under "Perché". */
@@ -315,7 +322,14 @@ export const TheScreens = (props: TheScreensWiring) => {
       case 'what_happened':
         return <WhatHappened texts={props.texts.what_happened} />
       case 'the_server':
-        return <TheServer texts={props.texts.the_server} />
+        return (
+          <TheServer
+            texts={props.texts.the_server}
+            {...(props.the_relay_s_public_configuration === undefined
+              ? {}
+              : { its_public_configuration: props.the_relay_s_public_configuration })}
+          />
+        )
       case 'the_introduction':
         return <TheIntroduction texts={props.texts.the_introduction} screen={screen} />
     }

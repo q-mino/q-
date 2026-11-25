@@ -2,9 +2,15 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative, sep } from 'node:path'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import type { TheBuild } from '../src/build_info.ts'
-import { compose, the_precache_of, type AComposition } from '../build/compose.ts'
+import {
+  compose,
+  the_precache_of,
+  the_relay_of,
+  the_release,
+  type AComposition,
+} from '../build/compose.ts'
 import { the_policy_of_the_app } from '../build/the_policy.ts'
 
 // The app's build with no bundler (PWA-4, PWA-5): `dist/` composed into a
@@ -62,6 +68,31 @@ describe('the app’s policy', () => {
     expect(policy).toBe(the_policy_of_the_app(a_release.relay, `'sha256-${hash}'`))
     expect(page.indexOf('Content-Security-Policy')).toBeLessThan(page.indexOf('importmap'))
     expect(policy?.match(/'sha256-/g)).toHaveLength(1)
+  })
+})
+
+describe('the relay a channel declares (REL-8)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('the project’s on the test and the release channels, an address of no relay locally', () => {
+    expect(the_relay_of('test')).toBe('https://relay.cumino.aleclofabbro.it')
+    expect(the_relay_of('release')).toBe('https://relay.cumino.aleclofabbro.it')
+    expect(the_relay_of('dev')).toBe('https://relay.cumino.test')
+    expect(the_policy_of_the_app(the_relay_of('test'), "'sha256-x'").split('; ')).toContain(
+      "connect-src 'self' https://relay.cumino.aleclofabbro.it",
+    )
+  })
+
+  test('the release reads its channel’s, or the one `Q_RELAY` names', () => {
+    vi.stubEnv('Q_CHANNEL', 'test')
+    vi.stubEnv('Q_RELAY', undefined)
+    expect(the_release().relay).toBe('https://relay.cumino.aleclofabbro.it')
+    vi.stubEnv('Q_CHANNEL', 'dev')
+    expect(the_release().relay).toBe('https://relay.cumino.test')
+    vi.stubEnv('Q_RELAY', 'https://another.relay.example')
+    expect(the_release().relay).toBe('https://another.relay.example')
   })
 })
 

@@ -11,6 +11,7 @@ import {
 } from './node/index.ts'
 import { Flaw, Gesture, Notice, Why } from '@q-mino/adapters-web/design'
 import { the_build } from './build_info.ts'
+import { the_repository } from './the_project.ts'
 import { texts } from './texts/index.ts'
 import { UpdatePrompt } from './UpdatePrompt.tsx'
 
@@ -23,8 +24,6 @@ import { UpdatePrompt } from './UpdatePrompt.tsx'
 // met at the start or by the screens' first reads, can be cleared on the
 // test channel only: the node stopped, its database deleted, the app opened
 // again.
-
-const repository = 'https://github.com/q-mino/q-'
 
 // The commit's instant, told in the device's zone and the Italian way (A, 23 Nov 2026).
 const the_time_of = (instant: string): string =>
@@ -167,7 +166,9 @@ export const App = (props: TheAppsWiring) => {
         <p>
           {texts.app.name} ({texts.app.reading}) · {texts.about.version}: {the_build.version} ·{' '}
           {texts.about.code}:{' '}
-          <a href={`${repository}/commit/${the_build.commit}`}>{the_build.commit.slice(0, 7)}</a>
+          <a href={`${the_repository}/commit/${the_build.commit}`}>
+            {the_build.commit.slice(0, 7)}
+          </a>
           {the_build.committed_at !== 'unknown' && (
             <> {texts.about.committed_on(the_time_of(the_build.committed_at))}</>
           )}

@@ -3,6 +3,7 @@
 // `phone/test/screens/the_first_face.test.tsx`).
 
 import { TheScreens } from '@q-mino/adapters-web/screens'
+import { the_public_configuration_at } from '../../../the_project.ts'
 import { AScreenStory } from '../../a_screen_story.tsx'
 import { words } from './fixtures_a.ts'
 
@@ -11,6 +12,9 @@ export default { title: 'Screens/The server', component: TheScreens }
 export const what_it_carries_and_does_not_see = {
   render: () => (
     <AScreenStory
+      the_relay_s_public_configuration={the_public_configuration_at(
+        '0000000000000000000000000000000000000000',
+      )}
       plays={async (hand) => {
         await hand.until_it_says(words.the_first_face.make_it)
         hand.types('name', 'Anna')
