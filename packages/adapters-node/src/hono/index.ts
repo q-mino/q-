@@ -17,7 +17,12 @@
 // - CORS open to every origin (MBX-9; A, 23 Nov 2026): the PWA is served
 //   from another origin, and a request with `Authorization` and JSON is
 //   preflighted by the browser. No gate: only a browser enforces an origin,
-//   and the relay is open to every depositor anyway.
+//   and the relay is open to every depositor anyway;
+// - a deposit when the disk has too little room, 507
+//   `{ "fault": "the_relay_is_full" }`, before its body is read, heard by no
+//   tree (REL-3): the transport's refusal, which a phone tries again;
+// - `GET /`, what the relay says of itself: its version, its commit and
+//   where the source of that commit is (REL-4, AGPL § 13), nothing else.
 
 import { Hono, type Context } from 'hono'
 import { cors } from 'hono/cors'
@@ -30,6 +35,7 @@ import type { deposit_an_envelope } from '@q-mino/domains/desk/depositor/_usecas
 import type { majors as holder_majors } from '@q-mino/domains/desk/holder/_majors.ts'
 import type { collect_the_envelopes } from '@q-mino/domains/desk/holder/_usecase.ts'
 import { deposit_address } from '@q-mino/domains/mailbox/deposits/_id.ts'
+import type { RoomForADeposit } from '../disk/index.ts'
 
 /** The port of the depositor's leaf, as the relay's configurator wires it. */
 type DepositPort = zz.TreePorts<
@@ -48,12 +54,25 @@ type CollectPort = zz.TreePorts<
 /** The hash of a collect secret, behind a port (PER-19, V5): D = hash(R), the primitives' (SEA-4). */
 export type HashOfACollectSecret = (secret: string) => Promise<string>
 
-/** What the interface is wired to: the desk's trees, the hash of R, the relay's clock. */
+/** What the relay says of itself at `GET /` (REL-4, AGPL § 13): its version, its commit, the source of that commit. */
+export interface AboutTheRelay {
+  readonly version: string
+  readonly commit: string
+  readonly source: string
+}
+
+/**
+ * What the interface is wired to: the desk's trees, the hash of R, the
+ * relay's clock, the room on its disk for a deposit (REL-3), and what it
+ * says of itself (REL-4).
+ */
 export interface TheDesk {
   readonly depositor: { readonly deposit_an_envelope: DepositPort }
   readonly holder: { readonly collect_the_envelopes: CollectPort }
   readonly hash: HashOfACollectSecret
   readonly clock: zz.Clock
+  readonly room: RoomForADeposit
+  readonly about: AboutTheRelay
 }
 
 /**
@@ -119,6 +138,9 @@ const answered = (c: Context, events: AsyncIterable<unknown>): Response =>
 
 const not_a_request = (c: Context, fault: string): Response => c.json({ fault }, 400)
 
+/** The disk has too little room (REL-3): 507, Insufficient Storage, a refusal of the transport's. */
+const the_relay_is_full = (c: Context): Response => c.json({ fault: 'the_relay_is_full' }, 507)
+
 /**
  * CORS (MBX-9): every origin, the two paths' method, the headers a phone
  * sends, a preflight kept a day by the browser, no credentials (R goes as a
@@ -143,7 +165,7 @@ const body_of = async (c: Context): Promise<unknown> => {
 
 /**
  * The relay's HTTP interface over the desk (MBX-9): a Hono app, which the
- * relay's configurator serves (step 24) and a test calls with `app.request`.
+ * relay's main serves (REL-1, REL-2) and a test calls with `app.request`.
  */
 export const the_desks_http_interface = (the_desk: TheDesk) => {
   /** The `Caller` the node `desk` takes (MBX-6): anyone, or the D of the R shown; R never enters the tree (V5). */
@@ -160,7 +182,9 @@ export const the_desks_http_interface = (the_desk: TheDesk) => {
   })
   return new Hono()
     .use(open_to_every_origin)
+    .get('/', (c) => c.json(the_desk.about))
     .post('/depositor/deposit_an_envelope', async (c) => {
+      if ((await the_desk.room()).room === 'too_little') return the_relay_is_full(c)
       const shown = shown_by(c.req.header('authorization'))
       const body = a_deposit.safeParse(await body_of(c))
       if (shown.shows === 'not_a_bearer_credential') return not_a_request(c, 'authorization')

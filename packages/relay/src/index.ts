@@ -26,19 +26,23 @@ import { discard_an_envelope } from '@q-mino/domains/mailbox/deposits/_usecase.t
 import {
   the_desks_http_interface,
   type HashOfACollectSecret,
+  type RoomForADeposit,
   type TheRelaysStorage,
 } from '@q-mino/adapters-node'
+import { about, the_build } from './build_info.ts'
 
 /**
  * The world outside the relay: its clock, by which it keeps the time of a
  * deposit and its seven days (MBX-1, MBX-2), and the time that passes, which
  * wakes the executor when a wait comes due (DOM-14); the hash of a collect
- * secret (MBX-6), the primitives' (SEA-4).
+ * secret (MBX-6), the primitives' (SEA-4); the room on its disk for a
+ * deposit (REL-3).
  */
 export interface World {
   readonly clock: zz.Clock
   readonly elapsed: zz.Elapsed
   readonly hash: HashOfACollectSecret
+  readonly room: RoomForADeposit
 }
 
 /** The relay keeps no trace of the requests it answered with no fact (CFG-3). */
@@ -84,8 +88,15 @@ export const relay = (storage: TheRelaysStorage) => async (world: World) => {
     log: storage.log,
     depositor,
     holder,
-    /** The HTTP interface through the desk (MBX-9), to serve. */
-    http: the_desks_http_interface({ depositor, holder, hash: world.hash, clock: world.clock }),
+    /** The HTTP interface through the desk (MBX-9), to serve (REL-2), and what it says of itself (REL-4). */
+    http: the_desks_http_interface({
+      depositor,
+      holder,
+      hash: world.hash,
+      clock: world.clock,
+      room: world.room,
+      about: about(the_build),
+    }),
     /** The effect executor of the deposits' waits, started (DOM-14). */
     waits: () =>
       waits({

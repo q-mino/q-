@@ -1,5 +1,5 @@
 import type * as zz from '@q-mino/domains/library'
-import { the_relays_storage } from '@q-mino/adapters-node'
+import { always_room, the_relays_storage } from '@q-mino/adapters-node'
 import { relay } from '@q-mino/relay'
 import { a_world, harnessed, hash, type Start } from './harness.ts'
 import { stories_of_the_relay } from './stories.ts'
@@ -32,6 +32,7 @@ const a_relay_on_sqlite = async (start: Start = {}) => {
     {
       ...world,
       hash,
+      room: always_room,
     },
   )
   return harnessed(the_relay, world, { traced: () => [], forget: storage.forget })

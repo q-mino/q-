@@ -11,7 +11,7 @@
 
 import { createServer, type Server } from 'node:http'
 import { getRequestListener } from '@hono/node-server'
-import { the_relays_storage } from '@q-mino/adapters-node'
+import { always_room, the_relays_storage } from '@q-mino/adapters-node'
 import type { AFetch, AnAnswer, ARequest } from '@q-mino/adapters-web'
 import { relay, type World } from '@q-mino/relay'
 
@@ -118,9 +118,10 @@ const a_network = () => {
  * takes the relay's address to it, through the network's faults; how many
  * requests it served; and its end, the server and the storage closed.
  */
-export const a_relay_served = async (world: World, the_relay_s_address: string) => {
+export const a_relay_served = async (world: Omit<World, 'room'>, the_relay_s_address: string) => {
   const storage = the_relays_storage(':memory:')
-  const the_relay = await relay(storage)(world)
+  // A disk with room, always: the disk's check is the relay's main's tests' (REL-3, REL-6).
+  const the_relay = await relay(storage)({ ...world, room: always_room })
   let served = 0
   const open = { count: 0 }
   const listener = getRequestListener(

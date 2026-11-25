@@ -63,7 +63,7 @@ const of_package = (folder) => {
     console.error(`No package at ${dir}.`)
     process.exit(2)
   }
-  const projects = [dir, join(dir, 'test'), join(dir, 'shell')].filter((d) =>
+  const projects = [dir, join(dir, 'test'), join(dir, 'shell'), join(dir, 'build')].filter((d) =>
     existsSync(join(root, d, 'tsconfig.json')),
   )
   return {

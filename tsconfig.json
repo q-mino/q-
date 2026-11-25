@@ -32,6 +32,9 @@
       "path": "packages/relay/test"
     },
     {
+      "path": "packages/relay/build"
+    },
+    {
       "path": "packages/generator"
     },
     {

@@ -168,6 +168,42 @@ describe('the HTTP interface, through the desk (MBX-9)', () => {
   })
 })
 
+describe('the room on the disk (REL-3) and what the relay says of itself (REL-4)', () => {
+  test('a disk with too little room refuses a deposit before any tree hears it; a collect still answers', async () => {
+    const relay = await a_relay()
+    const http = over_http(relay.http)
+    await lines_of(await http.deposits(a_deposit('anna-deposit-1')))
+    relay.disk('too_little')
+    const refused = await http.deposits(a_deposit('anna-deposit-2', E2))
+    expect(refused.status).toBe(507)
+    expect(refused.headers.get('access-control-allow-origin')).toBe('*')
+    expect(await refused.json()).toEqual({ fault: 'the_relay_is_full' })
+    expect(await http.deposits('not json')).toHaveProperty('status', 507)
+    expect(await reading(await http.collects(a_collect(), R_b)).next()).toMatchObject({
+      event: 'snapshot',
+      total: 1,
+    })
+    relay.disk('enough')
+    expect(await lines_of(await http.deposits(a_deposit('anna-deposit-2', E2)))).toEqual([
+      kept_at('2026-11-16T00:00:00.000Z'),
+    ])
+    relay.storage.close()
+  })
+
+  test("GET / says the relay's version, its commit and the source of that commit", async () => {
+    const relay = await a_relay()
+    const about = await relay.http.request('/')
+    expect(about.status).toBe(200)
+    expect(await about.json()).toEqual({
+      version: '0.0.0',
+      commit: '0000000000000000000000000000000000000000',
+      source: 'https://github.com/q-mino/q-/tree/0000000000000000000000000000000000000000',
+    })
+    expect((await relay.http.request('/', { method: 'POST' })).status).toBe(404)
+    relay.storage.close()
+  })
+})
+
 describe("the relay's storage (MBX-8)", () => {
   const folders: string[] = []
   afterEach(() => {
