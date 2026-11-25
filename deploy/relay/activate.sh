@@ -11,7 +11,8 @@
 # one it leaves), the relay restarted, and its `GET /` on 127.0.0.1 asked
 # until it answers with the release's commit and still does a few seconds
 # later. If it does not, the links go back, the relay is restarted on the
-# release before, and the activation fails. The last three releases are kept,
+# release before, the release that failed is removed, and the activation
+# fails. The last three releases are kept,
 # the current and the previous among them. [Q, C, 25 Nov 2026]
 
 set -euo pipefail
@@ -79,7 +80,8 @@ switch_to() { # <release>: made current, or back to the one before
   if [[ -n "$before" ]]; then point previous "$before"; else rm -f "$home/previous"; fi
   restart || true
   healthy "$from" || fail "the release before, $from, does not answer either"
-  fail "release $to rolled back; current: $from"
+  rm -rf "${releases:?}/$to"
+  fail "release $to rolled back and removed; current: $from"
 }
 
 prune() {
