@@ -45,3 +45,11 @@ The screens are Preact with `@preact/signals`, JSX compiled by `tsc` (WEB-18).
 - **Three red runs on the same failure**: stop, write it down, go on with what does not depend on it.
 - The software informs, it does not guarantee: when you add a guarantee, ask "can it be tampered with?"; if yes, it becomes a declared feature, not a defense.
 - Decisions and the session log live in Alessandro's notes, outside this repository: see `CLAUDE.local.md` if present.
+
+## The relay and its deploy
+
+The relay at `https://relay.cumino.aleclofabbro.it` and its deploy are Claude's (A, 25 Nov 2026: "sei autorizzato a fare i deploy per questo relay"). The machine, the rules and the flaws: REL-7 and [`docs/relay.md`](docs/relay.md), its public configuration (keep it true when the machine changes).
+
+- **AWS only with `AWS_PROFILE=cumino`** (the IAM user `cumino-relay-deploy`: Lightsail in `eu-central-1`, the relay's DNS records). Never the profile `default`, not even to read. No resource beyond REL-7's (one `nano_3_0` instance, its static IP, its records) without A; nothing paid beyond its 5 $ a month.
+- **Deploy**: from a clean checkout of a pushed commit, `flock /tmp/q-heavy.lock timeout 600 deploy/relay/deploy.sh` (build, copy, activation; a release that does not answer with its commit is rolled back by itself); then `deploy/relay/smoke.sh <commit>`. `deploy.sh rollback` makes the release before current again; `deploy.sh status`; `deploy.sh provision` after a change to the machine's files (idempotent). The key is `~/.ssh/cumino-relay`, never in the repository.
+- Note every action on AWS or on the machine (command, outcome) in the session's log.

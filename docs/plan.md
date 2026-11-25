@@ -254,10 +254,11 @@ Scope (Alessandro, 19 Nov 2026): first face, introduction, relay; handshake by c
 
 ### (c) Configurators
 
-**24. `relay`** — three parts (the relay's plan, 25 Nov 2026): 1 J · 260k (the main and the build), 2 J · 265k (the infrastructure, the first deploy, the public configuration), 3 L · 220k (the PWA on the relay, proved end to end) · `relay/1-main`, …
+**24. `relay`** — three parts (the relay's plan, 25 Nov 2026): 1 J · 260k (the main and the build), 2 J · 265k (the infrastructure, the first deploy, the public configuration), 3 L · 220k (the PWA on the relay, proved end to end) · `relay/1-main`, `relay/2-deploy`, …
 
 - Goal: the relay's composition root on a machine and its build for Node (part 1, REL-1..REL-6); the deploy (AWS Lightsail in Frankfurt, `nano_3_0`, Debian; `relay.cumino.aleclofabbro.it` on Route 53; Node under systemd, Caddy before it, no access logs, no backups) and the public configuration that screen 1c points to (`docs/relay.md`, part 2); the relay as every channel's default in the PWA, and a ping and its pong between two nodes through it (part 3).
-- Rules: CFG-1..5, PER-19, MBX-8, MBX-9; REL-1..REL-6, written by part 1 (25 Nov 2026).
+- Rules: CFG-1..5, PER-19, MBX-8, MBX-9; REL-1..REL-6, written by part 1 (25 Nov 2026); REL-7, by part 2 (25 Nov 2026).
+- Part 2, done (25 Nov 2026, `relay/2-deploy`): the machine on Lightsail (`cumino-relay`, `nano_3_0`, Debian 13, `eu-central-1a`, a static IPv4 and its IPv6), `relay.cumino.aleclofabbro.it` (A, AAAA), `deploy/relay/` (`provision.sh`, the unit, the Caddyfile, `deploy.sh` with the rollback, `smoke.sh`), the first deploy, and `docs/relay.md`, the public configuration. Checked live: valid TLS, `GET /` with the commit deployed, a deposit and a collect with `curl`, the CORS preflight, no access log (the journal after the requests, a 502 included), the relay back after a reboot, a release broken on purpose rolled back by itself.
 - Decisions: the relay and its deploy are Claude's (A, 25 Nov 2026: "sei autorizzato a fare i deploy per questo relay"), with the AWS profile limited to it (Lightsail in `eu-central-1`, the relay's records); one relay, operated by the project; only a check of the disk's occupation (REL-3); no server secret in GitHub.
 
 **25. `phone`** — L · 320k · `step/25-phone`
