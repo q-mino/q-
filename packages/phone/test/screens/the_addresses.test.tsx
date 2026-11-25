@@ -178,6 +178,7 @@ describe("a view's address", () => {
       ['the_handshake_at_a_distance', words.the_handshake_at_a_distance.title, '#/a-distanza'],
       ['the_extensions', words.the_extensions.title, '#/estensioni'],
       ['what_happened', words.what_happened.title, '#/cosa-e-successo'],
+      ['the_introduction', words.the_introduction.title, '#/introduzione'],
       ['the_server', words.the_server.title, '#/server'],
     ] as const) {
       const history = a_history_of_test()
@@ -312,8 +313,15 @@ describe("the invitation's ticket and the address", () => {
     })
     node.comes_to_hold((now) => ({ ...now, faces: [{ face: 'F_a', name: 'Anna' }] }))
     node.ends('A1', { ended: 'done', said: { event: 'your_face_is_being_made', payload: {} } })
+    // The introduction, read the first time (UI-6), skipped on to the server.
+    await on(app, words.the_introduction.title)
+    expect(history.the_address()).toBe('#/introduzione')
+    the_button(app.shown(), words.the_introduction.skip).click()
     await on(app, words.the_server.title)
     expect(history.the_address()).toBe('#/server')
+    await until(() => {
+      expect(has_a_button(app.shown(), words.the_server.go_on)).toBe(true)
+    })
     the_button(app.shown(), words.the_server.go_on).click()
     // The view she opened the app at, over her contacts.
     await on(app, words.the_extensions.title)
@@ -342,7 +350,12 @@ describe("the invitation's ticket and the address", () => {
     })
     node.comes_to_hold((now) => ({ ...now, faces: [{ face: 'F_a', name: 'Anna' }] }))
     node.ends('A1', { ended: 'done', said: { event: 'your_face_is_being_made', payload: {} } })
+    await on(app, words.the_introduction.title)
+    the_button(app.shown(), words.the_introduction.skip).click()
     await on(app, words.the_server.title)
+    await until(() => {
+      expect(has_a_button(app.shown(), words.the_server.go_on)).toBe(true)
+    })
     the_button(app.shown(), words.the_server.go_on).click()
     await on(app, words.an_invitation.title)
     expect(the_addresses(history)).toEqual(['#/contatti', '#/invito'])

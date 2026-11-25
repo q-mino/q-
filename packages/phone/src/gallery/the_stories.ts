@@ -22,6 +22,7 @@ import * as slot from './stories/slot.stories.tsx'
 import * as the_app from './stories/screens/the_app.stories.tsx'
 import * as the_first_face from './stories/screens/the_first_face.stories.tsx'
 import * as the_server from './stories/screens/the_server.stories.tsx'
+import * as the_introduction from './stories/screens/the_introduction.stories.tsx'
 import * as my_contacts from './stories/screens/my_contacts.stories.tsx'
 import * as a_contact from './stories/screens/a_contact.stories.tsx'
 import * as the_handshake_in_person from './stories/screens/the_handshake_in_person.stories.tsx'
@@ -37,6 +38,7 @@ import * as the_strip from './stories/screens/the_strip.stories.tsx'
 const the_screens = [
   the_app,
   the_first_face,
+  the_introduction,
   the_server,
   my_contacts,
   a_contact,

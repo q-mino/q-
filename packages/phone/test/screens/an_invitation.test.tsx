@@ -127,9 +127,18 @@ describe('an invitation', () => {
     })
     bea.comes_to_hold((now) => ({ ...now, faces: [{ face: 'F_b', name: 'Bea' }] }))
     bea.ends('A1', { ended: 'done', said: { event: 'your_face_is_being_made', payload: {} } })
-    // The server first, once (UI-5); then the start opens the link waiting.
+    // The introduction and the server first, once (UI-6, UI-5); then the start opens the link waiting.
     await until(() => {
-      expect(the_way(first)).toEqual([words.the_first_face.title, words.the_server.title])
+      expect(the_way(first)).toEqual([words.the_first_face.title, words.the_introduction.title])
+    })
+    the_button(first.shown(), words.the_introduction.skip).click()
+    await until(() => {
+      expect(the_way(first)).toEqual([
+        words.the_first_face.title,
+        words.the_introduction.title,
+        words.the_server.title,
+      ])
+      expect(has_a_button(first.shown(), words.the_server.go_on)).toBe(true)
     })
     the_button(first.shown(), words.the_server.go_on).click()
     await until(() => {

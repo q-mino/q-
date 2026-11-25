@@ -1,4 +1,4 @@
-// The first face and the start, rendered (UI-5, UI-1; stories 1, 4, 5, 6 of
+// The first face and the start, rendered (UI-5, UI-6, UI-1; stories 1, 4, 5, 6, 29 of
 // `ui`'s README): her gestures on the screens, what they hand her node.
 
 import { afterEach, describe, expect, test } from 'vitest'
@@ -53,7 +53,7 @@ describe('the first face', () => {
     expect(the_button(app.shown(), words.the_first_face.make_it).disabled).toBe(false)
   })
 
-  test('making the first face asks once, and once made the server is told, then her contacts', async () => {
+  test('making the first face asks once, and once made the introduction is read, then the server is told, then her contacts', async () => {
     const anna = a_node_of_test()
     opened = opens_the_app({ node: anna.node, device: a_device_of_test(['A1', 'F_a']) })
     const app = opened
@@ -72,13 +72,29 @@ describe('the first face', () => {
     })
     anna.comes_to_hold((now) => ({ ...now, faces: [{ face: 'F_a', name: 'Anna' }] }))
     anna.ends('A1', { ended: 'done', said: { event: 'your_face_is_being_made', payload: {} } })
+    // The introduction, read the first time (UI-6): its three cards, then on to the server.
+    await until(() => {
+      expect(the_title(app)).toBe(words.the_introduction.title)
+    })
+    for (const card of ['what_cumino_is', 'how_the_letters_travel'] as const) {
+      await until(() => {
+        expect(app.shown().textContent).toContain(words.the_introduction.the_cards[card].title)
+      })
+      the_button(app.shown(), words.the_introduction.to_the_next_card).click()
+    }
+    await until(() => {
+      expect(app.shown().textContent).toContain(
+        words.the_introduction.the_cards.the_extensions.title,
+      )
+    })
+    the_button(app.shown(), words.the_introduction.to_the_server).click()
     // The server, once (1c, UI-5): the relay her letters go through, what it sees and what not.
     await until(() => {
       expect(the_title(app)).toBe(words.the_server.title)
+      expect(app.shown().textContent).toContain(
+        words.the_server.it_carries_your_letters('https://relay.cumino.test'),
+      )
     })
-    expect(app.shown().textContent).toContain(
-      words.the_server.it_carries_your_letters('https://relay.cumino.test'),
-    )
     expect(app.shown().textContent).toContain(words.the_server.it_does_not_see)
     the_button(app.shown(), words.the_server.go_on).click()
     await until(() => {

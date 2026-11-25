@@ -39,6 +39,7 @@ import { TheExtensions } from './the_extensions.tsx'
 import { TheFirstFace } from './the_first_face.tsx'
 import { TheHandshakeAtADistance } from './the_handshake_at_a_distance.tsx'
 import { TheHandshakeInPerson } from './the_handshake_in_person.tsx'
+import { TheIntroduction } from './the_introduction.tsx'
 import { TheServer } from './the_server.tsx'
 import { WhatHappened } from './what_happened.tsx'
 
@@ -315,6 +316,8 @@ export const TheScreens = (props: TheScreensWiring) => {
         return <WhatHappened texts={props.texts.what_happened} />
       case 'the_server':
         return <TheServer texts={props.texts.the_server} />
+      case 'the_introduction':
+        return <TheIntroduction texts={props.texts.the_introduction} screen={screen} />
     }
   }
   // The focus to the title of the screen shown, at each move of the way

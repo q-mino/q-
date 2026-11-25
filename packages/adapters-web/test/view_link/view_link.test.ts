@@ -25,6 +25,7 @@ const words: TheViewsWords = {
   the_extensions: 'extensions',
   what_happened: 'what-happened',
   the_server: 'server',
+  the_introduction: 'introduction',
 }
 const fragment_of = the_fragment_of_a_view(words)
 const view_in = the_view_in_a_fragment(words)
@@ -49,6 +50,7 @@ const a_view: fc.Arbitrary<ui_value.a_screen> = fc.oneof(
     { screen: 'the_extensions' },
     { screen: 'what_happened' },
     { screen: 'the_server' },
+    { screen: 'the_introduction', read: 'again' },
   ),
   a_bond.map((bond): ui_value.a_screen => ({ screen: 'a_contact', bond })),
   a_name.map((extension): ui_value.a_screen => ({ screen: 'an_extension', extension })),
@@ -115,6 +117,14 @@ describe("a view's link", () => {
     })
     expect(invitation).toBe('#/invitation')
     expect(view_in(invitation ?? '')).toEqual({ holds: 'an_invitation' })
+  })
+
+  test('names the introduction the same for both readings, read back as read again, from the home (UI-6)', () => {
+    for (const read of ['the_first_time', 'again'] as const)
+      expect(fragment_of({ screen: 'the_introduction', read })).toBe('#/introduction')
+    const again: ui_value.a_screen = { screen: 'the_introduction', read: 'again' }
+    expect(view_in('#/introduction')).toEqual({ holds: 'a_view', screen: again })
+    expect(the_way_to_a_view(again)).toEqual([{ screen: 'my_contacts' }, again])
   })
 
   test('is never a ticket, and a ticket is never a view', () => {
