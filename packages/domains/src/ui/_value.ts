@@ -32,6 +32,15 @@ export const what_it_holds = value.what_it_holds
 export type what_it_holds = z.output<typeof what_it_holds>
 
 /**
+ * How the introduction is read (UI-6): the first time, after her first face,
+ * on to the server; or again, from the menu, back where she was.
+ *
+ * @see {@link value.how_the_introduction_is_read}
+ */
+export const how_the_introduction_is_read = value.how_the_introduction_is_read
+export type how_the_introduction_is_read = z.output<typeof how_the_introduction_is_read>
+
+/**
  * A screen of stage 1, with what it is about (UI-1).
  *
  * @see {@link value.a_screen}

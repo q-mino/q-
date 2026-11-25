@@ -30,6 +30,8 @@ export interface TheViewsWords {
   readonly the_extensions: string
   readonly what_happened: string
   readonly the_server: string
+  /** The introduction, both readings (UI-6): read back as read again, from the home. */
+  readonly the_introduction: string
 }
 
 /**
@@ -82,6 +84,8 @@ export const the_fragment_of_a_view =
         return of(words.what_happened)
       case 'the_server':
         return of(words.the_server)
+      case 'the_introduction':
+        return of(words.the_introduction)
     }
   }
 
@@ -116,6 +120,8 @@ const the_screen_named = (words: TheViewsWords, segments: readonly string[]): un
         return { screen: 'what_happened' }
       case words.the_server:
         return { screen: 'the_server' }
+      case words.the_introduction:
+        return { screen: 'the_introduction', read: 'again' }
       default:
         return undefined
     }
@@ -195,6 +201,7 @@ export const the_way_to_a_view = (screen: ui_value.a_screen): ui_value.the_way =
     case 'the_extensions':
     case 'what_happened':
     case 'the_server':
+    case 'the_introduction':
       return [home, screen]
   }
 }

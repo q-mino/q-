@@ -10,6 +10,7 @@ import { the_extensions } from './the_extensions.ts'
 import { the_first_face } from './the_first_face.ts'
 import { the_handshake_at_a_distance } from './the_handshake_at_a_distance.ts'
 import { the_handshake_in_person } from './the_handshake_in_person.ts'
+import { the_introduction } from './the_introduction.ts'
 import { the_server } from './the_server.ts'
 import { views } from './views.ts'
 import { what_happened } from './what_happened.ts'
@@ -30,6 +31,7 @@ export const screens = {
   a_page,
   what_happened,
   the_server,
+  the_introduction,
   views,
   extensions,
 } satisfies TheScreensTexts
