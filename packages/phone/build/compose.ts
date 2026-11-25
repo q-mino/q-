@@ -38,6 +38,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, relative, sep } from 'node:path'
 import ts from 'typescript'
 import type { TheBuild } from '../src/build_info.ts'
+import { the_project_s_relay } from '../src/the_project.ts'
 import { the_policy_of_the_app } from './the_policy.ts'
 
 const the_phone = join(import.meta.dirname, '..')
@@ -481,6 +482,16 @@ const git = (...command: string[]): string => {
   }
 }
 
+/**
+ * The relay a channel declares (REL-8): the project's on the test and the
+ * release channels (A, 25 Nov 2026: "lo inseriremo come default nella
+ * PWA"); locally, an address of no relay (`.test`, RFC 2606), where the node
+ * starts and collects nothing, unless `Q_RELAY` names one. A relay is an
+ * `https` URL (BND-4), so no relay of 127.0.0.1 without a certificate.
+ */
+export const the_relay_of = (channel: TheBuild['channel']): string =>
+  channel === 'dev' ? 'https://relay.cumino.test' : the_project_s_relay
+
 /** The release of this checkout: from the CI's variables, or from git. */
 export const the_release = (): TheBuild => {
   const committed = git('show', '-s', '--format=%cI', 'HEAD')
@@ -496,10 +507,9 @@ export const the_release = (): TheBuild => {
       ? 'unknown'
       : new Date(committed).toISOString(),
     channel,
-    // The relay the node's tickets declare (PWA-2): the release's; locally, an
-    // address of no relay (`.test`, RFC 2606), since no public relay runs
-    // before step 24 (A's): the node starts and collects nothing.
-    relay: process.env['Q_RELAY'] ?? 'https://relay.cumino.test',
+    // The relay the node's tickets declare (PWA-2, REL-8): `Q_RELAY`, or the
+    // channel's.
+    relay: process.env['Q_RELAY'] ?? the_relay_of(channel),
     base: '/q-/',
   }
 }

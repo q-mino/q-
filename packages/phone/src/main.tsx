@@ -14,6 +14,7 @@ import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'j
 import { render } from 'preact'
 import { App } from './App.tsx'
 import { the_build } from './build_info.ts'
+import { the_project_s_relay, the_public_configuration_at } from './the_project.ts'
 import {
   the_data_cleared,
   the_start,
@@ -80,6 +81,11 @@ const camera = the_camera(navigator.mediaDevices)
 const a_link = the_link_of(the_ticket_in_a_link(location.href))
 /** The link she opened the app with, given to the screens only when there is one. */
 const with_the_link = a_link === undefined ? {} : { a_link }
+/** The relay's public configuration, at this release's commit, for the project's relay only (REL-8). */
+const with_the_public_configuration =
+  the_build.relay === the_project_s_relay
+    ? { the_relay_s_public_configuration: the_public_configuration_at(the_build.commit) }
+    : {}
 
 render(
   <App
@@ -106,6 +112,7 @@ render(
         // A link followed while the app is open, read as the one it opened with (WEB-1, WEB-25).
         the_link_in={(address) => the_link_of(the_ticket_in_a_link(address))}
         {...with_the_link}
+        {...with_the_public_configuration}
         // Her gesture on the data of an older test release, on the test channel only (WEB-8).
         {...(clears_the_data_and_starts_again === undefined
           ? {}

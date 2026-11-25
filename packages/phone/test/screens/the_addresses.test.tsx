@@ -217,6 +217,31 @@ describe("a view's address", () => {
     await on(app, words.my_contacts.title)
   })
 
+  test('the server’s screen links the relay’s public configuration when the composition root gives it, and nothing without it (REL-8)', async () => {
+    const configuration = 'https://github.com/q-mino/q-/blob/1111111/docs/relay.md'
+    for (const given of [configuration, undefined]) {
+      opened?.closes()
+      opened = opens_the_app({
+        node: anna_s().node,
+        device: a_device_of_test(ids),
+        the_history: a_history_of_test(`${the_page}#/server`),
+        ...(given === undefined ? {} : { the_relay_s_public_configuration: given }),
+      })
+      const app = opened
+      await on(app, words.the_server.title)
+      await until(() => {
+        expect(has_a_button(app.shown(), words.the_server.go_on)).toBe(true)
+      })
+      const links = [...app.shown().querySelectorAll('a')].map((link) => [
+        link.textContent,
+        link.getAttribute('href'),
+      ])
+      expect(links).toEqual(
+        given === undefined ? [] : [[words.the_server.its_public_configuration, given]],
+      )
+    }
+  })
+
   test('an address of a contact no longer there tells it, and back is her contacts', async () => {
     const history = a_history_of_test(`${the_page}#/contatti/L_x`)
     const app = opens(anna_s(), history)

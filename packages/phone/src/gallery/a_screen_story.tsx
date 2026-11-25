@@ -45,6 +45,8 @@ export interface AScreenStorysSetting {
   readonly holds?: Partial<WhatTheNodeHolds>
   /** The link she opened the app with. */
   readonly a_link?: ui_value.what_it_holds
+  /** The relay's public configuration (REL-8), as the composition root gives it. */
+  readonly the_relay_s_public_configuration?: string
   /** The words of the extensions the app carries; the phone's by default. */
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
   /** Whether her phone shares (Web Share); it does by default. */
@@ -147,6 +149,9 @@ export const AScreenStory = (props: AScreenStorysSetting) => {
           props.words === undefined ? texts.screens : { ...texts.screens, extensions: props.words }
         }
         {...(props.a_link === undefined ? {} : { a_link: props.a_link })}
+        {...(props.the_relay_s_public_configuration === undefined
+          ? {}
+          : { the_relay_s_public_configuration: props.the_relay_s_public_configuration })}
       />
     </div>
   )

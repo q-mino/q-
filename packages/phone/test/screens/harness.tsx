@@ -174,6 +174,8 @@ export const opens_the_app = (wiring: {
   readonly the_history?: AHistoryOfTest
   /** The link an address holds (WEB-1), as the composition root reads it; none by default. */
   readonly the_link_in?: (address: string) => ui_value.what_it_holds | undefined
+  /** The relay's public configuration (REL-8), as the composition root gives it; none by default. */
+  readonly the_relay_s_public_configuration?: string
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
@@ -187,6 +189,9 @@ export const opens_the_app = (wiring: {
         : { clears_the_data_and_starts_again: wiring.clears_the_data_and_starts_again })}
       {...(wiring.the_history === undefined ? {} : { the_history: wiring.the_history })}
       {...(wiring.the_link_in === undefined ? {} : { the_link_in: wiring.the_link_in })}
+      {...(wiring.the_relay_s_public_configuration === undefined
+        ? {}
+        : { the_relay_s_public_configuration: wiring.the_relay_s_public_configuration })}
       texts={
         wiring.words === undefined ? texts.screens : { ...texts.screens, extensions: wiring.words }
       }
