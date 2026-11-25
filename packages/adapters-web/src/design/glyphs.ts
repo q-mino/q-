@@ -212,6 +212,24 @@ export const the_glyphs = {
       d: 'M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z',
     },
   ],
+  /**
+   * Cumino's own, not Lucide's: the logo, the cocker's head of the drawing
+   * on the blackboard, on the same grid and stroke
+   * (`phone/assets/logo.svg`, PWA-7). [Q, C, 25 Nov 2026]
+   */
+  cumino: [
+    {
+      shape: 'path',
+      d: 'M7.8 9V15C7.8 18.3 6.6 20 5.1 20S2.4 18.3 2.5 15.5L3.1 9.6C3.5 5.3 7.2 2.5 12 2.5S20.5 5.3 20.9 9.6L21.5 15.5C21.6 18.3 20.4 20 18.9 20S16.2 18.3 16.2 15V9',
+    },
+    {
+      shape: 'path',
+      d: 'M9.4 13.2C8.9 15.5 9 18 9.8 19.8C10.5 21.4 13.5 21.4 14.2 19.8C15 18 15.1 15.5 14.6 13.2',
+    },
+    { shape: 'path', d: 'M10.4 10.6h.01' },
+    { shape: 'path', d: 'M13.6 10.6h.01' },
+    { shape: 'path', d: 'M11.2 16.8h1.6' },
+  ],
 } as const satisfies Readonly<Record<string, readonly AShape[]>>
 
 /** A glyph's name. */
