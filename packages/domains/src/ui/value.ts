@@ -29,6 +29,12 @@ export const what_it_holds = z.discriminatedUnion('holds', [
   z.strictObject({ holds: z.literal('a_ticket_out_of_its_form') }),
 ])
 
+/**
+ * How the introduction is read (UI-6): the first time, after her first face,
+ * on to the server; or again, from the menu, back where she was.
+ */
+export const how_the_introduction_is_read = z.enum(['the_first_time', 'again'])
+
 /** A screen of stage 1, with what it is about (UI-1). */
 export const a_screen = z.discriminatedUnion('screen', [
   /** Before her first face (1a of the notes on screens). */
@@ -58,6 +64,8 @@ export const a_screen = z.discriminatedUnion('screen', [
   z.strictObject({ screen: z.literal('what_happened') }),
   /** The server: the relay her letters go through, what it declares, what it sees and what not (1c, informative, UI-5). */
   z.strictObject({ screen: z.literal('the_server') }),
+  /** The introduction: three cards that tell what Cumino is, read the first time after her first face or again from the menu (UI-6). */
+  z.strictObject({ screen: z.literal('the_introduction'), read: how_the_introduction_is_read }),
 ])
 
 /** The screens she opened, the last the one shown; back goes to the one before (UI-1). */

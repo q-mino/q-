@@ -100,4 +100,48 @@
     justify-items: start;
     gap: var(--space-2);
   }
+
+  /*
+   * The introduction (UI-6): its card in the middle of the body, its glyph
+   * large in the cumin over its title; under it, where she is among the
+   * cards, a dot each, the one shown long.
+   */
+  .screen > [data-part='body'] > [data-part='card'] {
+    display: grid;
+    align-content: center;
+    gap: var(--space-4);
+    min-block-size: 100%;
+  }
+
+  [data-part='card'] > .card > [data-part='glyph'] {
+    order: -1;
+    color: var(--cumin-ink);
+    font-size: calc(var(--text-xl) * 2);
+    line-height: 1;
+  }
+
+  [data-part='card'] > .card > p {
+    max-inline-size: var(--measure);
+  }
+
+  [data-part='card'] > [data-part='cards'] {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  [data-part='cards'] > li {
+    inline-size: var(--space-2);
+    block-size: var(--space-2);
+    border-radius: var(--radius-round);
+    background: var(--ink-soft);
+    transition: inline-size var(--duration-short);
+  }
+
+  [data-part='cards'] > li[aria-current='step'] {
+    inline-size: var(--space-5);
+    background: var(--cumin);
+  }
 }

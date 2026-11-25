@@ -28,6 +28,7 @@ const the_glyph_of: Readonly<Record<my_contacts_value.an_entry, AGlyph>> = {
   the_handshake_at_a_distance: 'link',
   the_extensions: 'puzzle',
   what_happened: 'history',
+  the_introduction: 'book_open',
   the_server: 'info',
 }
 

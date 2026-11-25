@@ -11,6 +11,7 @@ export const registry = {
   'ui/value/a_place': value.a_place,
   'ui/value/a_draft_for': value.a_draft_for,
   'ui/value/what_it_holds': value.what_it_holds,
+  'ui/value/how_the_introduction_is_read': value.how_the_introduction_is_read,
   'ui/value/a_screen': value.a_screen,
   'ui/value/the_way': value.the_way,
   'ui/value/where_it_goes': value.where_it_goes,

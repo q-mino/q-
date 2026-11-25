@@ -1,7 +1,8 @@
 // The first face, as sentences (UI-5): she types her name, kept as a draft; she
 // makes her first face with it; once made, the draft is dropped and the
-// server's screen tells her the relay her letters go through, once (1c), from
-// which the app starts again from her faces, which chooses it (USR-6).
+// introduction tells her what Cumino is (UI-6), then the server's screen the
+// relay her letters go through, once (1c), from which the app starts again
+// from her faces, which chooses it (USR-6).
 
 import { _ui, type activities, type value } from './_scope_dsl.ts'
 
@@ -46,15 +47,20 @@ export const after = (state: value.the_state, happens: value.what_happens): valu
   }
 }
 
-/** Once the making ended: made (now or before), the draft dropped and the server's screen, then the start; else she may try again. */
+/** Once the making ended: made (now or before), the draft dropped and the introduction, read the first time (then the server's screen and the start, UI-6); else she may try again. */
 const after_the_making = (
   state: value.the_state,
   how: activities.value.how_it_ended,
 ): value.a_turn =>
   how.ended === 'done' || how.ended === 'done_already'
-    ? _ui.dsl.it_goes(state, { goes: 'to_a_screen', screen: { screen: 'the_server' } }, [
-        { asks: 'to_drop_a_draft', for: for_the_name },
-      ])
+    ? _ui.dsl.it_goes(
+        state,
+        {
+          goes: 'to_a_screen',
+          screen: { screen: 'the_introduction', read: 'the_first_time' },
+        },
+        [{ asks: 'to_drop_a_draft', for: for_the_name }],
+      )
     : stays({
         ...state,
         asked: state.asked === undefined ? undefined : { ...state.asked, ended: true },

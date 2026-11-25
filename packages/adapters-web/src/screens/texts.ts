@@ -16,6 +16,7 @@ import type { TheExtensionsTexts } from './the_extensions.tsx'
 import type { TheFirstFaceTexts } from './the_first_face.tsx'
 import type { TheHandshakeAtADistanceTexts } from './the_handshake_at_a_distance.tsx'
 import type { TheHandshakeInPersonTexts } from './the_handshake_in_person.tsx'
+import type { TheIntroductionTexts } from './the_introduction.tsx'
 import type { TheServerTexts } from './the_server.tsx'
 import type { WhatHappenedTexts } from './what_happened.tsx'
 
@@ -33,6 +34,7 @@ export interface TheScreensTexts {
   readonly a_page: APageTexts
   readonly what_happened: WhatHappenedTexts
   readonly the_server: TheServerTexts
+  readonly the_introduction: TheIntroductionTexts
   /** The words of the views in the page's address (WEB-25), which she reads in the browser's bar. */
   readonly views: TheViewsWords
   /** The words of each extension the app carries, by its name (EXT-16, WEB-22). */
