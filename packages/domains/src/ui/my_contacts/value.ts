@@ -12,6 +12,7 @@ export const an_entry = z.enum([
   'the_handshake_at_a_distance',
   'the_extensions',
   'what_happened',
+  'the_introduction',
   'the_server',
 ])
 

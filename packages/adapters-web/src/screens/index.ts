@@ -21,6 +21,7 @@ export type { MyContactsTexts } from './my_contacts.tsx'
 export type { TheExtensionsTexts } from './the_extensions.tsx'
 export type { TheFirstFaceTexts } from './the_first_face.tsx'
 export type { TheServerTexts } from './the_server.tsx'
+export type { ACardsTexts, TheIntroductionTexts } from './the_introduction.tsx'
 export type { TheHandshakeAtADistanceTexts } from './the_handshake_at_a_distance.tsx'
 export {
   the_words_of_a_bond_made,

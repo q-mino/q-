@@ -4,10 +4,13 @@
     <meta charset="UTF-8" />
     <!-- composed by build/compose.ts -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#8a5a2b" />
-    <link rel="icon" href="./icon-192.png" />
+    <!-- The bar's colour by theme (PWA-7): Roano's paper, Lavagna's slate. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf8f3" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2023" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <title>q-</title>
+    <title>Cumino</title>
     <!-- Roano and Lavagna (WEB-26): the page declares both schemes, so that a browser that darkens
          pages by itself (Chrome's "darken websites", Brave, Opera) leaves it to its own dark theme. -->
     <meta name="color-scheme" content="light dark" />

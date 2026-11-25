@@ -18,6 +18,7 @@ export const my_contacts = {
     the_handshake_at_a_distance: 'Stretta di mano a distanza',
     the_extensions: 'Estensioni',
     what_happened: 'Cosa è successo',
+    the_introduction: 'Come funziona Cumino',
     the_server: 'Il server',
   },
   something_happened: (held_letters, happened) =>

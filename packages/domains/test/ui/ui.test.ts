@@ -9,6 +9,7 @@ import * as my_contacts from '../../src/ui/my_contacts/_dsl.ts'
 import * as the_first_face from '../../src/ui/the_first_face/_dsl.ts'
 import * as the_handshake_at_a_distance from '../../src/ui/the_handshake_at_a_distance/_dsl.ts'
 import * as the_handshake_in_person from '../../src/ui/the_handshake_in_person/_dsl.ts'
+import * as the_introduction from '../../src/ui/the_introduction/_dsl.ts'
 import * as the_server from '../../src/ui/the_server/_dsl.ts'
 import * as what_happened from '../../src/ui/what_happened/_dsl.ts'
 import type * as a_contact_value from '../../src/ui/a_contact/_value.ts'
@@ -281,7 +282,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     })
   })
 
-  test('making the first face asks once, and once made drops the draft and shows the server', () => {
+  test('making the first face asks once, and once made drops the draft and shows the introduction', () => {
     const typed = the_first_face.after(the_first_face.at_the_start(undefined), {
       happens: 'she_types_the_name',
       name: 'Anna',
@@ -307,7 +308,10 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       expect(after.asks).toEqual([
         { asks: 'to_drop_a_draft', for: { for: 'the_name_of_my_first_face' } },
       ])
-      expect(after.goes).toEqual({ goes: 'to_a_screen', screen: { screen: 'the_server' } })
+      expect(after.goes).toEqual({
+        goes: 'to_a_screen',
+        screen: { screen: 'the_introduction', read: 'the_first_time' },
+      })
     }
     expect(the_first_face.after(made.state, it_ended('A_other', done)).asks).toEqual([])
   })
@@ -382,6 +386,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       'the_handshake_at_a_distance',
       'the_extensions',
       'what_happened',
+      'the_introduction',
       'the_server',
     ] as const
     expect(
@@ -390,7 +395,10 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     for (const entry of the_menu) {
       const chosen = my_contacts.after(open.state, { happens: 'she_chooses', entry })
       expect(chosen.state).toEqual({ menu: 'closed' })
-      expect(chosen.goes).toEqual({ goes: 'to_a_screen', screen: { screen: entry } })
+      expect(chosen.goes).toEqual({
+        goes: 'to_a_screen',
+        screen: entry === 'the_introduction' ? { screen: entry, read: 'again' } : { screen: entry },
+      })
       expect(chosen.asks).toEqual([])
     }
     expect(my_contacts.after(open.state, { happens: 'she_closes_the_menu' }).state).toEqual({
@@ -1331,7 +1339,7 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       },
     ])
   })
-  test('the server is shown once after the first face, read again from the menu, and goes on to the start', () => {
+  test('the server is shown once after the introduction, read again from the menu, and goes on to the start', () => {
     const shown = the_server.what_it_shows(the_server.at_the_start(), {
       relay: 'https://relay.cumino.test',
     })
@@ -1348,6 +1356,79 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       { happens: 'she_chooses', entry: 'the_server' },
     )
     expect(from_the_menu.goes).toEqual({ goes: 'to_a_screen', screen: { screen: 'the_server' } })
+  })
+  test('the introduction is read once after the first face, on to the server, skippable, and again from the menu, back where she was', () => {
+    const first = the_introduction.at_the_start('the_first_time')
+    expect(the_introduction.what_it_shows(first)).toEqual({
+      card: 'what_cumino_is',
+      the_cards: ['what_cumino_is', 'how_the_letters_travel', 'the_extensions'],
+      going_on: 'to_the_next_card',
+      turning_back: 'none',
+      skipping: 'to_the_server',
+    })
+    const before_the_first = the_introduction.after(first, {
+      happens: 'she_turns_to_the_card_before',
+    })
+    expect(before_the_first).toEqual({ state: first, asks: [], goes: { goes: 'nowhere' } })
+    const second = the_introduction.after(first, { happens: 'she_turns_to_the_next_card' })
+    expect(second.goes).toEqual({ goes: 'nowhere' })
+    expect(second.asks).toEqual([])
+    expect(the_introduction.what_it_shows(second.state)).toMatchObject({
+      card: 'how_the_letters_travel',
+      going_on: 'to_the_next_card',
+      turning_back: 'to_the_card_before',
+      skipping: 'to_the_server',
+    })
+    expect(
+      the_introduction.after(second.state, { happens: 'she_turns_to_the_card_before' }).state,
+    ).toEqual(first)
+    const third = the_introduction.after(second.state, { happens: 'she_turns_to_the_next_card' })
+    expect(the_introduction.what_it_shows(third.state)).toMatchObject({
+      card: 'the_extensions',
+      going_on: 'to_the_server',
+      turning_back: 'to_the_card_before',
+      skipping: 'none',
+    })
+    const to_the_server = { goes: 'to_a_screen', screen: { screen: 'the_server' } }
+    expect(
+      the_introduction.after(third.state, { happens: 'she_turns_to_the_next_card' }),
+    ).toMatchObject({ asks: [], goes: to_the_server })
+    expect(the_introduction.after(first, { happens: 'she_skips_it' })).toMatchObject({
+      asks: [],
+      goes: to_the_server,
+    })
+    expect(the_introduction.after(first, { happens: 'she_goes_back' }).goes).toEqual({
+      goes: 'back',
+    })
+    const again = the_introduction.at_the_start('again')
+    expect(the_introduction.what_it_shows(again)).toMatchObject({
+      going_on: 'to_the_next_card',
+      skipping: 'none',
+    })
+    const its_last = the_introduction.after(
+      the_introduction.after(again, { happens: 'she_turns_to_the_next_card' }).state,
+      { happens: 'she_turns_to_the_next_card' },
+    ).state
+    expect(the_introduction.what_it_shows(its_last).going_on).toBe('back_where_she_was')
+    expect(
+      the_introduction.after(its_last, { happens: 'she_turns_to_the_next_card' }).goes,
+    ).toEqual({ goes: 'back' })
+    expect(the_introduction.after(again, { happens: 'she_skips_it' }).goes).toEqual({
+      goes: 'back',
+    })
+    const from_the_menu = my_contacts.after(
+      { menu: 'open' },
+      { happens: 'she_chooses', entry: 'the_introduction' },
+    )
+    expect(from_the_menu.goes).toEqual({
+      goes: 'to_a_screen',
+      screen: { screen: 'the_introduction', read: 'again' },
+    })
+    expect(
+      ui.the_way_after([{ screen: 'my_contacts' }], from_the_menu.goes, [
+        { screen: 'my_contacts' },
+      ]),
+    ).toEqual([{ screen: 'my_contacts' }, { screen: 'the_introduction', read: 'again' }])
   })
 
   test('a strip over every screen while the relay does not answer, none once it answers', () => {

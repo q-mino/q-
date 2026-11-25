@@ -45,21 +45,35 @@ const the_packages = join(the_phone, '..')
 const the_repository = join(the_packages, '..')
 const posix = (path: string): string => path.split(sep).join('/')
 
-/** The app's manifest (PWA-1), its addresses under the base. */
-const the_manifest = (base: string) => ({
-  name: 'q-',
-  short_name: 'q-',
-  description: 'Cumino',
+/**
+ * The name under the installed icon, by channel (PWA-7): the release's
+ * «Cumino»; the test site's and a local build's told apart, so that an
+ * installed test app is never taken for the release.
+ */
+const the_name_on = (channel: TheBuild['channel']): string =>
+  channel === 'release' ? 'Cumino' : channel === 'test' ? 'Cumino prova' : 'Cumino dev'
+
+/**
+ * The app's manifest (PWA-1, PWA-7), its addresses under the base: the
+ * splash's ground Roano's paper (the light theme's: a manifest has one), the
+ * icons the logo's on Lavagna's slate (`scripts/icons.mjs`), a maskable one
+ * of its own, the logo inside its safe circle.
+ */
+const the_manifest = (build: TheBuild) => ({
+  name: the_name_on(build.channel),
+  short_name: the_name_on(build.channel),
+  description: 'Cumino: lettere fra persone vere, senza un centro.',
   lang: 'it',
-  start_url: base,
-  scope: base,
+  start_url: build.base,
+  scope: build.base,
   display: 'standalone',
-  background_color: '#fdf6ec',
-  theme_color: '#8a5a2b',
+  background_color: '#fbf8f3',
+  theme_color: '#fbf8f3',
   icons: [
-    { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-    { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-    { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
   ],
 })
 
@@ -433,10 +447,7 @@ export const compose = (out: string, build: TheBuild): AComposition => {
     for (const icon of readdirSync(join(the_phone, 'public'))) {
       copyFileSync(join(the_phone, 'public', icon), join(out, icon))
     }
-    writeFileSync(
-      join(out, 'manifest.webmanifest'),
-      JSON.stringify(the_manifest(build.base), null, 2),
-    )
+    writeFileSync(join(out, 'manifest.webmanifest'), JSON.stringify(the_manifest(build), null, 2))
     const starts = pages.map((page) => the_start_of(graph, page.main))
     pages.forEach((page, at) => {
       const written = the_page(page.template, build, graph, starts[at] ?? [])

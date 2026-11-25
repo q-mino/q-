@@ -3,17 +3,19 @@
 
 import { _ui, type value } from './_scope_dsl.ts'
 
-/** The menu, in its order: the two handshakes, the extensions, what happened, and the server (read again, UI-5). */
+/** The menu, in its order: the two handshakes, the extensions, what happened, the introduction and the server (both read again, UI-5, UI-6). */
 const the_menu: readonly value.an_entry[] = [
   'the_handshake_in_person',
   'the_handshake_at_a_distance',
   'the_extensions',
   'what_happened',
+  'the_introduction',
   'the_server',
 ]
 
-/** The screen of an entry of the menu. */
-const the_screen_of = (entry: value.an_entry): _ui.value.a_screen => ({ screen: entry })
+/** The screen of an entry of the menu: the introduction read again (UI-6). */
+const the_screen_of = (entry: value.an_entry): _ui.value.a_screen =>
+  entry === 'the_introduction' ? { screen: entry, read: 'again' } : { screen: entry }
 
 /** The screen at its start: the menu closed. */
 export const at_the_start = (): value.the_state => ({ menu: 'closed' })
