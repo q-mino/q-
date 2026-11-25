@@ -69,6 +69,20 @@ The stories are in the Component Story Format (`packages/phone/src/gallery/stori
 - `q-mino.github.io/q-/`: releases, from the tags `v*`.
 - `q-mino-prova.github.io/q-/`: test origin, from every push on `acceptance`, the branch where the work is merged before it goes to `main` in review.
 
+## The relay
+
+`https://relay.cumino.aleclofabbro.it`, the project's, declared by the test and the release channels (REL-8): what it is and what it keeps, in [`docs/relay.md`](docs/relay.md), its public configuration; its deploy, in [`CLAUDE.md`](CLAUDE.md) § The relay and its deploy and `deploy/relay/`. A local build declares an address of no relay; `Q_RELAY=https://relay.cumino.aleclofabbro.it pnpm build` makes one on the project's.
+
+- **The round, end to end**, on a published site and its relay: two nodes, each a headless Chrome with a profile of its own, through the first faces, the handshake by link, ping pong activated by both, a ping and its pong, and a ping to a node that has not activated it, which meets silence (about a minute and a half, most of it the silence's 60 seconds). A line per step and the time from the ping to the pong; the report as JSON; exit 0 only if every step is ok:
+
+  ```sh
+  pnpm end-to-end                                         # the test site, q-mino-prova.github.io/q-/
+  pnpm end-to-end --url http://localhost:5173/q-/         # a local build made with Q_RELAY, served by `pnpm --filter @q-mino/phone preview`
+  pnpm end-to-end --out round.json --tries 6              # where the report goes; loads of a page that does not open
+  ```
+
+  `--commit <sha>` also asks that the site serve that commit (after a push on `acceptance`, once the workflow `Test origin` is green; the CDN keeps a file up to ten minutes). A cold load is about 900 requests, and GitHub Pages answers 429 to an address that asks too much (two runs back to back are enough): the profiles are loaded one at a time, a page that does not open is loaded again after 30 seconds, then 60, then 120, and the 429s are counted in the report. Each run leaves two bonds' mailboxes on the relay, forgotten after eight days (MBX-8).
+
 ## License
 
 q- is free software under the [GNU AGPL-3.0](LICENSE). A commercial license is available on request for those who cannot meet the AGPL's terms. Contributions require signing the [CLA](CLA.md). The names and the logo are trademarks: see [TRADEMARK.md](TRADEMARK.md).
