@@ -1,8 +1,21 @@
 // adapters-node: one folder per adapter, each imported only through its index.ts.
-// The relay's: its storage on SQLite (`sqlite/`) and its HTTP interface through `desk` (`hono/`).
+// The relay's: its storage on SQLite (`sqlite/`), its HTTP interface through `desk` (`hono/`),
+// and the room on its disk (`disk/`, REL-3).
 export { the_relays_storage, type TheRelaysStorage } from './sqlite/index.ts'
 export {
+  always_room,
+  the_free_space_kept,
+  the_room_of,
+  the_room_on_the_disk,
+  type FreeSpaceKept,
+  type ReadTheVolume,
+  type RoomForADeposit,
+  type RoomOnTheDisk,
+  type TheVolume,
+} from './disk/index.ts'
+export {
   the_desks_http_interface,
+  type AboutTheRelay,
   type HashOfACollectSecret,
   type TheDesk,
   type TheDesksHttpInterface,

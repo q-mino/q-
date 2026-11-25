@@ -1,10 +1,11 @@
 // A relay of the configurator's tests: its storage on SQLite, in memory or
 // in a file, its world faked (the clock a test sets, the time that passes
-// when it says, the hash of R told apart from R as in the relay's stories),
-// and its HTTP interface called with `app.request`, no server started.
+// when it says, the hash of R told apart from R as in the relay's stories,
+// its disk with room until a test fills it), and its HTTP interface called
+// with `app.request`, no server started.
 
 import * as zz from '@q-mino/domains/library'
-import { the_relays_storage } from '@q-mino/adapters-node'
+import { the_relays_storage, type RoomOnTheDisk } from '@q-mino/adapters-node'
 import { relay } from '../src/index.ts'
 
 const time_zone = zz.time_zone.parse('UTC')
@@ -26,6 +27,7 @@ export const a_relay = async (location = ':memory:', at = '2026-11-16T00:00:00.0
   const storage = the_relays_storage(location)
   let instant = zz.date_time.parse(at)
   const waits: (() => void)[] = []
+  let room: RoomOnTheDisk = { room: 'enough' }
   const the_relay = await relay(storage)({
     clock: { now: () => instant, time_zone },
     elapsed: () =>
@@ -33,10 +35,15 @@ export const a_relay = async (location = ':memory:', at = '2026-11-16T00:00:00.0
         waits.push(over)
       }),
     hash,
+    room: () => Promise.resolve(room),
   })
   return {
     ...the_relay,
     storage,
+    /** The relay's disk has too little room, or enough again (REL-3). */
+    disk: (now: RoomOnTheDisk['room']) => {
+      room = { room: now }
+    },
     /** The relay's clock at an instant. */
     at: (to: string) => {
       instant = zz.date_time.parse(to)
