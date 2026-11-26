@@ -2,9 +2,11 @@ import { z } from 'zod'
 import { _ui, user } from './_scope_value.ts'
 
 // Her contacts, the home of stage 1 (UI-5): the bonds she keeps, by the names
-// she gives them, whether each has her yet; the menu, minimal (Alessandro's
-// structure of the app); and a word of what happened, when something did
-// (USR-8: nothing happens in silence).
+// she gives them, whether each has her yet; on each row, the marks of the
+// extensions offered to it with their slots there (MSG-15, K-13: what is new
+// on a bond, seen from the home); the menu, minimal (Alessandro's structure
+// of the app); and a word of what happened, when something did (USR-8:
+// nothing happens in silence).
 
 /** The entries of the menu, in its order. */
 export const an_entry = z.enum([
@@ -35,19 +37,27 @@ export const a_turn = z.strictObject({
   goes: _ui.value.where_it_goes,
 })
 
-/** What the screen is given: her contacts, how many letters are held, how many things happened without a fact. */
+/** What the screen is given: her contacts, how many letters are held, how many things happened without a fact; the extensions and the bonds each is offered to, for the rows' marks (EXT-7). */
 export const what_it_is_given = z.strictObject({
   contacts: z.array(_ui.value.a_contact_seen).max(4096),
   held_letters: z.number().int().min(0),
   happened: z.number().int().min(0),
+  extensions: z.array(_ui.value.an_extension_seen).max(256),
+  offers: _ui.value.the_offers,
 })
 
-/** A contact in the list: by her name for it, as it introduced itself when that differs, whether it has her yet. */
+/**
+ * A contact in the list: by her name for it, as it introduced itself when
+ * that differs, whether it has her yet; the marks its row holds, each
+ * extension active and offered to it with a slot on the row (MSG-15), in
+ * the order of her extensions.
+ */
 export const a_contact_in_the_list = z.strictObject({
   bond: user.value.a_bond,
   name: z.string().min(1).max(80),
   introduced_as: z.string().min(1).max(80).optional(),
   they_have_me: z.boolean(),
+  marks: z.array(_ui.value.a_mark).max(64),
 })
 
 /**

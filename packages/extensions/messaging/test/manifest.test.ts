@@ -16,7 +16,7 @@ describe('the manifest of messaging (EXT-10, MSG-10)', () => {
     expect(boundary.the_manifest.parse(committed)).toEqual(the_manifest_of_messaging)
   })
 
-  test('its versions are its package’s and the boundary’s; it sees the declared time; its slot on a bond; no action, no page', () => {
+  test('its versions are its package’s and the boundary’s; it sees the declared time; its slots on a bond and on its row, one part; no action, no page', () => {
     expect(the_manifest_of_messaging).toMatchObject({
       name: 'messaging',
       version: package_json.version,
@@ -24,7 +24,10 @@ describe('the manifest of messaging (EXT-10, MSG-10)', () => {
       sees: { known: ['the_declared_time'] },
       touches: ['the_port_of_requests', 'its_storage'],
       actions: {},
-      slots: { the_chat: { on: 'a_bond', shows: 'parts/the_chat.js' } },
+      slots: {
+        the_chat: { on: 'a_bond', shows: 'parts/the_chat.js' },
+        the_chat_in_my_contacts: { on: 'a_bond_in_my_contacts', shows: 'parts/the_chat.js' },
+      },
       pages: {},
     })
   })

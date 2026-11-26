@@ -165,6 +165,7 @@ describe('between a part and the kernel (EXT-16)', () => {
   test('to the part: its place with its data, the events of what it invoked or follows', () => {
     for (const message of [
       { message: 'placed', place: 'a_bond', data: { bond: 'B-1' } },
+      { message: 'placed', place: 'a_bond_in_my_contacts', data: { bond: 'B-1' } },
       { message: 'placed', place: 'the_extension', data: {} },
       { message: 'event', id: 'F-1', event: { event: 'snapshot', entries: [] } },
       { message: 'done', id: 'F-1' },

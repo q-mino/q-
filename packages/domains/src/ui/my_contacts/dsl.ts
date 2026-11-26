@@ -1,5 +1,6 @@
 // Her contacts, as sentences (UI-5): she opens a contact; she opens the menu
-// and chooses where to go; she is told when something happened.
+// and chooses where to go; she is told when something happened; each row
+// holds the slots of the extensions offered to its bond (MSG-15).
 
 import { _ui, type value } from './_scope_dsl.ts'
 
@@ -53,17 +54,31 @@ export const what_it_shows = (
   contacts:
     given.contacts.length === 0
       ? { are: 'none_yet', ways: ['the_handshake_in_person', 'the_handshake_at_a_distance'] }
-      : { are: 'some', list: given.contacts.map(in_the_list) },
+      : { are: 'some', list: given.contacts.map((contact) => in_the_list(contact, given)) },
   ...(state.menu === 'open' ? { menu: [...the_menu] } : {}),
   ...(given.held_letters + given.happened > 0
     ? { something_happened: { held_letters: given.held_letters, happened: given.happened } }
     : {}),
 })
 
-/** A contact in the list: as it introduced itself only when she named it otherwise (9 of the notes: "si presenta come"). */
-const in_the_list = (contact: _ui.value.a_contact_seen): value.a_contact_in_the_list => ({
+/**
+ * A contact in the list: as it introduced itself only when she named it
+ * otherwise (9 of the notes: "si presenta come"); its row's marks, the
+ * extensions offered to its bond with a slot there (MSG-15: a row holds no
+ * action, which its manifest cannot declare there, EXT-16).
+ */
+const in_the_list = (
+  contact: _ui.value.a_contact_seen,
+  given: value.what_it_is_given,
+): value.a_contact_in_the_list => ({
   bond: contact.bond,
   name: contact.name,
   ...(contact.introduced_as === contact.name ? {} : { introduced_as: contact.introduced_as }),
   they_have_me: contact.confirmation.state === 'received',
+  marks: [
+    ..._ui.dsl.the_marks_at(
+      { place: 'a_bond_in_my_contacts', bond: contact.bond },
+      { extensions: given.extensions, offered: given.offers },
+    ),
+  ],
 })

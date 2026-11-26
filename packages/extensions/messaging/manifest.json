@@ -5,7 +5,10 @@
   "sees": { "known": ["the_declared_time"] },
   "touches": ["the_port_of_requests", "its_storage"],
   "actions": {},
-  "slots": { "the_chat": { "on": "a_bond", "shows": "parts/the_chat.js" } },
+  "slots": {
+    "the_chat": { "on": "a_bond", "shows": "parts/the_chat.js" },
+    "the_chat_in_my_contacts": { "on": "a_bond_in_my_contacts", "shows": "parts/the_chat.js" }
+  },
   "pages": {},
   "surfaces": {
     "self": {

@@ -1,9 +1,9 @@
 import * as z from 'zod'
 import { seen_on_known } from './contexts.ts'
-import { place } from './places.ts'
+import { a_place_of_an_action, place } from './places.ts'
 import { port } from './ports.ts'
 import { a_base_event, the_kernels_events_on_known } from './the_kernels_node.ts'
-import { a_file, a_leaf, a_name, a_set_of, json, semver, type Json } from './values.ts'
+import { a_leaf, a_name, a_part_module, a_set_of, json, semver, type Json } from './values.ts'
 import { version } from './version.ts'
 
 // The manifest (EXT-3, EXT-10): what an extension is to the kernel. Its
@@ -15,14 +15,14 @@ import { version } from './version.ts'
 // (`manifest.json`, `the_manifest`), the one form the kernel reads, with
 // the package's version and the boundary's, never written by hand.
 
-/** An action (EXT-16): data the kernel draws in a place, which invokes a leaf of the extension on `self` with the place's data. */
-const an_action = z.strictObject({ on: place, invokes: a_leaf })
+/** An action (EXT-16): data the kernel draws in a place, a bond's screen or the extension's own (never a row of her contacts), which invokes a leaf of the extension on `self` with the place's data. */
+const an_action = z.strictObject({ on: a_place_of_an_action, invokes: a_leaf })
 
-/** A slot (EXT-16): a part the kernel places in a screen of its own, with a document of the extension's bundle. */
-const a_slot = z.strictObject({ on: place, shows: a_file })
+/** A slot (EXT-16): a part the kernel places in a screen of its own, the component its module (`shows`) exports (K-3). */
+const a_slot = z.strictObject({ on: place, shows: a_part_module })
 
 /** A page (EXT-16): a part the kernel places as a screen, from the extension's own screen. */
-const a_page = z.strictObject({ on: z.literal('the_extension'), shows: a_file })
+const a_page = z.strictObject({ on: z.literal('the_extension'), shows: a_part_module })
 
 /**
  * The declaration, as its author writes it (EXT-10): `sees` per persona,
@@ -35,7 +35,9 @@ export interface Declaration<leaf extends string = string> {
   readonly name: string
   readonly sees?: { readonly known?: readonly seen_on_known[] }
   readonly touches: readonly port[]
-  readonly actions?: Readonly<Record<string, { readonly on: place; readonly invokes: leaf }>>
+  readonly actions?: Readonly<
+    Record<string, { readonly on: a_place_of_an_action; readonly invokes: leaf }>
+  >
   readonly slots?: Readonly<Record<string, { readonly on: place; readonly shows: string }>>
   readonly pages?: Readonly<
     Record<string, { readonly on: 'the_extension'; readonly shows: string }>

@@ -30,9 +30,10 @@ const declaration = boundary.manifest({
   touches: ['the_port_of_requests', 'its_storage'],
   actions: { greet: { on: 'a_bond', invokes: 'usecase/greet_a_bond' } },
   slots: {
-    the_greetings_of_a_bond: { on: 'a_bond', shows: 'frame/the_greetings_of_a_bond.html' },
+    the_greetings_of_a_bond: { on: 'a_bond', shows: 'parts/the_greetings_of_a_bond.js' },
+    the_last_greeting: { on: 'a_bond_in_my_contacts', shows: 'parts/the_greetings_of_a_bond.js' },
   },
-  pages: { all_the_greetings: { on: 'the_extension', shows: 'frame/all_the_greetings.html' } },
+  pages: { all_the_greetings: { on: 'the_extension', shows: 'parts/all_the_greetings.js' } },
 }) satisfies boundary.Manifest<Registry>
 
 /** The surface of `known`, as the build derives it (EXT-10): a leaf at major 1, its input and events as JSON Schemas. */
@@ -58,6 +59,36 @@ describe('the declaration (EXT-10)', () => {
     >()
     expectTypeOf(declaration.actions.greet.invokes).toEqualTypeOf<'usecase/greet_a_bond'>()
     expect(declaration.slots.the_greetings_of_a_bond.on).toBe('a_bond')
+    expect(declaration.slots.the_last_greeting.on).toBe('a_bond_in_my_contacts')
+  })
+
+  test('a part’s module is under parts/, as its build emits it; an action is never on a row of her contacts (K-3, K-13)', () => {
+    for (const shows of ['frame/the_greetings.html', 'parts/the_greetings.tsx', 'the_greetings.js'])
+      expect(
+        boundary.the_declaration.safeParse({
+          name: 'greetings',
+          touches: [],
+          slots: { the_greetings: { on: 'a_bond', shows } },
+        }).success,
+      ).toBe(false)
+    expect(
+      boundary.the_declaration.safeParse({
+        name: 'greetings',
+        touches: [],
+        actions: { greet: { on: 'a_bond_in_my_contacts', invokes: 'usecase/greet_a_bond' } },
+      }).success,
+    ).toBe(false)
+    interface AnActionOnARow {
+      readonly name: 'greetings'
+      readonly touches: readonly []
+      readonly actions: {
+        readonly greet: {
+          readonly on: 'a_bond_in_my_contacts'
+          readonly invokes: 'usecase/greet_a_bond'
+        }
+      }
+    }
+    expectTypeOf<AnActionOnARow>().not.toExtend<boundary.Declaration>()
   })
 
   test('what its author writes, its schema takes', () => {
@@ -105,7 +136,7 @@ describe('the declaration (EXT-10)', () => {
       boundary.the_declaration.parse({
         name: 'greetings',
         touches: [],
-        pages: { all: { on: 'a_bond', shows: 'frame/all.html' } },
+        pages: { all: { on: 'a_bond', shows: 'parts/all.js' } },
       }),
     ).toThrow()
     expect(() =>

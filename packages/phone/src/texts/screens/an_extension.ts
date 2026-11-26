@@ -6,6 +6,8 @@ import { the_news } from './what_happened.ts'
 /** Where a point is drawn, by its place's name; a place of no kernel's screen, by its name. */
 const the_places = new Map<string, string>([
   ['a_bond', 'sulla schermata di ogni contatto a cui la offri'],
+  // MSG-15 (provisional, C's, 27 Nov 2026, part M4 of messaging).
+  ['a_bond_in_my_contacts', 'sulla riga di ogni contatto a cui la offri, fra i tuoi contatti'],
   ['the_extension', 'sulla sua schermata'],
 ])
 

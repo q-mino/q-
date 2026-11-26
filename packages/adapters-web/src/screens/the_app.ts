@@ -4,14 +4,16 @@
 // and the two hands of a turn: what it asks, handed to `user` in order, and
 // where it goes, on the way. Since part 22.2 the words of each extension
 // the kernel draws in its mark, and whether a screen is the one shown (a
-// part of an extension is served only then, EXT-4, when one comes).
+// part of an extension is served only then, EXT-4). Since part M4 of
+// messaging the parts the app carries, each a component of its extension's
+// (K-3, WEB-23).
 
 import { computed, type ReadonlySignal } from '@preact/signals'
 import type * as boundary from '@q-mino/boundary'
 import type * as zz from '@q-mino/domains/library'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
-import { createContext } from 'preact'
+import { createContext, type FunctionComponent } from 'preact'
 import { useContext } from 'preact/hooks'
 import type { AFacing, AScan } from '../camera/index.ts'
 import type { TheWordsOfASlot } from '../design/index.ts'
@@ -109,11 +111,41 @@ export interface TheCommonTexts {
 export interface ThePointsTexts {
   /** The gesture that opens a page, by its label in the extension's words. */
   readonly opens_the_page: (label: string) => string
-  /** A slot or a page the app does not draw yet (WEB-23): a fault of the app's composition. */
+  /** A slot or a page whose part the app does not carry (WEB-23): a fault of the app's composition. */
   readonly no_document: string
+  /** A part whose module did not load (the network, K-3): a fault, drawn again at the next opening. */
+  readonly the_part_does_not_load: string
+  /** A part that fell while drawn (an exception of the extension's code, K-3): a fault, the rest of the screen drawn. */
+  readonly the_part_fell: string
   /** The kernel's words around a slot (WEB-30): its gestures to the whole screen and back, its corner. */
   readonly the_slot: TheWordsOfASlot
 }
+
+/**
+ * A part's component, as its module exports it (`part`, EXT-16, K-3): a
+ * function component of the extension's, given what the kernel gives a part
+ * (`boundary.WhatAPartIsGiven`), drawn in the kernel's mark.
+ */
+export type APartsComponent = FunctionComponent<boundary.WhatAPartIsGiven>
+
+/** A point of an extension's that holds a part: a slot, or a page, by its name in the manifest. */
+export interface APointWithAPart {
+  readonly point: 'slot' | 'page'
+  readonly name: string
+}
+
+/**
+ * A part as the app carries it, an ADT (WEB-23): carried, its module
+ * imported when first drawn (only an active extension's part is drawn, so
+ * off its files are not loaded, A, 24 Nov 2026); or not carried, which the
+ * app draws as its own fault (`APartNotDrawn`).
+ */
+export type APartOfTheApp =
+  | { readonly part: 'carried'; readonly imports: () => Promise<APartsComponent> }
+  | { readonly part: 'not_carried' }
+
+/** The parts the app carries, by their extension and their point (the composition root's, from the manifests it carries). */
+export type ThePartsOfTheApp = (extension: string, point: APointWithAPart) => APartOfTheApp
 
 /** What every screen is given by the rendering. */
 export interface TheApp {
@@ -128,6 +160,8 @@ export interface TheApp {
   readonly goes: (where: ui_value.where_it_goes) => void
   /** The words of an extension in the app's language (EXT-16), none if the app has none for it. */
   readonly words: (extension: string) => boundary.the_words_of_an_extension | undefined
+  /** The parts the app carries (K-3); none carried, each drawn as the app's fault. */
+  readonly parts: ThePartsOfTheApp
 }
 
 /** What a screen asked, drawn now: a new activity's id and the time (UI-3, WEB-4). */

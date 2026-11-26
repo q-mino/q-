@@ -40,7 +40,7 @@ export const a_turn = value.a_turn
 export type a_turn = z.output<typeof a_turn>
 
 /**
- * What the screen is given: her contacts, how many letters are held, how many things happened without a fact.
+ * What the screen is given: her contacts, how many letters are held, how many things happened without a fact; the extensions and the bonds each is offered to, for the rows' marks (EXT-7).
  *
  * @see {@link value.what_it_is_given}
  */
@@ -48,7 +48,10 @@ export const what_it_is_given = value.what_it_is_given
 export type what_it_is_given = z.output<typeof what_it_is_given>
 
 /**
- * A contact in the list: by her name for it, as it introduced itself when that differs, whether it has her yet.
+ * A contact in the list: by her name for it, as it introduced itself when
+ * that differs, whether it has her yet; the marks its row holds, each
+ * extension active and offered to it with a slot on the row (MSG-15), in
+ * the order of her extensions.
  *
  * @see {@link value.a_contact_in_the_list}
  */

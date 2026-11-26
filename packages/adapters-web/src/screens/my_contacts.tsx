@@ -1,12 +1,15 @@
 // Her contacts, the home of stage 1 (UI-5): her bonds by the names she gives
-// them, as introduced when it differs, whether they have her; none yet, the
-// two handshakes; the menu, a popover over the screen (WEB-29); a word when
+// them, as introduced when it differs, whether they have her; on each row,
+// the marks of the extensions offered to it, each with its slots there,
+// compact (MSG-15, K-13; part M4 of messaging); none yet, the two
+// handshakes; the menu, a popover over the screen (WEB-29); a word when
 // something happened.
 
 import * as my_contacts from '@q-mino/domains/ui/my_contacts/_dsl.ts'
 import type * as my_contacts_value from '@q-mino/domains/ui/my_contacts/_value.ts'
 import { Gesture, List, Menu, Row, Screen, type AGlyph } from '../design/index.ts'
 import { a_screen, what_it_is_given } from './a_screen.ts'
+import { TheMark, ThePoints } from './parts.tsx'
 import { the_app } from './the_app.ts'
 
 /** The words of her contacts (provisional, A to confirm). */
@@ -42,15 +45,19 @@ export const MyContacts = (props: { texts: MyContactsTexts }) => {
     app,
     screen.state,
     async (): Promise<my_contacts_value.what_it_is_given> => {
-      const [contacts, held_letters, happened] = await Promise.all([
+      const [contacts, held_letters, happened, extensions, offers] = await Promise.all([
         app.node.her_contacts(),
         app.node.the_held_letters(),
         app.node.what_happened(),
+        app.node.the_extensions(),
+        app.node.the_offers(),
       ])
       return {
         contacts: [...contacts],
         held_letters: held_letters.length,
         happened: happened.length,
+        extensions: [...extensions],
+        offers,
       }
     },
   )
@@ -162,6 +169,21 @@ export const MyContacts = (props: { texts: MyContactsTexts }) => {
               opens={() => {
                 screen.happens({ happens: 'she_opens_a_contact', bond: contact.bond })
               }}
+              {...(contact.marks.length === 0
+                ? {}
+                : {
+                    below: contact.marks.map((mark) => (
+                      <TheMark key={mark.extension} extension={mark.extension}>
+                        {/* A row holds no action and no page (EXT-16, MSG-15): its slots only. */}
+                        <ThePoints
+                          mark={mark}
+                          course_of={() => ({ course: 'nothing_asked' })}
+                          taps={() => undefined}
+                          opens={() => undefined}
+                        />
+                      </TheMark>
+                    )),
+                  })}
             />
           ))}
         </List>

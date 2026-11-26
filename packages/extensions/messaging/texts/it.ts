@@ -3,7 +3,7 @@ import type { manifest } from '../manifest.ts'
 import type { registry } from '../persona/self/_registry.ts'
 
 // Messaging's words in Italian (EXT-16, WEB-22; MSG-10; part M2), the texts
-// the kernel draws for it: its name and the label of its slot, typed by its
+// the kernel draws for it: its name and the labels of its slots, typed by its
 // declaration and the registry of `self`, so that a word missing does not
 // compile. No action, so no words of events: the part tells its messages
 // in its own words (part M5). Provisional [Q, C, provisional: A to
@@ -13,7 +13,8 @@ import type { registry } from '../persona/self/_registry.ts'
 export const words = {
   name: 'Messaggi',
   actions: {},
-  slots: { the_chat: 'Chat' },
+  // The slot on a row of her contacts (MSG-15, part M4): the same part, the same word.
+  slots: { the_chat: 'Chat', the_chat_in_my_contacts: 'Chat' },
   pages: {},
   events: {},
 } satisfies boundary.Words<typeof manifest, typeof registry>

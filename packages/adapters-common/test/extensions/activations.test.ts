@@ -53,8 +53,8 @@ describe('the manifest to accept (EXT-7, EXT-10)', () => {
           'usecase/wave_twice': a_leaf(wave_input, { waved }),
         }),
       }),
-      slots: { the_waves_of_a_bond: { on: 'a_bond', shows: 'frame/the_waves_of_a_bond.html' } },
-      pages: { all_the_waves: { on: 'the_extension', shows: 'frame/all_the_waves.html' } },
+      slots: { the_waves_of_a_bond: { on: 'a_bond', shows: 'parts/the_waves_of_a_bond.js' } },
+      pages: { all_the_waves: { on: 'the_extension', shows: 'parts/all_the_waves.js' } },
     }
     expect(the_manifest_to_accept(manifest)).toMatchObject({
       sees: { known: ['the_peer_key'] },

@@ -24,13 +24,14 @@ describe('the words of messaging (EXT-16)', () => {
     expect(boundary.the_words_of_an_extension.parse(committed)).toEqual(words)
   })
 
-  test('its name, «Messaggi», and the label of its slot, «Chat»', () => {
+  test('its name, «Messaggi», and the label of its slots, «Chat»', () => {
     expect(words.name).toBe('Messaggi')
     expect(words.slots.the_chat).toBe('Chat')
+    expect(words.slots.the_chat_in_my_contacts).toBe('Chat')
   })
 
   test('its words are typed by its manifest: a label per slot, no action, no own event', () => {
-    expectTypeOf<keyof ItsWords['slots']>().toEqualTypeOf<'the_chat'>()
+    expectTypeOf<keyof ItsWords['slots']>().toEqualTypeOf<'the_chat' | 'the_chat_in_my_contacts'>()
     expectTypeOf(words).toExtend<ItsWords>()
   })
 

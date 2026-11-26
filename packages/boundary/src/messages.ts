@@ -171,6 +171,11 @@ const placed = z.discriminatedUnion('place', [
   }),
   z.strictObject({
     message: z.literal('placed'),
+    place: z.literal('a_bond_in_my_contacts'),
+    data: the_data_of_a_place.a_bond_in_my_contacts,
+  }),
+  z.strictObject({
+    message: z.literal('placed'),
     place: z.literal('the_extension'),
     data: the_data_of_a_place.the_extension,
   }),
