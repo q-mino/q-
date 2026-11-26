@@ -264,7 +264,7 @@ describe('a contact', () => {
     })
   })
 
-  test('a strip over the screens while the relay does not answer, gone once it answers (UI-5)', async () => {
+  test('a strip over the screens while the relay does not answer or is full, gone once it answers (UI-5, REL-3)', async () => {
     const anna_s = a_node_of_test(anna)
     opened = opens_the_app({ node: anna_s.node, device: a_device_of_test([]) })
     const app = opened
@@ -277,10 +277,16 @@ describe('a contact', () => {
     await until(() => {
       expect(app.root.textContent).toContain(words.common.the_relay_does_not_answer)
     })
+    met('is_full')
+    await until(() => {
+      expect(app.root.textContent).toContain(words.common.the_relay_is_full)
+    })
+    expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
     met('answered')
     await until(() => {
-      expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
+      expect(app.root.textContent).not.toContain(words.common.the_relay_is_full)
     })
+    expect(app.root.textContent).not.toContain(words.common.the_relay_does_not_answer)
   })
 
   test('no network, while her phone tells it, told apart from a relay silent (UI-5)', async () => {

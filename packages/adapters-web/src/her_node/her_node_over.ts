@@ -152,7 +152,7 @@ const the_extensions_in_common = (
 
 /** How the relay client last met the relay, in `ui`'s words: not met yet is as if it answered (UI-5). */
 const the_relay_met = (met: ReturnType<TheRelayAsMet['last']>): ui_value.the_relay_met =>
-  met === 'did_not_answer' ? 'did_not_answer' : 'answered'
+  met === 'not_met_yet' ? 'answered' : met
 
 /** An event of a read of `self`, as the port toward `self` passes it: `self`'s words unchanged. */
 type AnEventOfSelf = { readonly event: string } & Readonly<Record<string, unknown>>

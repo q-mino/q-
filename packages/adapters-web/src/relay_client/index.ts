@@ -142,6 +142,9 @@ const the_json_of = (line: string): unknown => {
 /** The statuses by which an HTTP server says it gave no answer: try again (RFC 9110: 408, 429, 5xx). */
 const is_no_answer = (status: number): boolean => status === 408 || status === 429 || status >= 500
 
+/** The status by which the relay refuses a deposit for the room on its disk (REL-3): 507, Insufficient Storage, a 5xx. */
+const the_relay_is_full = 507
+
 /**
  * What came of a request to the relay (MBX-9): an answer, its status and
  * its lines to read; no answer (the request lost, the relay unheard in the
@@ -159,11 +162,16 @@ type AnExchange =
 
 /**
  * The relay as the client last met it (UI-5's strip): not met yet; it
- * answered; or it did not (`unreachable`: the request lost, the relay unheard
+ * answered; it did not (`unreachable`: the request lost, the relay unheard
  * in the longest wait, a status by which it gave no answer; no network and a
- * relay silent are not told apart).
+ * relay silent are not told apart); or it answered that it is full, a
+ * deposit refused for the room on its disk (507, REL-3), until a deposit is
+ * answered otherwise (a collect, which writes nothing, says nothing of the room).
  */
-export type TheRelayMet = 'not_met_yet' | 'answered' | 'did_not_answer'
+export type TheRelayMet = 'not_met_yet' | 'answered' | 'did_not_answer' | 'is_full'
+
+/** What asks the relay: a deposit, which tells of its room, or a collect, which does not (REL-3). */
+type AskedBy = 'a_deposit' | 'a_collect'
 
 /** What the client tells of its meetings with the relay: the last, and whoever listens, told at each change. */
 export interface TheRelayAsMet {
@@ -185,9 +193,10 @@ export const the_relay_s_http_transports = (
 } => {
   let last: TheRelayMet = 'not_met_yet'
   const listening = new Set<() => void>()
-  /** A meeting with the relay: kept, and told when it changes what she is shown. */
-  const met = (now: 'answered' | 'did_not_answer'): void => {
+  /** A meeting with the relay: kept, and told when it changes what she is shown; a collect answered leaves a relay full as it was. */
+  const met = (now: Exclude<TheRelayMet, 'not_met_yet'>, by: AskedBy): void => {
     if (now === last) return
+    if (now === 'answered' && by === 'a_collect' && last === 'is_full') return
     last = now
     for (const tell of listening) tell()
   }
@@ -203,6 +212,7 @@ export const the_relay_s_http_transports = (
 
   /** A request posted to a relay, and its answer as it begins, each wait within the longest. */
   const posted = async (
+    by: AskedBy,
     relay: string,
     path: string,
     body: unknown,
@@ -229,11 +239,18 @@ export const the_relay_s_http_transports = (
         }),
       )
       if (answer.heard === 'nothing') {
-        met('did_not_answer')
+        met('did_not_answer', by)
         return { came: 'no_answer', because: 'the relay unheard' }
       }
       const the_body = answer.value.body
-      met(is_no_answer(answer.value.status) || the_body === null ? 'did_not_answer' : 'answered')
+      met(
+        answer.value.status === the_relay_is_full
+          ? 'is_full'
+          : is_no_answer(answer.value.status) || the_body === null
+            ? 'did_not_answer'
+            : 'answered',
+        by,
+      )
       if (the_body === null) return { came: 'no_answer', because: 'an answer with no body' }
       return {
         came: 'an_answer',
@@ -242,11 +259,11 @@ export const the_relay_s_http_transports = (
       }
     } catch (fault) {
       if (is_the_network_s(fault)) {
-        met('did_not_answer')
+        met('did_not_answer', by)
         return { came: 'no_answer', because: 'the request lost' }
       }
       if (is_an_abort(fault) && letting_go.signal.aborted) {
-        met('did_not_answer')
+        met('did_not_answer', by)
         return { came: 'no_answer', because: 'the relay unheard' }
       }
       return { came: 'an_abort', fault }
@@ -282,6 +299,7 @@ export const the_relay_s_http_transports = (
   const mailbox: MailboxPort = {
     deposit: async (deposit) => {
       const exchange = await posted(
+        'a_deposit',
         the_relay_of(deposit.relays, deposit.deposit_address),
         the_paths_of_the_relay.deposit,
         {
@@ -318,6 +336,7 @@ export const the_relay_s_http_transports = (
   const collect: ACollect = async (mailbox_to_collect) => {
     const at = mailbox_to_collect.deposit_address
     const exchange = await posted(
+      'a_collect',
       the_relay_of(mailbox_to_collect.relays, at),
       the_paths_of_the_relay.collect,
       { version: holder[zz.$Version], input: { deposit_address: at } },

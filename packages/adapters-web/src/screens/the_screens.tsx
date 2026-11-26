@@ -368,6 +368,11 @@ export const TheScreens = (props: TheScreensWiring) => {
             <Strip glyph="clock">{props.texts.common.the_relay_does_not_answer}</Strip>
           </div>
         )}
+        {strip === 'the_relay_is_full' && (
+          <div data-part="strip" data-state={strip}>
+            <Strip glyph="circle_alert">{props.texts.common.the_relay_is_full}</Strip>
+          </div>
+        )}
         {why !== undefined ? (
           <section role="alert" class="it-does-not-start" data-state={why.why}>
             <h1>{props.texts.common.it_does_not_start}</h1>

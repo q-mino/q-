@@ -199,9 +199,10 @@ export const the_extensions_in_common = value.the_extensions_in_common
 export type the_extensions_in_common = z.output<typeof the_extensions_in_common>
 
 /**
- * The relay, as her node last met it (UI-5): it answered, or it did not (the
- * relay client's `unreachable`: the request lost, or the relay unheard).
- * Before her node met it, as if it answered.
+ * The relay, as her node last met it (UI-5): it answered; it did not (the
+ * relay client's `unreachable`: the request lost, or the relay unheard); or
+ * it answered that it is full, her deposits refused for the room on its disk
+ * (REL-3). Before her node met it, as if it answered.
  *
  * @see {@link value.the_relay_met}
  */
@@ -219,7 +220,8 @@ export type the_device_s_network = z.output<typeof the_device_s_network>
 
 /**
  * The strip over every screen (UI-5): none; no network, when her phone tells
- * it; else the relay that does not answer (her letters wait).
+ * it; else the relay that does not answer, or the relay full (her letters
+ * wait, either way).
  *
  * @see {@link value.a_strip}
  */

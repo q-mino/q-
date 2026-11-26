@@ -99,6 +99,8 @@ export interface TheCommonTexts {
   readonly no_network: string
   /** Over every screen while the relay did not answer (UI-5's strip): her letters wait. */
   readonly the_relay_does_not_answer: string
+  /** Over every screen while the relay answered it is full (UI-5's strip, REL-3): her letters wait for its room. */
+  readonly the_relay_is_full: string
   /** The kernel's words around an extension's points in its mark (EXT-16, WEB-22). */
   readonly the_points: ThePointsTexts
 }
