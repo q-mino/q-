@@ -17,6 +17,7 @@
     "@q-mino/adapters-node": "workspace:*",
     "@q-mino/adapters-web": "workspace:*",
     "@q-mino/greetings": "workspace:*",
+    "@q-mino/messaging": "workspace:*",
     "@q-mino/ping_pong": "workspace:*",
     "@q-mino/relay": "workspace:*",
     "fake-indexeddb": "6.2.7",
