@@ -12,6 +12,7 @@ import {
   type TheBrowsersHistory,
   type HerNode,
   type TheDevice,
+  type ThePartsOfTheApp,
 } from '@q-mino/adapters-web/screens'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { options, render } from 'preact'
@@ -41,6 +42,7 @@ export {
   nothing_held,
   ten_in_rome,
   type ANodeOfTest,
+  type HowItAnswersTheParts,
   type WhatTheNodeHolds,
 } from '../../src/the_node_of_a_story/index.ts'
 
@@ -176,6 +178,8 @@ export const opens_the_app = (wiring: {
   readonly the_link_in?: (address: string) => ui_value.what_it_holds | undefined
   /** The relay's public configuration (REL-8), as the composition root gives it; none by default. */
   readonly the_relay_s_public_configuration?: string
+  /** The parts the app carries (K-3); none by default. */
+  readonly the_parts?: ThePartsOfTheApp
 }): TheAppOpened => {
   const root = document.createElement('div')
   document.body.append(root)
@@ -192,6 +196,7 @@ export const opens_the_app = (wiring: {
       {...(wiring.the_relay_s_public_configuration === undefined
         ? {}
         : { the_relay_s_public_configuration: wiring.the_relay_s_public_configuration })}
+      {...(wiring.the_parts === undefined ? {} : { the_parts: wiring.the_parts })}
       texts={
         wiring.words === undefined ? texts.screens : { ...texts.screens, extensions: wiring.words }
       }

@@ -5,7 +5,7 @@
 // Lavagna) its own node, its own play. [Q, C, 24 Nov 2026]
 
 import type { TheCameras } from '@q-mino/adapters-web'
-import { TheScreens, type TheDevice } from '@q-mino/adapters-web/screens'
+import { TheScreens, type TheDevice, type ThePartsOfTheApp } from '@q-mino/adapters-web/screens'
 import type * as boundary from '@q-mino/boundary'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { useRef } from 'preact/hooks'
@@ -49,6 +49,8 @@ export interface AScreenStorysSetting {
   readonly the_relay_s_public_configuration?: string
   /** The words of the extensions the app carries; the phone's by default. */
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
+  /** The parts the app carries (K-3); none by default, every slot the app's fault. */
+  readonly parts?: ThePartsOfTheApp
   /** Whether her phone shares (Web Share); it does by default. */
   readonly shares?: boolean
   /** How many cameras her phone has; one by default. */
@@ -149,6 +151,7 @@ export const AScreenStory = (props: AScreenStorysSetting) => {
           props.words === undefined ? texts.screens : { ...texts.screens, extensions: props.words }
         }
         {...(props.a_link === undefined ? {} : { a_link: props.a_link })}
+        {...(props.parts === undefined ? {} : { the_parts: props.parts })}
         {...(props.the_relay_s_public_configuration === undefined
           ? {}
           : { the_relay_s_public_configuration: props.the_relay_s_public_configuration })}

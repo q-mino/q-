@@ -22,7 +22,9 @@
     "../../adapters-web/src",
     "../../memory/src",
     "../../extensions/ping_pong",
-    "../../extensions/messaging"
+    "../../extensions/messaging",
+    "../../extensions/greetings/parts",
+    "../../extensions/greetings/texts"
   ],
   "exclude": [
     "../src/sw",

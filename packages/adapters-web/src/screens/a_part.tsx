@@ -166,7 +166,10 @@ const a_door = (
  * place, the rest of the screen drawn. Preact catches a component's fall
  * only in a class's `componentDidCatch`, so this one is a class.
  */
-class WhereAPartMayFall extends Component<{ fell: ComponentChildren; children: ComponentChildren }> {
+class WhereAPartMayFall extends Component<{
+  fell: ComponentChildren
+  children: ComponentChildren
+}> {
   override state: { readonly fell: boolean } = { fell: false }
   override componentDidCatch(): void {
     this.setState({ fell: true })

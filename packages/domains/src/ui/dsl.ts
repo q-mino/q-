@@ -151,9 +151,7 @@ export const the_mark_of = (
 }
 
 /** Where an action is drawn, from the place its mark is told: a row of her contacts draws none (its manifest cannot declare one there, EXT-16). */
-const the_place_of_an_action = (
-  told: value.a_place,
-): activities.value.the_place | undefined => {
+const the_place_of_an_action = (told: value.a_place): activities.value.the_place | undefined => {
   switch (told.place) {
     case 'a_bond':
       return { place: 'a_bond', bond: told.bond }

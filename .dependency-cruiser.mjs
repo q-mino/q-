@@ -32,12 +32,14 @@ const tree_of_q = configuration.trees
 const surface_of_q = tree_of_q.map((top) => `${top}(?:.*/|)_(?!scope_|door_)[^/]+\\.ts$`)
 
 // The packages of the extensions (GR-10, EXT-9): each imports its library, zod and `boundary`, nothing else of the
-// repository; `boundary` imports zod only; no package of the kernel imports an extension but the configurators that
+// repository, and of npm zod only; its parts (K-3) Preact and its signals too; `boundary` imports zod only; no package of the kernel imports an extension but the configurators that
 // compose it. Inside an extension's tree `boundary` is imported only by the generated point of a mounted folder
 // (`_node.ts`, EXT-11), from the generator's configuration; outside the tree, as by any file of the package.
 const extensions = configuration.trees.filter((tree) =>
   tree.root.startsWith('packages/extensions/'),
 )
+/** The kinds of an npm import, as the cruiser names them. */
+const npm = ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg', 'npm-unknown']
 const extension_rules = extensions.flatMap((tree) => {
   const name = tree.root.split('/').at(-1)
   const root = `^${tree.root}/`
@@ -51,6 +53,23 @@ const extension_rules = extensions.flatMap((tree) => {
       to: {
         path: '^packages/',
         pathNot: [root, '^packages/boundary/', '^packages/domains/src/library/'],
+      },
+    },
+    {
+      name: `extension-${name}-npm`,
+      comment: `${name} imports of npm zod only, outside its parts, its tests and its scripts (GR-10).`,
+      severity: 'error',
+      from: { path: root, pathNot: [`${root}(parts|test|scripts)/`] },
+      to: { dependencyTypes: npm, pathNot: 'node_modules/(zod)/' },
+    },
+    {
+      name: `extension-${name}-parts-npm`,
+      comment: `${name}'s parts import of npm zod and the rendering library only, Preact and its signals (GR-10, K-3, EXT-16).`,
+      severity: 'error',
+      from: { path: `${root}parts/` },
+      to: {
+        dependencyTypes: npm,
+        pathNot: 'node_modules/(zod|preact|@preact/signals|@preact/signals-core)/',
       },
     },
     {

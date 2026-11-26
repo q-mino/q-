@@ -1,9 +1,15 @@
 // A contact (UI-5; WEB-29): each case of the card and her gestures on it, as her node holds
-// it (`phone/test/screens/a_contact.test.tsx`).
+// it (`phone/test/screens/a_contact.test.tsx`); since part M4 of messaging an extension's
+// part in its slot, greetings', the test extension's (K-3: `phone/test/screens/a_part.test.tsx`).
 
 import { TheScreens } from '@q-mino/adapters-web/screens'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { AScreenStory, type TheStorysHand } from '../../a_screen_story.tsx'
+import {
+  greetings_carried,
+  greetings_seen,
+  greetings_words,
+} from '../../../the_node_of_a_story/index.ts'
 import {
   anna_with_contacts,
   opens_the_contact,
@@ -222,5 +228,47 @@ export const no_network = {
           words.common.no_network,
         ),
       )
+    }),
+}
+
+/** Greetings active and offered to Bruno, beside ping pong: its slot on his screen holds its part. */
+const with_greetings = (then?: (hand: TheStorysHand) => Promise<void>) => (
+  <AScreenStory
+    holds={{
+      ...anna_with_contacts,
+      extensions: [ping_pong('active'), greetings_seen('active')],
+      offers: [
+        { extension: 'ping_pong', bonds: ['L_b'] },
+        { extension: 'greetings', bonds: ['L_b'] },
+      ],
+      offered: [
+        {
+          bond: 'L_b',
+          offered: [
+            { extension: 'ping_pong', majors: [1] },
+            { extension: 'greetings', majors: [1] },
+          ],
+        },
+      ],
+    }}
+    words={{ ...words.extensions, greetings: greetings_words }}
+    parts={greetings_carried}
+    plays={async (hand) => {
+      await opens_the_contact(hand, 'Bruno')
+      await hand.until(() => hand.shown().querySelector('.slot .the-greetings') !== null)
+      await then?.(hand)
+    }}
+  />
+)
+
+export const an_extension_s_part_in_its_slot = { render: () => with_greetings() }
+
+export const an_extension_s_part_on_the_whole_screen = {
+  render: () =>
+    with_greetings(async (hand) => {
+      hand.taps(words.common.the_points.the_slot.takes_the_screen)
+      await hand.until(() => hand.shown().querySelector('.the-greetings button') !== null)
+      hand.taps('Saluta')
+      await hand.until_the_app_says('Saluto partito: aspetta la risposta.')
     }),
 }

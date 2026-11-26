@@ -1,11 +1,19 @@
 // Her contacts (UI-5; WEB-29): each case of the home, as her node holds it
-// and as her gestures open it (`phone/test/screens/my_contacts.test.tsx`).
+// and as her gestures open it (`phone/test/screens/my_contacts.test.tsx`);
+// since part M4 of messaging a row holding an extension's slot, greetings',
+// the test extension's (MSG-15, K-3, K-13: `phone/test/screens/a_part.test.tsx`).
 
 import { TheScreens } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
 import { texts } from '../../../texts/index.ts'
 import { AScreenStory } from '../../a_screen_story.tsx'
-import { ten_in_rome, type WhatTheNodeHolds } from '../../../the_node_of_a_story/index.ts'
+import {
+  greetings_carried,
+  greetings_seen,
+  greetings_words,
+  ten_in_rome,
+  type WhatTheNodeHolds,
+} from '../../../the_node_of_a_story/index.ts'
 
 const words = texts.screens
 
@@ -51,6 +59,24 @@ export const the_menu_open = {
         await hand.until_it_says('Bruno')
         hand.taps(words.my_contacts.the_menu)
         await hand.until(() => hand.shown().querySelector('nav') !== null)
+      }}
+    />
+  ),
+}
+
+/** Greetings active and offered to Bruno: his row holds its slot, compact, a line; Carla's none. */
+export const a_row_with_an_extension_s_slot = {
+  render: () => (
+    <AScreenStory
+      holds={{
+        ...her_contacts,
+        extensions: [greetings_seen('active')],
+        offers: [{ extension: 'greetings', bonds: ['L_b'] }],
+      }}
+      words={{ ...words.extensions, greetings: greetings_words }}
+      parts={greetings_carried}
+      plays={async (hand) => {
+        await hand.until(() => hand.shown().querySelector('.the-greetings') !== null)
       }}
     />
   ),
