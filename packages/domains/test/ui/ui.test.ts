@@ -1438,6 +1438,13 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     expect(ui.the_strip({ relay: 'answered', network: 'not_told' })).toEqual({ strip: 'none' })
   })
 
+  test('a strip while the relay answered it is full (REL-3), no network first', () => {
+    expect(ui.the_strip({ relay: 'is_full', network: 'not_told' })).toEqual({
+      strip: 'the_relay_is_full',
+    })
+    expect(ui.the_strip({ relay: 'is_full', network: 'offline' })).toEqual({ strip: 'no_network' })
+  })
+
   test('no network, when her phone tells it, told apart from a relay silent, whatever the relay last did', () => {
     expect(ui.the_strip({ relay: 'did_not_answer', network: 'offline' })).toEqual({
       strip: 'no_network',

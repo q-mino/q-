@@ -259,6 +259,41 @@ describe("the relay's HTTP client: the post's mailbox port (WEB-6, PST-10)", () 
     expect(transports.the_relay.last()).toBe('answered')
   })
 
+  test('the relay full (507, REL-3): the deposit unreachable, the relay met full until a deposit is answered otherwise (UI-5)', async () => {
+    let answers: () => Promise<AnAnswer> = () =>
+      Promise.resolve({ status: 507, body: a_body([ndjson({ fault: 'the_relay_is_full' })]).body })
+    const changing = a_fetch(() => answers())
+    const transports = the_relay_s_http_transports({ fetch: changing.fetch, elapsed: no_time })
+    const told: string[] = []
+    transports.the_relay.when_it_changes(() => {
+      told.push(transports.the_relay.last())
+    })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'unreachable' })
+    expect(transports.the_relay.last()).toBe('is_full')
+    // A collect writes nothing and says nothing of the room: the relay stays full.
+    answers = () =>
+      Promise.resolve({
+        status: 200,
+        body: a_body([ndjson({ event: 'snapshot', entries: [] })], 'stays_open').body,
+      })
+    expect(await transports.collect(a_mailbox)).toEqual([])
+    expect(transports.the_relay.last()).toBe('is_full')
+    // A collect unheard is a relay that does not answer, full or not.
+    answers = () => Promise.reject(new TypeError('fetch failed'))
+    await expect(transports.collect(a_mailbox)).rejects.toThrow('the request lost')
+    expect(transports.the_relay.last()).toBe('did_not_answer')
+    answers = () =>
+      Promise.resolve({ status: 507, body: a_body([ndjson({ fault: 'the_relay_is_full' })]).body })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'unreachable' })
+    answers = () =>
+      Promise.resolve({
+        status: 200,
+        body: a_body([ndjson({ event: 'the_envelope_is_kept', payload: {} })]).body,
+      })
+    expect(await transports.mailbox.deposit(a_deposit())).toEqual({ outcome: 'kept' })
+    expect(told).toEqual(['is_full', 'did_not_answer', 'is_full', 'answered'])
+  })
+
   test('an abort the client did not ask for is signalled: the deposit throws (ADP-4, PST-10, TST-4)', async () => {
     const aborted = a_fetch(() =>
       Promise.reject(new DOMException('the page let it go', 'AbortError')),

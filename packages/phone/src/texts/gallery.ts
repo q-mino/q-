@@ -19,6 +19,7 @@ export const the_gallery = {
     the_mark_of: common.the_mark_of,
     no_network: common.no_network,
     the_relay_does_not_answer: common.the_relay_does_not_answer,
+    the_relay_is_full: common.the_relay_is_full,
     in_progress: common.in_progress,
     done: common.how_it_ended.done,
     something_went_wrong: common.something_went_wrong,

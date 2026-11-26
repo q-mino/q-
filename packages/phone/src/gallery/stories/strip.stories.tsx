@@ -14,3 +14,7 @@ export const no_network = {
 export const the_relay_does_not_answer = {
   render: () => <Strip glyph="clock">{words.the_relay_does_not_answer}</Strip>,
 }
+
+export const the_relay_is_full = {
+  render: () => <Strip glyph="circle_alert">{words.the_relay_is_full}</Strip>,
+}

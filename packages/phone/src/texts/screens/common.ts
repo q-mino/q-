@@ -64,6 +64,8 @@ export const common = {
   // The strip (UI-5): no network told apart from a relay silent [Q, A, 23 Nov 2026].
   no_network: 'Sei senza rete.',
   the_relay_does_not_answer: 'Il server non risponde: le lettere aspettano e partono appena torna.',
+  // The relay full (REL-3, UI-5), a word of C's [Q, C, provisional: A to confirm, 26 Nov 2026].
+  the_relay_is_full: 'Il server è pieno: le lettere aspettano e partono appena ha di nuovo spazio.',
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,
     no_document: 'L’app non ha il riquadro di questa estensione.',

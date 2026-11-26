@@ -463,9 +463,11 @@ describe('her node, over a phone of the stack', () => {
     anna.the_relay_meets('did_not_answer')
     expect(told).toBe(1)
     expect(await anna.her.the_relay()).toEqual({ address: the_relay, met: 'did_not_answer' })
+    anna.the_relay_meets('is_full')
+    expect(await anna.her.the_relay()).toEqual({ address: the_relay, met: 'is_full' })
     stops()
     anna.the_relay_meets('answered')
-    expect(told).toBe(1)
+    expect(told).toBe(2)
   })
 
   test('the device’s network, each change told: no network, else nothing told (UI-5)', async () => {

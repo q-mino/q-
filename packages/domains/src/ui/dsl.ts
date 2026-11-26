@@ -220,7 +220,7 @@ export const it_happened_to = (
 /**
  * The strip over every screen (UI-5): no network, when her phone tells it,
  * whatever the relay last did; else the relay that did not answer when her
- * node last met it; else none.
+ * node last met it, or that answered it is full (REL-3); else none.
  */
 export const the_strip = (her_node: {
   readonly relay: value.the_relay_met
@@ -230,4 +230,6 @@ export const the_strip = (her_node: {
     ? { strip: 'no_network' }
     : her_node.relay === 'did_not_answer'
       ? { strip: 'the_relay_does_not_answer' }
-      : { strip: 'none' }
+      : her_node.relay === 'is_full'
+        ? { strip: 'the_relay_is_full' }
+        : { strip: 'none' }
