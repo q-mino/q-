@@ -29,6 +29,7 @@
 // extension's partition, what the transports carried.
 
 import {
+  TheRelayIsOutOfReach,
   the_held_letters,
   the_manifest_to_accept,
   type AnEnvelopeCollected,
@@ -504,7 +505,9 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         try {
           await node.collects()
         } catch (fault) {
-          if (!is_injected(fault)) throw fault
+          // A response not deposited, the relay out of reach (an injected loss): the request
+          // handed again at the next round (MSG-14).
+          if (!is_injected(fault) && !(fault instanceof TheRelayIsOutOfReach)) throw fault
         }
       },
       /** What the ports show of the phone, compared between two rounds: its facts, the deposits it asked for, what it collected, its trace, its letters, the extension's partition and life. */

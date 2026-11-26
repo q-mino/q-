@@ -83,7 +83,7 @@ export interface ANotice {
  * (EXT-14); how the kernel's node on `known` gives the bond, in the
  * boundary's words, and the time the request declares; the kernel's trace (EXT-6); the port of its notices;
  * the clock; the while the kernel waits for its invocations in flight when
- * it is unloaded.
+ * it is unloaded; who is told it runs (MSG-16).
  */
 export interface HostingWiring {
   readonly composed: Composed
@@ -102,6 +102,13 @@ export interface HostingWiring {
   readonly notices: (notice: ANotice) => void
   readonly clock: zz.Clock
   readonly a_while: () => Promise<void>
+  /**
+   * Told each time a load makes it run (its activation, the node's start),
+   * not at its load again after a fall: the node's collector forgets what
+   * it saw, so that a request silenced while it did not run reaches it at
+   * the next pass (MSG-16), and the letter it fell on is not handed again.
+   */
+  readonly when_it_runs: () => void
 }
 
 /** The life of an extension hosted (EXT-15), as the kernel shows it: not loaded; loading, `ready` awaited; running; stopped, after a second fall or a `ready` that differs from its manifest. */
@@ -249,7 +256,10 @@ const major_of = (version: string): number => Number(version.split('.')[0])
  * declares them). On `known` the first event its surface types is the
  * answer, and the rest are traced (EXT-15); on `self` its events go to the
  * library's port, which sets aside what its surface does not type
- * (`outside_the_surface`, traced). Its calls: the port of requests, which
+ * (`outside_the_surface`, traced). An invocation whose consumer stops
+ * before its `done` (a follow no longer shown, a peer's request answered by
+ * its first event) is ended: `end` sent to the extension, and what of it
+ * still crosses dropped, its `done` included (K-4). Its calls: the port of requests, which
  * checks what it serves; its partition, served only if `touches` names it
  * (else refused, `not_declared`, traced) and only while active. A fall (its
  * `fallen`, an exception in its realm) is traced; its invocations in flight
@@ -271,6 +281,8 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
   let falls = 0
   let invocations = 0
   const in_flight = new Map<string, InFlight>()
+  /** The invocations the kernel ended before their `done` (K-4): their events and their `done` still crossing, dropped. */
+  const ended = new Set<string>()
   const now = (): string => wiring.clock.now()
   /** Since when it is to run: the hosting's creation, at the node's start, or its last load's beginning (MSG-9). */
   let to_run_since = Date.parse(now())
@@ -345,7 +357,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
   ): void => {
     const invocation = in_flight.get(event.id)
     if (invocation?.realm !== realm) {
-      not_in_the_boundary(event, 'pairs_no_exchange')
+      if (!ended.has(event.id)) not_in_the_boundary(event, 'pairs_no_exchange')
       return
     }
     if (invocation.persona === 'self') {
@@ -410,7 +422,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
       case 'done': {
         const invocation = in_flight.get(from.id)
         if (invocation?.realm !== realm) {
-          not_in_the_boundary(from, 'pairs_no_exchange')
+          if (!ended.delete(from.id)) not_in_the_boundary(from, 'pairs_no_exchange')
           return
         }
         invocation.flow.done()
@@ -457,6 +469,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
     })
     life = { life: 'unloaded' }
     fail_in(realm, `it has fallen, ${because}`)
+    ended.clear()
     realm.unload()
     if (falls > 1) {
       life = { life: 'stopped', why: 'it_fell_twice' }
@@ -563,7 +576,16 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
       ...(invocation.correlation === undefined ? {} : { correlation: invocation.correlation }),
       input,
     })
-    yield* flow.events()
+    try {
+      yield* flow.events()
+    } finally {
+      // Its consumer stopped before `done` (K-4): the extension told to end its flow.
+      if (in_flight.get(id)?.flow === flow) {
+        in_flight.delete(id)
+        ended.add(id)
+        if (the_realm() === realm) realm.to_the_extension({ message: 'end', id })
+      }
+    }
   }
 
   /** The user's request on a dead letter, handed to the extension while it runs. */
@@ -582,7 +604,10 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
         return loaded_now()
       }
       falls = 0
-      return loaded()
+      const came = await loaded()
+      // It runs now (MSG-16), not after a fall's load again, which would hand again the letter it fell on.
+      if (came.loaded === 'running') wiring.when_it_runs()
+      return came
     },
     unload: async () => {
       const realm = the_realm()
@@ -596,6 +621,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
       }
       life = { life: 'unloaded' }
       fail_in(realm, 'it has been unloaded')
+      ended.clear()
       realm.unload()
       // A load still waiting for its `ready` ends: its realm is no longer the one loaded.
       realm.first({ came: 'fallen', why: 'it has been unloaded' })

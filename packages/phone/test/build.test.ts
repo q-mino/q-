@@ -97,12 +97,14 @@ describe('the relay a channel declares (REL-8)', () => {
 })
 
 describe('the build', () => {
-  test('one module per source, a bare specifier found by the import map, ping pong on its path', () => {
+  test('one module per source, a bare specifier found by the import map, ping pong and messaging on their paths', () => {
     const { imports } = the_import_map()
     for (const target of Object.values(imports)) expect(existsSync(join(out, target))).toBe(true)
     expect(imports['@q-mino/domains/ui/_value.ts']).toBe('./domains/src/ui/_value.js')
     expect(imports['@q-mino/ping_pong']).toBe('./ext/ping_pong/configurator.js')
     expect(imports['@q-mino/ping_pong/manifest.json']).toBe('./ext/ping_pong/manifest.json')
+    expect(imports['@q-mino/messaging']).toBe('./ext/messaging/configurator.js')
+    expect(imports['@q-mino/messaging/manifest.json']).toBe('./ext/messaging/manifest.json')
     expect(imports['libsodium-wrappers-sumo']).toMatch(
       /^\.\/vendor\/libsodium-wrappers-sumo\/.*\.mjs$/,
     )
@@ -137,6 +139,7 @@ describe('the build', () => {
         .sort(),
     )
     expect(the_precache_of(out).files).toContain('ext/ping_pong/configurator.js')
+    expect(the_precache_of(out).files).toContain('ext/messaging/configurator.js')
   })
 })
 

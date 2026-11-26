@@ -102,7 +102,8 @@ describe('user, on the dsl alone (part 15.2)', () => {
         { happened: 'a_letter_was_refused', leaf: 'usecase/ping' },
       ],
       [
-        { why: 'a_response_not_deposited', response, answered: { outcome: 'unreachable' } },
+        // The relay out of reach is thrown, handed again at the next pass, never traced (MSG-14).
+        { why: 'a_response_not_deposited', response, answered: { outcome: 'not_sealed' } },
         { happened: 'a_response_could_not_be_sent' },
       ],
       [

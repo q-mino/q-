@@ -1,4 +1,5 @@
 import * as boundary from '@q-mino/boundary'
+import messaging from '@q-mino/messaging/texts/it.json' with { type: 'json' }
 import ping_pong from '@q-mino/ping_pong/texts/it.json' with { type: 'json' }
 
 // The words of the extensions the app carries, in Italian (EXT-16, WEB-22):
@@ -6,7 +7,9 @@ import ping_pong from '@q-mino/ping_pong/texts/it.json' with { type: 'json' }
 // pong's build writes from its typed module), parsed as the kernel parses
 // them: no module of the extension runs to draw (Alessandro, 22 Nov 2026:
 // words she reads, to be reviewed on the phones at step 27). The phone carries ping pong, preinstalled (PNG-5); its
-// composition is step 25's.
+// composition is step 25's. And messaging, preinstalled and off (MSG-10; part M3), its words
+// provisional (A to confirm).
 export const extensions = {
   ping_pong: boundary.the_words_of_an_extension.parse(ping_pong),
+  messaging: boundary.the_words_of_an_extension.parse(messaging),
 }

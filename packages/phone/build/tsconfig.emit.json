@@ -21,12 +21,16 @@
     "../../adapters-common/src",
     "../../adapters-web/src",
     "../../memory/src",
-    "../../extensions/ping_pong"
+    "../../extensions/ping_pong",
+    "../../extensions/messaging"
   ],
   "exclude": [
     "../src/sw",
     "../../extensions/ping_pong/test",
     "../../extensions/ping_pong/scripts",
-    "../../extensions/ping_pong/node_modules"
+    "../../extensions/ping_pong/node_modules",
+    "../../extensions/messaging/test",
+    "../../extensions/messaging/scripts",
+    "../../extensions/messaging/node_modules"
   ]
 }

@@ -237,8 +237,15 @@ describe('the personas (PER-1..PER-14, PER-25)', () => {
         input: { words: 'ciao di nuovo' },
       }),
     ).toEqual(waiting)
+    // The collector forgot what it saw once greetings ran again (MSG-16): B2, answered already, handed
+    // again before B3, each with the bond whole.
     expect(invocations_since(seeing)).toMatchObject([
       { message: 'invoke', context: { bond: 'L_b', peer_key: K_b, bond_name: 'Bruno' } },
+      {
+        message: 'invoke',
+        context: { bond: 'L_b', peer_key: K_b, bond_name: 'Bruno' },
+        input: { words: 'ciao di nuovo' },
+      },
     ])
     expect(anna.whys().slice(-2)).toEqual(['the_extension_has_fallen', 'a_request_not_answered'])
   })

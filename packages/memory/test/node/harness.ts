@@ -64,6 +64,8 @@ import type * as drafts_value from '@q-mino/domains/user/drafts/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
 import { greetings } from '@q-mino/greetings'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
+import { messaging } from '@q-mino/messaging'
+import messaging_manifest_json from '@q-mino/messaging/manifest.json' with { type: 'json' }
 import { ping_pong } from '@q-mino/ping_pong'
 import ping_pong_manifest_json from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { z } from 'zod'
@@ -88,8 +90,11 @@ export const greetings_manifest: unknown = manifest_json
 /** Ping pong's manifest as its build writes it (EXT-10, PNG-5). */
 export const ping_pong_manifest: unknown = ping_pong_manifest_json
 
-/** The extensions an app of the story may carry (preinstalled, off until the user activates one, PNG-1). */
-export type AnExtensionOfTheApp = 'greetings' | 'ping_pong'
+/** Messaging's manifest as its build writes it (EXT-10, MSG-10). */
+export const messaging_manifest: unknown = messaging_manifest_json
+
+/** The extensions an app of the story may carry (preinstalled, off until the user activates one, PNG-1, MSG-10). */
+export type AnExtensionOfTheApp = 'greetings' | 'ping_pong' | 'messaging'
 
 /**
  * Each extension an app may carry: its manifest as built, its realm (its
@@ -119,6 +124,11 @@ const the_apps_extensions: Readonly<
     manifest: ping_pong_manifest,
     realm: ping_pong,
     asks_by: 'business/pings/effect/ask_for_a_pong',
+  },
+  messaging: {
+    manifest: messaging_manifest,
+    realm: messaging,
+    asks_by: 'business/chats/effect/deliver_a_message',
   },
 }
 
@@ -314,6 +324,9 @@ export const a_node = async (story: Story, start: Start) => {
   // committed, or refused as a full partition refuses it, so that the
   // extension falls there (EXT-15); then as the partition answers.
   const commits: ('committed' | 'refused')[] = []
+  // The partition's reads held until the story lets them go: an extension loading,
+  // its configurator waiting for its storage, as a phone's slow start (MSG-9, K-1).
+  let reads_held: Promise<void> | undefined = undefined
   // A node whose code is changed (the code is free, F2): what its entry
   // answers in place of an extension's leaf's event.
   let tampered: ((event: zz.EventByPath) => zz.EventByPath) | undefined = undefined
@@ -359,7 +372,10 @@ export const a_node = async (story: Story, start: Start) => {
     a_while: a_timer(5),
     characters: start.characters ?? 1_000_000,
     the_partition: (_, partition) => ({
-      read: partition.read,
+      read: (read) =>
+        reads_held === undefined
+          ? partition.read(read)
+          : reads_held.then(() => partition.read(read)),
       commit: (writes) =>
         commits.shift() === 'refused'
           ? Promise.resolve({ answer: 'refused', why: 'the_partition_is_full' })
@@ -531,6 +547,8 @@ export const a_node = async (story: Story, start: Start) => {
     the_extensions_follow_the_office: node.the_extensions_follow_the_office,
     /** One pass of the phone's collector (DOM-17): the first fault of the entry thrown once it is over. */
     collects: node.collects,
+    /** The collector forgets what it saw (MSG-16): its next pass hands again what the relays keep, as a new start's first pass does (K-6). */
+    forgets: node.forgets,
     /** The node runs, then its collector passes: what came is served, and its answers deposited. */
     serves: async (): Promise<void> => {
       await runs()
@@ -1044,6 +1062,17 @@ export const a_node = async (story: Story, start: Start) => {
         .flatMap(([, value]) =>
           a_fact_kept.parse(value).parts.map((part) => part.path.split('/').at(-1) ?? ''),
         ),
+    /** The extension's partition's reads wait until the story lets them go (the function returned): a load held while it reads its storage (MSG-9). */
+    its_reads_wait: (): (() => void) => {
+      let go = (): void => undefined
+      reads_held = new Promise((resolve) => {
+        go = () => {
+          reads_held = undefined
+          resolve()
+        }
+      })
+      return go
+    },
     /** The next commits of the extension's partition, as the story scripts them (TST-4): `refused` makes it fall. */
     its_partition_will: (...next: readonly ('committed' | 'refused')[]): void => {
       commits.push(...next)

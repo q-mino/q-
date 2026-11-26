@@ -1,3 +1,4 @@
+import { TheRelayIsOutOfReach } from '@q-mino/adapters-common'
 import { describe, expect, test } from 'vitest'
 import { two_nodes, until, type NodeUnderTest } from './harness.ts'
 
@@ -61,7 +62,12 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
     await bruno.the_entry()
     await until(() => bruno.the_ping_is_closed(second), 'the second ping closed')
     expect(bruno.the_ping(second)).toMatchObject(closed_with('the_pong_came_back'))
-    expect(anna.pongs()).toMatchObject([{ bond: 'B-BRUNO' }])
+    // Her collector forgot what it saw once ping pong ran (MSG-16): the first ping, silenced while
+    // it was off and still kept by the relay, reached it too; its pong came after its time, a late
+    // one in Bruno's kernel's trace (F7), his first ping closed as it was.
+    expect(anna.pongs()).toMatchObject([{ bond: 'B-BRUNO' }, { bond: 'B-BRUNO' }])
+    expect(bruno.the_ping(first)).toMatchObject(closed_with('the_ping_had_no_response'))
+    expect(bruno.whys()).toEqual(['a_response_not_awaited'])
   })
 
   test('a ping between two nodes with ping pong active gives its pong', async () => {
@@ -135,15 +141,15 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
   })
 
   test('a ping redelivered gives one pong', async () => {
-    const { anna, bruno, runs_at } = await two_nodes({ carries: 'ping_pong' })
+    const { anna, bruno } = await two_nodes({ carries: 'ping_pong' })
     const ping = await pings(anna, 'B-BRUNO')
     bruno.post.will('lost')
-    await bruno.the_entry()
+    // His pong lost, the relay out of reach: P1 left unseen, handed again at his next pass (MSG-14).
+    await expect(bruno.the_entry()).rejects.toThrow(TheRelayIsOutOfReach)
     await anna.the_entry()
     expect(anna.the_ping_is_closed(ping)).toBe(false)
     expect(bruno.pongs()).toHaveLength(1)
-    // Anna's post sends P1 again with the same identity; Bruno's duplicate branch gives the recorded fact.
-    await runs_at(anna, '10:00:15')
+    // Bruno's duplicate branch gives the recorded fact, before Anna's post sends P1 again (10:00:15).
     await bruno.the_entry()
     await anna.the_entry()
     await until(() => anna.the_ping_is_closed(ping), 'the ping closed')
@@ -152,6 +158,7 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
     expect(bruno.pongs()).toHaveLength(1)
     expect(bruno.facts_of_ping_pong()).toEqual(['a_ping_has_been_answered'])
     expect(anna.facts_of_ping_pong()).toEqual(['a_ping_has_been_sent', 'a_pong_has_been_received'])
+    expect(await anna.sent()).toHaveLength(1)
     const invocations = bruno.to_the_extension.flatMap((message) =>
       message.message === 'invoke' && message.persona === 'known' ? [message.operation] : [],
     )

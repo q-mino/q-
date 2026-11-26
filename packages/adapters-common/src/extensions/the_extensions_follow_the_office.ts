@@ -15,6 +15,9 @@ import type { Hosted } from './hosting.ts'
 /** The path of the office's facts, which this consumer looks at again after. */
 const the_office = 'extensions/activations/'
 
+/** The office's fact of an extension offered to a bond, after a withdrawal (EXT-7). */
+const an_offer_given = 'extensions/activations/fact/an_extension_has_been_offered_to_a_bond'
+
 /** An extension hosted, as the consumer moves it: its name, and its hosting's load, unload and life (EXT-15). */
 export interface AnExtensionHosted {
   readonly name: string
@@ -25,13 +28,16 @@ export interface AnExtensionHosted {
  * The consumer's wiring: the node's fact log (DOM-17); whether an
  * extension is active, by the office's read (EXT-7, `the_kernels_reads`);
  * the extensions hosted now (an update of the app changes them); the
- * calling off of the port of requests, one look (`the_calling_off`, F7).
+ * calling off of the port of requests, one look (`the_calling_off`, F7);
+ * who is told, after the look, that an extension was offered to a bond
+ * again (MSG-16: the node's collector forgets what it saw).
  */
 export interface TheFollowingWiring {
   readonly log: zz.FactLog
   readonly is_active: (extension: string) => Promise<boolean>
   readonly hosted: () => readonly AnExtensionHosted[]
   readonly the_calling_off: () => Promise<readonly string[]>
+  readonly when_an_offer_is_given: () => void
 }
 
 /** The consumer running: stopped when asked, its fault, if it fell, thrown then. */
@@ -51,7 +57,8 @@ export interface TheFollowing {
  * flight of an extension not active or not offered to their bond, so that
  * `post` sends them again no more and their deliveries read the refusal
  * (F7, PST-14), a fall between a gesture and its look made good at the
- * next start. Again after each fact with a part of the office's. It
+ * next start. Again after each fact with a part of the office's; after
+ * an offer to a bond, who is told is told (MSG-16). It
  * waits on the log's next event or its stop, never in a loop of its own.
  * A load or an unload that throws stops it, the fault thrown at `stop`.
  */
@@ -111,6 +118,9 @@ export const the_extensions_follow_the_office =
         }
         if (caught_up && event.fact.parts.some((part) => part.path.startsWith(the_office))) {
           await a_look()
+          if (event.fact.parts.some((part) => part.path === an_offer_given)) {
+            wiring.when_an_offer_is_given()
+          }
         }
       }
     }

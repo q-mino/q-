@@ -10,6 +10,7 @@ import {
 } from '@q-mino/adapters-web'
 import { TheScreens } from '@q-mino/adapters-web/screens'
 import * as ui_value from '@q-mino/domains/ui/_value.ts'
+import messaging_manifest from '@q-mino/messaging/manifest.json' with { type: 'json' }
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { render } from 'preact'
 import { App } from './App.tsx'
@@ -26,9 +27,9 @@ import { texts } from './texts/index.ts'
 
 // The PWA's main (CFG-1; step 25, PWA-1..PWA-5): the browser's objects,
 // given (WEB-5), the release's configuration, the extensions it carries
-// (ping pong, preinstalled and off, PNG-1: its manifest as its build wrote
-// it, its configurator integrated, EXT-13), the device, the link the page
-// was opened with (WEB-1), and the app.
+// (ping pong and messaging, preinstalled and off, PNG-1, MSG-10: each
+// manifest as its build wrote it, each configurator integrated, EXT-13),
+// the device, the link the page was opened with (WEB-1), and the app.
 
 /**
  * Ping pong, carried (EXT-9, EXT-13): its manifest, composed at the start;
@@ -39,6 +40,16 @@ import { texts } from './texts/index.ts'
 const ping_pong: AnExtensionCarried = {
   manifest: ping_pong_manifest,
   realm: async (host) => (await import('@q-mino/ping_pong')).ping_pong(host),
+}
+
+/**
+ * Messaging, carried as ping pong is (MSG-10; part M3): preinstalled and
+ * off, its manifest composed at the start, its configurator imported only
+ * when the kernel loads it.
+ */
+const messaging: AnExtensionCarried = {
+  manifest: messaging_manifest,
+  realm: async (host) => (await import('@q-mino/messaging')).messaging(host),
 }
 
 /** The link's ticket in `ui`'s words (WEB-1, UI-1): one whose ticket `user` would not take is out of its form. */
@@ -72,7 +83,7 @@ const configuration: TheConfiguration = {
   name: 'cumino',
   relay: the_build.relay,
   page,
-  extensions: [ping_pong],
+  extensions: [ping_pong, messaging],
   characters: 1_000_000,
 }
 const starts = the_start(browser, configuration, { clock, elapsed: the_time_that_passes })

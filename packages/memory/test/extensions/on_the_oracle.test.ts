@@ -1,3 +1,4 @@
+import { TheRelayIsOutOfReach } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
 import { describe, expect, test } from 'vitest'
@@ -62,14 +63,15 @@ describe('1. a request and its response (F7)', () => {
     expect(bruno.traced).toEqual([])
   })
 
-  test('the response lost on its way: the request sent again, Bruno’s duplicate branch, the same response, one greeting back', async () => {
-    const { anna, bruno, runs_at } = await two_nodes()
+  test('the response lost on its way, the relay out of reach: the request handed again at Bruno’s next pass, his duplicate branch, the same response, one greeting back (MSG-14)', async () => {
+    const { anna, bruno } = await two_nodes()
     const greeting = await greets(anna, 'B-BRUNO')
     bruno.post.will('lost')
-    await bruno.the_entry()
+    await expect(bruno.the_entry()).rejects.toThrow(TheRelayIsOutOfReach)
     await anna.the_entry()
     expect(anna.is_closed(greeting)).toBe(false)
-    await runs_at(anna, '10:00:15')
+    expect(bruno.traced).toEqual([])
+    // His collector's next pass, before Anna's post sends again (PST-6: at 10:00:15).
     await bruno.the_entry()
     await anna.the_entry()
     await until(() => anna.is_closed(greeting), 'the greeting closed')
@@ -81,6 +83,12 @@ describe('1. a request and its response (F7)', () => {
     expect(
       anna.facts_of_greetings().filter((fact) => fact === 'a_greeting_has_been_closed'),
     ).toHaveLength(1)
+    // One request, handed twice, one operation: the second met the duplicate branch (DOM-11).
+    const invocations = bruno.to_the_extension.flatMap((message) =>
+      message.message === 'invoke' && message.persona === 'known' ? [message.operation] : [],
+    )
+    expect(invocations).toHaveLength(2)
+    expect(await anna.sent()).toHaveLength(1)
   })
 
   test('no response in the asker’s time: no_response; Bruno’s greeting back after it, annotated in Anna’s kernel trace', async () => {
@@ -385,7 +393,7 @@ describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
       const { anna, bruno } = story
       const greeting = await greets(anna, 'B-BRUNO')
       bruno.post.will('lost')
-      await bruno.the_entry()
+      await expect(bruno.the_entry()).rejects.toThrow(TheRelayIsOutOfReach)
       expect(bruno.greetings_back()).toHaveLength(1)
       if (change === 'withdraws') await bruno.withdraws_the_offer_from('B-ANNA')
       else await bruno.deactivates()
@@ -395,13 +403,9 @@ describe('3. an offer withdrawn, both ways (EXT-7, F8)', () => {
         closed_with({ outcome: 'the_greeting_had_no_response' }),
       )
       expect(bruno.greetings_back()).toMatchObject([{ bond: 'B-ANNA', words: 'ciao anche a te' }])
-      // The response lost on its way is in Bruno's kernel trace (PER-25, 5), then each retry's silence.
-      expect(bruno.traced[0]).toMatchObject({
-        why: 'a_response_not_deposited',
-        response: { answers: anna.the_request_of(greeting) },
-        answered: { outcome: 'unreachable' },
-      })
-      expect(new Set(bruno.whys().slice(1))).toEqual(
+      // The response lost on its way was thrown, never traced (MSG-14): the request, handed again
+      // at his next pass, met the silence, as each retry did.
+      expect(new Set(bruno.whys())).toEqual(
         new Set([
           change === 'withdraws'
             ? 'the_extension_is_not_offered_to_the_bond'

@@ -28,6 +28,9 @@
     },
     {
       "path": "../../extensions/ping_pong"
+    },
+    {
+      "path": "../../extensions/messaging"
     }
   ]
 }

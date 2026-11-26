@@ -99,6 +99,11 @@ interface Waiting {
  *   id, then `done`; an event that is no JSON object named by `event` is
  *   traced, not sent (the kernel would trace it, EXT-15); an invocation that
  *   throws makes the extension `fallen`;
+ * - `end` (K-4): the invocation its id names, still in flight, ended: no
+ *   event of it is sent any more, `return()` is asked of its leaf's
+ *   iterator (a leaf's generator waiting for its next event finishes that
+ *   step first: so the library's streams, which stop at their next turn),
+ *   and `done` sent; one no longer in flight, nothing;
  * - `answer`: the answer of the call its id names, parsed by the port's
  *   answer; one that names no call, or that does not parse, is traced;
  * - `start`, `stop`, `redeliver`, `discard`: handed to what was built.
@@ -195,20 +200,41 @@ export const the_extensions_side = <
       return undefined
     },
   )
+  /** The invocations in flight, by their id: how each is ended by the kernel (K-4). */
+  const in_flight = new Map<string, () => void>()
   const invoked = async (
     extension: AnExtension,
     id: string,
     invocation: an_invocation,
   ): Promise<void> => {
+    const iterator = extension.invoke(invocation)[Symbol.asyncIterator]()
+    const ended = new Promise<'ended'>((resolve) => {
+      in_flight.set(id, () => {
+        resolve('ended')
+      })
+    })
     try {
-      for await (const given of extension.invoke(invocation)) {
-        const event = an_event.safeParse(as_json(given))
+      for (;;) {
+        const step = iterator.next()
+        // A step overtaken by the end settles later: its fault, if any, is no longer the flow's.
+        void step.catch(() => undefined)
+        const next = await Promise.race([step, ended])
+        if (next === 'ended') {
+          void iterator.return?.().catch((error: unknown) => {
+            notices.traced({ an_invocation_not_ended: { id, why: why(error) } })
+          })
+          break
+        }
+        if (next.done === true) break
+        const event = an_event.safeParse(as_json(next.value))
         if (event.success) made.send({ message: 'event', id, event: event.data })
-        else notices.traced({ an_event_not_sent: { id, event: as_json(given) } })
+        else notices.traced({ an_event_not_sent: { id, event: as_json(next.value) } })
       }
       made.send({ message: 'done', id })
     } catch (error) {
       made.send({ message: 'fallen', why: why(error) })
+    } finally {
+      in_flight.delete(id)
     }
   }
   const receive = async (message: unknown): Promise<void> => {
@@ -241,6 +267,9 @@ export const the_extensions_side = <
           ...(received.operation === undefined ? {} : { operation: received.operation }),
           ...(received.correlation === undefined ? {} : { correlation: received.correlation }),
         })
+        return
+      case 'end':
+        in_flight.get(received.id)?.()
         return
       case 'start':
         extension.start()
