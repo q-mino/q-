@@ -161,11 +161,12 @@ const leaf_of = (
   }
   const entry = own['entry']
   if (!(entry instanceof z.ZodObject)) return undefined
-  if (declared['stream'] !== undefined || declared['actions'] !== undefined) {
+  if (declared['actions'] !== undefined) {
     throw new Error(
-      `${path}: a read leaf that streams or lists actions has its surface with its case (EXT-10)`,
+      `${path}: a read leaf that lists actions has its surface with its case (EXT-10)`,
     )
   }
+  const stream = streamed_of(path, declared['stream'], entry)
   return {
     kind: 'read',
     input: input_of(leaf),
@@ -177,9 +178,52 @@ const leaf_of = (
         total: z.number().int().min(0),
         next: cursor.optional(),
       }),
+      ...stream,
       ...closings,
     }),
-    answers_in_one_event: true,
+    answers_in_one_event: stream === undefined,
+  }
+}
+
+/**
+ * The events of a read leaf's stream as its port gives them (D72.5,
+ * `LeafStreamEvent`), each whole, by name: its entry projected as in the
+ * snapshot, its identity the field of the entry `stream.identity` names;
+ * the facts it names as their own events, with their payload; `fact`,
+ * `entered`, `left`, `caught_up` and `position_unavailable`. None for a leaf
+ * that does not stream. [Q, C, high impact: A to discuss] (26 Nov 2026,
+ * messaging's part M2, EXT-10): the case that the surface of a read leaf
+ * that streams waited for, messaging's `a_chat` on `self`, which its part
+ * follows. A leaf that lists actions keeps waiting for its own.
+ */
+const streamed_of = (
+  path: string,
+  stream: unknown,
+  entry: z.ZodObject,
+): Readonly<Record<string, z.ZodType>> | undefined => {
+  if (stream === undefined) return undefined
+  const identity_name: unknown = is_a_record(stream) ? stream['identity'] : undefined
+  const identity: unknown =
+    typeof identity_name === 'string' ? entry.shape[identity_name] : undefined
+  if (!is_a_schema(identity)) {
+    throw new Error(`${path}: its stream's identity names no field of its entry (D72.5)`)
+  }
+  const events: unknown = is_a_record(stream) ? stream['events'] : undefined
+  const with_entry = (name: string) =>
+    z.strictObject({ event: z.literal(name), position, identity, entry })
+  return {
+    ...Object.fromEntries(
+      Object.entries(is_a_record(events) ? events : {}).flatMap(([name, payload]) =>
+        is_a_schema(payload)
+          ? [[name, z.strictObject({ event: z.literal(name), position, identity, entry, payload })]]
+          : [],
+      ),
+    ),
+    fact: with_entry('fact'),
+    entered: with_entry('entered'),
+    left: z.strictObject({ event: z.literal('left'), position, identity }),
+    caught_up: z.strictObject({ event: z.literal('caught_up'), position }),
+    position_unavailable: z.strictObject({ event: z.literal('position_unavailable') }),
   }
 }
 
@@ -190,7 +234,7 @@ const leaf_of = (
  * folder, a past major's leaf as its own input and events give it, its flow
  * and limits the current leaf's it leads to. Faults, thrown: majors that do
  * not declare one version under its major; a leaf not below the folder; a
- * read leaf that streams or lists actions (its surface comes with its case).
+ * read leaf that lists actions (its surface comes with its case).
  */
 export const the_surface_of = (surface: {
   readonly majors: Majors

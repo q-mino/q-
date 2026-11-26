@@ -74,6 +74,12 @@
       "path": "packages/extensions/ping_pong/scripts"
     },
     {
+      "path": "packages/extensions/messaging"
+    },
+    {
+      "path": "packages/extensions/messaging/scripts"
+    },
+    {
       "path": "tsconfig.config.json"
     }
   ]

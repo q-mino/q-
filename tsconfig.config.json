@@ -13,6 +13,7 @@
     { "path": "packages/domains/test" },
     { "path": "packages/boundary" },
     { "path": "packages/extensions/greetings" },
-    { "path": "packages/extensions/ping_pong" }
+    { "path": "packages/extensions/ping_pong" },
+    { "path": "packages/extensions/messaging" }
   ]
 }

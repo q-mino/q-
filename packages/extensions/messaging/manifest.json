@@ -1,0 +1,1172 @@
+{
+  "name": "messaging",
+  "version": "0.1.0",
+  "boundary_version": "1.0.0",
+  "sees": { "known": ["the_declared_time"] },
+  "touches": ["the_port_of_requests", "its_storage"],
+  "actions": {},
+  "slots": { "the_chat": { "on": "a_bond", "shows": "parts/the_chat.js" } },
+  "pages": {},
+  "surfaces": {
+    "self": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/write_a_message": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": {
+                "bond": { "type": "string", "minLength": 1 },
+                "text": { "type": "string", "minLength": 1, "maxLength": 4000 }
+              },
+              "required": ["bond", "text"],
+              "additionalProperties": false
+            },
+            "events": {
+              "the_message_is_written": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_message_is_written" },
+                  "payload": {
+                    "type": "object",
+                    "properties": { "message_id": { "type": "string", "minLength": 1 } },
+                    "required": ["message_id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_message_cannot_be_written": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_message_cannot_be_written" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          },
+          "usecase/read_a_chat": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": {
+                "bond": { "type": "string", "minLength": 1 },
+                "up_to": { "type": "string", "minLength": 1 }
+              },
+              "required": ["bond", "up_to"],
+              "additionalProperties": false
+            },
+            "events": {
+              "the_chat_is_read": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_chat_is_read" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "the_chat_cannot_be_read": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "the_chat_cannot_be_read" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          },
+          "usecase/a_chat": {
+            "kind": "read",
+            "input": {
+              "type": "object",
+              "properties": { "bond": { "type": "string", "minLength": 1 } },
+              "required": ["bond"],
+              "additionalProperties": false
+            },
+            "events": {
+              "snapshot": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "snapshot" },
+                  "entries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message_id": { "type": "string", "minLength": 1 },
+                        "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                        "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                        "at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                        },
+                        "whose": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "whose": { "type": "string", "const": "mine" },
+                                "stage": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "on_its_way" }
+                                      },
+                                      "required": ["stage"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "delivered" },
+                                        "at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                        }
+                                      },
+                                      "required": ["stage", "at"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "no_receipt" },
+                                        "at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                        }
+                                      },
+                                      "required": ["stage", "at"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": {
+                                          "type": "string",
+                                          "const": "could_not_be_delivered"
+                                        },
+                                        "at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                        }
+                                      },
+                                      "required": ["stage", "at"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "called_off" },
+                                        "at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                        }
+                                      },
+                                      "required": ["stage", "at"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "held" }
+                                      },
+                                      "required": ["stage"],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "stage": { "type": "string", "const": "put_aside" }
+                                      },
+                                      "required": ["stage"],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": ["whose", "stage"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "whose": { "type": "string", "const": "theirs" },
+                                "declared_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                }
+                              },
+                              "required": ["whose", "declared_at"],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["message_id", "place", "text", "at", "whose"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "position": { "type": "string", "minLength": 1 },
+                  "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "next": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "entries", "position", "total"],
+                "additionalProperties": false
+              },
+              "fact": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "fact" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 },
+                  "entry": {
+                    "type": "object",
+                    "properties": {
+                      "message_id": { "type": "string", "minLength": 1 },
+                      "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                      "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "whose": { "type": "string", "const": "mine" },
+                              "stage": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "on_its_way" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "delivered" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "no_receipt" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": {
+                                        "type": "string",
+                                        "const": "could_not_be_delivered"
+                                      },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "called_off" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "held" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "put_aside" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["whose", "stage"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "whose": { "type": "string", "const": "theirs" },
+                              "declared_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["whose", "declared_at"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["message_id", "place", "text", "at", "whose"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "position", "identity", "entry"],
+                "additionalProperties": false
+              },
+              "entered": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "entered" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 },
+                  "entry": {
+                    "type": "object",
+                    "properties": {
+                      "message_id": { "type": "string", "minLength": 1 },
+                      "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                      "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "whose": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "whose": { "type": "string", "const": "mine" },
+                              "stage": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "on_its_way" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "delivered" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "no_receipt" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": {
+                                        "type": "string",
+                                        "const": "could_not_be_delivered"
+                                      },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "called_off" },
+                                      "at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                      }
+                                    },
+                                    "required": ["stage", "at"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "held" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "stage": { "type": "string", "const": "put_aside" }
+                                    },
+                                    "required": ["stage"],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["whose", "stage"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "whose": { "type": "string", "const": "theirs" },
+                              "declared_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["whose", "declared_at"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["message_id", "place", "text", "at", "whose"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "position", "identity", "entry"],
+                "additionalProperties": false
+              },
+              "left": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "left" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "position", "identity"],
+                "additionalProperties": false
+              },
+              "caught_up": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "caught_up" },
+                  "position": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "position"],
+                "additionalProperties": false
+              },
+              "position_unavailable": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "position_unavailable" } },
+                "required": ["event"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": false
+          },
+          "usecase/a_chat_at_a_glance": {
+            "kind": "read",
+            "input": {
+              "type": "object",
+              "properties": { "bond": { "type": "string", "minLength": 1 } },
+              "required": ["bond"],
+              "additionalProperties": false
+            },
+            "events": {
+              "snapshot": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "snapshot" },
+                  "entries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "bond": { "type": "string", "minLength": 1 },
+                        "the_last_message": {
+                          "type": "object",
+                          "properties": {
+                            "message_id": { "type": "string", "minLength": 1 },
+                            "place": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                            "at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                            },
+                            "whose": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "whose": { "type": "string", "const": "mine" },
+                                    "stage": {
+                                      "oneOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "on_its_way" }
+                                          },
+                                          "required": ["stage"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "delivered" },
+                                            "at": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                            }
+                                          },
+                                          "required": ["stage", "at"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "no_receipt" },
+                                            "at": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                            }
+                                          },
+                                          "required": ["stage", "at"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": {
+                                              "type": "string",
+                                              "const": "could_not_be_delivered"
+                                            },
+                                            "at": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                            }
+                                          },
+                                          "required": ["stage", "at"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "called_off" },
+                                            "at": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                            }
+                                          },
+                                          "required": ["stage", "at"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "held" }
+                                          },
+                                          "required": ["stage"],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stage": { "type": "string", "const": "put_aside" }
+                                          },
+                                          "required": ["stage"],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": ["whose", "stage"],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "whose": { "type": "string", "const": "theirs" },
+                                    "declared_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                    }
+                                  },
+                                  "required": ["whose", "declared_at"],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          },
+                          "required": ["message_id", "place", "text", "at", "whose"],
+                          "additionalProperties": false
+                        },
+                        "to_read": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                      },
+                      "required": ["bond", "the_last_message", "to_read"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "position": { "type": "string", "minLength": 1 },
+                  "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "next": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "entries", "position", "total"],
+                "additionalProperties": false
+              },
+              "fact": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "fact" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 },
+                  "entry": {
+                    "type": "object",
+                    "properties": {
+                      "bond": { "type": "string", "minLength": 1 },
+                      "the_last_message": {
+                        "type": "object",
+                        "properties": {
+                          "message_id": { "type": "string", "minLength": 1 },
+                          "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                          "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "whose": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "whose": { "type": "string", "const": "mine" },
+                                  "stage": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "on_its_way" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "delivered" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "no_receipt" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": {
+                                            "type": "string",
+                                            "const": "could_not_be_delivered"
+                                          },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "called_off" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "held" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "put_aside" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": ["whose", "stage"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "whose": { "type": "string", "const": "theirs" },
+                                  "declared_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["whose", "declared_at"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["message_id", "place", "text", "at", "whose"],
+                        "additionalProperties": false
+                      },
+                      "to_read": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                    },
+                    "required": ["bond", "the_last_message", "to_read"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "position", "identity", "entry"],
+                "additionalProperties": false
+              },
+              "entered": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "entered" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 },
+                  "entry": {
+                    "type": "object",
+                    "properties": {
+                      "bond": { "type": "string", "minLength": 1 },
+                      "the_last_message": {
+                        "type": "object",
+                        "properties": {
+                          "message_id": { "type": "string", "minLength": 1 },
+                          "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                          "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          },
+                          "whose": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "whose": { "type": "string", "const": "mine" },
+                                  "stage": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "on_its_way" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "delivered" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "no_receipt" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": {
+                                            "type": "string",
+                                            "const": "could_not_be_delivered"
+                                          },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "called_off" },
+                                          "at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                          }
+                                        },
+                                        "required": ["stage", "at"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "held" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "stage": { "type": "string", "const": "put_aside" }
+                                        },
+                                        "required": ["stage"],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": ["whose", "stage"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "whose": { "type": "string", "const": "theirs" },
+                                  "declared_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["whose", "declared_at"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["message_id", "place", "text", "at", "whose"],
+                        "additionalProperties": false
+                      },
+                      "to_read": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                    },
+                    "required": ["bond", "the_last_message", "to_read"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["event", "position", "identity", "entry"],
+                "additionalProperties": false
+              },
+              "left": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "left" },
+                  "position": { "type": "string", "minLength": 1 },
+                  "identity": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "position", "identity"],
+                "additionalProperties": false
+              },
+              "caught_up": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "caught_up" },
+                  "position": { "type": "string", "minLength": 1 }
+                },
+                "required": ["event", "position"],
+                "additionalProperties": false
+              },
+              "position_unavailable": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "position_unavailable" } },
+                "required": ["event"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": false
+          }
+        }
+      }
+    },
+    "known": {
+      "version": "1.0.0",
+      "majors": {
+        "1": {
+          "usecase/message": {
+            "kind": "command",
+            "input": {
+              "type": "object",
+              "properties": { "text": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+              "required": ["text"],
+              "additionalProperties": false
+            },
+            "events": {
+              "received": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "received" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "not_received": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "not_received" },
+                  "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+                },
+                "required": ["event", "payload"],
+                "additionalProperties": false
+              },
+              "not_found": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "not_found" } },
+                "required": ["event"],
+                "additionalProperties": false
+              },
+              "invalid_request": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "invalid_request" },
+                  "reason": { "type": "string", "enum": ["not_a_leaf", "input_not_in_schema"] }
+                },
+                "required": ["event", "reason"],
+                "additionalProperties": false
+              },
+              "version_not_supported": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string", "const": "version_not_supported" },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?\\.-?\\d+(?:\\.\\d+)?$"
+                  },
+                  "oldest": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["event", "current", "oldest"],
+                "additionalProperties": false
+              },
+              "identity_already_used": {
+                "type": "object",
+                "properties": { "event": { "type": "string", "const": "identity_already_used" } },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            },
+            "answers_in_one_event": true
+          }
+        }
+      }
+    }
+  }
+}

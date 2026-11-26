@@ -1,0 +1,1542 @@
+{
+  "domain": "business/chats",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "business/chats/id/bond": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/chats/id/message_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "business/chats/value/instant": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        }
+      }
+    },
+    "business/chats/value/text": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "minLength": 1, "maxLength": 4000 }
+        }
+      }
+    },
+    "business/chats/value/waiting_time": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 604800 }
+        }
+      }
+    },
+    "business/chats/value/place": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+        }
+      }
+    },
+    "business/chats/value/what_came_back": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "the_message_was_received",
+              "the_message_had_no_receipt",
+              "the_peer_cannot_receive_it",
+              "the_message_was_called_off"
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/progress": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "on_its_way" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "closed" },
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_message_was_received",
+                      "the_message_had_no_receipt",
+                      "the_peer_cannot_receive_it",
+                      "the_message_was_called_off"
+                    ]
+                  },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "what_came_back", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/a_message_written": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "written_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["id", "bond", "text", "written_at", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/value/a_message_received": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "declared_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "received_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "bond", "text", "declared_at", "received_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/value/a_message_in_a_chat": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "whose": { "type": "string", "const": "mine" },
+                  "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "message": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "bond": { "type": "string", "minLength": 1 },
+                      "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                      "written_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+                    },
+                    "required": ["id", "bond", "text", "written_at", "waits"],
+                    "additionalProperties": false
+                  },
+                  "progress": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "on_its_way" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "closed" },
+                          "what_came_back": {
+                            "type": "string",
+                            "enum": [
+                              "the_message_was_received",
+                              "the_message_had_no_receipt",
+                              "the_peer_cannot_receive_it",
+                              "the_message_was_called_off"
+                            ]
+                          },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "what_came_back", "at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["whose", "place", "message", "progress"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "whose": { "type": "string", "const": "theirs" },
+                  "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "message": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "bond": { "type": "string", "minLength": 1 },
+                      "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      },
+                      "received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    },
+                    "required": ["id", "bond", "text", "declared_at", "received_at"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["whose", "place", "message"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/reading": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "read": { "type": "string", "const": "nothing" } },
+                "required": ["read"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "read": { "type": "string", "const": "up_to" },
+                  "message_id": { "type": "string", "minLength": 1 },
+                  "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["read", "message_id", "place", "at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/a_chat_s_folder": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "filed": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "reading": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": { "read": { "type": "string", "const": "nothing" } },
+                    "required": ["read"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "read": { "type": "string", "const": "up_to" },
+                      "message_id": { "type": "string", "minLength": 1 },
+                      "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                      "at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    },
+                    "required": ["read", "message_id", "place", "at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["bond", "filed", "reading"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/value/stage": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "on_its_way" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "delivered" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "at"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "no_receipt" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "at"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "could_not_be_delivered" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "at"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stage": { "type": "string", "const": "called_off" },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["stage", "at"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "held" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": { "stage": { "type": "string", "const": "put_aside" } },
+                "required": ["stage"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/whose": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "whose": { "type": "string", "const": "mine" },
+                  "stage": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "on_its_way" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "delivered" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "at"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "no_receipt" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "at"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "could_not_be_delivered" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "at"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "stage": { "type": "string", "const": "called_off" },
+                          "at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["stage", "at"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "held" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": { "stage": { "type": "string", "const": "put_aside" } },
+                        "required": ["stage"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["whose", "stage"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "whose": { "type": "string", "const": "theirs" },
+                  "declared_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["whose", "declared_at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "business/chats/value/a_message_of_a_chat": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message_id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "whose": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "whose": { "type": "string", "const": "mine" },
+                      "stage": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": { "stage": { "type": "string", "const": "on_its_way" } },
+                            "required": ["stage"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "stage": { "type": "string", "const": "delivered" },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["stage", "at"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "stage": { "type": "string", "const": "no_receipt" },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["stage", "at"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "stage": { "type": "string", "const": "could_not_be_delivered" },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["stage", "at"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "stage": { "type": "string", "const": "called_off" },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                              }
+                            },
+                            "required": ["stage", "at"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": { "stage": { "type": "string", "const": "held" } },
+                            "required": ["stage"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": { "stage": { "type": "string", "const": "put_aside" } },
+                            "required": ["stage"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["whose", "stage"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "whose": { "type": "string", "const": "theirs" },
+                      "declared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    },
+                    "required": ["whose", "declared_at"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["message_id", "bond", "place", "text", "at", "whose"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/value/a_chat_at_a_glance": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "the_last_message": {
+                "type": "object",
+                "properties": {
+                  "message_id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "place": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "whose": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "whose": { "type": "string", "const": "mine" },
+                          "stage": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "on_its_way" }
+                                },
+                                "required": ["stage"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "delivered" },
+                                  "at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["stage", "at"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "no_receipt" },
+                                  "at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["stage", "at"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "could_not_be_delivered" },
+                                  "at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["stage", "at"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "called_off" },
+                                  "at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                },
+                                "required": ["stage", "at"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": { "stage": { "type": "string", "const": "held" } },
+                                "required": ["stage"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "stage": { "type": "string", "const": "put_aside" }
+                                },
+                                "required": ["stage"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["whose", "stage"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "whose": { "type": "string", "const": "theirs" },
+                          "declared_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                          }
+                        },
+                        "required": ["whose", "declared_at"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": ["message_id", "bond", "place", "text", "at", "whose"],
+                "additionalProperties": false
+              },
+              "to_read": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["bond", "the_last_message", "to_read"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_has_been_written": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                  "written_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+                },
+                "required": ["id", "bond", "text", "written_at", "waits"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["message"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_has_been_delivered": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "message_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_has_had_no_receipt": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "message_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_could_not_be_delivered": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "message_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_has_been_called_off": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "message_id", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_message_has_been_received": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "bond": { "type": "string", "minLength": 1 },
+                  "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                  "declared_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "received_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "bond", "text", "declared_at", "received_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["message"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_chat_has_been_read": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "up_to": { "type": "string", "minLength": 1 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "up_to", "at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/fact/a_chat_has_been_read_again": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "up_to": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "up_to"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/a_message_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "message_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_message_waits": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "message_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_message_was_received": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_message_was_received",
+                  "the_message_had_no_receipt",
+                  "the_peer_cannot_receive_it",
+                  "the_message_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_message_had_no_receipt": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_message_was_received",
+                  "the_message_had_no_receipt",
+                  "the_peer_cannot_receive_it",
+                  "the_message_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_peer_cannot_receive_it": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_message_was_received",
+                  "the_message_had_no_receipt",
+                  "the_peer_cannot_receive_it",
+                  "the_message_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_message_was_called_off": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_message_was_received",
+                  "the_message_had_no_receipt",
+                  "the_peer_cannot_receive_it",
+                  "the_message_was_called_off"
+                ]
+              }
+            },
+            "required": ["what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/predicate/the_chat_is_read_up_to_it": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "message_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/effect/deliver_a_message": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message_id": { "type": "string", "minLength": 1 },
+              "bond": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "waits": { "type": "integer", "minimum": 1, "maximum": 604800 }
+            },
+            "required": ["message_id", "bond", "text", "waits"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/selection/chat/the_chat_is_of_this_bond": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/selection/message/the_message_is_of_this_chat": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_is_new": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "message_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/write_a_message": { "kind": "command" },
+    "business/chats/command/write_a_message_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 }
+            },
+            "required": ["bond", "text"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_waits_and_was_received": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_waits": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "it_was_received": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_message_was_received",
+                      "the_message_had_no_receipt",
+                      "the_peer_cannot_receive_it",
+                      "the_message_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_waits", "it_was_received"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_waits_and_had_no_receipt": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_waits": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "it_had_no_receipt": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_message_was_received",
+                      "the_message_had_no_receipt",
+                      "the_peer_cannot_receive_it",
+                      "the_message_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_waits", "it_had_no_receipt"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_waits_and_the_peer_cannot_receive_it": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_waits": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "the_peer_cannot_receive_it": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_message_was_received",
+                      "the_message_had_no_receipt",
+                      "the_peer_cannot_receive_it",
+                      "the_message_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_waits", "the_peer_cannot_receive_it"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_waits_and_was_called_off": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_waits": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "it_was_called_off": {
+                "type": "object",
+                "properties": {
+                  "what_came_back": {
+                    "type": "string",
+                    "enum": [
+                      "the_message_was_received",
+                      "the_message_had_no_receipt",
+                      "the_peer_cannot_receive_it",
+                      "the_message_was_called_off"
+                    ]
+                  }
+                },
+                "required": ["what_came_back"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_waits", "it_was_called_off"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/close_a_message": { "kind": "command" },
+    "business/chats/command/close_a_message_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "message_id": { "type": "string", "minLength": 1 },
+              "what_came_back": {
+                "type": "string",
+                "enum": [
+                  "the_message_was_received",
+                  "the_message_had_no_receipt",
+                  "the_peer_cannot_receive_it",
+                  "the_message_was_called_off"
+                ]
+              }
+            },
+            "required": ["bond", "message_id", "what_came_back"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/receive_a_message": { "kind": "command" },
+    "business/chats/command/receive_a_message_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "declared_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["bond", "text", "declared_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_message_is_after_what_she_read": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_is_of_the_chat": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "it_is_not_read_yet": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_is_of_the_chat", "it_is_not_read_yet"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/the_chat_is_read_up_to_it_already": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_message_is_of_the_chat": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              },
+              "it_is_read": {
+                "type": "object",
+                "properties": {
+                  "bond": { "type": "string", "minLength": 1 },
+                  "message_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["bond", "message_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_message_is_of_the_chat", "it_is_read"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/command/read_a_chat": { "kind": "command" },
+    "business/chats/command/read_a_chat_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bond": { "type": "string", "minLength": 1 },
+              "up_to": { "type": "string", "minLength": 1 }
+            },
+            "required": ["bond", "up_to"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/query/a_chat": { "kind": "query" },
+    "business/chats/query/a_chat_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/query/a_chat_at_a_glance": { "kind": "query" },
+    "business/chats/query/a_chat_at_a_glance_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "bond": { "type": "string", "minLength": 1 } },
+            "required": ["bond"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "business/chats/usecase/write_a_message": { "kind": "usecase" },
+    "business/chats/usecase/close_a_message": { "kind": "usecase" },
+    "business/chats/usecase/receive_a_message": { "kind": "usecase" },
+    "business/chats/usecase/read_a_chat": { "kind": "usecase" },
+    "business/chats/usecase/a_chat": { "kind": "usecase" },
+    "business/chats/usecase/a_chat_at_a_glance": { "kind": "usecase" },
+    "business/chats/version/chats": { "kind": "version" }
+  }
+}
