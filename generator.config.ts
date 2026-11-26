@@ -5,6 +5,8 @@ import { sight as the_sight_of_greetings } from './packages/extensions/greetings
 import { manifest as the_manifest_of_greetings } from './packages/extensions/greetings/manifest.ts'
 import { sight as the_sight_of_ping_pong } from './packages/extensions/ping_pong/sight.ts'
 import { manifest as the_manifest_of_ping_pong } from './packages/extensions/ping_pong/manifest.ts'
+import { sight as the_sight_of_messaging } from './packages/extensions/messaging/sight.ts'
+import { manifest as the_manifest_of_messaging } from './packages/extensions/messaging/manifest.ts'
 import { mounted_of } from './packages/boundary/src/index.ts'
 
 // The trees the generator writes (DOM-25): `pnpm generate`, `pnpm generate:check`.
@@ -55,6 +57,18 @@ export default {
       library: '../../domains/src/library/index.ts',
       compared_with_main: true,
       mounted: mounted_of(the_manifest_of_ping_pong),
+    },
+    {
+      // Messaging, the first extension after ping pong (MSG-1; part M2): its
+      // personas mounted below the kernel's nodes, with the context its
+      // manifest's `sees` gives (`mounted_of`): on `known` the bond and the
+      // time the request declares (MSG-8), on `self` the root's context. Its
+      // surfaces are given to peers: compared with main's (PER-17).
+      root: 'packages/extensions/messaging',
+      sight: the_sight_of_messaging,
+      library: '../../domains/src/library/index.ts',
+      compared_with_main: true,
+      mounted: mounted_of(the_manifest_of_messaging),
     },
   ],
 } satisfies Configuration

@@ -107,10 +107,37 @@ describe('the surface of the leaves below a folder (EXT-10)', () => {
     })
   })
 
-  test('faults: a read leaf that streams, a folder its leaves are not below, majors with no version', () => {
+  test('Gianni’s reservations, a read leaf that streams: its snapshot, its stream’s events whole, not in one event (EXT-10, D72.5)', () => {
+    const with_no_actions = Object.fromEntries(
+      Object.entries(member_registry).filter(([path]) => !path.endsWith('/my_loans')),
+    )
+    const surface = the_surface_of({ majors: { 2: with_no_actions }, at: 'persona/member' })
+    const reservations = surface.majors['2']?.['usecase/my_reservations']
+    expect(reservations).toMatchObject({ kind: 'read', answers_in_one_event: false })
+    expect(Object.keys(reservations?.events ?? {})).toEqual([
+      'snapshot',
+      'the_tool_you_booked_is_in_repair',
+      'fact',
+      'entered',
+      'left',
+      'caught_up',
+      'position_unavailable',
+      'not_found',
+    ])
+    expect(reservations?.events['left']).toMatchObject({
+      required: ['event', 'position', 'identity'],
+    })
+    expect(reservations?.events['the_tool_you_booked_is_in_repair']).toMatchObject({
+      required: ['event', 'position', 'identity', 'entry', 'payload'],
+    })
+    const catalogue = surface.majors['2']?.['usecase/the_shelf']
+    expect(catalogue).toMatchObject({ kind: 'read', answers_in_one_event: false })
+  })
+
+  test('faults: a read leaf that lists actions, a folder its leaves are not below, majors with no version', () => {
     expect(() =>
       the_surface_of({ majors: { 2: member_registry, 1: member_1 }, at: 'persona/member' }),
-    ).toThrow('a read leaf that streams or lists actions has its surface with its case (EXT-10)')
+    ).toThrow('a read leaf that lists actions has its surface with its case (EXT-10)')
     expect(() => the_surface_of({ majors: keeper_majors, at: 'persona/member' })).toThrow(
       'persona/keeper/usecase/retire_a_tool is not below persona/member (EXT-10)',
     )
