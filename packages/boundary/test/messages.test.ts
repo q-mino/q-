@@ -39,6 +39,7 @@ describe('from the kernel to an extension', () => {
     },
     { message: 'answer', id: 'K-2', port: 'its_storage', answer: { answer: 'committed' } },
     { message: 'answer', id: 'K-3', port: 'its_storage', answer: { answer: 'read', entries: [] } },
+    { message: 'end', id: 'I-2' },
     { message: 'start' },
     { message: 'stop' },
     { message: 'redeliver', letter: 'L-1' },

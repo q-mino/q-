@@ -23,8 +23,19 @@ import { the_manifest_of_waves } from './fixtures.ts'
 // composes; on `known` one event, the rest traced; its storage served as
 // its manifest declares; a fall, then a second.
 
-/** How `waves` plays an invocation in a test: its events, or an exception (a fall in its realm). */
-type Playing = (invocation: boundary.an_invocation) => readonly unknown[] | Error
+/**
+ * A leaf of `waves` that follows (K-4): its events, then one more each time
+ * the test lets it step, until its flow is ended; whether its iterator was
+ * closed (its `finally`).
+ */
+interface AFollow {
+  readonly follows: readonly unknown[]
+  readonly steps: () => Promise<void>
+  readonly closed: { current: boolean }
+}
+
+/** How `waves` plays an invocation in a test: its events, an exception (a fall in its realm), or a follow. */
+type Playing = (invocation: boundary.an_invocation) => readonly unknown[] | Error | AFollow
 
 /** `waves` as its package would give it: its side of the messages over a configurator that reads its partition once, then plays its leaves. */
 const waves =
@@ -41,6 +52,17 @@ const waves =
           invoke: async function* (invocation) {
             const played = playing.current(invocation)
             if (played instanceof Error) throw played
+            if ('follows' in played) {
+              try {
+                for (const event of played.follows) yield await Promise.resolve(event)
+                for (let step = 1; ; step += 1) {
+                  await played.steps()
+                  yield { event: 'step', payload: { step } }
+                }
+              } finally {
+                played.closed.current = true
+              }
+            }
             for (const event of played) yield await Promise.resolve(event)
           },
           start: () => undefined,
@@ -299,6 +321,88 @@ describe('a leaf invoked through the boundary (EXT-2, EXT-3)', () => {
     expect(
       node.traced.map((entry) => entry.why === 'an_event_not_in_the_surface' && entry.the_event_is),
     ).toEqual(['not_typed', 'after_the_answer'])
+  })
+})
+
+describe('an invocation ended by its consumer (EXT-2, K-4)', () => {
+  /** A follow of `waves`, and the gate that lets it step once. */
+  const a_follow = () => {
+    let open = (): void => undefined
+    const follow: AFollow = {
+      follows: [{ event: 'the_wave_is_sent', payload: {} }],
+      steps: () =>
+        new Promise((resolve) => {
+          open = resolve
+        }),
+      closed: { current: false },
+    }
+    return {
+      follow,
+      steps_once: () => {
+        open()
+      },
+    }
+  }
+  const on_self = {
+    leaf: 'usecase/wave_to_a_bond',
+    version: zz.semver.parse('1.0.0'),
+    context: { caller: 'the_user' },
+    operation: { id: zz.operation_id.parse('op-1'), scope: 'self/user' },
+    input: { bond: 'B-BRUNO' },
+  }
+
+  test('a follow on self stopped after its first event: end sent, the extension says done, nothing traced', async () => {
+    const { follow, steps_once } = a_follow()
+    const node = a_node({ playing: () => follow })
+    await node.hosted.load()
+    for await (const event of node.hosted.invokes('self')(on_self)) {
+      expect(event).toEqual({ event: 'the_wave_is_sent', payload: {} })
+      break
+    }
+    const invoked = node.to_the_extension.find((message) => message.message === 'invoke')
+    expect(node.to_the_extension.at(-1)).toEqual({
+      message: 'end',
+      id: invoked?.message === 'invoke' ? invoked.id : '',
+    })
+    await settled()
+    // The leaf's generator, waiting for its next step, finishes it, then is closed.
+    expect(follow.closed.current).toBe(false)
+    steps_once()
+    await settled()
+    expect(follow.closed.current).toBe(true)
+    expect(node.traced).toEqual([])
+  })
+
+  test('a flow to its done, or failed, is not ended: no end sent', async () => {
+    const node = a_node({ playing: () => [{ event: 'the_wave_is_sent', payload: {} }] })
+    await node.hosted.load()
+    expect(await all(node.hosted.invokes('self')(on_self))).toHaveLength(1)
+    const failing = a_node({ playing: () => new Error('its realm threw') })
+    await failing.hosted.load()
+    await expect(all(failing.hosted.invokes('self')(on_self))).rejects.toThrow()
+    for (const each of [node, failing]) {
+      expect(each.to_the_extension.map((message) => message.message)).not.toContain('end')
+    }
+  })
+
+  test('on known, the request answered by its first event: the follow ended, what still crosses dropped', async () => {
+    const { follow } = a_follow()
+    const node = a_node({
+      playing: () => ({ ...follow, follows: [{ event: 'waved', payload: { to: 'Anna' } }] }),
+    })
+    await node.hosted.load()
+    for await (const event of node.hosted.invokes('known')(a_peers_wave)) {
+      expect(event).toEqual({ event: 'waved', payload: { to: 'Anna' } })
+      break
+    }
+    await settled()
+    expect(node.to_the_extension.map((message) => message.message)).toEqual([
+      'answer',
+      'start',
+      'invoke',
+      'end',
+    ])
+    expect(node.traced).toEqual([])
   })
 })
 

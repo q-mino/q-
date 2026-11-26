@@ -5,6 +5,7 @@
 // collector that hands it what came (DOM-17, step 17).
 
 export {
+  TheRelayIsOutOfReach,
   the_kernels_entry,
   the_scope_of_a_letter,
   the_scope_of_the_kernels_entry,

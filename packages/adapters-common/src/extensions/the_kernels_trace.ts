@@ -55,13 +55,13 @@ export type AnEnvelopeNotOpened =
 /**
  * Why a response was not deposited (PST-9, PST-10, PST-12): its event over
  * what a letter carries, never sealed; their key takes no seal; the relay
- * refused it, with what it said; or no answer came.
+ * refused it, with what it said. The relay out of reach is thrown, not
+ * traced (MSG-14).
  */
 export type AResponseNotDeposited =
   | { readonly outcome: 'too_large_for_a_letter' }
   | { readonly outcome: 'not_sealed' }
   | { readonly outcome: 'refused'; readonly why: string }
-  | { readonly outcome: 'unreachable' }
 
 /**
  * An entry of the kernel's trace (EXT-6), an ADT by `why`, a closed set:
@@ -90,8 +90,10 @@ export type AResponseNotDeposited =
  *   `not_a_leaf` (EXT-4), with the request as it came;
  * - `a_response_not_deposited`: a response the entry wrote and could not
  *   deposit (PST-9): its event over what a letter carries (PST-12), not
- *   sealed for their key, refused by the relay (with what it said), or no
- *   answer came; the asker's sending again asks again (PST-6);
+ *   sealed for their key, or refused by the relay (with what it said); the
+ *   asker's sending again asks again (PST-6); the relay out of reach is no
+ *   longer traced, the entry throws and the collector hands the request
+ *   again at its next pass (MSG-14, since 26 Nov 2026);
  * - `a_request_not_sent`: a request of the kernel's (EXT-8) whose input is
  *   over what a letter carries (PST-12), never sent: its delivery reads
  *   `too_large_for_a_letter`, which the office records as `no_response`

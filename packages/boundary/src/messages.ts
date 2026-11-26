@@ -73,15 +73,27 @@ const answer = z.discriminatedUnion('port', [
 ])
 
 /**
+ * The end of an invocation in flight, by its `id` (EXT-2 "Out", K-4; [Q, C,
+ * high impact: A to discuss], 26 Nov 2026): the kernel's consumer of its
+ * flow stopped before `done` (a part no longer shown, a peer's request
+ * answered by its first event), so that the extension ends that leaf's flow
+ * (`return()` on its iterator) and says `done`. An `end` that crosses the
+ * extension's `done`, or names an invocation it no longer has, does nothing.
+ */
+const end = z.strictObject({ message: z.literal('end'), id: an_id })
+
+/**
  * The messages from the kernel to an extension (EXT-2, EXT-15): an
- * invocation; the answer to one of its calls; the start and the stop of its
- * consumers (its executor, its reactions); the user's request on one of its
- * dead letters, `redeliver` or `discard`, by the letter's name, handed to
- * its executor or consumers (DOM-14: on a phone the operator is the user,
- * DOM-15), a discard with who and why, as the library traces it.
+ * invocation, and its end; the answer to one of its calls; the start and
+ * the stop of its consumers (its executor, its reactions); the user's
+ * request on one of its dead letters, `redeliver` or `discard`, by the
+ * letter's name, handed to its executor or consumers (DOM-14: on a phone
+ * the operator is the user, DOM-15), a discard with who and why, as the
+ * library traces it.
  */
 export const a_message_to_an_extension = z.discriminatedUnion('message', [
   invoke,
+  end,
   answer,
   z.strictObject({ message: z.literal('start') }),
   z.strictObject({ message: z.literal('stop') }),

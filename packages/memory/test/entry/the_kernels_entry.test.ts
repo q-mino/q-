@@ -2,6 +2,7 @@ import { the_content_a_ticket_s_secret_signs } from '@q-mino/domains/bonds/addre
 import { content_of } from '@q-mino/domains/post/_dsl.ts'
 import { sealed_for } from '@q-mino/domains/seals/safe/_dsl.ts'
 import manifest_json from '@q-mino/greetings/manifest.json' with { type: 'json' }
+import { TheRelayIsOutOfReach } from '@q-mino/adapters-common'
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
 import {
@@ -542,8 +543,9 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
     expect(carried_by(anna)).toEqual([])
     expect(await deposited_for(dario)).toBe(for_dario)
     // With L_d's secret, "Dario" and D_d: the bond made, answered on it at D_d; the response
-    // lost on its way, his post sends his request again (PST-6): the same event, from the fact
-    // recorded, deposited again.
+    // lost on its way, the relay out of reach: the entry throws, the collector leaves the request
+    // unseen, and its next pass hands it again (MSG-14, K-11): the same event, from the fact
+    // recorded, deposited again, before his post sends his request again (PST-6).
     const request_id = the_identity_of(dario, 'D2')
     await dario.sends_a_request({
       request_id,
@@ -553,19 +555,11 @@ describe('the kernel’s entry (PER-25, EXT-6, F7, F8)', () => {
     })
     await dario.runs()
     anna.will('lost')
-    await anna.serves()
+    await expect(anna.serves()).rejects.toThrow(TheRelayIsOutOfReach)
     await dario.collects()
     expect(await dario.the_answer_to(request_id)).toMatchObject([{ answer: waiting }])
-    expect(anna.traced).toMatchObject([
-      {
-        why: 'a_response_not_deposited',
-        response: { answers: request_id, caller: { is: 'a_face', key: K_d } },
-        answered: { outcome: 'unreachable' },
-      },
-    ])
-    story.at('10:00:15')
-    await dario.runs()
-    await anna.serves()
+    expect(anna.traced).toEqual([])
+    await anna.collects()
     await dario.collects()
     expect(await dario.the_answer_to(request_id)).toMatchObject([
       { answer: answered({ event: 'you_are_bonded', payload: {} }) },
