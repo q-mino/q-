@@ -301,4 +301,26 @@ describe('messaging between two nodes, on q-’s oracle (part M3)', () => {
       { id: anna.the_request_of(m1, deliver_a_message), scope: 'known/B-ANNA' },
     ])
   })
+
+  test('what the relay keeps handed again (a start’s first pass, K-6; a forget, MSG-16): one message, one receipt, nothing traced', async () => {
+    const { anna, bruno } = await two_nodes({ carries: 'messaging' })
+    const m1 = await writes(anna, 'B-BRUNO', 'Ciao Bruno')
+    await bruno.the_entry()
+    await anna.the_entry()
+    await until_it_stands(anna, 'B-BRUNO', m1, 'delivered')
+    bruno.forgets()
+    anna.forgets()
+    await bruno.the_entry()
+    await anna.the_entry()
+    // R1 met Bruno's duplicate branch, its receipt deposited again; Anna's take of it the recorded
+    // one (DOM-11): no fact, no trace on either side.
+    expect(bruno.post.carried().map((deposit) => deposit.fault)).toEqual(['none', 'none'])
+    expect(facts_of_messaging(bruno)).toEqual(['a_message_has_been_received'])
+    expect(facts_of_messaging(anna)).toEqual([
+      'a_message_has_been_written',
+      'a_message_has_been_delivered',
+    ])
+    expect(anna.traced).toEqual([])
+    expect(bruno.traced).toEqual([])
+  })
 })

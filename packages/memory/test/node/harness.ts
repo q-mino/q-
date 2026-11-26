@@ -547,6 +547,8 @@ export const a_node = async (story: Story, start: Start) => {
     the_extensions_follow_the_office: node.the_extensions_follow_the_office,
     /** One pass of the phone's collector (DOM-17): the first fault of the entry thrown once it is over. */
     collects: node.collects,
+    /** The collector forgets what it saw (MSG-16): its next pass hands again what the relays keep, as a new start's first pass does (K-6). */
+    forgets: node.forgets,
     /** The node runs, then its collector passes: what came is served, and its answers deposited. */
     serves: async (): Promise<void> => {
       await runs()
