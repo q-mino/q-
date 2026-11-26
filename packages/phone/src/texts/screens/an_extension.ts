@@ -30,6 +30,8 @@ export const an_extension = {
   what_it_asks: {
     to_see_the_peers_key: 'Vedere la chiave del volto dei tuoi contatti',
     to_see_the_name_of_the_bond: 'Vedere il nome che dai ai tuoi contatti',
+    // [Q, C, provisional: A to confirm] (MSG-8, 26 Nov 2026).
+    to_see_the_time_they_declare: 'Vedere l’ora che i tuoi contatti dichiarano nelle loro lettere',
     to_send_requests_on_your_bonds: 'Mandare richieste ai tuoi contatti a nome tuo',
     a_storage_of_its_own: 'Uno spazio suo per i suoi dati, che legge solo lei',
     // [Q, A, 24 Nov 2026] (USR-7; EXT-13: integrated means trusted); its last sentence, the mark's flaw

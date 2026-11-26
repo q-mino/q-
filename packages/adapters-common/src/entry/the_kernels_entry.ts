@@ -15,6 +15,7 @@ import type * as persona_value from '@q-mino/domains/persona/_value.ts'
 import {
   as_traced,
   route,
+  TheExtensionIsNotRunningYet,
   type AnEnvelopeNotOpened,
   type ARequestAsItCame,
   type Routed,
@@ -338,6 +339,8 @@ export const the_kernels_entry = (
         try {
           return await the_first_event_of(leaves(context, leaf))
         } catch (fault) {
+          // Active, not running yet (EXT-15, MSG-9): the letter waits for the collector's next pass.
+          if (fault instanceof TheExtensionIsNotRunningYet) throw fault
           // It fell, or it is not running: no response (F8, EXT-15). The hosting traces a fall;
           // the request unanswered is the entry's to trace (F6), a fall or not.
           wiring.trace({

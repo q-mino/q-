@@ -23,7 +23,11 @@ export {
   the_marks_in,
 } from './composition.ts'
 export type { ACompositionFault, Composed, Composition, TheKernelsOffer } from './composition.ts'
-export { a_hosted_extension } from './hosting.ts'
+export {
+  a_hosted_extension,
+  the_hold_of_a_request,
+  TheExtensionIsNotRunningYet,
+} from './hosting.ts'
 export { in_process } from './in_process.ts'
 export type { AnExtensionInProcess, AnExtensionsSide } from './in_process.ts'
 export type {

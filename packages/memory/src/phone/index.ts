@@ -282,6 +282,9 @@ const the_while_of_an_unload = 1_000
 /** What the node of `known` gives a mounted folder, as the hosting reads it (PER-24): the bond, whole. */
 const the_context_on_known = z.object({ bond: bond_of_a_face })
 
+/** The time the request declares, as the persona's base gives it to every leaf below (PER-23), which the hosting reads for an extension that sees it (MSG-8). */
+const the_declared_time_on_known = z.object({ declared_at: z.iso.datetime({ precision: 3 }) })
+
 /** A read's events as the phone's wiring reads them: its snapshot's entries, or a refusal of its input. */
 type ARead<entry> = AsyncIterable<
   | { readonly event: 'snapshot'; readonly entries: readonly entry[] }
@@ -741,6 +744,8 @@ const a_phone_wired =
               bond_name: given.bond.name,
             }
           },
+          the_declared_time_on_known: (context) =>
+            the_declared_time_on_known.parse(context).declared_at,
           trace,
           notices: (notice) => {
             notices.push(notice)

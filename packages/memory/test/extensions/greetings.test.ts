@@ -106,6 +106,7 @@ const a_node = (
       peer_key: 'KEY-OF-ANNA',
       bond_name: 'Anna',
     }),
+    the_declared_time_on_known: (context) => String(context['declared_at']),
     trace: (entry) => {
       traced.push(entry)
     },

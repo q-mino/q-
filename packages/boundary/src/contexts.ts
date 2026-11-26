@@ -18,6 +18,14 @@ export const the_peer_key = z.strictObject({ peer_key: z.string().min(1) })
 /** The name the user gave the bond, which a leaf on `known` sees only if its manifest declares it (EXT-3): `context.bond_name`. */
 export const the_name_of_the_bond = z.strictObject({ bond_name: z.string().min(1) })
 
+/**
+ * The time the request declares (PER-23, PST-1), a claim of the peer's (F2),
+ * which a leaf on `known` sees only if its manifest declares it (EXT-3,
+ * MSG-8): `context.declared_at`, in UTC to the millisecond, as the kernel
+ * writes it.
+ */
+export const the_declared_time = z.strictObject({ declared_at: z.iso.datetime({ precision: 3 }) })
+
 /** What a manifest may declare it sees on `known` beside the bond (EXT-3, EXT-10: `sees: { known: [...] }`), a closed set of the boundary's. */
-export const seen_on_known = z.enum(['the_peer_key', 'the_name_of_the_bond'])
+export const seen_on_known = z.enum(['the_peer_key', 'the_name_of_the_bond', 'the_declared_time'])
 export type seen_on_known = z.output<typeof seen_on_known>
