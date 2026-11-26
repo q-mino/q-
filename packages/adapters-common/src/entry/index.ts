@@ -20,4 +20,10 @@ export type {
   TheRoutingsReads,
 } from './the_kernels_entry.ts'
 export { the_collector } from './the_collector.ts'
-export type { ACollect, ADeposit, AMailboxToCollect, TheCollectorsWiring } from './the_collector.ts'
+export type {
+  ACollect,
+  ADeposit,
+  AMailboxToCollect,
+  TheCollector,
+  TheCollectorsWiring,
+} from './the_collector.ts'

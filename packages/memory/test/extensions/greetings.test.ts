@@ -118,6 +118,7 @@ const a_node = (
       new Promise((done) => {
         setTimeout(done, 5)
       }),
+    when_it_runs: () => undefined,
   })
   return { hosted, storage, traced, notices, requests, to_the_extension, answering }
 }

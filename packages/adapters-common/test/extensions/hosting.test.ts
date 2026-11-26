@@ -105,6 +105,7 @@ const a_node = (
   const notices: ANotice[] = []
   const kept = new Map<string, boundary.Json>()
   let loads = 0
+  let runs = 0
   let active = true
   const playing = { current: more.playing ?? ((): readonly unknown[] => []) }
   const copied = (message: unknown): unknown => JSON.parse(JSON.stringify(message))
@@ -168,6 +169,9 @@ const a_node = (
         ? clock
         : { now: () => zz.date_time.parse(more.now?.current), time_zone: clock.time_zone },
     a_while: () => Promise.resolve(),
+    when_it_runs: () => {
+      runs += 1
+    },
   }
   const hosted = a_hosted_extension(wiring)
   return {
@@ -177,6 +181,7 @@ const a_node = (
     notices,
     playing,
     loads: () => loads,
+    runs: () => runs,
     deactivate: () => {
       active = false
     },
@@ -208,6 +213,11 @@ describe('an extension hosted (EXT-15)', () => {
     expect(await active.hosted.load()).toEqual({ loaded: 'running' })
     expect(active.to_the_extension.map((message) => message.message)).toEqual(['answer', 'start'])
     expect(active.hosted.life()).toEqual({ life: 'running' })
+    // The node told it runs, once (MSG-16: its collector forgets what it saw); not for a load that did not run.
+    expect(active.runs()).toBe(1)
+    expect(await active.hosted.load()).toEqual({ loaded: 'running' })
+    expect(active.runs()).toBe(1)
+    expect(node.runs()).toBe(0)
   })
 
   test('a ready that differs from its manifest: a composition fault, it does not run', async () => {

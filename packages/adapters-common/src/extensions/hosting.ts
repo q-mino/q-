@@ -83,7 +83,7 @@ export interface ANotice {
  * (EXT-14); how the kernel's node on `known` gives the bond, in the
  * boundary's words, and the time the request declares; the kernel's trace (EXT-6); the port of its notices;
  * the clock; the while the kernel waits for its invocations in flight when
- * it is unloaded.
+ * it is unloaded; who is told it runs (MSG-16).
  */
 export interface HostingWiring {
   readonly composed: Composed
@@ -102,6 +102,13 @@ export interface HostingWiring {
   readonly notices: (notice: ANotice) => void
   readonly clock: zz.Clock
   readonly a_while: () => Promise<void>
+  /**
+   * Told each time a load makes it run (its activation, the node's start),
+   * not at its load again after a fall: the node's collector forgets what
+   * it saw, so that a request silenced while it did not run reaches it at
+   * the next pass (MSG-16), and the letter it fell on is not handed again.
+   */
+  readonly when_it_runs: () => void
 }
 
 /** The life of an extension hosted (EXT-15), as the kernel shows it: not loaded; loading, `ready` awaited; running; stopped, after a second fall or a `ready` that differs from its manifest. */
@@ -597,7 +604,10 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
         return loaded_now()
       }
       falls = 0
-      return loaded()
+      const came = await loaded()
+      // It runs now (MSG-16), not after a fall's load again, which would hand again the letter it fell on.
+      if (came.loaded === 'running') wiring.when_it_runs()
+      return came
     },
     unload: async () => {
       const realm = the_realm()

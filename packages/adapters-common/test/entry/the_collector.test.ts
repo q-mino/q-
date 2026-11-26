@@ -37,7 +37,7 @@ const annas_collector = (story: {
   const handed: AnEnvelopeCollected[] = []
   const throws = new Set(story.the_entry_throws_on ?? [])
   const down = new Set(story.the_collect_throws_at ?? [])
-  const collects = the_collector({
+  const { collects, forget } = the_collector({
     clock,
     address_book: {
       the_mailboxes_i_collect: () =>
@@ -66,7 +66,11 @@ const annas_collector = (story: {
       return Promise.resolve()
     },
   })
-  return { collects, handed: () => handed.map((each) => `${each.came_to}:${each.envelope}`) }
+  return {
+    collects,
+    forget,
+    handed: () => handed.map((each) => `${each.came_to}:${each.envelope}`),
+  }
 }
 
 /** Deposits at a mailbox, by their envelopes, their ids the relay's order. */
@@ -110,5 +114,25 @@ describe('the collector (DOM-17)', () => {
     const no_key = annas_collector({ deposits, no_key_for: 'L_b' })
     await expect(no_key.collects()).rejects.toThrow('no key of the mailbox of L_b')
     expect(no_key.handed()).toEqual(['D_mc:c1'])
+  })
+
+  test('forgotten once an extension runs or is offered again: the next pass hands again what the relays keep (MSG-16)', async () => {
+    const deposits = new Map([
+      ['R of L_b', at('b1', 'b2')],
+      ['R of L_c', at('c1')],
+    ])
+    const anna = annas_collector({ deposits })
+    await anna.collects()
+    anna.forget()
+    await anna.collects()
+    await anna.collects()
+    expect(anna.handed()).toEqual([
+      'D_mb:b1',
+      'D_mb:b2',
+      'D_mc:c1',
+      'D_mb:b1',
+      'D_mb:b2',
+      'D_mc:c1',
+    ])
   })
 })

@@ -62,7 +62,12 @@ describe('ping pong between two nodes, on q-’s oracle (step 14)', () => {
     await bruno.the_entry()
     await until(() => bruno.the_ping_is_closed(second), 'the second ping closed')
     expect(bruno.the_ping(second)).toMatchObject(closed_with('the_pong_came_back'))
-    expect(anna.pongs()).toMatchObject([{ bond: 'B-BRUNO' }])
+    // Her collector forgot what it saw once ping pong ran (MSG-16): the first ping, silenced while
+    // it was off and still kept by the relay, reached it too; its pong came after its time, a late
+    // one in Bruno's kernel's trace (F7), his first ping closed as it was.
+    expect(anna.pongs()).toMatchObject([{ bond: 'B-BRUNO' }, { bond: 'B-BRUNO' }])
+    expect(bruno.the_ping(first)).toMatchObject(closed_with('the_ping_had_no_response'))
+    expect(bruno.whys()).toEqual(['a_response_not_awaited'])
   })
 
   test('a ping between two nodes with ping pong active gives its pong', async () => {
