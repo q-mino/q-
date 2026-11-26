@@ -62,7 +62,7 @@ export const a_manifest = z.strictObject({
   name: an_extension,
   version: a_version,
   sees: z.strictObject({
-    known: z.array(z.enum(['the_peer_key', 'the_name_of_the_bond'])).max(8),
+    known: z.array(z.enum(['the_peer_key', 'the_name_of_the_bond', 'the_declared_time'])).max(8),
   }),
   touches: z.array(z.enum(['the_port_of_requests', 'its_storage'])).max(8),
   extension_points: z
@@ -91,6 +91,8 @@ export const what_an_extension_asks = z.discriminatedUnion('asks', [
   z.strictObject({ asks: z.literal('to_see_the_peers_key') }),
   /** To see the name she gave a bond. */
   z.strictObject({ asks: z.literal('to_see_the_name_of_the_bond') }),
+  /** To see the time a bond's letter declares it was sent, a claim of the peer's (F2, MSG-8). */
+  z.strictObject({ asks: z.literal('to_see_the_time_they_declare') }),
   /** To send requests on her bonds, in her name (F7). */
   z.strictObject({ asks: z.literal('to_send_requests_on_your_bonds') }),
   /** A storage of its own, which only it reads (EXT-14). */

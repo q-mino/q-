@@ -10,6 +10,8 @@ import {
   type HostingWiring,
   type TheKernelsTraced,
   type Transport,
+  the_hold_of_a_request,
+  TheExtensionIsNotRunningYet,
 } from '../../src/index.ts'
 import { the_manifest_of_waves } from './fixtures.ts'
 
@@ -73,6 +75,7 @@ const a_node = (
     readonly version?: boundary.semver
     readonly playing?: Playing
     readonly storage_answers?: boolean
+    readonly now?: { current: string }
   } = {},
 ) => {
   const to_the_extension: boundary.a_message_to_an_extension[] = []
@@ -131,13 +134,17 @@ const a_node = (
       peer_key: 'KEY-OF-ANNA',
       bond_name: 'Anna',
     }),
+    the_declared_time_on_known: (context) => String(context['declared_at']),
     trace: (entry) => {
       traced.push(entry)
     },
     notices: (notice) => {
       notices.push(notice)
     },
-    clock,
+    clock:
+      more.now === undefined
+        ? clock
+        : { now: () => zz.date_time.parse(more.now?.current), time_zone: clock.time_zone },
     a_while: () => Promise.resolve(),
   }
   const hosted = a_hosted_extension(wiring)
@@ -158,7 +165,12 @@ const a_node = (
 const a_peers_wave: zz.MountedInvocation = {
   leaf: 'usecase/wave',
   version: '1.0.0',
-  context: { bond_id: 'B-ANNA', caller: 'KEY-OF-ANNA', now: '2026-11-20T09:00:00.000Z' },
+  context: {
+    bond_id: 'B-ANNA',
+    caller: 'KEY-OF-ANNA',
+    declared_at: '2026-11-20T08:59:58.000Z',
+    now: '2026-11-20T09:00:00.000Z',
+  },
   operation: { id: zz.operation_id.parse('P1'), scope: 'known/KEY-OF-ANNA' },
   correlation: zz.correlation.parse('P1'),
   input: { to: 'Anna' },
@@ -214,16 +226,23 @@ describe('a leaf invoked through the boundary (EXT-2, EXT-3)', () => {
     expect(JSON.stringify(invoked)).not.toContain('KEY-OF-ANNA')
   })
 
-  test('on known, what sees declares: the peer’s key and the bond’s name', async () => {
+  test('on known, what sees declares: the peer’s key, the bond’s name, the time the request declares', async () => {
     const composition = compose_an_extension(the_kernels_offer([]))(
-      the_manifest_of_waves({ sees: ['the_peer_key', 'the_name_of_the_bond'] }),
+      the_manifest_of_waves({
+        sees: ['the_peer_key', 'the_name_of_the_bond', 'the_declared_time'],
+      }),
     )
     if (composition.composition === 'a_fault') throw new Error(composition.message)
     const node = a_node({ composed: composition.composed })
     await node.hosted.load()
     await all(node.hosted.invokes('known')(a_peers_wave))
     expect(node.to_the_extension.find((message) => message.message === 'invoke')).toMatchObject({
-      context: { bond: 'B-ANNA', peer_key: 'KEY-OF-ANNA', bond_name: 'Anna' },
+      context: {
+        bond: 'B-ANNA',
+        peer_key: 'KEY-OF-ANNA',
+        bond_name: 'Anna',
+        declared_at: '2026-11-20T08:59:58.000Z',
+      },
     })
   })
 
@@ -280,6 +299,44 @@ describe('a leaf invoked through the boundary (EXT-2, EXT-3)', () => {
     expect(
       node.traced.map((entry) => entry.why === 'an_event_not_in_the_surface' && entry.the_event_is),
     ).toEqual(['not_typed', 'after_the_answer'])
+  })
+})
+
+describe('a peer’s request before it runs (EXT-15, MSG-9)', () => {
+  test('active, not loaded yet at the start or still loading: held, thrown for the collector’s next pass', async () => {
+    const node = a_node({ storage_answers: false })
+    await expect(all(node.hosted.invokes('known')(a_peers_wave))).rejects.toBeInstanceOf(
+      TheExtensionIsNotRunningYet,
+    )
+    void node.hosted.load()
+    await settled()
+    expect(node.hosted.life()).toEqual({ life: 'loading' })
+    await expect(all(node.hosted.invokes('known')(a_peers_wave))).rejects.toBeInstanceOf(
+      TheExtensionIsNotRunningYet,
+    )
+    expect(node.to_the_extension.some((message) => message.message === 'invoke')).toBe(false)
+  })
+
+  test('past the hold, or not active, or on self: not held, it invokes nothing', async () => {
+    const now = { current: '2026-11-20T09:00:00.000Z' }
+    const node = a_node({ storage_answers: false, now })
+    now.current = new Date(Date.parse(now.current) + the_hold_of_a_request).toISOString()
+    const past = await all(node.hosted.invokes('known')(a_peers_wave)).catch(
+      (fault: unknown) => fault,
+    )
+    expect(past).toBeInstanceOf(Error)
+    expect(past).not.toBeInstanceOf(TheExtensionIsNotRunningYet)
+    const on_self = await all(node.hosted.invokes('self')(a_peers_wave)).catch(
+      (fault: unknown) => fault,
+    )
+    expect(on_self).not.toBeInstanceOf(TheExtensionIsNotRunningYet)
+    const another = a_node({ storage_answers: false })
+    another.deactivate()
+    const not_active = await all(another.hosted.invokes('known')(a_peers_wave)).catch(
+      (fault: unknown) => fault,
+    )
+    expect(not_active).toBeInstanceOf(Error)
+    expect(not_active).not.toBeInstanceOf(TheExtensionIsNotRunningYet)
   })
 })
 

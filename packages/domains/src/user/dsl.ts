@@ -23,10 +23,13 @@ const the_places_of = (manifest: value.a_manifest): readonly value.what_an_exten
 export const what_an_extension_asks = (
   manifest: value.a_manifest,
 ): readonly value.what_an_extension_asks[] => {
-  const sees: readonly value.what_an_extension_asks[] = manifest.sees.known.map((seen) =>
-    seen === 'the_peer_key'
-      ? { asks: 'to_see_the_peers_key' }
-      : { asks: 'to_see_the_name_of_the_bond' },
+  const sees: readonly value.what_an_extension_asks[] = manifest.sees.known.map(
+    (seen): value.what_an_extension_asks =>
+      seen === 'the_peer_key'
+        ? { asks: 'to_see_the_peers_key' }
+        : seen === 'the_name_of_the_bond'
+          ? { asks: 'to_see_the_name_of_the_bond' }
+          : { asks: 'to_see_the_time_they_declare' },
   )
   const touches: readonly value.what_an_extension_asks[] = manifest.touches.map((touched) =>
     touched === 'the_port_of_requests'
