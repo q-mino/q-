@@ -12,3 +12,7 @@ export type {
   WhyItStopped,
 } from './the_start.ts'
 export { a_phone_s_storage, the_kernel_s_domains } from './storage.ts'
+export {
+  the_import_of_an_extension,
+  the_pauses_of_an_import,
+} from './the_import_of_an_extension.ts'
