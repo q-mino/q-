@@ -553,16 +553,16 @@
   }
 
   /*
-   * A row of her contacts (MSG-15): its marks compact, the tag inline before
+   * A row of her contacts (MSG-15): its marks compact, the tag small over
    * what they hold, and each slot in its place a line, its part then the
-   * gesture to the whole screen, whose target is the whole slot (the line is
+   * gesture to the whole screen, its glyph alone (its words for a screen
+   * reader), whose target is the whole slot (the line is
    * one gesture: her tap takes it to the whole screen; the row's own, the
    * contact, stays its title's). [Q, C, 27 Nov 2026] (part M4 of messaging)
    */
   .row .mark {
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: var(--space-1) var(--space-2);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
     margin-block-start: 0;
     padding: var(--space-1) var(--space-2);
     border-width: 1px;
@@ -570,15 +570,10 @@
   }
 
   .row .mark > [data-part='tag'] {
-    grid-column: 1;
     margin-block-start: 0;
     padding: 0;
     border: 0;
     font-size: var(--text-s);
-  }
-
-  .row .mark > .slot {
-    grid-column: 2;
   }
 
   .row .slot[data-state='in_its_place'] {
@@ -592,7 +587,8 @@
     border: 0;
   }
 
-  .row .slot[data-state='in_its_place'] > [data-part='head'] > [data-part='label'] {
+  .row .slot[data-state='in_its_place'] > [data-part='head'] > [data-part='label'],
+  .row .slot[data-state='in_its_place'] > [data-part='head'] .gesture > [data-part='words'] {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;

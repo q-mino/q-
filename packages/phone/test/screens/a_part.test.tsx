@@ -132,7 +132,7 @@ describe('a part of an extension’s, drawn (K-3)', () => {
       expect(slot.dataset['state']).toBe('on_the_whole_screen')
       expect(slot.querySelector('.the-greetings button')).not.toBeNull()
     })
-    the_button(slot, 'Saluta').click()
+    the_button(slot, 'Saluta da qui').click()
     await until(() => {
       expect(slot.querySelector('[role="status"]')?.textContent).toBe(
         'Saluto partito: aspetta la risposta.',

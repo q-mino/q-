@@ -268,7 +268,7 @@ export const an_extension_s_part_on_the_whole_screen = {
     with_greetings(async (hand) => {
       hand.taps(words.common.the_points.the_slot.takes_the_screen)
       await hand.until(() => hand.shown().querySelector('.the-greetings button') !== null)
-      hand.taps('Saluta')
+      hand.taps('Saluta da qui')
       await hand.until_the_app_says('Saluto partito: aspetta la risposta.')
     }),
 }

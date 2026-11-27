@@ -4,7 +4,7 @@
 
 export const the_words_of_the_part = {
   in_its_place: 'Un saluto, a tutto schermo.',
-  greet: 'Saluta',
+  greet: 'Saluta da qui',
   how_it_went: {
     nothing_yet: 'Nessun saluto da qui.',
     on_its_way: 'Il saluto parte…',

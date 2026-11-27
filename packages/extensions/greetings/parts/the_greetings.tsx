@@ -11,6 +11,28 @@ import { the_words_of_the_part as words } from '../texts/the_part.it.ts'
 // went. A part acting at her tap here; the kernel cannot tell it from one
 // acting by itself (EXT-16), and shows it as greetings' activity.
 
+/**
+ * Its look (K-3): a part draws its own `<style>`, in the layer of the
+ * extensions, scoped by its class, with the design's variables, so that it
+ * follows the theme (Roano, Lavagna) and the kernel's mark stays over it
+ * (the layer `frame`, WEB-26). [Q, C, high impact: A to discuss]
+ */
+const its_look = `@layer extensions {
+  .the-greetings { display: grid; gap: var(--space-2); justify-items: start; margin: 0; }
+  .the-greetings button {
+    min-block-size: var(--tap);
+    padding: var(--space-2) var(--space-4);
+    border: 2px solid var(--extension-edge);
+    border-radius: var(--radius-round);
+    background: var(--extension-raised);
+    color: var(--extension-ink);
+    font: inherit;
+    font-weight: var(--weight-strong);
+  }
+  .the-greetings button:disabled { opacity: 0.6; }
+  .the-greetings [role='status'] { margin: 0; color: var(--ink-soft); }
+}`
+
 /** How the greeting asked from here went: nothing yet, on its way, sent (its leaf's event), or not sent (another event, or the kernel did not serve it). */
 type how_it_went = keyof typeof words.how_it_went
 
@@ -35,12 +57,16 @@ export const part = (given: boundary.WhatAPartIsGiven) => {
   const bond = the_bond_of(given.placed)
   if (given.where === 'in_its_place')
     return (
-      <p class="the-greetings" data-state={went.value}>
-        {went.value === 'nothing_yet' ? words.in_its_place : words.how_it_went[went.value]}
-      </p>
+      <>
+        <style>{its_look}</style>
+        <p class="the-greetings" data-state={went.value}>
+          {went.value === 'nothing_yet' ? words.in_its_place : words.how_it_went[went.value]}
+        </p>
+      </>
     )
   return (
     <div class="the-greetings" data-state={went.value}>
+      <style>{its_look}</style>
       <button
         type="button"
         disabled={bond === undefined || went.value === 'on_its_way'}
