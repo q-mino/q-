@@ -224,7 +224,9 @@ describe('the chat on a contact’s row (story 11, MSG-15)', () => {
         )
         expect(the_stage?.dataset['state']).toBe(stage.stage)
         expect(the_text_of(the_stage)).toBe(said)
-        expect(the_stage?.querySelector('svg[aria-hidden="true"]')?.dataset['glyph']).toBe(glyph)
+        expect(
+          the_stage?.querySelector('svg[aria-hidden="true"]')?.getAttribute('data-glyph'),
+        ).toBe(glyph)
       })
     }
   })
@@ -419,7 +421,7 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
         return [
           one.dataset['state'],
           the_text_of(stage),
-          stage?.querySelector<SVGElement>('svg')?.dataset['glyph'],
+          stage?.querySelector('svg')?.getAttribute('data-glyph'),
           one.querySelector('[data-part="send-again"]') !== null,
         ]
       }),
