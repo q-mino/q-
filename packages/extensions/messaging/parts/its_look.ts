@@ -52,7 +52,8 @@ export const its_look = `@layer extensions {
     font-size: var(--text-s);
   }
   .the-chat [data-part='stage'] { display: inline-flex; align-items: center; gap: var(--space-1); }
-  .the-chat [data-part='stage']:is([data-state='no_receipt'], [data-state='could_not_be_delivered'], [data-state='called_off'], [data-state='held'], [data-state='put_aside']) {
+  /* What went wrong in the fault's colour; what she did herself (called off, put aside) stays quiet. */
+  .the-chat [data-part='stage']:is([data-state='no_receipt'], [data-state='could_not_be_delivered'], [data-state='held']) {
     color: var(--fault);
   }
   .the-chat [data-part='to-read'] {

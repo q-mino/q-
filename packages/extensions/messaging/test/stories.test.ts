@@ -93,7 +93,18 @@ const her_chat = async (
 
 describe('the stories of messaging, through the boundary', () => {
   test('written and delivered: the receipt is Bruno’s response', async () => {
-    const { partition, anna } = await annas_node(received)
+    // His receipt comes three seconds after her «Invia»: delivered at the instant her node learned it, not when she wrote it.
+    const partition = a_partition()
+    const clock = a_clock()
+    const anna = await a_node({
+      partition,
+      answering: (request) => {
+        clock.the_clock_reads('2026-11-26T09:00:03.000Z')
+        return received(request)
+      },
+      clock,
+    })
+    await anna.start()
     const events = await anna.invoke(anna_writes('B-BRUNO', 'Ciao Bruno', 'op-1'))
     const m1 = message_of(events)
     expect(events).toEqual([{ event: 'the_message_is_written', payload: { message_id: m1 } }])
@@ -118,7 +129,7 @@ describe('the stories of messaging, through the boundary', () => {
         place: 1,
         text: 'Ciao Bruno',
         at: '2026-11-26T09:00:00.000Z',
-        whose: { whose: 'mine', stage: { stage: 'delivered', at: '2026-11-26T09:00:00.000Z' } },
+        whose: { whose: 'mine', stage: { stage: 'delivered', at: '2026-11-26T09:00:03.000Z' } },
       },
     ])
     await anna.stop()
@@ -133,6 +144,7 @@ describe('the stories of messaging, through the boundary', () => {
       { message_id: m1, whose: { whose: 'mine', stage: { stage: 'on_its_way' } } },
     ])
     // Anna closes her app at 12:00, its request still on its way; she opens it at 20:00.
+    await before.anna.stop()
     const clock = a_clock()
     clock.the_clock_reads('2026-11-26T19:00:00.000Z')
     const anna = await a_node({ partition, answering: received, clock })
@@ -187,19 +199,19 @@ describe('the stories of messaging, through the boundary', () => {
     await anna.stop()
   })
 
-  test.each(['Carla’s node has no messaging', 'Carla does not offer it to Anna'])(
-    'Carla without messaging, or not offering it to Anna: no receipt, the same from outside (%s)',
-    async () => {
-      const { partition, anna } = await annas_node(() => ({ answer: 'no_response' }))
-      const m2 = message_of(await anna.invoke(anna_writes('B-CARLA', 'Ciao Carla', 'op-1')))
-      await anna.until(() => the_facts(partition).includes('a_message_has_had_no_receipt'))
-      expect(await her_chat(anna, 'B-CARLA')).toMatchObject([
-        { message_id: m2, whose: { stage: { stage: 'no_receipt' } } },
-      ])
-      expect(anna.sent.filter((message) => message.message === 'dead_letter')).toEqual([])
-      await anna.stop()
-    },
-  )
+  // Anna's side: whichever of the two silences Carla's node keeps, her kernel's port answers
+  // `no_response` at the end of its time (F8); Carla's side, each silence with its case, is
+  // proven on the oracle (`memory/test/extensions/messaging.test.ts`, part M7).
+  test('Carla without messaging, or not offering it to Anna: no receipt, the same from outside', async () => {
+    const { partition, anna } = await annas_node(() => ({ answer: 'no_response' }))
+    const m2 = message_of(await anna.invoke(anna_writes('B-CARLA', 'Ciao Carla', 'op-1')))
+    await anna.until(() => the_facts(partition).includes('a_message_has_had_no_receipt'))
+    expect(await her_chat(anna, 'B-CARLA')).toMatchObject([
+      { message_id: m2, whose: { stage: { stage: 'no_receipt' } } },
+    ])
+    expect(anna.sent.filter((message) => message.message === 'dead_letter')).toEqual([])
+    await anna.stop()
+  })
 
   test.each([
     { answer: 'refused', why: 'not_offered_to_the_bond' } as const,
@@ -242,6 +254,19 @@ describe('the stories of messaging, through the boundary', () => {
       { event: 'received', payload: {} },
     ])
     expect(the_facts(partition)).toEqual(['a_message_has_been_received'])
+    // What the office keeps of it: the bond, the text, the declared time, the instant received.
+    expect(the_messages(partition, 'B-ANNA')).toMatchObject([
+      {
+        whose: 'theirs',
+        place: 1,
+        message: {
+          bond: 'B-ANNA',
+          text: 'Ciao Bruno',
+          declared_at: '2026-11-26T09:00:00.120Z',
+          received_at: '2026-11-26T17:00:04.000Z',
+        },
+      },
+    ])
     const [m1] = await her_chat(bruno, 'B-ANNA')
     const [message_id] = the_messages(partition, 'B-ANNA').map((each) =>
       field(field(each, 'message'), 'id'),
@@ -363,6 +388,11 @@ describe('the stories of messaging, through the boundary', () => {
     // «Invia di nuovo»: M4, the same text, a request of its own.
     const m4 = message_of(await anna.invoke(anna_writes('B-BRUNO', 'Ciao Bruno', 'op-3')))
     await anna.until(() => anna.requests.some((request) => request.id === m4))
+    expect(m4).not.toBe(m1)
+    expect(anna.requests.find((request) => request.id === m4)).toMatchObject({
+      bond: 'B-BRUNO',
+      input: { text: 'Ciao Bruno' },
+    })
     expect(the_message(partition, 'B-BRUNO', m4)).toMatchObject({ place: 2 })
     await anna.stop()
   })
@@ -473,6 +503,8 @@ describe('the stories of messaging, through the boundary', () => {
     expect(now_of(row())).toMatchObject([{ to_read: 0, the_last_message: { message_id: m1 } }])
     await after.start()
     await after.until(() => the_facts(partition).includes('a_message_has_been_delivered'))
+    await after.stop()
+    // Once: counted after the node stopped, so that no later delivery could hide.
     expect(after.requests).toHaveLength(1)
     expect(the_facts(partition)).toEqual([
       'a_message_has_been_received',
@@ -480,7 +512,6 @@ describe('the stories of messaging, through the boundary', () => {
       'a_message_has_been_written',
       'a_message_has_been_delivered',
     ])
-    await after.stop()
   })
 
   test('ready carries messaging, the package’s version and the boundary’s', async () => {

@@ -169,12 +169,20 @@ describe('messaging between two nodes, on q-’s oracle (part M3)', () => {
     expect(anna.the_hosted().life()).toEqual({ life: 'unloaded' })
     expect(await the_stage_of(bruno, 'B-ANNA', m1)).toEqual({ stage: 'on_its_way' })
     // What she accepts, as she is shown it (EXT-7, MSG-10): its leaf on known faces, the time
-    // they declare, requests on her bonds, a storage of its own, its slot on a bond's screen.
+    // they declare, requests on her bonds, a storage of its own, its two slots (a bond's screen,
+    // the row of a contact).
     expect(anna.shown()).toMatchObject({
       name: 'messaging',
       sees: { known: ['the_declared_time'] },
       touches: ['the_port_of_requests', 'its_storage'],
+      leaves_on_known: ['usecase/message'],
     })
+    expect(new Set(anna.shown().extension_points)).toEqual(
+      new Set([
+        { point: 'slot', name: 'the_chat', place: 'a_bond' },
+        { point: 'slot', name: 'the_chat_in_my_contacts', place: 'a_bond_in_my_contacts' },
+      ]),
+    )
     expect(await anna.activates()).toEqual({ loaded: 'running' })
     // Activated, her next pass reaches messaging: Bruno's next message is received.
     const m2 = await writes(bruno, 'B-ANNA', 'Ci sei?', 2)
@@ -183,6 +191,29 @@ describe('messaging between two nodes, on q-’s oracle (part M3)', () => {
     await until_it_stands(bruno, 'B-ANNA', m2, 'delivered')
     expect(await theirs(anna, 'B-BRUNO')).toContain('Ci sei?')
   })
+
+  test.each([
+    ['Carla’s node has no messaging', 'not_installed', 'the_extension_is_not_installed'],
+    ['Carla does not offer it to Anna', 'withdrawn', 'the_extension_is_not_offered_to_the_bond'],
+  ] as const)(
+    'Carla without messaging, or not offering it to Anna: silence on her node with its case, the same from Anna’s (%s)',
+    async (_, carla_s, why) => {
+      const { anna, carla } = await two_nodes({
+        carries: 'messaging',
+        carla: carla_s === 'not_installed' ? 'not_installed' : 'active',
+      })
+      if (carla_s === 'withdrawn') await carla.withdraws_the_offer_from('B-ANNA')
+      const m2 = await writes(anna, 'B-CARLA', 'Ciao Carla')
+      await carla.the_entry()
+      // Her kernel traces the silence with its case (her «Cosa è successo»), and answers nothing.
+      expect(carla.whys()).toEqual([why])
+      expect(carla.post.carried()).toEqual([])
+      // From Anna's side the two alike: her message on its way, no receipt (F8; story 3 at its time).
+      await anna.the_entry()
+      expect(await the_stage_of(anna, 'B-CARLA', m2)).toEqual({ stage: 'on_its_way' })
+      expect(facts_of_messaging(anna)).toEqual(['a_message_has_been_written'])
+    },
+  )
 
   test('Bruno’s message, silenced while Anna’s messaging was off, is received once she activates it', async () => {
     const story = await two_nodes({ carries: 'messaging', anna: 'installed' })
@@ -270,9 +301,15 @@ describe('messaging between two nodes, on q-’s oracle (part M3)', () => {
     at('18:00:05')
     await bruno.the_entry()
     expect(await theirs(bruno, 'B-ANNA')).toEqual(['Ciao Bruno'])
+    // Received within seconds of his start, by his clock.
+    expect([...(await the_chat(bruno, 'B-ANNA')).values()].map((message) => message.at)).toEqual([
+      '2026-11-20T18:00:05.000Z',
+    ])
     await anna.the_entry()
     await until_it_stands(anna, 'B-BRUNO', m1, 'delivered')
+    // Not at her next sending: R1 deposited once.
     expect(await anna.sent()).toHaveLength(1)
+    expect(anna.post.carried()).toHaveLength(1)
   })
 
   test('Bruno’s receipt not deposited, the relay unreachable: handed again at the next pass, delivered', async () => {
@@ -292,6 +329,8 @@ describe('messaging between two nodes, on q-’s oracle (part M3)', () => {
     expect(await theirs(bruno, 'B-ANNA')).toEqual(['Ciao Bruno'])
     expect(facts_of_messaging(bruno)).toEqual(['a_message_has_been_received'])
     expect(await anna.sent()).toHaveLength(1)
+    // Not at her next sending: R1 deposited once.
+    expect(anna.post.carried()).toHaveLength(1)
     // R1 reached his leaf twice, under one operation: the request's identity (F7, DOM-11).
     const operations = bruno.to_the_extension.flatMap((message) =>
       message.message === 'invoke' && message.persona === 'known' ? [message.operation] : [],

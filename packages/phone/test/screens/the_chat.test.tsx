@@ -165,7 +165,7 @@ describe('the chat on a contact’s row (story 11, MSG-15)', () => {
       expect(the_text_of(the_line_of(app, 'Bruno'))).toBe('Tu: dove sei? consegnato 09:30')
     })
     // Carla's chat has no message yet.
-    expect(the_text_of(the_line_of(app, 'Carla'))).toBe('Nessun messaggio ancora')
+    expect(the_text_of(the_line_of(app, 'Carla'))).toBe('Ancora nessun messaggio')
     // Bruno writes twice while her contacts are open.
     chats.change('L_b', (chat) => ({
       ...chat,
@@ -199,20 +199,21 @@ describe('the chat on a contact’s row (story 11, MSG-15)', () => {
   })
 
   test('the last message of hers in each stage, in words beside its glyph (MSG-13)', async () => {
-    const stages: readonly [a_stage_of_a_story, string][] = [
-      [{ stage: 'on_its_way' }, 'in uscita'],
-      [{ stage: 'delivered', at: ten_in_rome }, 'consegnato'],
-      [{ stage: 'no_receipt', at: ten_in_rome }, 'nessuna ricevuta'],
-      [{ stage: 'could_not_be_delivered', at: ten_in_rome }, 'non consegnabile'],
-      [{ stage: 'called_off', at: ten_in_rome }, 'annullato'],
-      [{ stage: 'held' }, 'trattenuto'],
-      [{ stage: 'put_aside' }, 'messo da parte'],
+    // Its glyph: what went wrong an alert; what she did herself (called off, put aside) a quiet minus (part M7).
+    const stages: readonly [a_stage_of_a_story, string, string][] = [
+      [{ stage: 'on_its_way' }, 'in uscita', 'clock'],
+      [{ stage: 'delivered', at: ten_in_rome }, 'consegnato', 'check_check'],
+      [{ stage: 'no_receipt', at: ten_in_rome }, 'nessuna ricevuta', 'circle_alert'],
+      [{ stage: 'could_not_be_delivered', at: ten_in_rome }, 'non consegnabile', 'circle_alert'],
+      [{ stage: 'called_off', at: ten_in_rome }, 'annullato', 'circle_minus'],
+      [{ stage: 'held' }, 'fermo', 'circle_alert'],
+      [{ stage: 'put_aside' }, 'messo da parte', 'circle_minus'],
     ]
     const chats = the_chats_of_a_story([
       bruno_s([mine('M1', 1, 'Ciao Bruno', minutes_after_ten(-60))]),
     ])
     const app = opens(chats)
-    for (const [stage, said] of stages) {
+    for (const [stage, said, glyph] of stages) {
       chats.change('L_b', (chat) => ({
         ...chat,
         messages: [mine('M1', 1, 'Ciao Bruno', minutes_after_ten(-60), stage)],
@@ -223,7 +224,9 @@ describe('the chat on a contact’s row (story 11, MSG-15)', () => {
         )
         expect(the_stage?.dataset['state']).toBe(stage.stage)
         expect(the_text_of(the_stage)).toBe(said)
-        expect(the_stage?.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+        expect(
+          the_stage?.querySelector('svg[aria-hidden="true"]')?.getAttribute('data-glyph'),
+        ).toBe(glyph)
       })
     }
   })
@@ -299,7 +302,7 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
     const slot = await opens_the_conversation(app, 'Carla')
     await until(() => {
       expect(the_text_of(slot.querySelector('[data-part="all"]'))).toBe(
-        'Scrivete il primo messaggio',
+        'Ancora nessun messaggio: scrivi il primo.',
       )
     })
     // The field labelled; «Invia» named in words, off while the text is blank.
@@ -355,7 +358,7 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
     expect(the_text_of(first?.querySelector('[data-part="stage"]'))).toBe(
       'nessuna ricevuta in 7 giorni',
     )
-    expect(the_text_of(second?.querySelector('[data-part="stage"]'))).toBe('trattenuto')
+    expect(the_text_of(second?.querySelector('[data-part="stage"]'))).toBe('fermo')
     expect(first?.dataset['state']).toBe('no_receipt')
     // «Invia di nuovo» on a message not delivered, not on one delivered.
     expect(third?.querySelector('[data-part="send-again"]')).toBeNull()
@@ -371,6 +374,58 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
     expect(the_text_of(first.querySelector('[data-part="stage"]'))).toBe(
       'nessuna ricevuta in 7 giorni',
     )
+  })
+
+  test('her messages in each of the seven stages, each in words with its glyph, «Invia di nuovo» under those not delivered (story 19, MSG-13)', async () => {
+    const stages: readonly [a_stage_of_a_story, string, string, boolean][] = [
+      [{ stage: 'on_its_way' }, 'in uscita', 'clock', false],
+      [{ stage: 'delivered', at: minutes_after_ten(-1) }, 'consegnato', 'check_check', false],
+      [
+        { stage: 'no_receipt', at: minutes_after_ten(-1) },
+        'nessuna ricevuta in 7 giorni',
+        'circle_alert',
+        true,
+      ],
+      [
+        { stage: 'could_not_be_delivered', at: minutes_after_ten(-1) },
+        'non consegnabile',
+        'circle_alert',
+        true,
+      ],
+      [{ stage: 'called_off', at: minutes_after_ten(-1) }, 'annullato', 'circle_minus', true],
+      [{ stage: 'held' }, 'fermo', 'circle_alert', true],
+      [{ stage: 'put_aside' }, 'messo da parte', 'circle_minus', true],
+    ]
+    const chats = the_chats_of_a_story([
+      bruno_s(
+        stages.map(([stage], at) =>
+          mine(
+            `M${String(at + 1)}`,
+            at + 1,
+            `messaggio ${String(at + 1)}`,
+            minutes_after_ten(-10 + at),
+            stage,
+          ),
+        ),
+      ),
+    ])
+    const app = opens(chats)
+    const slot = await opens_the_conversation(app, 'Bruno')
+    await until(() => {
+      expect(the_messages_of(slot)).toHaveLength(stages.length)
+    })
+    const drawn = [...slot.querySelectorAll<HTMLElement>('[data-part="a-message"]')]
+    expect(
+      drawn.map((one) => {
+        const stage = one.querySelector<HTMLElement>('[data-part="stage"]')
+        return [
+          one.dataset['state'],
+          the_text_of(stage),
+          stage?.querySelector('svg')?.getAttribute('data-glyph'),
+          one.querySelector('[data-part="send-again"]') !== null,
+        ]
+      }),
+    ).toEqual(stages.map(([stage, said, glyph, again]) => [stage.stage, said, glyph, again]))
   })
 
   test('the annotations of a message at a tap: theirs what her node can tell, hers where it stands (story 19, MSG-6)', async () => {
@@ -404,11 +459,10 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
         (dt) => `${the_text_of(dt)}: ${the_text_of(dt.nextElementSibling)}`,
       ),
     ).toEqual([
-      'Ricevuto: oggi alle 10:15, dal tuo telefono',
-      'Ora dichiarata: oggi alle 09:30, la dice il suo telefono',
+      'Ricevuto: oggi alle 10:15, secondo il tuo telefono',
+      'Ora dichiarata: oggi alle 09:30, secondo il suo telefono',
       'Firma: valida: è di un tuo contatto',
       'Casella: quella del vostro legame',
-      'Ora del relay: non disponibile',
     ])
     // A tap on her bubble opens hers, and closes his.
     hers.querySelector<HTMLElement>('[data-part="text"]')?.click()
@@ -423,7 +477,7 @@ describe('the conversation (stories 10 and 19, MSG-7)', () => {
     ).toEqual([
       'Scritto: oggi alle 10:16',
       'Stato: consegnato: la ricevuta del tuo contatto è arrivata',
-      'Saputo: oggi alle 10:20, dal tuo telefono',
+      'Aggiornato: oggi alle 10:20, secondo il tuo telefono',
     ])
   })
 
