@@ -97,6 +97,8 @@ const a_node = (
     readonly version?: boundary.semver
     readonly playing?: Playing
     readonly storage_answers?: boolean
+    /** Whether it is active, as the office answers each time it is asked; by default at once, until `deactivate`. */
+    readonly is_active?: () => Promise<boolean>
     readonly now?: { current: string }
   } = {},
 ) => {
@@ -137,7 +139,7 @@ const a_node = (
   const wiring: HostingWiring = {
     composed: more.composed ?? composition.composed,
     transport,
-    is_active: () => Promise.resolve(active),
+    is_active: more.is_active ?? (() => Promise.resolve(active)),
     the_port_of_requests: () => Promise.resolve({ answer: 'no_response' }),
     its_storage: {
       read: (read) =>
@@ -485,6 +487,26 @@ describe('the user’s ask on self before it runs (MSG-17)', () => {
     // At most the hold of MSG-9, from the hosting's creation.
     expect(node.paused).toEqual([the_hold_of_a_request])
     expect(await node.hosted.load()).toEqual({ loaded: 'running' })
+    expect(await asked).toEqual([{ event: 'the_wave_is_sent', payload: {} }])
+  })
+
+  test('it comes to run while the office answers whether it is active: woken, served with no wait', async () => {
+    const answers: ((active: boolean) => void)[] = []
+    const node = a_node({
+      playing: () => [{ event: 'the_wave_is_sent', payload: {} }],
+      // Her ask's question held; the load's answered at once.
+      is_active: () =>
+        answers.length === 0
+          ? new Promise((answer) => {
+              answers.push(answer)
+            })
+          : Promise.resolve(true),
+    })
+    const asked = all(node.hosted.invokes('self')(her_ask))
+    await settled()
+    expect(await node.hosted.load()).toEqual({ loaded: 'running' })
+    answers[0]?.(true)
+    // No time passes: the change of its life woke it.
     expect(await asked).toEqual([{ event: 'the_wave_is_sent', payload: {} }])
   })
 
