@@ -234,14 +234,15 @@ describe('a part of an extension’s, drawn (K-3)', () => {
     const app = opened
     await until(() => {
       expect(the_row(app, 'Bruno').querySelector('.a-follow')?.textContent).toBe('1')
+      expect(follows).toBe(1)
     })
-    expect(follows).toBe(1)
     // Bruno's screen on top: her contacts kept under it, not shown, the row's follow ended at once for the part.
     the_button(the_row(app, 'Bruno'), 'Bruno').click()
+    // The part is drawn before its follow is asked (the fence reads the extensions first): wait for both.
     await until(() => {
       expect(app.shown().querySelector('.a-follow')).not.toBeNull()
+      expect(follows).toBe(2)
     })
-    expect(follows).toBe(2)
     // Back: her contacts shown again, its part follows again; Bruno's screen gone, its part's follow ended.
     the_button(app.shown(), words.common.back).click()
     await until(() => {
