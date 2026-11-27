@@ -228,3 +228,11 @@ export const the_relays_storage = (location: string) => {
 
 /** The storage of a relay, as a configurator wires it. */
 export type TheRelaysStorage = ReturnType<typeof the_relays_storage>
+
+// The node's storage on SQLite (part B2 of the assistant, AST-2).
+export {
+  the_node_s_storage_on_sqlite,
+  type TheNodeOnSqlite,
+  type TheNodeOpenedOnSqlite,
+  type WhenItSyncs,
+} from './phone/index.ts'
