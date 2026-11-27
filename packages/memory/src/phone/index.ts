@@ -752,6 +752,7 @@ const a_phone_wired =
             written()
           },
           clock,
+          elapsed: world.elapsed,
           a_while,
           // Once it runs, the collector forgets what it saw: a request silenced while it did not run reaches it at the next pass (MSG-16).
           when_it_runs: () => {

@@ -396,8 +396,14 @@ const the_stylesheets_of = (page: string): readonly string[] =>
     return path
   })
 
+/** The precache the worker is written with: its version, each file with its hash as a fetch's `integrity` (PWA-8). */
+export interface APrecache {
+  readonly version: string
+  readonly files: readonly { readonly path: string; readonly integrity: string }[]
+}
+
 /** The service worker, a classic script: the precache, then `src/sw/sw.ts` compiled, with no import or export. */
-const the_worker = (precache: { readonly version: string; readonly files: readonly string[] }) => {
+export const the_worker = (precache: APrecache): string => {
   const source = readFileSync(join(the_phone, 'src', 'sw', 'sw.ts'), 'utf8')
   const compiled = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ES2024, module: ts.ModuleKind.ESNext },
@@ -408,16 +414,26 @@ const the_worker = (precache: { readonly version: string; readonly files: readon
   return `const the_precache = ${JSON.stringify(precache)};\n${script}`
 }
 
-/** The precache of a `dist/`: every file but the worker's, its version the hash of all of them. */
-export const the_precache_of = (out: string) => {
+/**
+ * The precache of a `dist/`: every file but the worker's, each with its
+ * hash (PWA-8: the worker takes it from the HTTP cache when the hash is
+ * met), its version the hash of all of them.
+ */
+export const the_precache_of = (out: string): APrecache => {
   const files = files_under(out)
     .map((file) => posix(relative(out, file)))
     .filter((path) => path !== 'sw.js')
     .sort()
+    .map((path) => ({ path, bytes: sha256(readFileSync(join(out, path))).digest() }))
   const all = sha256('')
-  for (const path of files)
-    all.update(`${path}\0${sha256(readFileSync(join(out, path))).digest('hex')}\n`)
-  return { version: all.digest('hex').slice(0, 16), files }
+  for (const { path, bytes } of files) all.update(`${path}\0${bytes.toString('hex')}\n`)
+  return {
+    version: all.digest('hex').slice(0, 16),
+    files: files.map(({ path, bytes }) => ({
+      path,
+      integrity: `sha256-${bytes.toString('base64')}`,
+    })),
+  }
 }
 
 /** What a composition wrote: the module count, how many of them the app's start preloads, its pages. */

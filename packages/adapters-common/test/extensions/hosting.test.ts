@@ -107,6 +107,9 @@ const a_node = (
   let loads = 0
   let runs = 0
   let active = true
+  /** The pauses the hosting asked of the time that passes, and their ends, let by the test. */
+  const paused: number[] = []
+  const pauses_end: (() => void)[] = []
   const playing = { current: more.playing ?? ((): readonly unknown[] => []) }
   const copied = (message: unknown): unknown => JSON.parse(JSON.stringify(message))
   const transport: Transport = (to_the_kernel) => {
@@ -168,6 +171,12 @@ const a_node = (
       more.now === undefined
         ? clock
         : { now: () => zz.date_time.parse(more.now?.current), time_zone: clock.time_zone },
+    elapsed: (milliseconds) => {
+      paused.push(milliseconds)
+      return new Promise((done) => {
+        pauses_end.push(done)
+      })
+    },
     a_while: () => Promise.resolve(),
     when_it_runs: () => {
       runs += 1
@@ -182,6 +191,11 @@ const a_node = (
     playing,
     loads: () => loads,
     runs: () => runs,
+    paused,
+    /** The pauses asked so far ended. */
+    time_passes: () => {
+      for (const done of pauses_end.splice(0)) done()
+    },
     deactivate: () => {
       active = false
     },
@@ -431,7 +445,7 @@ describe('a peer’s request before it runs (EXT-15, MSG-9)', () => {
     expect(node.to_the_extension.some((message) => message.message === 'invoke')).toBe(false)
   })
 
-  test('past the hold, or not active, or on self: not held, it invokes nothing', async () => {
+  test('past the hold, or not active, or on self (where the ask waits, MSG-17): not held, it invokes nothing', async () => {
     const now = { current: '2026-11-20T09:00:00.000Z' }
     const node = a_node({ storage_answers: false, now })
     now.current = new Date(Date.parse(now.current) + the_hold_of_a_request).toISOString()
@@ -451,6 +465,60 @@ describe('a peer’s request before it runs (EXT-15, MSG-9)', () => {
     )
     expect(not_active).toBeInstanceOf(Error)
     expect(not_active).not.toBeInstanceOf(TheExtensionIsNotRunningYet)
+  })
+})
+
+describe('the user’s ask on self before it runs (MSG-17)', () => {
+  /** The user's ask on `self` (a part's read), as the library's mounted port invokes it. */
+  const her_ask: zz.MountedInvocation = {
+    leaf: 'usecase/wave_to_a_bond',
+    version: '1.0.0',
+    context: { caller: 'the_user' },
+    input: { bond: 'B-BRUNO' },
+  }
+
+  test('active, not loaded yet at the start: it waits for the load, then it is served', async () => {
+    const node = a_node({ playing: () => [{ event: 'the_wave_is_sent', payload: {} }] })
+    const asked = all(node.hosted.invokes('self')(her_ask))
+    await settled()
+    expect(node.to_the_extension.some((message) => message.message === 'invoke')).toBe(false)
+    // At most the hold of MSG-9, from the hosting's creation.
+    expect(node.paused).toEqual([the_hold_of_a_request])
+    expect(await node.hosted.load()).toEqual({ loaded: 'running' })
+    expect(await asked).toEqual([{ event: 'the_wave_is_sent', payload: {} }])
+  })
+
+  test('loading past the hold: it waited, then it invokes nothing', async () => {
+    const now = { current: '2026-11-20T09:00:00.000Z' }
+    const node = a_node({ storage_answers: false, now })
+    void node.hosted.load()
+    await settled()
+    expect(node.hosted.life()).toEqual({ life: 'loading' })
+    const asked = all(node.hosted.invokes('self')(her_ask)).catch((fault: unknown) => fault)
+    await settled()
+    expect(node.paused).toEqual([the_hold_of_a_request])
+    now.current = new Date(Date.parse(now.current) + the_hold_of_a_request).toISOString()
+    node.time_passes()
+    const refused = await asked
+    expect(refused).toBeInstanceOf(Error)
+    expect(String(refused)).toContain('waves is not running, loading: it invokes nothing')
+    expect(node.to_the_extension.some((message) => message.message === 'invoke')).toBe(false)
+  })
+
+  test('it stops while waited for (a ready that differs): it invokes nothing', async () => {
+    const node = a_node({ version: '1.1.0' })
+    const asked = all(node.hosted.invokes('self')(her_ask)).catch((fault: unknown) => fault)
+    await settled()
+    expect((await node.hosted.load()).loaded).toBe('a_composition_fault')
+    expect(String(await asked)).toContain('waves is not running, stopped: it invokes nothing')
+  })
+
+  test('not active: it invokes nothing at once, no wait', async () => {
+    const node = a_node()
+    node.deactivate()
+    const refused = await all(node.hosted.invokes('self')(her_ask)).catch((fault: unknown) => fault)
+    expect(String(refused)).toContain('waves is not running, unloaded: it invokes nothing')
+    expect(node.paused).toEqual([])
   })
 })
 

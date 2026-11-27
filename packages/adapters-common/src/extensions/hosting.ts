@@ -101,6 +101,8 @@ export interface HostingWiring {
   readonly trace: TheKernelsTrace
   readonly notices: (notice: ANotice) => void
   readonly clock: zz.Clock
+  /** The time that passes: the most the user's ask on `self` waits for it to run (MSG-17). */
+  readonly elapsed: zz.Elapsed
   readonly a_while: () => Promise<void>
   /**
    * Told each time a load makes it run (its activation, the node's start),
@@ -286,6 +288,30 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
   const now = (): string => wiring.clock.now()
   /** Since when it is to run: the hosting's creation, at the node's start, or its last load's beginning (MSG-9). */
   let to_run_since = Date.parse(now())
+  /** Who waits for it to run (MSG-17): the user's asks on `self` while it is to run, woken at each change of its life. */
+  const waiting_to_run = new Set<(woken: undefined) => void>()
+  /** Its life changed: running, stopped, unloaded; who waits for it to run looks again. */
+  const lives = (next: typeof life): void => {
+    life = next
+    for (const wake of [...waiting_to_run]) wake(undefined)
+    waiting_to_run.clear()
+  }
+  /**
+   * The user's ask on `self` while it is to run (MSG-17): active and not
+   * running yet (not loaded yet at the node's start, or loading), within
+   * the hold of MSG-9; waited for until it runs, it stops, or the hold is over.
+   */
+  const until_it_runs = async (): Promise<void> => {
+    for (;;) {
+      if (life.life !== 'loading' && life.life !== 'unloaded') return
+      const left = to_run_since + the_hold_of_a_request - Date.parse(now())
+      if (left <= 0 || !(await wiring.is_active())) return
+      const woken = a_promise<undefined>()
+      waiting_to_run.add(woken.settle)
+      await Promise.race([woken.promise, wiring.elapsed(left)])
+      waiting_to_run.delete(woken.settle)
+    }
+  }
   /** The realm loaded now, if any. */
   const the_realm = (): Realm | undefined =>
     life.life === 'loading' || life.life === 'running' ? life.realm : undefined
@@ -467,12 +493,12 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
       fall: falls === 1 ? 'the_first' : 'the_second',
       because,
     })
-    life = { life: 'unloaded' }
+    lives({ life: 'unloaded' })
     fail_in(realm, `it has fallen, ${because}`)
     ended.clear()
     realm.unload()
     if (falls > 1) {
-      life = { life: 'stopped', why: 'it_fell_twice' }
+      lives({ life: 'stopped', why: 'it_fell_twice' })
       return { loaded: 'stopped' }
     }
     return loaded()
@@ -498,7 +524,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
       ready.version !== manifest.version ||
       ready.boundary_version !== manifest.boundary_version
     ) {
-      life = { life: 'stopped', why: 'its_ready_differs' }
+      lives({ life: 'stopped', why: 'its_ready_differs' })
       realm.unload()
       return {
         loaded: 'a_composition_fault',
@@ -514,7 +540,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
         ]),
       }
     }
-    life = { life: 'running', realm }
+    lives({ life: 'running', realm })
     realm.to_the_extension({ message: 'start' })
     return { loaded: 'running' }
   }
@@ -524,6 +550,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
     persona: 'self' | 'known',
     invocation: zz.MountedInvocation,
   ): AsyncIterable<unknown> {
+    if (persona === 'self' && life.life !== 'running') await until_it_runs()
     if (life.life !== 'running') {
       const to_run =
         persona === 'known' &&
@@ -619,7 +646,7 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
           .map((invocation) => invocation.flow.ended)
         await Promise.race([Promise.all(flows), wiring.a_while()])
       }
-      life = { life: 'unloaded' }
+      lives({ life: 'unloaded' })
       fail_in(realm, 'it has been unloaded')
       ended.clear()
       realm.unload()

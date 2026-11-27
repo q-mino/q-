@@ -114,6 +114,10 @@ const a_node = (
       notices.push(notice)
     },
     clock,
+    elapsed: (milliseconds) =>
+      new Promise((done) => {
+        setTimeout(done, milliseconds)
+      }),
     a_while: () =>
       new Promise((done) => {
         setTimeout(done, 5)

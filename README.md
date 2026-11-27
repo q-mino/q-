@@ -73,7 +73,7 @@ The stories are in the Component Story Format (`packages/phone/src/gallery/stori
 
 `https://relay.cumino.aleclofabbro.it`, the project's, declared by the test and the release channels (REL-8): what it is and what it keeps, in [`docs/relay.md`](docs/relay.md), its public configuration; its deploy, in [`CLAUDE.md`](CLAUDE.md) § The relay and its deploy and `deploy/relay/`. A local build declares an address of no relay; `Q_RELAY=https://relay.cumino.aleclofabbro.it pnpm build` makes one on the project's.
 
-- **The round, end to end**, on a published site and its relay: two nodes, each a headless Chrome with a profile of its own, through the first faces, the handshake by link, ping pong activated by both, a ping and its pong, and a ping to a node that has not activated it, which meets silence (about a minute and a half, most of it the silence's 60 seconds). A line per step and the time from the ping to the pong; the report as JSON; exit 0 only if every step is ok:
+- **The round, end to end**, on a published site and its relay: two nodes, each a headless Chrome with a profile of its own, through the first faces, both apps installed (their service workers, PWA-8), the handshake by link, ping pong activated by both, a ping and its pong, and a ping to a node that has not activated it, which meets silence; then messaging (its README's story 20): a message written while the other's page is closed, received at its opening, «consegnato», answered, and both chats as they were after a reload (about two minutes and a half, a minute of it the silence's 60 seconds). A line per step, the times from the ping to the pong and from an opening to «consegnato»; the report as JSON; exit 0 only if every step is ok:
 
   ```sh
   pnpm end-to-end                                         # the test site, q-mino-prova.github.io/q-/
@@ -81,7 +81,7 @@ The stories are in the Component Story Format (`packages/phone/src/gallery/stori
   pnpm end-to-end --out round.json --tries 6              # where the report goes; loads of a page that does not open
   ```
 
-  `--commit <sha>` also asks that the site serve that commit (after a push on `acceptance`, once the workflow `Test origin` is green; the CDN keeps a file up to ten minutes). A cold load is about 900 requests, and GitHub Pages answers 429 to an address that asks too much (two runs back to back are enough): the profiles are loaded one at a time, a page that does not open is loaded again after 30 seconds, then 60, then 120, and the 429s are counted in the report. Each run leaves two bonds' mailboxes on the relay, forgotten after eight days (MBX-8).
+  `--commit <sha>` also asks that the site serve that commit (after a push on `acceptance`, once the workflow `Test origin` is green; the CDN keeps a file up to ten minutes). A cold load is about 800 requests and the worker's precache about 190 more (PWA-8), and GitHub Pages refuses an address that asks too much: the profiles are loaded one at a time, a page that does not open is loaded again after 30 seconds, then 60, then 120, and the 429s are counted in the report (the first five with their headers), the worker's too; leave a few minutes between two runs. Each run leaves two bonds' mailboxes on the relay, forgotten after eight days (MBX-8).
 
 ## License
 
