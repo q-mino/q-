@@ -1,5 +1,16 @@
 import { z } from 'zod'
-import { command, identity_of, pick, AND, NOT, effect, fact, id, predicate, value } from './_scope_command.ts'
+import {
+  command,
+  identity_of,
+  pick,
+  AND,
+  NOT,
+  effect,
+  fact,
+  id,
+  predicate,
+  value,
+} from './_scope_command.ts'
 import { date_time } from '../../library/index.ts'
 
 /** The invitation is new, the stand has room for it, and it can be taken until then (INV-2). */

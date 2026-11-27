@@ -75,9 +75,7 @@ const at_the_stand = (relay: RelayUnderTest) => ({
   /** The one who took an invitation reads it by its take. */
   reads_the_taken: async (at: string, take_id: string) => {
     const anyone = await relay.as(nobody, '1.0.0')
-    const [snapshot] = await all(
-      relay.passer_by.the_invitation_taken(anyone.when(at), { take_id }),
-    )
+    const [snapshot] = await all(relay.passer_by.the_invitation_taken(anyone.when(at), { take_id }))
     if (snapshot?.event !== 'snapshot') throw new Error('a read with no snapshot')
     return snapshot.entries
   },
@@ -154,9 +152,9 @@ export const stories_of_the_stand = (
       // One taken, there is room again.
       const [oldest] = await stand.reads(thursday('09:08'))
       await stand.takes(thursday('09:08'), oldest?.invitation_id ?? '')
-      expect(
-        (await stand.leaves(thursday('09:09'), T(6), friday('09:00')))[0]?.event,
-      ).toBe('the_invitation_is_on_the_stand')
+      expect((await stand.leaves(thursday('09:09'), T(6), friday('09:00')))[0]?.event).toBe(
+        'the_invitation_is_on_the_stand',
+      )
     })
 
     test('not takeable then: before now, or past 48 hours', async () => {
@@ -234,7 +232,10 @@ export const stories_of_the_stand = (
         stand.takes(thursday('10:00'), first),
       ])
       const outcomes = [bea[0]?.event, carla[0]?.event].toSorted()
-      expect(outcomes).toEqual(['the_invitation_is_no_longer_on_the_stand', 'the_invitation_is_yours'])
+      expect(outcomes).toEqual([
+        'the_invitation_is_no_longer_on_the_stand',
+        'the_invitation_is_yours',
+      ])
       // Who lost tries the next, and has it.
       expect((await stand.takes(thursday('10:00'), second))[0]?.event).toBe(
         'the_invitation_is_yours',

@@ -140,6 +140,24 @@ describe("the relay's main, in a process of its own (REL-1)", () => {
     expect(await relay.stopped()).toBe(0)
   })
 
+  test('a stand with no inviter yet (INV-6, INV-7): its page says the assistant is not there yet', async () => {
+    const relay = await a_relay_process(the_main, {
+      CUMINO_RELAY_DATABASE: join(a_test_folder(), 'relay.sqlite'),
+      CUMINO_RELAY_STANDS: JSON.stringify([
+        { name: 'assistente', app: 'https://q-mino-prova.github.io/q-/' },
+      ]),
+    })
+    const page = await fetch(`${relay.origin}/assistente`)
+    expect(page.status).toBe(200)
+    expect(page.headers.get('content-type')).toMatch(/^text\/html/)
+    const text = await page.text()
+    expect(text).toMatch(/^<!doctype html><html lang="it">/)
+    expect(text).toContain('non è ancora arrivato')
+    expect(text).not.toContain('<form')
+    expect((await fetch(`${relay.origin}/altro`)).status).toBe(404)
+    expect(await relay.stopped()).toBe(0)
+  })
+
   test('settings out of form: it does not start, says why, and exits with 78', async () => {
     const a_port = await a_relay_that_ends(the_main, {
       CUMINO_RELAY_PORT: 'eighty',
@@ -152,6 +170,12 @@ describe("the relay's main, in a process of its own (REL-1)", () => {
     expect(no_database.faults).toMatch(
       /the relay's settings: CUMINO_RELAY_DATABASE: no database, and no STATE_DIRECTORY/,
     )
+    const a_stand = await a_relay_that_ends(the_main, {
+      CUMINO_RELAY_DATABASE: join(a_test_folder(), 'relay.sqlite'),
+      CUMINO_RELAY_STANDS: '[{"name":"assistente"}]',
+    })
+    expect(a_stand.exit).toBe(78)
+    expect(a_stand.faults).toMatch(/the relay's settings: CUMINO_RELAY_STANDS/)
   })
 })
 

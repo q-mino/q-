@@ -130,9 +130,10 @@ export const relay =
       stored: cell.stored_versions,
     })
     // Each domain's module sees its part of the relay's cell (MBX-7).
-    const deposits = mailbox_ports(seen_by<MailboxState, RelayState>(cell), release.streams)(
-      versions,
-    )
+    const deposits = mailbox_ports(
+      seen_by<MailboxState, RelayState>(cell),
+      release.streams,
+    )(versions)
     const invitations = stand_ports(seen_by<StandState, RelayState>(cell))(versions)
     const facts = log(cell)
     // The ports the trees invoke, by the folder of what they serve (PER-6).

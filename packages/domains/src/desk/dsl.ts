@@ -23,7 +23,8 @@ export const the_caller_is_the_inviter_of =
     caller.shows === 'the_signature_of_a_stand_s_inviter' && caller.stand === stand
 
 /** What the stand says of a leave it refused (INV-2): its room, or the time; anything else, the leave cannot be. */
-export type ARefusedLeave = 'the_stand_is_full' | 'not_takeable_then' | 'the_invitation_cannot_be_left'
+export type ARefusedLeave =
+  'the_stand_is_full' | 'not_takeable_then' | 'the_invitation_cannot_be_left'
 
 /**
  * Why a leave was refused, from its failures (INV-2, INV-5): the time it

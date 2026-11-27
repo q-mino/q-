@@ -16,6 +16,7 @@
     "@q-mino/adapters-common": "workspace:*",
     "@q-mino/adapters-node": "workspace:*",
     "@q-mino/domains": "workspace:*",
+    "hono": "^4.13.19",
     "zod": "^4.6.7"
   },
   "devDependencies": {

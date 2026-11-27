@@ -96,9 +96,7 @@ export const invitation_selection: zz.Algebra<
   },
 }
 
-const the_invitations: Source<StandState, invitation> = (state) => [
-  ...state.invitations.values(),
-]
+const the_invitations: Source<StandState, invitation> = (state) => [...state.invitations.values()]
 
 export const invitation_sources: {
   readonly the_invitations_on_a_stand: zz.QuerySource<

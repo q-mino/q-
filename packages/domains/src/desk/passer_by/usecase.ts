@@ -1,10 +1,5 @@
 import { z } from 'zod'
-import {
-  command_use_case_over,
-  read_use_case_over,
-  value,
-  invitations,
-} from './_scope_usecase.ts'
+import { command_use_case_over, read_use_case_over, value, invitations } from './_scope_usecase.ts'
 import * as zz from '../../library/index.ts'
 
 // The use cases of `passer_by`, the leaves of its tree (PER-6, INV-3,
