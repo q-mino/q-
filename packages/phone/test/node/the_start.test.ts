@@ -1,9 +1,5 @@
-import {
-  ARecordOutOfItsForm,
-  the_device_s_clock,
-  the_device_s_zone,
-  the_time_that_passes,
-} from '@q-mino/adapters-web'
+import { the_device_s_clock, the_device_s_zone, the_time_that_passes } from '@q-mino/adapters-web'
+import { ARecordOutOfItsForm } from '@q-mino/adapters-common'
 import ping_pong_manifest from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { afterEach, describe, expect, test } from 'vitest'

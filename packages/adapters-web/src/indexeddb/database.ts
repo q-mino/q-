@@ -4,17 +4,7 @@
 // the database; none is deleted in stage 1. The whole database is deleted
 // when she clears the data of an older test release (WEB-8).
 
-/** A store of the node's database: a business domain's, or an extension's partition. */
-export type AStore =
-  | { readonly of: 'a_domain'; readonly path: string }
-  | { readonly of: 'an_extension'; readonly name: string }
-
-/** The node's own store: the writer's term, the node's counters, the consumers' state. */
-export const the_node_s_store = 'node'
-
-/** A store's name in the database, told apart by its kind. */
-export const the_name_of = (store: AStore): string =>
-  store.of === 'a_domain' ? `domain ${store.path}` : `extension ${store.name}`
+import { the_name_of, the_node_s_store, type AStore } from '@q-mino/adapters-common'
 
 /** Why the database was closed under the node: then the node stops (WEB-10). */
 export type WhyItClosed = 'a_newer_release_opens_it' | 'the_browser_closed_it'

@@ -1,4 +1,4 @@
-// The module of `seals` on IndexedDB (WEB-8, WEB-9, part 21.2): the oracle's
+// The module of `seals` on the node's database (IndexedDB, SQLite) (WEB-8, WEB-9, part 21.2): the oracle's
 // (TST-2) over the store of `seals/safe`. Each map of the oracle's state is
 // a kind of record, by its id: a seed under `['state', 'seed', seed_id]`, a
 // face under `['state', 'face', face_id]`, a mailbox key under
@@ -9,7 +9,7 @@
 // The meanings from the domain's `dsl` (DOM-5); the calculations over the
 // primitives port the configurator gives (SEA-5, SEA-6).
 
-import type { TheSafesPorts } from '@q-mino/adapters-common'
+import type { TheSafesPorts } from '../../ports/index.ts'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/seals/safe/_registry.ts'
 import type * as safe_fact from '@q-mino/domains/seals/safe/_fact.ts'
@@ -228,7 +228,7 @@ export const seals_command_adapter = (storage: ADomainsStore) => ({
  * primitives port. No read streams: a signature, an opening and a mailbox's
  * key are asked when needed (SEA-6).
  */
-export const seals_ports_on_indexeddb = (
+export const seals_ports_on_the_node_s_database = (
   node: Pick<TheNodesStorage, 'domain'>,
   primitives: Primitives,
 ) => {

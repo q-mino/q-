@@ -1,4 +1,4 @@
-// The module of `post` on IndexedDB (WEB-8, WEB-9, part 21.2): the oracle's
+// The module of `post` on the node's database (IndexedDB, SQLite) (WEB-8, WEB-9, part 21.2): the oracle's
 // (TST-2, `memory`'s `oracle/post.ts`) over the store of `post/requests`.
 // Its one map, the requests sent by their identity, is a kind of record:
 // `['state', 'request', request_id]`, a request of the record, parsed with
@@ -7,7 +7,7 @@
 // reads the request it changes; the query reads every request by range and
 // selects in memory (WEB-8). The meaning from the domain's `dsl` (DOM-5).
 
-import type { ThePostsPorts } from '@q-mino/adapters-common'
+import type { ThePostsPorts } from '../../ports/index.ts'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/post/requests/_registry.ts'
 import { registry as safe_registry } from '@q-mino/domains/seals/safe/_registry.ts'
@@ -187,7 +187,7 @@ const post_command_use_cases = {
   take_a_response,
 }
 
-/** The state adapter of the commands of `post/requests` on IndexedDB: fragments, writes, one transaction per command (WEB-9). */
+/** The state adapter of the commands of `post/requests` on the node's database: fragments, writes, one transaction per command (WEB-9). */
 const post_command_adapter = (storage: ADomainsStorage) => ({
   algebra: { predicate: post_fragments, ...the_operators },
   write: post_writes,
@@ -196,13 +196,13 @@ const post_command_adapter = (storage: ADomainsStorage) => ({
 })
 
 /**
- * The ports of `post/requests` on IndexedDB, as the oracle's (TST-2): its
+ * The ports of `post/requests` on the node's database, as the oracle's (TST-2): its
  * commands, and the answer kept under an identity. A request's fact holds
  * the face that signs it, an identity of the safe's (`identities`, DOM-10).
  * No read streams: the port of requests follows a request's facts on the
  * log (PST-8, 12.4).
  */
-export const post_ports_on_indexeddb =
+export const post_ports_on_the_node_s_database =
   (node: Pick<TheNodesStorage, 'domain'>) =>
   (versions: zz.Versions): ThePostsPorts => {
     const storage = node.domain(the_path)

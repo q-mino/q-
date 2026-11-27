@@ -1,15 +1,15 @@
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { expect, expectTypeOf, test } from 'vitest'
 import {
-  NotTheWriter,
   ask_to_be_the_writer,
   ask_to_keep_the_storage,
   delete_the_node_s_database,
+  on_indexeddb,
   open_the_node_s_database,
-  the_partition_of,
   type ALockManager,
   type AnIndexedDb,
 } from '../../src/index.ts'
+import { NotTheWriter, the_partition_of } from '@q-mino/adapters-common'
 
 // The skeleton of step 21 (part 21.1, WEB-8..WEB-12), on fake-indexeddb in
 // Node and Node's Web Locks: the stores, the writer and "use here", a
@@ -35,8 +35,12 @@ test('one tab writes; "use here" takes the writer, and the old tab writes nothin
   if (first.writer !== 'this_tab') return
   const second = await ask_to_be_the_writer(navigator.locks, another.database)('if_no_tab_is')
   expect(second.writer).toBe('another_tab')
-  const partition = { key_range: IDBKeyRange, characters: 100 }
-  const old = the_partition_of({ ...partition, database: anna.database, term: first.term })(
+  const partition = { characters: 100 }
+  const old = the_partition_of({
+    ...partition,
+    database: on_indexeddb(anna.database, IDBKeyRange),
+    term: first.term,
+  })(
     'ping_pong',
   )
   expect(await old.commit([{ write: 'set', key: 'a', value: { n: 1 } }])).toEqual({
@@ -49,7 +53,11 @@ test('one tab writes; "use here" takes the writer, and the old tab writes nothin
   await expect(old.commit([{ write: 'set', key: 'b', value: 2 }])).rejects.toBeInstanceOf(
     NotTheWriter,
   )
-  const now = the_partition_of({ ...partition, database: another.database, term: here.term })(
+  const now = the_partition_of({
+    ...partition,
+    database: on_indexeddb(another.database, IDBKeyRange),
+    term: here.term,
+  })(
     'ping_pong',
   )
   expect(await now.read({ read: 'range' })).toEqual({

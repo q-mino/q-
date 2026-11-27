@@ -6,7 +6,13 @@
 export * from './oracle/index.ts'
 export { relay, the_desks_interface, the_scope_of_a_deposit } from './relay/index.ts'
 export type { HashOfACollectSecret, Relay, Release, Shown, World } from './relay/index.ts'
-export { a_new_phone, on_the_cell, phone, TheExtensionsDoNotCompose } from './phone/index.ts'
+export {
+  a_new_phone,
+  on_the_cell,
+  on_the_node_s_database,
+  phone,
+  TheExtensionsDoNotCompose,
+} from './phone/index.ts'
 export type {
   AnExtensionThatDoesNotCompose,
   AnExtensionHostedOnThePhone,

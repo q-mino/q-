@@ -4,12 +4,12 @@ import { majors as choices_majors } from '@q-mino/domains/user/choices/_majors.t
 import { majors as drafts_majors } from '@q-mino/domains/user/drafts/_majors.ts'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { afterEach, expect, test } from 'vitest'
+import { the_node_s_storage } from '../../../src/index.ts'
 import {
   ARecordOutOfItsForm,
-  the_node_s_storage,
   the_store_of,
-  user_ports_on_indexeddb,
-} from '../../../src/index.ts'
+  user_ports_on_the_node_s_database,
+} from '@q-mino/adapters-common'
 
 // The smoke test of `user` on IndexedDB (part 21.2, WEB-8, WEB-9), on
 // fake-indexeddb in Node: Anna's three offices in a node's database, each
@@ -67,7 +67,7 @@ const annas_node = async () => {
       correlation: zz.correlation.parse(`correlation-${operation}`),
       fingerprint: zz.fingerprint_of({ path, input }),
     })
-  return { opened, user: user_ports_on_indexeddb(opened)(versions), when, sent_as }
+  return { opened, user: user_ports_on_the_node_s_database(opened)(versions), when, sent_as }
 }
 
 const rename = {
@@ -214,7 +214,7 @@ test('her face as an older test release kept it, its instant with an offset, is 
   const { opened, user, when } = await annas_node()
   // The record as the build of 22 Nov 2026 wrote it: `date_time` then took an offset, now only `Z`.
   const store = the_store_of('user/choices')
-  const transaction = opened.database.transaction(store, 'readwrite')
+  const transaction = opened.connection.transaction(store, 'readwrite')
   transaction
     .objectStore(store)
     .put({ choice: 'the_active_face', face: 'F_a', since: '2026-11-22T10:00:00.000+01:00' }, [

@@ -1,4 +1,4 @@
-// The module of `user` on IndexedDB (USR-1, WEB-8, WEB-9; part 21.2): the
+// The module of `user` on the node's database (IndexedDB, SQLite) (USR-1, WEB-8, WEB-9; part 21.2): the
 // oracle's (TST-2, `memory/src/oracle/user.ts`) over the node's database.
 // Each office is its own store, by its path: the activities she asked
 // (`['state', 'activity', activity_id]`), her drafts (`['state', 'draft',
@@ -7,7 +7,7 @@
 // its facts' writes put in it only, and its reads read by range and select
 // in memory, as the oracle does: each office's ports over its own store.
 
-import type { TheUsersOfficesPorts } from '@q-mino/adapters-common'
+import type { TheUsersOfficesPorts } from '../../ports/index.ts'
 import * as zz from '@q-mino/domains/library'
 import { registry as activities_registry } from '@q-mino/domains/user/activities/_registry.ts'
 import { registry as drafts_registry } from '@q-mino/domains/user/drafts/_registry.ts'
@@ -289,11 +289,11 @@ const choices_writes: zz.FactWrites<zz.FactsIn<typeof choices_fact>, Write> = {
 const activities_command_use_cases = { ask_for_an_activity, end_an_activity }
 
 /**
- * The ports of `user`'s three offices on IndexedDB: the oracle's
+ * The ports of `user`'s three offices on the node's database: the oracle's
  * `user_ports`, each office's commands one transaction over its own store
  * (WEB-9), its reads a snapshot of it. No read streams, as the oracle.
  */
-export const user_ports_on_indexeddb =
+export const user_ports_on_the_node_s_database =
   (node: Pick<TheNodesStorage, 'domain'>) =>
   (versions: zz.Versions): TheUsersOfficesPorts => {
     const activities = node.domain(activities_path)

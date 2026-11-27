@@ -5,7 +5,8 @@ import { libsodium_primitives } from '@q-mino/adapters-common'
 import { majors } from '@q-mino/domains/bonds/address_book/_majors.ts'
 import { the_content_a_ticket_s_secret_signs } from '@q-mino/domains/bonds/address_book/_dsl.ts'
 import { base64url_of, bytes_of, type Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
-import { bonds_ports_on_indexeddb, the_node_s_storage } from '../../../src/index.ts'
+import { the_node_s_storage } from '../../../src/index.ts'
+import { bonds_ports_on_the_node_s_database } from '@q-mino/adapters-common'
 
 // The address book on IndexedDB (part 21.2, WEB-8, WEB-9), on fake-indexeddb
 // in Node: its ports called as the oracle's stories call them (the user's
@@ -51,7 +52,7 @@ const annas_phone = async () => {
   if (opened.writer !== 'this_tab') throw new Error('the node has another writer')
   const primitives = await libsodium_primitives()
   const versions = await zz.versions([majors])({ stored: opened.stored_versions })
-  const address_book = bonds_ports_on_indexeddb(opened, primitives)(versions)
+  const address_book = bonds_ports_on_the_node_s_database(opened, primitives)(versions)
   let operations = 0
   const sent_as =
     (path: string, input: unknown) =>

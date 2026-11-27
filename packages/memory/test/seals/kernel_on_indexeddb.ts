@@ -12,9 +12,13 @@
 // commit of IndexedDB takes turns of the event loop that the oracle's cell
 // does not, and how many depends on the machine's load.
 
-import { read_in, the_store_of, type TheNodesStorage } from '@q-mino/adapters-web'
+import {
+  read_in,
+  the_store_of,
+  type AStoredKey,
+  type TheNodesStorage,
+} from '@q-mino/adapters-common'
 import type * as zz from '@q-mino/domains/library'
-import { IDBKeyRange } from 'fake-indexeddb'
 import {
   a_node_on_indexeddb,
   a_phone_s_storage,
@@ -35,7 +39,7 @@ export const twice = <event>(given: AsyncIterable<event>): AsyncIterable<event> 
 })
 
 /** The position an entry is kept at, the last part of its key (`['entry', effect, position]`). */
-const the_position_of = (key: IDBValidKey): number => {
+const the_position_of = (key: AStoredKey): number => {
   const position = Array.isArray(key) ? key[2] : undefined
   if (typeof position !== 'number') throw new Error('an entry kept under a key out of form')
   return position
@@ -48,11 +52,11 @@ const the_entries_queued =
       store: the_store_of(path),
       prefix: ['entry'],
     }))
-    const transaction = node.database.transaction(
+    const read = await node.database.transaction(
       ranges.map((range) => range.store),
       'readonly',
+      (transaction) => read_in(transaction, ranges),
     )
-    const read = await read_in(transaction, IDBKeyRange, ranges)
     return ranges
       .flatMap((range) => read.kept_under(range))
       .toSorted((a, b) => the_position_of(a.key) - the_position_of(b.key))
@@ -63,19 +67,19 @@ const the_entries_queued =
   }
 
 /**
- * The kernel's storage on a new node of IndexedDB, quiet once no
- * transaction of it is in flight, every fact and every entry given twice if
- * asked (TST-4).
+ * The kernel's storage over a node's storage, on IndexedDB or on SQLite,
+ * quiet once its substrate is (`quiet`), every fact and every entry given
+ * twice if asked (TST-4).
  */
-export const the_kernel_on_indexeddb = async (start: Start = {}): Promise<AKernelsStorage> => {
-  const browser = an_indexeddb_that_knows_its_work()
-  const node = await a_node_on_indexeddb(browser.indexed_db)
+export const the_kernel_over = (
+  node: TheNodesStorage,
+  quiet: () => Promise<void>,
+  start: Start = {},
+): AKernelsStorage => {
   const storage = a_phone_s_storage(node)
   const queued = the_entries_queued(node)
   const outbox: zz.Outbox = (effect) => (from) => twice(storage.outbox(effect)(from))
   const log: zz.FactLog = (from) => twice(storage.log(from))
-  /** Until no transaction of its IndexedDB is in flight, seen from a turn of the event loop. */
-  const quiet = (): Promise<void> => until_quiet(browser.at_work, 'the node on IndexedDB quiet')
   return {
     stored_versions: storage.stored_versions,
     log: start.redelivered === true ? log : storage.log,
@@ -90,4 +94,17 @@ export const the_kernel_on_indexeddb = async (start: Start = {}): Promise<AKerne
     held_parts: node.held_parts,
     quiet,
   }
+}
+
+/**
+ * The kernel's storage on a new node of IndexedDB, quiet once no
+ * transaction of it is in flight, every fact and every entry given twice if
+ * asked (TST-4).
+ */
+export const the_kernel_on_indexeddb = async (start: Start = {}): Promise<AKernelsStorage> => {
+  const browser = an_indexeddb_that_knows_its_work()
+  const node = await a_node_on_indexeddb(browser.indexed_db)
+  /** Until no transaction of its IndexedDB is in flight, seen from a turn of the event loop. */
+  const quiet = (): Promise<void> => until_quiet(browser.at_work, 'the node on IndexedDB quiet')
+  return the_kernel_over(node, quiet, start)
 }

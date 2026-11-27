@@ -14,7 +14,7 @@ import type { JSX } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
 import { Gesture, Notice, Strip, Why } from '../design/index.ts'
 import type { HerNode } from '../her_node/index.ts'
-import { ARecordOutOfItsForm } from '../indexeddb/index.ts'
+import { ARecordOutOfItsForm } from '@q-mino/adapters-common'
 import { kept } from './a_screen.ts'
 import {
   lets_go,

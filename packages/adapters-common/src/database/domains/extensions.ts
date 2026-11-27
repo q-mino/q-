@@ -1,4 +1,4 @@
-// The module of `extensions/activations` on IndexedDB (part 21.2): the
+// The module of `extensions/activations` on the node's database (IndexedDB, SQLite) (part 21.2): the
 // oracle's (TST-2) over the node's database (WEB-8, WEB-9). The office's
 // records in its store, each a value of the domain parsed when read: what
 // the user did last of an extension (`['state', 'activation', name]`), an
@@ -11,7 +11,7 @@
 // the manifests installed with what the user chose of each, in memory, as
 // the oracle does (WEB-8). The meaning is the domain's `dsl` (DOM-5).
 
-import type { TheOfficesPorts } from '@q-mino/adapters-common'
+import type { TheOfficesPorts } from '../../ports/index.ts'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/extensions/activations/_registry.ts'
 import { registry as address_book_registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
@@ -356,7 +356,7 @@ const extensions_command_use_cases = {
 }
 
 /**
- * The ports of `extensions/activations` on IndexedDB, the oracle's
+ * The ports of `extensions/activations` on the node's database, the oracle's
  * (`extensions_ports`, TST-2) over the office's store: its commands, one
  * transaction each (WEB-9), and its reads of the installed extensions, one
  * snapshot each, given the manifests installed (the composition's, in the
@@ -364,7 +364,7 @@ const extensions_command_use_cases = {
  * resource of the fact (DOM-10): its registry names it (`identities`). No
  * read streams, as the oracle's.
  */
-export const extensions_ports_on_indexeddb =
+export const extensions_ports_on_the_node_s_database =
   (node: Pick<TheNodesStorage, 'domain'>, installed: readonly manifest[]) =>
   (versions: zz.Versions): TheOfficesPorts => {
     const storage = node.domain('extensions/activations')

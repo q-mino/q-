@@ -1,4 +1,4 @@
-// The node's consumers on IndexedDB (DOM-14, DOM-16, DOM-22, WEB-8, WEB-10;
+// The node's consumers on the node's database (DOM-14, DOM-16, DOM-22, WEB-8, WEB-10;
 // part 21.2): the outbox of an effect, read from its domain's store, where
 // its command wrote the entry; the executors' state and the reactions'
 // consumers', in the node's store, each commit with the writer's term; the
@@ -7,21 +7,19 @@
 
 import * as zz from '@q-mino/domains/library'
 import { the_range_of } from './command.ts'
-import { the_node_s_store } from './database.ts'
 import type { ABell } from './log.ts'
 import { the_store_of } from './records.ts'
 import {
-  the_end_of,
-  the_record_of,
-  the_records_of as records_of,
-  the_result_of,
-} from './requests.ts'
-import { the_term_holds } from './the_writer.ts'
+  the_node_s_store,
+  the_term_holds,
+  type ANodesDatabase,
+  type AStoredKey,
+  type ATransaction,
+} from './the_node_s_database.ts'
 
-/** What the consumers need of the node: its database, IndexedDB's ranges, the writer's term, the bell of its commits. */
+/** What the consumers need of the node: its database, the writer's term, the bell of its commits. */
 export interface TheNodesConsumers {
-  readonly database: IDBDatabase
-  readonly key_range: Pick<typeof IDBKeyRange, 'bound'>
+  readonly database: ANodesDatabase
   readonly term: number
   readonly bell: ABell
   /** The business domains' paths: their stores hold the facts, the entries and the versions. */
@@ -33,7 +31,7 @@ const the_domain_of_an_effect = (effect: string): string => effect.split('/effec
 
 const a_position = (count: number): zz.position => zz.position.parse(String(count))
 
-const the_number_in = (key: IDBValidKey, at: number): number => {
+const the_number_in = (key: AStoredKey, at: number): number => {
   const part = Array.isArray(key) ? key[at] : undefined
   if (typeof part !== 'number') throw new Error('a record kept under a key out of form')
   return part
@@ -48,23 +46,18 @@ export const the_node_s_outbox =
   (effect) =>
   (from) => {
     const store = the_store_of(the_domain_of_an_effect(effect))
-    const read = async (start: number): Promise<readonly zz.QueuedEntry[]> => {
-      const transaction = node.database.transaction(store, 'readonly')
-      const range = node.key_range.bound(
-        ['entry', effect, start],
-        ['entry', effect, Number.POSITIVE_INFINITY],
-      )
-      const kept = transaction.objectStore(store)
-      const [keys, entries] = await Promise.all([
-        the_result_of(kept.getAllKeys(range)),
-        records_of(kept.getAll(range)),
-      ])
-      return keys.map((key, at) => ({
-        position: a_position(the_number_in(key, 2)),
-        // cast: the adapter's own record, written under an entry's key by `execute_in`
-        entry: entries[at] as zz.StoredEntry,
-      }))
-    }
+    const read = (start: number): Promise<readonly zz.QueuedEntry[]> =>
+      node.database.transaction([store], 'readonly', async (transaction) => {
+        const kept = await transaction.within(store, {
+          lower: { key: ['entry', effect, start], open: false },
+          upper: { key: ['entry', effect, Number.POSITIVE_INFINITY], open: false },
+        })
+        return kept.map((record) => ({
+          position: a_position(the_number_in(record.key, 2)),
+          // cast: the adapter's own record, written under an entry's key by `execute_in`
+          entry: record.value as zz.StoredEntry,
+        }))
+      })
     async function* the_entries(): AsyncGenerator<zz.QueuedEntry> {
       let next = from === undefined ? 1 : Number(from)
       for (;;) {
@@ -82,38 +75,34 @@ export const the_node_s_outbox =
     return the_entries()
   }
 
+/** A record of the node's store set or deleted, in a commit of the consumers. */
+type ANodesWrite = (transaction: ATransaction) => void
+
 /** One commit in the node's store, with the writer's term (WEB-10). */
 const in_the_node_s_store =
   (node: TheNodesConsumers) =>
-  async (write: (store: IDBObjectStore) => void): Promise<void> => {
-    const transaction = node.database.transaction(the_node_s_store, 'readwrite')
-    const ended = the_end_of(transaction)
-    try {
+  (write: ANodesWrite): Promise<void> =>
+    node.database.transaction([the_node_s_store], 'readwrite', async (transaction) => {
       await the_term_holds(transaction, node.term)
-      write(transaction.objectStore(the_node_s_store))
-      await ended
-    } catch (fault) {
-      await ended.catch(() => undefined)
-      throw fault
-    }
-  }
+      write(transaction)
+    })
 
 /** A record of the node's store, read alone. */
-const in_the_node = async (node: TheNodesConsumers, key: IDBValidKey): Promise<unknown> => {
-  const transaction = node.database.transaction(the_node_s_store, 'readonly')
-  return the_record_of(transaction.objectStore(the_node_s_store).get(key))
-}
+const in_the_node = (node: TheNodesConsumers, key: AStoredKey): Promise<unknown> =>
+  node.database.transaction([the_node_s_store], 'readonly', (transaction) =>
+    transaction.get(the_node_s_store, key),
+  )
 
 /** The records of the node's store under a prefix, in its order. */
-const under = async (
+const under = (
   node: TheNodesConsumers,
-  prefix: readonly IDBValidKey[],
-): Promise<readonly unknown[]> => {
-  const transaction = node.database.transaction(the_node_s_store, 'readonly')
-  return records_of(
-    transaction.objectStore(the_node_s_store).getAll(the_range_of(node.key_range, prefix)),
+  prefix: readonly AStoredKey[],
+): Promise<readonly unknown[]> =>
+  node.database.transaction([the_node_s_store], 'readonly', async (transaction) =>
+    (await transaction.within(the_node_s_store, the_range_of(prefix))).map(
+      (record) => record.value,
+    ),
   )
-}
 
 const a_position_kept = (value: unknown): zz.position | undefined =>
   typeof value === 'number' ? a_position(value) : undefined
@@ -121,7 +110,7 @@ const a_position_kept = (value: unknown): zz.position | undefined =>
 /** The executors' durable state (DOM-14), in the node's store: a position per effect, its held entries by their key. */
 export const the_executors_state = (node: TheNodesConsumers): zz.ExecutorState => {
   const commit = in_the_node_s_store(node)
-  const held_key = (entry: zz.QueuedEntry): IDBValidKey => [
+  const held_key = (entry: zz.QueuedEntry): AStoredKey => [
     'executor',
     'held',
     entry.entry.effect,
@@ -131,8 +120,8 @@ export const the_executors_state = (node: TheNodesConsumers): zz.ExecutorState =
     position: async (effect) =>
       a_position_kept(await in_the_node(node, ['executor', 'position', effect])),
     advance: (effect) => (to) =>
-      commit((store) => {
-        store.put(Number(to), ['executor', 'position', effect])
+      commit((transaction) => {
+        transaction.put(the_node_s_store, ['executor', 'position', effect], Number(to))
       }),
     held: async (effect) =>
       // cast: the adapter's own records, written by `hold` below
@@ -140,21 +129,20 @@ export const the_executors_state = (node: TheNodesConsumers): zz.ExecutorState =
         (a, b) => Number(a.position) - Number(b.position),
       ),
     hold: (entry) =>
-      commit((store) => {
-        store.put(entry, held_key(entry))
+      commit((transaction) => {
+        transaction.put(the_node_s_store, held_key(entry), entry)
       }),
     release: (entry) =>
-      commit((store) => {
-        store.delete(held_key(entry))
+      commit((transaction) => {
+        transaction.delete(the_node_s_store, held_key(entry))
       }),
     discarded: (trace) =>
-      commit((store) => {
-        store.put(trace, [
-          'executor',
-          'discarded',
-          trace.letter.entry.effect,
-          trace.letter.entry.id,
-        ])
+      commit((transaction) => {
+        transaction.put(
+          the_node_s_store,
+          ['executor', 'discarded', trace.letter.entry.effect, trace.letter.entry.id],
+          trace,
+        )
       }),
   }
 }
@@ -167,14 +155,14 @@ export const the_entries_held =
       (a, b) => Number(a.position) - Number(b.position),
     )
 
-const the_part_named = (part: zz.ReactionPart): IDBValidKey[] => [
+const the_part_named = (part: zz.ReactionPart): AStoredKey[] => [
   part.reaction,
   part.fact.operation.scope,
   part.fact.operation.id,
   part.part,
 ]
 
-const the_part_s_key = (part: zz.ReactionPart): IDBValidKey => [
+const the_part_s_key = (part: zz.ReactionPart): AStoredKey => [
   'reaction',
   'held',
   ...the_part_named(part),
@@ -190,8 +178,8 @@ export const the_reactions_state = (node: TheNodesConsumers): zz.ReactionState =
     position: async (reaction) =>
       a_position_kept(await in_the_node(node, ['reaction', 'position', reaction])),
     advance: (reaction) => (to) =>
-      commit((store) => {
-        store.put(Number(to), ['reaction', 'position', reaction])
+      commit((transaction) => {
+        transaction.put(the_node_s_store, ['reaction', 'position', reaction], Number(to))
       }),
     held: async (reaction) =>
       // cast: the adapter's own records, written by `hold` below
@@ -199,16 +187,20 @@ export const the_reactions_state = (node: TheNodesConsumers): zz.ReactionState =
         in_the_log_s_order,
       ),
     hold: (part) =>
-      commit((store) => {
-        store.put(part, the_part_s_key(part))
+      commit((transaction) => {
+        transaction.put(the_node_s_store, the_part_s_key(part), part)
       }),
     release: (part) =>
-      commit((store) => {
-        store.delete(the_part_s_key(part))
+      commit((transaction) => {
+        transaction.delete(the_node_s_store, the_part_s_key(part))
       }),
     discarded: (trace) =>
-      commit((store) => {
-        store.put(trace, ['reaction', 'discarded', ...the_part_named(trace.letter)])
+      commit((transaction) => {
+        transaction.put(
+          the_node_s_store,
+          ['reaction', 'discarded', ...the_part_named(trace.letter)],
+          trace,
+        )
       }),
   }
 }
@@ -226,15 +218,10 @@ export const the_versions_kept =
   (node: TheNodesConsumers): zz.StoredVersions =>
   async () => {
     const stores = node.paths.map(the_store_of)
-    const transaction = node.database.transaction(stores, 'readonly')
-    const keys = await Promise.all(
-      stores.map((store) =>
-        the_result_of(
-          transaction.objectStore(store).getAllKeys(the_range_of(node.key_range, ['version'])),
-        ),
-      ),
+    const kept = await node.database.transaction(stores, 'readonly', (transaction) =>
+      Promise.all(stores.map((store) => transaction.within(store, the_range_of(['version'])))),
     )
-    return keys.flat().map((key) => {
+    return kept.flat().map(({ key }) => {
       const [, path, version] = Array.isArray(key) ? key : []
       if (typeof path !== 'string' || typeof version !== 'string')
         throw new Error('a version kept under a key out of form')

@@ -10,7 +10,7 @@
 // lookup of the duplicate branch is as built, or reads nothing (the
 // measure's variant: only the port's lookup and the step read).
 
-import type { TheNodesStorage } from '@q-mino/adapters-web'
+import type { TheNodeOnIndexedDb } from '@q-mino/adapters-web'
 import * as zz from '@q-mino/domains/library'
 import { the_content_a_ticket_s_secret_signs } from '@q-mino/domains/bonds/address_book/_dsl.ts'
 import { base64url_of, bytes_of } from '@q-mino/domains/seals/safe/_dsl.ts'
@@ -214,10 +214,10 @@ const a_face_of = (byte: number) => {
  * counted from here on.
  */
 export const a_phone_over = async (
-  opened: TheNodesStorage,
+  opened: TheNodeOnIndexedDb,
   lookup: TheLeafsLookup = 'as_built',
 ) => {
-  const transactions = the_transactions_of(opened.database)
+  const transactions = the_transactions_of(opened.connection)
   const kept = a_phone_s_storage(opened)
   const node = await phone(lookup === 'as_built' ? kept : with_the_leaf_s_lookup_off(kept))({
     clock,

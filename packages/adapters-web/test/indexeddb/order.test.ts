@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { compare_values } from '../../src/index.ts'
+import { compare_values } from '@q-mino/adapters-common'
 
 // IndexedDB's value order (LIB-9, WEB-14): the order its reads select and
 // sort by, written as the oracle writes it (an interpreter rule the adapters

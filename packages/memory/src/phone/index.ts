@@ -20,6 +20,11 @@
 
 import {
   a_hosted_extension,
+  bonds_ports_on_the_node_s_database,
+  extensions_ports_on_the_node_s_database,
+  post_ports_on_the_node_s_database,
+  seals_ports_on_the_node_s_database,
+  user_ports_on_the_node_s_database,
   in_process,
   compose_an_extension,
   the_acquaintances,
@@ -36,6 +41,7 @@ import {
   the_letters_an_extension_holds,
   the_manifest_to_accept,
   the_name_of_a_letter,
+  the_partition_of,
   the_port_of_requests,
   the_ticket_shown,
   type ABondToAnswerOn,
@@ -54,6 +60,7 @@ import {
   type TheOfficesPorts,
   type ThePostsPorts,
   type TheSafesPorts,
+  type TheNodesStorage,
   type TheUsersOfficesPorts,
   type Transport,
 } from '@q-mino/adapters-common'
@@ -165,8 +172,9 @@ type Installed = Parameters<typeof extensions_ports>[1]
  * node's fact log (DOM-17), the outbox (DOM-14), the executors' and the
  * reactions' durable state (DOM-14, DOM-16), the versions it keeps (DOM-22),
  * the entries its executors hold (USR-8), and the extensions' partitions
- * (EXT-14) of a size. The oracle's cell is one (`on_the_cell`); IndexedDB's
- * another (part 21.2). [Q, C, 21 Nov 2026]
+ * (EXT-14) of a size. The oracle's cell is one (`on_the_cell`); the node's
+ * database another (part 21.2), on IndexedDB or on SQLite
+ * (`on_the_node_s_database`). [Q, C, 21 Nov 2026]
  */
 export interface PhoneStorage<partitions extends APhonesPartitions = APhonesPartitions> {
   readonly stored_versions: zz.StoredVersions
@@ -203,6 +211,30 @@ export const on_the_cell = (cell: PhoneCell): PhoneStorage<Partitions> => ({
     extensions_ports(seen_by<ExtensionsState & BondsState, PhoneState>(cell), installed),
   user: user_ports(seen_by<UserState, PhoneState>(cell)),
   partitions,
+})
+
+/**
+ * A phone's storage on the node's database (WEB-16; part B2 of the
+ * assistant, AST-2): each kernel domain's module over its store, the node's
+ * log, outbox and consumers' state, and the extensions' partitions of the
+ * release's size, on whichever substrate the node's storage was opened
+ * (IndexedDB in the PWA, SQLite in the assistant's node). [Q, C, 27 Nov 2026]
+ */
+export const on_the_node_s_database = (node: TheNodesStorage): PhoneStorage => ({
+  stored_versions: node.stored_versions,
+  log: node.log,
+  outbox: node.outbox,
+  executor: node.executor,
+  reactions: node.reactions,
+  held: node.held,
+  safe: (primitives) => seals_ports_on_the_node_s_database(node, primitives),
+  post: post_ports_on_the_node_s_database(node),
+  address_book: (primitives) => bonds_ports_on_the_node_s_database(node, primitives),
+  office: (installed) => extensions_ports_on_the_node_s_database(node, installed),
+  user: user_ports_on_the_node_s_database(node),
+  partitions: ({ characters }) => ({
+    of: the_partition_of({ database: node.database, term: node.term, characters }),
+  }),
 })
 
 /** What an extension's realm is given beside the boundary (EXT-13): its clock, the time that passes, how it speaks to the kernel. */

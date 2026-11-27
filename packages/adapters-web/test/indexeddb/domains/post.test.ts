@@ -2,7 +2,8 @@ import * as zz from '@q-mino/domains/library'
 import { majors } from '@q-mino/domains/post/requests/_majors.ts'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { expect, onTestFinished, test } from 'vitest'
-import { post_ports_on_indexeddb, the_node_s_storage } from '../../../src/index.ts'
+import { the_node_s_storage } from '../../../src/index.ts'
+import { post_ports_on_the_node_s_database } from '@q-mino/adapters-common'
 
 // The module of `post` on IndexedDB (part 21.2, WEB-8, WEB-9), a smoke test
 // on fake-indexeddb in Node: a request sent and answered, read back through
@@ -72,10 +73,10 @@ const a_phone = async () => {
   if (opened.writer !== 'this_tab') throw new Error('the phone is not the writer')
   onTestFinished(() => {
     opened.let_go()
-    opened.database.close()
+    opened.connection.close()
   })
   const versions = await zz.versions([majors])({ stored: opened.stored_versions })
-  const post = post_ports_on_indexeddb(opened)(versions)
+  const post = post_ports_on_the_node_s_database(opened)(versions)
   return {
     opened,
     sends: (operation: string) =>
