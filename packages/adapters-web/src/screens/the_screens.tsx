@@ -34,7 +34,13 @@ import { AnExtension } from './an_extension.tsx'
 import { AnInvitation } from './an_invitation.tsx'
 import { MyContacts } from './my_contacts.tsx'
 import type { TheScreensTexts } from './texts.ts'
-import { TheAppContext, TheScreenIsShown, type TheApp, type TheDevice } from './the_app.ts'
+import {
+  TheAppContext,
+  TheScreenIsShown,
+  type TheApp,
+  type TheDevice,
+  type ThePartsOfTheApp,
+} from './the_app.ts'
 import { TheExtensions } from './the_extensions.tsx'
 import { TheFirstFace } from './the_first_face.tsx'
 import { TheHandshakeAtADistance } from './the_handshake_at_a_distance.tsx'
@@ -78,7 +84,16 @@ export interface TheScreensWiring {
    * screen points to nothing.
    */
   readonly the_relay_s_public_configuration?: string
+  /**
+   * The parts the app carries (K-3, WEB-23), from the extensions the
+   * composition root carries; without it no part is carried, and every
+   * slot and page is drawn as the app's fault.
+   */
+  readonly the_parts?: ThePartsOfTheApp
 }
+
+/** No part carried: every slot and page drawn as the app's fault (WEB-23). */
+const no_part: ThePartsOfTheApp = () => ({ part: 'not_carried' })
 
 /** Why the screens do not open (WEB-18): her node's opening reads failed, a record out of its form told apart (WEB-8); the message, whole, under "Perché". */
 type WhyTheyDoNotOpen =
@@ -257,6 +272,7 @@ export const TheScreens = (props: TheScreensWiring) => {
       asks,
       goes,
       words: (extension) => props.texts.extensions[extension],
+      parts: (extension, point) => (props.the_parts ?? no_part)(extension, point),
     }
     return {
       way,

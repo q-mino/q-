@@ -16,6 +16,7 @@
     "@q-mino/adapters-web": "workspace:*",
     "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
+    "@q-mino/greetings": "workspace:*",
     "@q-mino/memory": "workspace:*",
     "@q-mino/messaging": "workspace:*",
     "@q-mino/ping_pong": "workspace:*",

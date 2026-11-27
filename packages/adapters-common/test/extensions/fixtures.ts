@@ -40,7 +40,7 @@ export const the_manifest_of_waves = (
     readonly known?: z.input<typeof boundary.a_surface>
     readonly self?: z.input<typeof boundary.a_surface>
     readonly actions?: Readonly<
-      Record<string, { readonly on: boundary.place; readonly invokes: string }>
+      Record<string, { readonly on: boundary.a_place_of_an_action; readonly invokes: string }>
     >
   } = {},
 ): boundary.the_manifest =>

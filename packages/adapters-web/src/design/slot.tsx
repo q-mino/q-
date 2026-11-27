@@ -5,8 +5,10 @@
 // whole screen; on the whole screen (Alessandro, 24 Nov 2026), the same
 // part with the same subject, the corner telling who has the screen (the
 // chain of the marks around it) and the gesture that gives it back. The
-// part is never drawn again: the slot itself goes to the top layer (a
-// popover), so what the part holds stays as it was. Escape and Android's
+// part is never drawn anew: the slot itself goes to the top layer (a
+// popover), so what the part holds stays as it was; it is told where it
+// is, so that it draws a line in its place and a screen on the whole one
+// (K-3, part M4 of messaging). Escape and Android's
 // back give the screen back, as the browser closes a popover. A slot is a
 // grid of named areas, `head` (or `corner`) and `part`, its columns a
 // subgrid of its mark's, so that what it holds lines up with the rows of
@@ -73,8 +75,8 @@ export const Slot = <Subject,>(props: {
   words: TheWordsOfASlot
   /** Where it is when first drawn (a story's case); in its place, else. */
   at_first?: WhereASlotIs
-  /** Its part, told its subject. */
-  children: (subject: Subject) => ComponentChildren
+  /** Its part, told its subject and where it is (a part draws a line in its place, a screen on the whole one: K-3). */
+  children: (subject: Subject, where: WhereASlotIs) => ComponentChildren
 }) => {
   const at = useSignal<WhereASlotIs>(props.at_first ?? 'in_its_place')
   const moves = (to: WhereASlotIs): void => {
@@ -156,7 +158,7 @@ export const Slot = <Subject,>(props: {
           />
         </div>
       )}
-      <div data-part="part">{props.children(props.subject)}</div>
+      <div data-part="part">{props.children(props.subject, where)}</div>
     </div>
   )
 }

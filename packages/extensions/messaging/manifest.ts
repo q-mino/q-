@@ -10,11 +10,11 @@ import type { registry } from './persona/self/_registry.ts'
 // (MSG-6), and neither the peer's key nor the bond's name: the bond names
 // the chat, and the kernel's screen around the slot names the contact. It
 // calls the port of requests, toward its own leaf `message` on a bond's
-// node, and its storage. Its one part, the chat, is placed by the slot
-// `the_chat` on a bond's screen (MSG-7); the slot on the row of a contact,
-// `the_chat_in_my_contacts` on `a_bond_in_my_contacts`, comes with that
-// place (MSG-15, K-13: part M4), and the part's module with the kernel's
-// parts (K-3: `shows`, read again as the part's module in part M4). No
+// node, and its storage. Its one part, the chat, is placed by two slots:
+// `the_chat` on a bond's screen (MSG-7), and `the_chat_in_my_contacts` on
+// the row of a contact in her contacts (MSG-15, K-13, since part M4), both
+// showing the part's module (`shows`, K-3: `parts/the_chat.js`, the
+// package's export of that subpath, its export `part`, part M5). No
 // action (an action invokes a leaf with the place's data alone, which
 // cannot carry a text), no page (MSG-7).
 
@@ -22,5 +22,8 @@ export const manifest = boundary.manifest({
   name: 'messaging',
   sees: { known: ['the_declared_time'] },
   touches: ['the_port_of_requests', 'its_storage'],
-  slots: { the_chat: { on: 'a_bond', shows: 'parts/the_chat.js' } },
+  slots: {
+    the_chat: { on: 'a_bond', shows: 'parts/the_chat.js' },
+    the_chat_in_my_contacts: { on: 'a_bond_in_my_contacts', shows: 'parts/the_chat.js' },
+  },
 }) satisfies boundary.Manifest<typeof registry>

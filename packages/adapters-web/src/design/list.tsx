@@ -2,6 +2,9 @@
 // extensions, what happened), each a row: a glyph before it, its title and
 // a detail, gestures after it. A row she opens has its title a button whose
 // target is the whole row; its gestures stay their own. [Q, C, 24 Nov 2026]
+// Under its main, what the row holds beside it (the marks of the extensions
+// on a row of her contacts, MSG-15), its gestures its own too. [Q, C, 27 Nov
+// 2026] (part M4 of messaging)
 
 import type { ComponentChildren } from 'preact'
 import type { AGlyph } from './glyphs.ts'
@@ -21,6 +24,8 @@ export const Row = (props: {
   opens?: () => void
   /** The gestures after it. */
   trail?: ComponentChildren
+  /** What it holds under its main, its gestures its own (the marks of a row of her contacts). */
+  below?: ComponentChildren
 }) => {
   const opens = props.opens
   return (
@@ -49,6 +54,7 @@ export const Row = (props: {
         {props.detail !== undefined && <small data-part="detail">{props.detail}</small>}
       </div>
       {props.trail !== undefined && <div data-part="trail">{props.trail}</div>}
+      {props.below !== undefined && <div data-part="below">{props.below}</div>}
     </li>
   )
 }

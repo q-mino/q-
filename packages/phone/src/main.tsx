@@ -24,6 +24,7 @@ import {
   type TheBrowser,
   type TheConfiguration,
 } from './node/index.ts'
+import { the_parts_carried } from './the_parts.ts'
 import { texts } from './texts/index.ts'
 
 // The PWA's main (CFG-1; step 25, PWA-1..PWA-5): the browser's objects,
@@ -49,7 +50,8 @@ const ping_pong: AnExtensionCarried = {
 /**
  * Messaging, carried as ping pong is (MSG-10; part M3): preinstalled and
  * off, its manifest composed at the start, its configurator imported only
- * when the kernel loads it.
+ * when the kernel loads it. Its part, the chat (`parts/the_chat.js`, K-3),
+ * comes with part M5: until then its slots are drawn as the app's fault.
  */
 const messaging: AnExtensionCarried = {
   manifest: messaging_manifest,
@@ -122,6 +124,8 @@ render(
           the_navigator: navigator,
         }}
         texts={texts.screens}
+        // The parts of the extensions it carries, each imported when first drawn (K-3, WEB-23).
+        the_parts={the_parts_carried(configuration.extensions)}
         // The page's session history, where the way is written (WEB-25): `window`, as it is (WEB-5).
         the_history={window}
         // A link followed while the app is open, read as the one it opened with (WEB-1, WEB-25).

@@ -8,5 +8,7 @@ export {
   nothing_held,
   ten_in_rome,
   type ANodeOfTest,
+  type HowItAnswersTheParts,
   type WhatTheNodeHolds,
 } from './a_node_of_a_story.ts'
+export { greetings_carried, greetings_seen, greetings_words } from './greetings.ts'

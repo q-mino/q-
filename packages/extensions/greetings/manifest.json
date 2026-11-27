@@ -5,7 +5,13 @@
   "sees": { "known": [] },
   "touches": ["the_port_of_requests", "its_storage"],
   "actions": { "greet": { "on": "a_bond", "invokes": "usecase/greet_a_bond" } },
-  "slots": {},
+  "slots": {
+    "the_greetings_of_a_bond": { "on": "a_bond", "shows": "parts/the_greetings.js" },
+    "the_greetings_in_my_contacts": {
+      "on": "a_bond_in_my_contacts",
+      "shows": "parts/the_greetings.js"
+    }
+  },
   "pages": {},
   "surfaces": {
     "self": {

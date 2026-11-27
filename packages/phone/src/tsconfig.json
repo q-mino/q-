@@ -31,6 +31,9 @@
     },
     {
       "path": "../../extensions/messaging"
+    },
+    {
+      "path": "../../extensions/greetings/parts"
     }
   ]
 }

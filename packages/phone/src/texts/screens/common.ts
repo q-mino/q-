@@ -69,6 +69,10 @@ export const common = {
   the_points: {
     opens_the_page: (label) => `Apri la pagina «${label}»`,
     no_document: 'L’app non ha il riquadro di questa estensione.',
+    // K-3 (provisional, C's, 27 Nov 2026, part M4 of messaging).
+    the_part_does_not_load:
+      'Il riquadro di questa estensione non si è caricato: riapri la schermata.',
+    the_part_fell: 'Il riquadro di questa estensione si è fermato per un errore.',
     // WEB-30 (provisional, C's, 24 Nov 2026).
     the_slot: {
       takes_the_screen: 'A tutto schermo',

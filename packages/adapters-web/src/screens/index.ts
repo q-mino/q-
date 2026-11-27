@@ -7,10 +7,14 @@ export type { TheScreensTexts } from './texts.ts'
 export type { TheBrowsersHistory } from './the_history.ts'
 export type { TheViewsWords } from '../view_link/index.ts'
 export type {
+  APartOfTheApp,
+  APartsComponent,
+  APointWithAPart,
   TheApp,
   TheCommonTexts,
   TheDevice,
   TheNavigatorsSharing,
+  ThePartsOfTheApp,
   ThePointsTexts,
 } from './the_app.ts'
 export type { AContactTexts } from './a_contact.tsx'

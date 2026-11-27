@@ -14,12 +14,14 @@
 // extension's side of them, which every extension's configurator speaks
 // through (`the_extensions_side`). Since part 22.2, the words of an
 // extension the kernel draws (EXT-16), and since 22 Nov 2026 their type by
-// the manifest (`Words`, WEB-22).
+// the manifest (`Words`, WEB-22). Since part M4 of messaging (26–27 Nov
+// 2026), what a part integrated is given, its door included (K-3).
 
 export * from './contexts.ts'
 export * from './manifest.ts'
 export * from './messages.ts'
 export * from './mounted.ts'
+export * from './parts.ts'
 export * from './places.ts'
 export * from './ports.ts'
 export * from './the_extensions_side.ts'

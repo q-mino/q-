@@ -141,7 +141,9 @@
   .row {
     position: relative;
     display: grid;
-    grid-template-areas: 'lead main trail';
+    grid-template-areas:
+      'lead main trail'
+      '. below below';
     grid-template-columns: auto 1fr auto;
     align-items: center;
     column-gap: var(--space-3);
@@ -170,6 +172,16 @@
     z-index: 1;
     display: flex;
     gap: var(--space-1);
+  }
+
+  /* Under its main, what the row holds (the marks of a row of her contacts): its gestures its own, over the row's target. */
+  .row > [data-part='below'] {
+    grid-area: below;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-2);
+    min-inline-size: 0;
   }
 
   .row [data-part='title'] {
@@ -538,6 +550,62 @@
 
   .slot::backdrop {
     background: transparent;
+  }
+
+  /*
+   * A row of her contacts (MSG-15): its marks compact, the tag small over
+   * what they hold, and each slot in its place a line, its part then the
+   * gesture to the whole screen, its glyph alone (its words for a screen
+   * reader), whose target is the whole slot (the line is
+   * one gesture: her tap takes it to the whole screen; the row's own, the
+   * contact, stays its title's). [Q, C, 27 Nov 2026] (part M4 of messaging)
+   */
+  .row .mark {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+    margin-block-start: 0;
+    padding: var(--space-1) var(--space-2);
+    border-width: 1px;
+    border-radius: var(--radius-m);
+  }
+
+  .row .mark > [data-part='tag'] {
+    margin-block-start: 0;
+    padding: 0;
+    border: 0;
+    font-size: var(--text-s);
+  }
+
+  .row .slot[data-state='in_its_place'] {
+    position: relative;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'part head';
+    align-items: center;
+  }
+
+  .row .slot[data-state='in_its_place'] > [data-part='head'] {
+    border: 0;
+  }
+
+  .row .slot[data-state='in_its_place'] > [data-part='head'] > [data-part='label'],
+  .row .slot[data-state='in_its_place'] > [data-part='head'] .gesture > [data-part='words'] {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .row .slot[data-state='in_its_place'] > [data-part='part'] {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .row .slot[data-state='in_its_place'] > [data-part='head'] .gesture::after {
+    content: '';
+    position: absolute;
+    inset: 0;
   }
 
   /* Corner: who has the screen, the chain of the names, and the gesture that gives it back. */

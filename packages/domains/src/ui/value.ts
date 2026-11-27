@@ -10,9 +10,15 @@ import { activities, user } from './_scope_value.ts'
 // their own words (GR-3's form: the rendering links the reads to them). Only
 // presentational state: what she asked and what her node keeps are `user`'s.
 
-/** A place of the kernel's screens for an extension point (EXT-16, UI-4), with the data it tells: a bond's screen, with the bond; the extension's own. */
+/**
+ * A place of the kernel's screens for an extension point (EXT-16, UI-4), with
+ * the data it tells: a bond's screen, with the bond; the row of a bond in her
+ * contacts, with the bond (MSG-15, K-13: slots only, compact; [Q, C, high
+ * impact: A to discuss], part M4 of messaging); the extension's own.
+ */
 export const a_place = z.discriminatedUnion('place', [
   z.strictObject({ place: z.literal('a_bond'), bond: user.value.a_bond }),
+  z.strictObject({ place: z.literal('a_bond_in_my_contacts'), bond: user.value.a_bond }),
   z.strictObject({ place: z.literal('the_extension'), extension: user.value.an_extension }),
 ])
 

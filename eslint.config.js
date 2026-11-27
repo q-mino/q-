@@ -115,6 +115,8 @@ export default defineConfig(
     files: [
       'packages/phone/{src,test}/**/*.{ts,tsx}',
       'packages/adapters-web/{src,test}/**/*.{ts,tsx}',
+      // An extension's parts (GR-10, K-3; part M4 of messaging): its components, the same rules. [Q, C, 27 Nov 2026]
+      'packages/extensions/*/parts/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-syntax': [

@@ -46,7 +46,7 @@ export const Gesture = (props: {
       ) : (
         props.glyph !== undefined && <Icon glyph={props.glyph} />
       )}
-      {props.label}
+      <span data-part="words">{props.label}</span>
     </button>
   )
 }

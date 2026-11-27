@@ -23,12 +23,14 @@ import type { ACompositionFault } from '@q-mino/adapters-common'
 import {
   phone,
   TheExtensionsDoNotCompose,
-  type AnExtensionOfTheApp,
   type APhonesPartitions,
   type Phone,
   type PhoneWorld,
 } from '@q-mino/memory'
 import { a_phone_s_storage, the_kernel_s_domains } from './storage.ts'
+import type { AnExtensionCarried } from '../the_parts.ts'
+
+export type { AnExtensionCarried }
 
 // The PWA's composition root at its start (CFG-1, CFG-2, DOM-9; step 25,
 // PWA-1, PWA-2): the node opened in this tab, as its writer or not (WEB-10);
@@ -51,9 +53,6 @@ export interface TheBrowser extends TheBrowsersStorage {
   /** The page's `navigator` and `window`, for the device's network (WEB-4, UI-5). */
   readonly network: { readonly navigator: ANavigatorOnLine; readonly window: AWindowOfTheNetwork }
 }
-
-/** An extension the app carries (EXT-9, EXT-13): its manifest as its build wrote it, its realm imported by the composition root when it is active. */
-export type AnExtensionCarried = AnExtensionOfTheApp
 
 /** The release's configuration (PWA-2): the node's database, its relay, the page of its links, the extensions it carries, the size of a partition. */
 export interface TheConfiguration {

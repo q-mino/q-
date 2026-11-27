@@ -27,6 +27,6 @@ Beside them: [`test/manifest.test.ts`](test/manifest.test.ts) (the committed `ma
 
 ## Open
 
-- Its slot and page (parts of its own, EXT-16: with the first extension that has one), its texts (`texts/`, the label "Saluta"): steps 16 and 22.
+- Its page, and its texts for the kernel (`texts/it.ts`, the label "Saluta": the gallery gives them, the app does not carry greetings). Its part, since part M4 of messaging (K-3): [`parts/the_greetings.tsx`](parts/the_greetings.tsx), two slots, on a bond's screen and on its row in her contacts, the first part of an extension's package the kernel draws (GR-10, "The parts"), its own words in [`texts/the_part.it.ts`](texts/the_part.it.ts); drawn in the gallery and in `phone/test/screens/a_part.test.tsx`.
 - A read leaf on `self` (the greetings of a bond, for a part to follow) and the partition adapter's reads: with a part (step 16).
 - Hosted by the kernel's side and between two nodes on the oracle: [`packages/memory/test/extensions/`](../../memory/test/extensions/README.md) (part 12.4), the step's checks with two nodes.

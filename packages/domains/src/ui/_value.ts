@@ -8,7 +8,10 @@ import { z } from 'zod'
 import * as value from './value.ts'
 
 /**
- * A place of the kernel's screens for an extension point (EXT-16, UI-4), with the data it tells: a bond's screen, with the bond; the extension's own.
+ * A place of the kernel's screens for an extension point (EXT-16, UI-4), with
+ * the data it tells: a bond's screen, with the bond; the row of a bond in her
+ * contacts, with the bond (MSG-15, K-13: slots only, compact; [Q, C, high
+ * impact: A to discuss], part M4 of messaging); the extension's own.
  *
  * @see {@link value.a_place}
  */

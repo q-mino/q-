@@ -110,11 +110,12 @@ export interface WhatThePlacesAreGiven {
 
 /**
  * The marks a place holds (UI-4, EXT-16, EXT-7): for each extension active
- * (on a bond's screen, offered to that bond, since an offer goes both ways),
- * the points its manifest declares at that place, in the order it declares
- * them, in the kernel's mark of the extension. An extension with no point
- * there has no mark there. An action of an extension not active, or on a bond
- * whose offer is withdrawn, is not drawn.
+ * (on a bond, its screen or its row in her contacts, offered to that bond,
+ * since an offer goes both ways), the points its manifest declares at that
+ * place, in the order it declares them, in the kernel's mark of the
+ * extension. An extension with no point there has no mark there. An action of
+ * an extension not active, or on a bond whose offer is withdrawn, is not
+ * drawn.
  */
 export const the_marks_at = (
   place: value.a_place,
@@ -123,11 +124,11 @@ export const the_marks_at = (
   given.extensions
     .filter((extension) => extension.is === 'active')
     .filter((extension) =>
-      place.place === 'a_bond'
-        ? given.offered.some(
+      place.place === 'the_extension'
+        ? place.extension === extension.extension
+        : given.offered.some(
             (offer) => offer.extension === extension.extension && offer.bonds.includes(place.bond),
-          )
-        : place.extension === extension.extension,
+          ),
     )
     .map((extension) => the_mark_of(extension, place))
     .filter((mark) => mark.actions.length + mark.slots.length + mark.pages.length > 0)
@@ -149,6 +150,18 @@ export const the_mark_of = (
   }
 }
 
+/** Where an action is drawn, from the place its mark is told: a row of her contacts draws none (its manifest cannot declare one there, EXT-16). */
+const the_place_of_an_action = (told: value.a_place): activities.value.the_place | undefined => {
+  switch (told.place) {
+    case 'a_bond':
+      return { place: 'a_bond', bond: told.bond }
+    case 'the_extension':
+      return { place: 'the_extension' }
+    case 'a_bond_in_my_contacts':
+      return undefined
+  }
+}
+
 /**
  * An action of a mark tapped (EXT-16, USR-2): an activity of `user`, the
  * extension's action on the place's data, as a gesture of the kernel's own.
@@ -158,24 +171,18 @@ export const an_action_tapped = (
   mark: value.a_mark,
   action: string,
   activity_id: activities.id.activity_id,
-): readonly value.what_it_asks[] =>
-  mark.actions.includes(action)
+): readonly value.what_it_asks[] => {
+  const on = the_place_of_an_action(mark.told)
+  return mark.actions.includes(action) && on !== undefined
     ? [
         {
           asks: 'an_activity',
           activity_id,
-          what: {
-            activity: 'use_an_action',
-            extension: mark.extension,
-            action,
-            on:
-              mark.told.place === 'a_bond'
-                ? { place: 'a_bond', bond: mark.told.bond }
-                : { place: 'the_extension' },
-          },
+          what: { activity: 'use_an_action', extension: mark.extension, action, on },
         },
       ]
     : []
+}
 
 /** A page of a mark opened (EXT-16): its screen, told the place's data; a page the mark does not hold opens nothing. */
 export const a_page_opened = (mark: value.a_mark, page: string): value.where_it_goes =>

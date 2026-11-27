@@ -7,7 +7,14 @@
 // gallery draws each case as the tests prove it. Moved here from the tests'
 // harness in the MVP's part 2. [Q, C, 24 Nov 2026]
 
-import type { HerNode, HerTicket, TheDevice } from '@q-mino/adapters-web/screens'
+import type { TheKernelsTraced } from '@q-mino/adapters-common'
+import type {
+  AnEventOfALeaf,
+  APartServed,
+  HerNode,
+  HerTicket,
+  TheDevice,
+} from '@q-mino/adapters-web/screens'
 import * as zz from '@q-mino/domains/library'
 import type * as ui_value from '@q-mino/domains/ui/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
@@ -75,10 +82,40 @@ export interface ANodeOfTest {
   readonly comes_to_hold: (change: (now: WhatTheNodeHolds) => WhatTheNodeHolds) => void
   /** An activity in progress ends, how in her words; the screens are told. */
   readonly ends: (activity_id: string, how: activities_value.how_it_ended) => void
+  /** What the parts asked of it, as the kernel's fence served it, in order (K-3). */
+  readonly asked_by_the_parts: () => readonly APartServed[]
+  /** What the kernel's fence refused of the parts, traced (EXT-4). */
+  readonly fenced: () => readonly TheKernelsTraced[]
 }
 
-export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): ANodeOfTest => {
+/**
+ * How the node of a story answers what a part asks (K-3): by the leaf's
+ * events, in order, until its flow ends; by default greetings' greeting
+ * (`the_greeting_is_sent`, its one event) and nothing else.
+ */
+export type HowItAnswersTheParts = (served: APartServed) => AsyncIterable<AnEventOfALeaf>
+
+/** The default answer to a part: greetings' leaf `greet_a_bond` gives its greeting, any other leaf nothing. */
+const greetings_answers: HowItAnswersTheParts = (served) => {
+  const events: readonly AnEventOfALeaf[] =
+    served.invokes.extension === 'greetings' && served.invokes.use_case === 'usecase/greet_a_bond'
+      ? [{ event: 'the_greeting_is_sent', greeting: 'G-1' }]
+      : []
+  return {
+    [Symbol.asyncIterator]: () => {
+      const each = events[Symbol.iterator]()
+      return { next: () => Promise.resolve(each.next()) }
+    },
+  }
+}
+
+export const a_node_of_test = (
+  at_the_start: Partial<WhatTheNodeHolds> = {},
+  answers_the_parts: HowItAnswersTheParts = greetings_answers,
+): ANodeOfTest => {
   let held: WhatTheNodeHolds = { ...nothing_held, ...at_the_start }
+  let asked_by_the_parts: readonly APartServed[] = []
+  let fenced: readonly TheKernelsTraced[] = []
   let handed: readonly ui_value.what_it_asks[] = []
   let listeners: readonly (() => void)[] = []
   const tell = (): void => {
@@ -151,13 +188,14 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
       takes(what)
       return Promise.resolve()
     },
-    // No part of an extension is drawn yet (WEB-23): none asks, none is fenced.
-    a_part_asks: () => ({
-      [Symbol.asyncIterator]: () => ({
-        next: () => Promise.resolve({ done: true, value: undefined }),
-      }),
-    }),
-    a_part_is_fenced: () => undefined,
+    // What a part asks, recorded and answered as the story says (K-3); what the fence refused, recorded.
+    a_part_asks: (served) => {
+      asked_by_the_parts = [...asked_by_the_parts, served]
+      return answers_the_parts(served)
+    },
+    a_part_is_fenced: (traced) => {
+      fenced = [...fenced, traced]
+    },
     when_it_changes: (listener) => {
       listeners = [...listeners, listener]
       return () => {
@@ -170,6 +208,8 @@ export const a_node_of_test = (at_the_start: Partial<WhatTheNodeHolds> = {}): AN
     handed: () => handed,
     activities_asked: () => handed.flatMap((one) => (one.asks === 'an_activity' ? [one.what] : [])),
     holds: () => held,
+    asked_by_the_parts: () => asked_by_the_parts,
+    fenced: () => fenced,
     comes_to_hold,
     ends: (activity_id, how) => {
       comes_to_hold((now) => ({

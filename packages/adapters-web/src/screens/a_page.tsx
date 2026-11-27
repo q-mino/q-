@@ -1,7 +1,7 @@
 // A page of an extension (UI-4, UI-5; EXT-16; story 22 of `ui`'s README):
 // its name in the kernel's mark of its extension, where its part is placed
 // while the place still draws it; withdrawn or deactivated meanwhile, no
-// longer there. What it shows is not drawn yet (`APartNotDrawn`, WEB-23). Since the MVP's part 2 drawn with the design's
+// longer there. What it shows is its part on the whole screen (`APart`, K-3, WEB-23). Since the MVP's part 2 drawn with the design's
 // components (WEB-29); since its part 3 the extension holds the screen, so
 // its name is in the corner, as a slot's on the whole screen (WEB-30).
 
@@ -10,7 +10,8 @@ import * as a_page from '@q-mino/domains/ui/a_page/_dsl.ts'
 import type * as a_page_value from '@q-mino/domains/ui/a_page/_value.ts'
 import { Corner, Notice, Screen } from '../design/index.ts'
 import { a_screen, kept, what_it_is_given } from './a_screen.ts'
-import { APartNotDrawn, Back, TheMark } from './parts.tsx'
+import { APart } from './a_part.tsx'
+import { Back, TheMark } from './parts.tsx'
 import { the_app, the_word_or_its_fault } from './the_app.ts'
 
 /** The words of a page (provisional, A to confirm). */
@@ -68,7 +69,12 @@ export const APage = (props: {
             ]}
           />
           <TheMark extension={shown.extension}>
-            <APartNotDrawn />
+            <APart
+              extension={shown.extension}
+              point={{ point: 'page', name: shown.page }}
+              told={shown.told}
+              where="on_the_whole_screen"
+            />
           </TheMark>
         </>
       )}

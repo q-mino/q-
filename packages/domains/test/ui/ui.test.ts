@@ -16,6 +16,7 @@ import type * as a_contact_value from '../../src/ui/a_contact/_value.ts'
 import type * as an_extension_value from '../../src/ui/an_extension/_value.ts'
 import type * as an_invitation_value from '../../src/ui/an_invitation/_value.ts'
 import type * as at_a_distance_value from '../../src/ui/the_handshake_at_a_distance/_value.ts'
+import type * as my_contacts_value from '../../src/ui/my_contacts/_value.ts'
 import type * as in_person_value from '../../src/ui/the_handshake_in_person/_value.ts'
 import type * as what_happened_value from '../../src/ui/what_happened/_value.ts'
 import * as activities_value from '../../src/user/activities/_value.ts'
@@ -211,6 +212,12 @@ const it_fell = user_value.what_happened_without_a_fact.parse({
   fall: 'the_first',
 })
 
+/** No extension, no offer: the rows hold no mark. */
+const none_offered: Pick<my_contacts_value.what_it_is_given, 'extensions' | 'offers'> = {
+  extensions: [],
+  offers: [],
+}
+
 describe('ui, the screens of stage 1 (part 16.2)', () => {
   test('with no face the app starts at the first face; with one and none active it chooses it', () => {
     const anna = ui_value.a_face_seen.parse({ face: F_a, name: 'Anna' })
@@ -353,7 +360,12 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
   test('no contacts shows the two handshakes; some, by her name, as introduced when it differs, and whether they have her', () => {
     const closed = my_contacts.at_the_start()
     expect(
-      my_contacts.what_it_shows(closed, { contacts: [], held_letters: 0, happened: 0 }),
+      my_contacts.what_it_shows(closed, {
+        contacts: [],
+        held_letters: 0,
+        happened: 0,
+        ...none_offered,
+      }),
     ).toEqual({
       contacts: {
         are: 'none_yet',
@@ -364,17 +376,24 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       a_contact_seen(L_b, 'Bruno', 'Bruno', true),
       a_contact_seen(L_c, 'Carla R.', 'Carla', false),
     ]
-    expect(my_contacts.what_it_shows(closed, { contacts, held_letters: 0, happened: 0 })).toEqual({
+    expect(
+      my_contacts.what_it_shows(closed, {
+        contacts,
+        held_letters: 0,
+        happened: 0,
+        ...none_offered,
+      }),
+    ).toEqual({
       contacts: {
         are: 'some',
         list: [
-          { bond: L_b, name: 'Bruno', they_have_me: true },
-          { bond: L_c, name: 'Carla R.', introduced_as: 'Carla', they_have_me: false },
+          { bond: L_b, name: 'Bruno', they_have_me: true, marks: [] },
+          { bond: L_c, name: 'Carla R.', introduced_as: 'Carla', they_have_me: false, marks: [] },
         ],
       },
     })
     expect(
-      my_contacts.what_it_shows(closed, { contacts, held_letters: 1, happened: 0 })
+      my_contacts.what_it_shows(closed, { contacts, held_letters: 1, happened: 0, ...none_offered })
         .something_happened,
     ).toEqual({ held_letters: 1, happened: 0 })
   })
@@ -390,7 +409,12 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
       'the_server',
     ] as const
     expect(
-      my_contacts.what_it_shows(open.state, { contacts: [], held_letters: 0, happened: 0 }).menu,
+      my_contacts.what_it_shows(open.state, {
+        contacts: [],
+        held_letters: 0,
+        happened: 0,
+        ...none_offered,
+      }).menu,
     ).toEqual(the_menu)
     for (const entry of the_menu) {
       const chosen = my_contacts.after(open.state, { happens: 'she_chooses', entry })
@@ -577,6 +601,57 @@ describe('ui, the screens of stage 1 (part 16.2)', () => {
     expect(
       withdrawn_on_the_contact.shows === 'the_contact' && withdrawn_on_the_contact.marks,
     ).toEqual([])
+  })
+
+  test('a row of her contacts holds the slots of the extensions offered to its bond, never an action (MSG-15, K-13)', () => {
+    const on_the_row = (bond: string) => ({ place: 'a_bond_in_my_contacts', bond }) as const
+    const messaging = ping_pong_seen(
+      'active',
+      a_manifest([
+        { point: 'slot', name: 'the_chat', place: 'a_bond' },
+        { point: 'slot', name: 'the_chat_in_my_contacts', place: 'a_bond_in_my_contacts' },
+      ]),
+    )
+    const contacts = [
+      a_contact_seen(L_b, 'Bruno', 'Bruno', true),
+      a_contact_seen(L_c, 'Carla', 'Carla', true),
+    ]
+    const shown = my_contacts.what_it_shows(my_contacts.at_the_start(), {
+      contacts,
+      held_letters: 0,
+      happened: 0,
+      extensions: [messaging],
+      offers: offered_to(L_b),
+    })
+    expect(shown.contacts.are === 'some' && shown.contacts.list.map((one) => one.marks)).toEqual([
+      [
+        {
+          extension: ping_pong,
+          told: on_the_row(L_b),
+          actions: [],
+          slots: ['the_chat_in_my_contacts'],
+          pages: [],
+        },
+      ],
+      [],
+    ])
+    const row = the_one(
+      ui.the_marks_at(on_the_row(L_b), { extensions: [messaging], offered: offered_to(L_b) }),
+    )
+    expect(
+      ui.an_action_tapped({ ...row, actions: ['ping'] }, 'ping', asked('A9').activity_id),
+    ).toEqual([])
+    const off = my_contacts.what_it_shows(my_contacts.at_the_start(), {
+      contacts,
+      held_letters: 0,
+      happened: 0,
+      extensions: [ping_pong_seen('not_active', messaging.manifest)],
+      offers: offered_to(L_b),
+    })
+    expect(off.contacts.are === 'some' && off.contacts.list.map((one) => one.marks)).toEqual([
+      [],
+      [],
+    ])
   })
 
   test('tapping an action of a mark asks to use it on the place, once while in progress', () => {

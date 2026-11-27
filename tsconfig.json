@@ -65,6 +65,9 @@
       "path": "packages/extensions/greetings"
     },
     {
+      "path": "packages/extensions/greetings/parts"
+    },
+    {
       "path": "packages/extensions/greetings/scripts"
     },
     {

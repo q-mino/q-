@@ -33,8 +33,15 @@ export const a_name = z.string().regex(/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/)
  */
 export const a_leaf = z.string().regex(/^(?:[a-z0-9_]+\/)*usecase\/[a-z][a-z0-9_]*$/)
 
-/** A file of an extension's bundle, by its path from the package's root (`frame/the_greetings_of_a_bond.html`, EXT-16). */
-export const a_file = z.string().regex(/^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.[a-z0-9]+$/)
+/**
+ * The module of a part (EXT-16, K-3), by its path from the package's root
+ * as its build emits it (`parts/the_chat.js`): a module under `parts/`,
+ * which is also the package's export of that subpath, so that the phone
+ * imports it by it (WEB-23). [Q, C, high impact: A to discuss] (part M4 of
+ * messaging; until then a file of the extension's bundle, `frame/….html`,
+ * the frames' document of 21–24 Nov 2026).
+ */
+export const a_part_module = z.string().regex(/^parts\/[a-z][a-z0-9_]*\.js$/)
 
 /** A list of names from a closed set, each named once (EXT-10: `touches`, `sees`). */
 export const a_set_of = <const name extends string>(names: z.ZodType<name, name>) =>
