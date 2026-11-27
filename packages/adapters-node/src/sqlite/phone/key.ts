@@ -55,3 +55,59 @@ const the_bytes_of = (key: AStoredKey): readonly number[] =>
 
 /** A key encoded, in SQLite's order of BLOBs as IndexedDB orders the keys. */
 export const encoded = (key: AStoredKey): Uint8Array => new Uint8Array(the_bytes_of(key))
+
+/** A key read back from its bytes, and where its bytes end. */
+const decoded_from = (
+  bytes: Uint8Array,
+  from: number,
+): { readonly key: AStoredKey; readonly next: number } => {
+  const tag = bytes[from]
+  if (tag === a_number) {
+    const raw = bytes.slice(from + 1, from + 9)
+    const positive = ((raw[0] ?? 0) & 0x80) !== 0
+    const restored = raw.map((byte, at) =>
+      positive ? (at === 0 ? byte ^ 0x80 : byte) : ~byte & 0xff,
+    )
+    return { key: new DataView(restored.buffer).getFloat64(0), next: from + 9 }
+  }
+  if (tag === a_text) {
+    const units: number[] = []
+    const half: number[] = []
+    let at = from + 1
+    for (;;) {
+      const byte = bytes[at]
+      if (byte === undefined) throw new Error('a text key of the node’s database with no end')
+      if (byte === 0x00) {
+        const next = bytes[at + 1]
+        at += 2
+        if (next === 0x01) break
+        half.push(0x00)
+      } else {
+        half.push(byte)
+        at += 1
+      }
+      if (half.length === 2) units.push(((half[0] ?? 0) << 8) | (half[1] ?? 0))
+      if (half.length === 2) half.length = 0
+    }
+    return { key: String.fromCharCode(...units), next: at }
+  }
+  if (tag === an_array) {
+    const parts: AStoredKey[] = []
+    let at = from + 1
+    while (bytes[at] !== the_end) {
+      if (at >= bytes.length) throw new Error('an array key of the node’s database with no end')
+      const part = decoded_from(bytes, at)
+      parts.push(part.key)
+      at = part.next
+    }
+    return { key: parts, next: at + 1 }
+  }
+  throw new Error('a key of the node’s database out of form')
+}
+
+/** A key read back from its encoding. */
+export const decoded = (bytes: Uint8Array): AStoredKey => {
+  const read = decoded_from(bytes, 0)
+  if (read.next !== bytes.length) throw new Error('a key of the node’s database out of form')
+  return read.key
+}

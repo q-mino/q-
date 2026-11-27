@@ -21,17 +21,15 @@ import {
   type ABound,
   type AKept,
   type ANodesDatabase,
-  type AStoredKey,
   type ATransaction,
 } from '@q-mino/adapters-common'
-import { encoded } from './key.ts'
+import { decoded, encoded } from './key.ts'
 
 /** The one table of the node's records. */
 const the_records_table = `
   CREATE TABLE IF NOT EXISTS records (
     store TEXT NOT NULL,
     key BLOB NOT NULL,
-    shown TEXT NOT NULL,
     value TEXT NOT NULL,
     PRIMARY KEY (store, key)
   ) WITHOUT ROWID;
@@ -109,15 +107,10 @@ const a_text = (value: unknown, column: string): string => {
   return value
 }
 
-/** A key read back from its shown form, the JSON it was written with (numbers, texts, arrays). */
-const a_stored_key = (shown: string): AStoredKey => {
-  const key: unknown = JSON.parse(shown)
-  const valid = (part: unknown): part is AStoredKey =>
-    typeof part === 'number' ||
-    typeof part === 'string' ||
-    (Array.isArray(part) && part.every(valid))
-  if (!valid(key)) throw new Error('a key of the node’s database out of form')
-  return key
+/** A column read as bytes, or the storage's fault. */
+const bytes_of = (value: unknown): Uint8Array => {
+  if (!(value instanceof Uint8Array)) throw new Error('the node’s database: a key is not a BLOB')
+  return value
 }
 
 /** The condition and the values of a range of keys over the encoded column. */
@@ -167,11 +160,11 @@ export const on_sqlite = (
         alive()
         const where = the_range(range)
         const rows = prepared(
-          `SELECT shown, value FROM records WHERE store = ?${where.text} ORDER BY key`,
+          `SELECT key, value FROM records WHERE store = ?${where.text} ORDER BY key`,
         ).all(store, ...where.values)
         return Promise.resolve(
           rows.map((row): AKept => ({
-            key: a_stored_key(a_text(row['shown'], 'shown')),
+            key: decoded(bytes_of(row['key'])),
             value: JSON.parse(a_text(row['value'], 'value')),
           })),
         )
@@ -179,9 +172,9 @@ export const on_sqlite = (
       put: (store, key, value) => {
         alive()
         prepared(
-          `INSERT INTO records (store, key, shown, value) VALUES (?, ?, ?, ?)
+          `INSERT INTO records (store, key, value) VALUES (?, ?, ?)
            ON CONFLICT (store, key) DO UPDATE SET value = excluded.value`,
-        ).run(store, encoded(key), JSON.stringify(key), the_json_of(value))
+        ).run(store, encoded(key), the_json_of(value))
       },
       delete: (store, key) => {
         alive()

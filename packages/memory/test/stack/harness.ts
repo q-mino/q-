@@ -507,6 +507,8 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
     const the_phone = {
       name: start.name,
       node,
+      /** The story's clock as the phone reads it (an instant of `zz.date_time`). */
+      now: () => time.clock.now(),
       /** Whether the phone is on. */
       is_on: (): boolean => the_post !== undefined,
       /** The phone off (its app closed, its consumers stopped, its extensions unloaded), or on again. */
