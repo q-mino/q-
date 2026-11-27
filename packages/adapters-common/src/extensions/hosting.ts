@@ -305,11 +305,16 @@ export const a_hosted_extension = (wiring: HostingWiring): Hosted => {
     for (;;) {
       if (life.life !== 'loading' && life.life !== 'unloaded') return
       const left = to_run_since + the_hold_of_a_request - Date.parse(now())
-      if (left <= 0 || !(await wiring.is_active())) return
+      if (left <= 0) return
+      // Among who waits before asking whether it is active: a change of
+      // its life while the office answers wakes it (found by K-6's measure, a
+      // start with its chats: the line waited the whole hold).
       const woken = a_promise<undefined>()
       waiting_to_run.add(woken.settle)
-      await Promise.race([woken.promise, wiring.elapsed(left)])
+      const active = await wiring.is_active()
+      if (active) await Promise.race([woken.promise, wiring.elapsed(left)])
       waiting_to_run.delete(woken.settle)
+      if (!active) return
     }
   }
   /** The realm loaded now, if any. */
