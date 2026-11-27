@@ -40,9 +40,7 @@ test('one tab writes; "use here" takes the writer, and the old tab writes nothin
     ...partition,
     database: on_indexeddb(anna.database, IDBKeyRange),
     term: first.term,
-  })(
-    'ping_pong',
-  )
+  })('ping_pong')
   expect(await old.commit([{ write: 'set', key: 'a', value: { n: 1 } }])).toEqual({
     answer: 'committed',
   })
@@ -57,9 +55,7 @@ test('one tab writes; "use here" takes the writer, and the old tab writes nothin
     ...partition,
     database: on_indexeddb(another.database, IDBKeyRange),
     term: here.term,
-  })(
-    'ping_pong',
-  )
+  })('ping_pong')
   expect(await now.read({ read: 'range' })).toEqual({
     answer: 'read',
     entries: [{ key: 'a', value: { n: 1 } }],

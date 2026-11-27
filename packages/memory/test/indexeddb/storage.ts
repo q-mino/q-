@@ -5,11 +5,7 @@
 // every phone is its own node with its own writer (WEB-10).
 
 import type { TheNodesStorage } from '@q-mino/adapters-common'
-import {
-  the_node_s_storage,
-  type AnIndexedDb,
-  type TheNodeOnIndexedDb,
-} from '@q-mino/adapters-web'
+import { the_node_s_storage, type AnIndexedDb, type TheNodeOnIndexedDb } from '@q-mino/adapters-web'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { on_the_node_s_database, type PhoneStorage } from '../../src/index.ts'
 import type { AStorageUnderTest } from '../stack/harness.ts'
