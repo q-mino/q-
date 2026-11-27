@@ -17,12 +17,12 @@
 import * as zz from '@q-mino/domains/library'
 import {
   cell,
-  no_deposit,
+  a_new_relay,
   relay,
   the_desks_interface,
   the_scope_of_a_deposit,
   type HashOfACollectSecret,
-  type MailboxState,
+  type RelayState,
   type Relay,
   type Shown,
   type Strategy,
@@ -51,20 +51,28 @@ export interface Start {
   readonly hash?: HashOfACollectSecret
 }
 
-/** A request's operation, if the story names it, and its correlation. */
+/** A request's operation, if the story names it, its scope if not a depositor's, and its correlation. */
 export interface Sent {
   readonly operation?: string
+  readonly scope?: string
   readonly correlation?: string
 }
 
 /** Who comes to the desk: nobody in particular, or who shows the collect secret R. */
 export const nobody: Shown = { shows: 'nothing' }
 export const showing = (secret: string): Shown => ({ shows: 'a_collect_secret', secret })
+/** Who comes with the signature of a stand's inviter, which the interface verified (INV-5). */
+export const signing_for = (stand: string): Shown => ({
+  shows: 'the_signature_of_a_stand_s_inviter',
+  stand,
+})
 
 /** What the harness needs of a relay started: the desk's trees, the executor of the waits, the fact log. */
 export interface Started {
   readonly depositor: Relay['depositor']
   readonly holder: Relay['holder']
+  readonly inviter: Relay['inviter']
+  readonly passer_by: Relay['passer_by']
   readonly waits: () => zz.EffectExecutor
   readonly log: zz.FactLog
 }
@@ -131,7 +139,10 @@ export const harnessed = (
           version,
           now: zz.date_time.parse(at),
           time_zone,
-          operation: { id: zz.operation_id.parse(id), scope: the_scope_of_a_deposit },
+          operation: {
+            id: zz.operation_id.parse(id),
+            scope: sent.scope ?? the_scope_of_a_deposit,
+          },
           correlation: zz.correlation.parse(sent.correlation ?? `correlation-${id}`),
         }
       },
@@ -146,6 +157,8 @@ export const harnessed = (
   return {
     depositor: the_relay.depositor,
     holder: the_relay.holder,
+    inviter: the_relay.inviter,
+    passer_by: the_relay.passer_by,
     as,
     /** The effect executor of the deposits' waits started (DOM-14), the relay's clock at an instant. */
     waits: (at: string): zz.EffectExecutor => {
@@ -180,8 +193,8 @@ export const harnessed = (
 
 /** The relay of a story, as the oracle starts it. */
 export const a_relay = async (start: Start = {}) => {
-  const made = cell<MailboxState>({
-    initial: no_deposit,
+  const made = cell<RelayState>({
+    initial: a_new_relay,
     ...(start.redelivered === undefined ? {} : { redelivered: start.redelivered }),
   })
   const world = a_world()

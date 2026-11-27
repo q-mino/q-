@@ -15,7 +15,7 @@ import { depositor } from '@q-mino/domains/desk/depositor/_version.ts'
 import { holder } from '@q-mino/domains/desk/holder/_version.ts'
 import * as zz from '@q-mino/domains/library'
 import type { Deposited, MailboxPort } from '@q-mino/domains/post/_dsl.ts'
-import { cell, no_deposit, type Cell, type MailboxState } from '../oracle/index.ts'
+import { cell, type Cell } from '../oracle/index.ts'
 import {
   a_new_phone,
   on_the_cell,
@@ -28,11 +28,13 @@ import {
   type World as PhoneWorld,
 } from '../phone/index.ts'
 import {
+  a_new_relay,
   relay,
   the_desks_interface,
   the_scope_of_a_deposit,
   type HashOfACollectSecret,
   type Relay,
+  type RelayState,
   type Release as RelayRelease,
 } from '../relay/index.ts'
 
@@ -176,7 +178,7 @@ export interface APhoneOverTheRelay {
  * the phones' consumers are wired, not started: the caller runs them.
  */
 export const a_stack =
-  (relay_cell: Cell<MailboxState> = cell({ initial: no_deposit }), release: RelayRelease = {}) =>
+  (relay_cell: Cell<RelayState> = cell({ initial: a_new_relay }), release: RelayRelease = {}) =>
   async (world: TheStacksWorld) => {
     const the_relay = await relay(
       relay_cell,

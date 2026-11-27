@@ -1,5 +1,6 @@
 import { a_relay } from './harness.ts'
 import { stories_of_the_relay } from './stories.ts'
+import { stories_of_the_stand } from './stand_stories.ts'
 
 // The relay's stories on q-'s oracle (TST-1, TST-2): its read streamed
 // natively, the reference, and composed by the library over the cell's log,
@@ -16,3 +17,6 @@ stories_of_the_relay(
   (start = {}) => a_relay({ ...start, streams: 'composed' }),
   'by_reading_again',
 )
+
+// The stand's stories on q-'s oracle (INV-10): its reads are snapshots.
+stories_of_the_stand('on the oracle', (start = {}) => a_relay(start))
