@@ -33,8 +33,11 @@ const annas_collector = (story: {
   readonly the_entry_throws_on?: readonly string[]
   readonly the_collect_throws_at?: readonly string[]
   readonly no_key_for?: string
+  /** The envelope while whose entry the collector is told to forget, once. */
+  readonly forgets_while_taking?: string
 }) => {
   const handed: AnEnvelopeCollected[] = []
+  let forgets_while_taking = story.forgets_while_taking
   const throws = new Set(story.the_entry_throws_on ?? [])
   const down = new Set(story.the_collect_throws_at ?? [])
   const { collects, forget } = the_collector({
@@ -63,6 +66,10 @@ const annas_collector = (story: {
       if (throws.delete(collected.envelope))
         return Promise.reject(new Error(`the entry fell on ${collected.envelope}`))
       handed.push(collected)
+      if (forgets_while_taking === collected.envelope) {
+        forgets_while_taking = undefined
+        forget()
+      }
       return Promise.resolve()
     },
   })
@@ -134,5 +141,17 @@ describe('the collector (DOM-17)', () => {
       'D_mb:b2',
       'D_mc:c1',
     ])
+  })
+
+  test('forgotten while the entry takes a letter: that letter stays unseen, handed again at the next pass (MSG-16)', async () => {
+    // Bruno's b1 meets silence (messaging off) while Anna activates it: the
+    // activation's forget comes before the entry's answer on b1, so the pass
+    // that began before the forget does not take b1 as seen.
+    const deposits = new Map([['R of L_b', at('b1', 'b2')]])
+    const anna = annas_collector({ deposits, forgets_while_taking: 'b1' })
+    await anna.collects()
+    await anna.collects()
+    await anna.collects()
+    expect(anna.handed()).toEqual(['D_mb:b1', 'D_mb:b2', 'D_mb:b1'])
   })
 })

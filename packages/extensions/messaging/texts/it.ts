@@ -29,17 +29,17 @@ export const words = {
 export const the_words_of_the_chat = {
   /** In its place: the chat in a line, on a contact's row and under the slot's head on a contact's screen. */
   the_line: {
-    none: 'Nessun messaggio ancora',
+    none: 'Ancora nessun messaggio',
     mine: 'Tu:',
     to_read: (how_many: number) => `${String(how_many)} da leggere`,
-    not_read: 'La chat non si legge ora',
+    not_read: 'Chat non disponibile ora',
   },
   /** On the whole screen: the conversation. */
   the_conversation: {
     the_list: 'Messaggi della chat',
     reading: 'Lettura dei messaggi…',
-    none: 'Scrivete il primo messaggio',
-    not_read: 'La chat non si legge ora: i Messaggi non rispondono.',
+    none: 'Ancora nessun messaggio: scrivi il primo.',
+    not_read: 'Chat non disponibile: l’estensione Messaggi non risponde.',
     read_again: 'Riprova',
     older: 'Messaggi precedenti',
     /** Who wrote it and when, to a screen reader: «Tu, oggi alle 10:00». */
@@ -56,7 +56,7 @@ export const the_words_of_the_chat = {
     no_receipt: 'nessuna ricevuta in 7 giorni',
     could_not_be_delivered: 'non consegnabile',
     called_off: 'annullato',
-    held: 'trattenuto',
+    held: 'fermo',
     put_aside: 'messo da parte',
   },
   /** The same, in a line on a contact's row, where room is short. */
@@ -66,7 +66,7 @@ export const the_words_of_the_chat = {
     no_receipt: 'nessuna ricevuta',
     could_not_be_delivered: 'non consegnabile',
     called_off: 'annullato',
-    held: 'trattenuto',
+    held: 'fermo',
     put_aside: 'messo da parte',
   },
   /** A message on its way while the phone has no network. */
@@ -75,20 +75,19 @@ export const the_words_of_the_chat = {
   the_annotations: {
     written: 'Scritto',
     received: 'Ricevuto',
-    received_by: (when: string) => `${when}, dal tuo telefono`,
+    received_by: (when: string) => `${when}, secondo il tuo telefono`,
     declared: 'Ora dichiarata',
-    declared_by: (when: string) => `${when}, la dice il suo telefono`,
+    declared_by: (when: string) => `${when}, secondo il suo telefono`,
     signature: 'Firma',
     signature_valid: 'valida: è di un tuo contatto',
     mailbox: 'Casella',
     the_bond_s_mailbox: 'quella del vostro legame',
-    relay: 'Ora del relay',
-    relay_missing: 'non disponibile',
     stage: 'Stato',
-    learned: 'Saputo',
-    learned_by: (when: string) => `${when}, dal tuo telefono`,
+    learned: 'Aggiornato',
+    learned_by: (when: string) => `${when}, secondo il tuo telefono`,
     why: {
-      on_its_way: 'aspetta la ricevuta del tuo contatto, fino a 7 giorni',
+      on_its_way:
+        'aspetta la ricevuta del tuo contatto: arriva quando apre Cumino con i Messaggi accesi, entro 7 giorni',
       on_its_way_with_no_network: 'il telefono non ha rete: partirà appena possibile',
       delivered: 'la ricevuta del tuo contatto è arrivata',
       no_receipt:
@@ -112,7 +111,7 @@ export const the_words_of_the_chat = {
   the_field: {
     label: 'Scrivi un messaggio',
     send: 'Invia',
-    not_written: 'Il messaggio non è stato scritto: riprova.',
+    not_written: 'Messaggio non inviato: riprova.',
     no_network: 'Il telefono non ha rete: i messaggi partiranno appena possibile.',
   },
   /** What a screen reader is told politely, as it comes. */

@@ -109,8 +109,7 @@ const TheAnnotations = (props: {
           <dd>{its.signature_valid}</dd>
           <dt>{its.mailbox}</dt>
           <dd>{its.the_bond_s_mailbox}</dd>
-          <dt>{its.relay}</dt>
-          <dd>{its.relay_missing}</dd>
+          {/* The relay's time is not told until the kernel gives it (K-5): a row that read «non disponibile» on every message read as a fault (part M7). */}
         </>
       ) : (
         <>
