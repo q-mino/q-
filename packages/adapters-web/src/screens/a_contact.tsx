@@ -426,6 +426,7 @@ const TheContact = (props: {
         <TheMark key={mark.extension} extension={mark.extension}>
           <ThePoints
             mark={mark}
+            about={it.card.name}
             course_of={(action) =>
               the_course_for(it, {
                 for: 'an_action',

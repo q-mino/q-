@@ -50,12 +50,16 @@ const ping_pong: AnExtensionCarried = {
 /**
  * Messaging, carried as ping pong is (MSG-10; part M3): preinstalled and
  * off, its manifest composed at the start, its configurator imported only
- * when the kernel loads it. Its part, the chat (`parts/the_chat.js`, K-3),
- * comes with part M5: until then its slots are drawn as the app's fault.
+ * when the kernel loads it; its part, the chat (`parts/the_chat.js`, K-3,
+ * part M5), imported when first drawn, so only once it is active, tried
+ * again as its realm is (PWA-3).
  */
 const messaging: AnExtensionCarried = {
   manifest: messaging_manifest,
   realm: async (host) => (await imported(() => import('@q-mino/messaging'))).messaging(host),
+  parts: {
+    'parts/the_chat.js': () => imported(() => import('@q-mino/messaging/parts/the_chat.js')),
+  },
 }
 
 /** The link's ticket in `ui`'s words (WEB-1, UI-1): one whose ticket `user` would not take is out of its form. */

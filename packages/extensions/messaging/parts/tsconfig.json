@@ -1,0 +1,13 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": [],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "rootDir": ".",
+    "outDir": "../.tsbuild/parts"
+  },
+  "include": ["."],
+  "references": [{ "path": ".." }, { "path": "../../../boundary" }]
+}

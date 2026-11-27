@@ -17,6 +17,7 @@ import {
   a_sharing_of_test,
   type ACameraOfTest,
   type ANodeOfTest,
+  type HowItAnswersTheParts,
   type WhatTheNodeHolds,
 } from '../the_node_of_a_story/index.ts'
 import { a_play_starts } from './the_plays.ts'
@@ -51,6 +52,8 @@ export interface AScreenStorysSetting {
   readonly words?: Readonly<Record<string, boundary.the_words_of_an_extension>>
   /** The parts the app carries (K-3); none by default, every slot the app's fault. */
   readonly parts?: ThePartsOfTheApp
+  /** How her node answers what the parts ask (K-3); greetings' greeting by default. */
+  readonly answers?: HowItAnswersTheParts
   /** Whether her phone shares (Web Share); it does by default. */
   readonly shares?: boolean
   /** How many cameras her phone has; one by default. */
@@ -121,7 +124,7 @@ export const AScreenStory = (props: AScreenStorysSetting) => {
     undefined,
   )
   if (made.current === undefined) {
-    const node = a_node_of_test(props.holds)
+    const node = a_node_of_test(props.holds, props.answers)
     const camera = a_camera_of_test(props.cameras)
     made.current = { node, camera }
     const hand = a_hand(the_root, node, camera)

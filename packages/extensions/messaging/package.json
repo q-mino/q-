@@ -7,11 +7,14 @@
   "exports": {
     ".": "./configurator.ts",
     "./manifest.json": "./manifest.json",
-    "./texts/it.json": "./texts/it.json"
+    "./texts/it.json": "./texts/it.json",
+    "./parts/the_chat.js": "./parts/the_chat.tsx"
   },
   "dependencies": {
+    "@preact/signals": "2.11.4",
     "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
+    "preact": "11.2.0",
     "zod": "^4.6.7"
   },
   "scripts": {

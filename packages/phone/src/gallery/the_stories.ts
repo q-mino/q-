@@ -25,6 +25,7 @@ import * as the_server from './stories/screens/the_server.stories.tsx'
 import * as the_introduction from './stories/screens/the_introduction.stories.tsx'
 import * as my_contacts from './stories/screens/my_contacts.stories.tsx'
 import * as a_contact from './stories/screens/a_contact.stories.tsx'
+import * as the_chat from './stories/screens/the_chat.stories.tsx'
 import * as the_handshake_in_person from './stories/screens/the_handshake_in_person.stories.tsx'
 import * as the_handshake_at_a_distance from './stories/screens/the_handshake_at_a_distance.stories.tsx'
 import * as an_invitation from './stories/screens/an_invitation.stories.tsx'
@@ -42,6 +43,7 @@ const the_screens = [
   the_server,
   my_contacts,
   a_contact,
+  the_chat,
   the_handshake_in_person,
   the_handshake_at_a_distance,
   an_invitation,

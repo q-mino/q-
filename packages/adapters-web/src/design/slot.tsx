@@ -72,6 +72,13 @@ export const Slot = <Subject,>(props: {
   subject: Subject
   /** Its label, in its extension's words. */
   label: string
+  /**
+   * Who or what its subject is, in the kernel's words, at the top of the
+   * whole screen beside the corner (on a bond, the contact's name), so that
+   * the screen an extension holds still says what it speaks of (part M5 of
+   * messaging: a conversation names its contact); none, the corner alone.
+   */
+  about?: string
   words: TheWordsOfASlot
   /** Where it is when first drawn (a story's case); in its place, else. */
   at_first?: WhereASlotIs
@@ -128,6 +135,7 @@ export const Slot = <Subject,>(props: {
     >
       {whole ? (
         <div data-part="corner">
+          {props.about !== undefined && <p data-part="about">{props.about}</p>}
           <Corner label={props.words.who_has_the_screen} chain={around}>
             <Gesture
               kind="quiet"

@@ -177,6 +177,7 @@ export const MyContacts = (props: { texts: MyContactsTexts }) => {
                         {/* A row holds no action and no page (EXT-16, MSG-15): its slots only. */}
                         <ThePoints
                           mark={mark}
+                          about={contact.name}
                           course_of={() => ({ course: 'nothing_asked' })}
                           taps={() => undefined}
                           opens={() => undefined}
