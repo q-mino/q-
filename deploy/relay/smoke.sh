@@ -3,8 +3,11 @@
 # valid TLS (with the commit given, if one is); the CORS preflight of a
 # collect; a deposit on a mailbox drawn for the test, and a collect with its
 # R that finds it and, left open, hears the next deposit; then the machine's
-# journal since the first request, which must say nothing of them (CFG-3).
-# The test's mailbox is forgotten with its envelopes after eight days (MBX-8).
+# journal since the first request, which must say nothing of them (CFG-3);
+# the stand `assistente` (INV-5, INV-7): its page answers 200 with its title
+# and the headers of INV-7, and its count is read; no link is taken (a take
+# would spend a visitor's ticket). The test's mailbox is forgotten with its
+# envelopes after eight days (MBX-8).
 #
 #   deploy/relay/smoke.sh [<commit>]
 #
@@ -71,12 +74,35 @@ grep -q "\"envelope\":\"$E1\"" "$work/collect" && grep -q '"event":"caught_up"' 
 grep -q '"event":"fact"' "$work/collect" && grep -q "\"envelope\":\"$E2\"" "$work/collect" &&
   ok 'collect left open: the next deposit heard as a fact' || no 'collect left open: no fact'
 
+# The stand's page (INV-7), its GET taking nothing; and the stand read, as
+# the assistant reads it (INV-5): how many invitations, never their tickets.
+page_headers="$(curl -sS --max-time 10 -o "$work/page" -D - "$origin/assistente" | tr -d '\r')"
+grep -q '^HTTP/[0-9.]* 200' <<<"$page_headers" && grep -q "<title>L&#39;assistente di Cumino</title>" "$work/page" &&
+  ok "the page /assistente: 200, its title" || no "the page /assistente: $(head -1 <<<"$page_headers")"
+grep -qi '^cache-control: no-store$' <<<"$page_headers" &&
+  grep -qi "^content-security-policy: default-src 'none';" <<<"$page_headers" &&
+  grep -qi '^referrer-policy: no-referrer$' <<<"$page_headers" &&
+  ! grep -qi '^set-cookie:' <<<"$page_headers" &&
+  ok 'the page: no-store, its CSP, no referrer, no cookie' || no "the page's headers: $page_headers"
+if grep -q '<form method="post"' "$work/page"; then
+  ok 'the page: the assistant is there, its button'
+else
+  grep -q 'non è ancora arrivato' "$work/page" && ok 'the page: the assistant is not there yet' ||
+    no 'the page: neither the button nor "not there yet"'
+fi
+stand="$(curl -fsS --max-time 10 -H 'Content-Type: application/json' \
+  -d '{"version":"1.0.0","input":{"stand":"assistente"}}' \
+  "$origin/passer_by/the_invitations_on_a_stand")" &&
+  [[ "$stand" == *'"event":"snapshot"'* ]] &&
+  ok "the stand read: $(grep -o '"invitation_id"' <<<"$stand" | wc -l) invitations on it" ||
+  no "the stand read: ${stand:-}"
+
 # The journal since the first request: nothing of the requests.
 if [[ "${CUMINO_RELAY_JOURNAL:-yes}" != no ]]; then
   journal="$(ssh -i "$HOME/.ssh/cumino-relay" -o IdentitiesOnly=yes -o BatchMode=yes \
     -o UserKnownHostsFile="$HOME/.ssh/cumino-relay.known_hosts" -o HostKeyAlias=cumino-relay \
     "deploy@$host" "journalctl -u cumino-relay.service -u caddy.service --since '$since UTC' --no-pager -o cat")"
-  if grep -qE "$D|$run|collect_the_envelopes|deposit_an_envelope|POST|GET /" <<<"$journal"; then
+  if grep -qE "$D|$run|collect_the_envelopes|deposit_an_envelope|the_invitations_on_a_stand|assistente|POST|GET /" <<<"$journal"; then
     no "the journal tells of the requests: $journal"
   else
     ok "the journal since $since UTC: nothing of the requests (${journal:-empty})"

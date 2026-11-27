@@ -57,8 +57,8 @@ import {
   type Phone,
   type PhoneState,
   type PhoneStorage,
-  no_deposit,
-  type MailboxState,
+  a_new_relay,
+  type RelayState,
   type Stack,
   type TheRelaysTransports,
   type TheStacksWorld,
@@ -367,7 +367,7 @@ export interface Start {
  */
 export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
   const time = a_clock('2026-11-20T10:00:00.000Z')
-  const relay_cell = cell<MailboxState>({ initial: no_deposit })
+  const relay_cell = cell<RelayState>({ initial: a_new_relay })
   const world: TheStacksWorld = {
     clock: time.clock,
     elapsed: time.elapsed,

@@ -3,7 +3,8 @@
 // configurator over the machine's world (the clock in UTC, the time that
 // passes by Node's timers, the hash of libsodium, the room on the disk the
 // database is on), checked before any request (CFG-2); its HTTP interface
-// served by Node's HTTP server on 127.0.0.1 (`@hono/node-server`'s listener,
+// served by Node's HTTP server on 127.0.0.1, with the stands of its settings,
+// their inviters' signatures checked on libsodium (INV-5, INV-6), (`@hono/node-server`'s listener,
 // WEB-7's), the executor of the deposits' waits started, and the relay asked
 // to forget what is past (MBX-8) at its start and every hour. Its stop: no
 // more connections taken, every open one let go (a collect that stays open,
@@ -15,7 +16,7 @@ import { createServer, type Server } from 'node:http'
 import { dirname } from 'node:path'
 import { getRequestListener } from '@hono/node-server'
 import * as zz from '@q-mino/domains/library'
-import { the_deposit_address_of } from '@q-mino/domains/seals/safe/_dsl.ts'
+import { the_deposit_address_of, type Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 import { libsodium_primitives } from '@q-mino/adapters-common'
 import {
   the_relays_storage,
@@ -69,8 +70,7 @@ const the_time_that_passes: zz.Elapsed = (milliseconds) =>
   })
 
 /** The hash of a collect secret (MBX-6): BLAKE2b-256 of R, as a node's safe draws D (SEA-4), on libsodium. */
-const the_hash_on_libsodium = async (): Promise<HashOfACollectSecret> => {
-  const primitives = await libsodium_primitives()
+const the_hash_on = (primitives: Primitives): HashOfACollectSecret => {
   return (secret) => Promise.resolve(the_deposit_address_of(primitives)(secret))
 }
 
@@ -101,10 +101,13 @@ export const the_relay_started =
   async (machine: TheMachine): Promise<TheRelayRunning> => {
     const storage = the_relays_storage(settings.database)
     try {
+      const primitives = await libsodium_primitives()
       const the_relay = await relay(storage)({
         clock: the_clock,
         elapsed: the_time_that_passes,
-        hash: await the_hash_on_libsodium(),
+        hash: the_hash_on(primitives),
+        stands: settings.stands,
+        signature_holds: primitives.signature_holds,
         room: the_room_on_the_disk({
           path: dirname(settings.database),
           kept: settings.kept_free,

@@ -1,0 +1,73 @@
+{
+  "domain": "desk/inviter",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "desk/inviter/value/ticket": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "desk/inviter/node/inviter": { "kind": "node" },
+    "desk/inviter/usecase/leave_an_invitation": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_invitation_is_on_the_stand": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "invitation_id": { "type": "string", "minLength": 1 },
+              "left_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["invitation_id", "left_at"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_stand_is_full": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/not_takeable_then": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        "event/the_invitation_cannot_be_left": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "desk/inviter/usecase/leave_an_invitation_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["stand", "ticket", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/inviter/version/inviter": { "kind": "version" }
+  }
+}

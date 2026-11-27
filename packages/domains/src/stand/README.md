@@ -1,0 +1,5 @@
+# `stand`: the relay's stand of invitations
+
+The relay's second office (INV-1..INV-10, [`docs/architecture.md`](../../../../docs/architecture.md) § 4 "The stand: `stand`"; the words in the [glossary](../../../../docs/glossary.md), "The words of the assistant and of the stand"): `stand/invitations` keeps the invitations an inviter leaves on each stand, each a ticket, until a passer-by takes it or its time is over. Its first user is the assistant ([`packages/assistant/README.md`](../../../assistant/README.md)); its personas are the desk's `inviter` and `passer_by` ([`../desk/README.md`](../desk/README.md)).
+
+The stories (INV-10) are one suite, [`packages/memory/test/relay/stand_stories.ts`](../../../memory/test/relay/stand_stories.ts), run on q-'s oracle and on the relay's SQLite: left and taken; the oldest first; the stand full; not takeable then; taken away at its time, or taken before it; two takes at once; the stand empty; a leave sent again; a leave by a caller that is not the stand's inviter; a passer-by's reading with no ticket. Over HTTP and the page: [`packages/relay/test/stand.test.ts`](../../../relay/test/stand.test.ts).
