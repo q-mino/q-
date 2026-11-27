@@ -86,8 +86,10 @@ const tuesday = '2026-11-17T23:00:00.000Z'
  * alone, as SC-44's and the serial orders'.
  */
 const the_time_of_the_2000_tools = 20_000
+/** Every story here reads the 2,000 tools: each its time (since 27 Nov 2026: two reached 5.7 and 6.0 s in #76's first run). */
+const timeout = the_time_of_the_2000_tools
 
-describe('SC-22, the catalogue in pages (the business)', () => {
+describe('SC-22, the catalogue in pages (the business)', { timeout }, () => {
   test(
     '2,000 tools, 50 at a time: each page pulled with its position, the total and the cursor of the next; two rakes across a boundary, neither repeated nor skipped',
     async () => {
