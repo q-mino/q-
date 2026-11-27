@@ -15,5 +15,5 @@
       "path": "../../boundary"
     }
   ],
-  "exclude": ["scripts", ".tsbuild"]
+  "exclude": ["scripts", "parts", ".tsbuild"]
 }

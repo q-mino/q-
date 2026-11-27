@@ -138,12 +138,18 @@ importers:
 
   packages/extensions/messaging:
     dependencies:
+      '@preact/signals':
+        specifier: 2.11.4
+        version: 2.11.4(preact@11.2.0)
       '@q-mino/boundary':
         specifier: workspace:*
         version: link:../../boundary
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../../domains
+      preact:
+        specifier: 11.2.0
+        version: 11.2.0
       zod:
         specifier: ^4.6.7
         version: 4.6.7

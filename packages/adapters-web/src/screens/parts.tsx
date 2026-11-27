@@ -122,6 +122,8 @@ const TheCourseOfAnAction = (props: { extension: string; course: ui_value.a_cour
  */
 export const ThePoints = (props: {
   mark: ui_value.a_mark
+  /** Who the place's subject is, in the kernel's words: on a bond, the contact's name, told at the top of a slot on the whole screen. */
+  about?: string
   /** The course of the last activity of an action. */
   course_of: (action: string) => ui_value.a_course
   taps: (action: string) => void
@@ -154,6 +156,7 @@ export const ThePoints = (props: {
           subject={props.mark.told}
           label={the_word_or_its_fault(app.common, words?.slots[slot], slot)}
           words={app.common.the_points.the_slot}
+          {...(props.about === undefined ? {} : { about: props.about })}
         >
           {(_, where) => (
             <APart

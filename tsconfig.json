@@ -80,6 +80,9 @@
       "path": "packages/extensions/messaging"
     },
     {
+      "path": "packages/extensions/messaging/parts"
+    },
+    {
       "path": "packages/extensions/messaging/scripts"
     },
     {

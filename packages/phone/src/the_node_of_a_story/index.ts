@@ -12,3 +12,18 @@ export {
   type WhatTheNodeHolds,
 } from './a_node_of_a_story.ts'
 export { greetings_carried, greetings_seen, greetings_words } from './greetings.ts'
+export {
+  a_phone_of_a_story,
+  messaging_carried,
+  messaging_seen,
+  messaging_words,
+  minutes_after_ten,
+  mine,
+  the_chats_of_a_story,
+  theirs,
+  type AChatOfAStory,
+  type AMessageOfAStory,
+  type APhoneOfAStory,
+  type a_stage_of_a_story,
+  type TheChatsOfAStory,
+} from './messaging.ts'

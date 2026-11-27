@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <!-- composed by build/compose.ts -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The keyboard resizes the page (part M5 of messaging): a screen, a conversation's field
+         at its bottom too, stays above it instead of under it. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
     <!-- The bar's colour by theme (PWA-7): Roano's paper, Lavagna's slate. -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf8f3" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2023" />

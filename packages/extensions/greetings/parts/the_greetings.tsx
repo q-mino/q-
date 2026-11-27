@@ -18,7 +18,7 @@ import { the_words_of_the_part as words } from '../texts/the_part.it.ts'
  * (the layer `frame`, WEB-26). [Q, C, high impact: A to discuss]
  */
 const its_look = `@layer extensions {
-  .the-greetings { display: grid; gap: var(--space-2); justify-items: start; margin: 0; }
+  .the-greetings { display: grid; align-content: start; gap: var(--space-2); justify-items: start; margin: 0; }
   .the-greetings button {
     min-block-size: var(--tap);
     padding: var(--space-2) var(--space-4);

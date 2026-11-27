@@ -506,7 +506,24 @@
   .slot > [data-part='corner'] {
     grid-area: head;
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
     justify-items: end;
+  }
+
+  /* Who the subject is, at the top start of the whole screen (a conversation's contact): the kernel's words. */
+  .slot > [data-part='corner'] > [data-part='about'] {
+    justify-self: start;
+    max-inline-size: 100%;
+    margin: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font-size: var(--text-l);
+    font-weight: var(--weight-strong);
+    line-height: var(--line-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .slot > [data-part='part'] {
@@ -537,6 +554,28 @@
     overflow: auto;
     border: 2px solid var(--extension-edge);
     background: var(--extension-paper);
+  }
+
+  /*
+   * A part of an extension's on the whole screen holds all of it (K-3; part
+   * M5 of messaging): the slot's row of its part, the kernel's wrapper of a
+   * part (`.a-part`, WEB-23) and the part's own element, each the space
+   * left and never more, so that a part may scroll inside itself and keep
+   * what it holds at the bottom (a conversation and its field). A part that
+   * holds less starts at the top, as before. [Q, C, high impact: A to discuss]
+   */
+  .slot[data-state='on_the_whole_screen']:has(> [data-part='part'] > .a-part) {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .slot[data-state='on_the_whole_screen'] > [data-part='part']:has(> .a-part) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .slot[data-state='on_the_whole_screen'] > [data-part='part'] > .a-part {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    min-block-size: 0;
   }
 
   .slot:popover-open {
