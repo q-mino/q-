@@ -6,7 +6,8 @@
 //
 // The round, as a person does it on the screens, by their Italian words:
 //   1. Anna's first face, then Bruno's (one profile loaded at a time: a cold
-//      load is ~900 requests, and GitHub Pages answers 429 to many of them).
+//      load is ~800 requests and the worker's ~190, PWA-8, and GitHub Pages
+//      refuses an address that asks too much).
 //      The page's policy must name the relay (`connect-src`), and screen 1c
 //      the relay and its public configuration.
 //   2. The handshake at a distance: Anna makes the link, Bruno opens it and
@@ -18,10 +19,21 @@
 //   4. Bruno activates it and offers it to Anna; Anna's ping gets its pong
 //      through the relay, and the time from the tap to the pong is measured;
 //      then Bruno's ping to Anna, the same way back.
+//   5. Messaging (its README's story 20; part M6, 27 Nov 2026): both
+//      activate it; Anna writes «Ciao Bruno» while his page is closed
+//      («in uscita»); Bruno opens it, his row of Anna reads «1 da leggere»,
+//      his conversation the message with its annotations; Anna's reads
+//      «consegnato»; Bruno answers, her row and her conversation show it, his
+//      reads «consegnato»; both reload, and both chats are as they were.
+// After the first faces, both apps installed (PWA-8): the worker activated
+// with its whole precache, the page its own. The service worker's requests
+// are watched on its own target (attached as it starts): how many, how many
+// from the network, its 429s and failures, its states.
 //
 // First the site's release (`phone/src/build_info.js`, past the CDN's cache):
 // its commit, which must be `--commit`'s when given, and its relay, which must
-// be `--relay`. A request answered 429 is counted; a page (or the release)
+// be `--relay`. A request answered 429 is counted, the first five with their
+// headers (`refused` in the report: a 429 the HTTP cache may keep); a page (or the release)
 // that does not come is asked again after a pause, 30 s and then doubled, at
 // most `--tries` times (default 4). Every wait is bounded, so the
 // run always ends; Chrome and its profiles are removed at the end, also on
@@ -68,6 +80,9 @@ const pause_before = (attempt) => 30_000 * 2 ** (attempt - 1)
 const relay_wait_ms = 90_000
 // PNG-4: a ping's 60 seconds from its delivery, the screen's 70 from the tap.
 const silence_wait_ms = 100_000
+// The worker's install: its precache at most six at a time, again after its
+// pauses while the host refuses (PWA-8): two minutes.
+const worker_wait_ms = 120_000
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms))
 // A promise that fails with `message` if it takes longer than `ms`.
@@ -104,6 +119,8 @@ const report = {
   started_at: new Date().toISOString(),
   steps: [],
   too_many_requests: {},
+  refused: {},
+  worker: {},
   loads: {},
   faults: [],
 }
@@ -192,10 +209,89 @@ const open_node = async (label) => {
   const { sessionId } = await browser.send('Target.attachToTarget', { targetId, flatten: true })
   const page = (method, params) => browser.send(method, params, sessionId)
   report.too_many_requests[label] = 0
+  report.refused[label] = []
+  report.worker[label] = {
+    requests: 0,
+    from_the_network: 0,
+    too_many_requests: 0,
+    failed: { count: 0, first: [] },
+    states: [],
+  }
+  // The service worker's own requests (its precache) are a target of their
+  // own: attached as it starts, before its first request, then let go.
+  const workers = new Set()
+  const asked = new Map()
   browser.listen((message) => {
+    if (message.method !== 'Target.attachedToTarget') return
+    const { sessionId: worker, targetInfo } = message.params
+    if (targetInfo.type === 'service_worker' && targetInfo.url.startsWith(site)) {
+      workers.add(worker)
+      void browser.send('Network.enable', {}, worker).catch(() => undefined)
+    }
+    void browser.send('Runtime.runIfWaitingForDebugger', {}, worker).catch(() => undefined)
+  })
+  await browser.send('Target.setAutoAttach', {
+    autoAttach: true,
+    waitForDebuggerOnStart: true,
+    flatten: true,
+  })
+  // The first refusals, as the browser saw them: their address, their
+  // headers (a 429 the HTTP cache may keep), whose request.
+  const refused = (whose, response) => {
+    if (report.refused[label].length >= 5) return
+    report.refused[label].push({
+      whose,
+      url: response.url.replace(site, ''),
+      from_the_disk_cache: response.fromDiskCache === true,
+      headers: response.headers,
+    })
+  }
+  browser.listen((message) => {
+    if (workers.has(message.sessionId) && message.method === 'Network.requestWillBeSent') {
+      asked.set(message.params.requestId, message.params.request.url.replace(site, ''))
+      return
+    }
+    if (workers.has(message.sessionId) && message.method === 'Network.loadingFailed') {
+      const failed = report.worker[label].failed
+      failed.count += 1
+      if (failed.first.length < 5) {
+        failed.first.push({
+          url: asked.get(message.params.requestId),
+          error: message.params.errorText,
+          canceled: message.params.canceled === true,
+        })
+      }
+      return
+    }
+    if (workers.has(message.sessionId) && message.method === 'Network.responseReceived') {
+      const response = message.params.response
+      report.worker[label].requests += 1
+      if (response.fromDiskCache !== true) report.worker[label].from_the_network += 1
+      if (response.status === 429) {
+        report.worker[label].too_many_requests += 1
+        report.too_many_requests[label] += 1
+        refused('worker', response)
+      }
+      return
+    }
     if (message.sessionId !== sessionId) return
     if (message.method === 'Network.responseReceived' && message.params.response.status === 429) {
       report.too_many_requests[label] += 1
+      refused('page', message.params.response)
+    }
+    if (message.method === 'ServiceWorker.workerVersionUpdated') {
+      for (const version of message.params.versions) {
+        const states = report.worker[label].states
+        if (version.scriptURL.startsWith(site) && states.at(-1) !== version.status) {
+          states.push(version.status)
+        }
+      }
+    }
+    if (message.method === 'ServiceWorker.workerErrorReported') {
+      report.faults.push({
+        node: label,
+        fault: `worker: ${message.params.errorMessage.errorMessage}`,
+      })
     }
     if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
       report.faults.push({
@@ -222,6 +318,7 @@ const open_node = async (label) => {
   await page('Runtime.enable')
   await page('Network.enable')
   await page('Log.enable')
+  await page('ServiceWorker.enable')
   await page('Emulation.setDeviceMetricsOverride', {
     width: 412,
     height: 915,
@@ -298,10 +395,11 @@ const type_into = (node, selector, value) =>
   evaluate(
     node,
     `(() => {
-      const input = document.querySelector(${JSON.stringify(selector)});
+      const input = [...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => !e.closest('[hidden],[inert]'));
       if (!input) return false;
       input.focus();
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(value)});
+      const its = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement;
+      Object.getOwnPropertyDescriptor(its.prototype, 'value').set.call(input, ${JSON.stringify(value)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
       return true;
     })()`,
@@ -397,9 +495,9 @@ const the_first_face = async (node, name) => {
   return `connect-src ${connect_src}; 1c links ${configuration}`
 }
 
-const activate_ping_pong = async (node) => {
+const activate = async (node, extension) => {
   await from_the_menu(node, 'Estensioni', 'Estensioni')
-  await tap(node, 'Ping pong', { contains: true })
+  await tap(node, extension, { contains: true })
   await tap(node, 'Accendila')
   await tap(node, 'Accetto')
   if (!(await until_the_text(node, 'Spegnila', 15_000))) {
@@ -448,6 +546,97 @@ const a_ping = async (node, to, outcome, ms) => {
   throw new Error(`no outcome in ${ms / 1000} s: ${await its_text(node)}`)
 }
 
+// Her app installed (PWA-5, PWA-8): the worker activated with the whole
+// precache, and her page its own, so that what she imports later (an
+// extension at its activation) comes from the cache, not from the host.
+const the_app_installed = async (node) => {
+  const installed = await until(
+    node,
+    `(async () => { const r = await navigator.serviceWorker.getRegistration(); return r?.active?.state === 'activated' && navigator.serviceWorker.controller !== null })()`,
+    worker_wait_ms,
+  )
+  const worker = report.worker[node.label]
+  if (!installed) {
+    throw new Error(
+      `not installed in ${worker_wait_ms / 1000} s: the worker ${worker.states.join(' → ')}, ${worker.failed.count} failed (${JSON.stringify(worker.failed.first)})`,
+    )
+  }
+  return `the worker ${worker.states.join(' → ')}; ${worker.requests} files, ${worker.from_the_network} from the network`
+}
+
+// The chat (messaging's part, MSG-7, MSG-15): on a contact's screen, its
+// slot taken to the whole screen; given back with Escape. Every query of the
+// chat is of the screen shown: the screens under it stay in the page,
+// hidden, with their own slots (the home's rows).
+/** The elements of `selector` on the screen shown, as an expression. */
+const all_shown = (selector) =>
+  `[...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => !e.closest('[hidden],[inert]'))`
+/** The first of them, as an expression. */
+const shown = (selector) => `${all_shown(selector)}[0]`
+const the_chat_slot = `.slot:has(.the-chat)`
+const the_conversation = `.the-chat[data-where="on_the_whole_screen"]`
+const open_the_chat = async (node, name) => {
+  await open_the_contact(node, name)
+  const gesture = shown(`${the_chat_slot} [data-part="head"] .gesture`)
+  if (!(await until(node, `!!${gesture}`, 30_000))) {
+    throw new Error(`no chat on «Un contatto»: ${await its_text(node)}`)
+  }
+  await evaluate(node, `${gesture}.click()`)
+  if (
+    !(await until(node, `!!${shown(`${the_conversation} textarea[name="the_message"]`)}`, 15_000))
+  ) {
+    throw new Error(`no conversation: ${await its_text(node)}`)
+  }
+}
+const give_the_chat_back = async (node) => {
+  for (const type of ['keyDown', 'keyUp']) {
+    await node.page('Input.dispatchKeyEvent', {
+      type,
+      key: 'Escape',
+      code: 'Escape',
+      windowsVirtualKeyCode: 27,
+    })
+  }
+  await sleep(400)
+}
+const write_in_the_chat = async (node, text) => {
+  await type_into(node, `${the_conversation} textarea[name="the_message"]`, text)
+  const send = shown(`${the_conversation} button[data-part="send"]`)
+  if (!(await until(node, `${send}?.disabled === false`, 5_000))) {
+    throw new Error(`«Invia» not enabled: ${await its_text(node)}`)
+  }
+  await evaluate(node, `${send}.click()`)
+}
+/** The field of the conversation and its note, for a fault's report. */
+const the_field = (node) =>
+  quietly(
+    node,
+    `(() => { const c = ${shown(the_conversation)}; return c === undefined ? 'no conversation' : 'the field «' + c.querySelector('textarea')?.value + '», its note ' + c.querySelector('[data-part="note"][role="status"]')?.dataset.state + ': ' + c.innerText.replace(/\\s+/g, ' ').trim().slice(0, 300) })()`,
+  )
+/** The messages of the conversation shown: whose, its state, its text; in the order of their texts. */
+const the_messages_in = `${all_shown(`${the_conversation} [data-part="a-message"]`)}.map((m) => ({ whose: m.dataset.whose, state: m.dataset.state, text: m.querySelector('[data-part="text"]')?.textContent ?? '' })).sort((a, b) => a.text.localeCompare(b.text))`
+const the_messages = (node) => quietly(node, the_messages_in)
+const a_message_is = (whose, text, state) =>
+  `${all_shown(`${the_conversation} [data-part="a-message"][data-whose="${whose}"]${state === undefined ? '' : `[data-state="${state}"]`}`)}.some((m) => m.querySelector('[data-part="text"]')?.textContent === ${JSON.stringify(text)})`
+/** The line of the chat on her contact's row, on her contacts' screen. */
+const the_line = (node) =>
+  quietly(
+    node,
+    `(() => { const line = ${shown('.the-chat[data-where="in_its_place"]')}; return line === undefined ? null : { state: line.dataset.state, to_read: line.dataset.toRead ?? null, text: line.innerText.replace(/\\s+/g, ' ').trim() } })()`,
+  )
+const until_the_line = async (node, text, to_read, ms) => {
+  const end = Date.now() + ms
+  while (Date.now() < end) {
+    const line = await the_line(node)
+    if (line?.text.includes(text) && (to_read === undefined || line.text.includes(to_read)))
+      return line
+    await sleep(200)
+  }
+  throw new Error(
+    `the row's line is not «${text}${to_read ? ` … ${to_read}` : ''}» in ${ms / 1000} s: ${JSON.stringify(await the_line(node))}`,
+  )
+}
+
 let anna
 let bruno
 try {
@@ -477,6 +666,13 @@ try {
   const anna_ok = await step("Anna's first face", () => the_first_face(anna, 'Anna'))
   bruno = await open_node('bruno')
   const bruno_ok = await step("Bruno's first face", () => the_first_face(bruno, 'Bruno'))
+  if (anna_ok && bruno_ok) {
+    await step('Both apps installed, their pages the workers’ (PWA-8)', async () => {
+      const annas = await the_app_installed(anna)
+      const brunos = await the_app_installed(bruno)
+      return `Anna: ${annas}; Bruno: ${brunos}`
+    })
+  }
   let link
   const handshake =
     anna_ok &&
@@ -509,7 +705,7 @@ try {
     }))
   if (handshake) {
     const anna_s =
-      (await step('Anna activates ping pong', () => activate_ping_pong(anna))) &&
+      (await step('Anna activates ping pong', () => activate(anna, 'Ping pong'))) &&
       (await step('Anna offers it to Bruno', () => offer_ping_pong(anna, 'Bruno')))
     if (anna_s) {
       await step('Anna pings Bruno, who has not activated it: silence', async () => {
@@ -519,7 +715,7 @@ try {
       })
     }
     const bruno_s =
-      (await step('Bruno activates ping pong', () => activate_ping_pong(bruno))) &&
+      (await step('Bruno activates ping pong', () => activate(bruno, 'Ping pong'))) &&
       (await step('Bruno offers it to Anna', () => offer_ping_pong(bruno, 'Anna')))
     if (anna_s && bruno_s) {
       await step('Anna pings Bruno: the pong, through the relay', async () => {
@@ -533,6 +729,133 @@ try {
         return `«pong!» ${seconds.toFixed(1)} s after the tap`
       })
     }
+    // Story 20 of messaging (its README): the chat of their bond, from end
+    // to end through the relay.
+    const both =
+      (await step('Anna activates messaging', () => activate(anna, 'Messaggi'))) &&
+      (await step('Bruno activates messaging', () => activate(bruno, 'Messaggi')))
+    let opened = 0
+    const chat =
+      both &&
+      (await step('Anna writes to Bruno, his page closed: «in uscita»', async () => {
+        await bruno.page('Page.navigate', { url: 'about:blank' })
+        await open_the_chat(anna, 'Bruno')
+        await write_in_the_chat(anna, 'Ciao Bruno')
+        if (!(await until(anna, a_message_is('mine', 'Ciao Bruno', 'on_its_way'), 15_000))) {
+          throw new Error(
+            `not «in uscita»: ${JSON.stringify(await the_messages(anna))}; ${await the_field(anna)}`,
+          )
+        }
+      })) &&
+      (await step('Bruno opens his page: Anna’s row, «1 da leggere»', async () => {
+        opened = Date.now()
+        await open_the_site(bruno, site, 'I miei contatti')
+        const line = await until_the_line(bruno, 'Ciao Bruno', '1 da leggere', relay_wait_ms)
+        if (line.to_read !== 'some') throw new Error(`the line: ${JSON.stringify(line)}`)
+        const seconds = (Date.now() - opened) / 1000
+        report.row_to_read_seconds = seconds
+        return `«${line.text}» ${seconds.toFixed(1)} s after the opening`
+      })) &&
+      (await step('Bruno’s conversation: «Ciao Bruno» with its annotations', async () => {
+        await open_the_chat(bruno, 'Anna')
+        if (!(await until(bruno, a_message_is('theirs', 'Ciao Bruno', 'received'), 15_000))) {
+          throw new Error(`no «Ciao Bruno»: ${JSON.stringify(await the_messages(bruno))}`)
+        }
+        await evaluate(
+          bruno,
+          `${shown(`${the_conversation} [data-part="a-message"][data-whose="theirs"] button[data-part="meta"]`)}.click()`,
+        )
+        const annotations = await evaluate(
+          bruno,
+          `[...document.querySelectorAll('${the_conversation} [data-part="annotations"]:not([hidden])')].map((dl) => dl.innerText.replace(/\\s+/g, ' ').trim()).join(' | ')`,
+        )
+        for (const said of [
+          'Firma',
+          'valida: è di un tuo contatto',
+          'Casella',
+          'quella del vostro legame',
+          'Ora dichiarata',
+        ]) {
+          if (!annotations.includes(said))
+            throw new Error(`no «${said}» in its annotations: ${annotations}`)
+        }
+        return annotations.slice(0, 200)
+      })) &&
+      (await step('Anna’s message: «consegnato»', async () => {
+        if (!(await until(anna, a_message_is('mine', 'Ciao Bruno', 'delivered'), relay_wait_ms))) {
+          throw new Error(`not «consegnato»: ${JSON.stringify(await the_messages(anna))}`)
+        }
+        const stage = await evaluate(
+          anna,
+          `${shown(`${the_conversation} [data-part="a-message"][data-whose="mine"] [data-part="stage"]`)}.textContent.trim()`,
+        )
+        if (stage !== 'consegnato') throw new Error(`the stage reads «${stage}»`)
+        const seconds = (Date.now() - opened) / 1000
+        report.delivered_seconds = seconds
+        return `«${stage}» ${seconds.toFixed(1)} s after Bruno’s opening`
+      })) &&
+      (await step('Bruno answers: Anna’s row, her conversation, his «consegnato»', async () => {
+        await give_the_chat_back(anna)
+        await back_to_the_contacts(anna)
+        const written = Date.now()
+        await write_in_the_chat(bruno, 'Ciao Anna')
+        const line = await until_the_line(anna, 'Ciao Anna', '1 da leggere', relay_wait_ms)
+        const seconds = (Date.now() - written) / 1000
+        await open_the_chat(anna, 'Bruno')
+        if (!(await until(anna, a_message_is('theirs', 'Ciao Anna', 'received'), 15_000))) {
+          throw new Error(`no «Ciao Anna»: ${JSON.stringify(await the_messages(anna))}`)
+        }
+        if (!(await until(bruno, a_message_is('mine', 'Ciao Anna', 'delivered'), relay_wait_ms))) {
+          throw new Error(`his not «consegnato»: ${JSON.stringify(await the_messages(bruno))}`)
+        }
+        const delivered = (Date.now() - written) / 1000
+        report.answer_row_seconds = seconds
+        report.answer_delivered_seconds = delivered
+        return `«${line.text}» ${seconds.toFixed(1)} s after his «Invia», «consegnato» at ${delivered.toFixed(1)} s`
+      }))
+    if (chat) {
+      await step('Both reload: both chats as they were', async () => {
+        const expected = {
+          anna: [
+            { whose: 'mine', state: 'delivered', text: 'Ciao Bruno' },
+            { whose: 'theirs', state: 'received', text: 'Ciao Anna' },
+          ],
+          bruno: [
+            { whose: 'theirs', state: 'received', text: 'Ciao Bruno' },
+            { whose: 'mine', state: 'delivered', text: 'Ciao Anna' },
+          ],
+        }
+        for (const [node, other] of [
+          [anna, 'Bruno'],
+          [bruno, 'Anna'],
+        ]) {
+          await node.page('Page.reload', {})
+          // The page opens again at her contacts, or at the screen of its address (WEB-25).
+          if (!(await until(node, `${shown('h1')} !== undefined`, open_wait_ms))) {
+            throw new Error(`${node.label}: not open again: ${await its_text(node)}`)
+          }
+          await back_to_the_contacts(node)
+          const line = await until_the_line(node, 'Ciao Anna', undefined, 30_000)
+          if (line.to_read !== 'none')
+            throw new Error(`${node.label}'s line: ${JSON.stringify(line)}`)
+          await open_the_chat(node, other)
+          const wanted = JSON.stringify(
+            [...expected[node.label]].sort((a, b) => a.text.localeCompare(b.text)),
+          )
+          if (
+            !(await until(
+              node,
+              `JSON.stringify(${the_messages_in}) === ${JSON.stringify(wanted)}`,
+              15_000,
+            ))
+          ) {
+            throw new Error(
+              `${node.label}'s chat after the reload: ${JSON.stringify(await the_messages(node))}`,
+            )
+          }
+        }
+      })
+    }
   }
 } catch (fault) {
   report.steps.push({ step: 'the round', outcome: 'failed', why: String(fault) })
@@ -541,8 +864,10 @@ try {
 report.ended_at = new Date().toISOString()
 writeFileSync(out_file, JSON.stringify(report, null, 2))
 console.log(
-  `answers 429: ${JSON.stringify(report.too_many_requests)}; loads: ${JSON.stringify(report.loads)}; report: ${out_file}`,
+  `answers 429: ${JSON.stringify(report.too_many_requests)}; loads: ${JSON.stringify(report.loads)}; the worker: ${JSON.stringify(report.worker)}; report: ${out_file}`,
 )
-const all_ok = report.steps.length === 13 && report.steps.every((one) => one.outcome === 'ok')
+// The round's steps: the release, the faces, the install, the handshake (3),
+// ping pong (7), messaging (story 20: 7).
+const all_ok = report.steps.length === 22 && report.steps.every((one) => one.outcome === 'ok')
 clean_all()
 process.exit(all_ok ? 0 : 1)

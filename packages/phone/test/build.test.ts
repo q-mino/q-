@@ -42,6 +42,7 @@ const the_files = (): string[] =>
     .filter((each) => statSync(join(out, each)).isFile())
     .map((each) => relative(out, join(out, each)).split(sep).join('/'))
 const the_page = (): string => readFileSync(join(out, 'index.html'), 'utf8')
+const the_paths_precached = (): string[] => the_precache_of(out).files.map((file) => file.path)
 const the_import_map = (): { readonly text: string; readonly imports: Record<string, string> } => {
   const text = /<script type="importmap">([\s\S]*?)<\/script>/.exec(the_page())?.[1] ?? ''
   const parsed: unknown = JSON.parse(text)
@@ -133,13 +134,22 @@ describe('the build', () => {
     expect(worker).not.toMatch(/^\s*(import|export)\b/m)
     const precache: unknown = JSON.parse(/^const the_precache = (.*);$/m.exec(worker)?.[1] ?? '')
     expect(precache).toEqual(the_precache_of(out))
-    expect(the_precache_of(out).files).toEqual(
+    expect(the_paths_precached()).toEqual(
       the_files()
         .filter((each) => each !== 'sw.js')
         .sort(),
     )
-    expect(the_precache_of(out).files).toContain('ext/ping_pong/configurator.js')
-    expect(the_precache_of(out).files).toContain('ext/messaging/configurator.js')
+    expect(the_paths_precached()).toContain('ext/ping_pong/configurator.js')
+    expect(the_paths_precached()).toContain('ext/messaging/configurator.js')
+  })
+
+  test('each file precached with its hash, as a fetch’s integrity (PWA-8)', () => {
+    for (const { path, integrity } of the_precache_of(out).files) {
+      const hash = createHash('sha256')
+        .update(readFileSync(join(out, path)))
+        .digest('base64')
+      expect(integrity).toBe(`sha256-${hash}`)
+    }
   })
 })
 
@@ -176,7 +186,7 @@ describe('the pages and their look (WEB-26, WEB-28)', () => {
     expect(preloaded).not.toContain('phone/src/main.js')
     expect(gallery).toContain(`<script type="importmap">${the_import_map().text}</script>`)
     for (const path of the_stylesheets(gallery)) expect(existsSync(join(out, path))).toBe(true)
-    expect(the_precache_of(out).files).toContain('galleria.html')
+    expect(the_paths_precached()).toContain('galleria.html')
   })
 
   test('on the release, no gallery, and the name under the icon «Cumino»', () => {
@@ -214,7 +224,7 @@ describe('the installed app (PWA-7)', () => {
     })
     for (const icon of ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'favicon.svg']) {
       expect(the_files()).toContain(icon)
-      expect(the_precache_of(out).files).toContain(icon)
+      expect(the_paths_precached()).toContain(icon)
     }
   })
 
