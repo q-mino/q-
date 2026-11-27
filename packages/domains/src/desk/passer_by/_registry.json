@@ -1,0 +1,123 @@
+{
+  "domain": "desk/passer_by",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "desk/passer_by/value/ticket": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "desk/passer_by/usecase/the_invitations_on_a_stand": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "invitation_id": { "type": "string", "minLength": 1 },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["invitation_id", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/passer_by/usecase/the_invitations_on_a_stand_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+            "required": ["stand"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/passer_by/usecase/take_an_invitation": {
+      "kind": "usecase",
+      "shapes": {
+        "event/the_invitation_is_yours": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": { "take_id": { "type": "string", "minLength": 1 } },
+            "required": ["take_id"],
+            "additionalProperties": false
+          }
+        },
+        "event/the_invitation_is_no_longer_on_the_stand": {
+          "direction": "given",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "desk/passer_by/usecase/take_an_invitation_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "invitation_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["stand", "invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/passer_by/usecase/the_invitation_taken": {
+      "kind": "usecase",
+      "shapes": {
+        "entry": {
+          "direction": "given",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "invitation_id": { "type": "string", "minLength": 1 },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["invitation_id", "ticket", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/passer_by/usecase/the_invitation_taken_input": {
+      "kind": "usecase",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "take_id": { "type": "string", "minLength": 1 } },
+            "required": ["take_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "desk/passer_by/version/passer_by": { "kind": "version" }
+  }
+}

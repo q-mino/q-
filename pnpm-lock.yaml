@@ -56,6 +56,9 @@ importers:
       libsodium-wrappers-sumo:
         specifier: ^0.8.4
         version: 0.8.4
+      qr:
+        specifier: 0.7.2
+        version: 0.7.2
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -279,6 +282,9 @@ importers:
       '@q-mino/domains':
         specifier: workspace:*
         version: link:../domains
+      hono:
+        specifier: ^4.13.19
+        version: 4.13.19
       zod:
         specifier: ^4.6.7
         version: 4.6.7

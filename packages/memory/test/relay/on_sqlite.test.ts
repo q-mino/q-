@@ -3,6 +3,7 @@ import { always_room, the_relays_storage } from '@q-mino/adapters-node'
 import { relay } from '@q-mino/relay'
 import { a_world, harnessed, hash, type Start } from './harness.ts'
 import { stories_of_the_relay } from './stories.ts'
+import { stories_of_the_stand } from './stand_stories.ts'
 
 // The relay's stories on its storage, SQLite (TST-1, MBX-7, MBX-8): its
 // conformance suite, the same stories as on the oracle (`relay.test.ts`),
@@ -39,3 +40,6 @@ const a_relay_on_sqlite = async (start: Start = {}) => {
 }
 
 stories_of_the_relay('on SQLite', a_relay_on_sqlite, 'by_reading_again')
+
+// The stand's stories on the relay's storage (INV-10): its conformance suite.
+stories_of_the_stand('on SQLite', a_relay_on_sqlite)

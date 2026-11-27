@@ -14,3 +14,4 @@ export {
 export * as value from './_value.ts'
 export * as _desk from '../_door_below.ts'
 export * as deposits from '../../mailbox/deposits/_door_desk.ts'
+export * as invitations from '../../stand/invitations/_door_desk.ts'

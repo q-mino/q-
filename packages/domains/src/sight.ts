@@ -5,15 +5,17 @@ import type * as zz from './library/index.ts'
 // scopes of a folder the folders it sees, with those kinds only. What is not
 // listed is not seen; a folder sees its ancestors by the tree's rule. Its
 // keys are the top of the tree, the kernel's domains of § 2 as they are
-// written (MBX-4): since part 8.1 the relay's, since part 9.1 `seals`, since
+// written (MBX-4): since part 8.1 the relay's, since part B4 of the assistant its stand (`stand`), since part 9.1 `seals`, since
 // part 11.1 `bonds`, since part 11.2 `reaction` (GR-9), since part 10.1 `post`, since part 12.4 `extensions`, since part 13.1 `auth` and `persona`, since part 15.1 `user`, since part 16.1 `ui`. A folder they do not name (`library/`, the domains still
 // to write) is outside it.
 
 export const sight = {
   /** The relay's business sees no other domain (GR-3): its mailboxes are its own. */
   mailbox: {},
-  /** The relay's personas see the use cases, identities and facts of the mailbox (PER-19, GR-1). */
-  desk: { mailbox: ['usecase', 'id', 'fact'] },
+  /** The relay's stand sees no other domain (GR-3, INV-1): its invitations are its own. */
+  stand: {},
+  /** The relay's personas see the use cases, identities and facts of the mailbox and of the stand (PER-19, GR-1, INV-5). */
+  desk: { mailbox: ['usecase', 'id', 'fact'], stand: ['usecase', 'id', 'fact'] },
   /** The safe sees no other domain: `seals` imports the library only (§ 2, SEA-1). */
   seals: {},
   /** The post sees the safe's identities: a request names the face that signs it (GR-5, PST-5). */

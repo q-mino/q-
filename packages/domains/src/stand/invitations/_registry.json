@@ -1,0 +1,735 @@
+{
+  "domain": "stand/invitations",
+  "major": 1,
+  "version": "1.0.0",
+  "paths": {
+    "stand/invitations/id/stand": {
+      "kind": "id",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "pattern": "^[a-z_]{1,32}$" }
+        }
+      }
+    },
+    "stand/invitations/id/invitation_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "stand/invitations/id/take_id": {
+      "kind": "id",
+      "shapes": {
+        "schema": { "direction": "carried", "schema": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "stand/invitations/value/ticket": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" }
+        }
+      }
+    },
+    "stand/invitations/value/invitation_status": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "string", "enum": ["on_the_stand", "taken", "taken_away"] }
+        }
+      }
+    },
+    "stand/invitations/value/invitation_on_the_stand": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "left_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "on_the_stand" },
+              "taken_at": { "not": {} },
+              "take_id": { "not": {} },
+              "taken_away_at": { "not": {} }
+            },
+            "required": ["id", "stand", "ticket", "left_at", "takeable_until", "status"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/value/taken_invitation": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "left_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "taken" },
+              "taken_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "take_id": { "type": "string", "minLength": 1 },
+              "taken_away_at": { "not": {} }
+            },
+            "required": [
+              "id",
+              "stand",
+              "ticket",
+              "left_at",
+              "takeable_until",
+              "status",
+              "taken_at",
+              "take_id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/value/invitation_taken_away": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "ticket": { "not": {} },
+              "left_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": { "type": "string", "const": "taken_away" },
+              "taken_at": { "not": {} },
+              "take_id": { "not": {} },
+              "taken_away_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "stand", "left_at", "takeable_until", "status", "taken_away_at"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/value/invitation": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+                  "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+                  "left_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "takeable_until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "on_the_stand" },
+                  "taken_at": { "not": {} },
+                  "take_id": { "not": {} },
+                  "taken_away_at": { "not": {} }
+                },
+                "required": ["id", "stand", "ticket", "left_at", "takeable_until", "status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+                  "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+                  "left_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "takeable_until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "taken" },
+                  "taken_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "take_id": { "type": "string", "minLength": 1 },
+                  "taken_away_at": { "not": {} }
+                },
+                "required": [
+                  "id",
+                  "stand",
+                  "ticket",
+                  "left_at",
+                  "takeable_until",
+                  "status",
+                  "taken_at",
+                  "take_id"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+                  "ticket": { "not": {} },
+                  "left_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "takeable_until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "taken_away" },
+                  "taken_at": { "not": {} },
+                  "take_id": { "not": {} },
+                  "taken_away_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "stand", "left_at", "takeable_until", "status", "taken_away_at"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "stand/invitations/value/invitation_in_sight": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "left_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "left_at", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/value/invitation_in_hand": {
+      "kind": "value",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["id", "ticket", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/fact/an_invitation_has_been_left": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new_invitation": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+                  "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+                  "left_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "takeable_until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "status": { "type": "string", "const": "on_the_stand" },
+                  "taken_at": { "not": {} },
+                  "take_id": { "not": {} },
+                  "taken_away_at": { "not": {} }
+                },
+                "required": ["id", "stand", "ticket", "left_at", "takeable_until", "status"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["new_invitation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/fact/an_invitation_has_been_taken": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "taken_invitation": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "taken" },
+                  "taken_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "take_id": { "type": "string", "minLength": 1 }
+                },
+                "required": ["id", "status", "taken_at", "take_id"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["taken_invitation"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/fact/an_invitation_has_been_taken_away": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "invitation_taken_away": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "status": { "type": "string", "const": "taken_away" },
+                  "taken_away_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["id", "status", "taken_away_at"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["invitation_taken_away"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/fact/the_invitation_was_taken_before_its_time": {
+      "kind": "fact",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/an_invitation_has_this_id": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/the_stand_has_room": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+            "required": ["stand"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/it_can_be_taken_until_then": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "now": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["now", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/the_invitation_is_on_the_stand": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "invitation_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["stand", "invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/the_invitation_is_still_on_its_stand": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/predicate/the_invitation_has_been_taken": {
+      "kind": "predicate",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/effect/wait_until_it_can_no_longer_be_taken": {
+      "kind": "effect",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/selection/invitation/the_invitation_is_on_this_stand": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+            "required": ["stand"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/selection/invitation/the_invitation_can_be_taken": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": { "type": "object", "properties": {}, "additionalProperties": false }
+        }
+      }
+    },
+    "stand/invitations/selection/invitation/the_invitation_was_taken_by": {
+      "kind": "selection",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": { "take_id": { "type": "string", "minLength": 1 } },
+            "required": ["take_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/command/an_invitation_can_be_left": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_invitation_is_new": {
+                "type": "object",
+                "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+                "required": ["invitation_id"],
+                "additionalProperties": false
+              },
+              "the_stand_has_room": {
+                "type": "object",
+                "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+                "required": ["stand"],
+                "additionalProperties": false
+              },
+              "it_can_be_taken_until_then": {
+                "type": "object",
+                "properties": {
+                  "now": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "takeable_until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  }
+                },
+                "required": ["now", "takeable_until"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "the_invitation_is_new",
+              "the_stand_has_room",
+              "it_can_be_taken_until_then"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/command/leave_an_invitation": { "kind": "command" },
+    "stand/invitations/command/leave_an_invitation_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "ticket": { "type": "string", "maxLength": 4096, "pattern": "^[A-Za-z0-9_-]+$" },
+              "takeable_until": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": ["stand", "ticket", "takeable_until"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/command/take_an_invitation": { "kind": "command" },
+    "stand/invitations/command/take_an_invitation_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+              "invitation_id": { "type": "string", "minLength": 1 }
+            },
+            "required": ["stand", "invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/command/take_away_an_invitation": { "kind": "command" },
+    "stand/invitations/command/take_away_an_invitation_input": {
+      "kind": "command",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "invitation_id": { "type": "string", "minLength": 1 } },
+            "required": ["invitation_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/query/the_invitation_waits_on_the_stand": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "carried",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "the_invitation_is_on_this_stand": {
+                "type": "object",
+                "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+                "required": ["stand"],
+                "additionalProperties": false
+              },
+              "the_invitation_can_be_taken": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": ["the_invitation_is_on_this_stand", "the_invitation_can_be_taken"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/query/the_invitations_on_a_stand": { "kind": "query" },
+    "stand/invitations/query/the_invitations_on_a_stand_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "stand": { "type": "string", "pattern": "^[a-z_]{1,32}$" } },
+            "required": ["stand"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/query/the_invitation_taken": { "kind": "query" },
+    "stand/invitations/query/the_invitation_taken_input": {
+      "kind": "query",
+      "shapes": {
+        "schema": {
+          "direction": "read",
+          "schema": {
+            "type": "object",
+            "properties": { "take_id": { "type": "string", "minLength": 1 } },
+            "required": ["take_id"],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "stand/invitations/usecase/leave_an_invitation": { "kind": "usecase" },
+    "stand/invitations/usecase/take_an_invitation": { "kind": "usecase" },
+    "stand/invitations/usecase/take_away_an_invitation": { "kind": "usecase" },
+    "stand/invitations/usecase/the_invitations_on_a_stand": { "kind": "usecase" },
+    "stand/invitations/usecase/the_invitation_taken": { "kind": "usecase" },
+    "stand/invitations/version/invitations": { "kind": "version" }
+  }
+}

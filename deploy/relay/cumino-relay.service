@@ -4,7 +4,8 @@
 # (DynamicUser), its database in the state directory systemd gives it
 # (/var/lib/cumino-relay, REL-1), nothing else of the machine writable, no
 # address but loopback. A start with settings out of form (exit 78, REL-1) is
-# not tried again. Installed by provision.sh. [Q, C, 25 Nov 2026]
+# not tried again. Installed by provision.sh. [Q, C, 25 Nov 2026] The stand
+# of the assistant and its page (INV-6, INV-7): 27 Nov 2026.
 
 [Unit]
 Description=Cumino's relay
@@ -19,6 +20,11 @@ Type=simple
 ExecStart=/opt/node/bin/node --enable-source-maps --disable-warning=ExperimentalWarning /opt/cumino-relay/current/relay.mjs
 Environment=CUMINO_RELAY_PORT=8080
 Environment=NODE_ENV=production
+# The stands (INV-6): public data. `assistente`, the assistant's, its links to
+# the test site; no inviter yet until its key is added here, the 43
+# characters of the public half of the assistant's stand.key (AST-13), as
+# "inviter":"<key>", then deploy.sh provision.
+Environment='CUMINO_RELAY_STANDS=[{"name":"assistente","app":"https://q-mino-prova.github.io/q-/"}]'
 Restart=on-failure
 RestartSec=2
 RestartPreventExitStatus=78

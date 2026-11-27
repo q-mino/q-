@@ -115,11 +115,13 @@ export const deposit_writes: zz.FactWrites<zz.FactsIn<typeof deposits_fact>, Wri
 }
 
 /**
- * The first position the log must keep (MBX-8): the deposit fact of the
- * oldest deposit not forgotten, whose operation the duplicate branch may
- * meet again (DOM-11); with none, the last fact, so that a reader waiting
- * after it still meets it. Everything before is of deposits forgotten.
+ * The first position the log must keep (MBX-8, INV-8): the deposit fact of
+ * the oldest deposit not forgotten, or the leave fact of the oldest
+ * invitation not forgotten (`invitations.ts`), whose operation the
+ * duplicate branch may meet again (DOM-11); with none, the last fact, so
+ * that a reader waiting after it still meets it. Everything before is of
+ * deposits and invitations forgotten.
  */
 export const the_first_position_kept = sql(
-  "SELECT MIN(COALESCE((SELECT MIN(deposit_position) FROM deposits), seq), seq) AS kept_from FROM sqlite_sequence WHERE name = 'facts'",
+  "SELECT MIN(COALESCE((SELECT MIN(deposit_position) FROM deposits), seq), COALESCE((SELECT MIN(left_position) FROM invitations), seq), seq) AS kept_from FROM sqlite_sequence WHERE name = 'facts'",
 )

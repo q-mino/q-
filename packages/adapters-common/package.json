@@ -11,6 +11,7 @@
     "@q-mino/boundary": "workspace:*",
     "@q-mino/domains": "workspace:*",
     "libsodium-wrappers-sumo": "^0.8.4",
+    "qr": "0.7.2",
     "zod": "^4.6.7"
   }
 }

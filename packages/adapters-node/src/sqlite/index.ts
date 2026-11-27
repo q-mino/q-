@@ -1,6 +1,7 @@
 // The relay's storage on SQLite (`node:sqlite`; CFG-3, ADP-6, ADP-8, MBX-8):
-// the state of `mailbox/deposits`, its fact log, its outbox and its
-// executor's state, in one database, reached only through the ports. A
+// the state of `mailbox/deposits` and of `stand/invitations` (INV-1), their
+// fact log, their outbox and their executor's state, in one database,
+// reached only through the ports. A
 // serial writer (DOM-9): one process, and every command's step is
 // synchronous, one transaction from the duplicate branch to the commit, so
 // that the outcomes are those of a serial order by construction (TST-5).
@@ -25,6 +26,22 @@ import {
   the_first_position_kept,
   type Write,
 } from './deposits.ts'
+import { registry as invitations_registry } from '@q-mino/domains/stand/invitations/_registry.ts'
+import {
+  leave_an_invitation,
+  take_an_invitation,
+  take_away_an_invitation,
+  the_invitation_taken,
+  the_invitations_on_a_stand,
+} from '@q-mino/domains/stand/invitations/_usecase.ts'
+import {
+  forgetting_the_invitations,
+  invitation_fragments,
+  invitation_selection_fragments,
+  invitation_sources,
+  invitation_writes,
+  the_invitations_tables,
+} from './invitations.ts'
 import { the_log, the_logs_tables, waiting } from './log.ts'
 import { the_outbox, the_outboxs_tables } from './outbox.ts'
 import { after, holds, integer_of, operators, rows, run, sql, text_of, type Sql } from './sql.ts'
@@ -72,7 +89,7 @@ const select = (plan: Plan, selection: Sql, limit?: number): Sql => {
 export const the_relays_storage = (location: string) => {
   const database = new DatabaseSync(location)
   database.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;')
-  database.exec(the_logs_tables + the_outboxs_tables + the_deposits_tables)
+  database.exec(the_logs_tables + the_outboxs_tables + the_deposits_tables + the_invitations_tables)
   const waits = waiting()
   const facts = the_log(database, waits)
   const entries = the_outbox(database, waits)
@@ -203,13 +220,42 @@ export const the_relays_storage = (location: string) => {
       }),
     }),
     /**
-     * The relay forgets, now, what it discarded a day or more ago (MBX-8), as
-     * each deposit and each discard does: so that a relay with neither for a
-     * while forgets all the same, when its configurator asks (step 24).
+     * The ports of `stand/invitations` over the store: its commands, and its
+     * reads, snapshots, which no leaf streams (INV-5).
+     */
+    invitations: (versions: zz.Versions) => ({
+      ...zz.command_use_case_ports({
+        registry: invitations_registry,
+        versions,
+        use_cases: { leave_an_invitation, take_an_invitation, take_away_an_invitation },
+      })({
+        algebra: { predicate: invitation_fragments, ...operators },
+        write: invitation_writes,
+        execute,
+        recorded: (operation) => Promise.resolve(facts.recorded_by(operation)),
+      }),
+      ...zz.read_use_case_ports({
+        registry: invitations_registry,
+        versions,
+        use_cases: { the_invitations_on_a_stand, the_invitation_taken },
+      })({
+        algebra: { predicate: invitation_selection_fragments, ...operators, after },
+        sources: invitation_sources,
+        read,
+        page,
+        streams: {},
+      }),
+    }),
+    /**
+     * The relay forgets, now, what it discarded a day or more ago (MBX-8), and
+     * the invitations whose time was over a day or more ago (INV-8), as each
+     * deposit, discard, leave and take-away does: so that a relay with none
+     * for a while forgets all the same, when its configurator asks (step 24).
      */
     forget_what_is_past: (now: zz.date_time): void => {
       in_one_step(() => {
         write(forgetting(now))
+        write(forgetting_the_invitations(now))
         forget_what_is_discarded()
       })
     },
