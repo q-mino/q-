@@ -23,7 +23,7 @@ export const the_bytes_a_qr_holds = 2331
  * Node's globals.
  */
 const the_utf8_length_of = (text: string): number =>
-  [...text].reduce((bytes, character) => {
+  Array.from(text).reduce((bytes, character) => {
     const point = character.codePointAt(0) ?? 0
     return bytes + (point < 0x80 ? 1 : point < 0x800 ? 2 : point < 0x10000 ? 3 : 4)
   }, 0)

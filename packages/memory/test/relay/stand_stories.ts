@@ -110,13 +110,13 @@ export const stories_of_the_stand = (
       const relay = await a_relay()
       const stand = at_the_stand(relay)
       const left = await stand.leaves(thursday('09:00'), T(1), friday('09:00'))
+      const invitation_id = the_id_left(left)
       expect(left).toEqual([
         {
           event: 'the_invitation_is_on_the_stand',
-          payload: { invitation_id: expect.any(String), left_at: thursday('09:00') },
+          payload: { invitation_id, left_at: thursday('09:00') },
         },
       ])
-      const invitation_id = the_id_left(left)
       expect(await stand.reads(thursday('10:00'))).toEqual([
         { invitation_id, takeable_until: friday('09:00') },
       ])

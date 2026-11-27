@@ -63,7 +63,7 @@ export const invitation = value.invitation
 export type invitation = z.output<typeof invitation>
 
 /**
- * What a passer-by sees of an invitation on the stand: which one, and until when. Never its ticket (INV-5).
+ * What a passer-by sees of an invitation on the stand: which one, when it was left, until when. Never its ticket (INV-5).
  *
  * @see {@link value.invitation_in_sight}
  */

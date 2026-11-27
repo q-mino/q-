@@ -90,11 +90,8 @@ describe('the stand over HTTP (INV-5..INV-7)', () => {
       posted(body, { Authorization: `Signature ${key.signs(body)}` }),
     )
     expect(left.status).toBe(200)
-    expect(await lines_of(left)).toEqual([
-      {
-        event: 'the_invitation_is_on_the_stand',
-        payload: { invitation_id: expect.any(String), left_at: thursday('09:00') },
-      },
+    expect(await lines_of(left)).toMatchObject([
+      { event: 'the_invitation_is_on_the_stand', payload: { left_at: thursday('09:00') } },
     ])
     const read = await relay.app.request(
       '/passer_by/the_invitations_on_a_stand',

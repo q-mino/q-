@@ -10,7 +10,7 @@
 import { jsx, type Child } from 'hono/jsx'
 import { the_path_of, the_qr_of, type Modules } from '@q-mino/adapters-common'
 import type { AStandsPage } from '@q-mino/adapters-node'
-import { words } from '../texts/it.ts'
+import { words } from '../texts/index.ts'
 
 /** An element, its attributes and its children. */
 const h = (
