@@ -9,5 +9,6 @@ import * as zz from '../library/index.ts'
 export * as value from './_value.ts'
 export * as dsl from './_dsl.ts'
 export * as deposits from '../mailbox/deposits/_door_desk.ts'
+export * as invitations from '../stand/invitations/_door_desk.ts'
 
 export const { node, AND, OR, NOT } = zz.builders_at<zz.RootContext>()

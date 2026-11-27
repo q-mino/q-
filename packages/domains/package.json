@@ -9,6 +9,7 @@
     "./seals/*": "./src/seals/*",
     "./post/*": "./src/post/*",
     "./mailbox/*": "./src/mailbox/*",
+    "./stand/*": "./src/stand/*",
     "./desk/*": "./src/desk/*",
     "./bonds/*": "./src/bonds/*",
     "./reaction/*": "./src/reaction/*",

@@ -5,3 +5,4 @@
 // doors the map opens to it.
 
 export * as deposits from '../mailbox/deposits/_door_desk.ts'
+export * as invitations from '../stand/invitations/_door_desk.ts'

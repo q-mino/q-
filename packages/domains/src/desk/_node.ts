@@ -8,7 +8,7 @@ import type * as zz from '../library/index.ts'
 import * as node from './node.ts'
 
 /**
- * Whoever comes to the relay's counter, with a collect secret or with nothing.
+ * Whoever comes to the relay's counter, with a collect secret, an inviter's signature, or nothing.
  *
  * @see {@link node.desk}
  */
