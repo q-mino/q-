@@ -1,4 +1,4 @@
-// The module of `bonds/address_book` on IndexedDB (part 21.2, WEB-8, WEB-9):
+// The module of `bonds/address_book` on the node's database (IndexedDB, SQLite) (part 21.2, WEB-8, WEB-9):
 // the oracle's module (TST-2) over the domain's store. Its records sit under
 // `['state', kind, id]`, a face or a bond as `_value.ts` gives it; its
 // predicates read the records they name by key, or a kind's by range, and
@@ -8,7 +8,7 @@
 // secret of a ticket is verified over the primitives port, with the safe's
 // pure function (BND-9, SEA-6), as the oracle does.
 
-import type { TheAddressBooksPorts } from '@q-mino/adapters-common'
+import type { TheAddressBooksPorts } from '../../ports/index.ts'
 import * as zz from '@q-mino/domains/library'
 import { registry } from '@q-mino/domains/bonds/address_book/_registry.ts'
 import type * as address_book_fact from '@q-mino/domains/bonds/address_book/_fact.ts'
@@ -438,11 +438,11 @@ const bonds_command_use_cases = {
 }
 
 /**
- * The ports of `bonds/address_book` on IndexedDB: its commands, one
+ * The ports of `bonds/address_book` on the node's database: its commands, one
  * transaction each (WEB-9), and its reads, by subject, each in one snapshot
  * (WEB-8). No read streams, as the oracle's.
  */
-export const bonds_ports_on_indexeddb =
+export const bonds_ports_on_the_node_s_database =
   (node: Pick<TheNodesStorage, 'domain'>, primitives: Primitives) =>
   (versions: zz.Versions): TheAddressBooksPorts => {
     const storage = node.domain('bonds/address_book')

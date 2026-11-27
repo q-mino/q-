@@ -1,4 +1,7 @@
-import { bonds_ports_on_indexeddb, extensions_ports_on_indexeddb } from '@q-mino/adapters-web'
+import {
+  bonds_ports_on_the_node_s_database,
+  extensions_ports_on_the_node_s_database,
+} from '@q-mino/adapters-common'
 import { a_node_on_indexeddb, an_indexeddb_that_knows_its_work } from '../../indexeddb/storage.ts'
 import { fake_primitives } from '../../seals/primitives.ts'
 import {
@@ -27,8 +30,8 @@ const on_indexeddb: AFactory = async (start) => {
     outbox: node.outbox,
     executor: node.executor,
     held: node.held,
-    office: (installed) => extensions_ports_on_indexeddb(node, installed),
-    address_book: bonds_ports_on_indexeddb(node, fake_primitives),
+    office: (installed) => extensions_ports_on_the_node_s_database(node, installed),
+    address_book: bonds_ports_on_the_node_s_database(node, fake_primitives),
     at_work: browser.at_work,
   }
   await the_address_book_made_through_its_commands(storage, start)

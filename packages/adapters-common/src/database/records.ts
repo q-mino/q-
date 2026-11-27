@@ -1,4 +1,4 @@
-// A business domain's records in its store (WEB-8): under `['state', kind,
+// A business domain's records in its store (WEB-8; on IndexedDB and on SQLite): under `['state', kind,
 // ...ids]`, each a value of the domain as its `_value.ts` gives it, parsed
 // when read, so that a record out of its form fails where it is read, as a
 // case of its own (`ARecordOutOfItsForm`, WEB-8). The
@@ -9,7 +9,7 @@
 
 import type { z } from 'zod'
 import type { AKey, APut, ARange, Fragment, Records } from './command.ts'
-import { the_name_of } from './database.ts'
+import { the_name_of, type AStoredKey } from './the_node_s_database.ts'
 
 /**
  * A stored record that does not read with its domain's schema (WEB-8, the
@@ -42,12 +42,12 @@ export const the_records_of_a_domain = (path: string) => {
   return {
     store,
     /** A record of a kind, by its ids. */
-    a: (kind: string, ...ids: readonly IDBValidKey[]): AKey => ({
+    a: (kind: string, ...ids: readonly AStoredKey[]): AKey => ({
       store,
       key: ['state', kind, ...ids],
     }),
     /** Every record of a kind (under its ids, if given). */
-    every: (kind: string, ...ids: readonly IDBValidKey[]): ARange => ({
+    every: (kind: string, ...ids: readonly AStoredKey[]): ARange => ({
       store,
       prefix: ['state', kind, ...ids],
     }),

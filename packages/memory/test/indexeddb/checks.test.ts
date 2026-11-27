@@ -1,6 +1,7 @@
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { expect, test, vi } from 'vitest'
-import { NotTheWriter, the_node_s_storage, type TheNodesStorage } from '@q-mino/adapters-web'
+import { the_node_s_storage, type TheNodeOnIndexedDb } from '@q-mino/adapters-web'
+import { NotTheWriter } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import {
   a_phone_over,
@@ -163,7 +164,7 @@ test('the ticket L_c asked for under two operations, one sent twice, through the
 test('a rejection leaves no fact: the records, the position, the log, the versions and the outbox unchanged', async () => {
   const anna = await anna_s_phone()
   const kept = async () => ({
-    records: await everything_kept(anna.opened.database),
+    records: await everything_kept(anna.opened.connection),
     position: String(await anna.opened.position()),
     facts: await the_facts_logged(anna.opened.log),
     versions: await anna.opened.stored_versions(),
@@ -219,7 +220,7 @@ const another_tab = (indexed_db: IDBFactory, name: string, how: 'if_no_tab_is' |
   )
 
 /** The tab that took the writer, or the check fails. */
-const the_writer = async (opening: ReturnType<typeof another_tab>): Promise<TheNodesStorage> => {
+const the_writer = async (opening: ReturnType<typeof another_tab>): Promise<TheNodeOnIndexedDb> => {
   const opened = await opening
   if (opened.writer !== 'this_tab') throw new Error('the tab did not take the writer')
   return opened
@@ -239,7 +240,7 @@ test('a second tab composes nothing; "use here" takes the writer, and the first 
   const here = await a_phone_over(await the_writer(another_tab(indexed_db, name, 'use_here')))
   expect(await first.opened.lost).toBe('used_elsewhere')
   expect(here.opened.term).toBe(first.opened.term + 1)
-  const before = await everything_kept(here.opened.database)
+  const before = await everything_kept(here.opened.connection)
   const ticket = { bond_id: 'L_b', face_id: 'F_a', relays: [the_relay] }
   await expect(
     first.sends(
@@ -256,7 +257,7 @@ test('a second tab composes nothing; "use here" takes the writer, and the first 
   await expect(
     first.opened.executor.advance(the_ticket_s_wait)(zz.position.parse('1')),
   ).rejects.toBeInstanceOf(NotTheWriter)
-  expect(await everything_kept(here.opened.database)).toEqual(before)
+  expect(await everything_kept(here.opened.connection)).toEqual(before)
   // The new writer's ports write, the operation the old tab tried first among them.
   expect(
     await here.sends(
@@ -320,9 +321,9 @@ test('a command the first tab began before "use here" and commits after it write
   const name = `cumino ${crypto.randomUUID()}`
   const first = await a_phone_over(await a_node_on_indexeddb(indexed_db, name))
   await first.anna_s_face()
-  const before = await everything_kept(first.opened.database)
+  const before = await everything_kept(first.opened.connection)
   // Its lookup waits behind a transaction over the address book's store.
-  const held = a_transaction_held(first.opened.database, 'domain bonds/address_book')
+  const held = a_transaction_held(first.opened.connection, 'domain bonds/address_book')
   const count = first.transactions.so_far()
   const ticket = { bond_id: 'L_b', face_id: 'F_a', relays: [the_relay] }
   const begun = first
@@ -357,7 +358,7 @@ test('a command the first tab began before "use here" and commits after it write
   ])
   const here = await a_phone_over(taken)
   // Nothing written but the new writer's term.
-  expect(without_the_term(await everything_kept(here.opened.database))).toEqual(
+  expect(without_the_term(await everything_kept(here.opened.connection))).toEqual(
     without_the_term(before),
   )
   expect(

@@ -1,4 +1,4 @@
-// A business domain's reads on IndexedDB (DOM-18, LIB-9, WEB-8, part 21.2):
+// A business domain's reads on the node's database (DOM-18, LIB-9, WEB-8, part 21.2):
 // one `readonly` transaction, a consistent snapshot (D66), which reads the
 // records a query's source names by key and by range, with the node's
 // position, and selects, orders and reads the fields in memory, as the
@@ -9,8 +9,7 @@
 
 import * as zz from '@q-mino/domains/library'
 import { read_in, type ARead, type Fragment, type Records } from './command.ts'
-import { the_node_s_store } from './database.ts'
-import { the_end_of } from './requests.ts'
+import { the_node_s_store, type ANodesDatabase } from './the_node_s_database.ts'
 
 /** A selection predicate over a candidate of its subject, on the records read (DOM-18). */
 export type Selection<candidate> = (records: Records) => (candidate: candidate) => boolean
@@ -91,10 +90,9 @@ type Plan<candidate> = zz.PlannedQuery<
   Fragment
 >
 
-/** What the reads need of the node: its database and IndexedDB's ranges. */
+/** What the reads need of the node: its database. */
 export interface ADomainsReads {
-  readonly database: IDBDatabase
-  readonly key_range: Pick<typeof IDBKeyRange, 'bound'>
+  readonly database: ANodesDatabase
 }
 
 /** The entries of a query on the records read: selected, ordered (the identity closes it), read. */
@@ -136,34 +134,32 @@ const in_a_snapshot =
     const stores =
       plan.leaves === undefined
         ? [...new Set([the_node_s_store, ...plan.from.reads.map((read) => read.store)])]
-        : [...node.database.objectStoreNames]
-    const transaction = node.database.transaction(stores, 'readonly')
-    const ended = the_end_of(transaction)
-    const records = await read_in(transaction, node.key_range, [last, ...plan.from.reads])
-    const read = reading(records)
-    const leaves = plan.leaves
-    const entries =
-      leaves === undefined
-        ? read.entries
-        : await (async () => {
-            const conditions = read.entries.map((entry) => leaves.of(entry))
-            const more = await read_in(
-              transaction,
-              node.key_range,
-              conditions.flat().flatMap((condition) => condition.reads),
-            )
-            return read.entries.map((entry, at) => ({
-              ...entry,
-              [leaves.field]: (conditions[at] ?? []).map((condition) => condition.holds(more)),
-            }))
-          })()
-    await ended
-    const position = records.of({ store: the_node_s_store, key: 'the_last_fact' })
-    return {
-      entries,
-      rest: read.rest,
-      position: zz.position.parse(String(typeof position === 'number' ? position : 0)),
-    }
+        : node.database.stores()
+    return node.database.transaction(stores, 'readonly', async (transaction) => {
+      const records = await read_in(transaction, [last, ...plan.from.reads])
+      const read = reading(records)
+      const leaves = plan.leaves
+      const entries =
+        leaves === undefined
+          ? read.entries
+          : await (async () => {
+              const conditions = read.entries.map((entry) => leaves.of(entry))
+              const more = await read_in(
+                transaction,
+                conditions.flat().flatMap((condition) => condition.reads),
+              )
+              return read.entries.map((entry, at) => ({
+                ...entry,
+                [leaves.field]: (conditions[at] ?? []).map((condition) => condition.holds(more)),
+              }))
+            })()
+      const position = records.of(last)
+      return {
+        entries,
+        rest: read.rest,
+        position: zz.position.parse(String(typeof position === 'number' ? position : 0)),
+      }
+    })
   }
 
 /** A domain's `read` and `page` (DOM-18, SC-22), each in one snapshot. */

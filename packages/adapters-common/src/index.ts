@@ -1,6 +1,7 @@
 // adapters-common: one folder per adapter, each imported only through its index.ts.
 export * from './auth/index.ts'
 export * from './bonds/index.ts'
+export * from './database/index.ts'
 export * from './entry/index.ts'
 export * from './extensions/index.ts'
 export * from './user/index.ts'

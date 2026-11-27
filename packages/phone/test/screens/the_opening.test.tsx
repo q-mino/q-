@@ -4,7 +4,7 @@
 // data of an older test release, with the gesture to clear them where the
 // composition root gives it (the test channel), and without it elsewhere.
 
-import { ARecordOutOfItsForm } from '@q-mino/adapters-web'
+import { ARecordOutOfItsForm } from '@q-mino/adapters-common'
 import * as zz from '@q-mino/domains/library'
 import { afterEach, describe, expect, test } from 'vitest'
 import {

@@ -1,6 +1,5 @@
 import { libsodium_primitives, the_reads_of_self } from '@q-mino/adapters-common'
 import {
-  ARecordOutOfItsForm,
   ask_to_keep_the_storage,
   delete_the_node_s_database,
   her_node_over,
@@ -17,6 +16,7 @@ import {
   type TheBrowsersStorage,
   type TheStorage,
 } from '@q-mino/adapters-web'
+import { ARecordOutOfItsForm } from '@q-mino/adapters-common'
 import type * as zz from '@q-mino/domains/library'
 import type { MailboxPort } from '@q-mino/domains/post/_dsl.ts'
 import type { ACompositionFault } from '@q-mino/adapters-common'
@@ -259,11 +259,11 @@ export const the_start =
     }
     let node: Phone<APhonesPartitions>
     try {
-      node = await phone(a_phone_s_storage(opened, browser.key_range))(world)
+      node = await phone(a_phone_s_storage(opened))(world)
     } catch (fault) {
       // A composition fault (CFG-2, EXT-4): the node does not start, and lets the writer go.
       opened.let_go()
-      opened.database.close()
+      opened.connection.close()
       return { start: 'it_does_not_start', why: why_it_does_not_start(fault) }
     }
     const stops_running = the_node_runs(node, time, post.aborted)
@@ -306,7 +306,7 @@ export const the_start =
       the_end ??= (async () => {
         await stops_running()
         opened.let_go()
-        opened.database.close()
+        opened.connection.close()
       })()
       return the_end
     }

@@ -4,7 +4,8 @@ import * as zz from '@q-mino/domains/library'
 import { majors } from '@q-mino/domains/seals/safe/_majors.ts'
 import * as dsl from '@q-mino/domains/seals/safe/_dsl.ts'
 import { libsodium_primitives } from '@q-mino/adapters-common'
-import { seals_ports_on_indexeddb, the_node_s_storage } from '../../../src/index.ts'
+import { the_node_s_storage } from '../../../src/index.ts'
+import { seals_ports_on_the_node_s_database } from '@q-mino/adapters-common'
 
 // The safe on IndexedDB (part 21.2, WEB-8, WEB-9), on fake-indexeddb in
 // Node, over libsodium: a smoke test of its module, the oracle's stories
@@ -82,11 +83,11 @@ const a_safe = async () => {
   if (opened.writer !== 'this_tab') throw new Error('another tab writes the node')
   let_go.push(() => {
     opened.let_go()
-    opened.database.close()
+    opened.connection.close()
   })
   const primitives = await libsodium_primitives()
   const versions = await zz.versions([majors])({ stored: opened.stored_versions })
-  const ports = seals_ports_on_indexeddb(opened, primitives)(versions)
+  const ports = seals_ports_on_the_node_s_database(opened, primitives)(versions)
   /** The context of a command sent under an operation (DOM-11), its fingerprint over its use case's path and its input. */
   const sent_as =
     (path: string, input: unknown) =>

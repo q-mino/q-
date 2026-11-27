@@ -1,22 +1,30 @@
-// A business domain's command port on IndexedDB (DOM-8, DOM-9, DOM-11,
-// WEB-9): the library's `Execute` and `RecordedBy` over the domain's store.
+// A business domain's command port on the node's database (DOM-8, DOM-9,
+// DOM-11, WEB-9): the library's `Execute` and `RecordedBy` over the domain's
+// store, on IndexedDB and on SQLite alike (`the_node_s_database.ts`).
 // A fragment and a write declare the keys they read, as the partition-backed
 // adapter of an extension (EXT-14), and decide on them synchronously, by type:
 // so a command is one transaction, which reads the writer's term, its
 // operation and every key its branches name, decides, and writes its fact,
 // its operation, its entries, its versions and its parts' writes, awaiting
-// nothing but its own requests (WEB-9). IndexedDB runs the writer's
+// nothing but its own requests (WEB-9). The database runs the writer's
 // transactions one after another, since each holds the node's store.
 
 import * as zz from '@q-mino/domains/library'
-import { the_name_of, the_node_s_store } from './database.ts'
-import { the_end_of, the_record_of, the_records_of, the_result_of } from './requests.ts'
-import { the_term_holds } from './the_writer.ts'
+import {
+  the_name_of,
+  the_node_s_store,
+  the_term_holds,
+  type ABound,
+  type AKept,
+  type ANodesDatabase,
+  type AStoredKey,
+  type ATransaction,
+} from './the_node_s_database.ts'
 
 /** A key a fragment or a write reads: in its domain's store, or another's (GR-3). */
 export interface AKey {
   readonly store: string
-  readonly key: IDBValidKey
+  readonly key: AStoredKey
 }
 
 /**
@@ -26,7 +34,7 @@ export interface AKey {
  */
 export interface ARange {
   readonly store: string
-  readonly prefix: readonly IDBValidKey[]
+  readonly prefix: readonly AStoredKey[]
 }
 
 /** What a fragment, a write or a query reads: a key, or the records under a prefix. */
@@ -46,8 +54,8 @@ export interface Fragment {
 
 /** A record of the command's own store set or deleted: never another domain's (DOM-8). */
 export type APut =
-  | { readonly put: 'set'; readonly key: IDBValidKey; readonly value: unknown }
-  | { readonly put: 'delete'; readonly key: IDBValidKey }
+  | { readonly put: 'set'; readonly key: AStoredKey; readonly value: unknown }
+  | { readonly put: 'delete'; readonly key: AStoredKey }
 
 /** A fact's write: the keys it reads, and its records from them, at the fact's position. */
 export interface Write {
@@ -73,10 +81,10 @@ export const the_operators: Pick<zz.Algebra<never, Fragment>, 'and' | 'or' | 'no
 
 /** The keys of a domain's store kept by the adapter, beside its business's `state` records. */
 export const the_keys = {
-  fact: (position: number): IDBValidKey => ['fact', position],
-  operation: (operation: zz.Operation): IDBValidKey => ['operation', operation.scope, operation.id],
-  entry: (effect: string, position: number): IDBValidKey => ['entry', effect, position],
-  version: (path: string, version: zz.Semver): IDBValidKey => ['version', path, version],
+  fact: (position: number): AStoredKey => ['fact', position],
+  operation: (operation: zz.Operation): AStoredKey => ['operation', operation.scope, operation.id],
+  entry: (effect: string, position: number): AStoredKey => ['entry', effect, position],
+  version: (path: string, version: zz.Semver): AStoredKey => ['version', path, version],
 } as const
 
 /** The node's counters in its store: the last fact's position, the last entry's (one order each). */
@@ -88,22 +96,21 @@ const a_count = (value: unknown): number => (typeof value === 'number' ? value :
 const the_text_of = (read: ARead): string =>
   'key' in read ? JSON.stringify([read.store, read.key]) : JSON.stringify([read.store, read.prefix])
 
-/** IndexedDB's range of a prefix: every array key that begins with it (an id is never an array). */
-export const the_range_of = (
-  key_range: Pick<typeof IDBKeyRange, 'bound'>,
-  prefix: readonly IDBValidKey[],
-): IDBKeyRange => key_range.bound([...prefix], [...prefix, []], false, true)
+/** The range of a prefix: every array key that begins with it (an id is never an array). */
+export const the_range_of = (prefix: readonly AStoredKey[]): ABound => ({
+  lower: { key: [...prefix], open: false },
+  upper: { key: [...prefix, []], open: true },
+})
 
 /** Whether a key begins with a prefix, part by part. */
-const begins_with = (key: IDBValidKey, prefix: readonly IDBValidKey[]): boolean =>
+const begins_with = (key: AStoredKey, prefix: readonly AStoredKey[]): boolean =>
   Array.isArray(key) && prefix.every((part, at) => JSON.stringify(key[at]) === JSON.stringify(part))
 
 /** What a business domain's command port needs of the node. */
 export interface ADomainsStore {
-  readonly database: IDBDatabase
+  readonly database: ANodesDatabase
   /** The writer's term (WEB-10). */
   readonly term: number
-  readonly key_range: Pick<typeof IDBKeyRange, 'bound'>
   /** The business domain's path (`bonds/address_book`): its store's name. */
   readonly path: string
   /** Called after each commit: the node's log wakes its followers (WEB-9). */
@@ -125,35 +132,23 @@ const the_reads_of = (branch: Branch): readonly ARead[] => [
     : branch.writes.flatMap((write) => write.reads)),
 ]
 
-/** A record read under a key, with its key, so that a command's writes can be laid over a range. */
-interface AKept {
-  readonly key: IDBValidKey
-  readonly value: unknown
-}
-
 /** The records read, and each range's with their keys. */
-interface RecordsRead extends Records {
+export interface RecordsRead extends Records {
   readonly kept_under: (range: ARange) => readonly AKept[]
 }
 
 /** Reads every key and range named, each once, in the transaction. */
 export const read_in = async (
-  transaction: IDBTransaction,
-  key_range: Pick<typeof IDBKeyRange, 'bound'>,
+  transaction: ATransaction,
   reads: readonly ARead[],
 ): Promise<RecordsRead> => {
   const unique = [...new Map(reads.map((read) => [the_text_of(read), read])).values()]
   const values = await Promise.all(
-    unique.map(async (read): Promise<unknown> => {
-      const store = transaction.objectStore(read.store)
-      if ('key' in read) return the_record_of(store.get(read.key))
-      const range = the_range_of(key_range, read.prefix)
-      const [keys, kept] = await Promise.all([
-        the_result_of(store.getAllKeys(range)),
-        the_records_of(store.getAll(range)),
-      ])
-      return keys.map((key, at): AKept => ({ key, value: kept[at] }))
-    }),
+    unique.map((read): Promise<unknown> =>
+      'key' in read
+        ? transaction.get(read.store, read.key)
+        : transaction.within(read.store, the_range_of(read.prefix)),
+    ),
   )
   const found = new Map(unique.map((read, at) => [the_text_of(read), values[at]]))
   const kept_under = (range: ARange): readonly AKept[] => {
@@ -192,12 +187,13 @@ const laid_over = (
 })
 
 const the_fact_recorded = async (
-  records: IDBObjectStore,
+  transaction: ATransaction,
+  store: string,
   operation: zz.Operation,
 ): Promise<zz.AlreadyRecorded | undefined> => {
-  const position: unknown = await the_record_of(records.get(the_keys.operation(operation)))
+  const position = await transaction.get(store, the_keys.operation(operation))
   if (typeof position !== 'number') return undefined
-  const fact: unknown = await the_record_of(records.get(the_keys.fact(position)))
+  const fact = await transaction.get(store, the_keys.fact(position))
   return {
     outcome: 'recorded',
     position: zz.position.parse(String(position)),
@@ -211,9 +207,8 @@ export const recorded_in =
   (domain: Pick<ADomainsStore, 'database' | 'path'>): zz.RecordedBy =>
   (operation) => {
     const store = the_name_of({ of: 'a_domain', path: domain.path })
-    return the_fact_recorded(
-      domain.database.transaction(store, 'readonly').objectStore(store),
-      operation,
+    return domain.database.transaction([store], 'readonly', (transaction) =>
+      the_fact_recorded(transaction, store, operation),
     )
   }
 
@@ -231,81 +226,74 @@ export const execute_in =
   (domain: ADomainsStore): zz.Execute<Fragment, Write> =>
   async (plan) => {
     const store = the_name_of({ of: 'a_domain', path: domain.path })
-    const node = (key: IDBValidKey): AKey => ({ store: the_node_s_store, key })
+    const node = (key: AStoredKey): AKey => ({ store: the_node_s_store, key })
     const reads: readonly ARead[] = [
       node(the_last_fact),
       node(the_last_entry),
       ...plan.branches.flatMap(the_reads_of),
     ]
     const stores = [...new Set([store, the_node_s_store, ...reads.map((key) => key.store)])]
-    const transaction = domain.database.transaction(stores, 'readwrite')
-    const ended = the_end_of(transaction)
-    const kept = transaction.objectStore(store)
-    try {
-      await the_term_holds(transaction, domain.term)
-      const recorded = await the_fact_recorded(kept, plan.operation)
-      if (recorded !== undefined) {
-        await ended
-        return recorded
-      }
-      const records = await read_in(transaction, domain.key_range, reads)
-      const chosen = (branch: Branch): readonly number[] =>
-        'elements' in branch
-          ? branch.elements.map((element) =>
-              element.findIndex((each) => each.condition.holds(records)),
-            )
-          : []
-      const applied = plan.branches.findIndex(
-        (branch) =>
-          branch.condition.holds(records) && chosen(branch).every((index) => index !== -1),
-      )
-      const branch = plan.branches[applied]
-      if (branch === undefined) {
-        await ended
-        return {
-          outcome: 'rejected',
-          leaves: plan.branches.map((planned) => the_leaves_of(planned, records)),
+    const result = await domain.database.transaction(
+      stores,
+      'readwrite',
+      async (transaction): Promise<zz.Execution> => {
+        await the_term_holds(transaction, domain.term)
+        const recorded = await the_fact_recorded(transaction, store, plan.operation)
+        if (recorded !== undefined) return recorded
+        const records = await read_in(transaction, reads)
+        const chosen = (branch: Branch): readonly number[] =>
+          'elements' in branch
+            ? branch.elements.map((element) =>
+                element.findIndex((each) => each.condition.holds(records)),
+              )
+            : []
+        const applied = plan.branches.findIndex(
+          (branch) =>
+            branch.condition.holds(records) && chosen(branch).every((index) => index !== -1),
+        )
+        const branch = plan.branches[applied]
+        if (branch === undefined) {
+          return {
+            outcome: 'rejected',
+            leaves: plan.branches.map((planned) => the_leaves_of(planned, records)),
+          }
         }
-      }
-      const elements = chosen(branch)
-      const write = 'elements' in branch ? branch.applies(elements) : branch
-      const more =
-        'elements' in branch
-          ? await read_in(
-              transaction,
-              domain.key_range,
-              write.writes.flatMap((each) => each.reads),
-            )
-          : records
-      const position = a_count(records.of(node(the_last_fact))) + 1
-      const first_entry = a_count(records.of(node(the_last_entry))) + 1
-      const recording = { position: zz.position.parse(String(position)) }
-      const after = new Map<string, AKept>()
-      const seen = laid_over(more, store, after)
-      for (const each of write.writes)
-        for (const put of each.puts(seen, recording)) {
-          after.set(JSON.stringify(put.key), {
-            key: put.key,
-            value: put.put === 'set' ? put.value : undefined,
-          })
-          if (put.put === 'set') kept.put(put.value, put.key)
-          else kept.delete(put.key)
-        }
-      kept.put(write.fact, the_keys.fact(position))
-      kept.put(position, the_keys.operation(plan.operation))
-      for (const part of write.fact.parts) kept.put(true, the_keys.version(part.path, part.version))
-      write.entries.forEach((entry, at) => {
-        kept.put(entry, the_keys.entry(entry.effect, first_entry + at))
-        kept.put(true, the_keys.version(entry.effect, entry.version))
-      })
-      const counts = transaction.objectStore(the_node_s_store)
-      counts.put(position, the_last_fact)
-      counts.put(first_entry + write.entries.length - 1, the_last_entry)
-      await ended
-      domain.committed()
-      return { outcome: 'applied', branch: applied, elements, position: recording.position }
-    } catch (fault) {
-      await ended.catch(() => undefined)
-      throw fault
-    }
+        const elements = chosen(branch)
+        const write = 'elements' in branch ? branch.applies(elements) : branch
+        const more =
+          'elements' in branch
+            ? await read_in(
+                transaction,
+                write.writes.flatMap((each) => each.reads),
+              )
+            : records
+        const position = a_count(records.of(node(the_last_fact))) + 1
+        const first_entry = a_count(records.of(node(the_last_entry))) + 1
+        const recording = { position: zz.position.parse(String(position)) }
+        const after = new Map<string, AKept>()
+        const seen = laid_over(more, store, after)
+        for (const each of write.writes)
+          for (const put of each.puts(seen, recording)) {
+            after.set(JSON.stringify(put.key), {
+              key: put.key,
+              value: put.put === 'set' ? put.value : undefined,
+            })
+            if (put.put === 'set') transaction.put(store, put.key, put.value)
+            else transaction.delete(store, put.key)
+          }
+        transaction.put(store, the_keys.fact(position), write.fact)
+        transaction.put(store, the_keys.operation(plan.operation), position)
+        for (const part of write.fact.parts)
+          transaction.put(store, the_keys.version(part.path, part.version), true)
+        write.entries.forEach((entry, at) => {
+          transaction.put(store, the_keys.entry(entry.effect, first_entry + at), entry)
+          transaction.put(store, the_keys.version(entry.effect, entry.version), true)
+        })
+        transaction.put(the_node_s_store, the_last_fact, position)
+        transaction.put(the_node_s_store, the_last_entry, first_entry + write.entries.length - 1)
+        return { outcome: 'applied', branch: applied, elements, position: recording.position }
+      },
+    )
+    if (result.outcome === 'applied') domain.committed()
+    return result
   }

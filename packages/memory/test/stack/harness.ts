@@ -46,6 +46,8 @@ import {
 import type * as activities_value from '@q-mino/domains/user/activities/_value.ts'
 import { a_manifest } from '@q-mino/domains/user/_value.ts'
 import type * as user_value from '@q-mino/domains/user/_value.ts'
+import { messaging } from '@q-mino/messaging'
+import messaging_manifest_json from '@q-mino/messaging/manifest.json' with { type: 'json' }
 import { ping_pong } from '@q-mino/ping_pong'
 import ping_pong_manifest_json from '@q-mino/ping_pong/manifest.json' with { type: 'json' }
 import {
@@ -328,6 +330,18 @@ const a_world_of = (primitives: Primitives, phone: number): Primitives => {
 /** Ping pong's manifest as its build writes it (EXT-10, PNG-5). */
 const ping_pong_manifest: unknown = ping_pong_manifest_json
 
+/** Messaging's manifest as its build writes it (EXT-10, MSG-10). */
+const messaging_manifest: unknown = messaging_manifest_json
+
+/** The extensions a phone of the story may carry, preinstalled and off (PNG-1, MSG-10): ping pong, unless a story names messaging too. */
+export type AnExtensionCarried = 'ping_pong' | 'messaging'
+
+/** Each extension a phone may carry: its manifest as built, its realm in process (EXT-13). */
+const the_extensions_carried = {
+  ping_pong: { manifest: ping_pong_manifest, realm: ping_pong },
+  messaging: { manifest: messaging_manifest, realm: messaging },
+} as const
+
 /** A consumer the phone runs while it is on. */
 interface Running {
   readonly stop: () => Promise<void>
@@ -353,10 +367,17 @@ interface APhoneInTheRounds {
   readonly off: () => Promise<void>
 }
 
-/** How a phone of the story starts: its number for the world's draws, its user's name. */
+/**
+ * How a phone of the story starts: its number for the world's draws, its
+ * user's name; the extensions its app carries (ping pong unless given); and
+ * the storage it keeps, the factory's new one unless given (a node opened
+ * again from its file, part B2 of the assistant).
+ */
 export interface Start {
   readonly phone: number
   readonly name: string
+  readonly carries?: readonly AnExtensionCarried[]
+  readonly storage?: AStorageUnderTest
 }
 
 /**
@@ -396,7 +417,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
 
   /** A phone of the story over the stack, on, with no face yet: what it gives a story is below. */
   const a_phone = async (start: Start) => {
-    const made = await (factory.storage ?? on_a_cell)()
+    const made = start.storage ?? (await (factory.storage ?? on_a_cell)())
     storages.push(made)
     const carried: ACarriedDeposit[] = []
     const phase = { deposits: 0 }
@@ -407,7 +428,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         clock: time.clock,
         elapsed: time.elapsed,
         primitives: a_world_of(factory.primitives, start.phone),
-        extensions: [{ manifest: ping_pong_manifest, realm: ping_pong }],
+        extensions: (start.carries ?? ['ping_pong']).map((name) => the_extensions_carried[name]),
         relays: [the_relay],
       },
       release: {
@@ -481,14 +502,31 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
     }
 
     let operations = 0
+    /** The phone as the rounds know it, once it is in them. */
+    const in_the_rounds: { phone: APhoneInTheRounds | undefined } = { phone: undefined }
     const the_phone = {
       name: start.name,
       node,
+      /** The story's clock as the phone reads it (an instant of `zz.date_time`). */
+      now: () => time.clock.now(),
       /** Whether the phone is on. */
       is_on: (): boolean => the_post !== undefined,
       /** The phone off (its app closed, its consumers stopped, its extensions unloaded), or on again. */
       off,
       on,
+      /**
+       * The phone off and out of the story: its rounds and its storage no
+       * longer read, so that the storage can be closed (a node closed, to be
+       * opened again from its file as another phone of the story).
+       */
+      leaves: async (): Promise<void> => {
+        await off()
+        phones.splice(
+          phones.findIndex((each) => each === in_the_rounds.phone),
+          1,
+        )
+        storages.splice(storages.indexOf(made), 1)
+      },
       /**
        * The post's executor started again if a deposit aborted since (PST-10:
        * the effect stopped unadvanced, met again when it starts), as the
@@ -580,10 +618,10 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
       /** The answer the post keeps under a request's identity (PST-8). */
       the_answer_to: async (request_id: string) =>
         (await entries_of(node.post.the_answer_to_a_request(when(), { request_id })))[0]?.answer,
-      /** Ping pong's manifest in the office's words, as the user is shown it before activating it (EXT-7). */
-      the_manifest_shown: (): user_value.a_manifest => {
-        const extension = node.the_extension('ping_pong')
-        if (extension === undefined) throw new Error(`no ping pong on ${start.name}'s phone`)
+      /** An extension's manifest in the office's words (ping pong's unless named), as the user is shown it before activating it (EXT-7). */
+      the_manifest_shown: (name: AnExtensionCarried = 'ping_pong'): user_value.a_manifest => {
+        const extension = node.the_extension(name)
+        if (extension === undefined) throw new Error(`no ${name} on ${start.name}'s phone`)
         return a_manifest.parse(the_manifest_to_accept(extension.composed.manifest))
       },
       /** The life of ping pong hosted (EXT-15). */
@@ -636,6 +674,7 @@ export const a_story = async (factory: AFactory, plan: AFaultPlan) => {
         }),
     }
     phones.push(the_phone)
+    in_the_rounds.phone = the_phone
     on()
     return the_phone
   }

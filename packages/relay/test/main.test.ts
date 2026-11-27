@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { libsodium_primitives } from '@q-mino/adapters-common'
 import { the_deposit_address_of } from '@q-mino/domains/seals/safe/_dsl.ts'
 import { bundle } from '../build/bundle.ts'
@@ -14,6 +14,12 @@ import { a_folder, a_relay_process, a_relay_that_ends, kill_what_runs } from './
 // then free again (its volume a file the test writes); `GET /`; the
 // settings out of form; and the build, run by `node` alone outside the
 // workspace.
+
+// Each test has twenty seconds: it starts a process of its own (`node` on
+// the main's TypeScript), which takes seconds on a machine the whole suite
+// loads (CI, 28 Nov 2026: two tests over vitest's default five, with the
+// node's database on SQLite run beside them).
+vi.setConfig({ testTimeout: 20_000 })
 
 const the_main = join(import.meta.dirname, '..', 'src', 'main.ts')
 const on_a_disk_of_a_file = join(import.meta.dirname, 'fixtures', 'a_relay_on_a_disk_of_a_file.ts')

@@ -3,11 +3,8 @@ import { expect, test } from 'vitest'
 import * as zz from '@q-mino/domains/library'
 import { majors } from '@q-mino/domains/extensions/activations/_majors.ts'
 import { manifest } from '@q-mino/domains/extensions/activations/_value.ts'
-import {
-  extensions_ports_on_indexeddb,
-  the_node_s_storage,
-  the_store_of,
-} from '../../../src/index.ts'
+import { the_node_s_storage } from '../../../src/index.ts'
+import { extensions_ports_on_the_node_s_database, the_store_of } from '@q-mino/adapters-common'
 
 // The extensions' office on IndexedDB (part 21.2), a smoke test on
 // fake-indexeddb in Node: an activation accepted and read back, its record
@@ -67,7 +64,7 @@ const a_phone = async () => {
   const opened = await the_node_s_storage_of(`extensions ${crypto.randomUUID()}`)
   if (opened.writer !== 'this_tab') throw new Error('the test is not the writer')
   const versions = await zz.versions([majors])({ stored: opened.stored_versions })
-  const office = extensions_ports_on_indexeddb(opened, [greetings])(versions)
+  const office = extensions_ports_on_the_node_s_database(opened, [greetings])(versions)
   const activate = (given: manifest, operation: string) =>
     all(
       office.activate_an_extension(
@@ -92,7 +89,7 @@ const a_phone = async () => {
   const the_record = (key: IDBValidKey) =>
     new Promise<unknown>((found, failed) => {
       const store = the_store_of('extensions/activations')
-      const request = opened.database.transaction(store, 'readonly').objectStore(store).get(key)
+      const request = opened.connection.transaction(store, 'readonly').objectStore(store).get(key)
       request.onsuccess = () => {
         found(request.result)
       }
@@ -142,7 +139,7 @@ test('an activation with the manifest shown is applied, read back, and kept unde
     ).toEqual([['an_extension_has_been_activated'], ['an_extension_has_been_activated_again']])
   } finally {
     phone.opened.let_go()
-    phone.opened.database.close()
+    phone.opened.connection.close()
   }
 })
 
@@ -157,7 +154,7 @@ test('the same operation again: the recorded fact, at its position, and nothing 
     expect(await phone.recorded()).toHaveLength(1)
   } finally {
     phone.opened.let_go()
-    phone.opened.database.close()
+    phone.opened.connection.close()
   }
 })
 
@@ -176,6 +173,6 @@ test('a manifest other than the installed one is refused, and no fact is written
     expect(await phone.the_record(['state', 'activation', 'greetings'])).toBeUndefined()
   } finally {
     phone.opened.let_go()
-    phone.opened.database.close()
+    phone.opened.connection.close()
   }
 })

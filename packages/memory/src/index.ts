@@ -20,7 +20,13 @@ export type {
   Shown,
   World,
 } from './relay/index.ts'
-export { a_new_phone, on_the_cell, phone, TheExtensionsDoNotCompose } from './phone/index.ts'
+export {
+  a_new_phone,
+  on_the_cell,
+  on_the_node_s_database,
+  phone,
+  TheExtensionsDoNotCompose,
+} from './phone/index.ts'
 export type {
   AnExtensionThatDoesNotCompose,
   AnExtensionHostedOnThePhone,

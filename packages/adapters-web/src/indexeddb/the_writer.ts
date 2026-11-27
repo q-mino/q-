@@ -5,7 +5,7 @@
 // so that a tab whose lock was taken writes nothing more, even a commit it had
 // already begun.
 
-import { the_node_s_store } from './database.ts'
+import { the_node_s_store, the_writer_s_term } from '@q-mino/adapters-common'
 import { the_end_of, the_record_of } from './requests.ts'
 
 /** The browser's `navigator.locks`, given (WEB-5). */
@@ -18,9 +18,6 @@ export type ALockManager = Pick<LockManager, 'request'>
  */
 export const the_writer_s_lock = (database: IDBDatabase): string =>
   `cumino: the writer of ${database.name}`
-
-/** The key of the writer's term in the node's store. */
-export const the_writer_s_term = 'the_writer_s_term'
 
 /** How a tab asks to be the writer: if no tab is, or taking it from the tab that is ("use here"). */
 export type HowToAsk = 'if_no_tab_is' | 'use_here'
@@ -37,14 +34,6 @@ export type TheWriter =
       readonly let_go: () => void
     }
   | { readonly writer: 'another_tab' }
-
-/** A commit begun by a tab that is no longer the writer: aborted, nothing written (WEB-10). */
-export class NotTheWriter extends Error {
-  constructor() {
-    super('this tab is no longer the writer of the node')
-    this.name = 'NotTheWriter'
-  }
-}
 
 const a_new_term = async (database: IDBDatabase): Promise<number> => {
   const transaction = database.transaction(the_node_s_store, 'readwrite')
@@ -87,17 +76,3 @@ export const ask_to_be_the_writer =
         (): WhyNotAnyMore => 'used_elsewhere',
       )
     })
-
-/**
- * Inside a commit's transaction, before its writes: the term still this
- * writer's, or the transaction aborted and `NotTheWriter` thrown.
- */
-export const the_term_holds = async (transaction: IDBTransaction, term: number): Promise<void> => {
-  const now: unknown = await the_record_of(
-    transaction.objectStore(the_node_s_store).get(the_writer_s_term),
-  )
-  if (now !== term) {
-    transaction.abort()
-    throw new NotTheWriter()
-  }
-}
