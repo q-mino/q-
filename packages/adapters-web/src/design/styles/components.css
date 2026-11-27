@@ -600,19 +600,39 @@
    * contact, stays its title's). [Q, C, 27 Nov 2026] (part M4 of messaging)
    */
   .row .mark {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-1);
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
     margin-block-start: 0;
     padding: var(--space-1) var(--space-2);
     border-width: 1px;
     border-radius: var(--radius-m);
   }
 
+  .row .mark > * {
+    grid-column: 2;
+  }
+
+  /*
+   * On a row the tag is its glyph alone, at the start of what the mark
+   * holds, its words («Estensione «Messaggi»») still its heading for a
+   * screen reader: the frame in the extension's hue and the puzzle stay the
+   * kernel's (EXT-16), and the home no longer spends a line of each row on
+   * the same words (with eight friends, twice its height). [Q, C,
+   * provisional: A to confirm] (part M7 of messaging; rejected: the tag's
+   * words on every row, as M4 drew them; no mark on a row, the line alone)
+   */
   .row .mark > [data-part='tag'] {
+    grid-column: 1;
+    grid-row: 1;
+    inline-size: 1.25em;
     margin-block-start: 0;
     padding: 0;
+    overflow: hidden;
+    gap: 2em;
     border: 0;
     font-size: var(--text-s);
+    white-space: nowrap;
   }
 
   .row .slot[data-state='in_its_place'] {
