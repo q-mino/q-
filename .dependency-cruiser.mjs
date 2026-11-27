@@ -114,9 +114,12 @@ export default {
     {
       name: 'the-kernel-composes-the-extensions',
       comment:
-        "No package of the kernel imports an extension but the configurators that compose it: phone its configurator, imported when active (EXT-13), memory its configurator (GR-10); the repository's configuration may.",
+        "No package of the kernel imports an extension but the configurators that compose it: phone its configurator, imported when active (EXT-13), memory its configurator (GR-10), the assistant the two it carries, integrated (AST-1); the repository's configuration may.",
       severity: 'error',
-      from: { path: '^packages/', pathNot: ['^packages/(phone|memory)/', '^packages/extensions/'] },
+      from: {
+        path: '^packages/',
+        pathNot: ['^packages/(phone|memory|assistant)/', '^packages/extensions/'],
+      },
       to: { path: '^packages/extensions/' },
     },
     {
@@ -227,7 +230,7 @@ export default {
       name: 'adapters-do-not-import-configurators',
       severity: 'error',
       from: { path: '^packages/adapters-' },
-      to: { path: '^packages/(phone|relay|memory)/' },
+      to: { path: '^packages/(phone|relay|memory|assistant)/' },
     },
     {
       name: 'not-to-unresolvable',
