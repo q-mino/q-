@@ -69,6 +69,20 @@ export type TheFileHeld =
 export type WhenItSyncs = 'each_commit' | 'at_checkpoints'
 
 /**
+ * The file made, readable by its user only, if it is not there; never a
+ * descriptor opened on a file that is (B6): closing one drops every POSIX
+ * lock this process holds on it, SQLite's exclusive lock among them (NDB-2),
+ * so a second opening in the process, refused, would let another process in.
+ */
+export const a_file_made_if_missing = (location: string): void => {
+  try {
+    closeSync(openSync(location, 'wx', 0o600))
+  } catch (fault) {
+    if (!(fault instanceof Error && 'code' in fault && fault.code === 'EEXIST')) throw fault
+  }
+}
+
+/**
  * The file opened and held: its folder made, readable by its user only (it
  * keeps the face's private key, SEA-7), the file too; WAL, synced as asked,
  * the exclusive lock taken at once by a first write.
@@ -76,7 +90,7 @@ export type WhenItSyncs = 'each_commit' | 'at_checkpoints'
 export const hold_the_file = (location: string, syncs: WhenItSyncs): TheFileHeld => {
   const folder = dirname(location)
   if (!existsSync(folder)) mkdirSync(folder, { recursive: true, mode: 0o700 })
-  closeSync(openSync(location, 'a', 0o600))
+  a_file_made_if_missing(location)
   chmodSync(location, 0o600)
   const database = new DatabaseSync(location, { timeout: 0 })
   try {
@@ -190,15 +204,17 @@ export const on_sqlite = (
       in_flight += 1
       const run = async () => {
         let live = true
-        database.exec(mode === 'readwrite' ? 'BEGIN IMMEDIATE' : 'BEGIN')
+        // B6: the BEGIN inside, so that a refused one still ends the count of
+        // the work in flight (TST-11's waits).
         try {
+          database.exec(mode === 'readwrite' ? 'BEGIN IMMEDIATE' : 'BEGIN')
           const result = await body(in_a_transaction(() => live))
           live = false
           database.exec('COMMIT')
           return result
         } catch (fault) {
           live = false
-          if (database.isTransaction) database.exec('ROLLBACK')
+          if (database.isOpen && database.isTransaction) database.exec('ROLLBACK')
           throw told(fault)
         } finally {
           in_flight -= 1

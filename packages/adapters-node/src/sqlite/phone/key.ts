@@ -57,6 +57,17 @@ const the_bytes_of = (key: AStoredKey): readonly number[] =>
 export const encoded = (key: AStoredKey): Uint8Array => new Uint8Array(the_bytes_of(key))
 
 /** A key read back from its bytes, and where its bytes end. */
+/**
+ * UTF-16 code units as a text, by chunks (B6): one spread of more than about
+ * 125 000 arguments throws, and a partition's key may be far longer (EXT-14).
+ */
+const a_text_of = (units: readonly number[]): string => {
+  let text = ''
+  for (let at = 0; at < units.length; at += 8192)
+    text += String.fromCharCode(...units.slice(at, at + 8192))
+  return text
+}
+
 const decoded_from = (
   bytes: Uint8Array,
   from: number,
@@ -89,7 +100,7 @@ const decoded_from = (
       if (half.length === 2) units.push(((half[0] ?? 0) << 8) | (half[1] ?? 0))
       if (half.length === 2) half.length = 0
     }
-    return { key: String.fromCharCode(...units), next: at }
+    return { key: a_text_of(units), next: at }
   }
   if (tag === an_array) {
     const parts: AStoredKey[] = []
