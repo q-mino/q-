@@ -21,10 +21,10 @@ ExecStart=/opt/node/bin/node --enable-source-maps --disable-warning=Experimental
 Environment=CUMINO_RELAY_PORT=8080
 Environment=NODE_ENV=production
 # The stands (INV-6): public data. `assistente`, the assistant's, its links to
-# the test site; no inviter yet until its key is added here, the 43
-# characters of the public half of the assistant's stand.key (AST-13), as
-# "inviter":"<key>", then deploy.sh provision.
-Environment='CUMINO_RELAY_STANDS=[{"name":"assistente","app":"https://q-mino-prova.github.io/q-/"}]'
+# the test site; its inviter the public half of the assistant's stand.key
+# (AST-13), drawn at its first start in its container on 28 Nov 2026 (part
+# B5). A new key: here, then deploy.sh provision.
+Environment='CUMINO_RELAY_STANDS=[{"name":"assistente","inviter":"oWBXmTk4ZWZjhh-31-X_9K0gdbShTUW81FzxVrXzuO0","app":"https://q-mino-prova.github.io/q-/"}]'
 Restart=on-failure
 RestartSec=2
 RestartPreventExitStatus=78
