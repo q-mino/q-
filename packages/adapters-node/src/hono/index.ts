@@ -37,9 +37,14 @@
 //   takes nothing; `POST /<name>` takes the oldest invitation on the stand
 //   (INV-3), trying the next when another passer-by took it meanwhile, and
 //   shows its link, or says the stand is empty; rendered by the relay's page
-//   (`AStandsPage`), with no script, no cookie, not cached, and no CORS.
+//   (`AStandsPage`), with no script, no cookie, not cached, and no CORS; a
+//   `POST` a browser says came from another site takes nothing and shows the
+//   page (B6);
+// - a body over its path's size, 413 `{ "fault": "too_large" }`, read no
+//   further and heard by no tree (B6).
 
 import { Hono, type Context } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import * as z from 'zod'
 import * as zz from '@q-mino/domains/library'
@@ -243,6 +248,53 @@ const answered = (c: Context, events: AsyncIterable<unknown>): Response =>
 
 const not_a_request = (c: Context, fault: string): Response => c.json({ fault }, 400)
 
+/**
+ * The most a request's body may hold, by its path [Q, C, 28 Nov 2026] (B6;
+ * REL-7, INV-8): read before anything is checked, a body of hundreds of
+ * megabytes would pass the unit's `MemoryMax` and stop the relay, its
+ * mailboxes with it. A deposit is at most an envelope of 87 382 characters
+ * (MBX-1) and its fields; a collect, a leave (a ticket of at most 4 KiB) and
+ * a read, a few hundred bytes; a page's form, none. Generous, so that no
+ * phone of today meets it. Rejected: Caddy's `request_body` (the limits
+ * beside the paths they guard, tested with them).
+ */
+export const the_most_a_body_holds = {
+  deposit: 256 * 1024,
+  collect: 64 * 1024,
+  a_stand: 16 * 1024,
+} as const
+
+/** A body over its size: 413, heard by no tree. */
+const at_most = (bytes: number) =>
+  bodyLimit({ maxSize: bytes, onError: (c) => c.json({ fault: 'too_large' }, 413) })
+
+/**
+ * Whether a take comes from the stand's own page [Q, C, 28 Nov 2026] (B6;
+ * INV-7, INV-9): a browser tells where a form was sent from
+ * (`Sec-Fetch-Site`; an older one, `Origin`), so another site's page that
+ * posts to the stand from its visitors' browsers takes nothing, and the
+ * visitor sees the stand's page with its button. A request that tells
+ * neither (a script, `curl`) takes as before: anyone may take every link,
+ * a declared flaw (INV-9). `Origin: null` is what the page's own form sends
+ * with `Referrer-Policy: no-referrer` in a browser without `Sec-Fetch-Site`.
+ * Rejected: a token in the form (a cookie or a state the relay would keep,
+ * CFG-3); refusing a request that tells neither (`curl` would send the
+ * header).
+ */
+export const from_the_page_itself = (headers: {
+  readonly site: string | undefined
+  readonly origin: string | undefined
+  readonly host: string | undefined
+}): boolean => {
+  if (headers.site !== undefined) return headers.site === 'same-origin' || headers.site === 'none'
+  if (headers.origin === undefined || headers.origin === 'null') return true
+  try {
+    return new URL(headers.origin).host === headers.host
+  } catch {
+    return false
+  }
+}
+
 /** The disk has too little room (REL-3): 507, Insufficient Storage, a refusal of the transport's. */
 const the_relay_is_full = (c: Context): Response => c.json({ fault: 'the_relay_is_full' }, 507)
 
@@ -290,6 +342,13 @@ export const the_desks_http_interface = (the_desk: TheDesk) => {
     // CORS for the phones' paths and `GET /`, never for a page (INV-7): a page
     // is read by its visitor's browser, not by another origin's script.
     .use((c, next) => (the_pages.has(c.req.path) ? next() : open_to_every_origin(c, next)))
+    .use('/depositor/*', at_most(the_most_a_body_holds.deposit))
+    .use('/holder/*', at_most(the_most_a_body_holds.collect))
+    .use('/inviter/*', at_most(the_most_a_body_holds.a_stand))
+    .use('/passer_by/*', at_most(the_most_a_body_holds.a_stand))
+    .use((c, next) =>
+      the_pages.has(c.req.path) ? at_most(the_most_a_body_holds.a_stand)(c, next) : next(),
+    )
     .get('/', (c) => c.json(the_desk.about))
     .post('/depositor/deposit_an_envelope', async (c) => {
       if ((await the_desk.room()).room === 'too_little') return the_relay_is_full(c)
@@ -394,9 +453,15 @@ export const the_desks_http_interface = (the_desk: TheDesk) => {
       .post(`/${stand.name}`, async (c) =>
         a_page(
           c,
-          stand.has_an_inviter
-            ? await a_link_taken(the_desk, now)(stand)
-            : { page: 'no_inviter_yet', stand },
+          !stand.has_an_inviter
+            ? { page: 'no_inviter_yet', stand }
+            : from_the_page_itself({
+                  site: c.req.header('sec-fetch-site'),
+                  origin: c.req.header('origin'),
+                  host: c.req.header('host'),
+                })
+              ? await a_link_taken(the_desk, now)(stand)
+              : { page: 'the_stand', stand },
         ),
       )
   }

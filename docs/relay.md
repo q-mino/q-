@@ -30,9 +30,10 @@ In one SQLite database on the machine's disk (MBX-8):
 
 - the envelopes, sealed, with their D, their position in the mailbox and the time they arrived;
 - the deposits' operations (so that a phone that sends again the same deposit meets the same answer);
-- the stand's **invitations** (INV-1..INV-4): at most five on the stand, each a ticket of at most 4 KiB, when it was left and until when it can be taken (24 hours, at most 48); a taken one keeps its ticket, for the one who took it to read once, until it is forgotten; one nobody took loses its ticket when its time is over.
+- the stand's **invitations** (INV-1..INV-4): at most five on the stand, each a ticket of at most 4 KiB, when it was left and until when it can be taken (24 hours, at most 48); a taken one keeps its ticket, for the one who took it to read once, until it is forgotten; one nobody took loses its ticket when its time is over;
+- the **facts** of what the deposits and the stand did, in order (MBX-8, INV-8): among them each invitation's leave, which holds its ticket.
 
-A collected envelope is discarded by its holder's phone; whatever is left is **forgotten after eight days** (MBX-8), checked every hour. An invitation is **forgotten a day after its time to be taken is over** (INV-8): nothing of it stays past three days.
+A collected envelope is discarded by its holder's phone; whatever is left is **forgotten after eight days** (MBX-8), checked every hour. An invitation is **forgotten a day after its time to be taken is over** (INV-8): its row within three days. The fact of its leave, with its ticket, stays as long as the log keeps a fact older than it, the deposit of an envelope not yet forgotten among them: **at most eight days** (B6). A ticket is a link to bond with the assistant, nothing more.
 
 ## What it does not keep
 
@@ -47,9 +48,11 @@ The machine keeps a journal for **a week** (200 MB at most): the relay's own lin
 
 ## The assistant's page
 
-`GET https://relay.cumino.aleclofabbro.it/assistente` (INV-7) tells what the assistant is, that what one writes to it **leaves Cumino's network** (Claude, an external service, reads it), when it answers, and the steps; it takes nothing, so a preview of the link, a crawler or a reload spends no ticket. Its button sends `POST /assistente`, which takes the oldest ticket on the stand and shows its link to the test site (`https://q-mino-prova.github.io/q-/#ticket=…`) and its QR, or says there are none now. Until the assistant's key is in the relay's configuration, the page says the assistant is not there yet. The page is drawn by the relay for each request: no script, no cookie, not cached (`Cache-Control: no-store`), a strict `Content-Security-Policy`, `Referrer-Policy: no-referrer`, no CORS.
+`GET https://relay.cumino.aleclofabbro.it/assistente` (INV-7) tells what the assistant is, that what one writes to it **leaves Cumino's network** (Claude, Anthropic's service, reads it, and the chat stays on Alessandro's laptop, where the assistant runs and he can read it), when it answers (while that laptop is on; the messages wait at most a week, MBX-2), and the steps; it takes nothing, so a preview of the link, a crawler or a reload spends no ticket. Its button sends `POST /assistente`, which takes the oldest ticket on the stand and shows its link to the test site (`https://q-mino-prova.github.io/q-/#ticket=…`) and its QR, or says there are none now; a `POST` a browser says another site sent (`Sec-Fetch-Site`, or `Origin`) takes nothing and shows the page, so another site cannot spend the links from its visitors' browsers (B6); a script can still take them all (INV-9). Reloading the page of a link sends its `POST` again and takes another. Until the assistant's key is in the relay's configuration, the page says the assistant is not there yet. The page is drawn by the relay for each request: no script, no cookie, not cached (`Cache-Control: no-store`), a strict `Content-Security-Policy`, `Referrer-Policy: no-referrer`, no CORS.
 
 The assistant speaks to the stand over two paths (INV-5): `POST /inviter/leave_an_invitation`, signed (`Authorization: Signature <s>`, Ed25519 over `q-stand/` and the body as sent, verified with the stand's public key in the relay's configuration), and `POST /passer_by/the_invitations_on_a_stand`, which anyone may read: each invitation's id and until when, never its ticket. The configuration is public, in the unit: `CUMINO_RELAY_STANDS`, the stand's name, its inviter's public key, the site its links open (INV-6).
+
+Every path reads at most so much of a body (B6): a deposit 256 KiB (an envelope is at most 87 382 characters, MBX-1), a collect 64 KiB, the stand's paths and the page 16 KiB; over it, `413` `{ "fault": "too_large" }`, and nothing is heard.
 
 ## The disk
 

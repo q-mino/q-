@@ -2,7 +2,12 @@ import { afterEach, describe, expect, test } from 'vitest'
 import * as zz from '@q-mino/domains/library'
 import { base64url_of } from '@q-mino/domains/seals/safe/_dsl.ts'
 import { libsodium_primitives } from '@q-mino/adapters-common'
-import { always_room, the_relays_storage } from '@q-mino/adapters-node'
+import {
+  always_room,
+  from_the_page_itself,
+  the_most_a_body_holds,
+  the_relays_storage,
+} from '@q-mino/adapters-node'
 import { relay } from '../src/index.ts'
 import type { Stand } from '../src/settings.ts'
 import { hash, lines_of } from './harness.ts'
@@ -180,6 +185,71 @@ describe('the stand over HTTP (INV-5..INV-7)', () => {
     const empty = await relay.app.request('/assistente', { method: 'POST' })
     expect(empty.status).toBe(200)
     expect(await empty.text()).toContain('Ora non ci sono link')
+  })
+
+  test('a POST another site sends from its visitors’ browsers takes nothing; the stand’s own, or a script’s, takes (B6)', async () => {
+    const key = await a_key_pair(1)
+    const relay = await a_relay_with([
+      { name: 'assistente', inviter: key.public_key, app: app_of_the_test_site },
+    ])
+    const body = a_leave('leave-1', T1)
+    await relay.app.request(
+      '/inviter/leave_an_invitation',
+      posted(body, { Authorization: `Signature ${key.signs(body)}` }),
+    )
+    for (const headers of [
+      { 'Sec-Fetch-Site': 'cross-site' },
+      { 'Sec-Fetch-Site': 'same-site' },
+      { Origin: 'https://another.example' },
+    ]) {
+      const page = await relay.app.request('/assistente', { method: 'POST', headers })
+      const text = await page.text()
+      expect(text).toContain('<form method="post" action="/assistente">')
+      expect(text).not.toContain(T1)
+    }
+    const own = await relay.app.request('http://relay.test/assistente', {
+      method: 'POST',
+      headers: { 'Sec-Fetch-Site': 'same-origin', Origin: 'null' },
+    })
+    expect(await own.text()).toContain(`#ticket=${T1}"`)
+    expect(from_the_page_itself({ site: undefined, origin: 'null', host: 'relay.test' })).toBe(true)
+    expect(
+      from_the_page_itself({ site: undefined, origin: 'https://relay.test', host: 'relay.test' }),
+    ).toBe(true)
+    expect(from_the_page_itself({ site: undefined, origin: undefined, host: 'relay.test' })).toBe(
+      true,
+    )
+  })
+
+  test('a body over its path’s size: 413, heard by no tree (B6)', async () => {
+    const key = await a_key_pair(1)
+    const relay = await a_relay_with([
+      { name: 'assistente', inviter: key.public_key, app: app_of_the_test_site },
+    ])
+    const large = 'x'.repeat(the_most_a_body_holds.a_stand + 1)
+    for (const path of [
+      '/inviter/leave_an_invitation',
+      '/passer_by/the_invitations_on_a_stand',
+      '/assistente',
+    ]) {
+      const answer = await relay.app.request(path, posted(large))
+      expect(answer.status).toBe(413)
+      expect(await answer.json()).toEqual({ fault: 'too_large' })
+    }
+    const deposit = await relay.app.request(
+      '/depositor/deposit_an_envelope',
+      posted('x'.repeat(the_most_a_body_holds.deposit + 1)),
+    )
+    expect(deposit.status).toBe(413)
+    // A deposit of the largest envelope still reaches its tree (MBX-1): 400 for its body here, not 413.
+    const the_largest = JSON.stringify({
+      version: '1.0.0',
+      operation: 'deposit-1',
+      input: { deposit_address: 'x', envelope: 'A'.repeat(87_382) },
+    })
+    expect(
+      (await relay.app.request('/depositor/deposit_an_envelope', posted(the_largest))).status,
+    ).not.toBe(413)
   })
 
   test('a stand with no inviter yet: its page says so, takes nothing, and no leave is heard', async () => {

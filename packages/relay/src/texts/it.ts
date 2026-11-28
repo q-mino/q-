@@ -11,12 +11,13 @@ export const words = {
   it_leaves_the_network: {
     before: 'Quello che gli scrivi ',
     marked: 'esce dalla rete di Cumino',
-    after: ': lo legge Claude, un servizio esterno, e non resta fra voi due.',
+    after:
+      ': lo legge Claude, un servizio esterno di Anthropic, e la chat resta sul computer di Alessandro, che cura Cumino e può leggerla. Non è una chat solo fra voi due.',
   },
   the_notes:
     "Se gli chiedi di salvare un'idea, finisce nelle note del progetto, anonima e riscritta con parole sue.",
   when_it_answers:
-    'Risponde quando il computer di Alessandro, che cura Cumino, è acceso: se è spento i tuoi messaggi aspettano, e la risposta arriva più tardi.',
+    'Risponde quando il computer di Alessandro è acceso: se è spento i tuoi messaggi aspettano fino a una settimana, e la risposta arriva più tardi.',
   what_it_answers: 'Risponde solo su Cumino, e a un numero limitato di messaggi al giorno.',
   how_to_add_it: 'Come aggiungerlo',
   install_cumino: 'Installa Cumino',
