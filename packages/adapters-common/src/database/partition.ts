@@ -53,6 +53,9 @@ export const the_partition_of =
           })
           return { answer: 'read', entries }
         }
+        // An empty range (B6): IndexedDB's bound refuses one whose lower end is not below its upper.
+        if (asked.from !== undefined && asked.before !== undefined && asked.from >= asked.before)
+          return { answer: 'read', entries: [] }
         const kept = await transaction.within(store, a_range(asked))
         const entries = kept.map((record) => ({
           key: boundary.a_key.parse(record.key),

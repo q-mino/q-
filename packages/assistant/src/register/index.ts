@@ -89,7 +89,12 @@ const a_turn_of = (row: unknown): ATurnInProgress => {
 export const the_register = (file: string, forget_before: string): TheRegister => {
   const folder = dirname(file)
   if (!existsSync(folder)) mkdirSync(folder, { recursive: true, mode: 0o700 })
-  closeSync(openSync(file, 'a', 0o600))
+  // Made if missing, never a descriptor opened on it (B6: closing one drops this process's locks on it).
+  try {
+    closeSync(openSync(file, 'wx', 0o600))
+  } catch (fault) {
+    if (!(fault instanceof Error && 'code' in fault && fault.code === 'EEXIST')) throw fault
+  }
   chmodSync(file, 0o600)
   const database = new DatabaseSync(file)
   database.exec(`

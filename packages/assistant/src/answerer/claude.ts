@@ -24,11 +24,19 @@ import {
   type ACommandLine,
 } from './the_cage.ts'
 
-/** How Claude Code is started (AST-9, AST-14): the model, the effort, the time of an answer. */
+/** How Claude Code is started (AST-9, AST-14): the model, the effort, the time of an answer, an attempt's budget in dollars. */
 export interface ClaudesSettings {
   readonly model: string
   readonly effort: string
   readonly seconds: number
+  /**
+   * The most an attempt may cost by Claude Code's estimate (`--max-budget-usd`)
+   * [Q, C, 28 Nov 2026] (B6): a ceiling on one runaway attempt (a writer who
+   * has it read the whole copy again and again), not a cap counted over the
+   * day (AST-6 rejected that); checked with 2.1.302 on the bot's subscription:
+   * over it, `subtype: error_max_budget_usd`.
+   */
+  readonly budget: number
 }
 
 /** Where the answerer's things are, and how it is caged (AST-8). */
@@ -37,9 +45,11 @@ export interface ClaudesPlace {
   readonly claude: string
   readonly configuration: string
   readonly system_prompt: string
-  /** In the container, what the deny rules name beside the copy (AST-8): the node's data, the source of the copy. */
+  /** In the container, what the deny rules name beside the copy (AST-8): the node's data, the source of the copy, the words never copied, the notes. */
   readonly data: string
   readonly source: string
+  readonly never_copied: string
+  readonly notes: string
 }
 
 /** Claude Code's arguments (AST-9), the system prompt where the cage puts it; in the container, the deny rules. */
@@ -70,6 +80,8 @@ export const claude_s_arguments =
     the_answer_s_json_schema(),
     '--system-prompt-file',
     where.system_prompt,
+    '--max-budget-usd',
+    settings.budget.toFixed(2),
     ...(deny.length === 0 ? [] : ['--settings', the_settings_of(deny)]),
   ]
 
@@ -95,6 +107,8 @@ export const the_command_line = (
             data: place.data,
             source: place.source,
             configuration: place.configuration,
+            never_copied: place.never_copied,
+            notes: place.notes,
           })
         : [],
     ),
@@ -104,8 +118,10 @@ export const the_command_line = (
 /** Claude Code's result, as far as the answerer reads it (`--output-format json`). */
 const a_result = z.object({
   is_error: z.boolean(),
+  subtype: z.string().optional(),
   result: z.string().optional(),
   structured_output: z.unknown().optional(),
+  total_cost_usd: z.number().optional(),
 })
 
 /** What Claude Code says when its configuration has no login (its `result`, 2.1.302: «Not logged in · Please run /login»). */
@@ -132,10 +148,19 @@ export const the_answer_in = (output: string, fault: string, exit: number | null
   const told = result.success ? (result.data.result ?? '') : ''
   if (not_logged_in.test(told) || not_logged_in.test(fault)) return { answer: 'not_logged_in' }
   if (!result.success) return { answer: 'failed', exit, fault: the_first_line(fault || output) }
-  if (result.data.is_error) return { answer: 'failed', exit, fault: the_first_line(told || fault) }
-  return result.data.structured_output === undefined
-    ? { answer: 'out_of_its_form' }
-    : replied_if_it_fits(result.data.structured_output)
+  if (result.data.subtype === 'error_max_budget_usd') return { answer: 'over_its_budget' }
+  if (result.data.is_error)
+    return {
+      answer: 'failed',
+      exit,
+      fault: the_first_line(
+        [told, fault, result.data.subtype ?? ''].find((text) => text !== '') ?? '',
+      ),
+    }
+  if (result.data.structured_output === undefined) return { answer: 'out_of_its_form' }
+  const replied = replied_if_it_fits(result.data.structured_output)
+  const cost = result.data.total_cost_usd
+  return replied.answer === 'replied' && cost !== undefined ? { ...replied, cost } : replied
 }
 
 /** The most of Claude Code's output read (a result is a few KiB). */

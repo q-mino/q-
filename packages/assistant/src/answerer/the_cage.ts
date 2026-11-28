@@ -144,6 +144,8 @@ export const the_deny_rules = (folders: {
   readonly data: string
   readonly source: string
   readonly configuration: string
+  readonly never_copied: string
+  readonly notes: string
 }): readonly string[] =>
   [
     `${folders.data}/node.sqlite*`,
@@ -151,10 +153,15 @@ export const the_deny_rules = (folders: {
     `${folders.data}/stand.key`,
     `${folders.source}/**`,
     `${folders.configuration}/**`,
+    // B6: the words never copied and the notes are mounted beside the copy too.
+    folders.never_copied,
+    `${folders.notes}/**`,
     '/home/**',
     '/proc/**',
+    '/sys/**',
     '/etc/**',
     '/root/**',
+    '/tmp/**',
   ].map((path) => `Read(/${path})`)
 
 /** The settings given on the command line (`--settings`, which `--restricted` keeps): the deny rules, nothing else. */

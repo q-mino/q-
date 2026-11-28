@@ -5,7 +5,17 @@
 // over `q-stand/` and the body's bytes as sent, the count of what the stand
 // holds. The answers are NDJSON, their first line read. [Q, C, 27 Nov 2026]
 
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  closeSync,
+  existsSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  renameSync,
+  writeSync,
+} from 'node:fs'
 import { dirname } from 'node:path'
 import type { Primitives } from '@q-mino/domains/seals/safe/_dsl.ts'
 import { z } from 'zod'
@@ -25,8 +35,19 @@ export const the_stand_s_key = (
 ): { readonly key: TheStandsKey; readonly drawn: boolean } => {
   const drawn = !existsSync(file)
   if (drawn) {
+    // Written whole (B6): a temporary file synced, then renamed; a fall
+    // while it is drawn leaves no key cut short, which every start after
+    // would refuse (the container started again and again).
     mkdirSync(dirname(file), { recursive: true, mode: 0o700 })
-    writeFileSync(file, `${base64url(primitives.random_bytes(32))}\n`, { mode: 0o600, flag: 'wx' })
+    const drawing = `${file}.drawing`
+    const descriptor = openSync(drawing, 'w', 0o600)
+    try {
+      writeSync(descriptor, `${base64url(primitives.random_bytes(32))}\n`)
+      fsyncSync(descriptor)
+    } finally {
+      closeSync(descriptor)
+    }
+    renameSync(drawing, file)
   }
   chmodSync(file, 0o600)
   const seed = new Uint8Array(Buffer.from(readFileSync(file, 'utf8').trim(), 'base64url'))

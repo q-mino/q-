@@ -8,7 +8,7 @@ export const it = {
   the_face: 'Assistente di Cumino',
   /** The welcome (AST-5): the only message the assistant writes unasked. */
   the_welcome:
-    "Ciao, sono l'assistente di Cumino. Sono Claude, un'intelligenza artificiale: puoi chiedermi come funziona Cumino, fare domande, proporre idee o chiedere consigli sul progetto. Quello che mi scrivi esce dalla rete di Cumino: lo legge Claude, un servizio esterno. Se mi chiedi di salvare un'idea, la annoto nelle note del progetto, anonima e con parole mie. Rispondo quando il computer di Alessandro, che cura Cumino, è acceso: se tardo è spento, e ti rispondo appena si riaccende.",
+    "Ciao, sono l'assistente di Cumino. Sono Claude, un'intelligenza artificiale: puoi chiedermi come funziona Cumino, fare domande, proporre idee o chiedere consigli sul progetto. Quello che mi scrivi esce dalla rete di Cumino: lo legge Claude, un servizio esterno di Anthropic, e la nostra chat resta sul computer di Alessandro, che cura Cumino e può leggerla. Se mi chiedi di salvare un'idea, la annoto nelle note del progetto, anonima e con parole mie. Rispondo quando il suo computer è acceso: se tardo è spento, e ti rispondo appena si riaccende (i messaggi aspettano fino a una settimana).",
   /** The notice of a bond's cap (AST-6). */
   the_notice_of_a_bond_s_cap:
     'Per oggi ho risposto a tanti tuoi messaggi: riscrivimi domani. Fino ad allora quello che mi scrivi resta senza risposta.',

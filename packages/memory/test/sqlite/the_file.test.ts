@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { statSync } from 'node:fs'
 import { dirname } from 'node:path'
 import {
@@ -141,6 +142,18 @@ test('one connection holds the file: another opening is refused; opened again, t
   expect(await the_node_s_storage_on_sqlite(file)(stores)).toEqual({
     writer: 'another_connection',
   })
+  // The refused opening left the first one's lock (B6): another process is refused too.
+  const another = spawnSync(
+    process.execPath,
+    [
+      '--disable-warning=ExperimentalWarning',
+      '-e',
+      "const { DatabaseSync } = require('node:sqlite'); const d = new DatabaseSync(process.argv[1], { timeout: 0 }); try { d.exec('PRAGMA locking_mode = EXCLUSIVE'); d.exec('BEGIN IMMEDIATE'); d.exec('COMMIT'); console.log('held') } catch { console.log('refused') }",
+      file,
+    ],
+    { encoding: 'utf8' },
+  )
+  expect(another.stdout.trim()).toBe('refused')
   await first.close()
   const again = await a_node_on_sqlite(file)
   expect(again.term).toBe(first.term + 1)

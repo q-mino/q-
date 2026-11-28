@@ -12,7 +12,23 @@ Cumino's assistant (`packages/assistant`, AST-1..AST-16) runs on Alessandro's la
 
 Inside, the node runs (`/opt/cumino-assistente/assistant.mjs`, the bundle), and for each turn `claude -p` (Claude Code 2.1.302, pinned in the image) with Read, Grep and Glob only, `--restricted`, its working directory the copy, and deny rules for `/data`'s files, the source, the configuration and the system (AST-9). The node's journal is the container's log: never a text, a name or a bond.
 
-All commands from the repository's root, in a checkout of the commit to run (a clean one: `git status` empty).
+All commands from the repository's root, in a checkout of the commit to run (a clean one: `git status` empty). The container running now was built on 28 November 2026 from `~/code/q--asst` (a worktree of the night's sessions); any clean checkout of `q-` builds and replaces the same container (the project's name, `cumino-assistente`, is in `compose.yaml`).
+
+## In the morning: is it there, what runs, where the notes are
+
+```bash
+docker ps --filter name=cumino-assistente --format '{{.Status}}'
+```
+
+```bash
+docker logs cumino-assistente 2>&1 | grep ' started: ' | tail -1
+```
+
+The second says the version and the commit running, its answerer (`claude (sonnet, low, caged by the_container)`) and its copy. Then each turn by its outcome, never a text: `a turn answered in 12.3 s (Claude Code's estimate $0.041)` (the estimate is what the reply would cost on the API: a measure of the quota it used, which the subscription does not bill in dollars), `an attempt over its time`, `an attempt over its budget … the apology`, `a turn closed: replied | the_apology | the_notice_of_… | passed_over`, `the stand topped up: …`. `the answerer is not logged in: the turns wait` means the bot's login is gone: log in again (below), nothing is lost.
+
+**The notes** of the requests people asked to save land in `~/my-brain/wt/q/projects/q/richieste/` (the project's worktree, untracked), one file each, `<day>-<title>-<six hex>.md`, `owner: claude`, `status: draft`; the journal says `a note written`. They are committed at the project's passes, after a look.
+
+**The chats** stay in `~/.local/share/cumino-assistente/node.sqlite`, as on a phone (the welcome and the page say so).
 
 ## Before the first start
 
@@ -51,6 +67,8 @@ That key goes into the relay's configuration (`deploy/relay/cumino-relay.service
 
 A run with the scripted answerer (no Claude, a test reply): `CUMINO_ASSISTANT_ANSWERER=scripted docker compose -f deploy/assistant/compose.yaml up -d`.
 
+**Its numbers** are settings (`packages/assistant/src/settings.ts`): `CUMINO_ASSISTANT_TURNS_PER_BOND` (15 a day), `CUMINO_ASSISTANT_TURNS_PER_DAY` (60), `CUMINO_ASSISTANT_SECONDS` (180 an answer), `CUMINO_ASSISTANT_ATTEMPTS` (2), `CUMINO_ASSISTANT_BUDGET_USD` (0.50 an attempt), `CUMINO_ASSISTANT_MODEL` (`sonnet`), `CUMINO_ASSISTANT_EFFORT` (`low`). To change one, add it under `environment:` in `compose.yaml`, then `up -d` again. `CUMINO_ASSISTANT_TURNS_PER_DAY: '0'` keeps it answering nothing but the day's notice.
+
 ## The round end to end
 
 With the container running and its key in the relay's configuration (the stand topped up within five minutes):
@@ -73,10 +91,26 @@ docker compose -f deploy/assistant/compose.yaml stop
 
 `stop` sends `SIGTERM`: the answerer's process ended, the turn in progress left as the register has it, the node stopped. With `restart: always` a container stopped by hand starts again at the laptop's next start (Docker's daemon); to keep it off, `down`, which removes the container (the data stay on the laptop); `up -d` makes it again.
 
+From anywhere, without a checkout, to stop it now and keep it off until it is started again:
+
+```bash
+docker update --restart=no cumino-assistente
+```
+
+```bash
+docker stop cumino-assistente
+```
+
+`docker update --restart=always cumino-assistente` and `docker start cumino-assistente` undo them.
+
 ## Update
 
 ```bash
-git pull --ff-only
+git fetch origin
+```
+
+```bash
+git checkout --detach origin/acceptance
 ```
 
 ```bash
@@ -87,4 +121,4 @@ Claude Code's version is the image's `CLAUDE_CODE_VERSION` (`Dockerfile`), Node'
 
 ## What the container does not keep from Claude Code
 
-`bwrap` (the other cage, for a run outside a container) gives the answerer a filesystem of its own; in the container the answerer's process is the node's child, so it sees what the container mounts (the node's storage, the register, the stand's key, the source read-only). Only its tools are kept from them (`--restricted` and the deny rules, checked on 28 November 2026 with the real `claude`: `/home`, `/config/claude`, `/srv/source`, `/data/stand.key` and `/etc` refused, the copy read). A declared flaw (AST-8, AST-15).
+`bwrap` (the other cage, for a run outside a container) gives the answerer a filesystem of its own; in the container the answerer's process is the node's child, so it sees what the container mounts (the node's storage, the register, the stand's key, the source read-only). Only its tools are kept from them (`--restricted` and the deny rules, checked on 28 November 2026 with the real `claude`: `/home`, `/config/claude`, `/srv/source`, `/data/stand.key` and `/etc` refused, the copy read; again in B6, with a neutral prompt asking the tools: `/tmp`, `/data` by `../..`, `/config`, `/srv/notes`, `/opt` and `/` refused as outside the working directory). A declared flaw (AST-8, AST-15).

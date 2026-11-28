@@ -21,7 +21,9 @@ export {
   type TheVolume,
 } from './disk/index.ts'
 export {
+  from_the_page_itself,
   the_desks_http_interface,
+  the_most_a_body_holds,
   type AboutTheRelay,
   type AStandServed,
   type AStandsPage,

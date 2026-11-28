@@ -27,13 +27,15 @@ afterAll(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
 })
 
-const settings = { model: 'sonnet', effort: 'low', seconds: 180 }
+const settings = { model: 'sonnet', effort: 'low', seconds: 180, budget: 0.5 }
 const place = {
   claude: '/usr/local/bin/claude',
   configuration: '/config/claude',
   system_prompt: '/opt/cumino-assistente/the_system_prompt.md',
   data: '/data',
   source: '/srv/source',
+  never_copied: '/config/never-copied.txt',
+  notes: '/srv/notes',
 }
 
 describe('the tools of the answerer', () => {
@@ -83,9 +85,14 @@ describe('the tools of the answerer', () => {
         'Read(//data/stand.key)',
         'Read(//srv/source/**)',
         'Read(//config/claude/**)',
+        'Read(//config/never-copied.txt)',
+        'Read(//srv/notes/**)',
         'Read(//home/**)',
+        'Read(//tmp/**)',
       ]),
     )
+    // An attempt's ceiling (B6).
+    expect(line.args[line.args.indexOf('--max-budget-usd') + 1]).toBe('0.50')
     expect(line.env).toEqual({
       HOME: '/tmp/home',
       PATH: '/usr/local/bin:/usr/bin:/bin',
@@ -125,6 +132,30 @@ describe('the answer', () => {
     const answer = the_answer_in(fixture('claude_replied.json'), '', 0)
     expect(answer.answer).toBe('replied')
     expect(answer.answer === 'replied' ? answer.reply : '').toContain('Cumino')
+  })
+
+  test('a reply carries the cost Claude Code estimates; an attempt over its budget, as 2.1.302 says it (B6)', () => {
+    const replied = JSON.stringify({
+      is_error: false,
+      structured_output: { reply: 'Ciao' },
+      total_cost_usd: 0.0412,
+    })
+    expect(the_answer_in(replied, '', 0)).toEqual({
+      answer: 'replied',
+      reply: 'Ciao',
+      cost: 0.0412,
+    })
+    // The result of `claude -p --max-budget-usd 0.01 --output-format json` on 28 Nov 2026, its keys read.
+    const over = JSON.stringify({
+      type: 'result',
+      subtype: 'error_max_budget_usd',
+      is_error: true,
+      num_turns: 4,
+      stop_reason: 'tool_use',
+      total_cost_usd: 0.015484,
+      errors: ['Reached maximum budget ($0.01)'],
+    })
+    expect(the_answer_in(over, '', 1)).toEqual({ answer: 'over_its_budget' })
   })
 
   test('before the bot’s login: not logged in, as claude 2.1.302 says it', () => {
