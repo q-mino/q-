@@ -21,6 +21,7 @@
     "gallery": "pnpm --filter @q-mino/phone gallery",
     "screens": "node scripts/screens.mjs",
     "end-to-end": "node scripts/end_to_end.mjs",
+    "end-to-end:assistant": "node scripts/end_to_end_assistant.mjs",
     "contrast": "vitest run packages/adapters-web/test/design/the_contrast.test.ts --reporter=verbose",
     "icons": "node scripts/icons.mjs",
     "check:serial": "node scripts/check.mjs --serial",
