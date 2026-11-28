@@ -1,0 +1,12 @@
+# The context of deploy/assistant/Dockerfile (the repository's root): the
+# sources and the lockfile, never what a checkout builds or keeps locally.
+**/node_modules
+**/dist
+**/.tsbuild
+**/*.tsbuildinfo
+.git
+.check
+.claude
+CLAUDE.local.md
+screens
+coverage
