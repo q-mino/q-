@@ -10,7 +10,7 @@
 // [Q, C, 27 Nov 2026]
 
 import { the_link_of_a_ticket, the_mark_of_a_ticket } from '@q-mino/adapters-web'
-import type { AMessageTold, Answers, ATurnAsked } from '../answerer/index.ts'
+import type { Answers, ATurnAsked } from '../answerer/index.ts'
 import { a_note_written } from '../notes/index.ts'
 import type { ATurnInProgress, HowItCloses, TheRegister } from '../register/index.ts'
 import type { TheStand } from '../stand/index.ts'
@@ -110,17 +110,37 @@ export const the_caps_decide = (
   return 'answer'
 }
 
-/** The recent messages a turn is told with (AST-4): the last twelve, or 12 000 characters, the oldest dropped first. */
-const the_recent = (messages: readonly AMessageTold[]): readonly AMessageTold[] => {
-  const kept: AMessageTold[] = []
+/**
+ * The last of a chat's messages, at most so many and so many characters,
+ * the oldest dropped first: the recent ones a turn is told with (AST-4:
+ * twelve, 12 000 characters), and those it covers (eight, 12 000: B6, a
+ * flood of messages before a look would be one prompt as long as the flood,
+ * of Alessandro's quota). The last one always (a message is at most 4 000,
+ * MSG-4).
+ */
+export const the_last = <message extends { readonly text: string }>(
+  messages: readonly message[],
+  at_most: { readonly messages: number; readonly characters: number },
+): readonly message[] => {
+  const kept: message[] = []
   let characters = 0
   for (const message of [...messages].reverse()) {
-    if (kept.length >= 12 || characters + message.text.length > 12_000) break
+    if (
+      kept.length >= at_most.messages ||
+      (kept.length > 0 && characters + message.text.length > at_most.characters)
+    )
+      break
     kept.unshift(message)
     characters += message.text.length
   }
   return kept
 }
+
+/** How much of the chat before a turn it is told (AST-4). */
+const the_recent = { messages: 12, characters: 12_000 } as const
+
+/** How much of what a turn covers it is told [Q, C, 28 Nov 2026] (B6; AST-4): the rest is told by its number. */
+export const the_covered = { messages: 8, characters: 12_000 } as const
 
 /** The operations the assistant names (DOM-11): the same after a fall. */
 export const the_operations = {
@@ -240,13 +260,16 @@ export const the_assistant = (wiring: TheAssistantsWiring) => {
       .slice(to_read === 0 ? chat.length : -to_read)
       .filter((message) => through === undefined || message.place <= through.place)
     const first = covered[0]
+    const told = the_last(covered, the_covered)
     return {
-      before: the_recent(
+      before: the_last(
         chat
           .filter((message) => first === undefined || message.place < first.place)
           .map((message) => ({ whose: message.whose, text: message.text })),
+        the_recent,
       ),
-      covered: covered.map((message) => message.text),
+      covered: told.map((message) => message.text),
+      ...(told.length < covered.length ? { left_out: covered.length - told.length } : {}),
     }
   }
 
@@ -293,18 +316,32 @@ export const the_assistant = (wiring: TheAssistantsWiring) => {
             break
           }
           if (logged_out_until !== undefined && now < logged_out_until) return 'waits'
+          // Every attempt begun ended by a fall of the node (B6): the apology, not one more.
+          if (attempts_so_far >= numbers.attempts) {
+            wiring.journal('a turn whose attempts ended in falls: the apology')
+            turn = kept(turn, { stage: 'kept', reply: words.the_apology, closes_as: 'the_apology' })
+            break
+          }
           const asked = await what_is_asked(turn)
           if (asked.covered.length === 0) {
             turn = kept(turn, { stage: 'written', closes_as: 'passed_over' })
             break
           }
-          turn = kept(turn, turn.stage)
+          // The attempt counted as it begins [Q, C, 28 Nov 2026] (B6; AST-6): a fall
+          // of the node during it (the container killed, the laptop's power) counts,
+          // so a turn that kills its node is not asked again at every start, each of
+          // Alessandro's quota. A stop or a missing login gives it back.
+          const before_it = turn
+          const given_back = (): void => {
+            kept(before_it, { stage: 'asked', attempts: attempts_so_far })
+          }
+          turn = kept(turn, { stage: 'asked', attempts: attempts_so_far + 1 })
           const started = monotonic()
           const answer = await wiring.answers(asked, wiring.the_copy())
           const seconds = ((monotonic() - started) / 1000).toFixed(1)
           if (answer.answer === 'replied') {
             wiring.journal(
-              `a turn answered in ${seconds} s${answer.note === undefined ? '' : ', with a note'}`,
+              `a turn answered in ${seconds} s${answer.cost === undefined ? '' : ` (Claude Code's estimate $${answer.cost.toFixed(3)})`}${answer.note === undefined ? '' : ', with a note'}`,
             )
             logged_out_until = undefined
             turn = kept(turn, {
@@ -315,8 +352,17 @@ export const the_assistant = (wiring: TheAssistantsWiring) => {
             })
             break
           }
-          if (answer.answer === 'stopped') return 'waits'
+          if (answer.answer === 'stopped') {
+            given_back()
+            return 'waits'
+          }
+          if (answer.answer === 'over_its_budget') {
+            wiring.journal(`an attempt over its budget in ${seconds} s: the apology`)
+            turn = kept(turn, { stage: 'kept', reply: words.the_apology, closes_as: 'the_apology' })
+            break
+          }
           if (answer.answer === 'not_logged_in') {
+            given_back()
             if (logged_out_until === undefined)
               wiring.journal('the answerer is not logged in: the turns wait')
             logged_out_until = new Date(

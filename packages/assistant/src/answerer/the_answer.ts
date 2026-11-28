@@ -12,10 +12,15 @@ export interface AMessageTold {
   readonly text: string
 }
 
-/** A turn as the answerer is asked it (AST-4): the chat's recent messages before it, oldest first, and those it covers, oldest first. */
+/**
+ * A turn as the answerer is asked it (AST-4): the chat's recent messages
+ * before it, oldest first, and those it covers, oldest first, the last
+ * eight at most (B6); how many it covers that are left out, if any.
+ */
 export interface ATurnAsked {
   readonly before: readonly AMessageTold[]
   readonly covered: readonly string[]
+  readonly left_out?: number
 }
 
 /** The kinds of a note (AST-9, AST-12). */
@@ -48,15 +53,24 @@ export const the_answer_s_json_schema = (): string => {
 export const the_longest_message = 4_000
 
 /**
- * What the answerer gives back (AST-7): a reply, parsed; not logged in (no
- * attempt counted); over its time; out of its form; failed, by its exit and
- * the first line of its fault, never the prompt; stopped, the node stopping
- * (AST-14: the turn left as the register has it).
+ * What the answerer gives back (AST-7): a reply, parsed, with the cost
+ * Claude Code estimates when it tells one (the journal's, for Alessandro's
+ * quota; the subscription bills no dollars); not logged in (no attempt
+ * counted); over its time; over its budget (B6: an attempt's ceiling, then
+ * the apology at once, never a second attempt as costly); out of its form;
+ * failed, by its exit and the first line of its fault, never the prompt;
+ * stopped, the node stopping (AST-14: the turn left as the register has it).
  */
 export type AnAnswer =
-  | { readonly answer: 'replied'; readonly reply: string; readonly note?: ANote }
+  | {
+      readonly answer: 'replied'
+      readonly reply: string
+      readonly note?: ANote
+      readonly cost?: number
+    }
   | { readonly answer: 'not_logged_in' }
   | { readonly answer: 'over_its_time' }
+  | { readonly answer: 'over_its_budget' }
   | { readonly answer: 'out_of_its_form' }
   | { readonly answer: 'failed'; readonly exit: number | null; readonly fault: string }
   | { readonly answer: 'stopped' }
@@ -92,6 +106,12 @@ export const the_prompt_of = (turn: ATurnAsked): string =>
       : `The chat so far, oldest first:\n\n${turn.before.map((each) => told(each.whose, each.text)).join('\n\n')}`,
     '',
     `The new ${turn.covered.length === 1 ? 'message' : 'messages'} to answer, in one reply:\n\n${turn.covered.map((text) => told('theirs', text)).join('\n\n')}`,
+    ...(turn.left_out === undefined
+      ? []
+      : [
+          '',
+          `${String(turn.left_out)} earlier ${turn.left_out === 1 ? 'message' : 'messages'} of theirs in a row ${turn.left_out === 1 ? 'is' : 'are'} not shown here (too many at once): say so briefly, and answer these.`,
+        ]),
     '',
     'Answer as the system prompt says, in the JSON form asked: `reply`, and `note` only if they asked to save something.',
   ].join('\n')

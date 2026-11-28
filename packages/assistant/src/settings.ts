@@ -27,6 +27,8 @@ export interface Settings {
   readonly effort: string
   /** The time of an answer, in seconds (AST-6). */
   readonly seconds: number
+  /** The most an attempt may cost by Claude Code's estimate, in dollars (B6). */
+  readonly budget: number
   readonly numbers: TheNumbers
   /** The node's data: `node.sqlite`, `register.sqlite`, `stand.key`, `copy/`. */
   readonly data: string
@@ -61,6 +63,7 @@ export const names = {
   model: 'CUMINO_ASSISTANT_MODEL',
   effort: 'CUMINO_ASSISTANT_EFFORT',
   seconds: 'CUMINO_ASSISTANT_SECONDS',
+  budget: 'CUMINO_ASSISTANT_BUDGET_USD',
   attempts: 'CUMINO_ASSISTANT_ATTEMPTS',
   turns_per_bond: 'CUMINO_ASSISTANT_TURNS_PER_BOND',
   turns_per_day: 'CUMINO_ASSISTANT_TURNS_PER_DAY',
@@ -104,6 +107,12 @@ const the_environment = z.object({
     .default('sonnet'),
   [names.effort]: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('low'),
   [names.seconds]: a_whole_number(10, 3600).default(180),
+  [names.budget]: z
+    .string()
+    .regex(/^\d{1,2}(\.\d{1,2})?$/, 'dollars, as 0.50')
+    .transform(Number)
+    .pipe(z.number().min(0.05).max(20))
+    .default(0.5),
   [names.attempts]: a_whole_number(1, 10).default(2),
   [names.turns_per_bond]: a_whole_number(0, 10_000).default(15),
   [names.turns_per_day]: a_whole_number(0, 100_000).default(60),
@@ -172,6 +181,7 @@ export const the_settings_of = (
       model: read[names.model],
       effort: read[names.effort],
       seconds: read[names.seconds],
+      budget: read[names.budget],
       numbers: {
         turns_per_bond: read[names.turns_per_bond],
         turns_per_day: read[names.turns_per_day],

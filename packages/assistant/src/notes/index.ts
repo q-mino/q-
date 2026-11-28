@@ -41,12 +41,42 @@ const quoted = (text: string): string => JSON.stringify(text)
 /** One line of a text: its line breaks as spaces. */
 const one_line = (text: string): string => text.replace(/\s*\n\s*/g, ' ').trim()
 
+/**
+ * A text of the answerer made inert in the vault [Q, C, 28 Nov 2026] (B6):
+ * a stranger's request reaches the vault through Claude's words, so nothing
+ * in it may read as Alessandro's annotation (`> [!alex]`, `(alex: …)`, the
+ * vault's `meta/schema.md`, which its curation takes as his), a link or an
+ * embed of the graph (`[[…]]`, `![…]`), or HTML a viewer would render (a
+ * remote image loaded when the note is opened): no line begins with `>`;
+ * `[[`, `![`, `[!` and `<` are escaped; `(alex:` is quoted. Rejected: the
+ * text in a code block (the note unreadable as prose); trusting the system
+ * prompt (a request, not a guarantee, AST-15).
+ */
+export const inert = (text: string): string =>
+  text
+    .replace(/^[ \t]*>+[ \t]?/gm, '')
+    .replace(/\[\[/g, '\\[\\[')
+    .replace(/!\[/g, '!\\[')
+    .replace(/\[!/g, '[\\!')
+    .replace(/</g, '&lt;')
+    .replace(/\(\s*alex\s*:/gi, '(«alex»:')
+
+/** A title made inert for the frontmatter and the heading: one line, no brackets, `!`, `<` or `>`; `(alex:` quoted. */
+const an_inert_title = (title: string): string => {
+  const kept = one_line(title)
+    .replace(/[[\]<>!]/g, '')
+    .replace(/\(\s*alex\s*:/gi, '(«alex»:')
+    .trim()
+  return kept === '' ? 'richiesta' : kept
+}
+
 /** The note's Markdown (AST-12). */
 export const the_note_s_text = (note: ANote, day: string): string => {
   const kind = the_kind[note.kind]
+  const title = an_inert_title(note.title)
   return [
     '---',
-    `title: ${quoted(`q- - richiesta: ${one_line(note.title)}`)}`,
+    `title: ${quoted(`q- - richiesta: ${title}`)}`,
     'type: note',
     'owner: claude',
     'domain: tech',
@@ -61,17 +91,17 @@ export const the_note_s_text = (note: ANote, day: string): string => {
     'reviewed: ',
     'related: ["[[projects/q/index]]"]',
     '---',
-    `# ${one_line(note.title)}`,
+    `# ${title}`,
     '',
     `**Tipo**: ${kind.told}`,
     '',
     '## La richiesta',
     '',
-    note.request.trim(),
+    inert(note.request.trim()),
     '',
     '## Il contesto',
     '',
-    note.context.trim() === '' ? '—' : note.context.trim(),
+    note.context.trim() === '' ? '—' : inert(note.context.trim()),
     '',
   ].join('\n')
 }

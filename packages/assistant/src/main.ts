@@ -109,7 +109,12 @@ export const run = async (environment: Environment): Promise<void> => {
   const answers: Answers =
     settings.answerer === 'claude'
       ? claude(
-          { model: settings.model, effort: settings.effort, seconds: settings.seconds },
+          {
+            model: settings.model,
+            effort: settings.effort,
+            seconds: settings.seconds,
+            budget: settings.budget,
+          },
           {
             cage: settings.cage,
             claude: realpathSync(settings.claude),
@@ -117,6 +122,8 @@ export const run = async (environment: Environment): Promise<void> => {
             system_prompt: the_system_prompt_file(),
             data: settings.data,
             source: settings.source,
+            never_copied: settings.never_copied,
+            notes: settings.notes,
           },
           stopping.signal,
         )
