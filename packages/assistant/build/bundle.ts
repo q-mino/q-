@@ -50,6 +50,13 @@ export const bundle = async (out: string, values: TheBuild = the_release()): Pro
     input: join(the_assistant, 'src', 'main.ts'),
     platform: 'node',
     logLevel: 'warn',
+    // An import not resolved is a fault of the build, never an external: a
+    // checkout whose packages were not installed again bundled `qr` and
+    // `hono/jsx` as externals, and the release did not start (part B5 of the
+    // assistant, 28 Nov 2026: rolled back by `activate.sh`). [Q, C, 28 Nov 2026]
+    onLog: (level, log, handler) => {
+      handler(log.code === 'UNRESOLVED_IMPORT' ? 'error' : level, log)
+    },
     plugins: [
       {
         name: 'the-build-s-values',
