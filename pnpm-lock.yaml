@@ -109,6 +109,49 @@ importers:
         specifier: 21.0.4
         version: 21.0.4
 
+  packages/assistant:
+    dependencies:
+      '@q-mino/adapters-common':
+        specifier: workspace:*
+        version: link:../adapters-common
+      '@q-mino/adapters-node':
+        specifier: workspace:*
+        version: link:../adapters-node
+      '@q-mino/adapters-web':
+        specifier: workspace:*
+        version: link:../adapters-web
+      '@q-mino/boundary':
+        specifier: workspace:*
+        version: link:../boundary
+      '@q-mino/domains':
+        specifier: workspace:*
+        version: link:../domains
+      '@q-mino/memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@q-mino/messaging':
+        specifier: workspace:*
+        version: link:../extensions/messaging
+      '@q-mino/ping_pong':
+        specifier: workspace:*
+        version: link:../extensions/ping_pong
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@hono/node-server':
+        specifier: 2.1.6
+        version: 2.1.6(hono@4.13.19)
+      '@q-mino/relay':
+        specifier: workspace:*
+        version: link:../relay
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      rolldown:
+        specifier: 1.2.16
+        version: 1.2.16
+
   packages/boundary:
     dependencies:
       zod:

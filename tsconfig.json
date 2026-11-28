@@ -59,6 +59,15 @@
       "path": "packages/boundary"
     },
     {
+      "path": "packages/assistant"
+    },
+    {
+      "path": "packages/assistant/test"
+    },
+    {
+      "path": "packages/assistant/build"
+    },
+    {
       "path": "packages/boundary/test"
     },
     {

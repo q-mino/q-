@@ -1,0 +1,31 @@
+{
+  "name": "@q-mino/assistant",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "node build/bundle.ts",
+    "start": "node src/main.ts"
+  },
+  "dependencies": {
+    "@q-mino/adapters-common": "workspace:*",
+    "@q-mino/adapters-node": "workspace:*",
+    "@q-mino/adapters-web": "workspace:*",
+    "@q-mino/boundary": "workspace:*",
+    "@q-mino/domains": "workspace:*",
+    "@q-mino/memory": "workspace:*",
+    "@q-mino/messaging": "workspace:*",
+    "@q-mino/ping_pong": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@hono/node-server": "2.1.6",
+    "@q-mino/relay": "workspace:*",
+    "@types/node": "^24.19.2",
+    "rolldown": "1.2.16"
+  }
+}

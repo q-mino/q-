@@ -1,0 +1,23 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": "../.tsbuild/test"
+  },
+  "include": ["."],
+  "references": [
+    { "path": ".." },
+    { "path": "../../domains" },
+    { "path": "../../adapters-common" },
+    { "path": "../../adapters-node" },
+    { "path": "../../adapters-web" },
+    { "path": "../../boundary" },
+    { "path": "../../memory" },
+    { "path": "../../memory/test" },
+    { "path": "../../relay" },
+    { "path": "../../extensions/messaging" },
+    { "path": "../../extensions/ping_pong" }
+  ]
+}

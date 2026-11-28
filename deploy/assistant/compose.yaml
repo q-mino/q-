@@ -1,0 +1,62 @@
+# Cumino's assistant in a container (AST-8, AST-14): the container is the
+# cage. Its root read-only, every capability dropped, no new privileges, its
+# user Alessandro's uid (the files it writes stay his), and only these
+# folders mounted: the source of the copy read-only, the notes' folder, the
+# node's data and the bot's Claude Code configuration read-write, the words
+# never copied read-only. Started again always, at the laptop's start too
+# (Docker's daemon). Its commands: README.md here. [Q, C, 28 Nov 2026]
+name: cumino-assistente
+
+services:
+  assistente:
+    build:
+      context: ../..
+      dockerfile: deploy/assistant/Dockerfile
+      args:
+        Q_COMMIT: ${Q_COMMIT:-unknown}
+        Q_VERSION: ${Q_VERSION:-unknown}
+    image: cumino-assistente:latest
+    container_name: cumino-assistente
+    restart: always
+    user: '${CUMINO_UID:-1000}:${CUMINO_GID:-1000}'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    pids_limit: 256
+    mem_limit: 1g
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    environment:
+      CUMINO_ASSISTANT_ANSWERER: ${CUMINO_ASSISTANT_ANSWERER:-claude}
+    volumes:
+      # The source of the copy (AST-11): the project's notes, read-only.
+      - type: bind
+        source: ${HOME}/my-brain/wt/q/projects/q
+        target: /srv/source
+        read_only: true
+        bind: { create_host_path: false }
+      # The notes of the requests (AST-12), written by the node.
+      - type: bind
+        source: ${HOME}/my-brain/wt/q/projects/q/richieste
+        target: /srv/notes
+        bind: { create_host_path: false }
+      # The node's data: node.sqlite, register.sqlite, stand.key, copy/.
+      - type: bind
+        source: ${HOME}/.local/share/cumino-assistente
+        target: /data
+        bind: { create_host_path: false }
+      # The bot's own Claude Code configuration (its login), which Claude Code refreshes.
+      - type: bind
+        source: ${HOME}/.config/cumino-assistente/claude
+        target: /config/claude
+        bind: { create_host_path: false }
+      # The laptop's words never copied (AST-11).
+      - type: bind
+        source: ${HOME}/.config/cumino-assistente/never-copied.txt
+        target: /config/never-copied.txt
+        read_only: true
+        bind: { create_host_path: false }
+    stop_grace_period: 30s
+    logging:
+      driver: local
+      options: { max-size: 10m, max-file: '3' }
