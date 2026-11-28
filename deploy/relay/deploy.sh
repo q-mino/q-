@@ -53,6 +53,9 @@ release() {
   fi
 
   say "build $commit"
+  # The checkout's packages as its lockfile says (a checkout of an older
+  # commit lacks the newer dependencies; part B5, 28 Nov 2026).
+  timeout 300 pnpm --dir "$root" install --frozen-lockfile
   timeout 300 pnpm --dir "$root" --filter @q-mino/relay build
   dist="$root/packages/relay/dist"
   head -1 "$dist/relay.mjs" | grep -qF "($commit)" || fail "the build does not say $commit"

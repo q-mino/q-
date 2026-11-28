@@ -51,6 +51,16 @@ That key goes into the relay's configuration (`deploy/relay/cumino-relay.service
 
 A run with the scripted answerer (no Claude, a test reply): `CUMINO_ASSISTANT_ANSWERER=scripted docker compose -f deploy/assistant/compose.yaml up -d`.
 
+## The round end to end
+
+With the container running and its key in the relay's configuration (the stand topped up within five minutes):
+
+```bash
+pnpm end-to-end:assistant --commit <the test site's commit>
+```
+
+Two visitors in two headless Chromes, from the page `/assistente` to the assistant's replies (stories 26–28, 21, 22 of `packages/assistant/README.md`): four turns of the answerer (with `claude`, four replies of the bot's quota), two links of the stand, two bonds kept by the assistant (Ottavia and Ludovica, test faces), and the container stopped, started and restarted once each. The note it makes is deleted at its end (`--keep-the-notes` to keep it).
+
 ## Logs, stop
 
 ```bash
